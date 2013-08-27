@@ -10,6 +10,8 @@
 
 # Compiler flags:
 
+PKGCONFIG ?= pkgconfig
+
 CC       ?= gcc
 CFLAGS   ?= -g -O3 -Wall
 
@@ -19,8 +21,12 @@ CXXFLAGS ?= -g -O3 -Wall -Werror=overloaded-virtual -Wno-parentheses
 CDEFINES  = -D_GNU_SOURCE
 CDEFINES += -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE
 
-LIBS      = -ljpeg -lpthread -ldl -lcap -lrt $(shell pkg-config --libs freetype2 fontconfig)
-INCLUDES ?= $(shell pkg-config --cflags freetype2 fontconfig)
+ifdef ANDROID
+LIBS      = -ljpeg -ldl -lintl $(shell $(PKGCONFIG) --libs freetype2 fontconfig)
+else
+LIBS      = -ljpeg -lpthread -ldl -lcap -lrt $(shell $(PKGCONFIG) --libs freetype2 fontconfig)
+endif
+INCLUDES ?= $(shell $(PKGCONFIG) --cflags freetype2 fontconfig)
 
 # Directories:
 
@@ -71,7 +77,7 @@ OBJS = audio.o channels.o ci.o config.o cutter.o device.o diseqc.o dvbdevice.o d
        lirc.o menu.o menuitems.o nit.o osdbase.o osd.o pat.o player.o plugin.o\
        receiver.o recorder.o recording.o remote.o remux.o ringbuffer.o sdt.o sections.o shutdown.o\
        skinclassic.o skinlcars.o skins.o skinsttng.o sourceparams.o sources.o spu.o status.o svdrp.o themes.o thread.o\
-       timers.o tools.o transfer.o vdr.o videodir.o
+       timers.o tools.o transfer.o vdr.o videodir.o android_sort.o android_strchrnul.o android_getline.o
 
 DEFINES  += $(CDEFINES)
 INCLUDES += $(CINCLUDES)
