@@ -143,7 +143,9 @@ cRwLock::cRwLock(bool PreferWriter)
 {
   pthread_rwlockattr_t attr;
   pthread_rwlockattr_init(&attr);
+#ifndef ANDROID
   pthread_rwlockattr_setkind_np(&attr, PreferWriter ? PTHREAD_RWLOCK_PREFER_WRITER_NP : PTHREAD_RWLOCK_PREFER_READER_NP);
+#endif
   pthread_rwlock_init(&rwlock, &attr);
 }
 
@@ -229,8 +231,10 @@ void cThread::SetPriority(int Priority)
 
 void cThread::SetIOPriority(int Priority)
 {
+#ifndef ANDROID
   if (syscall(SYS_ioprio_set, 1, 0, (Priority & 0xff) | (3 << 13)) < 0) // idle class
      LOG_ERROR;
+#endif
 }
 
 void cThread::SetDescription(const char *Description, ...)
@@ -250,9 +254,11 @@ void *cThread::StartThread(cThread *Thread)
   Thread->childThreadId = ThreadId();
   if (Thread->description) {
      dsyslog("%s thread started (pid=%d, tid=%d, prio=%s)", Thread->description, getpid(), Thread->childThreadId, Thread->lowPriority ? "low" : "high");
+#ifndef ANDROID
 #ifdef PR_SET_NAME
      if (prctl(PR_SET_NAME, Thread->description, 0, 0, 0) < 0)
         esyslog("%s thread naming failed (pid=%d, tid=%d)", Thread->description, getpid(), Thread->childThreadId);
+#endif
 #endif
      }
   if (Thread->lowPriority) {
@@ -332,7 +338,11 @@ void cThread::Cancel(int WaitSeconds)
             }
         esyslog("ERROR: %s thread %d won't end (waited %d seconds) - canceling it...", description ? description : "", childThreadId, WaitSeconds);
         }
+#ifdef ANDROID
+     pthread_kill(childTid, SIGINT);
+#else
      pthread_cancel(childTid);
+#endif
      childTid = 0;
      active = false;
      }
