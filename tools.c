@@ -25,12 +25,22 @@ extern "C" {
 #include <time.h>
 #include <unistd.h>
 #include <utime.h>
+#include <string.h>
 #include "i18n.h"
 #include "thread.h"
 
 int SysLogLevel = 3;
 
 #define MAXSYSLOGBUF 256
+
+#ifdef ANDROID
+#include "android_getline.h"
+
+#define POSIX_FADV_RANDOM   1
+#define POSIX_FADV_DONTNEED 1
+#define POSIX_FADV_WILLNEED 1
+#define posix_fadvise(a,b,c,d) (-1)
+#endif
 
 void syslog_with_tid(int priority, const char *format, ...)
 {
@@ -260,7 +270,7 @@ int numdigits(int n)
   return res;
 }
 
-bool isnumber(const char *s)
+bool is_number(const char *s)
 {
   if (!s || !*s)
      return false;
@@ -569,7 +579,11 @@ char *ReadLink(const char *FileName)
 {
   if (!FileName)
      return NULL;
+#ifdef ANDROID
+  char *TargetName = realpath(FileName, NULL);
+#else
   char *TargetName = canonicalize_file_name(FileName);
+#endif
   if (!TargetName) {
      if (errno == ENOENT) // file doesn't exist
         TargetName = strdup(FileName);
@@ -1099,7 +1113,7 @@ cString DateString(time_t t)
   char buf[32];
   struct tm tm_r;
   tm *tm = localtime_r(&t, &tm_r);
-  char *p = stpcpy(buf, WeekDayName(tm->tm_wday));
+  char *p = strcpy(buf, WeekDayName(tm->tm_wday));
   *p++ = ' ';
   strftime(p, sizeof(buf) - (p - buf), "%d.%m.%Y", tm);
   return buf;

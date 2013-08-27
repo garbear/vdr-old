@@ -27,6 +27,12 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
+#ifdef ANDROID
+#include "android_sort.h"
+#include "android_strchrnul.h"
+#define __attribute_format_arg__(x) __attribute__ ((__format_arg__ (x)))
+#endif
+
 typedef unsigned char uchar;
 
 extern int SysLogLevel;
@@ -206,7 +212,7 @@ bool startswith(const char *s, const char *p);
 bool endswith(const char *s, const char *p);
 bool isempty(const char *s);
 int numdigits(int n);
-bool isnumber(const char *s);
+bool is_number(const char *s);
 int64_t StrToNum(const char *s);
     ///< Converts the given string to a number.
     ///< The numerical part of the string may be followed by one of the letters
