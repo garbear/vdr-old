@@ -334,6 +334,7 @@ cTDT::cTDT(const u_char *Data)
 {
   CheckParse();
 
+#ifndef ANDROID
   time_t dvbtim = getTime();
   time_t loctim = time(NULL);
 
@@ -358,6 +359,7 @@ cTDT::cTDT(const u_char *Data)
         }
      mutex.Unlock();
      }
+#endif
 }
 
 // --- cEitFilter ------------------------------------------------------------
