@@ -10,6 +10,9 @@
  */
 
 #include "lirc.h"
+
+#ifndef ANDROID
+
 #include <netinet/in.h>
 #include <sys/socket.h>
 
@@ -135,3 +138,6 @@ void cLircRemote::Action(void)
            }
         }
 }
+
+#endif
+

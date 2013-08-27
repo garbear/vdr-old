@@ -10,6 +10,8 @@
 #ifndef __LIRC_H
 #define __LIRC_H
 
+#ifndef ANDROID
+
 #include <sys/un.h>
 #include "remote.h"
 #include "thread.h"
@@ -26,5 +28,7 @@ public:
   virtual ~cLircRemote();
   virtual bool Ready(void);
   };
+
+#endif
 
 #endif //__LIRC_H
