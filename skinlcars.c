@@ -1036,12 +1036,14 @@ void cSkinLCARSDisplayMenu::DrawLoad(void)
      if (initial)
         osd->DrawText(xa00, yb04, tr("LOAD"), ColorFg, ColorBg, tinyFont, xa02 - xa00, yb05 - yb04, taTop | taLeft | taBorder);
      double SystemLoad;
+#ifndef ANDROID
      if (getloadavg(&SystemLoad, 1) > 0) {
         if (initial || SystemLoad != lastSystemLoad) {
            osd->DrawText(xa00, yb05 - lineHeight, cString::sprintf("%.1f", SystemLoad), ColorFg, ColorBg, cFont::GetFont(fontOsd), xa02 - xa00, lineHeight, taBottom | taRight | taBorder);
            lastSystemLoad = SystemLoad;
            }
         }
+#endif
      }
 }
 
