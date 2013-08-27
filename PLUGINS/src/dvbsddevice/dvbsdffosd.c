@@ -10,7 +10,9 @@
 #include <linux/dvb/osd.h>
 #include <signal.h>
 #include <sys/ioctl.h>
+#ifndef ANDROID
 #include <sys/unistd.h>
+#endif
 #include <vdr/tools.h>
 
 // --- cDvbSdFfOsd -----------------------------------------------------------
