@@ -322,7 +322,7 @@ bool cTimer::Parse(const char *s)
      result = ParseDay(daybuffer, day, weekdays);
      Utf8Strn0Cpy(file, filebuffer, sizeof(file));
      strreplace(file, '|', ':');
-     if (isnumber(channelbuffer))
+     if (is_number(channelbuffer))
         channel = Channels.GetByNumber(atoi(channelbuffer));
      else
         channel = Channels.GetByChannelID(tChannelID::FromString(channelbuffer), true, true);
