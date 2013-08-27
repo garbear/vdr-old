@@ -27,12 +27,16 @@
 
 #include <getopt.h>
 #include <grp.h>
+#ifndef ANDROID
 #include <langinfo.h>
+#endif
 #include <locale.h>
 #include <pwd.h>
 #include <signal.h>
 #include <stdlib.h>
+#ifndef ANDROID
 #include <sys/capability.h>
+#endif
 #include <sys/prctl.h>
 #include <termios.h>
 #include <unistd.h>
@@ -119,6 +123,7 @@ static bool SetUser(const char *UserName, bool UserDump)
 
 static bool DropCaps(void)
 {
+#ifndef ANDROID
   // drop all capabilities except selected ones
   cap_t caps = cap_from_text("= cap_sys_nice,cap_sys_time,cap_net_raw=ep");
   if (!caps) {
@@ -131,6 +136,7 @@ static bool DropCaps(void)
      return false;
      }
   cap_free(caps);
+#endif
   return true;
 }
 
@@ -273,7 +279,7 @@ int main(int argc, char *argv[])
                     break;
           case 'd': DaemonMode = true;
                     break;
-          case 'D': if (isnumber(optarg)) {
+          case 'D': if (is_number(optarg)) {
                        int n = atoi(optarg);
                        if (0 <= n && n < MAXDEVICES) {
                           cDevice::SetUseDevice(n);
@@ -347,7 +353,7 @@ int main(int argc, char *argv[])
                     break;
           case 'h': DisplayHelp = true;
                     break;
-          case 'i': if (isnumber(optarg)) {
+          case 'i': if (is_number(optarg)) {
                        InstanceId = atoi(optarg);
                        if (InstanceId >= 0)
                           break;
@@ -358,13 +364,13 @@ int main(int argc, char *argv[])
                     char *p = strchr(optarg, '.');
                     if (p)
                        *p = 0;
-                    if (isnumber(optarg)) {
+                    if (is_number(optarg)) {
                        int l = atoi(optarg);
                        if (0 <= l && l <= 3) {
                           SysLogLevel = l;
                           if (!p)
                              break;
-                          if (isnumber(p + 1)) {
+                          if (is_number(p + 1)) {
                              int l = atoi(p + 1);
                              if (0 <= l && l <= 7) {
                                 int targets[] = { LOG_LOCAL0, LOG_LOCAL1, LOG_LOCAL2, LOG_LOCAL3, LOG_LOCAL4, LOG_LOCAL5, LOG_LOCAL6, LOG_LOCAL7 };
@@ -402,7 +408,7 @@ int main(int argc, char *argv[])
           case 'n' | 0x100:
                     UseKbd = false;
                     break;
-          case 'p': if (isnumber(optarg))
+          case 'p': if (is_number(optarg))
                        SVDRPport = atoi(optarg);
                     else {
                        fprintf(stderr, "vdr: invalid port number: %s\n", optarg);
@@ -444,7 +450,7 @@ int main(int argc, char *argv[])
                     while (optarg && *optarg && optarg[strlen(optarg) - 1] == '/')
                           optarg[strlen(optarg) - 1] = 0;
                     break;
-          case 'w': if (isnumber(optarg)) {
+          case 'w': if (is_number(optarg)) {
                        int t = atoi(optarg);
                        if (t >= 0) {
                           WatchdogTimeout = t;
@@ -602,6 +608,7 @@ int main(int argc, char *argv[])
         return 2;
         }
      }
+#ifndef ANDROID
   else if (Terminal) {
      // Claim new controlling terminal
      stdin  = freopen(Terminal, "r", stdin);
@@ -610,6 +617,7 @@ int main(int argc, char *argv[])
      HasStdin = true;
      tcgetattr(STDIN_FILENO, &savedTm);
      }
+#endif
 
   isyslog("VDR version %s started", VDRVERSION);
   if (StartedAsRoot && VdrUser)
@@ -619,7 +627,7 @@ int main(int argc, char *argv[])
   cThread::SetMainThreadId();
 
   // Set the system character table:
-
+#ifndef ANDROID
   char *CodeSet = NULL;
   if (setlocale(LC_CTYPE, ""))
      CodeSet = nl_langinfo(CODESET);
@@ -636,6 +644,7 @@ int main(int argc, char *argv[])
      isyslog("codeset is '%s' - %s", CodeSet, known ? "known" : "unknown");
      cCharSetConv::SetSystemCharacterTable(CodeSet);
      }
+#endif
 
   // Initialize internationalization:
 
@@ -789,8 +798,10 @@ int main(int argc, char *argv[])
      }
 
   // Remote Controls:
+#ifndef ANDROID
   if (LircDevice)
      new cLircRemote(LircDevice);
+#endif
   if (!DaemonMode && HasStdin && UseKbd)
      new cKbdRemote;
   Interface->LearnKeys();
@@ -805,7 +816,7 @@ int main(int argc, char *argv[])
   if (!cDevice::WaitForAllDevicesReady(DEVICEREADYTIMEOUT))
      dsyslog("not all devices ready after %d seconds", DEVICEREADYTIMEOUT);
   if (*Setup.InitialChannel) {
-     if (isnumber(Setup.InitialChannel)) { // for compatibility with old setup.conf files
+     if (is_number(Setup.InitialChannel)) { // for compatibility with old setup.conf files
         if (cChannel *Channel = Channels.GetByNumber(atoi(Setup.InitialChannel)))
            Setup.InitialChannel = Channel->GetChannelID().ToString();
         }
