@@ -12,9 +12,12 @@
 #include <stdlib.h>
 #include <sys/ioctl.h>
 #include <sys/stat.h>
-#include <sys/unistd.h>
 #include "device.h"
 #include "tools.h"
+
+#ifndef ANDROID
+#include <sys/unistd.h>
+#endif
 
 tColor HsvToColor(double H, double S, double V)
 {
