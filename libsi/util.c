@@ -13,6 +13,10 @@
 #include <string.h>
 #include "util.h"
 
+#ifdef ANDROID
+#define timegm(x) mktime(x)
+#endif
+
 namespace SI {
 
 /*---------------------------- CharArray ----------------------------*/
