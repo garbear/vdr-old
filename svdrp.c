@@ -110,7 +110,7 @@ int cSocket::Accept(void)
   if (Open()) {
      struct sockaddr_in clientname;
      uint size = sizeof(clientname);
-     int newsock = accept(sock, (struct sockaddr *)&clientname, &size);
+     int newsock = accept(sock, (struct sockaddr *)&clientname, (socklen_t*)&size);
      if (newsock > 0) {
         bool accepted = SVDRPhosts.Acceptable(clientname.sin_addr.s_addr);
         if (!accepted) {
@@ -486,7 +486,7 @@ void cSVDRP::CmdCHAN(const char *Option)
   if (*Option) {
      int n = -1;
      int d = 0;
-     if (isnumber(Option)) {
+     if (is_number(Option)) {
         int o = strtol(Option, NULL, 10);
         if (o >= 1 && o <= Channels.MaxNumber())
            n = o;
@@ -551,7 +551,7 @@ void cSVDRP::CmdCLRE(const char *Option)
 {
   if (*Option) {
      tChannelID ChannelID = tChannelID::InvalidID;
-     if (isnumber(Option)) {
+     if (is_number(Option)) {
         int o = strtol(Option, NULL, 10);
         if (o >= 1 && o <= Channels.MaxNumber())
            ChannelID = Channels.GetByNumber(o)->GetChannelID();
@@ -615,7 +615,7 @@ void cSVDRP::CmdCLRE(const char *Option)
 void cSVDRP::CmdDELC(const char *Option)
 {
   if (*Option) {
-     if (isnumber(Option)) {
+     if (is_number(Option)) {
         if (!Channels.BeingEdited()) {
            cChannel *channel = Channels.GetByNumber(strtol(Option, NULL, 10));
            if (channel) {
@@ -662,7 +662,7 @@ void cSVDRP::CmdDELC(const char *Option)
 void cSVDRP::CmdDELR(const char *Option)
 {
   if (*Option) {
-     if (isnumber(Option)) {
+     if (is_number(Option)) {
         cRecording *recording = recordings.Get(strtol(Option, NULL, 10) - 1);
         if (recording) {
            cRecordControl *rc = cRecordControls::GetRecordControl(recording->FileName());
@@ -694,7 +694,7 @@ void cSVDRP::CmdDELR(const char *Option)
 void cSVDRP::CmdDELT(const char *Option)
 {
   if (*Option) {
-     if (isnumber(Option)) {
+     if (is_number(Option)) {
         if (!Timers.BeingEdited()) {
            cTimer *timer = Timers.Get(strtol(Option, NULL, 10) - 1);
            if (timer) {
@@ -723,7 +723,7 @@ void cSVDRP::CmdDELT(const char *Option)
 void cSVDRP::CmdEDIT(const char *Option)
 {
   if (*Option) {
-     if (isnumber(Option)) {
+     if (is_number(Option)) {
         cRecording *recording = recordings.Get(strtol(Option, NULL, 10) - 1);
         if (recording) {
            cMarks Marks;
@@ -784,7 +784,7 @@ void cSVDRP::CmdGRAB(const char *Option)
            p = strtok_r(NULL, delim, &strtok_next);
            }
         if (p) {
-           if (isnumber(p))
+           if (is_number(p))
               Quality = atoi(p);
            else {
               Reply(501, "Invalid quality \"%s\"", p);
@@ -794,14 +794,14 @@ void cSVDRP::CmdGRAB(const char *Option)
         }
      // image size:
      if ((p = strtok_r(NULL, delim, &strtok_next)) != NULL) {
-        if (isnumber(p))
+        if (is_number(p))
            SizeX = atoi(p);
         else {
            Reply(501, "Invalid sizex \"%s\"", p);
            return;
            }
         if ((p = strtok_r(NULL, delim, &strtok_next)) != NULL) {
-           if (isnumber(p))
+           if (is_number(p))
               SizeY = atoi(p);
            else {
               Reply(501, "Invalid sizey \"%s\"", p);
@@ -958,7 +958,7 @@ void cSVDRP::CmdLSTC(const char *Option)
 {
   bool WithGroupSeps = strcasecmp(Option, ":groups") == 0;
   if (*Option && !WithGroupSeps) {
-     if (isnumber(Option)) {
+     if (is_number(Option)) {
         cChannel *channel = Channels.GetByNumber(strtol(Option, NULL, 10));
         if (channel)
            Reply(250, "%d %s", channel->Number(), *channel->ToText());
@@ -1018,7 +1018,7 @@ void cSVDRP::CmdLSTE(const char *Option)
               else if (strcasecmp(p, "AT") == 0) {
                  DumpMode = dmAtTime;
                  if ((p = strtok_r(NULL, delim, &strtok_next)) != NULL) {
-                    if (isnumber(p))
+                    if (is_number(p))
                        AtTime = strtol(p, NULL, 10);
                     else {
                        Reply(501, "Invalid time");
@@ -1032,7 +1032,7 @@ void cSVDRP::CmdLSTE(const char *Option)
                  }
               else if (!Schedule) {
                  cChannel* Channel = NULL;
-                 if (isnumber(p))
+                 if (is_number(p))
                     Channel = Channels.GetByNumber(strtol(Option, NULL, 10));
                  else
                     Channel = Channels.GetByChannelID(tChannelID::FromString(Option));
@@ -1092,7 +1092,7 @@ void cSVDRP::CmdLSTR(const char *Option)
      char *p = strtok_r(buf, delim, &strtok_next);
      while (p) {
            if (!Number) {
-              if (isnumber(p))
+              if (is_number(p))
                  Number = strtol(p, NULL, 10);
               else {
                  Reply(501, "Error in recording number \"%s\"", Option);
@@ -1150,7 +1150,7 @@ void cSVDRP::CmdLSTT(const char *Option)
      char *strtok_next;
      char *p = strtok_r(buf, delim, &strtok_next);
      while (p) {
-           if (isnumber(p))
+           if (is_number(p))
               Number = strtol(p, NULL, 10);
            else if (strcasecmp(p, "ID") == 0)
               Id = true;
@@ -1392,7 +1392,7 @@ void cSVDRP::CmdPLAY(const char *Option)
            option++;
      char c = *option;
      *option = 0;
-     if (isnumber(num)) {
+     if (is_number(num)) {
         cRecording *recording = recordings.Get(strtol(num, NULL, 10) - 1);
         if (recording) {
            if (c)
@@ -1601,7 +1601,7 @@ void cSVDRP::CmdUPDR(const char *Option)
 void cSVDRP::CmdVOLU(const char *Option)
 {
   if (*Option) {
-     if (isnumber(Option))
+     if (is_number(Option))
         cDevice::PrimaryDevice()->SetVolume(strtol(Option, NULL, 10), true);
      else if (strcmp(Option, "+") == 0)
         cDevice::PrimaryDevice()->SetVolume(VOLUMEDELTA);
