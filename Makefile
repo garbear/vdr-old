@@ -10,7 +10,7 @@
 
 # Compiler flags:
 
-PKGCONFIG ?= pkgconfig
+PKGCONFIG ?= pkg-config
 
 CC       ?= gcc
 CFLAGS   ?= -g -O3 -Wall
