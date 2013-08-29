@@ -14,7 +14,7 @@
 #include "util.h"
 
 #ifdef ANDROID
-#define timegm(x) mktime(x)
+#include "android_timegm.h"
 #endif
 
 namespace SI {

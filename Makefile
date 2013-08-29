@@ -77,7 +77,7 @@ OBJS = audio.o channels.o ci.o config.o cutter.o device.o diseqc.o dvbdevice.o d
        lirc.o menu.o menuitems.o nit.o osdbase.o osd.o pat.o player.o plugin.o\
        receiver.o recorder.o recording.o remote.o remux.o ringbuffer.o sdt.o sections.o shutdown.o\
        skinclassic.o skinlcars.o skins.o skinsttng.o sourceparams.o sources.o spu.o status.o svdrp.o themes.o thread.o\
-       timers.o tools.o transfer.o vdr.o videodir.o android_sort.o android_strchrnul.o android_getline.o
+       timers.o tools.o transfer.o vdr.o videodir.o android_sort.o android_strchrnul.o android_getline.o android_timegm.o
 
 DEFINES  += $(CDEFINES)
 INCLUDES += $(CINCLUDES)
