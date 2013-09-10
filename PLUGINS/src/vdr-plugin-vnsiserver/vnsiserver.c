@@ -36,6 +36,8 @@
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <arpa/inet.h>
+#include <time.h>
+#include <sys/types.h>
 #include <sys/stat.h>
 
 #include <vdr/plugin.h>
@@ -251,13 +253,22 @@ void cVNSIServer::Action(void)
         struct stat s;
         if(stat(Channels.FileName(), &s) != -1)
         {
-          if ((s.st_mtim.tv_sec != channelsUpdate.tv_sec) &&
-              (s.st_mtim.tv_nsec != channelsUpdate.tv_nsec))
+#ifdef ANDROID
+          if (s.st_mtime != channelsUpdate.tv_sec)
+#else
+          struct timespec time = s.st_mtim;
+          if ((time.tv_sec != channelsUpdate.tv_sec) &&
+              (time.tv_nsec != channelsUpdate.tv_nsec))
+#endif
           {
             INFOLOG("Requesting clients to reload channel list");
             for (ClientList::iterator i = m_clients.begin(); i != m_clients.end(); i++)
               (*i)->ChannelChange();
-            channelsUpdate = s.st_mtim;
+#ifdef ANDROID
+            channelsUpdate.tv_sec = s.st_mtime;
+#else
+            channelsUpdate = time;
+#endif
           }
         }
         chanTimer.Set(5000);

@@ -24,7 +24,9 @@
 #include "responsepacket.h"
 #include <signal.h>
 #include <sys/ioctl.h>
+#ifndef ANDROID
 #include <sys/unistd.h>
+#endif
 #include <vdr/tools.h>
 #include <vdr/remote.h>
 #include "cxsocket.h"
