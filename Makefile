@@ -115,7 +115,7 @@ DEFINES += -DLOCDIR=\"$(LOCDIR)\"
 VDRVERSION = $(shell sed -ne '/define VDRVERSION/s/^.*"\(.*\)".*$$/\1/p' config.h)
 APIVERSION = $(shell sed -ne '/define APIVERSION/s/^.*"\(.*\)".*$$/\1/p' config.h)
 
-all: vdr i18n plugins
+all: vdr libvdr.so i18n plugins
 
 # Implicit rules:
 
@@ -135,6 +135,9 @@ $(DEPFILE): Makefile
 
 vdr: $(OBJS) $(SILIB)
 	$(CXX) $(CXXFLAGS) -rdynamic $(LDFLAGS) $(OBJS) $(LIBS) $(SILIB) -o vdr
+
+libvdr.so: $(OBJS) $(SILIB)
+	$(CXX) $(CXXFLAGS) -shared $(LDFLAGS) $(OBJS) $(LIBS) $(SILIB) -o libvdr.so
 
 # The libsi library:
 
