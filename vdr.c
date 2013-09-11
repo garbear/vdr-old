@@ -92,78 +92,178 @@
 
 static int LastSignal = 0;
 
-static bool SetUser(const char *UserName, bool UserDump)
+cVDRDaemon::cVDRDaemon(void)
 {
-  if (UserName) {
-     struct passwd *user = getpwnam(UserName);
-     if (!user) {
-        fprintf(stderr, "vdr: unknown user: '%s'\n", UserName);
-        return false;
-        }
-     if (setgid(user->pw_gid) < 0) {
-        fprintf(stderr, "vdr: cannot set group id %u: %s\n", (unsigned int)user->pw_gid, strerror(errno));
-        return false;
-        }
-     if (initgroups(user->pw_name, user->pw_gid) < 0) {
-        fprintf(stderr, "vdr: cannot set supplemental group ids for user %s: %s\n", user->pw_name, strerror(errno));
-        return false;
-        }
-     if (setuid(user->pw_uid) < 0) {
-        fprintf(stderr, "vdr: cannot set user id %u: %s\n", (unsigned int)user->pw_uid, strerror(errno));
-        return false;
-        }
-     if (UserDump && prctl(PR_SET_DUMPABLE, 1, 0, 0, 0) < 0)
-        fprintf(stderr, "vdr: warning - cannot set dumpable: %s\n", strerror(errno));
-     setenv("HOME", user->pw_dir, 1);
-     setenv("USER", user->pw_name, 1);
-     setenv("LOGNAME", user->pw_name, 1);
-     setenv("SHELL", user->pw_shell, 1);
-     }
+#define dd(a, b) (*a ? a : b)
+#define DEFAULTSVDRPPORT 6419
+#define DEFAULTWATCHDOG     0 // seconds
+#define DEFAULTVIDEODIR VIDEODIR
+#define DEFAULTCONFDIR dd(CONFDIR, m_VideoDirectory)
+#define DEFAULTCACHEDIR dd(CACHEDIR, m_VideoDirectory)
+#define DEFAULTRESDIR dd(RESDIR, m_ConfigDirectory)
+#define DEFAULTPLUGINDIR PLUGINDIR
+#define DEFAULTLOCDIR LOCDIR
+#define DEFAULTEPGDATAFILENAME "epg.data"
+
+  m_pluginManager = new cPluginManager(DEFAULTPLUGINDIR);
+  m_HasStdin = (tcgetpgrp(STDIN_FILENO) == getpid() || getppid() != (pid_t)1) && tcgetattr(STDIN_FILENO, &m_savedTm) == 0;
+  m_StartedAsRoot = false;
+  m_VdrUser = NULL;
+  m_UserDump = false;
+  m_SVDRPport = DEFAULTSVDRPPORT;
+  m_AudioCommand = NULL;
+  m_VideoDirectory = DEFAULTVIDEODIR;
+  m_ConfigDirectory = NULL;
+  m_CacheDirectory = NULL;
+  m_ResourceDirectory = NULL;
+  m_LocaleDirectory = DEFAULTLOCDIR;
+  m_EpgDataFileName = DEFAULTEPGDATAFILENAME;
+  m_DisplayHelp = false;
+  m_DisplayVersion = false;
+  m_DaemonMode = false;
+  m_SysLogTarget = LOG_USER;
+  m_MuteAudio = false;
+  m_WatchdogTimeout = DEFAULTWATCHDOG;
+  m_Terminal = NULL;
+  m_UseKbd = true;
+  m_LircDevice = NULL;
+ #if !defined(REMOTE_KBD)
+  m_UseKbd = false;
+ #endif
+ #if defined(REMOTE_LIRC)
+  m_LircDevice = LIRC_DEVICE;
+ #endif
+ #if defined(VDR_USER)
+  m_VdrUser = VDR_USER;
+ #endif
+}
+
+cVDRDaemon::~cVDRDaemon(void)
+{
+  if (ShutdownHandler.EmergencyExitRequested())
+    esyslog("emergency exit requested - shutting down");
+
+  m_pluginManager->StopPlugins();
+  cRecordControls::Shutdown();
+  cCutter::Stop();
+  delete m_Menu;
+  cControl::Shutdown();
+  delete Interface;
+  cOsdProvider::Shutdown();
+  Remotes.Clear();
+  Audios.Clear();
+  Skins.Clear();
+  SourceParams.Clear();
+  if (ShutdownHandler.GetExitCode() != 2)
+  {
+    Setup.CurrentChannel = cDevice::CurrentChannel();
+    Setup.CurrentVolume = cDevice::CurrentVolume();
+    Setup.Save();
+  }
+  cDevice::Shutdown();
+  EpgHandlers.Clear();
+  m_pluginManager->Shutdown(true);
+  cSchedules::Cleanup(true);
+  ReportEpgBugFixStats(true);
+  if (m_WatchdogTimeout > 0)
+    dsyslog("max. latency time %d seconds", m_MaxLatencyTime);
+  if (LastSignal)
+    isyslog("caught signal %d", LastSignal);
+  if (ShutdownHandler.EmergencyExitRequested())
+    esyslog("emergency exit!");
+  isyslog("exiting, exit code %d", ShutdownHandler.GetExitCode());
+  if (SysLogLevel > 0)
+    closelog();
+  if (m_HasStdin)
+    tcsetattr(STDIN_FILENO, TCSANOW, &m_savedTm);
+  delete m_pluginManager;
+}
+
+bool cVDRDaemon::SetUser(const char *UserName, bool UserDump)
+{
+  if (UserName)
+  {
+    struct passwd *user = getpwnam(UserName);
+    if (!user)
+    {
+      fprintf(stderr, "vdr: unknown user: '%s'\n", UserName);
+      return false;
+    }
+    if (setgid(user->pw_gid) < 0)
+    {
+      fprintf(stderr, "vdr: cannot set group id %u: %s\n", (unsigned int) user->pw_gid, strerror(errno));
+      return false;
+    }
+    if (initgroups(user->pw_name, user->pw_gid) < 0)
+    {
+      fprintf(stderr, "vdr: cannot set supplemental group ids for user %s: %s\n", user->pw_name, strerror(errno));
+      return false;
+    }
+    if (setuid(user->pw_uid) < 0)
+    {
+      fprintf(stderr, "vdr: cannot set user id %u: %s\n", (unsigned int) user->pw_uid, strerror(errno));
+      return false;
+    }
+    if (UserDump && prctl(PR_SET_DUMPABLE, 1, 0, 0, 0) < 0)
+      fprintf(stderr, "vdr: warning - cannot set dumpable: %s\n", strerror(errno));
+    setenv("HOME", user->pw_dir, 1);
+    setenv("USER", user->pw_name, 1);
+    setenv("LOGNAME", user->pw_name, 1);
+    setenv("SHELL", user->pw_shell, 1);
+  }
   return true;
 }
 
-static bool DropCaps(void)
+bool cVDRDaemon::DropCaps(void)
 {
 #ifndef ANDROID
   // drop all capabilities except selected ones
   cap_t caps = cap_from_text("= cap_sys_nice,cap_sys_time,cap_net_raw=ep");
-  if (!caps) {
-     fprintf(stderr, "vdr: cap_from_text failed: %s\n", strerror(errno));
-     return false;
-     }
-  if (cap_set_proc(caps) == -1) {
-     fprintf(stderr, "vdr: cap_set_proc failed: %s\n", strerror(errno));
-     cap_free(caps);
-     return false;
-     }
+  if (!caps)
+  {
+    fprintf(stderr, "vdr: cap_from_text failed: %s\n", strerror(errno));
+    return false;
+  }
+  if (cap_set_proc(caps) == -1)
+  {
+    fprintf(stderr, "vdr: cap_set_proc failed: %s\n", strerror(errno));
+    cap_free(caps);
+    return false;
+  }
   cap_free(caps);
 #endif
   return true;
 }
 
-static bool SetKeepCaps(bool On)
+bool cVDRDaemon::SetKeepCaps(bool On)
 {
   // set keeping capabilities during setuid() on/off
-  if (prctl(PR_SET_KEEPCAPS, On ? 1 : 0, 0, 0, 0) != 0) {
-     fprintf(stderr, "vdr: prctl failed\n");
-     return false;
-     }
+  if (prctl(PR_SET_KEEPCAPS, On ? 1 : 0, 0, 0, 0) != 0)
+  {
+    fprintf(stderr, "vdr: prctl failed\n");
+    return false;
+  }
   return true;
 }
 
+/*!
+ *
+ * @param signum
+ */
 static void SignalHandler(int signum)
 {
-  switch (signum) {
-    case SIGPIPE:
-         break;
-    case SIGHUP:
-         LastSignal = signum;
-         break;
-    default:
-         LastSignal = signum;
-         Interface->Interrupt();
-         ShutdownHandler.Exit(0);
-    }
+  switch (signum)
+  {
+  case SIGPIPE:
+    break;
+  case SIGHUP:
+    LastSignal = signum;
+    break;
+  default:
+    LastSignal = signum;
+    Interface->Interrupt();
+    ShutdownHandler.Exit(0);
+  }
   signal(signum, SignalHandler);
 }
 
@@ -175,55 +275,7 @@ static void Watchdog(int signum)
   exit(1);
 }
 
-void vdr_get_default_opts(vdr_daemon_opts* opts)
-{
-#define dd(a, b) (*a ? a : b)
-#define DEFAULTSVDRPPORT 6419
-#define DEFAULTWATCHDOG     0 // seconds
-#define DEFAULTVIDEODIR VIDEODIR
-#define DEFAULTCONFDIR(x) dd(CONFDIR, x.VideoDirectory)
-#define DEFAULTCACHEDIR(x) dd(CACHEDIR, x.VideoDirectory)
-#define DEFAULTRESDIR(x) dd(RESDIR, x.ConfigDirectory)
-#define DEFAULTPLUGINDIR PLUGINDIR
-#define DEFAULTLOCDIR LOCDIR
-#define DEFAULTEPGDATAFILENAME "epg.data"
-
-  memset(opts, 0, sizeof(vdr_daemon_opts));
-
-  opts->HasStdin = (tcgetpgrp(STDIN_FILENO) == getpid() || getppid() != (pid_t)1) && tcgetattr(STDIN_FILENO, &opts->savedTm) == 0;
-  opts->StartedAsRoot = false;
-  opts->VdrUser = NULL;
-  opts->UserDump = false;
-  opts->SVDRPport = DEFAULTSVDRPPORT;
-  opts->AudioCommand = NULL;
-  opts->VideoDirectory = DEFAULTVIDEODIR;
-  opts->ConfigDirectory = NULL;
-  opts->CacheDirectory = NULL;
-  opts->ResourceDirectory = NULL;
-  opts->LocaleDirectory = DEFAULTLOCDIR;
-  opts->EpgDataFileName = DEFAULTEPGDATAFILENAME;
-  opts->DisplayHelp = false;
-  opts->DisplayVersion = false;
-  opts->DaemonMode = false;
-  opts->SysLogTarget = LOG_USER;
-  opts->MuteAudio = false;
-  opts->WatchdogTimeout = DEFAULTWATCHDOG;
-  opts->Terminal = NULL;
-  opts->UseKbd = true;
-  opts->LircDevice = NULL;
- #if !defined(REMOTE_KBD)
-  opts->UseKbd = false;
- #endif
- #if defined(REMOTE_LIRC)
-  opts->LircDevice = LIRC_DEVICE;
- #endif
- #if defined(VDR_USER)
-  opts->VdrUser = VDR_USER;
- #endif
-}
-
-static void
-read_cmdline_opts(vdr_daemon_opts* opts, cPluginManager& pluginManager, int argc, char *argv[])
+int cVDRDaemon::ReadCommandLineOptions(int argc, char *argv[])
 {
   static struct option long_options[] =
     {
@@ -268,16 +320,16 @@ read_cmdline_opts(vdr_daemon_opts* opts, cPluginManager& pluginManager, int argc
     switch (c)
       {
     case 'a':
-      opts->AudioCommand = optarg;
+      m_AudioCommand = optarg;
       break;
     case 'c' | 0x100:
-      opts->CacheDirectory = optarg;
+      m_CacheDirectory = optarg;
       break;
     case 'c':
-      opts->ConfigDirectory = optarg;
+      m_ConfigDirectory = optarg;
       break;
     case 'd':
-      opts->DaemonMode = true;
+      m_DaemonMode = true;
       break;
     case 'D':
       if (is_number(optarg))
@@ -351,7 +403,7 @@ read_cmdline_opts(vdr_daemon_opts* opts, cPluginManager& pluginManager, int argc
     case 'e' | 0x100:
       return CutRecording(optarg) ? 0 : 2;
     case 'E':
-      opts->EpgDataFileName = (*optarg != '-' ? optarg : NULL);
+      m_EpgDataFileName = (*optarg != '-' ? optarg : NULL);
       break;
     case 'f' | 0x100:
       Setup.MaxVideoFileSize = StrToNum(optarg) / MEGABYTE(1);
@@ -366,7 +418,7 @@ read_cmdline_opts(vdr_daemon_opts* opts, cPluginManager& pluginManager, int argc
       cSVDRP::SetGrabImageDir(*optarg != '-' ? optarg : NULL);
       break;
     case 'h':
-      opts->DisplayHelp = true;
+      m_DisplayHelp = true;
       break;
     case 'i':
       if (is_number(optarg))
@@ -398,7 +450,7 @@ read_cmdline_opts(vdr_daemon_opts* opts, cPluginManager& pluginManager, int argc
                 int targets[] =
                   { LOG_LOCAL0, LOG_LOCAL1, LOG_LOCAL2, LOG_LOCAL3, LOG_LOCAL4,
                       LOG_LOCAL5, LOG_LOCAL6, LOG_LOCAL7 };
-                opts->SysLogTarget = targets[l];
+                m_SysLogTarget = targets[l];
                 break;
               }
             }
@@ -411,7 +463,7 @@ read_cmdline_opts(vdr_daemon_opts* opts, cPluginManager& pluginManager, int argc
       }
     case 'L':
       if (access(optarg, R_OK | X_OK) == 0)
-        pluginManager.SetDirectory(optarg);
+        m_pluginManager->SetDirectory(optarg);
       else
       {
         fprintf(stderr, "vdr: can't access plugin directory: %s\n", optarg);
@@ -419,11 +471,11 @@ read_cmdline_opts(vdr_daemon_opts* opts, cPluginManager& pluginManager, int argc
       }
       break;
     case 'l' | 0x100:
-      opts->LircDevice = optarg ? optarg : LIRC_DEVICE;
+      m_LircDevice = optarg ? optarg : LIRC_DEVICE;
       break;
     case 'l' | 0x200:
       if (access(optarg, R_OK | X_OK) == 0)
-        opts->LocaleDirectory = optarg;
+        m_LocaleDirectory = optarg;
       else
       {
         fprintf(stderr, "vdr: can't access locale directory: %s\n", optarg);
@@ -431,14 +483,14 @@ read_cmdline_opts(vdr_daemon_opts* opts, cPluginManager& pluginManager, int argc
       }
       break;
     case 'm':
-      opts->MuteAudio = true;
+      m_MuteAudio = true;
       break;
     case 'n' | 0x100:
-      opts->UseKbd = false;
+      m_UseKbd = false;
       break;
     case 'p':
       if (is_number(optarg))
-        opts->SVDRPport = atoi(optarg);
+        m_SVDRPport = atoi(optarg);
       else
       {
         fprintf(stderr, "vdr: invalid port number: %s\n", optarg);
@@ -446,13 +498,13 @@ read_cmdline_opts(vdr_daemon_opts* opts, cPluginManager& pluginManager, int argc
       }
       break;
     case 'P':
-      pluginManager.AddPlugin(optarg);
+      m_pluginManager->AddPlugin(optarg);
       break;
     case 'r':
       cRecordingUserCommand::SetCommand(optarg);
       break;
     case 'r' | 0x100:
-      opts->ResourceDirectory = optarg;
+      m_ResourceDirectory = optarg;
       break;
     case 's':
       ShutdownHandler.SetShutdownCommand(optarg);
@@ -461,22 +513,22 @@ read_cmdline_opts(vdr_daemon_opts* opts, cPluginManager& pluginManager, int argc
       Setup.SplitEditedFiles = 1;
       break;
     case 't':
-      opts->Terminal = optarg;
-      if (access(opts->Terminal, R_OK | W_OK) < 0)
+      m_Terminal = optarg;
+      if (access(m_Terminal, R_OK | W_OK) < 0)
       {
-        fprintf(stderr, "vdr: can't access terminal: %s\n", opts->Terminal);
+        fprintf(stderr, "vdr: can't access terminal: %s\n", m_Terminal);
         return 2;
       }
       break;
     case 'u':
       if (*optarg)
-        opts->VdrUser = optarg;
+        m_VdrUser = optarg;
       break;
     case 'u' | 0x100:
-      opts->UserDump = true;
+      m_UserDump = true;
       break;
     case 'V':
-      opts->DisplayVersion = true;
+      m_DisplayVersion = true;
       break;
     case 'v' | 0x100:
       DirectoryPathMax = 250;
@@ -484,7 +536,7 @@ read_cmdline_opts(vdr_daemon_opts* opts, cPluginManager& pluginManager, int argc
       DirectoryEncoding = true;
       break;
     case 'v':
-      opts->VideoDirectory = optarg;
+      m_VideoDirectory = optarg;
       while (optarg && *optarg && optarg[strlen(optarg) - 1] == '/')
         optarg[strlen(optarg) - 1] = 0;
       break;
@@ -494,7 +546,7 @@ read_cmdline_opts(vdr_daemon_opts* opts, cPluginManager& pluginManager, int argc
         int t = atoi(optarg);
         if (t >= 0)
         {
-          opts->WatchdogTimeout = t;
+          m_WatchdogTimeout = t;
           break;
         }
       }
@@ -504,42 +556,33 @@ read_cmdline_opts(vdr_daemon_opts* opts, cPluginManager& pluginManager, int argc
       return 2;
       }
   }
-}
-
-int main(int argc, char *argv[])
-{
-  vdr_daemon_opts opts;
-  vdr_get_default_opts(&opts);
-
-  // Initiate locale:
-  setlocale(LC_ALL, "");
-
-  cPluginManager PluginManager(DEFAULTPLUGINDIR);
-  read_cmdline_opts(&opts, PluginManager, argc, argv);
 
   // Set user id in case we were started as root:
-
-  if (opts.VdrUser && geteuid() == 0) {
-     opts.StartedAsRoot = true;
-     if (strcmp(opts.VdrUser, "root")) {
-        if (!SetKeepCaps(true))
-           return 2;
-        if (!SetUser(opts.VdrUser, opts.UserDump))
-           return 2;
-        if (!SetKeepCaps(false))
-           return 2;
-        if (!DropCaps())
-           return 2;
-        }
-     }
+  if (m_VdrUser && geteuid() == 0)
+  {
+    m_StartedAsRoot = true;
+    if (strcmp(m_VdrUser, "root"))
+    {
+      if (!SetKeepCaps(true))
+        return 2;
+      if (!SetUser(m_VdrUser, m_UserDump))
+        return 2;
+      if (!SetKeepCaps(false))
+        return 2;
+      if (!DropCaps())
+        return 2;
+    }
+  }
 
   // Help and version info:
+  if (m_DisplayHelp || m_DisplayVersion)
+  {
+     if (!m_pluginManager->HasPlugins())
+       m_pluginManager->AddPlugin("*"); // adds all available plugins
+     m_pluginManager->LoadPlugins();
 
-  if (opts.DisplayHelp || opts.DisplayVersion) {
-     if (!PluginManager.HasPlugins())
-        PluginManager.AddPlugin("*"); // adds all available plugins
-     PluginManager.LoadPlugins();
-     if (opts.DisplayHelp) {
+     if (m_DisplayHelp)
+     {
         printf("Usage: vdr [OPTIONS]\n\n"          // for easier orientation, this is column 80|
                "  -a CMD,   --audio=CMD    send Dolby Digital audio to stdin of command CMD\n"
                "            --cachedir=DIR save cache files in DIR (default: %s)\n"
@@ -604,8 +647,8 @@ int main(int argc, char *argv[])
                "  -w SEC,   --watchdog=SEC activate the watchdog timer with a timeout of SEC\n"
                "                           seconds (default: %d); '0' disables the watchdog\n"
                "\n",
-               DEFAULTCACHEDIR(opts),
-               DEFAULTCONFDIR(opts),
+               DEFAULTCACHEDIR,
+               DEFAULTCONFDIR,
                PATH_MAX - 1,
                NAME_MAX,
                DEFAULTEPGDATAFILENAME,
@@ -614,871 +657,1003 @@ int main(int argc, char *argv[])
                LIRC_DEVICE,
                DEFAULTLOCDIR,
                DEFAULTSVDRPPORT,
-               DEFAULTRESDIR(opts),
+               DEFAULTRESDIR,
                DEFAULTVIDEODIR,
                DEFAULTWATCHDOG
                );
-        }
-     if (opts.DisplayVersion)
-        printf("vdr (%s/%s) - The Video Disk Recorder\n", VDRVERSION, APIVERSION);
-     if (PluginManager.HasPlugins()) {
-        if (opts.DisplayHelp)
-           printf("Plugins: vdr -P\"name [OPTIONS]\"\n\n");
-        for (int i = 0; ; i++) {
-            cPlugin *p = PluginManager.GetPlugin(i);
-            if (p) {
-               const char *help = p->CommandLineHelp();
-               printf("%s (%s) - %s\n", p->Name(), p->Version(), p->Description());
-               if (opts.DisplayHelp && help) {
-                  printf("\n");
-                  puts(help);
-                  }
-               }
-            else
-               break;
-            }
-        }
-     return 0;
      }
+
+    if (m_DisplayVersion)
+      printf("vdr (%s/%s) - The Video Disk Recorder\n", VDRVERSION, APIVERSION);
+    if (m_pluginManager->HasPlugins())
+    {
+      if (m_DisplayHelp)
+        printf("Plugins: vdr -P\"name [OPTIONS]\"\n\n");
+      for (int i = 0;; i++)
+      {
+        cPlugin *p = m_pluginManager->GetPlugin(i);
+        if (p)
+        {
+          const char *help = p->CommandLineHelp();
+          printf("%s (%s) - %s\n", p->Name(), p->Version(), p->Description());
+          if (m_DisplayHelp && help)
+          {
+            printf("\n");
+            puts(help);
+          }
+        }
+        else
+          break;
+      }
+    }
+    return 0;
+  }
 
   // Log file:
-
   if (SysLogLevel > 0)
-     openlog("vdr", LOG_CONS, opts.SysLogTarget); // LOG_PID doesn't work as expected under NPTL
+    openlog("vdr", LOG_CONS, m_SysLogTarget); // LOG_PID doesn't work as expected under NPTL
 
   // Check the video directory:
-
-  if (!DirectoryOk(opts.VideoDirectory, true)) {
-     fprintf(stderr, "vdr: can't access video directory %s\n", opts.VideoDirectory);
-     return 2;
-     }
+  if (!DirectoryOk(m_VideoDirectory, true))
+  {
+    fprintf(stderr, "vdr: can't access video directory %s\n", m_VideoDirectory);
+    return 2;
+  }
 
   // Daemon mode:
-
-  if (opts.DaemonMode) {
-     if (daemon(1, 0) == -1) {
-        fprintf(stderr, "vdr: %m\n");
-        esyslog("ERROR: %m");
-        return 2;
-        }
-     }
+  if (m_DaemonMode)
+  {
+    if (daemon(1, 0) == -1)
+    {
+      fprintf(stderr, "vdr: %m\n");
+      esyslog("ERROR: %m");
+      return 2;
+    }
+  }
 #ifndef ANDROID
-  else if (opts.Terminal) {
-     // Claim new controlling terminal
-     stdin  = freopen(opts.Terminal, "r", stdin);
-     stdout = freopen(opts.Terminal, "w", stdout);
-     stderr = freopen(opts.Terminal, "w", stderr);
-     opts.HasStdin = true;
-     tcgetattr(STDIN_FILENO, &opts.savedTm);
-     }
+  else if (m_Terminal)
+  {
+    // Claim new controlling terminal
+    stdin = freopen(m_Terminal, "r", stdin);
+    stdout = freopen(m_Terminal, "w", stdout);
+    stderr = freopen(m_Terminal, "w", stderr);
+    m_HasStdin = true;
+    tcgetattr(STDIN_FILENO, &m_savedTm);
+  }
 #endif
 
+  return 0;
+}
+
+int cVDRDaemon::Init(void)
+{
+  // Main program loop variables - need to be here to have them initialized before any EXIT():
+  m_Menu = NULL;
+  m_LastChannel = 0;
+  m_LastTimerChannel = -1;
+  m_PreviousChannel[0] = 1;
+  m_PreviousChannel[1] = 1;
+  m_PreviousChannelIndex = 0;
+  m_LastChannelChanged = time(NULL);
+  m_LastInteract = 0;
+  m_MaxLatencyTime = 0;
+  m_InhibitEpgScan = false;
+  m_IsInfoMenu = false;
+  m_CurrentSkin = NULL;
+
+  // Load plugins:
+  if (!m_pluginManager->LoadPlugins(true))
+    return 2;
+
+  // Directories:
+  SetVideoDirectory(m_VideoDirectory);
+  if (!m_ConfigDirectory)
+    m_ConfigDirectory = DEFAULTCONFDIR;
+  cPlugin::SetConfigDirectory(m_ConfigDirectory);
+  if (!m_CacheDirectory)
+    m_CacheDirectory = DEFAULTCACHEDIR;
+  cPlugin::SetCacheDirectory(m_CacheDirectory);
+  if (!m_ResourceDirectory)
+    m_ResourceDirectory = DEFAULTRESDIR;
+  cPlugin::SetResourceDirectory(m_ResourceDirectory);
+  cThemes::SetThemesDirectory(AddDirectory(m_ConfigDirectory, "themes"));
+
+  // Configuration data:
+  Setup.Load(AddDirectory(m_ConfigDirectory, "setup.conf"));
+  Sources.Load(AddDirectory(m_ConfigDirectory, "sources.conf"), true, true);
+  Diseqcs.Load(AddDirectory(m_ConfigDirectory, "diseqc.conf"), true,
+      Setup.DiSEqC);
+  Scrs.Load(AddDirectory(m_ConfigDirectory, "scr.conf"), true);
+  Channels.Load(AddDirectory(m_ConfigDirectory, "channels.conf"), false, true);
+  Timers.Load(AddDirectory(m_ConfigDirectory, "timers.conf"));
+  Commands.Load(AddDirectory(m_ConfigDirectory, "commands.conf"));
+  RecordingCommands.Load(AddDirectory(m_ConfigDirectory, "reccmds.conf"));
+  SVDRPhosts.Load(AddDirectory(m_ConfigDirectory, "svdrphosts.conf"), true);
+  Keys.Load(AddDirectory(m_ConfigDirectory, "remote.conf"));
+  KeyMacros.Load(AddDirectory(m_ConfigDirectory, "keymacros.conf"), true);
+  Folders.Load(AddDirectory(m_ConfigDirectory, "folders.conf"));
+
+  if (!*cFont::GetFontFileName(Setup.FontOsd))
+  {
+    const char *msg = "no fonts available - OSD will not show any text!";
+    fprintf(stderr, "vdr: %s\n", msg);
+    esyslog("ERROR: %s", msg);
+  }
+
+  // Recordings:
+  Recordings.Update();
+  DeletedRecordings.Update();
+
+  // EPG data:
+  if (m_EpgDataFileName)
+  {
+    const char *EpgDirectory = NULL;
+    if (DirectoryOk(m_EpgDataFileName))
+    {
+      EpgDirectory = m_EpgDataFileName;
+      m_EpgDataFileName = DEFAULTEPGDATAFILENAME;
+    }
+    else if (*m_EpgDataFileName != '/' && *m_EpgDataFileName != '.')
+      EpgDirectory = m_CacheDirectory;
+    if (EpgDirectory)
+      cSchedules::SetEpgDataFileName(
+          AddDirectory(EpgDirectory, m_EpgDataFileName));
+    else
+      cSchedules::SetEpgDataFileName(m_EpgDataFileName);
+    m_EpgDataReader = new cEpgDataReader;
+    m_EpgDataReader->Start();
+  }
+
+  // DVB interfaces:
+  cDvbDevice::Initialize();
+  cDvbDevice::BondDevices(Setup.DeviceBondings);
+
+  // Initialize plugins:
+  if (!m_pluginManager->InitializePlugins())
+    return 2;
+
+  // Primary device:
+  cDevice::SetPrimaryDevice(Setup.PrimaryDVB);
+  if (!cDevice::PrimaryDevice() || !cDevice::PrimaryDevice()->HasDecoder())
+  {
+    if (cDevice::PrimaryDevice() && !cDevice::PrimaryDevice()->HasDecoder())
+      isyslog(
+          "device %d has no MPEG decoder", cDevice::PrimaryDevice()->DeviceNumber() + 1);
+    for (int i = 0; i < cDevice::NumDevices(); i++)
+    {
+      cDevice *d = cDevice::GetDevice(i);
+      if (d && d->HasDecoder())
+      {
+        isyslog("trying device number %d instead", i + 1);
+        if (cDevice::SetPrimaryDevice(i + 1))
+        {
+          Setup.PrimaryDVB = i + 1;
+          break;
+        }
+      }
+    }
+    if (!cDevice::PrimaryDevice())
+    {
+      const char *msg = "no primary device found - using first device!";
+      fprintf(stderr, "vdr: %s\n", msg);
+      esyslog("ERROR: %s", msg);
+      if (!cDevice::SetPrimaryDevice(1))
+        return 2;
+      if (!cDevice::PrimaryDevice())
+      {
+        const char *msg = "no primary device found - giving up!";
+        fprintf(stderr, "vdr: %s\n", msg);
+        esyslog("ERROR: %s", msg);
+        return 2;
+      }
+    }
+  }
+
+  // Check for timers in automatic start time window:
+  ShutdownHandler.CheckManualStart(MANUALSTART);
+
+  // User interface:
+  Interface = new cInterface(m_SVDRPport);
+
+  // Default skins:
+  new cSkinLCARS;
+  new cSkinSTTNG;
+  new cSkinClassic;
+  Skins.SetCurrent(Setup.OSDSkin);
+  cThemes::Load(Skins.Current()->Name(), Setup.OSDTheme,
+      Skins.Current()->Theme());
+  m_CurrentSkin = Skins.Current();
+
+  // Start plugins:
+  if (!m_pluginManager->StartPlugins())
+    return 2;
+
+  // Set skin and theme in case they're implemented by a plugin:
+  if (!m_CurrentSkin
+      || (m_CurrentSkin == Skins.Current()
+          && strcmp(Skins.Current()->Name(), Setup.OSDSkin) != 0))
+  {
+    Skins.SetCurrent(Setup.OSDSkin);
+    cThemes::Load(Skins.Current()->Name(), Setup.OSDTheme,
+        Skins.Current()->Theme());
+  }
+
+  // Remote Controls:
+#ifndef ANDROID
+  if (m_LircDevice)
+    new cLircRemote(m_LircDevice);
+#endif
+
+  if (!m_DaemonMode && m_HasStdin && m_UseKbd)
+    new cKbdRemote;
+  Interface->LearnKeys();
+
+  // External audio:
+  if (m_AudioCommand)
+    new cExternalAudio(m_AudioCommand);
+
+  // Channel:
+  if (!cDevice::WaitForAllDevicesReady(DEVICEREADYTIMEOUT))
+    dsyslog("not all devices ready after %d seconds", DEVICEREADYTIMEOUT);
+  if (*Setup.InitialChannel)
+  {
+    if (is_number(Setup.InitialChannel))
+    { // for compatibility with old setup.conf files
+      if (cChannel *Channel = Channels.GetByNumber(atoi(Setup.InitialChannel)))
+        Setup.InitialChannel = Channel->GetChannelID().ToString();
+    }
+    if (cChannel *Channel = Channels.GetByChannelID(
+        tChannelID::FromString(Setup.InitialChannel)))
+      Setup.CurrentChannel = Channel->Number();
+  }
+  if (Setup.InitialVolume >= 0)
+    Setup.CurrentVolume = Setup.InitialVolume;
+  Channels.SwitchTo(Setup.CurrentChannel);
+  if (m_MuteAudio)
+    cDevice::PrimaryDevice()->ToggleMute();
+  else
+    cDevice::PrimaryDevice()->SetVolume(Setup.CurrentVolume, true);
+  return 0;
+}
+
+void cVDRDaemon::Process(void)
+{
+  // Main program loop:
+#define DELETE_MENU ((m_IsInfoMenu &= (m_Menu == NULL)), delete m_Menu, m_Menu = NULL)
+
+#ifdef DEBUGRINGBUFFERS
+  cRingBufferLinear::PrintDebugRBL();
+#endif
+  // Attach launched player control:
+  cControl::Attach();
+
+  time_t Now = time(NULL);
+
+  // Make sure we have a visible programme in case device usage has changed:
+  if (!EITScanner.Active() && cDevice::PrimaryDevice()->HasDecoder())
+  {
+    static time_t lastTime = 0;
+    if (!cDevice::PrimaryDevice()->HasProgramme())
+    {
+      if (!CamMenuActive() && Now - lastTime > MINCHANNELWAIT)
+      { // !CamMenuActive() to avoid interfering with the CAM if a CAM menu is open
+        cChannel *Channel = Channels.GetByNumber(cDevice::CurrentChannel());
+        if (Channel
+            && (Channel->Vpid() || Channel->Apid(0) || Channel->Dpid(0)))
+        {
+          if (cDevice::GetDeviceForTransponder(Channel, LIVEPRIORITY)
+              && Channels.SwitchTo(Channel->Number())) // try to switch to the original channel...
+            {}
+          else if (m_LastTimerChannel > 0)
+          {
+            Channel = Channels.GetByNumber(m_LastTimerChannel);
+            if (Channel
+                && cDevice::GetDeviceForTransponder(Channel, LIVEPRIORITY)
+                && Channels.SwitchTo(m_LastTimerChannel)) // ...or the one used by the last timer
+              {}
+          }
+        }
+        lastTime = Now; // don't do this too often
+        m_LastTimerChannel = -1;
+      }
+    }
+    else
+      lastTime = 0; // makes sure we immediately try again next time
+  }
+  // Update the OSD size:
+  {
+    static time_t lastOsdSizeUpdate = 0;
+    if (Now != lastOsdSizeUpdate)
+    { // once per second
+      cOsdProvider::UpdateOsdSize();
+      lastOsdSizeUpdate = Now;
+    }
+  }
+  // Restart the Watchdog timer:
+  if (m_WatchdogTimeout > 0)
+  {
+    int LatencyTime = m_WatchdogTimeout - alarm(m_WatchdogTimeout);
+    if (LatencyTime > m_MaxLatencyTime)
+    {
+      m_MaxLatencyTime = LatencyTime;
+      dsyslog("max. latency time %d seconds", m_MaxLatencyTime);
+    }
+  }
+  // Handle channel and timer modifications:
+  if (!Channels.BeingEdited() && !Timers.BeingEdited())
+  {
+    int modified = Channels.Modified();
+    static time_t ChannelSaveTimeout = 0;
+    static int TimerState = 0;
+    // Channels and timers need to be stored in a consistent manner,
+    // therefore if one of them is changed, we save both.
+    if (modified == CHANNELSMOD_USER || Timers.Modified(TimerState))
+      ChannelSaveTimeout = 1; // triggers an immediate save
+    else if (modified && !ChannelSaveTimeout)
+      ChannelSaveTimeout = Now + CHANNELSAVEDELTA;
+    bool timeout = ChannelSaveTimeout == 1
+        || (ChannelSaveTimeout && Now > ChannelSaveTimeout
+            && !cRecordControls::Active());
+    if ((modified || timeout) && Channels.Lock(false, 100))
+    {
+      if (timeout)
+      {
+        Channels.Save();
+        Timers.Save();
+        ChannelSaveTimeout = 0;
+      }
+      for (cChannel *Channel = Channels.First(); Channel;
+          Channel = Channels.Next(Channel))
+      {
+        if (Channel->Modification(CHANNELMOD_RETUNE))
+        {
+          cRecordControls::ChannelDataModified(Channel);
+          if (Channel->Number() == cDevice::CurrentChannel())
+          {
+            if (!cDevice::PrimaryDevice()->Replaying()
+                || cDevice::PrimaryDevice()->Transferring())
+            {
+              if (cDevice::ActualDevice()->ProvidesTransponder(Channel))
+              { // avoids retune on devices that don't really access the transponder
+                isyslog(
+                    "retuning due to modification of channel %d", Channel->Number());
+                Channels.SwitchTo(Channel->Number());
+              }
+            }
+          }
+        }
+      }
+      Channels.Unlock();
+    }
+  }
+  // Channel display:
+  if (!EITScanner.Active() && cDevice::CurrentChannel() != m_LastChannel)
+  {
+    if (!m_Menu)
+      m_Menu = new cDisplayChannel(cDevice::CurrentChannel(),
+          m_LastChannel >= 0);
+    m_LastChannel = cDevice::CurrentChannel();
+    m_LastChannelChanged = Now;
+  }
+  if (Now - m_LastChannelChanged >= Setup.ZapTimeout
+      && m_LastChannel != m_PreviousChannel[m_PreviousChannelIndex])
+    m_PreviousChannel[m_PreviousChannelIndex ^= 1] = m_LastChannel;
+  // Timers and Recordings:
+  if (!Timers.BeingEdited())
+  {
+    // Assign events to timers:
+    Timers.SetEvents();
+    // Must do all following calls with the exact same time!
+    // Process ongoing recordings:
+    cRecordControls::Process(Now);
+    // Start new recordings:
+    cTimer *Timer = Timers.GetMatch(Now);
+    if (Timer)
+    {
+      if (!cRecordControls::Start(Timer))
+        Timer->SetPending(true);
+      else
+        m_LastTimerChannel = Timer->Channel()->Number();
+    }
+    // Make sure timers "see" their channel early enough:
+    static time_t LastTimerCheck = 0;
+    if (Now - LastTimerCheck > TIMERCHECKDELTA)
+    { // don't do this too often
+      m_InhibitEpgScan = false;
+      for (cTimer *Timer = Timers.First(); Timer; Timer = Timers.Next(Timer))
+      {
+        bool InVpsMargin = false;
+        bool NeedsTransponder = false;
+        if (Timer->HasFlags(tfActive) && !Timer->Recording())
+        {
+          if (Timer->HasFlags(tfVps))
+          {
+            if (Timer->Matches(Now, true, Setup.VpsMargin))
+            {
+              InVpsMargin = true;
+              Timer->SetInVpsMargin(InVpsMargin);
+            }
+            else if (Timer->Event())
+            {
+              InVpsMargin = Timer->Event()->StartTime() <= Now
+                  && Now < Timer->Event()->EndTime();
+              NeedsTransponder = Timer->Event()->StartTime() - Now
+                  < VPSLOOKAHEADTIME * 3600
+                  && !Timer->Event()->SeenWithin(VPSUPTODATETIME);
+            }
+            else
+            {
+              cSchedulesLock SchedulesLock;
+              const cSchedules *Schedules = cSchedules::Schedules(
+                  SchedulesLock);
+              if (Schedules)
+              {
+                const cSchedule *Schedule = Schedules->GetSchedule(
+                    Timer->Channel());
+                InVpsMargin = !Schedule; // we must make sure we have the schedule
+                NeedsTransponder = Schedule
+                    && !Schedule->PresentSeenWithin(VPSUPTODATETIME);
+              }
+            }
+            m_InhibitEpgScan |= InVpsMargin | NeedsTransponder;
+          }
+          else
+            NeedsTransponder = Timer->Matches(Now, true, TIMERLOOKAHEADTIME);
+        }
+        if (NeedsTransponder || InVpsMargin)
+        {
+          // Find a device that provides the required transponder:
+          cDevice *Device = cDevice::GetDeviceForTransponder(Timer->Channel(),
+              MINPRIORITY);
+          if (!Device && InVpsMargin)
+            Device = cDevice::GetDeviceForTransponder(Timer->Channel(),
+                LIVEPRIORITY);
+          // Switch the device to the transponder:
+          if (Device)
+          {
+            bool HadProgramme = cDevice::PrimaryDevice()->HasProgramme();
+            if (!Device->IsTunedToTransponder(Timer->Channel()))
+            {
+              if (Device == cDevice::ActualDevice()
+                  && !Device->IsPrimaryDevice())
+                cDevice::PrimaryDevice()->StopReplay(); // stop transfer mode
+              dsyslog(
+                  "switching device %d to channel %d", Device->DeviceNumber() + 1, Timer->Channel()->Number());
+              if (Device->SwitchChannel(Timer->Channel(), false))
+                Device->SetOccupied(TIMERDEVICETIMEOUT);
+            }
+            if (cDevice::PrimaryDevice()->HasDecoder() && HadProgramme
+                && !cDevice::PrimaryDevice()->HasProgramme())
+              Skins.QueueMessage(mtInfo, tr("Upcoming recording!")); // the previous SwitchChannel() has switched away the current live channel
+          }
+        }
+      }
+      LastTimerCheck = Now;
+    }
+    // Delete expired timers:
+    Timers.DeleteExpired();
+  }
+  if (!m_Menu && Recordings.NeedsUpdate())
+  {
+    Recordings.Update();
+    DeletedRecordings.Update();
+  }
+  // CAM control:
+  if (!m_Menu && !cOsd::IsOpen())
+    m_Menu = CamControl();
+  // Queued messages:
+  if (!Skins.IsOpen())
+    Skins.ProcessQueuedMessages();
+  // User Input:
+  cOsdObject *Interact = m_Menu ? m_Menu : cControl::Control();
+  eKeys key = Interface->GetKey(!Interact || !Interact->NeedsFastResponse());
+  if (ISREALKEY(key))
+  {
+    EITScanner.Activity();
+    // Cancel shutdown countdown:
+    if (ShutdownHandler.countdown)
+      ShutdownHandler.countdown.Cancel();
+    // Set user active for MinUserInactivity time in the future:
+    ShutdownHandler.SetUserInactiveTimeout();
+  }
+  // Keys that must work independent of any interactive mode:
+  switch (int(key))
+    {
+  // Menu control:
+  case kMenu:
+    {
+      key = kNone; // nobody else needs to see this key
+      bool WasOpen = Interact != NULL;
+      bool WasMenu = Interact && Interact->IsMenu();
+      if (m_Menu)
+        DELETE_MENU;
+      else if (cControl::Control())
+      {
+        if (cOsd::IsOpen())
+          cControl::Control()->Hide();
+        else
+          WasOpen = false;
+      }
+      if (!WasOpen || (!WasMenu && !Setup.MenuKeyCloses))
+        m_Menu = new cMenuMain;
+    }
+    break;
+    // Info:
+  case kInfo:
+    {
+      if (m_IsInfoMenu)
+      {
+        key = kNone; // nobody else needs to see this key
+        DELETE_MENU;
+      }
+      else if (!m_Menu)
+      {
+        m_IsInfoMenu = true;
+        if (cControl::Control())
+        {
+          cControl::Control()->Hide();
+          m_Menu = cControl::Control()->GetInfo();
+          if (m_Menu)
+            m_Menu->Show();
+          else
+            m_IsInfoMenu = false;
+        }
+        else
+        {
+          cRemote::Put(kOk, true);
+          cRemote::Put(kSchedule, true);
+        }
+        key = kNone; // nobody else needs to see this key
+      }
+    }
+    break;
+    // Direct main menu functions:
+#define DirectMainFunction(function)\
+            { DELETE_MENU;\
+            if (cControl::Control())\
+               cControl::Control()->Hide();\
+               m_Menu = new cMenuMain(function);\
+            key = kNone; } // nobody else needs to see this key
+  case kSchedule:
+    DirectMainFunction(osSchedule);
+    break;
+  case kChannels:
+    DirectMainFunction(osChannels);
+    break;
+  case kTimers:
+    DirectMainFunction(osTimers);
+    break;
+  case kRecordings:
+    DirectMainFunction(osRecordings);
+    break;
+  case kSetup:
+    DirectMainFunction(osSetup);
+    break;
+  case kCommands:
+    DirectMainFunction(osCommands);
+    break;
+  case kUser0 ... kUser9:
+    cRemote::PutMacro(key);
+    key = kNone;
+    break;
+  case k_Plugin:
+    {
+      const char *PluginName = cRemote::GetPlugin();
+      if (PluginName)
+      {
+        DELETE_MENU;
+        if (cControl::Control())
+          cControl::Control()->Hide();
+        cPlugin *plugin = cPluginManager::GetPlugin(PluginName);
+        if (plugin)
+        {
+          m_Menu = plugin->MainMenuAction();
+          if (m_Menu)
+            m_Menu->Show();
+        }
+        else
+          esyslog("ERROR: unknown plugin '%s'", PluginName);
+      }
+      key = kNone; // nobody else needs to see these keys
+    }
+    break;
+    // Channel up/down:
+  case kChanUp | k_Repeat:
+  case kChanUp:
+  case kChanDn | k_Repeat:
+  case kChanDn:
+    if (!Interact)
+      m_Menu = new cDisplayChannel(NORMALKEY(key));
+    else if (cDisplayChannel::IsOpen() || cControl::Control())
+    {
+      Interact->ProcessKey(key);
+      return;
+    }
+    else
+      cDevice::SwitchChannel(NORMALKEY(key) == kChanUp ? 1 : -1);
+    key = kNone; // nobody else needs to see these keys
+    break;
+    // Volume control:
+  case kVolUp | k_Repeat:
+  case kVolUp:
+  case kVolDn | k_Repeat:
+  case kVolDn:
+  case kMute:
+    if (key == kMute)
+    {
+      if (!cDevice::PrimaryDevice()->ToggleMute() && !m_Menu)
+      {
+        key = kNone; // nobody else needs to see these keys
+        break; // no need to display "mute off"
+      }
+    }
+    else
+      cDevice::PrimaryDevice()->SetVolume(
+          NORMALKEY(key) == kVolDn ? -VOLUMEDELTA : VOLUMEDELTA);
+    if (!m_Menu && !cOsd::IsOpen())
+      m_Menu = cDisplayVolume::Create();
+    cDisplayVolume::Process(key);
+    key = kNone; // nobody else needs to see these keys
+    break;
+    // Audio track control:
+  case kAudio:
+    if (cControl::Control())
+      cControl::Control()->Hide();
+    if (!cDisplayTracks::IsOpen())
+    {
+      DELETE_MENU;
+      m_Menu = cDisplayTracks::Create();
+    }
+    else
+      cDisplayTracks::Process(key);
+    key = kNone;
+    break;
+    // Subtitle track control:
+  case kSubtitles:
+    if (cControl::Control())
+      cControl::Control()->Hide();
+    if (!cDisplaySubtitleTracks::IsOpen())
+    {
+      DELETE_MENU;
+      m_Menu = cDisplaySubtitleTracks::Create();
+    }
+    else
+      cDisplaySubtitleTracks::Process(key);
+    key = kNone;
+    break;
+    // Pausing live video:
+  case kPlayPause:
+  case kPause:
+    if (!cControl::Control())
+    {
+      DELETE_MENU;
+      if (Setup.PauseKeyHandling)
+      {
+        if (Setup.PauseKeyHandling > 1
+            || Interface->Confirm(tr("Pause live video?")))
+        {
+          if (!cRecordControls::PauseLiveVideo())
+            Skins.QueueMessage(mtError, tr("No free DVB device to record!"));
+        }
+      }
+      key = kNone; // nobody else needs to see this key
+    }
+    break;
+    // Instant recording:
+  case kRecord:
+    if (!cControl::Control())
+    {
+      if (cRecordControls::Start())
+        Skins.QueueMessage(mtInfo, tr("Recording started"));
+      key = kNone; // nobody else needs to see this key
+    }
+    break;
+    // Power off:
+  case kPower:
+    isyslog("Power button pressed");
+    DELETE_MENU;
+    // Check for activity, request power button again if active:
+    if (!ShutdownHandler.ConfirmShutdown(false)
+        && Skins.Message(mtWarning,
+            tr("VDR will shut down later - press Power to force"),
+            SHUTDOWNFORCEPROMPT) != kPower)
+    {
+      // Not pressed power - set VDR to be non-interactive and power down later:
+      ShutdownHandler.SetUserInactive();
+      break;
+    }
+    // No activity or power button pressed twice - ask for confirmation:
+    if (!ShutdownHandler.ConfirmShutdown(true))
+    {
+      // Non-confirmed background activity - set VDR to be non-interactive and power down later:
+      ShutdownHandler.SetUserInactive();
+      break;
+    }
+    // Ask the final question:
+    if (!Interface->Confirm(tr("Press any key to cancel shutdown"),
+        SHUTDOWNCANCELPROMPT, true))
+      // If final question was canceled, continue to be active:
+      break;
+    // Ok, now call the shutdown script:
+    ShutdownHandler.DoShutdown(true);
+    // Set VDR to be non-interactive and power down again later:
+    ShutdownHandler.SetUserInactive();
+    // Do not attempt to automatically shut down for a while:
+    ShutdownHandler.SetRetry(SHUTDOWNRETRY);
+    break;
+  default:
+    break;
+    }
+  Interact = m_Menu ? m_Menu : cControl::Control(); // might have been closed in the mean time
+  if (Interact)
+  {
+    m_LastInteract = Now;
+    eOSState state = Interact->ProcessKey(key);
+    if (state == osUnknown && Interact != cControl::Control())
+    {
+      if (ISMODELESSKEY(key) && cControl::Control())
+      {
+        state = cControl::Control()->ProcessKey(key);
+        if (state == osEnd)
+        {
+          // let's not close a menu when replay ends:
+          cControl::Shutdown();
+          return;
+        }
+      }
+      else if (Now - cRemote::LastActivity() > MENUTIMEOUT)
+        state = osEnd;
+    }
+    switch (state)
+      {
+    case osPause:
+      DELETE_MENU;
+      if (!cRecordControls::PauseLiveVideo())
+        Skins.QueueMessage(mtError, tr("No free DVB device to record!"));
+      break;
+    case osRecord:
+      DELETE_MENU;
+      if (cRecordControls::Start())
+        Skins.QueueMessage(mtInfo, tr("Recording started"));
+      break;
+    case osRecordings:
+      DELETE_MENU;
+      cControl::Shutdown();
+      m_Menu = new cMenuMain(osRecordings);
+      break;
+    case osReplay:
+      DELETE_MENU;
+      cControl::Shutdown();
+      cControl::Launch(new cReplayControl);
+      break;
+    case osStopReplay:
+      DELETE_MENU;
+      cControl::Shutdown();
+      break;
+    case osSwitchDvb:
+      DELETE_MENU;
+      cControl::Shutdown();
+      Skins.QueueMessage(mtInfo, tr("Switching primary DVB..."));
+      cDevice::SetPrimaryDevice(Setup.PrimaryDVB);
+      break;
+    case osPlugin:
+      DELETE_MENU;
+      m_Menu = cMenuMain::PluginOsdObject();
+      if (m_Menu)
+        m_Menu->Show();
+      break;
+    case osBack:
+    case osEnd:
+      if (Interact == m_Menu)
+        DELETE_MENU;
+      else
+        cControl::Shutdown();
+      break;
+    default:
+      break;
+      }
+  }
+  else
+  {
+    // Key functions in "normal" viewing mode:
+    if (key != kNone && KeyMacros.Get(key))
+    {
+      cRemote::PutMacro(key);
+      key = kNone;
+    }
+    switch (int(key))
+      {
+    // Toggle channels:
+    case kChanPrev:
+    case k0:
+      {
+        if (m_PreviousChannel[m_PreviousChannelIndex ^ 1] == m_LastChannel
+            || (m_LastChannel != m_PreviousChannel[0]
+                && m_LastChannel != m_PreviousChannel[1]))
+          m_PreviousChannelIndex ^= 1;
+        Channels.SwitchTo(m_PreviousChannel[m_PreviousChannelIndex ^= 1]);
+        break;
+      }
+      // Direct Channel Select:
+    case k1 ... k9:
+      // Left/Right rotates through channel groups:
+    case kLeft | k_Repeat:
+    case kLeft:
+    case kRight | k_Repeat:
+    case kRight:
+      // Previous/Next rotates through channel groups:
+    case kPrev | k_Repeat:
+    case kPrev:
+    case kNext | k_Repeat:
+    case kNext:
+      // Up/Down Channel Select:
+    case kUp | k_Repeat:
+    case kUp:
+    case kDown | k_Repeat:
+    case kDown:
+      m_Menu = new cDisplayChannel(NORMALKEY(key));
+      break;
+      // Viewing Control:
+    case kOk:
+      m_LastChannel = -1;
+      break; // forces channel display
+      // Instant resume of the last viewed recording:
+    case kPlay:
+      if (cReplayControl::LastReplayed())
+      {
+        cControl::Shutdown();
+        cControl::Launch(new cReplayControl);
+      }
+      else
+        DirectMainFunction(osRecordings);
+      // no last viewed recording, so enter the Recordings menu
+      break;
+    default:
+      break;
+      }
+  }
+  if (!m_Menu)
+  {
+    if (!m_InhibitEpgScan)
+      EITScanner.Process();
+    if (!cCutter::Active() && cCutter::Ended())
+    {
+      if (cCutter::Error())
+        Skins.Message(mtError, tr("Editing process failed!"));
+      else
+        Skins.Message(mtInfo, tr("Editing process finished"));
+    }
+  }
+
+  // SIGHUP shall cause a restart:
+  if (LastSignal == SIGHUP)
+  {
+    if (ShutdownHandler.ConfirmRestart(true)
+        && Interface->Confirm(tr("Press any key to cancel restart"),
+            RESTARTCANCELPROMPT, true))
+      EXIT(1);
+    LastSignal = 0;
+  }
+
+  // Update the shutdown countdown:
+  if (ShutdownHandler.countdown && ShutdownHandler.countdown.Update())
+  {
+    if (!ShutdownHandler.ConfirmShutdown(false))
+      ShutdownHandler.countdown.Cancel();
+  }
+
+  if ((Now - m_LastInteract) > ACTIVITYTIMEOUT
+      && !cRecordControls::Active() && !cCutter::Active() && !Interface->HasSVDRPConnection() && (Now - cRemote::LastActivity()) > ACTIVITYTIMEOUT){
+      // Handle housekeeping tasks
+
+      // Shutdown:
+      // Check whether VDR will be ready for shutdown in SHUTDOWNWAIT seconds:
+time_t      Soon = Now + SHUTDOWNWAIT;
+      if (ShutdownHandler.IsUserInactive(Soon) && ShutdownHandler.Retry(Soon) && !ShutdownHandler.countdown)
+      {
+        if (ShutdownHandler.ConfirmShutdown(false))
+        // Time to shut down - start final countdown:
+        ShutdownHandler.countdown.Start(tr("VDR will shut down in %s minutes"), SHUTDOWNWAIT);// the placeholder is really %s!
+        // Dont try to shut down again for a while:
+        ShutdownHandler.SetRetry(SHUTDOWNRETRY);
+      }
+      // Countdown run down to 0?
+      if (ShutdownHandler.countdown.Done())
+      {
+        // Timed out, now do a final check:
+        if (ShutdownHandler.IsUserInactive() && ShutdownHandler.ConfirmShutdown(false))
+        ShutdownHandler.DoShutdown(false);
+        // Do this again a bit later:
+        ShutdownHandler.SetRetry(SHUTDOWNRETRY);
+      }
+
+      // Disk housekeeping:
+      RemoveDeletedRecordings();
+      cSchedules::Cleanup();
+      // Plugins housekeeping:
+      m_pluginManager->Housekeeping();
+    }
+
+  ReportEpgBugFixStats();
+
+  // Main thread hooks of plugins:
+  m_pluginManager->MainThreadHook();
+
+Exit:
+  return;
+}
+
+int main(int argc, char *argv[])
+{
+  cVDRDaemon daemon;
+
+  // Initiate locale:
+  setlocale(LC_ALL, "");
+
+  daemon.ReadCommandLineOptions(argc, argv);
+
   isyslog("VDR version %s started", VDRVERSION);
-  if (opts.StartedAsRoot && opts.VdrUser)
-     isyslog("switched to user '%s'", opts.VdrUser);
-  if (opts.DaemonMode)
-     dsyslog("running as daemon (tid=%d)", cThread::ThreadId());
+  if (daemon.m_StartedAsRoot && daemon.m_VdrUser)
+    isyslog("switched to user '%s'", daemon.m_VdrUser);
+  if (daemon.m_DaemonMode)
+    dsyslog("running as daemon (tid=%d)", cThread::ThreadId());
   cThread::SetMainThreadId();
 
   // Set the system character table:
 #ifndef ANDROID
   char *CodeSet = NULL;
   if (setlocale(LC_CTYPE, ""))
-     CodeSet = nl_langinfo(CODESET);
-  else {
-     char *LangEnv = getenv("LANG"); // last resort in case locale stuff isn't installed
-     if (LangEnv) {
-        CodeSet = strchr(LangEnv, '.');
-        if (CodeSet)
-           CodeSet++; // skip the dot
-        }
-     }
-  if (CodeSet) {
-     bool known = SI::SetSystemCharacterTable(CodeSet);
-     isyslog("codeset is '%s' - %s", CodeSet, known ? "known" : "unknown");
-     cCharSetConv::SetSystemCharacterTable(CodeSet);
-     }
+    CodeSet = nl_langinfo(CODESET);
+  else
+  {
+    char *LangEnv = getenv("LANG"); // last resort in case locale stuff isn't installed
+    if (LangEnv)
+    {
+      CodeSet = strchr(LangEnv, '.');
+      if (CodeSet)
+        CodeSet++; // skip the dot
+    }
+  }
+  if (CodeSet)
+  {
+    bool known = SI::SetSystemCharacterTable(CodeSet);
+    isyslog("codeset is '%s' - %s", CodeSet, known ? "known" : "unknown");
+    cCharSetConv::SetSystemCharacterTable(CodeSet);
+  }
 #endif
 
   // Initialize internationalization:
+  I18nInitialize(daemon.m_LocaleDirectory);
 
-  I18nInitialize(opts.LocaleDirectory);
-
-  // Main program loop variables - need to be here to have them initialized before any EXIT():
-
-  cEpgDataReader EpgDataReader;
-  cOsdObject *Menu = NULL;
-  int LastChannel = 0;
-  int LastTimerChannel = -1;
-  int PreviousChannel[2] = { 1, 1 };
-  int PreviousChannelIndex = 0;
-  time_t LastChannelChanged = time(NULL);
-  time_t LastInteract = 0;
-  int MaxLatencyTime = 0;
-  bool InhibitEpgScan = false;
-  bool IsInfoMenu = false;
-  cSkin *CurrentSkin = NULL;
-
-  // Load plugins:
-
-  if (!PluginManager.LoadPlugins(true))
-     EXIT(2);
-
-  // Directories:
-
-  SetVideoDirectory(opts.VideoDirectory);
-  if (!opts.ConfigDirectory)
-    opts.ConfigDirectory = DEFAULTCONFDIR(opts);
-  cPlugin::SetConfigDirectory(opts.ConfigDirectory);
-  if (!opts.CacheDirectory)
-    opts.CacheDirectory = DEFAULTCACHEDIR(opts);
-  cPlugin::SetCacheDirectory(opts.CacheDirectory);
-  if (!opts.ResourceDirectory)
-    opts.ResourceDirectory = DEFAULTRESDIR(opts);
-  cPlugin::SetResourceDirectory(opts.ResourceDirectory);
-  cThemes::SetThemesDirectory(AddDirectory(opts.ConfigDirectory, "themes"));
-
-  // Configuration data:
-
-  Setup.Load(AddDirectory(opts.ConfigDirectory, "setup.conf"));
-  Sources.Load(AddDirectory(opts.ConfigDirectory, "sources.conf"), true, true);
-  Diseqcs.Load(AddDirectory(opts.ConfigDirectory, "diseqc.conf"), true, Setup.DiSEqC);
-  Scrs.Load(AddDirectory(opts.ConfigDirectory, "scr.conf"), true);
-  Channels.Load(AddDirectory(opts.ConfigDirectory, "channels.conf"), false, true);
-  Timers.Load(AddDirectory(opts.ConfigDirectory, "timers.conf"));
-  Commands.Load(AddDirectory(opts.ConfigDirectory, "commands.conf"));
-  RecordingCommands.Load(AddDirectory(opts.ConfigDirectory, "reccmds.conf"));
-  SVDRPhosts.Load(AddDirectory(opts.ConfigDirectory, "svdrphosts.conf"), true);
-  Keys.Load(AddDirectory(opts.ConfigDirectory, "remote.conf"));
-  KeyMacros.Load(AddDirectory(opts.ConfigDirectory, "keymacros.conf"), true);
-  Folders.Load(AddDirectory(opts.ConfigDirectory, "folders.conf"));
-
-  if (!*cFont::GetFontFileName(Setup.FontOsd)) {
-     const char *msg = "no fonts available - OSD will not show any text!";
-     fprintf(stderr, "vdr: %s\n", msg);
-     esyslog("ERROR: %s", msg);
-     }
-
-  // Recordings:
-
-  Recordings.Update();
-  DeletedRecordings.Update();
-
-  // EPG data:
-
-  if (opts.EpgDataFileName) {
-     const char *EpgDirectory = NULL;
-     if (DirectoryOk(opts.EpgDataFileName)) {
-        EpgDirectory = opts.EpgDataFileName;
-        opts.EpgDataFileName = DEFAULTEPGDATAFILENAME;
-        }
-     else if (*opts.EpgDataFileName != '/' && *opts.EpgDataFileName != '.')
-        EpgDirectory = opts.CacheDirectory;
-     if (EpgDirectory)
-        cSchedules::SetEpgDataFileName(AddDirectory(EpgDirectory, opts.EpgDataFileName));
-     else
-        cSchedules::SetEpgDataFileName(opts.EpgDataFileName);
-     EpgDataReader.Start();
-     }
-
-  // DVB interfaces:
-
-  cDvbDevice::Initialize();
-  cDvbDevice::BondDevices(Setup.DeviceBondings);
-
-  // Initialize plugins:
-
-  if (!PluginManager.InitializePlugins())
-     EXIT(2);
-
-  // Primary device:
-
-  cDevice::SetPrimaryDevice(Setup.PrimaryDVB);
-  if (!cDevice::PrimaryDevice() || !cDevice::PrimaryDevice()->HasDecoder()) {
-     if (cDevice::PrimaryDevice() && !cDevice::PrimaryDevice()->HasDecoder())
-        isyslog("device %d has no MPEG decoder", cDevice::PrimaryDevice()->DeviceNumber() + 1);
-     for (int i = 0; i < cDevice::NumDevices(); i++) {
-         cDevice *d = cDevice::GetDevice(i);
-         if (d && d->HasDecoder()) {
-            isyslog("trying device number %d instead", i + 1);
-            if (cDevice::SetPrimaryDevice(i + 1)) {
-               Setup.PrimaryDVB = i + 1;
-               break;
-               }
-            }
-         }
-     if (!cDevice::PrimaryDevice()) {
-        const char *msg = "no primary device found - using first device!";
-        fprintf(stderr, "vdr: %s\n", msg);
-        esyslog("ERROR: %s", msg);
-        if (!cDevice::SetPrimaryDevice(1))
-           EXIT(2);
-        if (!cDevice::PrimaryDevice()) {
-           const char *msg = "no primary device found - giving up!";
-           fprintf(stderr, "vdr: %s\n", msg);
-           esyslog("ERROR: %s", msg);
-           EXIT(2);
-           }
-        }
-     }
-
-  // Check for timers in automatic start time window:
-
-  ShutdownHandler.CheckManualStart(MANUALSTART);
-
-  // User interface:
-
-  Interface = new cInterface(opts.SVDRPport);
-
-  // Default skins:
-
-  new cSkinLCARS;
-  new cSkinSTTNG;
-  new cSkinClassic;
-  Skins.SetCurrent(Setup.OSDSkin);
-  cThemes::Load(Skins.Current()->Name(), Setup.OSDTheme, Skins.Current()->Theme());
-  CurrentSkin = Skins.Current();
-
-  // Start plugins:
-
-  if (!PluginManager.StartPlugins())
-     EXIT(2);
-
-  // Set skin and theme in case they're implemented by a plugin:
-
-  if (!CurrentSkin || CurrentSkin == Skins.Current() && strcmp(Skins.Current()->Name(), Setup.OSDSkin) != 0) {
-     Skins.SetCurrent(Setup.OSDSkin);
-     cThemes::Load(Skins.Current()->Name(), Setup.OSDTheme, Skins.Current()->Theme());
-     }
-
-  // Remote Controls:
-#ifndef ANDROID
-  if (opts.LircDevice)
-     new cLircRemote(opts.LircDevice);
-#endif
-  if (!opts.DaemonMode && opts.HasStdin && opts.UseKbd)
-     new cKbdRemote;
-  Interface->LearnKeys();
-
-  // External audio:
-
-  if (opts.AudioCommand)
-     new cExternalAudio(opts.AudioCommand);
-
-  // Channel:
-
-  if (!cDevice::WaitForAllDevicesReady(DEVICEREADYTIMEOUT))
-     dsyslog("not all devices ready after %d seconds", DEVICEREADYTIMEOUT);
-  if (*Setup.InitialChannel) {
-     if (is_number(Setup.InitialChannel)) { // for compatibility with old setup.conf files
-        if (cChannel *Channel = Channels.GetByNumber(atoi(Setup.InitialChannel)))
-           Setup.InitialChannel = Channel->GetChannelID().ToString();
-        }
-     if (cChannel *Channel = Channels.GetByChannelID(tChannelID::FromString(Setup.InitialChannel)))
-        Setup.CurrentChannel = Channel->Number();
-     }
-  if (Setup.InitialVolume >= 0)
-     Setup.CurrentVolume = Setup.InitialVolume;
-  Channels.SwitchTo(Setup.CurrentChannel);
-  if (opts.MuteAudio)
-     cDevice::PrimaryDevice()->ToggleMute();
-  else
-     cDevice::PrimaryDevice()->SetVolume(Setup.CurrentVolume, true);
+  if (daemon.Init() != 0)
+    return -2;
 
   // Signal handlers:
-
   if (signal(SIGHUP,  SignalHandler) == SIG_IGN) signal(SIGHUP,  SIG_IGN);
   if (signal(SIGINT,  SignalHandler) == SIG_IGN) signal(SIGINT,  SIG_IGN);
   if (signal(SIGTERM, SignalHandler) == SIG_IGN) signal(SIGTERM, SIG_IGN);
   if (signal(SIGPIPE, SignalHandler) == SIG_IGN) signal(SIGPIPE, SIG_IGN);
-  if (opts.WatchdogTimeout > 0)
-     if (signal(SIGALRM, Watchdog)   == SIG_IGN) signal(SIGALRM, SIG_IGN);
+  if (daemon.m_WatchdogTimeout > 0)
+    if (signal(SIGALRM, Watchdog)    == SIG_IGN) signal(SIGALRM, SIG_IGN);
 
   // Watchdog:
+  if (daemon.m_WatchdogTimeout > 0)
+  {
+    dsyslog("setting watchdog timer to %d seconds", daemon.m_WatchdogTimeout);
+    alarm(daemon.m_WatchdogTimeout); // Initial watchdog timer start
+  }
 
-  if (opts.WatchdogTimeout > 0) {
-     dsyslog("setting watchdog timer to %d seconds", opts.WatchdogTimeout);
-     alarm(opts.WatchdogTimeout); // Initial watchdog timer start
-     }
-
-  // Main program loop:
-
-#define DELETE_MENU ((IsInfoMenu &= (Menu == NULL)), delete Menu, Menu = NULL)
-
-  while (!ShutdownHandler.DoExit()) {
-#ifdef DEBUGRINGBUFFERS
-        cRingBufferLinear::PrintDebugRBL();
-#endif
-        // Attach launched player control:
-        cControl::Attach();
-
-        time_t Now = time(NULL);
-
-        // Make sure we have a visible programme in case device usage has changed:
-        if (!EITScanner.Active() && cDevice::PrimaryDevice()->HasDecoder()) {
-           static time_t lastTime = 0;
-           if (!cDevice::PrimaryDevice()->HasProgramme()) {
-              if (!CamMenuActive() && Now - lastTime > MINCHANNELWAIT) { // !CamMenuActive() to avoid interfering with the CAM if a CAM menu is open
-                 cChannel *Channel = Channels.GetByNumber(cDevice::CurrentChannel());
-                 if (Channel && (Channel->Vpid() || Channel->Apid(0) || Channel->Dpid(0))) {
-                    if (cDevice::GetDeviceForTransponder(Channel, LIVEPRIORITY) && Channels.SwitchTo(Channel->Number())) // try to switch to the original channel...
-                       ;
-                    else if (LastTimerChannel > 0) {
-                       Channel = Channels.GetByNumber(LastTimerChannel);
-                       if (Channel && cDevice::GetDeviceForTransponder(Channel, LIVEPRIORITY) && Channels.SwitchTo(LastTimerChannel)) // ...or the one used by the last timer
-                          ;
-                       }
-                    }
-                 lastTime = Now; // don't do this too often
-                 LastTimerChannel = -1;
-                 }
-              }
-           else
-              lastTime = 0; // makes sure we immediately try again next time
-           }
-        // Update the OSD size:
-        {
-          static time_t lastOsdSizeUpdate = 0;
-          if (Now != lastOsdSizeUpdate) { // once per second
-             cOsdProvider::UpdateOsdSize();
-             lastOsdSizeUpdate = Now;
-             }
-        }
-        // Restart the Watchdog timer:
-        if (opts.WatchdogTimeout > 0) {
-           int LatencyTime = opts.WatchdogTimeout - alarm(opts.WatchdogTimeout);
-           if (LatencyTime > MaxLatencyTime) {
-              MaxLatencyTime = LatencyTime;
-              dsyslog("max. latency time %d seconds", MaxLatencyTime);
-              }
-           }
-        // Handle channel and timer modifications:
-        if (!Channels.BeingEdited() && !Timers.BeingEdited()) {
-           int modified = Channels.Modified();
-           static time_t ChannelSaveTimeout = 0;
-           static int TimerState = 0;
-           // Channels and timers need to be stored in a consistent manner,
-           // therefore if one of them is changed, we save both.
-           if (modified == CHANNELSMOD_USER || Timers.Modified(TimerState))
-              ChannelSaveTimeout = 1; // triggers an immediate save
-           else if (modified && !ChannelSaveTimeout)
-              ChannelSaveTimeout = Now + CHANNELSAVEDELTA;
-           bool timeout = ChannelSaveTimeout == 1 || ChannelSaveTimeout && Now > ChannelSaveTimeout && !cRecordControls::Active();
-           if ((modified || timeout) && Channels.Lock(false, 100)) {
-              if (timeout) {
-                 Channels.Save();
-                 Timers.Save();
-                 ChannelSaveTimeout = 0;
-                 }
-              for (cChannel *Channel = Channels.First(); Channel; Channel = Channels.Next(Channel)) {
-                  if (Channel->Modification(CHANNELMOD_RETUNE)) {
-                     cRecordControls::ChannelDataModified(Channel);
-                     if (Channel->Number() == cDevice::CurrentChannel()) {
-                        if (!cDevice::PrimaryDevice()->Replaying() || cDevice::PrimaryDevice()->Transferring()) {
-                           if (cDevice::ActualDevice()->ProvidesTransponder(Channel)) { // avoids retune on devices that don't really access the transponder
-                              isyslog("retuning due to modification of channel %d", Channel->Number());
-                              Channels.SwitchTo(Channel->Number());
-                              }
-                           }
-                        }
-                     }
-                  }
-              Channels.Unlock();
-              }
-           }
-        // Channel display:
-        if (!EITScanner.Active() && cDevice::CurrentChannel() != LastChannel) {
-           if (!Menu)
-              Menu = new cDisplayChannel(cDevice::CurrentChannel(), LastChannel >= 0);
-           LastChannel = cDevice::CurrentChannel();
-           LastChannelChanged = Now;
-           }
-        if (Now - LastChannelChanged >= Setup.ZapTimeout && LastChannel != PreviousChannel[PreviousChannelIndex])
-           PreviousChannel[PreviousChannelIndex ^= 1] = LastChannel;
-        // Timers and Recordings:
-        if (!Timers.BeingEdited()) {
-           // Assign events to timers:
-           Timers.SetEvents();
-           // Must do all following calls with the exact same time!
-           // Process ongoing recordings:
-           cRecordControls::Process(Now);
-           // Start new recordings:
-           cTimer *Timer = Timers.GetMatch(Now);
-           if (Timer) {
-              if (!cRecordControls::Start(Timer))
-                 Timer->SetPending(true);
-              else
-                 LastTimerChannel = Timer->Channel()->Number();
-              }
-           // Make sure timers "see" their channel early enough:
-           static time_t LastTimerCheck = 0;
-           if (Now - LastTimerCheck > TIMERCHECKDELTA) { // don't do this too often
-              InhibitEpgScan = false;
-              for (cTimer *Timer = Timers.First(); Timer; Timer = Timers.Next(Timer)) {
-                  bool InVpsMargin = false;
-                  bool NeedsTransponder = false;
-                  if (Timer->HasFlags(tfActive) && !Timer->Recording()) {
-                     if (Timer->HasFlags(tfVps)) {
-                        if (Timer->Matches(Now, true, Setup.VpsMargin)) {
-                           InVpsMargin = true;
-                           Timer->SetInVpsMargin(InVpsMargin);
-                           }
-                        else if (Timer->Event()) {
-                           InVpsMargin = Timer->Event()->StartTime() <= Now && Now < Timer->Event()->EndTime();
-                           NeedsTransponder = Timer->Event()->StartTime() - Now < VPSLOOKAHEADTIME * 3600 && !Timer->Event()->SeenWithin(VPSUPTODATETIME);
-                           }
-                        else {
-                           cSchedulesLock SchedulesLock;
-                           const cSchedules *Schedules = cSchedules::Schedules(SchedulesLock);
-                           if (Schedules) {
-                              const cSchedule *Schedule = Schedules->GetSchedule(Timer->Channel());
-                              InVpsMargin = !Schedule; // we must make sure we have the schedule
-                              NeedsTransponder = Schedule && !Schedule->PresentSeenWithin(VPSUPTODATETIME);
-                              }
-                           }
-                        InhibitEpgScan |= InVpsMargin | NeedsTransponder;
-                        }
-                     else
-                        NeedsTransponder = Timer->Matches(Now, true, TIMERLOOKAHEADTIME);
-                     }
-                  if (NeedsTransponder || InVpsMargin) {
-                     // Find a device that provides the required transponder:
-                     cDevice *Device = cDevice::GetDeviceForTransponder(Timer->Channel(), MINPRIORITY);
-                     if (!Device && InVpsMargin)
-                        Device = cDevice::GetDeviceForTransponder(Timer->Channel(), LIVEPRIORITY);
-                     // Switch the device to the transponder:
-                     if (Device) {
-                        bool HadProgramme = cDevice::PrimaryDevice()->HasProgramme();
-                        if (!Device->IsTunedToTransponder(Timer->Channel())) {
-                           if (Device == cDevice::ActualDevice() && !Device->IsPrimaryDevice())
-                              cDevice::PrimaryDevice()->StopReplay(); // stop transfer mode
-                           dsyslog("switching device %d to channel %d", Device->DeviceNumber() + 1, Timer->Channel()->Number());
-                           if (Device->SwitchChannel(Timer->Channel(), false))
-                              Device->SetOccupied(TIMERDEVICETIMEOUT);
-                           }
-                        if (cDevice::PrimaryDevice()->HasDecoder() && HadProgramme && !cDevice::PrimaryDevice()->HasProgramme())
-                           Skins.QueueMessage(mtInfo, tr("Upcoming recording!")); // the previous SwitchChannel() has switched away the current live channel
-                        }
-                     }
-                  }
-              LastTimerCheck = Now;
-              }
-           // Delete expired timers:
-           Timers.DeleteExpired();
-           }
-        if (!Menu && Recordings.NeedsUpdate()) {
-           Recordings.Update();
-           DeletedRecordings.Update();
-           }
-        // CAM control:
-        if (!Menu && !cOsd::IsOpen())
-           Menu = CamControl();
-        // Queued messages:
-        if (!Skins.IsOpen())
-           Skins.ProcessQueuedMessages();
-        // User Input:
-        cOsdObject *Interact = Menu ? Menu : cControl::Control();
-        eKeys key = Interface->GetKey(!Interact || !Interact->NeedsFastResponse());
-        if (ISREALKEY(key)) {
-           EITScanner.Activity();
-           // Cancel shutdown countdown:
-           if (ShutdownHandler.countdown)
-              ShutdownHandler.countdown.Cancel();
-           // Set user active for MinUserInactivity time in the future:
-           ShutdownHandler.SetUserInactiveTimeout();
-           }
-        // Keys that must work independent of any interactive mode:
-        switch (int(key)) {
-          // Menu control:
-          case kMenu: {
-               key = kNone; // nobody else needs to see this key
-               bool WasOpen = Interact != NULL;
-               bool WasMenu = Interact && Interact->IsMenu();
-               if (Menu)
-                  DELETE_MENU;
-               else if (cControl::Control()) {
-                  if (cOsd::IsOpen())
-                     cControl::Control()->Hide();
-                  else
-                     WasOpen = false;
-                  }
-               if (!WasOpen || !WasMenu && !Setup.MenuKeyCloses)
-                  Menu = new cMenuMain;
-               }
-               break;
-          // Info:
-          case kInfo: {
-               if (IsInfoMenu) {
-                  key = kNone; // nobody else needs to see this key
-                  DELETE_MENU;
-                  }
-               else if (!Menu) {
-                  IsInfoMenu = true;
-                  if (cControl::Control()) {
-                     cControl::Control()->Hide();
-                     Menu = cControl::Control()->GetInfo();
-                     if (Menu)
-                        Menu->Show();
-                     else
-                        IsInfoMenu = false;
-                     }
-                  else {
-                     cRemote::Put(kOk, true);
-                     cRemote::Put(kSchedule, true);
-                     }
-                  key = kNone; // nobody else needs to see this key
-                  }
-               }
-               break;
-          // Direct main menu functions:
-          #define DirectMainFunction(function)\
-            { DELETE_MENU;\
-            if (cControl::Control())\
-               cControl::Control()->Hide();\
-            Menu = new cMenuMain(function);\
-            key = kNone; } // nobody else needs to see this key
-          case kSchedule:   DirectMainFunction(osSchedule); break;
-          case kChannels:   DirectMainFunction(osChannels); break;
-          case kTimers:     DirectMainFunction(osTimers); break;
-          case kRecordings: DirectMainFunction(osRecordings); break;
-          case kSetup:      DirectMainFunction(osSetup); break;
-          case kCommands:   DirectMainFunction(osCommands); break;
-          case kUser0 ... kUser9: cRemote::PutMacro(key); key = kNone; break;
-          case k_Plugin: {
-               const char *PluginName = cRemote::GetPlugin();
-               if (PluginName) {
-                  DELETE_MENU;
-                  if (cControl::Control())
-                     cControl::Control()->Hide();
-                  cPlugin *plugin = cPluginManager::GetPlugin(PluginName);
-                  if (plugin) {
-                     Menu = plugin->MainMenuAction();
-                     if (Menu)
-                        Menu->Show();
-                     }
-                  else
-                     esyslog("ERROR: unknown plugin '%s'", PluginName);
-                  }
-               key = kNone; // nobody else needs to see these keys
-               }
-               break;
-          // Channel up/down:
-          case kChanUp|k_Repeat:
-          case kChanUp:
-          case kChanDn|k_Repeat:
-          case kChanDn:
-               if (!Interact)
-                  Menu = new cDisplayChannel(NORMALKEY(key));
-               else if (cDisplayChannel::IsOpen() || cControl::Control()) {
-                  Interact->ProcessKey(key);
-                  continue;
-                  }
-               else
-                  cDevice::SwitchChannel(NORMALKEY(key) == kChanUp ? 1 : -1);
-               key = kNone; // nobody else needs to see these keys
-               break;
-          // Volume control:
-          case kVolUp|k_Repeat:
-          case kVolUp:
-          case kVolDn|k_Repeat:
-          case kVolDn:
-          case kMute:
-               if (key == kMute) {
-                  if (!cDevice::PrimaryDevice()->ToggleMute() && !Menu) {
-                     key = kNone; // nobody else needs to see these keys
-                     break; // no need to display "mute off"
-                     }
-                  }
-               else
-                  cDevice::PrimaryDevice()->SetVolume(NORMALKEY(key) == kVolDn ? -VOLUMEDELTA : VOLUMEDELTA);
-               if (!Menu && !cOsd::IsOpen())
-                  Menu = cDisplayVolume::Create();
-               cDisplayVolume::Process(key);
-               key = kNone; // nobody else needs to see these keys
-               break;
-          // Audio track control:
-          case kAudio:
-               if (cControl::Control())
-                  cControl::Control()->Hide();
-               if (!cDisplayTracks::IsOpen()) {
-                  DELETE_MENU;
-                  Menu = cDisplayTracks::Create();
-                  }
-               else
-                  cDisplayTracks::Process(key);
-               key = kNone;
-               break;
-          // Subtitle track control:
-          case kSubtitles:
-               if (cControl::Control())
-                  cControl::Control()->Hide();
-               if (!cDisplaySubtitleTracks::IsOpen()) {
-                  DELETE_MENU;
-                  Menu = cDisplaySubtitleTracks::Create();
-                  }
-               else
-                  cDisplaySubtitleTracks::Process(key);
-               key = kNone;
-               break;
-          // Pausing live video:
-          case kPlayPause:
-          case kPause:
-               if (!cControl::Control()) {
-                  DELETE_MENU;
-                  if (Setup.PauseKeyHandling) {
-                     if (Setup.PauseKeyHandling > 1 || Interface->Confirm(tr("Pause live video?"))) {
-                        if (!cRecordControls::PauseLiveVideo())
-                           Skins.QueueMessage(mtError, tr("No free DVB device to record!"));
-                        }
-                     }
-                  key = kNone; // nobody else needs to see this key
-                  }
-               break;
-          // Instant recording:
-          case kRecord:
-               if (!cControl::Control()) {
-                  if (cRecordControls::Start())
-                     Skins.QueueMessage(mtInfo, tr("Recording started"));
-                  key = kNone; // nobody else needs to see this key
-                  }
-               break;
-          // Power off:
-          case kPower:
-               isyslog("Power button pressed");
-               DELETE_MENU;
-               // Check for activity, request power button again if active:
-               if (!ShutdownHandler.ConfirmShutdown(false) && Skins.Message(mtWarning, tr("VDR will shut down later - press Power to force"), SHUTDOWNFORCEPROMPT) != kPower) {
-                  // Not pressed power - set VDR to be non-interactive and power down later:
-                  ShutdownHandler.SetUserInactive();
-                  break;
-                  }
-               // No activity or power button pressed twice - ask for confirmation:
-               if (!ShutdownHandler.ConfirmShutdown(true)) {
-                  // Non-confirmed background activity - set VDR to be non-interactive and power down later:
-                  ShutdownHandler.SetUserInactive();
-                  break;
-                  }
-               // Ask the final question:
-               if (!Interface->Confirm(tr("Press any key to cancel shutdown"), SHUTDOWNCANCELPROMPT, true))
-                  // If final question was canceled, continue to be active:
-                  break;
-               // Ok, now call the shutdown script:
-               ShutdownHandler.DoShutdown(true);
-               // Set VDR to be non-interactive and power down again later:
-               ShutdownHandler.SetUserInactive();
-               // Do not attempt to automatically shut down for a while:
-               ShutdownHandler.SetRetry(SHUTDOWNRETRY);
-               break;
-          default: break;
-          }
-        Interact = Menu ? Menu : cControl::Control(); // might have been closed in the mean time
-        if (Interact) {
-           LastInteract = Now;
-           eOSState state = Interact->ProcessKey(key);
-           if (state == osUnknown && Interact != cControl::Control()) {
-              if (ISMODELESSKEY(key) && cControl::Control()) {
-                 state = cControl::Control()->ProcessKey(key);
-                 if (state == osEnd) {
-                    // let's not close a menu when replay ends:
-                    cControl::Shutdown();
-                    continue;
-                    }
-                 }
-              else if (Now - cRemote::LastActivity() > MENUTIMEOUT)
-                 state = osEnd;
-              }
-           switch (state) {
-             case osPause:  DELETE_MENU;
-                            if (!cRecordControls::PauseLiveVideo())
-                               Skins.QueueMessage(mtError, tr("No free DVB device to record!"));
-                            break;
-             case osRecord: DELETE_MENU;
-                            if (cRecordControls::Start())
-                               Skins.QueueMessage(mtInfo, tr("Recording started"));
-                            break;
-             case osRecordings:
-                            DELETE_MENU;
-                            cControl::Shutdown();
-                            Menu = new cMenuMain(osRecordings);
-                            break;
-             case osReplay: DELETE_MENU;
-                            cControl::Shutdown();
-                            cControl::Launch(new cReplayControl);
-                            break;
-             case osStopReplay:
-                            DELETE_MENU;
-                            cControl::Shutdown();
-                            break;
-             case osSwitchDvb:
-                            DELETE_MENU;
-                            cControl::Shutdown();
-                            Skins.QueueMessage(mtInfo, tr("Switching primary DVB..."));
-                            cDevice::SetPrimaryDevice(Setup.PrimaryDVB);
-                            break;
-             case osPlugin: DELETE_MENU;
-                            Menu = cMenuMain::PluginOsdObject();
-                            if (Menu)
-                               Menu->Show();
-                            break;
-             case osBack:
-             case osEnd:    if (Interact == Menu)
-                               DELETE_MENU;
-                            else
-                               cControl::Shutdown();
-                            break;
-             default:       ;
-             }
-           }
-        else {
-           // Key functions in "normal" viewing mode:
-           if (key != kNone && KeyMacros.Get(key)) {
-              cRemote::PutMacro(key);
-              key = kNone;
-              }
-           switch (int(key)) {
-             // Toggle channels:
-             case kChanPrev:
-             case k0: {
-                  if (PreviousChannel[PreviousChannelIndex ^ 1] == LastChannel || LastChannel != PreviousChannel[0] && LastChannel != PreviousChannel[1])
-                     PreviousChannelIndex ^= 1;
-                  Channels.SwitchTo(PreviousChannel[PreviousChannelIndex ^= 1]);
-                  break;
-                  }
-             // Direct Channel Select:
-             case k1 ... k9:
-             // Left/Right rotates through channel groups:
-             case kLeft|k_Repeat:
-             case kLeft:
-             case kRight|k_Repeat:
-             case kRight:
-             // Previous/Next rotates through channel groups:
-             case kPrev|k_Repeat:
-             case kPrev:
-             case kNext|k_Repeat:
-             case kNext:
-             // Up/Down Channel Select:
-             case kUp|k_Repeat:
-             case kUp:
-             case kDown|k_Repeat:
-             case kDown:
-                  Menu = new cDisplayChannel(NORMALKEY(key));
-                  break;
-             // Viewing Control:
-             case kOk:   LastChannel = -1; break; // forces channel display
-             // Instant resume of the last viewed recording:
-             case kPlay:
-                  if (cReplayControl::LastReplayed()) {
-                     cControl::Shutdown();
-                     cControl::Launch(new cReplayControl);
-                     }
-                  else
-                     DirectMainFunction(osRecordings); // no last viewed recording, so enter the Recordings menu
-                  break;
-             default:    break;
-             }
-           }
-        if (!Menu) {
-           if (!InhibitEpgScan)
-              EITScanner.Process();
-           if (!cCutter::Active() && cCutter::Ended()) {
-              if (cCutter::Error())
-                 Skins.Message(mtError, tr("Editing process failed!"));
-              else
-                 Skins.Message(mtInfo, tr("Editing process finished"));
-              }
-           }
-
-        // SIGHUP shall cause a restart:
-        if (LastSignal == SIGHUP) {
-           if (ShutdownHandler.ConfirmRestart(true) && Interface->Confirm(tr("Press any key to cancel restart"), RESTARTCANCELPROMPT, true))
-              EXIT(1);
-           LastSignal = 0;
-           }
-
-        // Update the shutdown countdown:
-        if (ShutdownHandler.countdown && ShutdownHandler.countdown.Update()) {
-           if (!ShutdownHandler.ConfirmShutdown(false))
-              ShutdownHandler.countdown.Cancel();
-           }
-
-        if ((Now - LastInteract) > ACTIVITYTIMEOUT && !cRecordControls::Active() && !cCutter::Active() && !Interface->HasSVDRPConnection() && (Now - cRemote::LastActivity()) > ACTIVITYTIMEOUT) {
-           // Handle housekeeping tasks
-
-           // Shutdown:
-           // Check whether VDR will be ready for shutdown in SHUTDOWNWAIT seconds:
-           time_t Soon = Now + SHUTDOWNWAIT;
-           if (ShutdownHandler.IsUserInactive(Soon) && ShutdownHandler.Retry(Soon) && !ShutdownHandler.countdown) {
-              if (ShutdownHandler.ConfirmShutdown(false))
-                 // Time to shut down - start final countdown:
-                 ShutdownHandler.countdown.Start(tr("VDR will shut down in %s minutes"), SHUTDOWNWAIT); // the placeholder is really %s!
-              // Dont try to shut down again for a while:
-              ShutdownHandler.SetRetry(SHUTDOWNRETRY);
-              }
-           // Countdown run down to 0?
-           if (ShutdownHandler.countdown.Done()) {
-              // Timed out, now do a final check:
-              if (ShutdownHandler.IsUserInactive() && ShutdownHandler.ConfirmShutdown(false))
-                 ShutdownHandler.DoShutdown(false);
-              // Do this again a bit later:
-              ShutdownHandler.SetRetry(SHUTDOWNRETRY);
-              }
-
-           // Disk housekeeping:
-           RemoveDeletedRecordings();
-           cSchedules::Cleanup();
-           // Plugins housekeeping:
-           PluginManager.Housekeeping();
-           }
-
-        ReportEpgBugFixStats();
-
-        // Main thread hooks of plugins:
-        PluginManager.MainThreadHook();
-        }
-
-  if (ShutdownHandler.EmergencyExitRequested())
-     esyslog("emergency exit requested - shutting down");
-
-Exit:
+  while (!ShutdownHandler.DoExit())
+  {
+    daemon.Process();
+  }
 
   // Reset all signal handlers to default before Interface gets deleted:
-  signal(SIGHUP,  SIG_DFL);
-  signal(SIGINT,  SIG_DFL);
+  signal(SIGHUP, SIG_DFL);
+  signal(SIGINT, SIG_DFL);
   signal(SIGTERM, SIG_DFL);
   signal(SIGPIPE, SIG_DFL);
   signal(SIGALRM, SIG_DFL);
 
-  PluginManager.StopPlugins();
-  cRecordControls::Shutdown();
-  cCutter::Stop();
-  delete Menu;
-  cControl::Shutdown();
-  delete Interface;
-  cOsdProvider::Shutdown();
-  Remotes.Clear();
-  Audios.Clear();
-  Skins.Clear();
-  SourceParams.Clear();
-  if (ShutdownHandler.GetExitCode() != 2) {
-     Setup.CurrentChannel = cDevice::CurrentChannel();
-     Setup.CurrentVolume  = cDevice::CurrentVolume();
-     Setup.Save();
-     }
-  cDevice::Shutdown();
-  EpgHandlers.Clear();
-  PluginManager.Shutdown(true);
-  cSchedules::Cleanup(true);
-  ReportEpgBugFixStats(true);
-  if (opts.WatchdogTimeout > 0)
-     dsyslog("max. latency time %d seconds", MaxLatencyTime);
-  if (LastSignal)
-     isyslog("caught signal %d", LastSignal);
-  if (ShutdownHandler.EmergencyExitRequested())
-     esyslog("emergency exit!");
-  isyslog("exiting, exit code %d", ShutdownHandler.GetExitCode());
-  if (SysLogLevel > 0)
-     closelog();
-  if (opts.HasStdin)
-     tcsetattr(STDIN_FILENO, TCSANOW, &opts.savedTm);
   return ShutdownHandler.GetExitCode();
 }
