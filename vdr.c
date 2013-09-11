@@ -71,6 +71,14 @@
 #include "videodir.h"
 #include "vdr_main.h"
 
+using namespace std;
+using namespace ADDON;
+
+CHelper_libXBMC_addon*   XBMC = NULL;
+string         g_strUserPath    = "";
+string         g_strClientPath  = "";
+ADDON_STATUS   m_CurStatus      = ADDON_STATUS_UNKNOWN;
+
 #define MINCHANNELWAIT        10 // seconds to wait between failed channel switchings
 #define ACTIVITYTIMEOUT       60 // seconds before starting housekeeping
 #define SHUTDOWNWAIT         300 // seconds to wait in user prompt before automatic shutdown
@@ -1656,4 +1664,76 @@ int main(int argc, char *argv[])
   signal(SIGALRM, SIG_DFL);
 
   return ShutdownHandler.GetExitCode();
+}
+
+extern "C" {
+
+void ADDON_ReadSettings(void)
+{
+}
+
+ADDON_STATUS ADDON_Create(void* hdl, void* props)
+{
+  if (!hdl || !props)
+    return ADDON_STATUS_UNKNOWN;
+
+  CONTENT_PROPERTIES* cprops = (CONTENT_PROPERTIES*)props;
+
+  try
+  {
+    XBMC = new CHelper_libXBMC_addon;
+    if (!XBMC || !XBMC->RegisterMe(hdl))
+      throw ADDON_STATUS_PERMANENT_FAILURE;
+  }
+  catch (ADDON_STATUS status)
+  {
+    delete XBMC;
+    XBMC = NULL;
+    return status;
+  }
+
+  m_CurStatus     = ADDON_STATUS_OK;
+  g_strUserPath   = cprops->strUserPath;
+  g_strClientPath = cprops->strClientPath;
+
+  ADDON_ReadSettings();
+  return m_CurStatus;
+}
+
+ADDON_STATUS ADDON_GetStatus()
+{
+  return m_CurStatus;
+}
+
+void ADDON_Destroy()
+{
+  m_CurStatus = ADDON_STATUS_UNKNOWN;
+}
+
+bool ADDON_HasSettings()
+{
+  return true;
+}
+
+unsigned int ADDON_GetSettings(ADDON_StructSetting *** sSet)
+{
+  return 0;
+}
+
+ADDON_STATUS ADDON_SetSetting(const char *settingName, const void *settingValue)
+{
+  if (!settingName || !settingValue)
+    return ADDON_STATUS_UNKNOWN;
+
+  return ADDON_STATUS_OK;
+}
+
+void ADDON_Stop()
+{
+}
+
+void ADDON_FreeSettings()
+{
+}
+
 }

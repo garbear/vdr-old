@@ -3,6 +3,9 @@
 #include <termios.h>
 #include <time.h>
 
+#include "xbmc/xbmc_addon_types.h"
+#include "xbmc/libXBMC_addon.h"
+
 class cEpgDataReader;
 class cOsdObject;
 class cSkin;
@@ -59,3 +62,7 @@ private:
   bool            m_IsInfoMenu;
   cSkin*          m_CurrentSkin;
 };
+
+extern std::string                   g_strUserPath;
+extern std::string                   g_strClientPath;
+extern ADDON::CHelper_libXBMC_addon* XBMC;
