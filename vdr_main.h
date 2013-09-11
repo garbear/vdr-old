@@ -5,16 +5,17 @@
 
 #include "xbmc/xbmc_addon_types.h"
 #include "xbmc/libXBMC_addon.h"
+#include "platform/threads/threads.h"
 
 class cEpgDataReader;
 class cOsdObject;
 class cSkin;
 class cPluginManager;
 
-class cVDRDaemon
+class cVDRDaemon : public PLATFORM::CThread
 {
 public:
-  cVDRDaemon(void);
+  static cVDRDaemon& Get(void);
   virtual ~cVDRDaemon(void);
 
   struct termios m_savedTm;
@@ -43,8 +44,10 @@ public:
 
   int ReadCommandLineOptions(int argc, char *argv[]);
   int Init(void);
-  void Process(void);
+  void* Process(void);
+  void Iterate(void);
 private:
+  cVDRDaemon(void);
   bool SetUser(const char *UserName, bool UserDump);
   bool DropCaps(void);
   bool SetKeepCaps(bool On);

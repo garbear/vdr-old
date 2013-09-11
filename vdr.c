@@ -73,6 +73,7 @@
 
 using namespace std;
 using namespace ADDON;
+using namespace PLATFORM;
 
 CHelper_libXBMC_addon*   XBMC = NULL;
 string         g_strUserPath    = "";
@@ -99,6 +100,12 @@ ADDON_STATUS   m_CurStatus      = ADDON_STATUS_UNKNOWN;
 #define EXIT(v) { ShutdownHandler.Exit(v); goto Exit; }
 
 static int LastSignal = 0;
+
+cVDRDaemon& cVDRDaemon::Get(void)
+{
+  static cVDRDaemon _instance;
+  return _instance;
+}
 
 cVDRDaemon::cVDRDaemon(void)
 {
@@ -924,7 +931,7 @@ int cVDRDaemon::Init(void)
   return 0;
 }
 
-void cVDRDaemon::Process(void)
+void cVDRDaemon::Iterate(void)
 {
   // Main program loop:
 #define DELETE_MENU ((m_IsInfoMenu &= (m_Menu == NULL)), delete m_Menu, m_Menu = NULL)
@@ -1593,17 +1600,17 @@ Exit:
 
 int main(int argc, char *argv[])
 {
-  cVDRDaemon daemon;
+  cVDRDaemon* daemon = &cVDRDaemon::Get();
 
   // Initiate locale:
   setlocale(LC_ALL, "");
 
-  daemon.ReadCommandLineOptions(argc, argv);
+  daemon->ReadCommandLineOptions(argc, argv);
 
   isyslog("VDR version %s started", VDRVERSION);
-  if (daemon.m_StartedAsRoot && daemon.m_VdrUser)
-    isyslog("switched to user '%s'", daemon.m_VdrUser);
-  if (daemon.m_DaemonMode)
+  if (daemon->m_StartedAsRoot && daemon->m_VdrUser)
+    isyslog("switched to user '%s'", daemon->m_VdrUser);
+  if (daemon->m_DaemonMode)
     dsyslog("running as daemon (tid=%d)", cThread::ThreadId());
   cThread::SetMainThreadId();
 
@@ -1631,9 +1638,9 @@ int main(int argc, char *argv[])
 #endif
 
   // Initialize internationalization:
-  I18nInitialize(daemon.m_LocaleDirectory);
+  I18nInitialize(daemon->m_LocaleDirectory);
 
-  if (daemon.Init() != 0)
+  if (daemon->Init() != 0)
     return -2;
 
   // Signal handlers:
@@ -1641,19 +1648,19 @@ int main(int argc, char *argv[])
   if (signal(SIGINT,  SignalHandler) == SIG_IGN) signal(SIGINT,  SIG_IGN);
   if (signal(SIGTERM, SignalHandler) == SIG_IGN) signal(SIGTERM, SIG_IGN);
   if (signal(SIGPIPE, SignalHandler) == SIG_IGN) signal(SIGPIPE, SIG_IGN);
-  if (daemon.m_WatchdogTimeout > 0)
+  if (daemon->m_WatchdogTimeout > 0)
     if (signal(SIGALRM, Watchdog)    == SIG_IGN) signal(SIGALRM, SIG_IGN);
 
   // Watchdog:
-  if (daemon.m_WatchdogTimeout > 0)
+  if (daemon->m_WatchdogTimeout > 0)
   {
-    dsyslog("setting watchdog timer to %d seconds", daemon.m_WatchdogTimeout);
-    alarm(daemon.m_WatchdogTimeout); // Initial watchdog timer start
+    dsyslog("setting watchdog timer to %d seconds", daemon->m_WatchdogTimeout);
+    alarm(daemon->m_WatchdogTimeout); // Initial watchdog timer start
   }
 
   while (!ShutdownHandler.DoExit())
   {
-    daemon.Process();
+    daemon->Iterate();
   }
 
   // Reset all signal handlers to default before Interface gets deleted:
@@ -1664,6 +1671,15 @@ int main(int argc, char *argv[])
   signal(SIGALRM, SIG_DFL);
 
   return ShutdownHandler.GetExitCode();
+}
+
+void* cVDRDaemon::Process(void)
+{
+  while (!ShutdownHandler.DoExit() && IsRunning())
+  {
+    Iterate();
+  }
+  return NULL;
 }
 
 extern "C" {
@@ -1684,6 +1700,10 @@ ADDON_STATUS ADDON_Create(void* hdl, void* props)
     XBMC = new CHelper_libXBMC_addon;
     if (!XBMC || !XBMC->RegisterMe(hdl))
       throw ADDON_STATUS_PERMANENT_FAILURE;
+
+    cVDRDaemon* daemon = &cVDRDaemon::Get();
+    if (daemon->Init() != 0 && !daemon->CreateThread(true))
+      throw ADDON_STATUS_UNKNOWN;
   }
   catch (ADDON_STATUS status)
   {
@@ -1707,6 +1727,7 @@ ADDON_STATUS ADDON_GetStatus()
 
 void ADDON_Destroy()
 {
+  cVDRDaemon::Get().StopThread();
   m_CurStatus = ADDON_STATUS_UNKNOWN;
 }
 
@@ -1730,6 +1751,7 @@ ADDON_STATUS ADDON_SetSetting(const char *settingName, const void *settingValue)
 
 void ADDON_Stop()
 {
+  cVDRDaemon::Get().StopThread();
 }
 
 void ADDON_FreeSettings()
