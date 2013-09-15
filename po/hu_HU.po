@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: VDR 2.0.0\n"
 "Report-Msgid-Bugs-To: <vdr-bugs@tvdr.de>\n"
-"POT-Creation-Date: 2013-03-04 14:46+0100\n"
+"POT-Creation-Date: 2013-09-16 01:08+0200\n"
 "PO-Revision-Date: 2013-03-01 19:22+0200\n"
 "Last-Translator: István Füley <ifuley@tigercomp.ro>\n"
 "Language-Team: Hungarian <vdr@linuxtv.org>\n"
@@ -320,9 +320,26 @@ msgstr "Korábban nem sugárzott"
 msgid "Content$Live Broadcast"
 msgstr "Élő közvetítés"
 
-#, c-format
-msgid "ParentalRating$from %d"
-msgstr "%d éven felülieknek"
+msgid "Content$Movie"
+msgstr ""
+
+msgid "Content$News"
+msgstr ""
+
+msgid "Content$Children"
+msgstr ""
+
+msgid "Content$Education"
+msgstr ""
+
+msgid "Content$Series"
+msgstr ""
+
+msgid "Content$Music"
+msgstr ""
+
+msgid "Content$Religious"
+msgstr ""
 
 msgid "No title"
 msgstr "cím nélkül"
@@ -1402,3 +1419,6 @@ msgstr "Lemez"
 
 msgid "free"
 msgstr "szabad"
+
+#~ msgid "ParentalRating$from %d"
+#~ msgstr "%d éven felülieknek"

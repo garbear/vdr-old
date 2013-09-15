@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: VDR 2.0.0\n"
 "Report-Msgid-Bugs-To: <vdr-bugs@tvdr.de>\n"
-"POT-Creation-Date: 2013-03-04 14:46+0100\n"
+"POT-Creation-Date: 2013-09-16 01:08+0200\n"
 "PO-Revision-Date: 2013-02-09 16:00+0100\n"
 "Last-Translator: Yarema aka Knedlyk <yupadmin@gmail.com>\n"
 "Language-Team: Ukrainian <vdr@linuxtv.org>\n"
@@ -317,9 +317,26 @@ msgstr "Неопубліковане"
 msgid "Content$Live Broadcast"
 msgstr "Трансляція"
 
-#, c-format
-msgid "ParentalRating$from %d"
-msgstr "з %d"
+msgid "Content$Movie"
+msgstr ""
+
+msgid "Content$News"
+msgstr ""
+
+msgid "Content$Children"
+msgstr ""
+
+msgid "Content$Education"
+msgstr ""
+
+msgid "Content$Series"
+msgstr ""
+
+msgid "Content$Music"
+msgstr ""
+
+msgid "Content$Religious"
+msgstr ""
 
 msgid "No title"
 msgstr "Без назви"
@@ -1399,3 +1416,6 @@ msgstr "Диск"
 
 msgid "free"
 msgstr "вільно"
+
+#~ msgid "ParentalRating$from %d"
+#~ msgstr "з %d"

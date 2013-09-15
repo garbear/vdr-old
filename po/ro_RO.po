@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: VDR 2.0.0\n"
 "Report-Msgid-Bugs-To: <vdr-bugs@tvdr.de>\n"
-"POT-Creation-Date: 2013-03-04 14:46+0100\n"
+"POT-Creation-Date: 2013-09-16 01:08+0200\n"
 "PO-Revision-Date: 2013-02-09 23:01+0100\n"
 "Last-Translator: Lucian Muresan <lucianm@users.sorceforge.net>\n"
 "Language-Team: Romanian <vdr@linuxtv.org>\n"
@@ -318,9 +318,26 @@ msgstr "Nepublicat"
 msgid "Content$Live Broadcast"
 msgstr "Transmisie în direct"
 
-#, c-format
-msgid "ParentalRating$from %d"
-msgstr "de la %d ani"
+msgid "Content$Movie"
+msgstr ""
+
+msgid "Content$News"
+msgstr ""
+
+msgid "Content$Children"
+msgstr ""
+
+msgid "Content$Education"
+msgstr ""
+
+msgid "Content$Series"
+msgstr ""
+
+msgid "Content$Music"
+msgstr ""
+
+msgid "Content$Religious"
+msgstr ""
 
 msgid "No title"
 msgstr "Fără titlu"
@@ -1400,3 +1417,6 @@ msgstr "Disc"
 
 msgid "free"
 msgstr "liber"
+
+#~ msgid "ParentalRating$from %d"
+#~ msgstr "de la %d ani"

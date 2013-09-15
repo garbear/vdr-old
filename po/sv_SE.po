@@ -11,7 +11,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: VDR 2.0.0\n"
 "Report-Msgid-Bugs-To: <vdr-bugs@tvdr.de>\n"
-"POT-Creation-Date: 2013-03-04 14:46+0100\n"
+"POT-Creation-Date: 2013-09-16 01:08+0200\n"
 "PO-Revision-Date: 2013-02-18 17:04+0100\n"
 "Last-Translator: Richard Lithvall <r-vdr@boomer.se>\n"
 "Language-Team: Swedish <vdr@linuxtv.org>\n"
@@ -320,9 +320,26 @@ msgstr "Saknas"
 msgid "Content$Live Broadcast"
 msgstr "Direktsändning"
 
-#, c-format
-msgid "ParentalRating$from %d"
-msgstr "från %d"
+msgid "Content$Movie"
+msgstr ""
+
+msgid "Content$News"
+msgstr ""
+
+msgid "Content$Children"
+msgstr ""
+
+msgid "Content$Education"
+msgstr ""
+
+msgid "Content$Series"
+msgstr ""
+
+msgid "Content$Music"
+msgstr ""
+
+msgid "Content$Religious"
+msgstr ""
 
 msgid "No title"
 msgstr "Ingen titel"
@@ -1402,3 +1419,6 @@ msgstr "Disk"
 
 msgid "free"
 msgstr "ledigt"
+
+#~ msgid "ParentalRating$from %d"
+#~ msgstr "från %d"

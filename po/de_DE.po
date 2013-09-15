@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: VDR 2.0.0\n"
 "Report-Msgid-Bugs-To: <vdr-bugs@tvdr.de>\n"
-"POT-Creation-Date: 2013-03-04 14:46+0100\n"
+"POT-Creation-Date: 2013-09-16 01:08+0200\n"
 "PO-Revision-Date: 2010-01-16 16:46+0100\n"
 "Last-Translator: Klaus Schmidinger <vdr@tvdr.de>\n"
 "Language-Team: German <vdr@linuxtv.org>\n"
@@ -316,9 +316,26 @@ msgstr "Unveröffentlicht"
 msgid "Content$Live Broadcast"
 msgstr "Live-Sendung"
 
-#, c-format
-msgid "ParentalRating$from %d"
-msgstr "ab %d"
+msgid "Content$Movie"
+msgstr ""
+
+msgid "Content$News"
+msgstr ""
+
+msgid "Content$Children"
+msgstr ""
+
+msgid "Content$Education"
+msgstr ""
+
+msgid "Content$Series"
+msgstr ""
+
+msgid "Content$Music"
+msgstr ""
+
+msgid "Content$Religious"
+msgstr ""
 
 msgid "No title"
 msgstr "Kein Titel"
@@ -1398,3 +1415,6 @@ msgstr "Disk"
 
 msgid "free"
 msgstr "frei"
+
+#~ msgid "ParentalRating$from %d"
+#~ msgstr "ab %d"

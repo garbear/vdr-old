@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: VDR 2.0.0\n"
 "Report-Msgid-Bugs-To: <vdr-bugs@tvdr.de>\n"
-"POT-Creation-Date: 2013-03-04 14:46+0100\n"
+"POT-Creation-Date: 2013-09-16 01:08+0200\n"
 "PO-Revision-Date: 2008-03-09 12:59+0100\n"
 "Last-Translator: Marek Nazarko <mnazarko@gmail.com>\n"
 "Language-Team: Polish <vdr@linuxtv.org>\n"
@@ -318,9 +318,26 @@ msgstr "Niepublikowane"
 msgid "Content$Live Broadcast"
 msgstr "Transmisje na ¿ywo"
 
-#, c-format
-msgid "ParentalRating$from %d"
-msgstr "od %d"
+msgid "Content$Movie"
+msgstr ""
+
+msgid "Content$News"
+msgstr ""
+
+msgid "Content$Children"
+msgstr ""
+
+msgid "Content$Education"
+msgstr ""
+
+msgid "Content$Series"
+msgstr ""
+
+msgid "Content$Music"
+msgstr ""
+
+msgid "Content$Religious"
+msgstr ""
 
 msgid "No title"
 msgstr "Bez tytu³u"
@@ -1400,3 +1417,6 @@ msgstr "Dysk"
 
 msgid "free"
 msgstr "wolnego"
+
+#~ msgid "ParentalRating$from %d"
+#~ msgstr "od %d"

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: VDR 2.0.0\n"
 "Report-Msgid-Bugs-To: <vdr-bugs@tvdr.de>\n"
-"POT-Creation-Date: 2013-03-04 14:46+0100\n"
+"POT-Creation-Date: 2013-09-16 01:08+0200\n"
 "PO-Revision-Date: 2010-10-30 11:55+0200\n"
 "Last-Translator: Valdemaras Pipiras <varas@ambernet.lt>\n"
 "Language-Team: Lithuanian <vdr@linuxtv.org>\n"
@@ -316,9 +316,26 @@ msgstr "Nepublikuota"
 msgid "Content$Live Broadcast"
 msgstr "Tiesioginė transliacija"
 
-#, c-format
-msgid "ParentalRating$from %d"
-msgstr "nuo %d"
+msgid "Content$Movie"
+msgstr ""
+
+msgid "Content$News"
+msgstr ""
+
+msgid "Content$Children"
+msgstr ""
+
+msgid "Content$Education"
+msgstr ""
+
+msgid "Content$Series"
+msgstr ""
+
+msgid "Content$Music"
+msgstr ""
+
+msgid "Content$Religious"
+msgstr ""
 
 msgid "No title"
 msgstr "Be pavadinimo"
@@ -1398,3 +1415,6 @@ msgstr "Diskas"
 
 msgid "free"
 msgstr "laisva"
+
+#~ msgid "ParentalRating$from %d"
+#~ msgstr "nuo %d"

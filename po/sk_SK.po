@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: VDR 2.0.0\n"
 "Report-Msgid-Bugs-To: <vdr-bugs@tvdr.de>\n"
-"POT-Creation-Date: 2013-02-03 16:46+0100\n"
+"POT-Creation-Date: 2013-09-16 01:08+0200\n"
 "PO-Revision-Date: 2013-03-04 21:24+0100\n"
 "Last-Translator: Milan Hrala <hrala.milan@gmail.com>\n"
 "Language-Team: Slovak <vdr@linuxtv.org>\n"
@@ -316,9 +316,26 @@ msgstr "Nepublikované"
 msgid "Content$Live Broadcast"
 msgstr "®ivé vysielanie"
 
-#, c-format
-msgid "ParentalRating$from %d"
-msgstr "od %d"
+msgid "Content$Movie"
+msgstr ""
+
+msgid "Content$News"
+msgstr ""
+
+msgid "Content$Children"
+msgstr ""
+
+msgid "Content$Education"
+msgstr ""
+
+msgid "Content$Series"
+msgstr ""
+
+msgid "Content$Music"
+msgstr ""
+
+msgid "Content$Religious"
+msgstr ""
 
 msgid "No title"
 msgstr "Bez názvu"
@@ -1398,3 +1415,6 @@ msgstr "Disk"
 
 msgid "free"
 msgstr "voµné"
+
+#~ msgid "ParentalRating$from %d"
+#~ msgstr "od %d"
