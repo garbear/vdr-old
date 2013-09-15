@@ -945,6 +945,20 @@ cChannel *cChannels::GetByChannelID(tChannelID ChannelID, bool TryWithoutRid, bo
      }
   return NULL;
 }
+
+cChannel *cChannels::GetByChannelID(int nid, int tid, int sid)
+{
+  cList<cHashObject> *list = channelsHashSid.GetList(sid);
+  if (list) {
+     for (cHashObject *hobj = list->First(); hobj; hobj = list->Next(hobj)) {
+         cChannel *channel = (cChannel *)hobj->Object();
+         if (channel->Sid() == sid && channel->Tid() == tid && channel->Nid() == nid)
+            return channel;
+         }
+     }
+  return NULL;
+}
+
 cChannel *cChannels::GetByTransponderID(tChannelID ChannelID)
 {
   int source = ChannelID.Source();

@@ -122,6 +122,9 @@ enum DescriptorTag {
                AdaptationFieldDataDescriptorTag = 0x70,
                ServiceIdentifierDescriptorTag = 0x71,
                ServiceAvailabilityDescriptorTag = 0x72,
+               DishRatingDescriptorTag = 0x89,
+               DishShortEventDescriptorTag = 0x91,
+               DishExtendedEventDescriptorTag = 0x92,
   // defined by ETSI (EN 300 468) v 1.7.1
                DefaultAuthorityDescriptorTag = 0x73,
                RelatedContentDescriptorTag = 0x74,

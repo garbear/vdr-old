@@ -17,6 +17,7 @@
 #include <stdlib.h> // for broadcaster stupidity workaround
 #include <string.h>
 #include "descriptor.h"
+#include "dish.h"
 
 namespace SI {
 
@@ -622,6 +623,10 @@ Descriptor *Descriptor::getDescriptor(CharArray da, DescriptorTagDomain domain, 
             break;
          case DefaultAuthorityDescriptorTag:
             d=new DefaultAuthorityDescriptor();
+            break;
+         case DishShortEventDescriptorTag:
+         case DishExtendedEventDescriptorTag:
+            d=new DishDescriptor();
             break;
 
          //note that it is no problem to implement one

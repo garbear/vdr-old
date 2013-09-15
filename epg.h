@@ -19,6 +19,7 @@
 #include "tools.h"
 
 #define MAXEPGBUGFIXLEVEL 3
+#define VDR_RATINGS_PATCHED_V2
 
 enum { MaxEventContents = 4 };
 
@@ -77,7 +78,8 @@ private:
   uchar tableID;           // Table ID this event came from
   uchar version;           // Version number of section this event came from
   uchar runningStatus;     // 0=undefined, 1=not running, 2=starts in a few seconds, 3=pausing, 4=running
-  uchar parentalRating;    // Parental rating of this event
+  uint16_t parentalRating; // Parental rating of this event
+  uint8_t starRating;      // Dish/BEV star rating
   char *title;             // Title of this event
   char *shortText;         // Short description of this event (typically the episode name in case of a series)
   char *description;       // Description of this event
@@ -103,6 +105,7 @@ public:
   const cComponents *Components(void) const { return components; }
   uchar Contents(int i = 0) const { return (0 <= i && i < MaxEventContents) ? contents[i] : uchar(0); }
   int ParentalRating(void) const { return parentalRating; }
+  uint8_t StarRating(void) const { return starRating; }
   time_t StartTime(void) const { return startTime; }
   time_t EndTime(void) const { return startTime + duration; }
   int Duration(void) const { return duration; }
@@ -113,6 +116,7 @@ public:
   bool IsRunning(bool OrAboutToStart = false) const;
   static const char *ContentToString(uchar Content);
   cString GetParentalRatingString(void) const;
+  cString GetStarRatingString(void) const;
   cString GetDateString(void) const;
   cString GetTimeString(void) const;
   cString GetEndTimeString(void) const;
@@ -127,6 +131,7 @@ public:
   void SetComponents(cComponents *Components); // Will take ownership of Components!
   void SetContents(uchar *Contents);
   void SetParentalRating(int ParentalRating);
+  void SetStarRating(uint8_t StarRating) { starRating = StarRating; }
   void SetStartTime(time_t StartTime);
   void SetDuration(int Duration);
   void SetVps(time_t Vps);

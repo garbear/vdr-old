@@ -124,6 +124,7 @@ cEvent::cEvent(tEventID EventID)
   components = NULL;
   memset(contents, 0, sizeof(contents));
   parentalRating = 0;
+  starRating = 0;
   startTime = 0;
   duration = 0;
   vps = 0;
@@ -394,6 +395,20 @@ const char *cEvent::ContentToString(uchar Content)
            default: ;
            }
          break;
+    case ecgUserDefined:
+         switch (Content & 0x0F) {
+           //case 0x00: return tr("Content$"); // ???
+           case 0x01: return tr("Content$Movie");
+           case 0x02: return tr("Content$Sports");
+           case 0x03: return tr("Content$News");
+           case 0x04: return tr("Content$Children");
+           case 0x05: return tr("Content$Education");
+           case 0x06: return tr("Content$Series");
+           case 0x07: return tr("Content$Music");
+           case 0x08: return tr("Content$Religious");
+           default: ;
+           }
+         break;   
     default: ;
     }
   return "";
@@ -401,9 +416,31 @@ const char *cEvent::ContentToString(uchar Content)
 
 cString cEvent::GetParentalRatingString(void) const
 {
-  if (parentalRating)
-     return cString::sprintf(tr("ParentalRating$from %d"), parentalRating);
-  return NULL;
+  static const char *const ratings[8] =  { "", "G", "PG", "PG-13", "R", "NR/AO", "", "NC-17" };
+  char buffer[19];
+  buffer[0] = 0;
+  strcpy(buffer, ratings[(parentalRating >> 10) & 0x07]);
+  if (parentalRating & 0x37F) {
+     strcat(buffer, " [");
+     if (parentalRating & 0x0230)
+        strcat(buffer, "V,");
+     if (parentalRating & 0x000A)
+        strcat(buffer, "L,");
+     if (parentalRating & 0x0044)
+        strcat(buffer, "N,");
+     if (parentalRating & 0x0101)
+        strcat(buffer, "SC,");
+     if (char *s = strrchr(buffer, ','))
+        s[0] = ']';    
+     }
+
+  return isempty(buffer) ? NULL : buffer;
+}
+
+cString cEvent::GetStarRatingString(void) const
+{
+  static const char *const critiques[8] = { "", "*", "*+", "**", "**+", "***", "***+", "****" };
+  return critiques[starRating & 0x07];
 }
 
 cString cEvent::GetDateString(void) const
@@ -448,8 +485,8 @@ void cEvent::Dump(FILE *f, const char *Prefix, bool InfoOnly) const
             fprintf(f, " %02X", Contents(i));
         fprintf(f, "\n");
         }
-     if (parentalRating)
-        fprintf(f, "%sR %d\n", Prefix, parentalRating);
+     if (parentalRating || starRating)
+        fprintf(f, "%sR %d %d\n", Prefix, parentalRating, starRating);
      if (components) {
         for (int i = 0; i < components->NumComponents(); i++) {
             tComponent *p = components->Component(i);
@@ -488,7 +525,13 @@ bool cEvent::Parse(char *s)
                     }
               }
               break;
-    case 'R': SetParentalRating(atoi(t));
+    case 'R': {
+                int ParentalRating = 0;
+                int StarRating = 0;
+                sscanf(t, "%d %d", &ParentalRating, &StarRating);
+                SetParentalRating(ParentalRating);
+                SetStarRating(StarRating);
+              }
               break;
     case 'X': if (!components)
                  components = new cComponents;
@@ -1313,7 +1356,7 @@ bool cSchedules::Read(FILE *f)
 
 cSchedule *cSchedules::AddSchedule(tChannelID ChannelID)
 {
-  ChannelID.ClrRid();
+  //ChannelID.ClrRid();
   cSchedule *p = (cSchedule *)GetSchedule(ChannelID);
   if (!p) {
      p = new cSchedule(ChannelID);
@@ -1327,7 +1370,7 @@ cSchedule *cSchedules::AddSchedule(tChannelID ChannelID)
 
 const cSchedule *cSchedules::GetSchedule(tChannelID ChannelID) const
 {
-  ChannelID.ClrRid();
+  //ChannelID.ClrRid();
   for (cSchedule *p = First(); p; p = Next(p)) {
       if (p->ChannelID() == ChannelID)
          return p;

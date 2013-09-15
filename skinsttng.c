@@ -696,6 +696,16 @@ void cSkinSTTNGDisplayMenu::SetEvent(const cEvent *Event)
      osd->DrawEllipse  (x1, yb,             x2, yb + Roundness, frameColor, -2);
      SetTextScrollbar();
      }
+  y += textScroller.Height() + font->Height();
+  if (Event->StarRating()) {
+     cString buffer = cString::sprintf(" %s ", *Event->GetStarRatingString());
+     const cFont *font = cFont::GetFont(fontSml);
+     int w = font->Width(buffer);
+     osd->DrawText(x4 - w, y, buffer, Theme.Color(clrMenuEventVps), frameColor, font, w);
+     int yb = y + font->Height();
+     osd->DrawRectangle(x5, y, x6 - 1, yb - 1, frameColor);
+     osd->DrawEllipse  (x6, y, x7 - 1, yb - 1, frameColor, 5);
+     }
 }
 
 void cSkinSTTNGDisplayMenu::SetRecording(const cRecording *Recording)
@@ -740,6 +750,16 @@ void cSkinSTTNGDisplayMenu::SetRecording(const cRecording *Recording)
      osd->DrawRectangle(x1, yt,             x2, yb,             frameColor);
      osd->DrawEllipse  (x1, yb,             x2, yb + Roundness, frameColor, -2);
      SetTextScrollbar();
+     }
+  y += textScroller.Height() + font->Height();
+  if (Info->GetEvent()->StarRating()) {
+     cString buffer = cString::sprintf(" %s ", *Info->GetEvent()->GetStarRatingString());
+     const cFont *font = cFont::GetFont(fontSml);
+     int w = font->Width(buffer);
+     osd->DrawText(x4 - w, y, buffer, Theme.Color(clrMenuEventVps), frameColor, font, w);
+     int yb = y + font->Height();
+     osd->DrawRectangle(x5, y, x6 - 1, yb - 1, frameColor);
+     osd->DrawEllipse  (x6, y, x7 - 1, yb - 1, frameColor, 5);
      }
 }
 

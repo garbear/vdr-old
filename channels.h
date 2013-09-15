@@ -221,6 +221,7 @@ public:
   cChannel *GetByNumber(int Number, int SkipGap = 0);
   cChannel *GetByServiceID(int Source, int Transponder, unsigned short ServiceID);
   cChannel *GetByChannelID(tChannelID ChannelID, bool TryWithoutRid = false, bool TryWithoutPolarization = false);
+  cChannel *GetByChannelID(int nid, int tid, int sid);
   cChannel *GetByTransponderID(tChannelID ChannelID);
   int BeingEdited(void) { return beingEdited; }
   void IncBeingEdited(void) { beingEdited++; }

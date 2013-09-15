@@ -13,7 +13,7 @@ RANLIB   ?= ranlib
 
 ### The object files (add further files here):
 
-OBJS = util.o si.o section.o descriptor.o
+OBJS = util.o si.o section.o descriptor.o dish.o
 
 ### Implicit rules:
 
@@ -41,4 +41,5 @@ clean:
 
 dist:
 	tar cvzf libsi.tar.gz -C .. libsi/util.c libsi/si.c libsi/section.c libsi/descriptor.c \
-   libsi/util.h libsi/si.h libsi/section.h libsi/descriptor.h libsi/headers.h libsi/Makefile libsi/gendescr
+	libsi/util.h libsi/si.h libsi/section.h libsi/descriptor.h libsi/headers.h libsi/Makefile libsi/gendescr \
+	dish.c

@@ -381,6 +381,13 @@ void cSkinClassicDisplayMenu::SetEvent(const cEvent *Event)
      textScroller.Set(osd, x1, y, x2 - x1, y3 - y, Event->Description(), font, Theme.Color(clrMenuEventDescription), Theme.Color(clrBackground));
      SetTextScrollbar();
      }
+  y += textScroller.Height() + font->Height();  
+  if (Event->StarRating()) {
+     cString buffer = cString::sprintf(" %s ", *Event->GetStarRatingString());
+     const cFont *font = cFont::GetFont(fontSml);
+     int w = font->Width(buffer);
+     osd->DrawText(x3 - w, y, buffer, Theme.Color(clrMenuEventVpsFg), Theme.Color(clrMenuEventVpsBg), font, w);
+     }
 }
 
 void cSkinClassicDisplayMenu::SetRecording(const cRecording *Recording)
@@ -415,6 +422,13 @@ void cSkinClassicDisplayMenu::SetRecording(const cRecording *Recording)
   if (!isempty(Info->Description())) {
      textScroller.Set(osd, x1, y, x2 - x1, y3 - y, Info->Description(), font, Theme.Color(clrMenuEventDescription), Theme.Color(clrBackground));
      SetTextScrollbar();
+     }
+  y += textScroller.Height() + font->Height();
+  if (Info->GetEvent()->StarRating()) {
+     cString buffer = cString::sprintf(" %s ", *Info->GetEvent()->GetStarRatingString());
+     const cFont *font = cFont::GetFont(fontSml);
+     int w = font->Width(buffer);
+     osd->DrawText(x3 - w, y, buffer, Theme.Color(clrMenuEventVpsFg), Theme.Color(clrMenuEventVpsBg), font, w);
      }
 }
 

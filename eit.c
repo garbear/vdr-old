@@ -17,6 +17,7 @@
 #include "i18n.h"
 #include "libsi/section.h"
 #include "libsi/descriptor.h"
+#include "libsi/dish.h"
 
 #define VALID_TIME (31536000 * 2) // two years
 
@@ -39,8 +40,7 @@ cEIT::cEIT(cSchedules *Schedules, int Source, u_char Tid, const u_char *Data, bo
 
   if (!Channels.Lock(false, 10))
      return;
-  tChannelID channelID(Source, getOriginalNetworkId(), getTransportStreamId(), getServiceId());
-  cChannel *channel = Channels.GetByChannelID(channelID, true);
+  cChannel *channel = Channels.GetByChannelID(getOriginalNetworkId(), getTransportStreamId(), getServiceId());
   if (!channel || EpgHandlers.IgnoreChannel(channel)) {
      Channels.Unlock();
      return;
@@ -121,6 +121,8 @@ cEIT::cEIT(cSchedules *Schedules, int Source, u_char Tid, const u_char *Data, bo
       int LanguagePreferenceExt = -1;
       bool UseExtendedEventDescriptor = false;
       SI::Descriptor *d;
+      SI::DishDescriptor *DishExtendedEventDescriptor = NULL;
+      SI::DishDescriptor *DishShortEventDescriptor = NULL;
       SI::ExtendedEventDescriptors *ExtendedEventDescriptors = NULL;
       SI::ShortEventDescriptor *ShortEventDescriptor = NULL;
       cLinkChannels *LinkChannels = NULL;
@@ -140,6 +142,26 @@ cEIT::cEIT(cSchedules *Schedules, int Source, u_char Tid, const u_char *Data, bo
                     }
                  if (eed->getDescriptorNumber() == eed->getLastDescriptorNumber())
                     UseExtendedEventDescriptor = false;
+                 }
+                 break;
+            case SI::DishExtendedEventDescriptorTag: {
+                 SI::DishDescriptor *deed = (SI::DishDescriptor *)d;
+                 deed->Decompress(Tid);
+                 if (!DishExtendedEventDescriptor) {
+                    DishExtendedEventDescriptor = deed;
+                    d = NULL; // so that it is not deleted
+                    }
+                 handledExternally = true; 
+                 }
+                 break;
+            case SI::DishShortEventDescriptorTag: {
+                 SI::DishDescriptor *dsed = (SI::DishDescriptor *)d;
+                 dsed->Decompress(Tid);
+                 if (!DishShortEventDescriptor) {
+                   DishShortEventDescriptor = dsed;
+                   d = NULL; // so that it is not deleted
+                   }
+                 handledExternally = true;
                  }
                  break;
             case SI::ShortEventDescriptorTag: {
@@ -165,6 +187,7 @@ cEIT::cEIT(cSchedules *Schedules, int Source, u_char Tid, const u_char *Data, bo
                  EpgHandlers.SetContents(pEvent, Contents);
                  }
                  break;
+/*
             case SI::ParentalRatingDescriptorTag: {
                  int LanguagePreferenceRating = -1;
                  SI::ParentalRatingDescriptor *prd = (SI::ParentalRatingDescriptor *)d;
@@ -186,6 +209,17 @@ cEIT::cEIT(cSchedules *Schedules, int Source, u_char Tid, const u_char *Data, bo
                      }
                  }
                  break;
+*/
+            case SI::DishRatingDescriptorTag:
+                 if (d->getLength() == 4) {
+                    uint16_t rating = d->getData().TwoBytes(2);
+                    uint16_t newRating = (rating >> 10) & 0x07;
+                    if (newRating == 0) newRating = 5;
+                    if (newRating == 6) newRating = 0;
+                    pEvent->SetParentalRating((newRating << 10) | (rating & 0x3FF));
+                    pEvent->SetStarRating((rating >> 13) & 0x07);
+                    }
+                 break;                  
             case SI::PDCDescriptorTag: {
                  SI::PDCDescriptor *pd = (SI::PDCDescriptor *)d;
                  t.tm_isdst = -1; // makes sure mktime() will determine the correct DST setting
@@ -269,6 +303,13 @@ cEIT::cEIT(cSchedules *Schedules, int Source, u_char Tid, const u_char *Data, bo
           }
 
       if (!rEvent) {
+         if (DishShortEventDescriptor) {
+            pEvent->SetTitle(DishShortEventDescriptor->getText());
+            }
+         if (DishExtendedEventDescriptor) {
+            pEvent->SetDescription(DishExtendedEventDescriptor->getText());
+            pEvent->SetShortText(DishExtendedEventDescriptor->getShortText());
+            }
          if (ShortEventDescriptor) {
             char buffer[Utf8BufSize(256)];
             EpgHandlers.SetTitle(pEvent, ShortEventDescriptor->name.getText(buffer, sizeof(buffer)));
@@ -285,6 +326,8 @@ cEIT::cEIT(cSchedules *Schedules, int Source, u_char Tid, const u_char *Data, bo
          else
             EpgHandlers.SetDescription(pEvent, NULL);
          }
+      delete DishExtendedEventDescriptor;
+      delete DishShortEventDescriptor;
       delete ExtendedEventDescriptors;
       delete ShortEventDescriptor;
 
@@ -368,7 +411,9 @@ time_t cEitFilter::disableUntil = 0;
 
 cEitFilter::cEitFilter(void)
 {
-  Set(0x12, 0x40, 0xC0);  // event info now&next actual/other TS (0x4E/0x4F), future actual/other TS (0x5X/0x6X)
+  Set(0x12, 0x00, 0x00);
+  Set(0x0300, 0x00, 0x00); // Dish Network EEPG
+  Set(0x0441, 0x00, 0x00); // Bell ExpressVU EEPG 
   Set(0x14, 0x70);        // TDT
 }
 
@@ -386,8 +431,10 @@ void cEitFilter::Process(u_short Pid, u_char Tid, const u_char *Data, int Length
         return;
      }
   switch (Pid) {
+    case 0x0300:
+    case 0x0441:
     case 0x12: {
-         if (Tid >= 0x4E && Tid <= 0x6F) {
+         if (Tid >= 0x4E) {
             cSchedulesLock SchedulesLock(true, 10);
             cSchedules *Schedules = (cSchedules *)cSchedules::Schedules(SchedulesLock);
             if (Schedules)
