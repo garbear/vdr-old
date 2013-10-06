@@ -72,12 +72,14 @@ endif
 
 SILIB    = $(LSIDIR)/libsi.a
 
-OBJS = audio.o channels.o ci.o config.o cutter.o device.o diseqc.o dvbdevice.o dvbci.o\
+COBJS = android_sort.o android_strchrnul.o android_getline.o android_timegm.o
+
+CXXOBJS = audio.o channels.o ci.o config.o cutter.o device.o diseqc.o dvbdevice.o dvbci.o\
        dvbplayer.o dvbspu.o dvbsubtitle.o eit.o eitscan.o epg.o filter.o font.o i18n.o interface.o keys.o\
        lirc.o menu.o menuitems.o nit.o osdbase.o osd.o pat.o player.o plugin.o\
        receiver.o recorder.o recording.o remote.o remux.o ringbuffer.o sdt.o sections.o shutdown.o\
        skinclassic.o skinlcars.o skins.o skinsttng.o sourceparams.o sources.o spu.o status.o svdrp.o themes.o thread.o\
-       timers.o tools.o transfer.o vdr.o videodir.o android_sort.o android_strchrnul.o android_getline.o android_timegm.o
+       timers.o tools.o transfer.o vdr.o videodir.o
 
 DEFINES  += $(CDEFINES)
 INCLUDES += $(CINCLUDES)
@@ -122,22 +124,25 @@ all: vdr libvdr.so i18n plugins
 %.o: %.c
 	$(CXX) $(CXXFLAGS) -c $(DEFINES) $(INCLUDES) -o $@ $<
 
+%.o: %.cpp
+	$(CXX) $(CXXFLAGS) -c $(DEFINES) $(INCLUDES) -o $@ $<
+
 # Dependencies:
 
 MAKEDEP = $(CXX) -MM -MG
 DEPFILE = .dependencies
 $(DEPFILE): Makefile
-	@$(MAKEDEP) $(DEFINES) $(INCLUDES) $(OBJS:%.o=%.c) > $@
+	@$(MAKEDEP) $(DEFINES) $(INCLUDES) $(COBJS:%.o=%.c) $(CXXOBJS:%.o=%.cpp) > $@
 
 -include $(DEPFILE)
 
 # The main program:
 
-vdr: $(OBJS) $(SILIB)
-	$(CXX) $(CXXFLAGS) -rdynamic $(LDFLAGS) $(OBJS) $(LIBS) $(SILIB) -o vdr
+vdr: $(COBJS) $(CXXOBJS) $(SILIB)
+	$(CXX) $(CXXFLAGS) -rdynamic $(LDFLAGS) $(COBJS) $(CXXOBJS) $(LIBS) $(SILIB) -o vdr
 
-libvdr.so: $(OBJS) $(SILIB)
-	$(CXX) $(CXXFLAGS) -shared $(LDFLAGS) $(OBJS) $(LIBS) $(SILIB) -o libvdr.so
+libvdr.so: $(COBJS) $(CXXOBJS) $(SILIB)
+	$(CXX) $(CXXFLAGS) -shared $(LDFLAGS) $(CXXOBJS) $(LIBS) $(SILIB) -o libvdr.so
 
 # The libsi library:
 
@@ -179,7 +184,7 @@ I18Npot   = $(PODIR)/vdr.pot
 %.mo: %.po
 	msgfmt -c -o $@ $<
 
-$(I18Npot): $(wildcard *.c)
+$(I18Npot): $(wildcard *.c) $(wildcard *.cpp)
 	xgettext -C -cTRANSLATORS --no-wrap --no-location -k -ktr -ktrNOOP --package-name=VDR --package-version=$(VDRVERSION) --msgid-bugs-address='<vdr-bugs@tvdr.de>' -o $@ `ls $^`
 
 %.po: $(I18Npot)
@@ -322,7 +327,7 @@ srcdoc:
 
 clean:
 	@$(MAKE) --no-print-directory -C $(LSIDIR) clean
-	@-rm -f $(OBJS) $(DEPFILE) vdr libvdr.so vdr.pc core* *~
+	@-rm -f $(COBJS) $(CXXOBJS) $(DEPFILE) vdr libvdr.so vdr.pc core* *~
 	@-rm -rf $(LOCALEDIR) $(PODIR)/*.mo $(PODIR)/*.pot
 	@-rm -rf include
 	@-rm -rf srcdoc
