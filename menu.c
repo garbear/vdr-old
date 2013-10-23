@@ -4,7 +4,7 @@
  * See the main source file 'vdr.c' for copyright information and
  * how to reach the author.
  *
- * $Id: menu.c 2.82.1.2 2013/04/27 10:32:28 kls Exp $
+ * $Id: menu.c 2.82.1.5 2013/10/16 09:46:24 kls Exp $
  */
 
 #include "menu.h"
@@ -3364,7 +3364,7 @@ cMenuPluginItem::cMenuPluginItem(const char *Name, int Index)
 
 cOsdObject *cMenuMain::pluginOsdObject = NULL;
 
-cMenuMain::cMenuMain(eOSState State)
+cMenuMain::cMenuMain(eOSState State, bool OpenSubMenus)
 :cOsdMenu("")
 {
   SetMenuCategory(mcMain);
@@ -3381,7 +3381,7 @@ cMenuMain::cMenuMain(eOSState State)
     case osSchedule:   AddSubMenu(new cMenuSchedule); break;
     case osChannels:   AddSubMenu(new cMenuChannels); break;
     case osTimers:     AddSubMenu(new cMenuTimers); break;
-    case osRecordings: AddSubMenu(new cMenuRecordings(NULL, 0, true)); break;
+    case osRecordings: AddSubMenu(new cMenuRecordings(NULL, 0, OpenSubMenus)); break;
     case osSetup:      AddSubMenu(new cMenuSetup); break;
     case osCommands:   AddSubMenu(new cMenuCommands(tr("Commands"), &Commands)); break;
     default: break;
@@ -3448,7 +3448,7 @@ bool cMenuMain::Update(bool Force)
         stopReplayItem = NULL;
         }
      // Color buttons:
-     SetHelp(!replaying ? tr("Button$Record") : NULL, tr("Button$Audio"), replaying ? NULL : tr("Button$Pause"), replaying ? tr("Button$Stop") : cReplayControl::LastReplayed() ? tr("Button$Resume") : tr("Button$Play"));
+     SetHelp(!replaying ? tr("Button$Record") : NULL, tr("Button$Audio"), replaying || !Setup.PauseKeyHandling ? NULL : tr("Button$Pause"), replaying ? tr("Button$Stop") : cReplayControl::LastReplayed() ? tr("Button$Resume") : tr("Button$Play"));
      result = true;
      }
 
@@ -3543,7 +3543,7 @@ eOSState cMenuMain::ProcessKey(eKeys Key)
                                 }
                              break;
                case kYellow: if (!HadSubMenu)
-                                state = replaying ? osContinue : osPause;
+                                state = replaying || !Setup.PauseKeyHandling ? osContinue : osPause;
                              break;
                case kBlue:   if (!HadSubMenu)
                                 state = replaying ? osStopReplay : cReplayControl::LastReplayed() ? osReplay : osRecordings;
@@ -4968,10 +4968,8 @@ eOSState cReplayControl::ProcessKey(eKeys Key)
                            else
                               Show();
                            break;
-            case kBack:    if (Setup.DelTimeshiftRec) {
-                              cRecordControl* rc = cRecordControls::GetRecordControl(fileName);
-                              return rc && rc->InstantId() ? osEnd : osRecordings;
-                              }
+            case kBack:    Hide();
+                           Stop();
                            return osRecordings;
             default:       return osUnknown;
             }
