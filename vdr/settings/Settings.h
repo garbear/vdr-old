@@ -33,6 +33,7 @@ class cSettings
 {
 public:
   cSettings();
+  ~cSettings();
 
   int LoadFromCmdLine(int argc, char *argv[]);
 

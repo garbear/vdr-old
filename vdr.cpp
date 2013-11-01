@@ -25,9 +25,6 @@
  * $Id: vdr.c 2.57.1.1 2013/10/16 09:46:36 kls Exp $
  */
 
-// Don't need once we move destructor fields into m_settings
-#include <termios.h>
-
 #ifndef ANDROID
 #include <langinfo.h>
 #endif
@@ -138,9 +135,6 @@ cVDRDaemon::~cVDRDaemon(void)
   isyslog("exiting, exit code %d", ShutdownHandler.GetExitCode());
   if (SysLogLevel > 0)
     closelog();
-  if (m_settings.m_HasStdin)
-    tcsetattr(STDIN_FILENO, TCSANOW, &m_settings.m_savedTm);
-  delete m_settings.m_pluginManager;
 }
 
 /*!

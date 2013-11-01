@@ -157,6 +157,13 @@ cSettings::cSettings()
   m_HasStdin = (tcgetpgrp(STDIN_FILENO) == getpid() || getppid() != (pid_t)1) && tcgetattr(STDIN_FILENO, &m_savedTm) == 0;
 }
 
+cSettings::~cSettings()
+{
+  if (m_HasStdin)
+    tcsetattr(STDIN_FILENO, TCSANOW, &m_savedTm);
+  delete m_pluginManager;
+}
+
 int cSettings::LoadFromCmdLine(int argc, char *argv[])
 {
   static struct option long_options[] =
