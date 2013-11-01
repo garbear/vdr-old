@@ -27,7 +27,8 @@
 .settings
 
 # VDR ignorables
-vdr
+vdr.bin
+libvdr.so
 *.mo
 *.pot
 .dependencies

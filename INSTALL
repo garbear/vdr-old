@@ -33,7 +33,7 @@ need to do "modprobe capability" before running VDR.
 
 After extracting the package, change into the VDR directory
 and type 'make'. This should produce an executable file
-named 'vdr', which can be run after the DVB driver has been
+named 'vdr.bin', which can be run after the DVB driver has been
 installed.
 
 If you want to build a 32-bit version of VDR on a 64-bit machine, you can
@@ -43,7 +43,7 @@ use 'make M32=1' to do so. Note that you also need to have a Make.config file
 IMPORTANT: See "Configuration files" below for information on how
 =========  to set up the configuration files at the proper location!
 
-By default the 'vdr' program can be controlled via the PC keyboard.
+By default the 'vdr.bin' program can be controlled via the PC keyboard.
 If you want to disable control via the keyboard, you can add NO_KBD=1
 to the 'make' call, or use the '--no-kbd' option at runtime.
 
@@ -63,7 +63,7 @@ have limitations on directory name lengths and/or allowed characters in
 directory names, you can call VDR with the command line option '--dirnames'
 (see man vdr(1) for details).
 
-When running, the 'vdr' program writes status information into the
+When running, the 'vdr.bin' program writes status information into the
 system log file, which is usually /var/log/messages (or /var/log/user.log,
 depending on your syslog configuration). You may want to watch these
 messages (tail -f /var/log/messages) to see if there are any problems.

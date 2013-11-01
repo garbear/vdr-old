@@ -117,7 +117,7 @@ DEFINES += -DLOCDIR=\"$(LOCDIR)\"
 VDRVERSION = $(shell sed -ne '/define VDRVERSION/s/^.*"\(.*\)".*$$/\1/p' config.h)
 APIVERSION = $(shell sed -ne '/define APIVERSION/s/^.*"\(.*\)".*$$/\1/p' config.h)
 
-all: vdr libvdr.so i18n plugins
+all: vdr.bin libvdr.so i18n plugins
 
 # Implicit rules:
 
@@ -138,8 +138,8 @@ $(DEPFILE): Makefile
 
 # The main program:
 
-vdr: $(COBJS) $(CXXOBJS) $(SILIB)
-	$(CXX) $(CXXFLAGS) -rdynamic $(LDFLAGS) $(COBJS) $(CXXOBJS) $(LIBS) $(SILIB) -o vdr
+vdr.bin: $(COBJS) $(CXXOBJS) $(SILIB)
+	$(CXX) $(CXXFLAGS) -rdynamic $(LDFLAGS) $(COBJS) $(CXXOBJS) $(LIBS) $(SILIB) -o vdr.bin
 
 libvdr.so: $(COBJS) $(CXXOBJS) $(SILIB)
 	$(CXX) $(CXXFLAGS) -shared $(LDFLAGS) $(CXXOBJS) $(LIBS) $(SILIB) -o libvdr.so
@@ -265,9 +265,9 @@ install: install-pc install-bin install-dirs install-conf install-doc install-pl
 
 # VDR binary:
 
-install-bin: vdr
+install-bin: vdr.bin
 	@mkdir -p $(DESTDIR)$(BINDIR)
-	@cp --remove-destination vdr svdrpsend $(DESTDIR)$(BINDIR)
+	@cp --remove-destination vdr.bin svdrpsend $(DESTDIR)$(BINDIR)
 
 # Configuration files:
 
@@ -327,7 +327,7 @@ srcdoc:
 
 clean:
 	@$(MAKE) --no-print-directory -C $(LSIDIR) clean
-	@-rm -f $(COBJS) $(CXXOBJS) $(DEPFILE) vdr libvdr.so vdr.pc core* *~
+	@-rm -f $(COBJS) $(CXXOBJS) $(DEPFILE) vdr.bin libvdr.so vdr.pc core* *~
 	@-rm -rf $(LOCALEDIR) $(PODIR)/*.mo $(PODIR)/*.pot
 	@-rm -rf include
 	@-rm -rf srcdoc
