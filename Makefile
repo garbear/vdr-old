@@ -32,21 +32,15 @@ INCLUDES ?= $(shell $(PKGCONFIG) --cflags freetype2 fontconfig)
 
 CWD       ?= $(shell pwd)
 LSIDIR    ?= $(CWD)/libsi
+SETTINGSDIR ?= $(CWD)/vdr/settings
 PLUGINDIR ?= $(CWD)/PLUGINS
 
 DESTDIR   ?=
-VIDEODIR  ?= /srv/vdr/video
-CONFDIR   ?= /var/lib/vdr
-CACHEDIR  ?= /var/cache/vdr
 
-PREFIX    ?= /usr/local
-BINDIR    ?= $(PREFIX)/bin
-INCDIR    ?= $(PREFIX)/include
-LIBDIR    ?= $(PREFIX)/lib/vdr
-LOCDIR    ?= $(PREFIX)/share/locale
-MANDIR    ?= $(PREFIX)/share/man
-PCDIR     ?= $(PREFIX)/lib/pkgconfig
-RESDIR    ?= $(PREFIX)/share/vdr
+BINDIR    ?= /usr/local/bin
+INCDIR    ?= /usr/local/include
+MANDIR    ?= /usr/local/share/man
+PCDIR     ?= /usr/local/lib/pkgconfig
 
 # Source documentation
 
@@ -70,7 +64,8 @@ endif
 
 # Object files
 
-SILIB    = $(LSIDIR)/libsi.a
+SILIB       = $(LSIDIR)/libsi.a
+SETTINGSLIB = $(SETTINGSDIR)/settings.a
 
 COBJS = android_sort.o android_strchrnul.o android_getline.o android_timegm.o
 
@@ -102,16 +97,6 @@ DEFINES += -DBIDI
 LIBS += $(shell pkg-config --libs fribidi)
 endif
 
-LIRC_DEVICE ?= /var/run/lirc/lircd
-
-DEFINES += -DLIRC_DEVICE=\"$(LIRC_DEVICE)\"
-DEFINES += -DVIDEODIR=\"$(VIDEODIR)\"
-DEFINES += -DCONFDIR=\"$(CONFDIR)\"
-DEFINES += -DCACHEDIR=\"$(CACHEDIR)\"
-DEFINES += -DRESDIR=\"$(RESDIR)\"
-DEFINES += -DPLUGINDIR=\"$(LIBDIR)\"
-DEFINES += -DLOCDIR=\"$(LOCDIR)\"
-
 # The version numbers of VDR and the plugin API (taken from VDR's "config.h"):
 
 VDRVERSION = $(shell sed -ne '/define VDRVERSION/s/^.*"\(.*\)".*$$/\1/p' config.h)
@@ -138,16 +123,19 @@ $(DEPFILE): Makefile
 
 # The main program:
 
-vdr.bin: $(COBJS) $(CXXOBJS) $(SILIB)
-	$(CXX) $(CXXFLAGS) -rdynamic $(LDFLAGS) $(COBJS) $(CXXOBJS) $(LIBS) $(SILIB) -o vdr.bin
+vdr.bin: $(COBJS) $(CXXOBJS) $(SILIB) $(SETTINGSLIB)
+	$(CXX) $(CXXFLAGS) -rdynamic $(LDFLAGS) $(COBJS) $(CXXOBJS) $(SILIB) $(SETTINGSLIB) $(LIBS) -o vdr.bin
 
-libvdr.so: $(COBJS) $(CXXOBJS) $(SILIB)
-	$(CXX) $(CXXFLAGS) -shared $(LDFLAGS) $(CXXOBJS) $(LIBS) $(SILIB) -o libvdr.so
+libvdr.so: $(COBJS) $(CXXOBJS) $(SILIB) $(SETTINGSLIB)
+	$(CXX) $(CXXFLAGS) -shared $(LDFLAGS) $(CXXOBJS) $(SILIB) $(SETTINGSLIB) $(LIBS) -o libvdr.so
 
 # The libsi library:
 
 $(SILIB):
 	$(MAKE) --no-print-directory -C $(LSIDIR) CXXFLAGS="$(CXXFLAGS)" DEFINES="$(CDEFINES)" all
+
+$(SETTINGSLIB):
+	$(MAKE) --no-print-directory -C $(SETTINGSDIR) CXXFLAGS="$(CXXFLAGS)" DEFINES="$(CDEFINES)" all
 
 # pkg-config file:
 

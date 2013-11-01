@@ -18,6 +18,7 @@
 #include <unistd.h>
 #include "recording.h"
 #include "tools.h"
+#include "vdr/settings/Settings.h"
 
 const char *VideoDirectory = VIDEODIR;
 
