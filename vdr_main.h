@@ -1,5 +1,6 @@
 #pragma once
 
+#include <string>
 #include <termios.h>
 #include <time.h>
 
