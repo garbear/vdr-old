@@ -1299,7 +1299,7 @@ int main(int argc, char *argv[])
              case osRecordings:
                             DELETE_MENU;
                             cControl::Shutdown();
-                            Menu = new cMenuMain(osRecordings, true);
+                            Menu = new cMenuMain(osRecordings);
                             break;
              case osReplay: DELETE_MENU;
                             cControl::Shutdown();
