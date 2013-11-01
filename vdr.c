@@ -1419,7 +1419,7 @@ void cVDRDaemon::Process(void)
     case osRecordings:
       DELETE_MENU;
       cControl::Shutdown();
-      m_Menu = new cMenuMain(osRecordings);
+      m_Menu = new cMenuMain(osRecordings, true);
       break;
     case osReplay:
       DELETE_MENU;
