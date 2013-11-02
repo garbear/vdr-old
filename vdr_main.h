@@ -21,10 +21,10 @@ public:
   static cVDRDaemon& Get(void);
   virtual ~cVDRDaemon(void);
 
-  int ReadCommandLineOptions(int argc, char *argv[]);
-  int Init(void);
+  bool ReadCommandLineOptions(int argc, char *argv[]);
+  bool Init(void);
   void* Process(void);
-  void Iterate(void);
+  bool Iterate(void);
 
   cSettings       m_settings;
 

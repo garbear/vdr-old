@@ -89,8 +89,6 @@ ADDON_STATUS   m_CurStatus      = ADDON_STATUS_UNKNOWN;
 #define VPSLOOKAHEADTIME      24 // hours within which VPS timers will make sure their events are up to date
 #define VPSUPTODATETIME     3600 // seconds before the event or schedule of a VPS timer needs to be refreshed
 
-#define EXIT(v) { ShutdownHandler.Exit(v); goto Exit; }
-
 static int LastSignal = 0;
 
 cVDRDaemon::cVDRDaemon()
@@ -182,16 +180,16 @@ static void Watchdog(int signum)
   exit(1);
 }
 
-int cVDRDaemon::ReadCommandLineOptions(int argc, char *argv[])
+bool cVDRDaemon::ReadCommandLineOptions(int argc, char *argv[])
 {
   return m_settings.LoadFromCmdLine(argc, argv);
 }
 
-int cVDRDaemon::Init(void)
+bool cVDRDaemon::Init(void)
 {
   // Load plugins:
   if (!m_settings.m_pluginManager->LoadPlugins(true))
-    return 2;
+    return false;
 
   // Directories:
   SetVideoDirectory(m_settings.m_VideoDirectory);
@@ -258,7 +256,7 @@ int cVDRDaemon::Init(void)
 
   // Initialize plugins:
   if (!m_settings.m_pluginManager->InitializePlugins())
-    return 2;
+    return false;
 
   // Primary device:
   cDevice::SetPrimaryDevice(Setup.PrimaryDVB);
@@ -286,13 +284,13 @@ int cVDRDaemon::Init(void)
       fprintf(stderr, "vdr: %s\n", msg);
       esyslog("ERROR: %s", msg);
       if (!cDevice::SetPrimaryDevice(1))
-        return 2;
+        return false;
       if (!cDevice::PrimaryDevice())
       {
         const char *msg = "no primary device found - giving up!";
         fprintf(stderr, "vdr: %s\n", msg);
         esyslog("ERROR: %s", msg);
-        return 2;
+        return false;
       }
     }
   }
@@ -314,7 +312,7 @@ int cVDRDaemon::Init(void)
 
   // Start plugins:
   if (!m_settings.m_pluginManager->StartPlugins())
-    return 2;
+    return false;
 
   // Set skin and theme in case they're implemented by a plugin:
   if (!m_CurrentSkin
@@ -361,10 +359,10 @@ int cVDRDaemon::Init(void)
     cDevice::PrimaryDevice()->ToggleMute();
   else
     cDevice::PrimaryDevice()->SetVolume(Setup.CurrentVolume, true);
-  return 0;
+  return true;
 }
 
-void cVDRDaemon::Iterate(void)
+bool cVDRDaemon::Iterate(void)
 {
   // Main program loop:
 #define DELETE_MENU ((m_IsInfoMenu &= (m_Menu == NULL)), delete m_Menu, m_Menu = NULL)
@@ -715,7 +713,7 @@ void cVDRDaemon::Iterate(void)
     else if (cDisplayChannel::IsOpen() || cControl::Control())
     {
       Interact->ProcessKey(key);
-      return;
+      return true;
     }
     else
       cDevice::SwitchChannel(NORMALKEY(key) == kChanUp ? 1 : -1);
@@ -846,7 +844,7 @@ void cVDRDaemon::Iterate(void)
         {
           // let's not close a menu when replay ends:
           cControl::Shutdown();
-          return;
+          return true;
         }
       }
       else if (Now - cRemote::LastActivity() > MENUTIMEOUT)
@@ -979,7 +977,10 @@ void cVDRDaemon::Iterate(void)
     if (ShutdownHandler.ConfirmRestart(true)
         && Interface->Confirm(tr("Press any key to cancel restart"),
             RESTARTCANCELPROMPT, true))
-      EXIT(1);
+    {
+      ShutdownHandler.Exit(1);
+      return false;
+    }
     LastSignal = 0;
   }
 
@@ -1027,8 +1028,7 @@ time_t      Soon = Now + SHUTDOWNWAIT;
   // Main thread hooks of plugins:
   m_settings.m_pluginManager->MainThreadHook();
 
-Exit:
-  return;
+  return !ShutdownHandler.DoExit();
 }
 
 int main(int argc, char *argv[])
@@ -1038,7 +1038,8 @@ int main(int argc, char *argv[])
   // Initiate locale:
   setlocale(LC_ALL, "");
 
-  daemon->ReadCommandLineOptions(argc, argv);
+  if (!daemon->ReadCommandLineOptions(argc, argv))
+    return 2;
 
   isyslog("VDR version %s started", VDRVERSION);
   if (daemon->m_settings.m_StartedAsRoot && daemon->m_settings.m_VdrUser)
@@ -1073,7 +1074,7 @@ int main(int argc, char *argv[])
   // Initialize internationalization:
   I18nInitialize(daemon->m_settings.m_LocaleDirectory);
 
-  if (daemon->Init() != 0)
+  if (!daemon->Init())
     return -2;
 
   // Signal handlers:
@@ -1091,9 +1092,10 @@ int main(int argc, char *argv[])
     alarm(daemon->m_settings.m_WatchdogTimeout); // Initial watchdog timer start
   }
 
-  while (!ShutdownHandler.DoExit())
+  while (1)
   {
-    daemon->Iterate();
+    if (!daemon->Iterate())
+      break;
   }
 
   // Reset all signal handlers to default before Interface gets deleted:
@@ -1108,9 +1110,10 @@ int main(int argc, char *argv[])
 
 void* cVDRDaemon::Process(void)
 {
-  while (!ShutdownHandler.DoExit() && IsRunning())
+  while (IsRunning())
   {
-    Iterate();
+    if (!Iterate())
+      break;
   }
   return NULL;
 }
@@ -1135,7 +1138,7 @@ ADDON_STATUS ADDON_Create(void* hdl, void* props)
       throw ADDON_STATUS_PERMANENT_FAILURE;
 
     cVDRDaemon* daemon = &cVDRDaemon::Get();
-    if (daemon->Init() != 0 && !daemon->CreateThread(true))
+    if (!daemon->Init() && !daemon->CreateThread(true))
       throw ADDON_STATUS_UNKNOWN;
   }
   catch (ADDON_STATUS status)

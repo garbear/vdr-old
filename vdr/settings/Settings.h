@@ -35,7 +35,7 @@ public:
   cSettings();
   ~cSettings();
 
-  int LoadFromCmdLine(int argc, char *argv[]);
+  bool LoadFromCmdLine(int argc, char *argv[]);
 
   const char *   m_AudioCommand;
   const char *   m_CacheDirectory;

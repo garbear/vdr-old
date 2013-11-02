@@ -164,7 +164,7 @@ cSettings::~cSettings()
   delete m_pluginManager;
 }
 
-int cSettings::LoadFromCmdLine(int argc, char *argv[])
+bool cSettings::LoadFromCmdLine(int argc, char *argv[])
 {
   static struct option long_options[] =
     {
@@ -237,7 +237,7 @@ int cSettings::LoadFromCmdLine(int argc, char *argv[])
         }
       }
       fprintf(stderr, "vdr: invalid DVB device number: %s\n", optarg);
-      return 2;
+      return false;
     // dirnames
     case 'd' | 0x100:
       {
@@ -248,7 +248,7 @@ int cSettings::LoadFromCmdLine(int argc, char *argv[])
           if (n <= 0 || n >= PATH_MAX)
           { // PATH_MAX includes the terminating 0
             fprintf(stderr, "vdr: invalid directory path length: %s\n", optarg);
-            return 2;
+            return false;
           }
           DirectoryPathMax = n;
           if (!*s)
@@ -256,7 +256,7 @@ int cSettings::LoadFromCmdLine(int argc, char *argv[])
           if (*s != ',')
           {
             fprintf(stderr, "vdr: invalid delimiter: %s\n", optarg);
-            return 2;
+            return false;
           }
         }
         s++;
@@ -268,7 +268,7 @@ int cSettings::LoadFromCmdLine(int argc, char *argv[])
           if (n <= 0 || n > NAME_MAX)
           { // NAME_MAX excludes the terminating 0
             fprintf(stderr, "vdr: invalid directory name length: %s\n", optarg);
-            return 2;
+            return false;
           }
           DirectoryNameMax = n;
           if (!*s)
@@ -276,7 +276,7 @@ int cSettings::LoadFromCmdLine(int argc, char *argv[])
           if (*s != ',')
           {
             fprintf(stderr, "vdr: invalid delimiter: %s\n", optarg);
-            return 2;
+            return false;
           }
         }
         s++;
@@ -286,19 +286,19 @@ int cSettings::LoadFromCmdLine(int argc, char *argv[])
         if (n != 0 && n != 1)
         {
           fprintf(stderr, "vdr: invalid directory encoding: %s\n", optarg);
-          return 2;
+          return false;
         }
         DirectoryEncoding = n;
         if (*s)
         {
           fprintf(stderr, "vdr: unexpected data: %s\n", optarg);
-          return 2;
+          return false;
         }
       }
       break;
     // edit
     case 'e' | 0x100:
-      return CutRecording(optarg) ? 0 : 2;
+      return CutRecording(optarg);
     // epgfile
     case 'E':
       m_EpgDataFileName = (*optarg != '-' ? optarg : NULL);
@@ -313,7 +313,7 @@ int cSettings::LoadFromCmdLine(int argc, char *argv[])
       break;
     // genindex
     case 'g' | 0x100:
-      return GenerateIndex(optarg) ? 0 : 2;
+      return GenerateIndex(optarg);
       // grab
     case 'g':
       cSVDRP::SetGrabImageDir(*optarg != '-' ? optarg : NULL);
@@ -331,7 +331,7 @@ int cSettings::LoadFromCmdLine(int argc, char *argv[])
           break;
       }
       fprintf(stderr, "vdr: invalid instance id: %s\n", optarg);
-      return 2;
+      return false;
     // log
     case 'l':
       {
@@ -363,7 +363,7 @@ int cSettings::LoadFromCmdLine(int argc, char *argv[])
         if (p)
           *p = '.';
         fprintf(stderr, "vdr: invalid log level: %s\n", optarg);
-        return 2;
+        return false;
       }
     // lib
     case 'L':
@@ -372,7 +372,7 @@ int cSettings::LoadFromCmdLine(int argc, char *argv[])
       else
       {
         fprintf(stderr, "vdr: can't access plugin directory: %s\n", optarg);
-        return 2;
+        return false;
       }
       break;
     // lirc
@@ -386,7 +386,7 @@ int cSettings::LoadFromCmdLine(int argc, char *argv[])
       else
       {
         fprintf(stderr, "vdr: can't access locale directory: %s\n", optarg);
-        return 2;
+        return false;
       }
       break;
     // mute
@@ -404,7 +404,7 @@ int cSettings::LoadFromCmdLine(int argc, char *argv[])
       else
       {
         fprintf(stderr, "vdr: invalid port number: %s\n", optarg);
-        return 2;
+        return false;
       }
       break;
     // port
@@ -433,7 +433,7 @@ int cSettings::LoadFromCmdLine(int argc, char *argv[])
       if (access(m_Terminal, R_OK | W_OK) < 0)
       {
         fprintf(stderr, "vdr: can't access terminal: %s\n", m_Terminal);
-        return 2;
+        return false;
       }
       break;
     // user
@@ -473,9 +473,9 @@ int cSettings::LoadFromCmdLine(int argc, char *argv[])
         }
       }
       fprintf(stderr, "vdr: invalid watchdog timeout: %s\n", optarg);
-      return 2;
+      return false;
     default:
-      return 2;
+      return false;
       }
   }
 
@@ -486,13 +486,13 @@ int cSettings::LoadFromCmdLine(int argc, char *argv[])
     if (strcmp(m_VdrUser, "root"))
     {
       if (!SetKeepCaps(true))
-        return 2;
+        return false;
       if (!SetUser(m_VdrUser, m_UserDump))
-        return 2;
+        return false;
       if (!SetKeepCaps(false))
-        return 2;
+        return false;
       if (!DropCaps())
-        return 2;
+        return false;
     }
   }
 
@@ -545,7 +545,7 @@ int cSettings::LoadFromCmdLine(int argc, char *argv[])
           break;
       }
     }
-    return 0;
+    return false; // TODO: main() should return 0 instead of 2
   }
 
   // Log file:
@@ -556,7 +556,7 @@ int cSettings::LoadFromCmdLine(int argc, char *argv[])
   if (!DirectoryOk(m_VideoDirectory, true))
   {
     fprintf(stderr, "vdr: can't access video directory %s\n", m_VideoDirectory);
-    return 2;
+    return false;
   }
 
   // Daemon mode:
@@ -566,7 +566,7 @@ int cSettings::LoadFromCmdLine(int argc, char *argv[])
     {
       fprintf(stderr, "vdr: %m\n");
       esyslog("ERROR: %m");
-      return 2;
+      return false;
     }
   }
 #ifndef ANDROID
@@ -581,7 +581,7 @@ int cSettings::LoadFromCmdLine(int argc, char *argv[])
   }
 #endif
 
-  return 0;
+  return true;
 }
 
 bool cSettings::SetKeepCaps(bool On)
