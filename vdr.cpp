@@ -1031,24 +1031,8 @@ time_t      Soon = Now + SHUTDOWNWAIT;
   return !ShutdownHandler.DoExit();
 }
 
-int main(int argc, char *argv[])
+void SetSystemCharacterTable()
 {
-  cVDRDaemon* daemon = &cVDRDaemon::Get();
-
-  // Initiate locale:
-  setlocale(LC_ALL, "");
-
-  if (!daemon->ReadCommandLineOptions(argc, argv))
-    return 2;
-
-  isyslog("VDR version %s started", VDRVERSION);
-  if (daemon->m_settings.m_StartedAsRoot && daemon->m_settings.m_VdrUser)
-    isyslog("switched to user '%s'", daemon->m_settings.m_VdrUser);
-  if (daemon->m_settings.m_DaemonMode)
-    dsyslog("running as daemon (tid=%d)", cThread::ThreadId());
-  cThread::SetMainThreadId();
-
-  // Set the system character table:
 #ifndef ANDROID
   char *CodeSet = NULL;
   if (setlocale(LC_CTYPE, ""))
@@ -1070,6 +1054,26 @@ int main(int argc, char *argv[])
     cCharSetConv::SetSystemCharacterTable(CodeSet);
   }
 #endif
+}
+
+int main(int argc, char *argv[])
+{
+  cVDRDaemon* daemon = &cVDRDaemon::Get();
+
+  // Initiate locale:
+  setlocale(LC_ALL, "");
+
+  if (!daemon->ReadCommandLineOptions(argc, argv))
+    return 2;
+
+  isyslog("VDR version %s started", VDRVERSION);
+  if (daemon->m_settings.m_StartedAsRoot && daemon->m_settings.m_VdrUser)
+    isyslog("switched to user '%s'", daemon->m_settings.m_VdrUser);
+  if (daemon->m_settings.m_DaemonMode)
+    dsyslog("running as daemon (tid=%d)", cThread::ThreadId());
+  cThread::SetMainThreadId();
+
+  ::SetSystemCharacterTable();
 
   // Initialize internationalization:
   I18nInitialize(daemon->m_settings.m_LocaleDirectory);
