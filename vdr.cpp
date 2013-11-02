@@ -140,8 +140,6 @@ cVDRDaemon::~cVDRDaemon(void)
   m_settings.m_pluginManager->Shutdown(true);
   cSchedules::Cleanup(true);
   ReportEpgBugFixStats(true);
-  if (m_settings.m_WatchdogTimeout > 0)
-    dsyslog("max. latency time %d seconds", m_MaxLatencyTime);
   if (LastSignal)
     isyslog("caught signal %d", LastSignal);
   if (ShutdownHandler.EmergencyExitRequested())
@@ -170,14 +168,6 @@ static void SignalHandler(int signum)
     ShutdownHandler.Exit(0);
   }
   signal(signum, SignalHandler);
-}
-
-static void Watchdog(int signum)
-{
-  // Something terrible must have happened that prevented the 'alarm()' from
-  // being called in time, so let's get out of here:
-  esyslog("PANIC: watchdog timer expired - exiting!");
-  exit(1);
 }
 
 bool cVDRDaemon::ReadCommandLineOptions(int argc, char *argv[])
@@ -413,16 +403,6 @@ bool cVDRDaemon::Iterate(void)
     { // once per second
       cOsdProvider::UpdateOsdSize();
       lastOsdSizeUpdate = Now;
-    }
-  }
-  // Restart the Watchdog timer:
-  if (m_settings.m_WatchdogTimeout > 0)
-  {
-    int LatencyTime = m_settings.m_WatchdogTimeout - alarm(m_settings.m_WatchdogTimeout);
-    if (LatencyTime > m_MaxLatencyTime)
-    {
-      m_MaxLatencyTime = LatencyTime;
-      dsyslog("max. latency time %d seconds", m_MaxLatencyTime);
     }
   }
   // Handle channel and timer modifications:
@@ -1086,15 +1066,8 @@ int main(int argc, char *argv[])
   if (signal(SIGINT,  SignalHandler) == SIG_IGN) signal(SIGINT,  SIG_IGN);
   if (signal(SIGTERM, SignalHandler) == SIG_IGN) signal(SIGTERM, SIG_IGN);
   if (signal(SIGPIPE, SignalHandler) == SIG_IGN) signal(SIGPIPE, SIG_IGN);
-  if (daemon->m_settings.m_WatchdogTimeout > 0)
-    if (signal(SIGALRM, Watchdog)    == SIG_IGN) signal(SIGALRM, SIG_IGN);
 
-  // Watchdog:
-  if (daemon->m_settings.m_WatchdogTimeout > 0)
-  {
-    dsyslog("setting watchdog timer to %d seconds", daemon->m_settings.m_WatchdogTimeout);
-    alarm(daemon->m_settings.m_WatchdogTimeout); // Initial watchdog timer start
-  }
+  //alarm(daemon->m_settings.m_WatchdogTimeout); // Initial watchdog timer start (TODO)
 
   while (1)
   {

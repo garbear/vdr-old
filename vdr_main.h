@@ -39,7 +39,6 @@ private:
   int             m_PreviousChannelIndex;
   time_t          m_LastChannelChanged;
   time_t          m_LastInteract;
-  int             m_MaxLatencyTime;
   bool            m_InhibitEpgScan;
   bool            m_IsInfoMenu;
   cSkin*          m_CurrentSkin;

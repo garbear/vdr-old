@@ -56,7 +56,6 @@ public:
   bool           m_UserDump;
   bool           m_DisplayVersion;
   const char *   m_VideoDirectory;
-  int            m_WatchdogTimeout;
   bool           m_StartedAsRoot;
   bool           m_HasStdin;
   struct termios m_savedTm;

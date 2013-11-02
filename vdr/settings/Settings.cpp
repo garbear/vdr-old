@@ -48,7 +48,6 @@
 #define LOCDIR      "/usr/local/share/locale"
 
 #define DEFAULTSVDRPPORT   6419
-#define DEFAULTWATCHDOG    0 // seconds
 #define DEFAULTVIDEODIR    VIDEODIR
 #define DEFAULTPLUGINDIR   PLUGINDIR
 #define DEFAULTLOCDIR      LOCDIR
@@ -115,8 +114,6 @@
                  "  -V,       --version      print version information and exit\n" \
                  "            --vfat         for backwards compatibility (same as\n" \
                  "                           --dirnames=250,40,1\n" \
-                 "  -w SEC,   --watchdog=SEC activate the watchdog timer with a timeout of SEC\n" \
-                 "                           seconds (default: %d); '0' disables the watchdog\n" \
                  "\n"
 
 cSettings::cSettings()
@@ -152,7 +149,6 @@ cSettings::cSettings()
   m_UserDump = false;
   m_DisplayVersion = false;
   m_VideoDirectory = DEFAULTVIDEODIR;
-  m_WatchdogTimeout = DEFAULTWATCHDOG;
   m_StartedAsRoot = false;
   m_HasStdin = (tcgetpgrp(STDIN_FILENO) == getpid() || getppid() != (pid_t)1) && tcgetattr(STDIN_FILENO, &m_savedTm) == 0;
 }
@@ -199,7 +195,6 @@ bool cSettings::LoadFromCmdLine(int argc, char *argv[])
       { "version",   no_argument,       NULL, 'V' },
       { "vfat",      no_argument,       NULL, 'v' | 0x100 },
       { "video",     required_argument, NULL, 'v' },
-      { "watchdog",  required_argument, NULL, 'w' },
       { NULL,        no_argument,       NULL, 0 }
     };
 
@@ -461,19 +456,6 @@ bool cSettings::LoadFromCmdLine(int argc, char *argv[])
       while (optarg && *optarg && optarg[strlen(optarg) - 1] == '/')
         optarg[strlen(optarg) - 1] = 0;
       break;
-    // watchdog
-    case 'w':
-      if (is_number(optarg))
-      {
-        int t = atoi(optarg);
-        if (t >= 0)
-        {
-          m_WatchdogTimeout = t;
-          break;
-        }
-      }
-      fprintf(stderr, "vdr: invalid watchdog timeout: %s\n", optarg);
-      return false;
     default:
       return false;
       }
@@ -517,8 +499,7 @@ bool cSettings::LoadFromCmdLine(int argc, char *argv[])
                DEFAULTLOCDIR,
                DEFAULTSVDRPPORT,
                DEFAULTRESDIR,
-               DEFAULTVIDEODIR,
-               DEFAULTWATCHDOG
+               DEFAULTVIDEODIR
                );
      }
 
