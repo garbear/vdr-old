@@ -93,6 +93,22 @@ ADDON_STATUS   m_CurStatus      = ADDON_STATUS_UNKNOWN;
 
 static int LastSignal = 0;
 
+cVDRDaemon::cVDRDaemon()
+ : m_EpgDataReader(NULL),
+   m_Menu(NULL),
+   m_LastChannel(0),
+   m_LastTimerChannel(-1),
+   m_PreviousChannelIndex(0),
+   m_LastChannelChanged(time(NULL)),
+   m_LastInteract(0),
+   m_InhibitEpgScan(false),
+   m_IsInfoMenu(false),
+   m_CurrentSkin(NULL)
+{
+  m_PreviousChannel[0] = 1;
+  m_PreviousChannel[1] = 1;
+}
+
 cVDRDaemon& cVDRDaemon::Get(void)
 {
   static cVDRDaemon _instance;
@@ -173,20 +189,6 @@ int cVDRDaemon::ReadCommandLineOptions(int argc, char *argv[])
 
 int cVDRDaemon::Init(void)
 {
-  // Main program loop variables - need to be here to have them initialized before any EXIT():
-  m_Menu = NULL;
-  m_LastChannel = 0;
-  m_LastTimerChannel = -1;
-  m_PreviousChannel[0] = 1;
-  m_PreviousChannel[1] = 1;
-  m_PreviousChannelIndex = 0;
-  m_LastChannelChanged = time(NULL);
-  m_LastInteract = 0;
-  m_MaxLatencyTime = 0;
-  m_InhibitEpgScan = false;
-  m_IsInfoMenu = false;
-  m_CurrentSkin = NULL;
-
   // Load plugins:
   if (!m_settings.m_pluginManager->LoadPlugins(true))
     return 2;

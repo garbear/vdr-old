@@ -29,7 +29,7 @@ public:
   cSettings       m_settings;
 
 private:
-  cVDRDaemon(void) { }
+  cVDRDaemon(void);
 
   cEpgDataReader* m_EpgDataReader;
   cOsdObject*     m_Menu;
