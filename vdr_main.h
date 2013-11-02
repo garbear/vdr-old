@@ -26,6 +26,8 @@ public:
   void* Process(void);
   bool Iterate(void);
 
+  void WaitForShutdown();
+
   cSettings       m_settings;
 
 private:

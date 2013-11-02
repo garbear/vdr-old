@@ -1011,6 +1011,15 @@ time_t      Soon = Now + SHUTDOWNWAIT;
   return !ShutdownHandler.DoExit();
 }
 
+void cVDRDaemon::WaitForShutdown()
+{
+  while (!ShutdownHandler.DoExit() && IsRunning())
+  {
+    // TODO: Wait on condition variable
+    usleep(1000 * 1000);
+  }
+}
+
 void SetSystemCharacterTable()
 {
 #ifndef ANDROID
@@ -1046,8 +1055,6 @@ int main(int argc, char *argv[])
   if (!daemon->ReadCommandLineOptions(argc, argv))
     return 2;
 
-  cThread::SetMainThreadId();
-
   ::SetSystemCharacterTable();
 
   // Initialize internationalization:
@@ -1064,11 +1071,8 @@ int main(int argc, char *argv[])
 
   //alarm(daemon->m_settings.m_WatchdogTimeout); // Initial watchdog timer start (TODO)
 
-  while (1)
-  {
-    if (!daemon->Iterate())
-      break;
-  }
+  daemon->CreateThread();
+  daemon->WaitForShutdown();
 
   // Reset all signal handlers to default before Interface gets deleted:
   signal(SIGHUP, SIG_DFL);
@@ -1082,6 +1086,7 @@ int main(int argc, char *argv[])
 
 void* cVDRDaemon::Process(void)
 {
+  cThread::SetMainThreadId();
   while (IsRunning())
   {
     if (!Iterate())
