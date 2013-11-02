@@ -1046,11 +1046,6 @@ int main(int argc, char *argv[])
   if (!daemon->ReadCommandLineOptions(argc, argv))
     return 2;
 
-  isyslog("VDR version %s started", VDRVERSION);
-  if (daemon->m_settings.m_StartedAsRoot && daemon->m_settings.m_VdrUser)
-    isyslog("switched to user '%s'", daemon->m_settings.m_VdrUser);
-  if (daemon->m_settings.m_DaemonMode)
-    dsyslog("running as daemon (tid=%d)", cThread::ThreadId());
   cThread::SetMainThreadId();
 
   ::SetSystemCharacterTable();

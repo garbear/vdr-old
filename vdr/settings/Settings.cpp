@@ -461,23 +461,6 @@ bool cSettings::LoadFromCmdLine(int argc, char *argv[])
       }
   }
 
-  // Set user id in case we were started as root:
-  if (m_VdrUser && geteuid() == 0)
-  {
-    m_StartedAsRoot = true;
-    if (strcmp(m_VdrUser, "root"))
-    {
-      if (!SetKeepCaps(true))
-        return false;
-      if (!SetUser(m_VdrUser, m_UserDump))
-        return false;
-      if (!SetKeepCaps(false))
-        return false;
-      if (!DropCaps())
-        return false;
-    }
-  }
-
   // Help and version info:
   if (m_DisplayHelp || m_DisplayVersion)
   {
@@ -533,6 +516,24 @@ bool cSettings::LoadFromCmdLine(int argc, char *argv[])
   if (SysLogLevel > 0)
     openlog("vdr", LOG_CONS, m_SysLogTarget); // LOG_PID doesn't work as expected under NPTL
 
+  // Set user id in case we were started as root:
+  if (m_VdrUser && geteuid() == 0)
+  {
+    m_StartedAsRoot = true;
+    if (strcmp(m_VdrUser, "root"))
+    {
+      if (!SetKeepCaps(true))
+        return false;
+      if (!SetUser(m_VdrUser, m_UserDump))
+        return false;
+      if (!SetKeepCaps(false))
+        return false;
+      if (!DropCaps())
+        return false;
+    }
+    isyslog("switched to user '%s'", m_VdrUser);
+  }
+
   // Check the video directory:
   if (!DirectoryOk(m_VideoDirectory, true))
   {
@@ -549,6 +550,7 @@ bool cSettings::LoadFromCmdLine(int argc, char *argv[])
       esyslog("ERROR: %m");
       return false;
     }
+    dsyslog("running as daemon (tid=%d)", cThread::ThreadId());
   }
 #ifndef ANDROID
   else if (m_Terminal)
@@ -561,6 +563,8 @@ bool cSettings::LoadFromCmdLine(int argc, char *argv[])
     tcgetattr(STDIN_FILENO, &m_savedTm);
   }
 #endif
+
+  isyslog("VDR version %s started", VDRVERSION);
 
   return true;
 }
