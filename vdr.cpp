@@ -149,6 +149,17 @@ cVDRDaemon::~cVDRDaemon(void)
     closelog();
 }
 
+void* cVDRDaemon::Process(void)
+{
+  cThread::SetMainThreadId();
+  while (IsRunning())
+  {
+    if (!Iterate())
+      break;
+  }
+  return NULL;
+}
+
 /*!
  *
  * @param signum
@@ -1132,17 +1143,6 @@ int main(int argc, char *argv[])
   signal(SIGALRM, SIG_DFL);
 
   return ShutdownHandler.GetExitCode();
-}
-
-void* cVDRDaemon::Process(void)
-{
-  cThread::SetMainThreadId();
-  while (IsRunning())
-  {
-    if (!Iterate())
-      break;
-  }
-  return NULL;
 }
 
 extern "C" {
