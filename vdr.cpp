@@ -1079,7 +1079,8 @@ bool cVDRDaemon::HandleInput(time_t Now)
 
 void cVDRDaemon::WaitForShutdown()
 {
-  CMutex mutex;
+  CMutex mutex; // private mutex
+  CLockObject lock(mutex);
   m_exitCondition.Wait(mutex, m_finished);
 }
 
