@@ -33,6 +33,13 @@ public:
 private:
   cVDRDaemon(void);
 
+  void DirectMainFunction(eOSState function);
+
+  /*!
+   \return true if the input has been handled, and Iterate() should return true
+   */
+  bool HandleInput(time_t Now);
+
   cEpgDataReader* m_EpgDataReader;
   cOsdObject*     m_Menu;
   int             m_LastChannel;

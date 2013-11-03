@@ -355,8 +355,6 @@ bool cVDRDaemon::Init(void)
 bool cVDRDaemon::Iterate(void)
 {
   // Main program loop:
-#define DELETE_MENU ((m_IsInfoMenu &= (m_Menu == NULL)), delete m_Menu, m_Menu = NULL)
-
 #ifdef DEBUGRINGBUFFERS
   cRingBufferLinear::PrintDebugRBL();
 #endif
@@ -570,374 +568,10 @@ bool cVDRDaemon::Iterate(void)
   // Queued messages:
   if (!Skins.IsOpen())
     Skins.ProcessQueuedMessages();
+
   // User Input:
-  cOsdObject *Interact = m_Menu ? m_Menu : cControl::Control();
-  eKeys key = Interface->GetKey(!Interact || !Interact->NeedsFastResponse());
-  if (ISREALKEY(key))
-  {
-    EITScanner.Activity();
-    // Cancel shutdown countdown:
-    if (ShutdownHandler.countdown)
-      ShutdownHandler.countdown.Cancel();
-    // Set user active for MinUserInactivity time in the future:
-    ShutdownHandler.SetUserInactiveTimeout();
-  }
-  // Keys that must work independent of any interactive mode:
-  switch (int(key))
-    {
-  // Menu control:
-  case kMenu:
-    {
-      key = kNone; // nobody else needs to see this key
-      bool WasOpen = Interact != NULL;
-      bool WasMenu = Interact && Interact->IsMenu();
-      if (m_Menu)
-        DELETE_MENU;
-      else if (cControl::Control())
-      {
-        if (cOsd::IsOpen())
-          cControl::Control()->Hide();
-        else
-          WasOpen = false;
-      }
-      if (!WasOpen || (!WasMenu && !Setup.MenuKeyCloses))
-        m_Menu = new cMenuMain;
-    }
-    break;
-    // Info:
-  case kInfo:
-    {
-      if (m_IsInfoMenu)
-      {
-        key = kNone; // nobody else needs to see this key
-        DELETE_MENU;
-      }
-      else if (!m_Menu)
-      {
-        m_IsInfoMenu = true;
-        if (cControl::Control())
-        {
-          cControl::Control()->Hide();
-          m_Menu = cControl::Control()->GetInfo();
-          if (m_Menu)
-            m_Menu->Show();
-          else
-            m_IsInfoMenu = false;
-        }
-        else
-        {
-          cRemote::Put(kOk, true);
-          cRemote::Put(kSchedule, true);
-        }
-        key = kNone; // nobody else needs to see this key
-      }
-    }
-    break;
-    // Direct main menu functions:
-#define DirectMainFunction(function)\
-            { DELETE_MENU;\
-            if (cControl::Control())\
-               cControl::Control()->Hide();\
-               m_Menu = new cMenuMain(function);\
-            key = kNone; } // nobody else needs to see this key
-  case kSchedule:
-    DirectMainFunction(osSchedule);
-    break;
-  case kChannels:
-    DirectMainFunction(osChannels);
-    break;
-  case kTimers:
-    DirectMainFunction(osTimers);
-    break;
-  case kRecordings:
-    DirectMainFunction(osRecordings);
-    break;
-  case kSetup:
-    DirectMainFunction(osSetup);
-    break;
-  case kCommands:
-    DirectMainFunction(osCommands);
-    break;
-  case kUser0 ... kUser9:
-    cRemote::PutMacro(key);
-    key = kNone;
-    break;
-  case k_Plugin:
-    {
-      const char *PluginName = cRemote::GetPlugin();
-      if (PluginName)
-      {
-        DELETE_MENU;
-        if (cControl::Control())
-          cControl::Control()->Hide();
-        cPlugin *plugin = cPluginManager::GetPlugin(PluginName);
-        if (plugin)
-        {
-          m_Menu = plugin->MainMenuAction();
-          if (m_Menu)
-            m_Menu->Show();
-        }
-        else
-          esyslog("ERROR: unknown plugin '%s'", PluginName);
-      }
-      key = kNone; // nobody else needs to see these keys
-    }
-    break;
-    // Channel up/down:
-  case kChanUp | k_Repeat:
-  case kChanUp:
-  case kChanDn | k_Repeat:
-  case kChanDn:
-    if (!Interact)
-      m_Menu = new cDisplayChannel(NORMALKEY(key));
-    else if (cDisplayChannel::IsOpen() || cControl::Control())
-    {
-      Interact->ProcessKey(key);
-      return true;
-    }
-    else
-      cDevice::SwitchChannel(NORMALKEY(key) == kChanUp ? 1 : -1);
-    key = kNone; // nobody else needs to see these keys
-    break;
-    // Volume control:
-  case kVolUp | k_Repeat:
-  case kVolUp:
-  case kVolDn | k_Repeat:
-  case kVolDn:
-  case kMute:
-    if (key == kMute)
-    {
-      if (!cDevice::PrimaryDevice()->ToggleMute() && !m_Menu)
-      {
-        key = kNone; // nobody else needs to see these keys
-        break; // no need to display "mute off"
-      }
-    }
-    else
-      cDevice::PrimaryDevice()->SetVolume(
-          NORMALKEY(key) == kVolDn ? -VOLUMEDELTA : VOLUMEDELTA);
-    if (!m_Menu && !cOsd::IsOpen())
-      m_Menu = cDisplayVolume::Create();
-    cDisplayVolume::Process(key);
-    key = kNone; // nobody else needs to see these keys
-    break;
-    // Audio track control:
-  case kAudio:
-    if (cControl::Control())
-      cControl::Control()->Hide();
-    if (!cDisplayTracks::IsOpen())
-    {
-      DELETE_MENU;
-      m_Menu = cDisplayTracks::Create();
-    }
-    else
-      cDisplayTracks::Process(key);
-    key = kNone;
-    break;
-    // Subtitle track control:
-  case kSubtitles:
-    if (cControl::Control())
-      cControl::Control()->Hide();
-    if (!cDisplaySubtitleTracks::IsOpen())
-    {
-      DELETE_MENU;
-      m_Menu = cDisplaySubtitleTracks::Create();
-    }
-    else
-      cDisplaySubtitleTracks::Process(key);
-    key = kNone;
-    break;
-    // Pausing live video:
-  case kPlayPause:
-  case kPause:
-    if (!cControl::Control())
-    {
-      DELETE_MENU;
-      if (Setup.PauseKeyHandling)
-      {
-        if (Setup.PauseKeyHandling > 1
-            || Interface->Confirm(tr("Pause live video?")))
-        {
-          if (!cRecordControls::PauseLiveVideo())
-            Skins.QueueMessage(mtError, tr("No free DVB device to record!"));
-        }
-      }
-      key = kNone; // nobody else needs to see this key
-    }
-    break;
-    // Instant recording:
-  case kRecord:
-    if (!cControl::Control())
-    {
-      if (cRecordControls::Start())
-        Skins.QueueMessage(mtInfo, tr("Recording started"));
-      key = kNone; // nobody else needs to see this key
-    }
-    break;
-    // Power off:
-  case kPower:
-    isyslog("Power button pressed");
-    DELETE_MENU;
-    // Check for activity, request power button again if active:
-    if (!ShutdownHandler.ConfirmShutdown(false)
-        && Skins.Message(mtWarning,
-            tr("VDR will shut down later - press Power to force"),
-            SHUTDOWNFORCEPROMPT) != kPower)
-    {
-      // Not pressed power - set VDR to be non-interactive and power down later:
-      ShutdownHandler.SetUserInactive();
-      break;
-    }
-    // No activity or power button pressed twice - ask for confirmation:
-    if (!ShutdownHandler.ConfirmShutdown(true))
-    {
-      // Non-confirmed background activity - set VDR to be non-interactive and power down later:
-      ShutdownHandler.SetUserInactive();
-      break;
-    }
-    // Ask the final question:
-    if (!Interface->Confirm(tr("Press any key to cancel shutdown"),
-        SHUTDOWNCANCELPROMPT, true))
-      // If final question was canceled, continue to be active:
-      break;
-    // Ok, now call the shutdown script:
-    ShutdownHandler.DoShutdown(true);
-    // Set VDR to be non-interactive and power down again later:
-    ShutdownHandler.SetUserInactive();
-    // Do not attempt to automatically shut down for a while:
-    ShutdownHandler.SetRetry(SHUTDOWNRETRY);
-    break;
-  default:
-    break;
-    }
-  Interact = m_Menu ? m_Menu : cControl::Control(); // might have been closed in the mean time
-  if (Interact)
-  {
-    m_LastInteract = Now;
-    eOSState state = Interact->ProcessKey(key);
-    if (state == osUnknown && Interact != cControl::Control())
-    {
-      if (ISMODELESSKEY(key) && cControl::Control())
-      {
-        state = cControl::Control()->ProcessKey(key);
-        if (state == osEnd)
-        {
-          // let's not close a menu when replay ends:
-          cControl::Shutdown();
-          return true;
-        }
-      }
-      else if (Now - cRemote::LastActivity() > MENUTIMEOUT)
-        state = osEnd;
-    }
-    switch (state)
-      {
-    case osPause:
-      DELETE_MENU;
-      if (!cRecordControls::PauseLiveVideo())
-        Skins.QueueMessage(mtError, tr("No free DVB device to record!"));
-      break;
-    case osRecord:
-      DELETE_MENU;
-      if (cRecordControls::Start())
-        Skins.QueueMessage(mtInfo, tr("Recording started"));
-      break;
-    case osRecordings:
-      DELETE_MENU;
-      cControl::Shutdown();
-      m_Menu = new cMenuMain(osRecordings, true);
-      break;
-    case osReplay:
-      DELETE_MENU;
-      cControl::Shutdown();
-      cControl::Launch(new cReplayControl);
-      break;
-    case osStopReplay:
-      DELETE_MENU;
-      cControl::Shutdown();
-      break;
-    case osSwitchDvb:
-      DELETE_MENU;
-      cControl::Shutdown();
-      Skins.QueueMessage(mtInfo, tr("Switching primary DVB..."));
-      cDevice::SetPrimaryDevice(Setup.PrimaryDVB);
-      break;
-    case osPlugin:
-      DELETE_MENU;
-      m_Menu = cMenuMain::PluginOsdObject();
-      if (m_Menu)
-        m_Menu->Show();
-      break;
-    case osBack:
-    case osEnd:
-      if (Interact == m_Menu)
-        DELETE_MENU;
-      else
-        cControl::Shutdown();
-      break;
-    default:
-      break;
-      }
-  }
-  else
-  {
-    // Key functions in "normal" viewing mode:
-    if (key != kNone && KeyMacros.Get(key))
-    {
-      cRemote::PutMacro(key);
-      key = kNone;
-    }
-    switch (int(key))
-      {
-    // Toggle channels:
-    case kChanPrev:
-    case k0:
-      {
-        if (m_PreviousChannel[m_PreviousChannelIndex ^ 1] == m_LastChannel
-            || (m_LastChannel != m_PreviousChannel[0]
-                && m_LastChannel != m_PreviousChannel[1]))
-          m_PreviousChannelIndex ^= 1;
-        Channels.SwitchTo(m_PreviousChannel[m_PreviousChannelIndex ^= 1]);
-        break;
-      }
-      // Direct Channel Select:
-    case k1 ... k9:
-      // Left/Right rotates through channel groups:
-    case kLeft | k_Repeat:
-    case kLeft:
-    case kRight | k_Repeat:
-    case kRight:
-      // Previous/Next rotates through channel groups:
-    case kPrev | k_Repeat:
-    case kPrev:
-    case kNext | k_Repeat:
-    case kNext:
-      // Up/Down Channel Select:
-    case kUp | k_Repeat:
-    case kUp:
-    case kDown | k_Repeat:
-    case kDown:
-      m_Menu = new cDisplayChannel(NORMALKEY(key));
-      break;
-      // Viewing Control:
-    case kOk:
-      m_LastChannel = -1;
-      break; // forces channel display
-      // Instant resume of the last viewed recording:
-    case kPlay:
-      if (cReplayControl::LastReplayed())
-      {
-        cControl::Shutdown();
-        cControl::Launch(new cReplayControl);
-      }
-      else
-        DirectMainFunction(osRecordings);
-      // no last viewed recording, so enter the Recordings menu
-      break;
-    default:
-      break;
-      }
-  }
+  if (HandleInput(Now))
+    return true;
   if (!m_Menu)
   {
     if (!m_InhibitEpgScan)
@@ -1009,6 +643,422 @@ time_t      Soon = Now + SHUTDOWNWAIT;
   m_settings.m_pluginManager->MainThreadHook();
 
   return !ShutdownHandler.DoExit();
+}
+
+void cVDRDaemon::DirectMainFunction(eOSState function)
+{
+  m_IsInfoMenu &= (m_Menu == NULL);
+  delete m_Menu;
+  m_Menu = NULL;
+  if (cControl::Control())
+    cControl::Control()->Hide();
+  m_Menu = new cMenuMain(function);
+}
+
+bool cVDRDaemon::HandleInput(time_t Now)
+{
+  cOsdObject *Interact = m_Menu ? m_Menu : cControl::Control();
+  eKeys key = Interface->GetKey(!Interact || !Interact->NeedsFastResponse());
+  if (ISREALKEY(key))
+  {
+    EITScanner.Activity();
+    // Cancel shutdown countdown:
+    if (ShutdownHandler.countdown)
+      ShutdownHandler.countdown.Cancel();
+    // Set user active for MinUserInactivity time in the future:
+    ShutdownHandler.SetUserInactiveTimeout();
+  }
+  // Keys that must work independent of any interactive mode:
+  switch (int(key))
+    {
+  // Menu control:
+  case kMenu:
+    {
+      key = kNone; // nobody else needs to see this key
+      bool WasOpen = Interact != NULL;
+      bool WasMenu = Interact && Interact->IsMenu();
+      if (m_Menu)
+      {
+        m_IsInfoMenu &= (m_Menu == NULL);
+        delete m_Menu;
+        m_Menu = NULL;
+      }
+      else if (cControl::Control())
+      {
+        if (cOsd::IsOpen())
+          cControl::Control()->Hide();
+        else
+          WasOpen = false;
+      }
+      if (!WasOpen || (!WasMenu && !Setup.MenuKeyCloses))
+        m_Menu = new cMenuMain;
+    }
+    break;
+    // Info:
+  case kInfo:
+    {
+      if (m_IsInfoMenu)
+      {
+        key = kNone; // nobody else needs to see this key
+        m_IsInfoMenu &= (m_Menu == NULL);
+        delete m_Menu;
+        m_Menu = NULL;
+      }
+      else if (!m_Menu)
+      {
+        m_IsInfoMenu = true;
+        if (cControl::Control())
+        {
+          cControl::Control()->Hide();
+          m_Menu = cControl::Control()->GetInfo();
+          if (m_Menu)
+            m_Menu->Show();
+          else
+            m_IsInfoMenu = false;
+        }
+        else
+        {
+          cRemote::Put(kOk, true);
+          cRemote::Put(kSchedule, true);
+        }
+        key = kNone; // nobody else needs to see this key
+      }
+    }
+    break;
+  // Direct main menu functions:
+  case kSchedule:
+    DirectMainFunction(osSchedule);
+    key = kNone; // nobody else needs to see this key
+    break;
+  case kChannels:
+    DirectMainFunction(osChannels);
+    key = kNone; // nobody else needs to see this key
+    break;
+  case kTimers:
+    DirectMainFunction(osTimers);
+    key = kNone; // nobody else needs to see this key
+    break;
+  case kRecordings:
+    DirectMainFunction(osRecordings);
+    key = kNone; // nobody else needs to see this key
+    break;
+  case kSetup:
+    DirectMainFunction(osSetup);
+    key = kNone; // nobody else needs to see this key
+    break;
+  case kCommands:
+    DirectMainFunction(osCommands);
+    key = kNone; // nobody else needs to see this key
+    break;
+  case kUser0 ... kUser9:
+    cRemote::PutMacro(key);
+    key = kNone;
+    break;
+  case k_Plugin:
+    {
+      const char *PluginName = cRemote::GetPlugin();
+      if (PluginName)
+      {
+        m_IsInfoMenu &= (m_Menu == NULL);
+        delete m_Menu;
+        m_Menu = NULL;
+        if (cControl::Control())
+          cControl::Control()->Hide();
+        cPlugin *plugin = cPluginManager::GetPlugin(PluginName);
+        if (plugin)
+        {
+          m_Menu = plugin->MainMenuAction();
+          if (m_Menu)
+            m_Menu->Show();
+        }
+        else
+          esyslog("ERROR: unknown plugin '%s'", PluginName);
+      }
+      key = kNone; // nobody else needs to see these keys
+    }
+    break;
+    // Channel up/down:
+  case kChanUp | k_Repeat:
+  case kChanUp:
+  case kChanDn | k_Repeat:
+  case kChanDn:
+    if (!Interact)
+      m_Menu = new cDisplayChannel(NORMALKEY(key));
+    else if (cDisplayChannel::IsOpen() || cControl::Control())
+    {
+      Interact->ProcessKey(key);
+      return true; // Iterate() should exit and return true
+    }
+    else
+      cDevice::SwitchChannel(NORMALKEY(key) == kChanUp ? 1 : -1);
+    key = kNone; // nobody else needs to see these keys
+    break;
+    // Volume control:
+  case kVolUp | k_Repeat:
+  case kVolUp:
+  case kVolDn | k_Repeat:
+  case kVolDn:
+  case kMute:
+    if (key == kMute)
+    {
+      if (!cDevice::PrimaryDevice()->ToggleMute() && !m_Menu)
+      {
+        key = kNone; // nobody else needs to see these keys
+        break; // no need to display "mute off"
+      }
+    }
+    else
+      cDevice::PrimaryDevice()->SetVolume(
+          NORMALKEY(key) == kVolDn ? -VOLUMEDELTA : VOLUMEDELTA);
+    if (!m_Menu && !cOsd::IsOpen())
+      m_Menu = cDisplayVolume::Create();
+    cDisplayVolume::Process(key);
+    key = kNone; // nobody else needs to see these keys
+    break;
+    // Audio track control:
+  case kAudio:
+    if (cControl::Control())
+      cControl::Control()->Hide();
+    if (!cDisplayTracks::IsOpen())
+    {
+      m_IsInfoMenu &= (m_Menu == NULL);
+      delete m_Menu;
+      m_Menu = cDisplayTracks::Create();
+    }
+    else
+      cDisplayTracks::Process(key);
+    key = kNone;
+    break;
+    // Subtitle track control:
+  case kSubtitles:
+    if (cControl::Control())
+      cControl::Control()->Hide();
+    if (!cDisplaySubtitleTracks::IsOpen())
+    {
+      m_IsInfoMenu &= (m_Menu == NULL);
+      delete m_Menu;
+      m_Menu = cDisplaySubtitleTracks::Create();
+    }
+    else
+      cDisplaySubtitleTracks::Process(key);
+    key = kNone;
+    break;
+    // Pausing live video:
+  case kPlayPause:
+  case kPause:
+    if (!cControl::Control())
+    {
+      m_IsInfoMenu &= (m_Menu == NULL);
+      delete m_Menu;
+      m_Menu = NULL;
+      if (Setup.PauseKeyHandling)
+      {
+        if (Setup.PauseKeyHandling > 1
+            || Interface->Confirm(tr("Pause live video?")))
+        {
+          if (!cRecordControls::PauseLiveVideo())
+            Skins.QueueMessage(mtError, tr("No free DVB device to record!"));
+        }
+      }
+      key = kNone; // nobody else needs to see this key
+    }
+    break;
+    // Instant recording:
+  case kRecord:
+    if (!cControl::Control())
+    {
+      if (cRecordControls::Start())
+        Skins.QueueMessage(mtInfo, tr("Recording started"));
+      key = kNone; // nobody else needs to see this key
+    }
+    break;
+    // Power off:
+  case kPower:
+    isyslog("Power button pressed");
+    m_IsInfoMenu &= (m_Menu == NULL);
+    delete m_Menu;
+    m_Menu = NULL;
+    // Check for activity, request power button again if active:
+    if (!ShutdownHandler.ConfirmShutdown(false)
+        && Skins.Message(mtWarning,
+            tr("VDR will shut down later - press Power to force"),
+            SHUTDOWNFORCEPROMPT) != kPower)
+    {
+      // Not pressed power - set VDR to be non-interactive and power down later:
+      ShutdownHandler.SetUserInactive();
+      break;
+    }
+    // No activity or power button pressed twice - ask for confirmation:
+    if (!ShutdownHandler.ConfirmShutdown(true))
+    {
+      // Non-confirmed background activity - set VDR to be non-interactive and power down later:
+      ShutdownHandler.SetUserInactive();
+      break;
+    }
+    // Ask the final question:
+    if (!Interface->Confirm(tr("Press any key to cancel shutdown"),
+        SHUTDOWNCANCELPROMPT, true))
+      // If final question was canceled, continue to be active:
+      break;
+    // Ok, now call the shutdown script:
+    ShutdownHandler.DoShutdown(true);
+    // Set VDR to be non-interactive and power down again later:
+    ShutdownHandler.SetUserInactive();
+    // Do not attempt to automatically shut down for a while:
+    ShutdownHandler.SetRetry(SHUTDOWNRETRY);
+    break;
+  default:
+    break;
+    }
+  Interact = m_Menu ? m_Menu : cControl::Control(); // might have been closed in the mean time
+  if (Interact)
+  {
+    m_LastInteract = Now;
+    eOSState state = Interact->ProcessKey(key);
+    if (state == osUnknown && Interact != cControl::Control())
+    {
+      if (ISMODELESSKEY(key) && cControl::Control())
+      {
+        state = cControl::Control()->ProcessKey(key);
+        if (state == osEnd)
+        {
+          // let's not close a menu when replay ends:
+          cControl::Shutdown();
+          return true; // Iterate() should exit and return true
+        }
+      }
+      else if (Now - cRemote::LastActivity() > MENUTIMEOUT)
+        state = osEnd;
+    }
+    switch (state)
+    {
+    case osPause:
+      m_IsInfoMenu &= (m_Menu == NULL);
+      delete m_Menu;
+      m_Menu = NULL;
+      if (!cRecordControls::PauseLiveVideo())
+        Skins.QueueMessage(mtError, tr("No free DVB device to record!"));
+      break;
+    case osRecord:
+      m_IsInfoMenu &= (m_Menu == NULL);
+      delete m_Menu;
+      m_Menu = NULL;
+      if (cRecordControls::Start())
+        Skins.QueueMessage(mtInfo, tr("Recording started"));
+      break;
+    case osRecordings:
+      m_IsInfoMenu &= (m_Menu == NULL);
+      delete m_Menu;
+      m_Menu = NULL;
+      cControl::Shutdown();
+      m_Menu = new cMenuMain(osRecordings, true);
+      break;
+    case osReplay:
+      m_IsInfoMenu &= (m_Menu == NULL);
+      delete m_Menu;
+      m_Menu = NULL;
+      cControl::Shutdown();
+      cControl::Launch(new cReplayControl);
+      break;
+    case osStopReplay:
+      m_IsInfoMenu &= (m_Menu == NULL);
+      delete m_Menu;
+      m_Menu = NULL;
+      cControl::Shutdown();
+      break;
+    case osSwitchDvb:
+      m_IsInfoMenu &= (m_Menu == NULL);
+      delete m_Menu;
+      m_Menu = NULL;
+      cControl::Shutdown();
+      Skins.QueueMessage(mtInfo, tr("Switching primary DVB..."));
+      cDevice::SetPrimaryDevice(Setup.PrimaryDVB);
+      break;
+    case osPlugin:
+      m_IsInfoMenu &= (m_Menu == NULL);
+      delete m_Menu;
+      m_Menu = cMenuMain::PluginOsdObject();
+      if (m_Menu)
+        m_Menu->Show();
+      break;
+    case osBack:
+    case osEnd:
+      if (Interact == m_Menu)
+      {
+        m_IsInfoMenu &= (m_Menu == NULL);
+        delete m_Menu;
+        m_Menu = NULL;
+      }
+      else
+        cControl::Shutdown();
+      break;
+    default:
+      break;
+    }
+  }
+  else
+  {
+    // Key functions in "normal" viewing mode:
+    if (key != kNone && KeyMacros.Get(key))
+    {
+      cRemote::PutMacro(key);
+      key = kNone;
+    }
+    switch (int(key))
+    {
+    // Toggle channels:
+    case kChanPrev:
+    case k0:
+      {
+        if (m_PreviousChannel[m_PreviousChannelIndex ^ 1] == m_LastChannel
+            || (m_LastChannel != m_PreviousChannel[0]
+                && m_LastChannel != m_PreviousChannel[1]))
+          m_PreviousChannelIndex ^= 1;
+        Channels.SwitchTo(m_PreviousChannel[m_PreviousChannelIndex ^= 1]);
+        break;
+      }
+      // Direct Channel Select:
+    case k1 ... k9:
+      // Left/Right rotates through channel groups:
+    case kLeft | k_Repeat:
+    case kLeft:
+    case kRight | k_Repeat:
+    case kRight:
+      // Previous/Next rotates through channel groups:
+    case kPrev | k_Repeat:
+    case kPrev:
+    case kNext | k_Repeat:
+    case kNext:
+      // Up/Down Channel Select:
+    case kUp | k_Repeat:
+    case kUp:
+    case kDown | k_Repeat:
+    case kDown:
+      m_Menu = new cDisplayChannel(NORMALKEY(key));
+      break;
+      // Viewing Control:
+    case kOk:
+      m_LastChannel = -1;
+      break; // forces channel display
+      // Instant resume of the last viewed recording:
+    case kPlay:
+      if (cReplayControl::LastReplayed())
+      {
+        cControl::Shutdown();
+        cControl::Launch(new cReplayControl);
+      }
+      else
+      {
+        DirectMainFunction(osRecordings);
+        key = kNone; // nobody else needs to see this key
+      }
+      // no last viewed recording, so enter the Recordings menu
+      break;
+    default:
+      break;
+    }
+  }
+  return false; // Iterate() should continue normally
 }
 
 void cVDRDaemon::WaitForShutdown()
