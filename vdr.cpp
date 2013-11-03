@@ -164,11 +164,7 @@ void* cVDRDaemon::Process(void)
   return NULL;
 }
 
-/*!
- *
- * @param signum
- */
-static void SignalHandler(int signum)
+void cVDRDaemon::OnSignal(int signum)
 {
   switch (signum)
   {
@@ -181,8 +177,8 @@ static void SignalHandler(int signum)
     LastSignal = signum;
     Interface->Interrupt();
     ShutdownHandler.Exit(0);
+    break;
   }
-  signal(signum, SignalHandler);
 }
 
 bool cVDRDaemon::ReadCommandLineOptions(int argc, char *argv[])
@@ -1125,11 +1121,10 @@ int main(int argc, char *argv[])
   if (!daemon->Init())
     return -2;
 
-  // Signal handlers:
-  if (signal(SIGHUP,  SignalHandler) == SIG_IGN) signal(SIGHUP,  SIG_IGN);
-  if (signal(SIGINT,  SignalHandler) == SIG_IGN) signal(SIGINT,  SIG_IGN);
-  if (signal(SIGTERM, SignalHandler) == SIG_IGN) signal(SIGTERM, SIG_IGN);
-  if (signal(SIGPIPE, SignalHandler) == SIG_IGN) signal(SIGPIPE, SIG_IGN);
+  CSignalHandler::Get().SetSignalReceiver(SIGHUP, daemon);
+  CSignalHandler::Get().SetSignalReceiver(SIGINT, daemon);
+  CSignalHandler::Get().SetSignalReceiver(SIGTERM, daemon);
+  CSignalHandler::Get().SetSignalReceiver(SIGPIPE, daemon);
 
   //alarm(daemon->m_settings.m_WatchdogTimeout); // Initial watchdog timer start (TODO)
 
@@ -1137,11 +1132,7 @@ int main(int argc, char *argv[])
   daemon->WaitForShutdown();
 
   // Reset all signal handlers to default before Interface gets deleted:
-  signal(SIGHUP, SIG_DFL);
-  signal(SIGINT, SIG_DFL);
-  signal(SIGTERM, SIG_DFL);
-  signal(SIGPIPE, SIG_DFL);
-  signal(SIGALRM, SIG_DFL);
+  CSignalHandler::Get().ResetSignalReceivers();
 
   return ShutdownHandler.GetExitCode();
 }

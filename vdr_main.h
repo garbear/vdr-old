@@ -10,13 +10,14 @@
 #include "platform/threads/mutex.h"
 
 #include "vdr/settings/Settings.h"
+#include "vdr/SignalHandler.h"
 
 class cEpgDataReader;
 class cOsdObject;
 class cSkin;
 class cPluginManager;
 
-class cVDRDaemon : public PLATFORM::CThread
+class cVDRDaemon : public PLATFORM::CThread, public ISignalReceiver
 {
 public:
   static cVDRDaemon& Get(void);
@@ -30,6 +31,12 @@ public:
   void WaitForShutdown();
 
   cSettings       m_settings;
+
+protected:
+  /*!
+   * \brief Inherited from ISignalReceiver
+   */
+  virtual void OnSignal(int signum);
 
 private:
   cVDRDaemon(void);

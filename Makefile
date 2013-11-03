@@ -32,6 +32,7 @@ INCLUDES ?= $(shell $(PKGCONFIG) --cflags freetype2 fontconfig)
 
 CWD       ?= $(shell pwd)
 LSIDIR    ?= $(CWD)/libsi
+VDRDIR    ?= $(CWD)/vdr
 SETTINGSDIR ?= $(CWD)/vdr/settings
 PLUGINDIR ?= $(CWD)/PLUGINS
 
@@ -65,6 +66,7 @@ endif
 # Object files
 
 SILIB       = $(LSIDIR)/libsi.a
+VDRLIB      = $(VDRDIR)/vdr.a
 SETTINGSLIB = $(SETTINGSDIR)/settings.a
 
 COBJS = android_sort.o android_strchrnul.o android_getline.o android_timegm.o
@@ -123,16 +125,19 @@ $(DEPFILE): Makefile
 
 # The main program:
 
-vdr.bin: $(COBJS) $(CXXOBJS) $(SILIB) $(SETTINGSLIB)
-	$(CXX) $(CXXFLAGS) -rdynamic $(LDFLAGS) $(COBJS) $(CXXOBJS) $(SILIB) $(SETTINGSLIB) $(LIBS) -o vdr.bin
+vdr.bin: $(COBJS) $(CXXOBJS) $(VDRLIB) $(SILIB) $(SETTINGSLIB)
+	$(CXX) $(CXXFLAGS) -rdynamic $(LDFLAGS) $(COBJS) $(CXXOBJS) $(VDRLIB) $(SILIB) $(SETTINGSLIB) $(LIBS) -o vdr.bin
 
-libvdr.so: $(COBJS) $(CXXOBJS) $(SILIB) $(SETTINGSLIB)
-	$(CXX) $(CXXFLAGS) -shared $(LDFLAGS) $(CXXOBJS) $(SILIB) $(SETTINGSLIB) $(LIBS) -o libvdr.so
+libvdr.so: $(COBJS) $(CXXOBJS) $(VDRLIB) $(SILIB) $(SETTINGSLIB)
+	$(CXX) $(CXXFLAGS) -shared $(LDFLAGS) $(CXXOBJS) $(VDRLIB) $(SILIB) $(SETTINGSLIB) $(LIBS) -o libvdr.so
 
 # The libsi library:
 
 $(SILIB):
 	$(MAKE) --no-print-directory -C $(LSIDIR) CXXFLAGS="$(CXXFLAGS)" DEFINES="$(CDEFINES)" all
+
+$(VDRLIB):
+	$(MAKE) --no-print-directory -C $(VDRDIR) CXXFLAGS="$(CXXFLAGS)" DEFINES="$(CDEFINES)" all
 
 $(SETTINGSLIB):
 	$(MAKE) --no-print-directory -C $(SETTINGSDIR) CXXFLAGS="$(CXXFLAGS)" DEFINES="$(CDEFINES)" all
