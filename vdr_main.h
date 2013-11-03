@@ -7,6 +7,7 @@
 #include "xbmc/xbmc_addon_types.h"
 #include "xbmc/libXBMC_addon.h"
 #include "platform/threads/threads.h"
+#include "platform/threads/mutex.h"
 
 #include "vdr/settings/Settings.h"
 
@@ -51,6 +52,8 @@ private:
   bool            m_InhibitEpgScan;
   bool            m_IsInfoMenu;
   cSkin*          m_CurrentSkin;
+  PLATFORM::CCondition<bool> m_exitCondition;
+  bool            m_finished;
 };
 
 extern std::string                   g_strUserPath;

@@ -101,7 +101,8 @@ cVDRDaemon::cVDRDaemon()
    m_LastInteract(0),
    m_InhibitEpgScan(false),
    m_IsInfoMenu(false),
-   m_CurrentSkin(NULL)
+   m_CurrentSkin(NULL),
+   m_finished(false)
 {
   m_PreviousChannel[0] = 1;
   m_PreviousChannel[1] = 1;
@@ -151,12 +152,15 @@ cVDRDaemon::~cVDRDaemon(void)
 
 void* cVDRDaemon::Process(void)
 {
-  cThread::SetMainThreadId();
+  m_finished = false;
+  //cThread::SetMainThreadId();
   while (IsRunning())
   {
     if (!Iterate())
       break;
   }
+  m_finished = true;
+  m_exitCondition.Signal();
   return NULL;
 }
 
@@ -1074,11 +1078,8 @@ bool cVDRDaemon::HandleInput(time_t Now)
 
 void cVDRDaemon::WaitForShutdown()
 {
-  while (!ShutdownHandler.DoExit() && IsRunning())
-  {
-    // TODO: Wait on condition variable
-    usleep(1000 * 1000);
-  }
+  CMutex mutex;
+  m_exitCondition.Wait(mutex, m_finished);
 }
 
 void SetSystemCharacterTable()
