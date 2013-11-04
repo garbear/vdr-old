@@ -59,6 +59,8 @@ private:
   bool            m_InhibitEpgScan;
   bool            m_IsInfoMenu;
   cSkin*          m_CurrentSkin;
+  int             m_LastSignal;
+  PLATFORM::CMutex m_critSection;
   PLATFORM::CCondition<bool> m_exitCondition;
   bool            m_finished;
 };

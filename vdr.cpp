@@ -89,8 +89,6 @@ ADDON_STATUS   m_CurStatus      = ADDON_STATUS_UNKNOWN;
 #define VPSLOOKAHEADTIME      24 // hours within which VPS timers will make sure their events are up to date
 #define VPSUPTODATETIME     3600 // seconds before the event or schedule of a VPS timer needs to be refreshed
 
-static int LastSignal = 0;
-
 cVDRDaemon::cVDRDaemon()
  : m_EpgDataReader(NULL),
    m_Menu(NULL),
@@ -102,6 +100,7 @@ cVDRDaemon::cVDRDaemon()
    m_InhibitEpgScan(false),
    m_IsInfoMenu(false),
    m_CurrentSkin(NULL),
+   m_LastSignal(0),
    m_finished(false)
 {
   m_PreviousChannel[0] = 1;
@@ -141,8 +140,8 @@ cVDRDaemon::~cVDRDaemon(void)
   m_settings.m_pluginManager->Shutdown(true);
   cSchedules::Cleanup(true);
   ReportEpgBugFixStats(true);
-  if (LastSignal)
-    isyslog("caught signal %d", LastSignal);
+  if (m_LastSignal)
+    isyslog("caught signal %d", m_LastSignal);
   if (ShutdownHandler.EmergencyExitRequested())
     esyslog("emergency exit!");
   isyslog("exiting, exit code %d", ShutdownHandler.GetExitCode());
@@ -170,13 +169,26 @@ void cVDRDaemon::OnSignal(int signum)
   case SIGPIPE:
     break;
   case SIGHUP:
-    LastSignal = signum;
-    break;
+    {
+      CLockObject lock(m_critSection);
+      m_LastSignal = signum;
+      // SIGHUP shall cause a restart:
+      if (ShutdownHandler.ConfirmRestart(true) &&
+          Interface->Confirm(tr("Press any key to cancel restart"), RESTARTCANCELPROMPT, true))
+      {
+        ShutdownHandler.Exit(1);
+      }
+      m_LastSignal = 0;
+      break;
+    }
   default:
-    LastSignal = signum;
-    Interface->Interrupt();
-    ShutdownHandler.Exit(0);
-    break;
+    {
+      CLockObject lock(m_critSection);
+      m_LastSignal = signum;
+      Interface->Interrupt();
+      ShutdownHandler.Exit(0);
+      break;
+    }
   }
 }
 
@@ -187,6 +199,8 @@ bool cVDRDaemon::ReadCommandLineOptions(int argc, char *argv[])
 
 bool cVDRDaemon::Init(void)
 {
+  CLockObject lock(m_critSection);
+
   // Load plugins:
   if (!m_settings.m_pluginManager->LoadPlugins(true))
     return false;
@@ -365,6 +379,11 @@ bool cVDRDaemon::Init(void)
 bool cVDRDaemon::Iterate(void)
 {
   // Main program loop:
+  CLockObject lock(m_critSection);
+
+  if (ShutdownHandler.DoExit())
+    return false;
+
 #ifdef DEBUGRINGBUFFERS
   cRingBufferLinear::PrintDebugRBL();
 #endif
@@ -593,19 +612,6 @@ bool cVDRDaemon::Iterate(void)
       else
         Skins.Message(mtInfo, tr("Editing process finished"));
     }
-  }
-
-  // SIGHUP shall cause a restart:
-  if (LastSignal == SIGHUP)
-  {
-    if (ShutdownHandler.ConfirmRestart(true)
-        && Interface->Confirm(tr("Press any key to cancel restart"),
-            RESTARTCANCELPROMPT, true))
-    {
-      ShutdownHandler.Exit(1);
-      return false;
-    }
-    LastSignal = 0;
   }
 
   // Update the shutdown countdown:
