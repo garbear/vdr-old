@@ -153,7 +153,6 @@ cVDRDaemon::~cVDRDaemon(void)
 void* cVDRDaemon::Process(void)
 {
   m_finished = false;
-  //cThread::SetMainThreadId();
   while (IsRunning())
   {
     if (!Iterate())
@@ -1112,6 +1111,8 @@ int main(int argc, char *argv[])
 
   if (!daemon->ReadCommandLineOptions(argc, argv))
     return 2;
+
+  cThread::SetMainThreadId();
 
   ::SetSystemCharacterTable();
 
