@@ -13,7 +13,7 @@ RANLIB   ?= ranlib
 
 ### The object files (add further files here):
 
-OBJS = File.o VFSFile.o
+OBJS = Directory.o DirectoryFetchJob.o File.o IDirectory.o VFSDirectory.o VFSFile.o
 
 ### Implicit rules:
 
