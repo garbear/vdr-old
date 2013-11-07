@@ -13,6 +13,8 @@
  * $Id: svdrp.c 2.24 2013/02/17 13:18:01 kls Exp $
  */
 
+#include "vdr/utils/Base64.h"
+
 #include "svdrp.h"
 #include <arpa/inet.h>
 #include <ctype.h>
@@ -39,6 +41,10 @@
 #include "timers.h"
 #include "tools.h"
 #include "videodir.h"
+
+#include <string>
+
+using namespace std;
 
 // --- cSocket ---------------------------------------------------------------
 
@@ -872,10 +878,9 @@ void cSVDRP::CmdGRAB(const char *Option)
               }
            }
         else {
-           cBase64Encoder Base64(Image, ImageSize);
-           const char *s;
-           while ((s = Base64.NextLine()) != NULL)
-                 Reply(-216, "%s", s);
+           string output;
+           Base64::Encode(Image, ImageSize, output);
+           Reply(-216, "%s", output.c_str());
            Reply(216, "Grabbed image %s", Option);
            }
         free(Image);

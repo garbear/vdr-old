@@ -1186,58 +1186,6 @@ uchar *RgbToJpeg(uchar *Mem, int Width, int Height, int &Size, int Quality)
   return jcd.mem;
 }
 
-// --- cBase64Encoder --------------------------------------------------------
-
-const char *cBase64Encoder::b64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-
-cBase64Encoder::cBase64Encoder(const uchar *Data, int Length, int MaxResult)
-{
-  data = Data;
-  length = Length;
-  maxResult = MaxResult;
-  i = 0;
-  result = MALLOC(char, maxResult + 1);
-}
-
-cBase64Encoder::~cBase64Encoder()
-{
-  free(result);
-}
-
-const char *cBase64Encoder::NextLine(void)
-{
-  int r = 0;
-  while (i < length && r < maxResult - 3) {
-        result[r++] = b64[(data[i] >> 2) & 0x3F];
-        uchar c = (data[i] << 4) & 0x3F;
-        if (++i < length)
-           c |= (data[i] >> 4) & 0x0F;
-        result[r++] = b64[c];
-        if (i < length) {
-           c = (data[i] << 2) & 0x3F;
-           if (++i < length)
-              c |= (data[i] >> 6) & 0x03;
-           result[r++] = b64[c];
-           }
-        else {
-           i++;
-           result[r++] = '=';
-           }
-        if (i < length) {
-           c = data[i] & 0x3F;
-           result[r++] = b64[c];
-           }
-        else
-           result[r++] = '=';
-        i++;
-        }
-  if (r > 0) {
-     result[r] = 0;
-     return result;
-     }
-  return NULL;
-}
-
 // --- cBitStream ------------------------------------------------------------
 
 int cBitStream::GetBit(void)

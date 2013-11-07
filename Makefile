@@ -35,6 +35,7 @@ LSIDIR    ?= $(CWD)/libsi
 VDRDIR    ?= $(CWD)/vdr
 FSDIR     ?= $(CWD)/vdr/filesystem
 SETTINGSDIR ?= $(CWD)/vdr/settings
+UTILSDIR  ?= $(CWD)/vdr/utils
 PLUGINDIR ?= $(CWD)/PLUGINS
 
 DESTDIR   ?=
@@ -70,11 +71,13 @@ SILIB       = $(LSIDIR)/libsi.a
 VDRLIB      = $(VDRDIR)/vdr.a
 FSLIB       = $(FSDIR)/filesystem.a
 SETTINGSLIB = $(SETTINGSDIR)/settings.a
+UTILSLIB    = $(UTILSDIR)/utils.a
 
 VDRLIBS = $(VDRLIB) \
           $(SILIB) \
           $(FSLIB) \
-          $(SETTINGSLIB)
+          $(SETTINGSLIB) \
+          $(UTILSLIB)
 
 COBJS = android_sort.o android_strchrnul.o android_getline.o android_timegm.o
 
@@ -151,6 +154,9 @@ $(FSLIB):
 
 $(SETTINGSLIB):
 	$(MAKE) --no-print-directory -C $(SETTINGSDIR) CXXFLAGS="$(CXXFLAGS)" DEFINES="$(CDEFINES)" all
+
+$(UTILSLIB):
+	$(MAKE) --no-print-directory -C $(UTILSDIR) CXXFLAGS="$(CXXFLAGS)" DEFINES="$(CDEFINES)" all
 
 # pkg-config file:
 
