@@ -42,7 +42,7 @@ public:
 class cSVDRP {
 private:
   cSocket socket;
-  cFile file;
+  cVDRFile file;
   cRecordings recordings;
   cPUTEhandler *PUTEhandler;
   int numChars;

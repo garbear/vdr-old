@@ -376,14 +376,14 @@ public:
   struct dirent *Next(void);
   };
 
-class cFile {
+class cVDRFile {
 private:
   static bool files[];
   static int maxFiles;
   int f;
 public:
-  cFile(void);
-  ~cFile();
+  cVDRFile(void);
+  ~cVDRFile();
   operator int () { return f; }
   bool Open(const char *FileName, int Flags, mode_t Mode = DEFFILEMODE);
   bool Open(int FileDes);

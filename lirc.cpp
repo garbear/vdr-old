@@ -72,7 +72,7 @@ void cLircRemote::Action(void)
 
   while (Running() && f >= 0) {
 
-        bool ready = cFile::FileReady(f, timeout);
+        bool ready = cVDRFile::FileReady(f, timeout);
         int ret = ready ? safe_read(f, buf, sizeof(buf)) : -1;
 
         if (ready && ret <= 0 ) {

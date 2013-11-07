@@ -1476,22 +1476,22 @@ bool cFileNameList::Load(const char *Directory, bool DirsOnly)
   return false;
 }
 
-// --- cFile -----------------------------------------------------------------
+// --- cVDRFile -----------------------------------------------------------------
 
-bool cFile::files[FD_SETSIZE] = { false };
-int cFile::maxFiles = 0;
+bool cVDRFile::files[FD_SETSIZE] = { false };
+int cVDRFile::maxFiles = 0;
 
-cFile::cFile(void)
+cVDRFile::cVDRFile(void)
 {
   f = -1;
 }
 
-cFile::~cFile()
+cVDRFile::~cVDRFile()
 {
   Close();
 }
 
-bool cFile::Open(const char *FileName, int Flags, mode_t Mode)
+bool cVDRFile::Open(const char *FileName, int Flags, mode_t Mode)
 {
   if (!IsOpen())
      return Open(open(FileName, Flags, Mode));
@@ -1499,7 +1499,7 @@ bool cFile::Open(const char *FileName, int Flags, mode_t Mode)
   return false;
 }
 
-bool cFile::Open(int FileDes)
+bool cVDRFile::Open(int FileDes)
 {
   if (FileDes >= 0) {
      if (!IsOpen()) {
@@ -1524,7 +1524,7 @@ bool cFile::Open(int FileDes)
   return false;
 }
 
-void cFile::Close(void)
+void cVDRFile::Close(void)
 {
   if (f >= 0) {
      close(f);
@@ -1533,12 +1533,12 @@ void cFile::Close(void)
      }
 }
 
-bool cFile::Ready(bool Wait)
+bool cVDRFile::Ready(bool Wait)
 {
   return f >= 0 && AnyFileReady(f, Wait ? 1000 : 0);
 }
 
-bool cFile::AnyFileReady(int FileDes, int TimeoutMs)
+bool cVDRFile::AnyFileReady(int FileDes, int TimeoutMs)
 {
   fd_set set;
   FD_ZERO(&set);
@@ -1556,7 +1556,7 @@ bool cFile::AnyFileReady(int FileDes, int TimeoutMs)
   return select(FD_SETSIZE, &set, NULL, NULL, &timeout) > 0 && (FileDes < 0 || FD_ISSET(FileDes, &set));
 }
 
-bool cFile::FileReady(int FileDes, int TimeoutMs)
+bool cVDRFile::FileReady(int FileDes, int TimeoutMs)
 {
   fd_set set;
   struct timeval timeout;
@@ -1571,7 +1571,7 @@ bool cFile::FileReady(int FileDes, int TimeoutMs)
   return select(FD_SETSIZE, &set, NULL, NULL, (TimeoutMs >= 0) ? &timeout : NULL) > 0 && FD_ISSET(FileDes, &set);
 }
 
-bool cFile::FileReadyForWriting(int FileDes, int TimeoutMs)
+bool cVDRFile::FileReadyForWriting(int FileDes, int TimeoutMs)
 {
   fd_set set;
   struct timeval timeout;
