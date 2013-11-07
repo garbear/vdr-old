@@ -17,6 +17,8 @@
 #include "remote.h"
 #include "status.h"
 
+#include "vdr/utils/UTF8Utils.h"
+
 // IMPORTANT NOTE: in the 'sscanf()' calls there is a blank after the '%d'
 // format characters in order to allow any number of blanks after a numeric
 // value!
@@ -112,7 +114,7 @@ cTimer::cTimer(const cEvent *Event)
   lifetime = Setup.DefaultLifetime;
   const char *Title = Event->Title();
   if (!isempty(Title))
-     Utf8Strn0Cpy(file, Event->Title(), sizeof(file));
+    cUtf8Utils::Utf8Strn0Cpy(file, Event->Title(), sizeof(file));
   SetEvent(Event);
 }
 
@@ -256,7 +258,7 @@ cString cTimer::PrintDay(time_t Day, int WeekDays, bool SingleByteChars)
      if (!SingleByteChars)
         w = tr(w);
      while (*w) {
-           int sl = Utf8CharLen(w);
+           int sl = cUtf8Utils::Utf8CharLen(w);
            if (WeekDays & 1) {
               for (int i = 0; i < sl; i++)
                   b[i] = w[i];
@@ -320,7 +322,7 @@ bool cTimer::Parse(const char *s)
         }
      //TODO add more plausibility checks
      result = ParseDay(daybuffer, day, weekdays);
-     Utf8Strn0Cpy(file, filebuffer, sizeof(file));
+     cUtf8Utils::Utf8Strn0Cpy(file, filebuffer, sizeof(file));
      strreplace(file, '|', ':');
      if (is_number(channelbuffer))
         channel = Channels.GetByNumber(atoi(channelbuffer));
@@ -392,7 +394,7 @@ time_t cTimer::SetTime(time_t t, int SecondsFromMidnight)
 void cTimer::SetFile(const char *File)
 {
   if (!isempty(File))
-     Utf8Strn0Cpy(file, File, sizeof(file));
+    cUtf8Utils::Utf8Strn0Cpy(file, File, sizeof(file));
 }
 
 #define EITPRESENTFOLLOWINGRATE 10 // max. seconds between two occurrences of the "EIT present/following table for the actual multiplex" (2s by the standard, using some more for safety)

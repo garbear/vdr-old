@@ -12,6 +12,9 @@
 
 #include "filter.h"
 
+// From UTF8Utils.h
+#define Utf8BufSize(s) ((s) * 4)
+
 #define MAXNITS 16
 #define MAXNETWORKNAME Utf8BufSize(256)
 

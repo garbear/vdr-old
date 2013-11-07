@@ -19,6 +19,8 @@
 #include "libsi/descriptor.h"
 #include "libsi/dish.h"
 
+#include "vdr/utils/UTF8Utils.h"
+
 #define VALID_TIME (31536000 * 2) // two years
 
 // --- cEIT ------------------------------------------------------------------

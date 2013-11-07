@@ -29,6 +29,7 @@
 #include "videodir.h"
 
 #include "vdr/filesystem/Directory.h"
+#include "vdr/utils/UTF8Utils.h"
 
 #define SUMMARYFALLBACK
 
@@ -658,7 +659,7 @@ char *LimitNameLengths(char *s, int PathMax, int NameMax)
          PathLength += 3;
          }
       else {
-         int8_t l = Utf8CharLen(p);
+         int8_t l = cUtf8Utils::Utf8CharLen(p);
          a[n] = l;
          NameLength += l;
          PathLength += l;

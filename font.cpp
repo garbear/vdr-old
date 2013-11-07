@@ -21,6 +21,11 @@
 #include "osd.h"
 #include "tools.h"
 
+#ifdef BIDI
+  #include "vdr/utils/CharSetConverter.h"
+#endif
+#include "vdr/utils/UTF8Utils.h"
+
 const char *DefaultFontOsd = "Sans Serif:Bold";
 const char *DefaultFontSml = "Sans Serif";
 const char *DefaultFontFix = "Courier:Bold";
@@ -252,8 +257,8 @@ int cFreetypeFont::Width(const char *s) const
 #endif
      uint prevSym = 0;
      while (*s) {
-           int sl = Utf8CharLen(s);
-           uint sym = Utf8CharGet(s, sl);
+           int sl = cUtf8Utils::Utf8CharLen(s);
+           uint sym = cUtf8Utils::Utf8CharGet(s, sl);
            s += sl;
            cGlyph *g = Glyph(sym, Setup.AntiAlias);
            if (g)
@@ -281,8 +286,8 @@ void cFreetypeFont::DrawText(cBitmap *Bitmap, int x, int y, const char *s, tColo
      tIndex fg = Bitmap->Index(ColorFg);
      uint prevSym = 0;
      while (*s) {
-           int sl = Utf8CharLen(s);
-           uint sym = Utf8CharGet(s, sl);
+           int sl = cUtf8Utils::Utf8CharLen(s);
+           uint sym = cUtf8Utils::Utf8CharGet(s, sl);
            s += sl;
            cGlyph *g = Glyph(sym, AntiAliased);
            if (!g)
@@ -340,8 +345,8 @@ void cFreetypeFont::DrawText(cPixmap *Pixmap, int x, int y, const char *s, tColo
      bool AntiAliased = Setup.AntiAlias;
      uint prevSym = 0;
      while (*s) {
-           int sl = Utf8CharLen(s);
-           uint sym = Utf8CharGet(s, sl);
+           int sl = cUtf8Utils::Utf8CharLen(s);
+           uint sym = cUtf8Utils::Utf8CharGet(s, sl);
            s += sl;
            cGlyph *g = Glyph(sym, AntiAliased);
            if (!g)
@@ -574,8 +579,8 @@ void cTextWrapper::Set(const char *Text, const cFont *Font, int Width)
   stripspace(text); // strips trailing newlines
 
   for (char *p = text; *p; ) {
-      int sl = Utf8CharLen(p);
-      uint sym = Utf8CharGet(p, sl);
+      int sl = cUtf8Utils::Utf8CharLen(p);
+      uint sym = cUtf8Utils::Utf8CharGet(p, sl);
       if (sym == '\n') {
          lines++;
          w = 0;

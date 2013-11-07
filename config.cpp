@@ -17,6 +17,8 @@
 #include "plugin.h"
 #include "recording.h"
 
+#include "vdr/utils/UTF8Utils.h"
+
 // IMPORTANT NOTE: in the 'sscanf()' calls there is a blank after the '%d'
 // format characters in order to allow any number of blanks after a numeric
 // value!
@@ -579,8 +581,8 @@ bool cSetup::ParseLanguages(const char *Value, int *Values)
 bool cSetup::Parse(const char *Name, const char *Value)
 {
   if      (!strcasecmp(Name, "OSDLanguage"))       { strn0cpy(OSDLanguage, Value, sizeof(OSDLanguage)); I18nSetLocale(OSDLanguage); }
-  else if (!strcasecmp(Name, "OSDSkin"))             Utf8Strn0Cpy(OSDSkin, Value, MaxSkinName);
-  else if (!strcasecmp(Name, "OSDTheme"))            Utf8Strn0Cpy(OSDTheme, Value, MaxThemeName);
+  else if (!strcasecmp(Name, "OSDSkin"))             cUtf8Utils::Utf8Strn0Cpy(OSDSkin, Value, MaxSkinName);
+  else if (!strcasecmp(Name, "OSDTheme"))            cUtf8Utils::Utf8Strn0Cpy(OSDTheme, Value, MaxThemeName);
   else if (!strcasecmp(Name, "PrimaryDVB"))          PrimaryDVB         = atoi(Value);
   else if (!strcasecmp(Name, "ShowInfoOnChSwitch"))  ShowInfoOnChSwitch = atoi(Value);
   else if (!strcasecmp(Name, "TimeoutRequChInfo"))   TimeoutRequChInfo  = atoi(Value);
@@ -588,7 +590,7 @@ bool cSetup::Parse(const char *Name, const char *Value)
   else if (!strcasecmp(Name, "MenuScrollWrap"))      MenuScrollWrap     = atoi(Value);
   else if (!strcasecmp(Name, "MenuKeyCloses"))       MenuKeyCloses      = atoi(Value);
   else if (!strcasecmp(Name, "MarkInstantRecord"))   MarkInstantRecord  = atoi(Value);
-  else if (!strcasecmp(Name, "NameInstantRecord"))   Utf8Strn0Cpy(NameInstantRecord, Value, sizeof(NameInstantRecord));
+  else if (!strcasecmp(Name, "NameInstantRecord"))   cUtf8Utils::Utf8Strn0Cpy(NameInstantRecord, Value, sizeof(NameInstantRecord));
   else if (!strcasecmp(Name, "InstantRecordTime"))   InstantRecordTime  = atoi(Value);
   else if (!strcasecmp(Name, "LnbSLOF"))             LnbSLOF            = atoi(Value);
   else if (!strcasecmp(Name, "LnbFrequLo"))          LnbFrequLo         = atoi(Value);
@@ -649,9 +651,9 @@ bool cSetup::Parse(const char *Name, const char *Value)
   else if (!strcasecmp(Name, "OSDMessageTime"))      OSDMessageTime     = atoi(Value);
   else if (!strcasecmp(Name, "UseSmallFont"))        UseSmallFont       = atoi(Value);
   else if (!strcasecmp(Name, "AntiAlias"))           AntiAlias          = atoi(Value);
-  else if (!strcasecmp(Name, "FontOsd"))             Utf8Strn0Cpy(FontOsd, Value, MAXFONTNAME);
-  else if (!strcasecmp(Name, "FontSml"))             Utf8Strn0Cpy(FontSml, Value, MAXFONTNAME);
-  else if (!strcasecmp(Name, "FontFix"))             Utf8Strn0Cpy(FontFix, Value, MAXFONTNAME);
+  else if (!strcasecmp(Name, "FontOsd"))             cUtf8Utils::Utf8Strn0Cpy(FontOsd, Value, MAXFONTNAME);
+  else if (!strcasecmp(Name, "FontSml"))             cUtf8Utils::Utf8Strn0Cpy(FontSml, Value, MAXFONTNAME);
+  else if (!strcasecmp(Name, "FontFix"))             cUtf8Utils::Utf8Strn0Cpy(FontFix, Value, MAXFONTNAME);
   else if (!strcasecmp(Name, "FontOsdSizeP"))      { FontOsdSizeP       = atod(Value); ChkDoublePlausibility(FontOsdSizeP, 0.038); }
   else if (!strcasecmp(Name, "FontSmlSizeP"))      { FontSmlSizeP       = atod(Value); ChkDoublePlausibility(FontSmlSizeP, 0.035); }
   else if (!strcasecmp(Name, "FontFixSizeP"))      { FontFixSizeP       = atod(Value); ChkDoublePlausibility(FontFixSizeP, 0.031); }

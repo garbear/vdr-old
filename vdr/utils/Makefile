@@ -14,7 +14,9 @@ RANLIB   ?= ranlib
 ### The object files (add further files here):
 
 OBJS = Base64.o \
-       StringUtils.o
+       CharSetConverter.o \
+       StringUtils.o \
+       UTF8Utils.o
 
 ### Implicit rules:
 

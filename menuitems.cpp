@@ -17,7 +17,16 @@
 #include "skins.h"
 #include "status.h"
 
+#include "vdr/utils/CharSetConverter.h"
+#include "vdr/utils/UTF8Utils.h"
+
 #define AUTO_ADVANCE_TIMEOUT  1500 // ms before auto advance when entering characters via numeric keys
+
+// The following macros automatically use the correct versions of the character
+// class functions:
+
+#define Utf8to(conv, c) (cCharSetConv::SystemCharacterTable() ? to##conv(c) : tow##conv(c))
+#define Utf8is(ccls, c) (cCharSetConv::SystemCharacterTable() ? is##ccls(c) : isw##ccls(c))
 
 const char *FileNameChars = trNOOP("FileNameChars$ abcdefghijklmnopqrstuvwxyz0123456789-.,#~\\^$[]|()*+?{}/:%@&");
 
@@ -368,14 +377,14 @@ void cMenuEditStrItem::EnterEditMode(void)
 {
   if (!valueUtf8) {
      valueUtf8 = new uint[length];
-     lengthUtf8 = Utf8ToArray(value, valueUtf8, length);
+     lengthUtf8 = cUtf8Utils::Utf8ToArray(value, valueUtf8, length);
      int l = strlen(allowed) + 1;
      allowedUtf8 = new uint[l];
-     Utf8ToArray(allowed, allowedUtf8, l);
+     cUtf8Utils::Utf8ToArray(allowed, allowedUtf8, l);
      const char *charMap = tr("CharMap$ 0\t-.,1#~\\^$[]|()*+?{}/:%@&\tabc2\tdef3\tghi4\tjkl5\tmno6\tpqrs7\ttuv8\twxyz9");
      l = strlen(charMap) + 1;
      charMapUtf8 = new uint[l];
-     Utf8ToArray(charMap, charMapUtf8, l);
+     cUtf8Utils::Utf8ToArray(charMap, charMapUtf8, l);
      currentCharUtf8 = charMapUtf8;
      AdvancePos();
      }
@@ -385,7 +394,7 @@ void cMenuEditStrItem::LeaveEditMode(bool SaveValue)
 {
   if (valueUtf8) {
      if (SaveValue) {
-        Utf8FromArray(valueUtf8, value, length);
+       cUtf8Utils::Utf8FromArray(valueUtf8, value, length);
         stripspace(value);
         }
      lengthUtf8 = 0;
@@ -475,14 +484,14 @@ void cMenuEditStrItem::Set(void)
      char *p = buf;
      if (offset)
         *p++ = '<';
-     p += Utf8FromArray(valueUtf8 + offset, p, sizeof(buf) - (p - buf), pos - offset);
+     p += cUtf8Utils::Utf8FromArray(valueUtf8 + offset, p, sizeof(buf) - (p - buf), pos - offset);
      *p++ = '[';
      if (insert && newchar)
         *p++ = ']';
-     p += Utf8FromArray(&valueUtf8[pos], p, sizeof(buf) - (p - buf), 1);
+     p += cUtf8Utils::Utf8FromArray(&valueUtf8[pos], p, sizeof(buf) - (p - buf), 1);
      if (!(insert && newchar))
         *p++ = ']';
-     p += Utf8FromArray(&valueUtf8[pos + 1], p, sizeof(buf) - (p - buf), EndPos - pos - 1);
+     p += cUtf8Utils::Utf8FromArray(&valueUtf8[pos + 1], p, sizeof(buf) - (p - buf), EndPos - pos - 1);
      if (EndPos != lengthUtf8)
         *p++ = '>';
      *p = 0;

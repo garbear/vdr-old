@@ -17,6 +17,8 @@
 #include "libsi/si.h"
 #include "timers.h"
 
+#include "vdr/utils/UTF8Utils.h"
+
 #define RUNNINGSTATUSTIMEOUT 30 // seconds before the running status is considered unknown
 #define EPGDATAWRITEDELTA   600 // seconds between writing the epg.data file
 
@@ -689,7 +691,7 @@ static void StripControlCharacters(char *s)
   if (s) {
      int len = strlen(s);
      while (len > 0) {
-           int l = Utf8CharLen(s);
+           int l = cUtf8Utils::Utf8CharLen(s);
            uchar *p = (uchar *)s;
            if (l == 2 && *p == 0xC2) // UTF-8 sequence
               p++;

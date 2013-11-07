@@ -42,6 +42,8 @@
 #include "tools.h"
 #include "videodir.h"
 
+#include "vdr/utils/CharSetConverter.h"
+
 #include <string>
 
 using namespace std;

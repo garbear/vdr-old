@@ -16,6 +16,9 @@
 #include "device.h"
 #include "libsi/si.h"
 
+#include "vdr/utils/CharSetConverter.h"
+#include "vdr/utils/UTF8Utils.h"
+
 //#define FINISHPAGE_HACK
 
 #define PAGE_COMPOSITION_SEGMENT    0x10
@@ -226,7 +229,7 @@ void cSubtitleObject::DecodeCharacterString(const uchar *Data, int NumberOfCodes
             }
         *p = 0;
         const char *s = conv.Convert(txt);
-        Utf8Strn0Cpy(textData, s, Utf8StrLen(s));
+        cUtf8Utils::Utf8Strn0Cpy(textData, s, cUtf8Utils::Utf8StrLen(s));
         }
      else {
         // TODO: add proper multibyte support for "UTF-16", "EUC-KR", "GB2312", "GBK", "UTF-8"
@@ -489,7 +492,7 @@ void cSubtitleRegion::UpdateTextData(cSubtitleClut *Clut)
 {
   const cPalette *palette = Clut ? Clut->GetPalette(Depth()) : NULL;
   for (cSubtitleObject *so = objects.First(); so && palette; so = objects.Next(so)) {
-      if (Utf8StrLen(so->TextData()) > 0) {
+      if (cUtf8Utils::Utf8StrLen(so->TextData()) > 0) {
          cFont *font = cFont::CreateFont(Setup.FontOsd, Setup.FontOsdSize);
          cBitmap tmp(font->Width(so->TextData()), font->Height(), Depth());
          double factor = (double)lineHeight / font->Height();

@@ -32,6 +32,8 @@
 #include "transfer.h"
 #include "videodir.h"
 
+#include "vdr/utils/UTF8Utils.h"
+
 #define MAXWAIT4EPGINFO   3 // seconds
 #define MODETIMEOUT       3 // seconds
 #define NEWTIMERLIMIT   120 // seconds until the start time of a new timer created from the Schedule menu,
@@ -1334,11 +1336,11 @@ bool cMenuScheduleItem::Update(bool Force)
      const char *csn = channel ? channel->ShortName(true) : NULL;
      cString eds = event->GetDateString();
      if (channel && withDate)
-        buffer = cString::sprintf("%d\t%.*s\t%.*s\t%s\t%c%c%c\t%s", channel->Number(), Utf8SymChars(csn, 999), csn, Utf8SymChars(eds, 6), *eds, *event->GetTimeString(), t, v, r, event->Title());
+        buffer = cString::sprintf("%d\t%.*s\t%.*s\t%s\t%c%c%c\t%s", channel->Number(), cUtf8Utils::Utf8SymChars(csn, 999), csn, cUtf8Utils::Utf8SymChars(eds, 6), *eds, *event->GetTimeString(), t, v, r, event->Title());
      else if (channel)
-        buffer = cString::sprintf("%d\t%.*s\t%s\t%c%c%c\t%s", channel->Number(), Utf8SymChars(csn, 999), csn, *event->GetTimeString(), t, v, r, event->Title());
+        buffer = cString::sprintf("%d\t%.*s\t%s\t%c%c%c\t%s", channel->Number(), cUtf8Utils::Utf8SymChars(csn, 999), csn, *event->GetTimeString(), t, v, r, event->Title());
      else
-        buffer = cString::sprintf("%.*s\t%s\t%c%c%c\t%s", Utf8SymChars(eds, 6), *eds, *event->GetTimeString(), t, v, r, event->Title());
+        buffer = cString::sprintf("%.*s\t%s\t%c%c%c\t%s", cUtf8Utils::Utf8SymChars(eds, 6), *eds, *event->GetTimeString(), t, v, r, event->Title());
      SetText(buffer);
      result = true;
      }
@@ -2625,23 +2627,23 @@ eOSState cMenuSetupOSD::ProcessKey(eKeys Key)
      if (skinIndex != originalSkinIndex) {
         cSkin *Skin = Skins.Get(skinIndex);
         if (Skin) {
-           Utf8Strn0Cpy(data.OSDSkin, Skin->Name(), sizeof(data.OSDSkin));
+          cUtf8Utils::Utf8Strn0Cpy(data.OSDSkin, Skin->Name(), sizeof(data.OSDSkin));
            Skins.SetCurrent(Skin->Name());
            ModifiedAppearance = true;
            }
         }
      if (themes.NumThemes() && Skins.Current()->Theme()) {
         Skins.Current()->Theme()->Load(themes.FileName(themeIndex));
-        Utf8Strn0Cpy(data.OSDTheme, themes.Name(themeIndex), sizeof(data.OSDTheme));
+        cUtf8Utils::Utf8Strn0Cpy(data.OSDTheme, themes.Name(themeIndex), sizeof(data.OSDTheme));
         ModifiedAppearance |= themeIndex != originalThemeIndex;
         }
      if (!(DoubleEqual(data.OSDLeftP, Setup.OSDLeftP) && DoubleEqual(data.OSDTopP, Setup.OSDTopP) && DoubleEqual(data.OSDWidthP, Setup.OSDWidthP) && DoubleEqual(data.OSDHeightP, Setup.OSDHeightP)))
         ModifiedAppearance = true;
      if (data.UseSmallFont != Setup.UseSmallFont || data.AntiAlias != Setup.AntiAlias)
         ModifiedAppearance = true;
-     Utf8Strn0Cpy(data.FontOsd, fontOsdNames[fontOsdIndex], sizeof(data.FontOsd));
-     Utf8Strn0Cpy(data.FontSml, fontSmlNames[fontSmlIndex], sizeof(data.FontSml));
-     Utf8Strn0Cpy(data.FontFix, fontFixNames[fontFixIndex], sizeof(data.FontFix));
+     cUtf8Utils::Utf8Strn0Cpy(data.FontOsd, fontOsdNames[fontOsdIndex], sizeof(data.FontOsd));
+     cUtf8Utils::Utf8Strn0Cpy(data.FontSml, fontSmlNames[fontSmlIndex], sizeof(data.FontSml));
+     cUtf8Utils::Utf8Strn0Cpy(data.FontFix, fontFixNames[fontFixIndex], sizeof(data.FontFix));
      if (strcmp(data.FontOsd, Setup.FontOsd) || !DoubleEqual(data.FontOsdSizeP, Setup.FontOsdSizeP))
         ModifiedAppearance = true;
      if (strcmp(data.FontSml, Setup.FontSml) || !DoubleEqual(data.FontSmlSizeP, Setup.FontSmlSizeP))

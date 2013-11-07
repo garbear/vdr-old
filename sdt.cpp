@@ -13,6 +13,8 @@
 #include "libsi/section.h"
 #include "libsi/descriptor.h"
 
+#include "vdr/utils/UTF8Utils.h"
+
 // --- cSdtFilter ------------------------------------------------------------
 
 cSdtFilter::cSdtFilter(cPatFilter *PatFilter)

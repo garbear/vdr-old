@@ -14,6 +14,8 @@
 #include "libsi/si.h"
 #include "timers.h"
 
+#include "vdr/utils/UTF8Utils.h"
+
 // IMPORTANT NOTE: in the 'sscanf()' calls there is a blank after the '%d'
 // format characters in order to allow any number of blanks after a numeric
 // value!
@@ -992,7 +994,7 @@ int cChannels::MaxChannelNameLength(void)
   if (!maxChannelNameLength) {
      for (cChannel *channel = First(); channel; channel = Next(channel)) {
          if (!channel->GroupSep())
-            maxChannelNameLength = max(Utf8StrLen(channel->Name()), maxChannelNameLength);
+            maxChannelNameLength = max(cUtf8Utils::Utf8StrLen(channel->Name()), maxChannelNameLength);
          }
      }
   return maxChannelNameLength;
@@ -1003,7 +1005,7 @@ int cChannels::MaxShortChannelNameLength(void)
   if (!maxShortChannelNameLength) {
      for (cChannel *channel = First(); channel; channel = Next(channel)) {
          if (!channel->GroupSep())
-            maxShortChannelNameLength = max(Utf8StrLen(channel->ShortName(true)), maxShortChannelNameLength);
+            maxShortChannelNameLength = max(cUtf8Utils::Utf8StrLen(channel->ShortName(true)), maxShortChannelNameLength);
          }
      }
   return maxShortChannelNameLength;

@@ -19,6 +19,8 @@
 #include "status.h"
 #include "transfer.h"
 
+#include "vdr/utils/UTF8Utils.h"
+
 // --- cLiveSubtitle ---------------------------------------------------------
 
 class cLiveSubtitle : public cReceiver {
@@ -955,7 +957,7 @@ bool cDevice::SetAvailableTrack(eTrackType Type, int Index, uint16_t Id, const c
      if (Language)
         strn0cpy(availableTracks[t].language, Language, sizeof(availableTracks[t].language));
      if (Description)
-        Utf8Strn0Cpy(availableTracks[t].description, Description, sizeof(availableTracks[t].description));
+       cUtf8Utils::Utf8Strn0Cpy(availableTracks[t].description, Description, sizeof(availableTracks[t].description));
      if (Id) {
         availableTracks[t].id = Id; // setting 'id' last to avoid the need for extensive locking
         if (Type == ttAudio || Type == ttDolby) {

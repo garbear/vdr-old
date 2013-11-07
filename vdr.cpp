@@ -64,6 +64,7 @@
 #include "vdr_main.h"
 
 #include "vdr/filesystem/Directory.h"
+#include "vdr/utils/CharSetConverter.h"
 
 using namespace std;
 using namespace ADDON;

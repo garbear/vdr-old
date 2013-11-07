@@ -406,7 +406,7 @@ bool convertCharacterTable(const char *from, size_t fromLength, char *to, size_t
   return false;
 }
 
-// A similar version is used in VDR/tools.c:
+// A similar version is used in UTF8Utils.cpp:
 static int Utf8CharLen(const char *s)
 {
   if (SystemCharacterTableIsSingleByte)
