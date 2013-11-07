@@ -13,6 +13,8 @@
 #include "remux.h"
 #include "videodir.h"
 
+#include "vdr/filesystem/Directory.h"
+
 // --- cPacketBuffer ---------------------------------------------------------
 
 class cPacketBuffer {
@@ -743,7 +745,7 @@ bool cCutter::Ended(void)
 
 bool CutRecording(const char *FileName)
 {
-  if (DirectoryOk(FileName)) {
+  if (cDirectory::CanWrite(FileName)) {
      cRecording Recording(FileName);
      if (Recording.Name()) {
         cMarks Marks;

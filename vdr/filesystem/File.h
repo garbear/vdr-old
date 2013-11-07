@@ -77,6 +77,8 @@ public:
 
   //virtual int IoControl(EIoControl request, void* param) { return -1; }
 
+  static bool OnSameFileSystem(const std::string &strFile1, const std::string &strFile2);
+
 private:
   static IFile *CreateLoader(const std::string &url);
 

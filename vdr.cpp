@@ -63,6 +63,8 @@
 #include "videodir.h"
 #include "vdr_main.h"
 
+#include "vdr/filesystem/Directory.h"
+
 using namespace std;
 using namespace ADDON;
 using namespace PLATFORM;
@@ -248,7 +250,7 @@ bool cVDRDaemon::Init(void)
   if (m_settings.m_EpgDataFileName)
   {
     const char *EpgDirectory = NULL;
-    if (DirectoryOk(m_settings.m_EpgDataFileName))
+    if (cDirectory::CanWrite(m_settings.m_EpgDataFileName))
     {
       EpgDirectory = m_settings.m_EpgDataFileName;
       m_settings.m_EpgDataFileName = DEFAULTEPGDATAFILENAME;

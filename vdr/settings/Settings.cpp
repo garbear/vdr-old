@@ -19,6 +19,7 @@
  */
 
 #include "Settings.h"
+#include "../../vdr/filesystem/Directory.h"
 #include "../../config.h"
 #include "../../cutter.h"
 #include "../../device.h"
@@ -535,7 +536,7 @@ bool cSettings::LoadFromCmdLine(int argc, char *argv[])
   }
 
   // Check the video directory:
-  if (!DirectoryOk(m_VideoDirectory, true))
+  if (!cDirectory::CanWrite(m_VideoDirectory))
   {
     fprintf(stderr, "vdr: can't access video directory %s\n", m_VideoDirectory);
     return false;

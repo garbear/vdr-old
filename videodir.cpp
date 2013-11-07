@@ -18,7 +18,13 @@
 #include <unistd.h>
 #include "recording.h"
 #include "tools.h"
+#include "vdr/filesystem/Directory.h"
+#include "vdr/filesystem/File.h"
 #include "vdr/settings/Settings.h"
+
+#include <string>
+
+using namespace std;
 
 const char *VideoDirectory = VIDEODIR;
 
@@ -62,7 +68,12 @@ cVideoDirectory::~cVideoDirectory()
 
 int cVideoDirectory::FreeMB(int *UsedMB)
 {
-  return FreeDiskSpaceMB(name ? name : VideoDirectory, UsedMB);
+  string strPath = name ? name : VideoDirectory;
+  unsigned int total, used, free;
+  cDirectory::CalculateDiskSpace(strPath, total, used, free);
+  if (UsedMB)
+    *UsedMB = used;
+  return free;
 }
 
 bool cVideoDirectory::Next(void)
@@ -84,7 +95,7 @@ bool cVideoDirectory::Next(void)
         char buf[16];
         if (sprintf(buf, "%0*d", digits, number) == digits) {
            strcpy(&name[length - digits], buf);
-           return DirectoryOk(name);
+           return cDirectory::CanWrite(name);
            }
         }
      }
@@ -126,7 +137,9 @@ cUnbufferedFile *OpenVideoFile(const char *FileName, int Flags)
         // Find the directory with the most free space:
         int MaxFree = Dir.FreeMB();
         while (Dir.Next()) {
-              int Free = FreeDiskSpaceMB(Dir.Name());
+              unsigned int total, used, free;
+              cDirectory::CalculateDiskSpace(Dir.Name(), total, used, free);
+              int Free = free;
               if (Free > MaxFree) {
                  Dir.Store();
                  MaxFree = Free;
@@ -242,7 +255,7 @@ bool IsOnVideoDirectoryFileSystem(const char *FileName)
 {
   cVideoDirectory Dir;
   do {
-     if (EntriesOnSameFileSystem(Dir.Name(), FileName))
+     if (cFile::OnSameFileSystem(Dir.Name(), FileName))
         return true;
      } while (Dir.Next());
   return false;

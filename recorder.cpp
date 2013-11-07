@@ -10,6 +10,8 @@
 #include "recorder.h"
 #include "shutdown.h"
 
+#include "vdr/filesystem/Directory.h"
+
 #define RECORDERBUFSIZE  (MEGABYTE(20) / TS_SIZE * TS_SIZE) // multiple of TS_SIZE
 
 // The maximum time we wait before assuming that a recorded video data stream
@@ -77,7 +79,9 @@ cRecorder::~cRecorder()
 bool cRecorder::RunningLowOnDiskSpace(void)
 {
   if (time(NULL) > lastDiskSpaceCheck + DISKCHECKINTERVAL) {
-     int Free = FreeDiskSpaceMB(fileName->Name());
+     unsigned int total, used, free;
+     cDirectory::CalculateDiskSpace(fileName->Name(), total, used, free);
+     int Free = free;
      lastDiskSpaceCheck = time(NULL);
      if (Free < MINFREEDISKSPACE) {
         dsyslog("low disk space (%d MB, limit is %d MB)", Free, MINFREEDISKSPACE);

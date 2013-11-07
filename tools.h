@@ -232,9 +232,6 @@ cString dtoa(double d, const char *Format = "%f");
     ///< If Format is given, it will be used instead of the default.
 cString itoa(int n);
 cString AddDirectory(const char *DirName, const char *FileName);
-bool EntriesOnSameFileSystem(const char *File1, const char *File2);
-int FreeDiskSpaceMB(const char *Directory, int *UsedMB = NULL);
-bool DirectoryOk(const char *DirName, bool LogErrors = false);
 bool MakeDirs(const char *FileName, bool IsDirectory = false);
 bool RemoveFileOrDir(const char *FileName, bool FollowSymlinks = false);
 bool RemoveEmptyDirectories(const char *DirName, bool RemoveThis = false, const char *IgnoreFiles[] = NULL);

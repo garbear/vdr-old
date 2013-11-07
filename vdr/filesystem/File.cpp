@@ -238,3 +238,17 @@ bool cFile::SetHidden(const std::string &url, bool hidden)
     return false;
   return pFile->SetHidden(url, false);
 }
+
+bool cFile::OnSameFileSystem(const std::string &strFile1, const std::string &strFile2)
+{
+  struct __stat64 statStruct;
+  cFile file;
+  file.Stat(strFile1, &statStruct);
+  dev_t dev1 = statStruct.st_dev;
+  if (dev1)
+  {
+    file.Stat(strFile2, &statStruct);
+    return dev1 == statStruct.st_dev;
+  }
+  return false;
+}

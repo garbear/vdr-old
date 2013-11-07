@@ -28,6 +28,8 @@
 #include "tools.h"
 #include "videodir.h"
 
+#include "vdr/filesystem/Directory.h"
+
 #define SUMMARYFALLBACK
 
 #define RECEXT       ".rec"
@@ -2160,7 +2162,7 @@ int cIndexFile::GetLength(const char *FileName, bool IsPesRecording)
 
 bool GenerateIndex(const char *FileName)
 {
-  if (DirectoryOk(FileName)) {
+  if (cDirectory::CanWrite(FileName)) {
      cRecording Recording(FileName);
      if (Recording.Name()) {
         if (!Recording.IsPesRecording()) {

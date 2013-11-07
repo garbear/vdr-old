@@ -29,6 +29,8 @@ extern "C" {
 #include "i18n.h"
 #include "thread.h"
 
+#include "vdr/filesystem/Directory.h"
+
 int SysLogLevel = 3;
 
 #define MAXSYSLOGBUF 256
@@ -353,56 +355,6 @@ cString itoa(int n)
   return buf;
 }
 
-bool EntriesOnSameFileSystem(const char *File1, const char *File2)
-{
-  struct stat st;
-  if (stat(File1, &st) == 0) {
-     dev_t dev1 = st.st_dev;
-     if (stat(File2, &st) == 0)
-        return st.st_dev == dev1;
-     else
-        LOG_ERROR_STR(File2);
-     }
-  else
-     LOG_ERROR_STR(File1);
-  return false;
-}
-
-int FreeDiskSpaceMB(const char *Directory, int *UsedMB)
-{
-  if (UsedMB)
-     *UsedMB = 0;
-  int Free = 0;
-  struct statfs statFs;
-  if (statfs(Directory, &statFs) == 0) {
-     double blocksPerMeg = 1024.0 * 1024.0 / statFs.f_bsize;
-     if (UsedMB)
-        *UsedMB = int((statFs.f_blocks - statFs.f_bfree) / blocksPerMeg);
-     Free = int(statFs.f_bavail / blocksPerMeg);
-     }
-  else
-     LOG_ERROR_STR(Directory);
-  return Free;
-}
-
-bool DirectoryOk(const char *DirName, bool LogErrors)
-{
-  struct stat ds;
-  if (stat(DirName, &ds) == 0) {
-     if (S_ISDIR(ds.st_mode)) {
-        if (access(DirName, R_OK | W_OK | X_OK) == 0)
-           return true;
-        else if (LogErrors)
-           esyslog("ERROR: can't access %s", DirName);
-        }
-     else if (LogErrors)
-        esyslog("ERROR: %s is not a directory", DirName);
-     }
-  else if (LogErrors)
-     LOG_ERROR_STR(DirName);
-  return false;
-}
-
 bool MakeDirs(const char *FileName, bool IsDirectory)
 {
   bool result = true;
@@ -597,7 +549,7 @@ bool SpinUpDisk(const char *FileName)
 {
   for (int n = 0; n < 10; n++) {
       cString buf;
-      if (DirectoryOk(FileName))
+      if (cDirectory::CanWrite(FileName))
          buf = cString::sprintf("%s/vdr-%06d", *FileName ? FileName : ".", n);
       else
          buf = cString::sprintf("%s.vdr-%06d", FileName, n);
@@ -1844,7 +1796,7 @@ cLockFile::cLockFile(const char *Directory)
 {
   fileName = NULL;
   f = -1;
-  if (DirectoryOk(Directory))
+  if (cDirectory::CanWrite(Directory))
      fileName = strdup(AddDirectory(Directory, LOCKFILENAME));
 }
 

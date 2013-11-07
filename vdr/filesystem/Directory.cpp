@@ -24,6 +24,9 @@
 #include "VFSDirectory.h"
 
 #include <auto_ptr.h>
+#include <sys/stat.h>
+#include <sys/statfs.h>
+#include <unistd.h>
 
 using namespace std;
 
@@ -138,6 +141,35 @@ bool cDirectory::Rename(const string &strPath, const string &strNewPath)
   catch (...)
   {
     // Log
+  }
+  return false;
+}
+
+bool cDirectory::CalculateDiskSpace(const string &strPath, unsigned int &size, unsigned int &used, unsigned int &free)
+{
+  struct statfs64 statFs;
+  if (statfs64(strPath.c_str(), &statFs) == 0)
+  {
+    size = statFs.f_blocks * statFs.f_bsize;
+    used = (statFs.f_blocks - statFs.f_bfree) * statFs.f_bsize;
+    free = statFs.f_bavail * statFs.f_bsize;
+    return true;
+  }
+  return false;
+}
+
+bool cDirectory::CanWrite(const string &strPath)
+{
+  struct stat64 ds;
+  if (stat64(strPath.c_str(), &ds) == 0)
+  {
+    if (S_ISDIR(ds.st_mode))
+    {
+      if (access(strPath.c_str(), R_OK | W_OK | X_OK) == 0)
+        return true;
+      return false; // Can't access directory
+    }
+    return false; // Not a directory
   }
   return false;
 }
