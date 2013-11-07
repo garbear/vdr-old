@@ -13,7 +13,8 @@ RANLIB   ?= ranlib
 
 ### The object files (add further files here):
 
-OBJS = Base64.o
+OBJS = Base64.o \
+       StringUtils.o
 
 ### Implicit rules:
 
