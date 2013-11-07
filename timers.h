@@ -15,6 +15,8 @@
 #include "epg.h"
 #include "tools.h"
 
+#include <vector>
+
 enum eTimerFlags { tfNone      = 0x0000,
                    tfActive    = 0x0001,
                    tfInstant   = 0x0002,
@@ -104,6 +106,8 @@ public:
   static int TimeToInt(int t);
   static bool ParseDay(const char *s, time_t &Day, int &WeekDays);
   static cString PrintDay(time_t Day, int WeekDays, bool SingleByteChars);
+
+  static int CompareTimers(const cTimer *a, const cTimer *b);
   };
 
 class cTimers : public cConfig<cTimer> {
@@ -134,10 +138,5 @@ public:
   };
 
 extern cTimers Timers;
-
-class cSortedTimers : public cVector<const cTimer *> {
-public:
-  cSortedTimers(void);
-  };
 
 #endif //__TIMERS_H

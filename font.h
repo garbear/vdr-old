@@ -14,6 +14,9 @@
 #include <stdlib.h>
 #include "tools.h"
 
+#include <string>
+#include <vector>
+
 #define MAXFONTNAME 64
 #define MINFONTSIZE 10
 #define MAXFONTSIZE 64
@@ -77,7 +80,7 @@ public:
           ///< for how to get a list of all available font names.
           ///< If the requested font can't be created, NULL is returned.
           ///< The caller must delete the font when it is no longer needed.
-  static bool GetAvailableFontNames(cStringList *FontNames, bool Monospaced = false);
+  static bool GetAvailableFontNames(std::vector<std::string> &FontNames, bool Monospaced = false);
           ///< Queries the font configuration for a list of available font names,
           ///< which is returned in FontNames. If Monospaced is true, only
           ///< monospaced fonts will be returned. The resulting font names are

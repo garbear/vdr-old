@@ -27,6 +27,7 @@
 #include "font.h"
 #include "menu.h"
 #include "osd.h"
+#include "timers.h"
 #include "themes.h"
 #include "videodir.h"
 
@@ -61,6 +62,11 @@
 #include "symbols/srew3.xpm"
 #include "symbols/teletext.xpm"
 #include "symbols/volume.xpm"
+
+#include <algorithm>
+#include <vector>
+
+using namespace std;
 
 #define Gap            (Setup.FontOsdSize / 5 & ~1) // must be even
 #define TextFrame      (Setup.FontOsdSize / TEXT_ALIGN_BORDER)
@@ -244,18 +250,18 @@ static bool DrawDeviceData(cOsd *Osd, const cDevice *Device, int x0, int y0, int
      int x = x0;
      // Device number:
      cString Nr = itoa(Device->DeviceNumber() + 1);
-     int w = max(font->Width(Nr), y1 - y0);
+     int w = ::max(font->Width(Nr), y1 - y0);
      Osd->DrawText(x, y0, Nr, ColorFg, ColorBg, font, w, y1 - y0, taCenter);
      x += w;
      // Device type:
      Osd->DrawText(x, y0, DeviceType, ColorFg, ColorBg, TinyFont);
-     xs = max(xs, x + TinyFont->Width(DeviceType));
+     xs = ::max(xs, x + TinyFont->Width(DeviceType));
      LastDeviceType = DeviceType;
      // CAM:
      if (CamSlot) {
         cString s = cString::sprintf("CAM %d", CamSlot->SlotNumber());
         Osd->DrawText(x, y1 - TinyFont->Height(), s, ColorFg, ColorBg, TinyFont);
-        xs = max(xs, x + TinyFont->Width(s));
+        xs = ::max(xs, x + TinyFont->Width(s));
         }
      LastCamSlot = CamSlot;
      return true;
@@ -267,7 +273,7 @@ static void DrawDeviceSignal(cOsd *Osd, const cDevice *Device, int x0, int y0, i
 {
   int SignalStrength = Device->SignalStrength();
   int SignalQuality = Device->SignalQuality();
-  int d = max((y1 - y0) / 10, 1);
+  int d = ::max((y1 - y0) / 10, 1);
   int x00 = x0 + d;
   int x01 = x1 - d;
   int h = (y1 - y0 - 3 * d) / 2;
@@ -458,7 +464,7 @@ void cSkinLCARSDisplayChannel::DrawTrack(void)
 
 void cSkinLCARSDisplayChannel::DrawSeen(int Current, int Total)
 {
-  int Seen = (Total > 0) ? min(xc07 - xc06, int((xc07 - xc06) * double(Current) / Total)) : 0;
+  int Seen = (Total > 0) ? ::min(xc07 - xc06, int((xc07 - xc06) * double(Current) / Total)) : 0;
   if (initial || Seen != lastSeen) {
      int y0 = yc11 - ShowSeenExtent;
      int y1 = yc11 + lineHeight / 2 - Gap / 2;
@@ -497,7 +503,7 @@ void cSkinLCARSDisplayChannel::SetChannel(const cChannel *Channel, int Number)
            bmEncrypted.Width() - SymbolSpacing -
            bmDolbyDigital.Width() - SymbolSpacing -
            bmAudio.Width() - SymbolSpacing -
-           max(bmTeletext.Width(), bmRadio.Width()) - SymbolSpacing;
+           ::max(bmTeletext.Width(), bmRadio.Width()) - SymbolSpacing;
   osd->DrawRectangle(xi, yc00, xc13 - 1, yc01 - 1, frameColor);
   if (Channel && !Channel->GroupSep()) {
      bool rec = cRecordControls::Active();
@@ -634,12 +640,12 @@ private:
   cFont *tallFont;
   tColor frameColor;
   int currentIndex;
-  cVector<int> deviceOffset;
-  cVector<bool> deviceRecording;
+  vector<int> deviceOffset;
+  vector<bool> deviceRecording;
   cString lastDeviceType[MAXDEVICES];
-  cVector<cCamSlot *> lastCamSlot;
-  cVector<int> lastSignalStrength;
-  cVector<int> lastSignalQuality;
+  vector<cCamSlot *> lastCamSlot;
+  vector<int> lastSignalStrength;
+  vector<int> lastSignalQuality;
   bool initial;
   enum eCurrentMode { cmUnknown, cmLive, cmPlay };
   eCurrentMode lastMode;
@@ -1124,9 +1130,9 @@ void cSkinLCARSDisplayMenu::DrawScrollbar(int Total, int Offset, int Shown, bool
      }
   if (Total > 0 && Total > Shown) {
      int sw = x1 - x0;
-     int sh = max(int((tb - tt) * double(Shown) / Total + 0.5), sw);
-     int st = min(int(tt + (tb - tt) * double(Offset) / Total + 0.5), tb - sh);
-     int sb = min(st + sh, tb);
+     int sh = ::max(int((tb - tt) * double(Shown) / Total + 0.5), sw);
+     int st = ::min(int(tt + (tb - tt) * double(Offset) / Total + 0.5), tb - sh);
+     int sb = ::min(st + sh, tb);
      osd->DrawRectangle(x0, tt, x1 - 1, tb - 1, Theme.Color(clrMenuScrollbarTotal));
      osd->DrawRectangle(x0, st, x1 - 1, sb - 1, Theme.Color(clrMenuScrollbarShown));
      }
@@ -1160,7 +1166,7 @@ void cSkinLCARSDisplayMenu::DrawTimer(const cTimer *Timer, int y, bool MultiRec)
      Date = cString::sprintf("VPS %s", *Date);
   const cChannel *Channel = Timer->Channel();
   const cEvent *Event = Timer->Event();
-  int d = max(TextFrame / 2, 1);
+  int d = ::max(TextFrame / 2, 1);
   if (Channel) {
      osd->DrawText(xs00 + d, y, Channel->Name(), ColorFg, ColorBg, tinyFont, xs03 - xs00 - d);
      osd->DrawText(xs03 - tinyFont->Width(Date) - d, y, Date, ColorFg, ColorBg, tinyFont);
@@ -1175,22 +1181,25 @@ void cSkinLCARSDisplayMenu::DrawTimer(const cTimer *Timer, int y, bool MultiRec)
 void cSkinLCARSDisplayMenu::DrawTimers(void)
 {
   if (Timers.Modified(lastTimersState)) {
-     deviceRecording.Clear();
+     deviceRecording.clear();
      const cFont *font = cFont::GetFont(fontOsd);
      osd->DrawRectangle(xs00, ys04, xs04 - 1, ys05 - 1, Theme.Color(clrBackground));
      osd->DrawRectangle(xs07, ys04, xs13 - 1, ys05 - 1, Theme.Color(clrBackground));
-     cSortedTimers SortedTimers;
-     cVector<int> FreeDeviceSlots;
+     vector<const cTimer*> SortedTimers;
+     for (const cTimer *Timer = Timers.First(); Timer; Timer = Timers.Next(Timer))
+       SortedTimers.push_back(Timer);
+     sort(SortedTimers.begin(), SortedTimers.end(), cTimer::CompareTimers);
+     vector<int> FreeDeviceSlots;
      int NumDevices = 0;
      int y = ys04;
      // Timers and recording devices:
      while (1) {
            int NumTimers = 0;
            const cDevice *Device = NULL;
-           for (int i = 0; i < SortedTimers.Size(); i++) {
+           for (vector<const cTimer*>::iterator it = SortedTimers.begin(); it != SortedTimers.end(); ++it) {
                if (y + lineHeight > ys05)
                   break;
-               if (const cTimer *Timer = SortedTimers[i]) {
+               if (const cTimer *Timer = *it) {
                   if (Timer->Recording()) {
                      if (cRecordControl *RecordControl = cRecordControls::GetRecordControl(Timer)) {
                         if (!Device || Device == RecordControl->Device()) {
@@ -1203,19 +1212,19 @@ void cSkinLCARSDisplayMenu::DrawTimers(void)
                               NumDevices++;
                               }
                            else
-                              FreeDeviceSlots.Append(y);
+                              FreeDeviceSlots.push_back(y);
                            y += lineHeight + Gap;
                            }
                         else
                            continue;
                         }
-                     SortedTimers[i] = NULL;
+                     *it = NULL;
                      }
                   else if (!Device && Timer->HasFlags(tfActive)) {
                      DrawTimer(Timer, y, false);
-                     FreeDeviceSlots.Append(y);
+                     FreeDeviceSlots.push_back(y);
                      y += lineHeight + Gap;
-                     SortedTimers[i] = NULL;
+                     *it = NULL;
                      }
                   }
                }
@@ -1228,7 +1237,7 @@ void cSkinLCARSDisplayMenu::DrawTimers(void)
          if (const cDevice *Device = cDevice::GetDevice(i)) {
             if (Device->NumProvidedSystems()) {
                if (!deviceRecording[Device->DeviceNumber()]) {
-                  if (Slot < FreeDeviceSlots.Size()) {
+                  if (Slot < (int)FreeDeviceSlots.size()) {
                      y = FreeDeviceSlots[Slot];
                      Slot++;
                      }
@@ -1429,7 +1438,7 @@ void cSkinLCARSDisplayMenu::DrawInfo(const cEvent *Event, bool WithTime)
 
 void cSkinLCARSDisplayMenu::DrawSeen(int Current, int Total)
 {
-  int Seen = (Total > 0) ? min(xm08 - xm02, int((xm08 - xm02) * double(Current) / Total)) : 0;
+  int Seen = (Total > 0) ? ::min(xm08 - xm02, int((xm08 - xm02) * double(Current) / Total)) : 0;
   if (initial || Seen != lastSeen) {
      int y0 = yc04 - ShowSeenExtent;
      int y1 = yc04 + lineHeight / 2 - Gap / 2;
@@ -1829,7 +1838,7 @@ void cSkinLCARSDisplayReplay::SetCurrent(const char *Current)
 {
   const cFont *font = cFont::GetFont(fontOsd);
   int w = font->Width(Current);
-  osd->DrawText(xp03, yp03 - lineHeight, Current, Theme.Color(clrReplayPosition), Theme.Color(clrBackground), font, max(lastCurrentWidth, w), 0, taLeft);
+  osd->DrawText(xp03, yp03 - lineHeight, Current, Theme.Color(clrReplayPosition), Theme.Color(clrBackground), font, ::max(lastCurrentWidth, w), 0, taLeft);
   lastCurrentWidth = w;
 }
 
@@ -1837,7 +1846,7 @@ void cSkinLCARSDisplayReplay::SetTotal(const char *Total)
 {
   const cFont *font = cFont::GetFont(fontOsd);
   int w = font->Width(Total);
-  osd->DrawText(xp13 - w, yp03 - lineHeight, Total, Theme.Color(clrReplayPosition), Theme.Color(clrBackground), font, max(lastTotalWidth, w), 0, taRight);
+  osd->DrawText(xp13 - w, yp03 - lineHeight, Total, Theme.Color(clrReplayPosition), Theme.Color(clrBackground), font, ::max(lastTotalWidth, w), 0, taRight);
   lastTotalWidth = w;
 }
 
@@ -1982,7 +1991,7 @@ cSkinLCARSDisplayTracks::cSkinLCARSDisplayTracks(const char *Title, int NumTrack
   xt03 = xt00 + 2 * lineHeight;
   int ItemsWidth = font->Width(Title) + xt03 - xt02;
   for (int i = 0; i < NumTracks; i++)
-      ItemsWidth = max(ItemsWidth, font->Width(Tracks[i]) + 2 * TextFrame);
+      ItemsWidth = ::max(ItemsWidth, font->Width(Tracks[i]) + 2 * TextFrame);
   xt04 = xt02 + ItemsWidth;
   xt05 = xt04 + Gap;
   xt06 = xt04 + lineHeight;

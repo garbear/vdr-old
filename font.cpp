@@ -26,6 +26,10 @@
 #endif
 #include "vdr/utils/UTF8Utils.h"
 
+#include <algorithm>
+
+using namespace std;
+
 const char *DefaultFontOsd = "Sans Serif:Bold";
 const char *DefaultFontSml = "Sans Serif";
 const char *DefaultFontFix = "Courier:Bold";
@@ -51,7 +55,7 @@ private:
   int width; ///< The number of pixels per bitmap row.
   int rows;  ///< The number of bitmap rows.
   int pitch; ///< The pitch's absolute value is the number of bytes taken by one bitmap row, including padding.
-  cVector<tKerning> kerningCache;
+  vector<tKerning> kerningCache;
 public:
   cGlyph(uint CharCode, FT_GlyphSlotRec_ *GlyphData);
   virtual ~cGlyph();
@@ -89,16 +93,16 @@ cGlyph::~cGlyph()
 
 int cGlyph::GetKerningCache(uint PrevSym) const
 {
-  for (int i = kerningCache.Size(); --i > 0; ) {
-      if (kerningCache[i].prevSym == PrevSym)
-         return kerningCache[i].kerning;
+  for (vector<tKerning>::const_iterator it = kerningCache.begin(); it != kerningCache.end(); ++it) {
+      if (it->prevSym == PrevSym)
+         return it->kerning;
       }
   return KERNING_UNKNOWN;
 }
 
 void cGlyph::SetKerningCache(uint PrevSym, int Kerning)
 {
-  kerningCache.Append(tKerning(PrevSym, Kerning));
+  kerningCache.push_back(tKerning(PrevSym, Kerning));
 }
 
 class cFreetypeFont : public cFont {
@@ -417,7 +421,7 @@ const cFont *cFont::GetFont(eDvbFont Font)
   if (!fonts[Font]) {
      switch (Font) {
        case fontOsd: SetFont(Font, Setup.FontOsd, Setup.FontOsdSize); break;
-       case fontSml: SetFont(Font, Setup.FontSml, min(Setup.FontSmlSize, Setup.FontOsdSize)); break;
+       case fontSml: SetFont(Font, Setup.FontSml, ::min(Setup.FontSmlSize, Setup.FontOsdSize)); break;
        case fontFix: SetFont(Font, Setup.FontFix, Setup.FontFixSize); break;
        default: esyslog("ERROR: unknown Font %d (%s %d)", Font, __FUNCTION__, __LINE__);
        }
@@ -433,9 +437,9 @@ cFont *cFont::CreateFont(const char *Name, int CharHeight, int CharWidth)
   return NULL;
 }
 
-bool cFont::GetAvailableFontNames(cStringList *FontNames, bool Monospaced)
+bool cFont::GetAvailableFontNames(vector<string> &FontNames, bool Monospaced)
 {
-  if (!FontNames->Size()) {
+  if (FontNames.empty()) {
      FcInit();
      FcObjectSet *os = FcObjectSetBuild(FC_FAMILY, FC_STYLE, NULL);
      FcPattern *pat = FcPatternCreate();
@@ -463,16 +467,16 @@ bool cFont::GetAvailableFontNames(cStringList *FontNames, bool Monospaced)
             // Make it user presentable:
             s = strreplace(s, "\\", ""); // '-' is escaped
             s = strreplace(s, "style=", "");
-            FontNames->Append(s); // takes ownership of s
+            FontNames.push_back(s); // takes ownership of s
             }
          }
      FcFontSetDestroy(fontset);
      FcPatternDestroy(pat);
      FcObjectSetDestroy(os);
      //FcFini(); // older versions of fontconfig are broken - and FcInit() can be called more than once
-     FontNames->Sort();
+     sort(FontNames.begin(), FontNames.end());
      }
-  return FontNames->Size() > 0;
+  return !FontNames.empty();
 }
 
 cString cFont::GetFontFileName(const char *FontName)

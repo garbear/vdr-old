@@ -14,6 +14,9 @@
 #include "dvbdevice.h"
 #include "osdbase.h"
 
+#include <string>
+#include <vector>
+
 extern const char *FileNameChars;
 
 class cMenuEditItem : public cOsdItem {
@@ -128,10 +131,11 @@ public:
 
 class cMenuEditStraItem : public cMenuEditIntItem {
 private:
-  const char * const *strings;
+  std::vector<std::string> strings;
 protected:
   virtual void Set(void);
 public:
+  cMenuEditStraItem(const char *Name, int *Value, int NumStrings, const std::vector<std::string> &Strings);
   cMenuEditStraItem(const char *Name, int *Value, int NumStrings, const char * const *Strings);
   };
 

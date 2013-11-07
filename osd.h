@@ -18,6 +18,8 @@
 #include "thread.h"
 #include "tools.h"
 
+#include <vector>
+
 #define OSD_LEVEL_DEFAULT     0
 #define OSD_LEVEL_SUBTITLES  10
 
@@ -283,7 +285,7 @@ public:
        ///< the 2^NewBpp most frequently used colors as defined in the current palette.
        ///< If NewBpp is not smaller than the bitmap's current color depth,
        ///< or if it is not one of 4bpp or 2bpp, nothing happens.
-  cBitmap *Scaled(double FactorX, double FactorY, bool AntiAlias = false);
+  cBitmap *Scaled(double FactorX, double FactorY, bool AntiAlias = false) const;
        ///< Creates a copy of this bitmap, scaled by the given factors.
        ///< If AntiAlias is true and either of the factors is greater than 1.0,
        ///< anti-aliasing is applied. This will also set the color depth of the
@@ -717,14 +719,14 @@ class cOsd {
   friend class cOsdProvider;
 private:
   static int osdLeft, osdTop, osdWidth, osdHeight;
-  static cVector<cOsd *> Osds;
+  static std::vector<cOsd*> Osds;
   static cMutex mutex;
   bool isTrueColor;
   cBitmap *savedBitmap;
   cBitmap *bitmaps[MAXOSDAREAS];
   int numBitmaps;
   cPixmapMemory *savedPixmap;
-  cVector<cPixmap *> pixmaps;
+  std::vector<cPixmap*> pixmaps;
   int left, top, width, height;
   uint level;
   bool active;
@@ -787,7 +789,7 @@ public:
        ///< This may be useful for plugins that determine the scaling of the
        ///< video image and need to scale the OSD accordingly to fit on the
        ///< screen.
-  static int IsOpen(void) { return Osds.Size() && Osds[0]->level == OSD_LEVEL_DEFAULT; }
+  static int IsOpen(void) { return !Osds.empty() && Osds[0]->level == OSD_LEVEL_DEFAULT; }
        ///< Returns true if there is currently a level 0 OSD open.
   bool IsTrueColor(void) const { return isTrueColor; }
        ///< Returns 'true' if this is a true color OSD (providing full 32 bit color

@@ -14,12 +14,15 @@
 #include "tools.h"
 #include "osd.h"
 
+#include <string>
+#include <vector>
+
 class cTheme {
 public:
   enum { MaxThemeColors = 128 };
 private:
   char *name;
-  cStringList descriptions;
+  std::vector<std::string> descriptions;
   char *colorNames[MaxThemeColors];
   tColor colorValues[MaxThemeColors];
   bool FileNameOk(const char *FileName, bool SetName = false);

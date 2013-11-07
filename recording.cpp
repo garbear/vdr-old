@@ -31,6 +31,8 @@
 #include "vdr/filesystem/Directory.h"
 #include "vdr/utils/UTF8Utils.h"
 
+#include <algorithm>
+
 #define SUMMARYFALLBACK
 
 #define RECEXT       ".rec"
@@ -1557,8 +1559,8 @@ void cMarks::Sort(void)
   for (cMark *m1 = First(); m1; m1 = Next(m1)) {
       for (cMark *m2 = Next(m1); m2; m2 = Next(m2)) {
           if (m2->Position() < m1->Position()) {
-             swap(m1->position, m2->position);
-             swap(m1->comment, m2->comment);
+             std::swap(m1->position, m2->position);
+             std::swap(m1->comment, m2->comment);
              }
           }
       }

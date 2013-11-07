@@ -20,6 +20,8 @@
 #include "vdr/utils/CharSetConverter.h"
 #include "vdr/utils/UTF8Utils.h"
 
+using namespace std;
+
 #define AUTO_ADVANCE_TIMEOUT  1500 // ms before auto advance when entering characters via numeric keys
 
 // The following macros automatically use the correct versions of the character
@@ -727,16 +729,23 @@ eOSState cMenuEditStrItem::ProcessKey(eKeys Key)
 
 // --- cMenuEditStraItem -----------------------------------------------------
 
+cMenuEditStraItem::cMenuEditStraItem(const char *Name, int *Value, int NumStrings, const vector<string> &Strings)
+:cMenuEditIntItem(Name, Value, 0, NumStrings - 1), strings(Strings)
+{
+  Set();
+}
+
 cMenuEditStraItem::cMenuEditStraItem(const char *Name, int *Value, int NumStrings, const char * const *Strings)
 :cMenuEditIntItem(Name, Value, 0, NumStrings - 1)
 {
-  strings = Strings;
+  for (const char * const *i = Strings; i; i++)
+    strings.push_back(*i);
   Set();
 }
 
 void cMenuEditStraItem::Set(void)
 {
-  SetValue(strings[*value]);
+  SetValue(strings[*value].c_str());
 }
 
 // --- cMenuEditChanItem -----------------------------------------------------

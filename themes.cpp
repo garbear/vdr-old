@@ -13,6 +13,8 @@
 #include "config.h"
 #include "tools.h"
 
+using namespace std;
+
 // --- cTheme ----------------------------------------------------------------
 
 cTheme::cTheme(void)
@@ -20,7 +22,7 @@ cTheme::cTheme(void)
   name = strdup("default");
   memset(colorNames, 0, sizeof(colorNames));
   memset(colorValues, 0, sizeof(colorValues));
-  descriptions[0] = strdup("Default");
+  descriptions.push_back("Default");
 }
 
 cTheme::~cTheme()
@@ -74,10 +76,14 @@ bool cTheme::FileNameOk(const char *FileName, bool SetName)
 
 const char *cTheme::Description(void)
 {
-  char *s = descriptions[I18nCurrentLanguage()];
-  if (!s)
+  string s;
+  unsigned int i = I18nCurrentLanguage();
+  if (i < descriptions.size())
+    s = descriptions[i];
+  if (s.empty())
      s = descriptions[0];
-  return s ? s : name;
+  // TODO: This leaks memory
+  return !s.empty() ? strdup(s.c_str()) : name;
 }
 
 bool cTheme::Load(const char *FileName, bool OnlyDescriptions)
@@ -113,8 +119,7 @@ bool cTheme::Load(const char *FileName, bool OnlyDescriptions)
                     if (l)
                        lang = I18nLanguageIndex(++l);
                     if (lang >= 0) {
-                       free(descriptions[lang]);
-                       descriptions[lang] = strdup(v);
+                       descriptions[lang] = v;
                        }
                     else
                        error = "invalid language code";
@@ -164,9 +169,9 @@ bool cTheme::Save(const char *FileName)
   bool result = true;
   cSafeFile f(FileName);
   if (f.Open()) {
-     for (int i = 0; i < I18nLanguages()->Size(); i++) {
-         if (descriptions[i])
-            fprintf(f, "Description%s%.*s = %s\n", i ? "." : "", 3, i ? I18nLanguageCode(i) : "", descriptions[i]);
+     for (unsigned int i = 0; i < I18nLanguages().size(); i++) {
+         if (!descriptions[i].empty())
+            fprintf(f, "Description%s%.*s = %s\n", i ? "." : "", 3, i ? I18nLanguageCode(i) : "", descriptions[i].c_str());
          }
      for (int i = 0; i < MaxThemeColors; i++) {
          if (colorNames[i])

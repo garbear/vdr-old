@@ -545,9 +545,9 @@ bool cSetup::Load(const char *FileName)
 
 void cSetup::StoreLanguages(const char *Name, int *Values)
 {
-  char buffer[I18nLanguages()->Size() * 4];
+  char buffer[I18nLanguages().size() * 4];
   char *q = buffer;
-  for (int i = 0; i < I18nLanguages()->Size(); i++) {
+  for (int i = 0; i < (int)I18nLanguages().size(); i++) {
       if (Values[i] < 0)
          break;
       const char *s = I18nLanguageCode(Values[i]);
@@ -565,7 +565,7 @@ void cSetup::StoreLanguages(const char *Name, int *Values)
 bool cSetup::ParseLanguages(const char *Value, int *Values)
 {
   int n = 0;
-  while (Value && *Value && n < I18nLanguages()->Size()) {
+  while (Value && *Value && n < (int)I18nLanguages().size()) {
         char buffer[4];
         strn0cpy(buffer, Value, sizeof(buffer));
         int i = I18nLanguageIndex(buffer);

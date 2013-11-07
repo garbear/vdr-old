@@ -37,6 +37,8 @@
 
 #include "config.h"
 
+#include <vector>
+
 class cSegment
 {
   public:
@@ -71,7 +73,7 @@ private:
   cIndexFile *m_indexFile;
   int         m_file;
   int         m_fileOpen;
-  cVector<cSegment*> m_segments;
+  std::vector<cSegment*> m_segments;
   uint64_t    m_totalLength;
   uint32_t    m_totalFrames;
   char       *m_recordingFilename;

@@ -19,6 +19,8 @@
 
 #include "vdr/utils/UTF8Utils.h"
 
+using namespace std;
+
 // IMPORTANT NOTE: in the 'sscanf()' calls there is a blank after the '%d'
 // format characters in order to allow any number of blanks after a numeric
 // value!
@@ -416,7 +418,7 @@ bool cTimer::Matches(time_t t, bool Directly, int Margin) const
      }
   else {
      for (int i = -1; i <= 7; i++) {
-         time_t t0 = IncDay(day ? max(day, t) : t, i);
+         time_t t0 = IncDay(day ? ::max(day, t) : t, i);
          if (DayMatches(t0)) {
             time_t a = SetTime(t0, begin);
             time_t b = a + length;
@@ -477,7 +479,7 @@ eTimerMatch cTimer::Matches(const cEvent *Event, int *Overlap) const
         else if (stopTime <= Event->StartTime() || Event->EndTime() <= startTime)
            overlap = 0;
         else
-           overlap = (min(stopTime, Event->EndTime()) - max(startTime, Event->StartTime())) * FULLMATCH / max(Event->Duration(), 1);
+           overlap = (::min(stopTime, Event->EndTime()) - ::max(startTime, Event->StartTime())) * FULLMATCH / ::max(Event->Duration(), 1);
         }
      startTime = stopTime = 0;
      if (Overlap)
@@ -833,17 +835,12 @@ void cTimers::DeleteExpired(void)
   lastDeleteExpired = time(NULL);
 }
 
-// --- cSortedTimers ---------------------------------------------------------
-
-static int CompareTimers(const void *a, const void *b)
+int cTimer::CompareTimers(const cTimer *a, const cTimer *b)
 {
-  return (*(const cTimer **)a)->Compare(**(const cTimer **)b);
-}
-
-cSortedTimers::cSortedTimers(void)
-:cVector<const cTimer *>(Timers.Count())
-{
-  for (const cTimer *Timer = Timers.First(); Timer; Timer = Timers.Next(Timer))
-      Append(Timer);
-  Sort(CompareTimers);
+  time_t t1 = a->StartTime();
+  time_t t2 = b->StartTime();
+  int r = t1 - t2;
+  if (r == 0)
+    r = b->priority - a->priority;
+  return r;
 }

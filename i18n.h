@@ -13,6 +13,9 @@
 #include <stdio.h>
 #include "tools.h"
 
+#include <string>
+#include <vector>
+
 #define I18N_DEFAULT_LOCALE "en_US"
 #define I18N_MAX_LOCALE_LEN 16       // for buffers that hold en_US etc.
 #define I18N_MAX_LANGUAGES  256      // for buffers that hold all available languages
@@ -39,7 +42,7 @@ void I18nSetLanguage(int Language);
 int I18nNumLanguagesWithLocale(void);
    ///< Returns the number of entries in the list returned by I18nLanguages()
    ///< that actually have a locale.
-const cStringList *I18nLanguages(void);
+const std::vector<std::string> &I18nLanguages(void);
    ///< Returns the list of available languages. Values returned by
    ///< I18nCurrentLanguage() are indexes into this list.
    ///< Only the first I18nNumLanguagesWithLocale() entries in this list

@@ -34,6 +34,12 @@
 
 #include "vdr/utils/UTF8Utils.h"
 
+#include <algorithm>
+#include <string>
+#include <vector>
+
+using namespace std;
+
 #define MAXWAIT4EPGINFO   3 // seconds
 #define MODETIMEOUT       3 // seconds
 #define NEWTIMERLIMIT   120 // seconds until the start time of a new timer created from the Schedule menu,
@@ -51,7 +57,7 @@
 #define MAXCHNAMWIDTH      16 // maximum number of characters of channels' short names shown in schedules menus
 
 #define CHNUMWIDTH  (numdigits(Channels.MaxNumber()) + 1)
-#define CHNAMWIDTH  (min(MAXCHNAMWIDTH, Channels.MaxShortChannelNameLength() + 1))
+#define CHNAMWIDTH  (::min(MAXCHNAMWIDTH, Channels.MaxShortChannelNameLength() + 1))
 
 // --- cMenuEditCaItem -------------------------------------------------------
 
@@ -2533,7 +2539,7 @@ private:
   cThemes themes;
   int originalThemeIndex;
   int themeIndex;
-  cStringList fontOsdNames, fontSmlNames, fontFixNames;
+  vector<string> fontOsdNames, fontSmlNames, fontFixNames;
   int fontOsdIndex, fontSmlIndex, fontFixIndex;
   virtual void Set(void);
 public:
@@ -2551,15 +2557,19 @@ cMenuSetupOSD::cMenuSetupOSD(void)
   skinDescriptions = new const char*[numSkins];
   themes.Load(Skins.Current()->Name());
   themeIndex = originalThemeIndex = Skins.Current()->Theme() ? themes.GetThemeIndex(Skins.Current()->Theme()->Description()) : 0;
-  cFont::GetAvailableFontNames(&fontOsdNames);
-  cFont::GetAvailableFontNames(&fontSmlNames);
-  cFont::GetAvailableFontNames(&fontFixNames, true);
-  fontOsdNames.Insert(strdup(DefaultFontOsd));
-  fontSmlNames.Insert(strdup(DefaultFontSml));
-  fontFixNames.Insert(strdup(DefaultFontFix));
-  fontOsdIndex = max(0, fontOsdNames.Find(Setup.FontOsd));
-  fontSmlIndex = max(0, fontSmlNames.Find(Setup.FontSml));
-  fontFixIndex = max(0, fontFixNames.Find(Setup.FontFix));
+  cFont::GetAvailableFontNames(fontOsdNames);
+  cFont::GetAvailableFontNames(fontSmlNames);
+  cFont::GetAvailableFontNames(fontFixNames, true);
+  fontOsdNames.insert(fontOsdNames.begin(), DefaultFontOsd);
+  fontSmlNames.insert(fontSmlNames.begin(), DefaultFontSml);
+  fontFixNames.insert(fontFixNames.begin(), DefaultFontFix);
+  vector<string>::const_iterator it;
+  it = std::find(fontOsdNames.begin(), fontOsdNames.end(), Setup.FontOsd);
+  fontOsdIndex = (it == fontOsdNames.end() ? 0 : fontOsdNames.begin() - it);
+  it = std::find(fontSmlNames.begin(), fontSmlNames.end(), Setup.FontSml);
+  fontSmlIndex = (it == fontSmlNames.end() ? 0 : fontSmlNames.begin() - it);
+  it = std::find(fontFixNames.begin(), fontFixNames.end(), Setup.FontFix);
+  fontFixIndex = (it == fontFixNames.end() ? 0 : fontFixNames.begin() - it);
   Set();
 }
 
@@ -2582,7 +2592,7 @@ void cMenuSetupOSD::Set(void)
   keyColorTexts[3] = tr("Key$Blue");
   Clear();
   SetSection(tr("OSD"));
-  Add(new cMenuEditStraItem(tr("Setup.OSD$Language"),               &osdLanguageIndex, I18nNumLanguagesWithLocale(), &I18nLanguages()->At(0)));
+  Add(new cMenuEditStraItem(tr("Setup.OSD$Language"),               &osdLanguageIndex, I18nNumLanguagesWithLocale(), I18nLanguages()));
   Add(new cMenuEditStraItem(tr("Setup.OSD$Skin"),                   &skinIndex, numSkins, skinDescriptions));
   if (themes.NumThemes())
   Add(new cMenuEditStraItem(tr("Setup.OSD$Theme"),                  &themeIndex, themes.NumThemes(), themes.Descriptions()));
@@ -2593,9 +2603,9 @@ void cMenuSetupOSD::Set(void)
   Add(new cMenuEditIntItem( tr("Setup.OSD$Message time (s)"),       &data.OSDMessageTime, 1, 60));
   Add(new cMenuEditStraItem(tr("Setup.OSD$Use small font"),         &data.UseSmallFont, 3, useSmallFontTexts));
   Add(new cMenuEditBoolItem(tr("Setup.OSD$Anti-alias"),             &data.AntiAlias));
-  Add(new cMenuEditStraItem(tr("Setup.OSD$Default font"),           &fontOsdIndex, fontOsdNames.Size(), &fontOsdNames[0]));
-  Add(new cMenuEditStraItem(tr("Setup.OSD$Small font"),             &fontSmlIndex, fontSmlNames.Size(), &fontSmlNames[0]));
-  Add(new cMenuEditStraItem(tr("Setup.OSD$Fixed font"),             &fontFixIndex, fontFixNames.Size(), &fontFixNames[0]));
+  Add(new cMenuEditStraItem(tr("Setup.OSD$Default font"),           &fontOsdIndex, fontOsdNames.size(), fontOsdNames));
+  Add(new cMenuEditStraItem(tr("Setup.OSD$Small font"),             &fontSmlIndex, fontSmlNames.size(), fontSmlNames));
+  Add(new cMenuEditStraItem(tr("Setup.OSD$Fixed font"),             &fontFixIndex, fontFixNames.size(), fontFixNames));
   Add(new cMenuEditPrcItem( tr("Setup.OSD$Default font size (%)"),  &data.FontOsdSizeP, 0.01, 0.1, 1));
   Add(new cMenuEditPrcItem( tr("Setup.OSD$Small font size (%)"),    &data.FontSmlSizeP, 0.01, 0.1, 1));
   Add(new cMenuEditPrcItem( tr("Setup.OSD$Fixed font size (%)"),    &data.FontFixSizeP, 0.01, 0.1, 1));
@@ -2641,9 +2651,9 @@ eOSState cMenuSetupOSD::ProcessKey(eKeys Key)
         ModifiedAppearance = true;
      if (data.UseSmallFont != Setup.UseSmallFont || data.AntiAlias != Setup.AntiAlias)
         ModifiedAppearance = true;
-     cUtf8Utils::Utf8Strn0Cpy(data.FontOsd, fontOsdNames[fontOsdIndex], sizeof(data.FontOsd));
-     cUtf8Utils::Utf8Strn0Cpy(data.FontSml, fontSmlNames[fontSmlIndex], sizeof(data.FontSml));
-     cUtf8Utils::Utf8Strn0Cpy(data.FontFix, fontFixNames[fontFixIndex], sizeof(data.FontFix));
+     cUtf8Utils::Utf8Strn0Cpy(data.FontOsd, fontOsdNames[fontOsdIndex].c_str(), sizeof(data.FontOsd));
+     cUtf8Utils::Utf8Strn0Cpy(data.FontSml, fontSmlNames[fontSmlIndex].c_str(), sizeof(data.FontSml));
+     cUtf8Utils::Utf8Strn0Cpy(data.FontFix, fontFixNames[fontFixIndex].c_str(), sizeof(data.FontFix));
      if (strcmp(data.FontOsd, Setup.FontOsd) || !DoubleEqual(data.FontOsdSizeP, Setup.FontOsdSizeP))
         ModifiedAppearance = true;
      if (strcmp(data.FontSml, Setup.FontSml) || !DoubleEqual(data.FontSmlSizeP, Setup.FontSmlSizeP))
@@ -2698,7 +2708,7 @@ public:
 cMenuSetupEPG::cMenuSetupEPG(void)
 {
   SetMenuCategory(mcSetupEpg);
-  for (numLanguages = 0; numLanguages < I18nLanguages()->Size() && data.EPGLanguages[numLanguages] >= 0; numLanguages++)
+  for (numLanguages = 0; numLanguages < (int)I18nLanguages().size() && data.EPGLanguages[numLanguages] >= 0; numLanguages++)
       ;
   originalNumLanguages = numLanguages;
   SetSection(tr("EPG"));
@@ -2719,10 +2729,10 @@ void cMenuSetupEPG::Setup(void)
   if (data.SetSystemTime)
      Add(new cMenuEditTranItem(tr("Setup.EPG$Use time from transponder"), &data.TimeTransponder, &data.TimeSource));
   // TRANSLATORS: note the plural!
-  Add(new cMenuEditIntItem( tr("Setup.EPG$Preferred languages"),       &numLanguages, 0, I18nLanguages()->Size()));
+  Add(new cMenuEditIntItem( tr("Setup.EPG$Preferred languages"),       &numLanguages, 0, I18nLanguages().size()));
   for (int i = 0; i < numLanguages; i++)
       // TRANSLATORS: note the singular!
-      Add(new cMenuEditStraItem(tr("Setup.EPG$Preferred language"),    &data.EPGLanguages[i], I18nLanguages()->Size(), &I18nLanguages()->At(0)));
+      Add(new cMenuEditStraItem(tr("Setup.EPG$Preferred language"),    &data.EPGLanguages[i], I18nLanguages().size(), I18nLanguages()));
 
   SetCurrent(Get(current));
   Display();
@@ -2752,7 +2762,7 @@ eOSState cMenuSetupEPG::ProcessKey(eKeys Key)
      if (numLanguages != oldnumLanguages || data.SetSystemTime != oldSetSystemTime) {
         for (int i = oldnumLanguages; i < numLanguages; i++) {
             data.EPGLanguages[i] = 0;
-            for (int l = 0; l < I18nLanguages()->Size(); l++) {
+            for (int l = 0; l < (int)I18nLanguages().size(); l++) {
                 int k;
                 for (k = 0; k < oldnumLanguages; k++) {
                     if (data.EPGLanguages[k] == l)
@@ -2795,9 +2805,9 @@ public:
 cMenuSetupDVB::cMenuSetupDVB(void)
 {
   SetMenuCategory(mcSetupDvb);
-  for (numAudioLanguages = 0; numAudioLanguages < I18nLanguages()->Size() && data.AudioLanguages[numAudioLanguages] >= 0; numAudioLanguages++)
+  for (numAudioLanguages = 0; numAudioLanguages < (int)I18nLanguages().size() && data.AudioLanguages[numAudioLanguages] >= 0; numAudioLanguages++)
       ;
-  for (numSubtitleLanguages = 0; numSubtitleLanguages < I18nLanguages()->Size() && data.SubtitleLanguages[numSubtitleLanguages] >= 0; numSubtitleLanguages++)
+  for (numSubtitleLanguages = 0; numSubtitleLanguages < (int)I18nLanguages().size() && data.SubtitleLanguages[numSubtitleLanguages] >= 0; numSubtitleLanguages++)
       ;
   originalNumAudioLanguages = numAudioLanguages;
   originalNumSubtitleLanguages = numSubtitleLanguages;
@@ -2831,14 +2841,14 @@ void cMenuSetupDVB::Setup(void)
      Add(new cMenuEditStraItem(tr("Setup.DVB$Video display format"), &data.VideoDisplayFormat, 3, videoDisplayFormatTexts));
   Add(new cMenuEditBoolItem(tr("Setup.DVB$Use Dolby Digital"),     &data.UseDolbyDigital));
   Add(new cMenuEditStraItem(tr("Setup.DVB$Update channels"),       &data.UpdateChannels, 6, updateChannelsTexts));
-  Add(new cMenuEditIntItem( tr("Setup.DVB$Audio languages"),       &numAudioLanguages, 0, I18nLanguages()->Size()));
+  Add(new cMenuEditIntItem( tr("Setup.DVB$Audio languages"),       &numAudioLanguages, 0, I18nLanguages().size()));
   for (int i = 0; i < numAudioLanguages; i++)
-      Add(new cMenuEditStraItem(tr("Setup.DVB$Audio language"),    &data.AudioLanguages[i], I18nLanguages()->Size(), &I18nLanguages()->At(0)));
+      Add(new cMenuEditStraItem(tr("Setup.DVB$Audio language"),    &data.AudioLanguages[i], I18nLanguages().size(), I18nLanguages()));
   Add(new cMenuEditBoolItem(tr("Setup.DVB$Display subtitles"),     &data.DisplaySubtitles));
   if (data.DisplaySubtitles) {
-     Add(new cMenuEditIntItem( tr("Setup.DVB$Subtitle languages"),    &numSubtitleLanguages, 0, I18nLanguages()->Size()));
+     Add(new cMenuEditIntItem( tr("Setup.DVB$Subtitle languages"),    &numSubtitleLanguages, 0, I18nLanguages().size()));
      for (int i = 0; i < numSubtitleLanguages; i++)
-         Add(new cMenuEditStraItem(tr("Setup.DVB$Subtitle language"), &data.SubtitleLanguages[i], I18nLanguages()->Size(), &I18nLanguages()->At(0)));
+         Add(new cMenuEditStraItem(tr("Setup.DVB$Subtitle language"), &data.SubtitleLanguages[i], I18nLanguages().size(), I18nLanguages()));
      Add(new cMenuEditIntItem( tr("Setup.DVB$Subtitle offset"),                  &data.SubtitleOffset,      -100, 100));
      Add(new cMenuEditIntItem( tr("Setup.DVB$Subtitle foreground transparency"), &data.SubtitleFgTransparency, 0, 9));
      Add(new cMenuEditIntItem( tr("Setup.DVB$Subtitle background transparency"), &data.SubtitleBgTransparency, 0, 10));
@@ -2874,7 +2884,7 @@ eOSState cMenuSetupDVB::ProcessKey(eKeys Key)
             if (numAudioLanguages != oldnumAudioLanguages) {
                for (int i = oldnumAudioLanguages; i < numAudioLanguages; i++) {
                    data.AudioLanguages[i] = 0;
-                   for (int l = 0; l < I18nLanguages()->Size(); l++) {
+                   for (int l = 0; l < (int)I18nLanguages().size(); l++) {
                        int k;
                        for (k = 0; k < oldnumAudioLanguages; k++) {
                            if (data.AudioLanguages[k] == l)
@@ -2892,7 +2902,7 @@ eOSState cMenuSetupDVB::ProcessKey(eKeys Key)
             if (numSubtitleLanguages != oldnumSubtitleLanguages) {
                for (int i = oldnumSubtitleLanguages; i < numSubtitleLanguages; i++) {
                    data.SubtitleLanguages[i] = 0;
-                   for (int l = 0; l < I18nLanguages()->Size(); l++) {
+                   for (int l = 0; l < (int)I18nLanguages().size(); l++) {
                        int k;
                        for (k = 0; k < oldnumSubtitleLanguages; k++) {
                            if (data.SubtitleLanguages[k] == l)
@@ -4718,7 +4728,7 @@ void cReplayControl::TimeSearchProcess(eKeys Key)
     case kRight: {
          int dir = ((Key == kRight || Key == kFastFwd) ? 1 : -1);
          if (dir > 0)
-            Seconds = min(Total - Current - STAY_SECONDS_OFF_END, Seconds);
+            Seconds = ::min(Total - Current - STAY_SECONDS_OFF_END, Seconds);
          SkipSeconds(Seconds * dir);
          timeSearchActive = false;
          }
@@ -4730,7 +4740,7 @@ void cReplayControl::TimeSearchProcess(eKeys Key)
     case kDown:
     case kOk:
          if (timeSearchPos > 0) {
-            Seconds = min(Total - STAY_SECONDS_OFF_END, Seconds);
+            Seconds = ::min(Total - STAY_SECONDS_OFF_END, Seconds);
             Goto(SecondsToFrames(Seconds, FramesPerSecond()), Key == kDown || Key == kPause || Key == kOk);
             }
          timeSearchActive = false;

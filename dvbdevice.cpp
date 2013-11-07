@@ -21,6 +21,14 @@
 #include "menuitems.h"
 #include "sourceparams.h"
 
+#include "vdr/utils/StringUtils.h"
+
+#include <algorithm>
+#include <string>
+#include <vector>
+
+using namespace std;
+
 static int DvbApiVersion = 0x0000; // the version of the DVB driver actually in use (will be determined by the first device created)
 
 #define DVBS_TUNE_TIMEOUT  9000 //ms
@@ -786,7 +794,7 @@ bool cDvbTuner::SetFrontend(void)
         CHECK(ioctl(fd_frontend, FE_SET_VOLTAGE, volt));
         CHECK(ioctl(fd_frontend, FE_SET_TONE, tone));
         }
-     frequency = abs(frequency); // Allow for C-band, where the frequency is less than the LOF
+     frequency = ::abs(frequency); // Allow for C-band, where the frequency is less than the LOF
 
      // DVB-S/DVB-S2 (common parts)
      SETCMD(DTV_FREQUENCY, frequency * 1000UL);
@@ -1124,7 +1132,7 @@ bool cDvbDevice::Initialize(void)
   new cDvbSourceParam('C', "DVB-C");
   new cDvbSourceParam('S', "DVB-S");
   new cDvbSourceParam('T', "DVB-T");
-  cStringList Nodes;
+  vector<string> Nodes;
   cReadDir DvbDir(DEV_DVB_BASE);
   if (DvbDir.Ok()) {
      struct dirent *a;
@@ -1137,7 +1145,7 @@ bool cDvbDevice::Initialize(void)
                  while ((f = AdapterDir.Next()) != NULL) {
                        if (strstr(f->d_name, DEV_DVB_FRONTEND) == f->d_name) {
                           int Frontend = strtol(f->d_name + strlen(DEV_DVB_FRONTEND), NULL, 10);
-                          Nodes.Append(strdup(cString::sprintf("%2d %2d", Adapter, Frontend)));
+                          Nodes.push_back(StringUtils::Format("%2d %2d", Adapter, Frontend));
                           }
                        }
                  }
@@ -1146,12 +1154,12 @@ bool cDvbDevice::Initialize(void)
      }
   int Checked = 0;
   int Found = 0;
-  if (Nodes.Size() > 0) {
-     Nodes.Sort();
-     for (int i = 0; i < Nodes.Size(); i++) {
+  if (!Nodes.empty()) {
+     sort(Nodes.begin(), Nodes.end());
+     for (vector<string>::const_iterator it = Nodes.begin(); it != Nodes.end(); ++it) {
          int Adapter;
          int Frontend;
-         if (2 == sscanf(Nodes[i], "%d %d", &Adapter, &Frontend)) {
+         if (2 == sscanf(it->c_str(), "%d %d", &Adapter, &Frontend)) {
             if (Exists(Adapter, Frontend)) {
                if (Checked++ < MAXDVBDEVICES) {
                   if (UseDevice(NextCardIndex())) {

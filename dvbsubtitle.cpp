@@ -19,6 +19,10 @@
 #include "vdr/utils/CharSetConverter.h"
 #include "vdr/utils/UTF8Utils.h"
 
+#include <vector>
+
+using namespace std;
+
 //#define FINISHPAGE_HACK
 
 #define PAGE_COMPOSITION_SEGMENT    0x10
@@ -675,7 +679,7 @@ void cDvbSubtitleAssembler::Reset(void)
 bool cDvbSubtitleAssembler::Realloc(int Size)
 {
   if (Size > size) {
-     Size = max(Size, 2048);
+     Size = ::max(Size, 2048);
      if (uchar *NewBuffer = (uchar *)realloc(data, Size)) {
         size = Size;
         data = NewBuffer;
@@ -723,7 +727,7 @@ private:
   int numAreas;
   double osdFactorX;
   double osdFactorY;
-  cVector<cBitmap *> bitmaps;
+  vector<cBitmap*> bitmaps;
 public:
   cDvbSubtitleBitmaps(int64_t Pts, int Timeout, tArea *Areas, int NumAreas, double OsdFactorX, double OsdFactorY);
   ~cDvbSubtitleBitmaps();
@@ -746,13 +750,13 @@ cDvbSubtitleBitmaps::cDvbSubtitleBitmaps(int64_t Pts, int Timeout, tArea *Areas,
 cDvbSubtitleBitmaps::~cDvbSubtitleBitmaps()
 {
   delete[] areas;
-  for (int i = 0; i < bitmaps.Size(); i++)
-      delete bitmaps[i];
+  for (vector<cBitmap*>::iterator it = bitmaps.begin(); it != bitmaps.end(); ++it)
+    delete *it;
 }
 
 void cDvbSubtitleBitmaps::AddBitmap(cBitmap *Bitmap)
 {
-  bitmaps.Append(Bitmap);
+  bitmaps.push_back(Bitmap);
 }
 
 void cDvbSubtitleBitmaps::Draw(cOsd *Osd)
@@ -773,14 +777,14 @@ void cDvbSubtitleBitmaps::Draw(cOsd *Osd)
         }
      }
   if (Osd->SetAreas(areas, numAreas) == oeOk) {
-     for (int i = 0; i < bitmaps.Size(); i++) {
-         cBitmap *b = bitmaps[i];
-         if (Scale)
-            b = b->Scaled(osdFactorX, osdFactorY, AntiAlias);
-         Osd->DrawBitmap(int(round(b->X0() * osdFactorX)), int(round(b->Y0() * osdFactorY)), *b);
-         if (b != bitmaps[i])
-            delete b;
-         }
+    for (vector<cBitmap*>::const_iterator it = bitmaps.begin(); it != bitmaps.end(); ++it) {
+        const cBitmap *b = *it;
+        if (Scale)
+           b = b->Scaled(osdFactorX, osdFactorY, AntiAlias);
+        Osd->DrawBitmap(int(round(b->X0() * osdFactorX)), int(round(b->Y0() * osdFactorY)), *b);
+        if (b != *it)
+           delete b;
+        }
      Osd->Flush();
      }
 }

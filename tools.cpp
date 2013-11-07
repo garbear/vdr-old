@@ -32,6 +32,10 @@ extern "C" {
 #include "vdr/filesystem/Directory.h"
 #include "vdr/utils/UTF8Utils.h"
 
+#include <algorithm>
+
+using namespace std;
+
 int SysLogLevel = 3;
 
 #define MAXSYSLOGBUF 256
@@ -127,7 +131,7 @@ int WriteAllOrNothing(int fd, const uchar *Data, int Length, int TimeoutMs, int 
 char *strcpyrealloc(char *dest, const char *src)
 {
   if (src) {
-     int l = max(dest ? strlen(dest) : 0, strlen(src)) + 1; // don't let the block get smaller!
+     int l = ::max(dest ? strlen(dest) : 0, strlen(src)) + 1; // don't let the block get smaller!
      dest = (char *)realloc(dest, l);
      if (dest)
         strcpy(dest, src);
@@ -744,7 +748,7 @@ cString WeekDayName(int WeekDay)
      // TRANSLATORS: abbreviated weekdays, beginning with monday (must all be 3 letters!)
      const char *day = tr("MonTueWedThuFriSatSun");
      day += cUtf8Utils::Utf8SymChars(day, WeekDay * 3);
-     strn0cpy(buffer, day, min(cUtf8Utils::Utf8SymChars(day, 3) + 1, int(sizeof(buffer))));
+     strn0cpy(buffer, day, ::min(cUtf8Utils::Utf8SymChars(day, 3) + 1, int(sizeof(buffer))));
      return buffer;
      }
   else
@@ -1058,60 +1062,29 @@ struct dirent *cReadDir::Next(void)
   return NULL;
 }
 
-// --- cStringList -----------------------------------------------------------
-
-cStringList::~cStringList()
+bool GetSubDirectories(const string &strDirectory, vector<string> &vecFileNames)
 {
-  Clear();
-}
-
-int cStringList::Find(const char *s) const
-{
-  for (int i = 0; i < Size(); i++) {
-      if (!strcmp(s, At(i)))
-         return i;
-      }
-  return -1;
-}
-
-void cStringList::Clear(void)
-{
-  for (int i = 0; i < Size(); i++)
-      free(At(i));
-  cVector<char *>::Clear();
-}
-
-// --- cFileNameList ---------------------------------------------------------
-
-// TODO better GetFileNames(const char *Directory, cStringList *List)?
-cFileNameList::cFileNameList(const char *Directory, bool DirsOnly)
-{
-  Load(Directory, DirsOnly);
-}
-
-bool cFileNameList::Load(const char *Directory, bool DirsOnly)
-{
-  Clear();
-  if (Directory) {
-     cReadDir d(Directory);
-     struct dirent *e;
-     if (d.Ok()) {
-        while ((e = d.Next()) != NULL) {
-              if (DirsOnly) {
-                 struct stat ds;
-                 if (stat(AddDirectory(Directory, e->d_name), &ds) == 0) {
-                    if (!S_ISDIR(ds.st_mode))
-                       continue;
-                    }
-                 }
-              Append(strdup(e->d_name));
-              }
-        Sort();
-        return true;
+  vecFileNames.clear();
+  if (!strDirectory.empty())
+  {
+    cReadDir d(strDirectory.c_str());
+    struct dirent *e;
+    if (d.Ok())
+    {
+      while ((e = d.Next()) != NULL)
+      {
+        struct stat64 ds;
+        if (stat64(AddDirectory(strDirectory.c_str(), e->d_name), &ds) == 0)
+        {
+          if (!S_ISDIR(ds.st_mode))
+            continue;
         }
-     else
-        LOG_ERROR_STR(Directory);
-     }
+        vecFileNames.push_back(e->d_name);
+      }
+      std::sort(vecFileNames.begin(), vecFileNames.end());
+      return true;
+    }
+  }
   return false;
 }
 
@@ -1366,13 +1339,13 @@ ssize_t cUnbufferedFile::Read(void *Data, size_t Size)
         cachedstart = curpos;
         cachedend = curpos;
         }
-     cachedstart = min(cachedstart, curpos);
+     cachedstart = ::min(cachedstart, curpos);
 #endif
      ssize_t bytesRead = safe_read(fd, Data, Size);
      if (bytesRead > 0) {
         curpos += bytesRead;
 #ifdef USE_FADVISE
-        cachedend = max(cachedend, curpos);
+        cachedend = ::max(cachedend, curpos);
 
         // Read ahead:
         // no jump? (allow small forward jump still inside readahead window).
@@ -1383,7 +1356,7 @@ ssize_t cUnbufferedFile::Read(void *Data, size_t Size)
            if (ahead - curpos < (off_t)(readahead / 2)) {
               posix_fadvise(fd, curpos, readahead, POSIX_FADV_WILLNEED);
               ahead = curpos + readahead;
-              cachedend = max(cachedend, ahead);
+              cachedend = ::max(cachedend, ahead);
               }
            if (readahead < Size * 32) { // automagically tune readahead size.
               readahead = Size * 32;
@@ -1419,10 +1392,10 @@ ssize_t cUnbufferedFile::Write(const void *Data, size_t Size)
      ssize_t bytesWritten = safe_write(fd, Data, Size);
 #ifdef USE_FADVISE
      if (bytesWritten > 0) {
-        begin = min(begin, curpos);
+        begin = ::min(begin, curpos);
         curpos += bytesWritten;
         written += bytesWritten;
-        lastpos = max(lastpos, curpos);
+        lastpos = ::max(lastpos, curpos);
         if (written > WRITE_BUFFER) {
            if (lastpos > begin) {
               // Now do three things:
@@ -1433,7 +1406,7 @@ ssize_t cUnbufferedFile::Write(const void *Data, size_t Size)
               //    last (partial) page might be skipped, writeback will start only after
               //    second call; the third call will still include this page and finally
               //    drop it from cache.
-              off_t headdrop = min(begin, off_t(WRITE_BUFFER * 2));
+              off_t headdrop = ::min(begin, off_t(WRITE_BUFFER * 2));
               posix_fadvise(fd, begin - headdrop, lastpos - begin + headdrop, POSIX_FADV_DONTNEED);
               }
            begin = lastpos = curpos;
@@ -1452,7 +1425,7 @@ ssize_t cUnbufferedFile::Write(const void *Data, size_t Size)
               // kind of write gathering enabled), but the syncs cause (io) load..
               // Uncomment the next line if you think you need them.
               //fdatasync(fd);
-              off_t headdrop = min(off_t(curpos - totwritten), off_t(totwritten * 2));
+              off_t headdrop = ::min(off_t(curpos - totwritten), off_t(totwritten * 2));
               posix_fadvise(fd, curpos - totwritten - headdrop, totwritten + headdrop, POSIX_FADV_DONTNEED);
               totwritten = 0;
               }

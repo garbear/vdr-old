@@ -24,6 +24,10 @@
 #include <unistd.h>
 #include "tools.h"
 
+#include <algorithm>
+
+using namespace std;
+
 // TRANSLATORS: The name of the language, as written natively
 const char *LanguageName = trNOOP("LanguageName$English");
 // TRANSLATORS: The 3-letter code of the language
@@ -65,9 +69,9 @@ const char *LanguageCodeList[] = {
 
 static cString I18nLocaleDir;
 
-static cStringList LanguageLocales;
-static cStringList LanguageNames;
-static cStringList LanguageCodes;
+static vector<string> LanguageLocales;
+static vector<string> LanguageNames;
+static vector<string> LanguageCodes;
 
 static int NumLocales = 1;
 static int CurrentLanguage = 0;
@@ -103,26 +107,26 @@ static void SetEnvLanguage(const char *Locale)
 void I18nInitialize(const char *LocaleDir)
 {
   I18nLocaleDir = LocaleDir;
-  LanguageLocales.Append(strdup(I18N_DEFAULT_LOCALE));
-  LanguageNames.Append(strdup(SkipContext(LanguageName)));
-  LanguageCodes.Append(strdup(LanguageCodeList[0]));
+  LanguageLocales.push_back(I18N_DEFAULT_LOCALE);
+  LanguageNames.push_back(SkipContext(LanguageName));
+  LanguageCodes.push_back(LanguageCodeList[0]);
   textdomain("vdr");
   bindtextdomain("vdr", I18nLocaleDir);
-  cFileNameList Locales(I18nLocaleDir, true);
-  if (Locales.Size() > 0) {
+  vector<string> Locales;
+  if (GetSubDirectories(*I18nLocaleDir, Locales)) {
      char *OldLocale = strdup(setlocale(LC_MESSAGES, NULL));
-     for (int i = 0; i < Locales.Size(); i++) {
-         cString FileName = cString::sprintf("%s/%s/LC_MESSAGES/vdr.mo", *I18nLocaleDir, Locales[i]);
+     for (vector<string>::const_iterator it = Locales.begin(); it != Locales.end(); ++it) {
+         cString FileName = cString::sprintf("%s/%s/LC_MESSAGES/vdr.mo", *I18nLocaleDir, it->c_str());
          if (access(FileName, F_OK) == 0) { // found a locale with VDR texts
             if (NumLocales < I18N_MAX_LANGUAGES - 1) {
-               SetEnvLanguage(Locales[i]);
+               SetEnvLanguage(it->c_str());
                const char *TranslatedLanguageName = gettext(LanguageName);
                if (TranslatedLanguageName != LanguageName) {
                   NumLocales++;
-                  if (strstr(OldLocale, Locales[i]) == OldLocale)
-                     CurrentLanguage = LanguageLocales.Size();
-                  LanguageLocales.Append(strdup(Locales[i]));
-                  LanguageNames.Append(strdup(TranslatedLanguageName));
+                  if (strstr(OldLocale, it->c_str()) == OldLocale)
+                     CurrentLanguage = LanguageLocales.size();
+                  LanguageLocales.push_back(*it);
+                  LanguageNames.push_back(TranslatedLanguageName);
                   const char *Code = gettext(LanguageCode);
                   for (const char **lc = LanguageCodeList; *lc; lc++) {
                       if (ContainsCode(*lc, Code)) {
@@ -130,7 +134,7 @@ void I18nInitialize(const char *LocaleDir)
                          break;
                          }
                       }
-                  LanguageCodes.Append(strdup(Code));
+                  LanguageCodes.push_back(Code);
                   }
                }
             else {
@@ -139,24 +143,24 @@ void I18nInitialize(const char *LocaleDir)
                }
             }
          }
-     SetEnvLanguage(LanguageLocales[CurrentLanguage]);
+     SetEnvLanguage(LanguageLocales[CurrentLanguage].c_str());
      free(OldLocale);
      dsyslog("found %d locales in %s", NumLocales - 1, *I18nLocaleDir);
      }
   // Prepare any known language codes for which there was no locale:
   for (const char **lc = LanguageCodeList; *lc; lc++) {
       bool Found = false;
-      for (int i = 0; i < LanguageCodes.Size(); i++) {
-          if (strcmp(*lc, LanguageCodes[i]) == 0) {
+      for (vector<string>::const_iterator it = LanguageCodes.begin(); it != LanguageCodes.end(); ++it) {
+          if (*it == *lc) {
              Found = true;
              break;
              }
           }
       if (!Found) {
          dsyslog("no locale for language code '%s'", *lc);
-         LanguageLocales.Append(strdup(I18N_DEFAULT_LOCALE));
-         LanguageNames.Append(strdup(*lc));
-         LanguageCodes.Append(strdup(*lc));
+         LanguageLocales.push_back(I18N_DEFAULT_LOCALE);
+         LanguageNames.push_back(*lc);
+         LanguageCodes.push_back(*lc);
          }
       }
 }
@@ -170,7 +174,8 @@ void I18nRegister(const char *Plugin)
 void I18nSetLocale(const char *Locale)
 {
   if (Locale && *Locale) {
-     int i = LanguageLocales.Find(Locale);
+     vector<string>::const_iterator it = find(LanguageLocales.begin(), LanguageLocales.end(), Locale);
+     int i = (it != LanguageLocales.end() ? it - LanguageLocales.begin() : -1);
      if (i >= 0) {
         CurrentLanguage = i;
         SetEnvLanguage(Locale);
@@ -187,7 +192,7 @@ int I18nCurrentLanguage(void)
 
 void I18nSetLanguage(int Language)
 {
-  if (Language < LanguageNames.Size()) {
+  if (Language < (int)LanguageNames.size()) {
      CurrentLanguage = Language;
      I18nSetLocale(I18nLocale(CurrentLanguage));
      }
@@ -198,9 +203,9 @@ int I18nNumLanguagesWithLocale(void)
   return NumLocales;
 }
 
-const cStringList *I18nLanguages(void)
+const vector<string> &I18nLanguages(void)
 {
-  return &LanguageNames;
+  return LanguageNames;
 }
 
 const char *I18nTranslate(const char *s, const char *Plugin)
@@ -217,18 +222,18 @@ const char *I18nTranslate(const char *s, const char *Plugin)
 
 const char *I18nLocale(int Language)
 {
-  return 0 <= Language && Language < LanguageLocales.Size() ? LanguageLocales[Language] : NULL;
+  return 0 <= Language && Language < (int)LanguageLocales.size() ? LanguageLocales[Language].c_str() : NULL;
 }
 
 const char *I18nLanguageCode(int Language)
 {
-  return 0 <= Language && Language < LanguageCodes.Size() ? LanguageCodes[Language] : NULL;
+  return 0 <= Language && Language < (int)LanguageCodes.size() ? LanguageCodes[Language].c_str() : NULL;
 }
 
 int I18nLanguageIndex(const char *Code)
 {
-  for (int i = 0; i < LanguageCodes.Size(); i++) {
-      if (ContainsCode(LanguageCodes[i], Code))
+  for (int i = 0; i < (int)LanguageCodes.size(); i++) {
+      if (ContainsCode(LanguageCodes[i].c_str(), Code))
          return i;
       }
   //dsyslog("unknown language code: '%s'", Code);
@@ -272,7 +277,7 @@ bool I18nIsPreferredLanguage(int *PreferredLanguages, const char *LanguageCode, 
   bool found = false;
   while (LanguageCode) {
         int LanguageIndex = I18nLanguageIndex(LanguageCode);
-        for (int i = 0; i < LanguageCodes.Size(); i++) {
+        for (int i = 0; i < (int)LanguageCodes.size(); i++) {
             if (PreferredLanguages[i] < 0)
                break; // the language is not a preferred one
             if (PreferredLanguages[i] == LanguageIndex) {
@@ -293,7 +298,7 @@ bool I18nIsPreferredLanguage(int *PreferredLanguages, const char *LanguageCode, 
            *Position = 0;
         }
   if (OldPreference < 0) {
-     OldPreference = LanguageCodes.Size(); // higher than the maximum possible value
+     OldPreference = LanguageCodes.size(); // higher than the maximum possible value
      return true; // if we don't find a preferred one, we take the first one
      }
   return found;

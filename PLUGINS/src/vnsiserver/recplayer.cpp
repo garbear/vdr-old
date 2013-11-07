@@ -34,6 +34,8 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+using namespace std;
+
 cRecPlayer::cRecPlayer(cRecording* rec, bool inProgress)
 {
   m_file          = -1;
@@ -55,10 +57,9 @@ cRecPlayer::cRecPlayer(cRecording* rec, bool inProgress)
 }
 
 void cRecPlayer::cleanup() {
-  for(int i = 0; i != m_segments.Size(); i++) {
-    delete m_segments[i];
-  }
-  m_segments.Clear();
+  for (vector<cSegment*>::iterator it = m_segments.begin(); it != m_segments.end(); ++it)
+    delete *it;
+  m_segments.clear();
 }
 
 void cRecPlayer::scan()
@@ -85,7 +86,7 @@ void cRecPlayer::scan()
     segment->start = m_totalLength;
     segment->end = segment->start + s.st_size;
 
-    m_segments.Append(segment);
+    m_segments.push_back(segment);
 
     m_totalLength += s.st_size;
     INFOLOG("File %i found, size: %lu, totalLength now %lu", i, s.st_size, m_totalLength);
@@ -110,10 +111,10 @@ void cRecPlayer::reScan()
     }
 
     cSegment* segment;
-    if (m_segments.Size() < i+1)
+    if (m_segments.size() < i + 1)
     {
       cSegment* segment = new cSegment();
-      m_segments.Append(segment);
+      m_segments.push_back(segment);
       segment->start = m_totalLength;
     }
     else
@@ -203,7 +204,7 @@ int cRecPlayer::getBlock(unsigned char* buffer, uint64_t position, int amount)
 
   // work out what block "position" is in
   int segmentNumber = -1;
-  for(int i = 0; i < m_segments.Size(); i++)
+  for (int i = 0; i < m_segments.size(); i++)
   {
     if ((position >= m_segments[i]->start) && (position < m_segments[i]->end)) {
       segmentNumber = i;
@@ -266,7 +267,7 @@ uint64_t cRecPlayer::positionFromFrameNumber(uint32_t frameNumber)
   if (!m_indexFile->Get((int)frameNumber, &retFileNumber, &retFileOffset, &retPicType, &retLength))
     return 0;
 
-  if (retFileNumber >= m_segments.Size()) 
+  if (retFileNumber >= m_segments.size())
     return 0;
 
   uint64_t position = m_segments[retFileNumber]->start + retFileOffset;
@@ -284,7 +285,7 @@ uint32_t cRecPlayer::frameNumberFromPosition(uint64_t position)
   }
 
   int segmentNumber = -1;
-  for(int i = 0; i < m_segments.Size(); i++)
+  for(int i = 0; i < m_segments.size(); i++)
   {
     if ((position >= m_segments[i]->start) && (position < m_segments[i]->end)) {
       segmentNumber = i;
