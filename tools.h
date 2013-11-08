@@ -174,16 +174,6 @@ void TouchFile(const char *FileName);
 time_t LastModifiedTime(const char *FileName);
 off_t FileSize(const char *FileName); ///< returns the size of the given file, or -1 in case of an error (e.g. if the file doesn't exist)
 
-uchar *RgbToJpeg(uchar *Mem, int Width, int Height, int &Size, int Quality = 100);
-    ///< Converts the given Memory to a JPEG image and returns a pointer
-    ///< to the resulting image. Mem must point to a data block of exactly
-    ///< (Width * Height) triplets of RGB image data bytes. Upon return, Size
-    ///< will hold the number of bytes of the resulting JPEG data.
-    ///< Quality can be in the range 0..100 and controls the quality of the
-    ///< resulting image, where 100 is "best". The caller takes ownership of
-    ///< the result and has to delete it once it is no longer needed.
-    ///< The result may be NULL in case of an error.
-
 class cBitStream {
 private:
   const uint8_t *data;
