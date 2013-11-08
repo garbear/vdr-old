@@ -20,25 +20,30 @@
  */
 
 #include "CalendarUtils.h"
+#include "StringUtils.h"
 #include "UTF8Utils.h"
 #include "../../i18n.h"
-#include "../../tools.h" // for strn0cpy
-
-#include <algorithm>
 
 using namespace std;
 
 string CalendarUtils::WeekDayName(int WeekDay)
 {
-  char buffer[16];
-  WeekDay = WeekDay == 0 ? 6 : WeekDay - 1; // we start with Monday==0!
-  if (0 <= WeekDay && WeekDay <= 6)
+  if (WeekDay == 0)
+    WeekDay = 6;
+  else
+    WeekDay -= 1; // we start with Monday==0!
+
+  if (WeekDay <= 6)
   {
     // TRANSLATORS: abbreviated weekdays, beginning with monday (must all be 3 letters!)
-    const char *day = tr("MonTueWedThuFriSatSun");
-    day += cUtf8Utils::Utf8SymChars(day, WeekDay * 3);
-    strn0cpy(buffer, day, std::min(cUtf8Utils::Utf8SymChars(day, 3) + 1, int(sizeof(buffer))));
-    return buffer;
+    string week = tr("MonTueWedThuFriSatSun");
+
+    // Remove the first N days from week
+    unsigned int offset = cUtf8Utils::Utf8SymChars(week.c_str(), WeekDay * 3);
+    week = week.substr(offset);
+
+    // Extract the first day
+    return week.substr(0, cUtf8Utils::Utf8SymChars(week.c_str(), 3));
   }
   else
     return "???";
@@ -52,7 +57,11 @@ string CalendarUtils::WeekDayName(time_t t)
 
 string CalendarUtils::WeekDayNameFull(int WeekDay)
 {
-  WeekDay = WeekDay == 0 ? 6 : WeekDay - 1; // we start with Monday==0!
+  if (WeekDay == 0)
+    WeekDay = 6;
+  else
+    WeekDay -= 1; // we start with Monday==0!
+
   switch (WeekDay)
   {
     case 0: return tr("Monday");
@@ -74,13 +83,13 @@ string CalendarUtils::WeekDayNameFull(time_t t)
 
 string CalendarUtils::DayDateTime(time_t t)
 {
-  char buffer[32];
   if (t == 0)
     time(&t);
+
   struct tm tm_r;
   tm *tm = localtime_r(&t, &tm_r);
-  snprintf(buffer, sizeof(buffer), "%s %02d.%02d. %02d:%02d", WeekDayName(tm->tm_wday).c_str(), tm->tm_mday, tm->tm_mon + 1, tm->tm_hour, tm->tm_min);
-  return buffer;
+
+  return StringUtils::Format("%s %02d.%02d. %02d:%02d", WeekDayName(tm->tm_wday).c_str(), tm->tm_mday, tm->tm_mon + 1, tm->tm_hour, tm->tm_min);
 }
 
 string CalendarUtils::TimeToString(time_t t)
@@ -96,21 +105,23 @@ string CalendarUtils::TimeToString(time_t t)
 
 string CalendarUtils::DateString(time_t t)
 {
-  char buf[32];
   struct tm tm_r;
   tm *tm = localtime_r(&t, &tm_r);
-  char *p = strcpy(buf, WeekDayName(tm->tm_wday).c_str());
-  *p++ = ' ';
-  strftime(p, sizeof(buf) - (p - buf), "%d.%m.%Y", tm);
-  return buf;
+
+  char buf[32];
+  strftime(buf, sizeof(buf), "%d.%m.%Y", tm);
+
+  return WeekDayName(tm->tm_wday) + " " + ShortDateString(t);
 }
 
 string CalendarUtils::ShortDateString(time_t t)
 {
-  char buf[32];
   struct tm tm_r;
   tm *tm = localtime_r(&t, &tm_r);
+
+  char buf[32];
   strftime(buf, sizeof(buf), "%d.%m.%y", tm);
+
   return buf;
 }
 
