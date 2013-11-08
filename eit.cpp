@@ -19,6 +19,7 @@
 #include "libsi/descriptor.h"
 #include "libsi/dish.h"
 
+#include "vdr/utils/CalendarUtils.h"
 #include "vdr/utils/UTF8Utils.h"
 
 #define VALID_TIME (31536000 * 2) // two years
@@ -388,7 +389,7 @@ cTDT::cTDT(const u_char *Data)
      mutex.Lock();
      if (abs(diff) > MAX_ADJ_DIFF) {
         if (stime(&dvbtim) == 0)
-           isyslog("system time changed from %s (%ld) to %s (%ld)", *TimeToString(loctim), loctim, *TimeToString(dvbtim), dvbtim);
+           isyslog("system time changed from %s (%ld) to %s (%ld)", CalendarUtils::TimeToString(loctim).c_str(), loctim, CalendarUtils::TimeToString(dvbtim).c_str(), dvbtim);
         else
            esyslog("ERROR while setting system time: %m");
         }
@@ -398,7 +399,7 @@ cTDT::cTDT(const u_char *Data)
         delta.tv_sec = diff;
         delta.tv_usec = 0;
         if (adjtime(&delta, NULL) == 0)
-           isyslog("system time adjustment initiated from %s (%ld) to %s (%ld)", *TimeToString(loctim), loctim, *TimeToString(dvbtim), dvbtim);
+           isyslog("system time adjustment initiated from %s (%ld) to %s (%ld)", CalendarUtils::TimeToString(loctim).c_str(), loctim, CalendarUtils::TimeToString(dvbtim).c_str(), dvbtim);
         else
            esyslog("ERROR while adjusting system time: %m");
         }

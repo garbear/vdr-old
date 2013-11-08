@@ -42,6 +42,7 @@
 #include "tools.h"
 #include "videodir.h"
 
+#include "vdr/utils/CalendarUtils.h"
 #include "vdr/utils/CharSetConverter.h"
 
 #include <string>
@@ -1377,7 +1378,7 @@ void cSVDRP::CmdNEXT(const char *Option)
      time_t Start = t->StartTime();
      int Number = t->Index() + 1;
      if (!*Option)
-        Reply(250, "%d %s", Number, *TimeToString(Start));
+        Reply(250, "%d %s", Number, CalendarUtils::TimeToString(Start).c_str());
      else if (strcasecmp(Option, "ABS") == 0)
         Reply(250, "%d %ld", Number, Start);
      else if (strcasecmp(Option, "REL") == 0)
@@ -1693,7 +1694,7 @@ bool cSVDRP::Process(void)
         char buffer[BUFSIZ];
         gethostname(buffer, sizeof(buffer));
         time_t now = time(NULL);
-        Reply(220, "%s SVDRP VideoDiskRecorder %s; %s; %s", buffer, VDRVERSION, *TimeToString(now), cCharSetConv::SystemCharacterTable() ? cCharSetConv::SystemCharacterTable() : "UTF-8");
+        Reply(220, "%s SVDRP VideoDiskRecorder %s; %s; %s", buffer, VDRVERSION, CalendarUtils::TimeToString(now).c_str(), cCharSetConv::SystemCharacterTable() ? cCharSetConv::SystemCharacterTable() : "UTF-8");
         }
      if (NewConnection)
         lastActivity = time(NULL);

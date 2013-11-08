@@ -50,6 +50,8 @@
 #include "symbols/teletext.xpm"
 #include "symbols/volume.xpm"
 
+#include "vdr/utils/CalendarUtils.h"
+
 #define Roundness     (Setup.FontOsdSize / 2)
 #define Gap           (Setup.FontOsdSize / 5)
 #define ScrollWidth   (Setup.FontOsdSize / 4)
@@ -330,7 +332,7 @@ void cSkinSTTNGDisplayChannel::Flush(void)
   if (withInfo) {
      if (!message) {
         const cFont *font = cFont::GetFont(fontSml);
-        cString date = DayDateTime();
+        cString date = CalendarUtils::DayDateTime().c_str();
         int w = font->Width(date);
         if (!*lastDate || strcmp(date, lastDate)) {
            osd->DrawText(x4 - w - TextFrame, y7 - font->Height(), date, Theme.Color(clrChannelDate), frameColor, font, w);
@@ -574,7 +576,7 @@ void cSkinSTTNGDisplayMenu::SetButtons(const char *Red, const char *Green, const
   const char *lutText[] = { Red, Green, Yellow, Blue };
   tColor lutFg[] = { clrButtonRedFg, clrButtonGreenFg, clrButtonYellowFg, clrButtonBlueFg };
   tColor lutBg[] = { clrButtonRedBg, clrButtonGreenBg, clrButtonYellowBg, clrButtonBlueBg };
-  cString date = DayDateTime();
+  cString date = CalendarUtils::DayDateTime().c_str();
   const cFont *font = cFont::GetFont(fontSml);
   int d = 2 * Gap;
   int d2 = d / 2;
@@ -717,7 +719,7 @@ void cSkinSTTNGDisplayMenu::SetRecording(const cRecording *Recording)
   int xl = x3 + TextSpacing;
   int y = y3;
   cTextScroller ts;
-  cString t = cString::sprintf("%s  %s  %s", *DateString(Recording->Start()), *TimeString(Recording->Start()), Info->ChannelName() ? Info->ChannelName() : "");
+  cString t = cString::sprintf("%s  %s  %s", CalendarUtils::DateString(Recording->Start()).c_str(), CalendarUtils::TimeString(Recording->Start()).c_str(), Info->ChannelName() ? Info->ChannelName() : "");
   ts.Set(osd, xl, y, x4 - xl, y4 - y, t, font, Theme.Color(clrMenuEventTime), Theme.Color(clrBackground));
   y += ts.Height();
   if (Info->GetEvent()->ParentalRating()) {
@@ -786,7 +788,7 @@ void cSkinSTTNGDisplayMenu::Flush(void)
   if (cVideoDiskUsage::HasChanged(lastDiskUsageState))
      DrawTitle();
   if (!message) {
-     cString date = DayDateTime();
+     cString date = CalendarUtils::DayDateTime().c_str();
      if (!*lastDate || strcmp(date, lastDate)) {
         const cFont *font = cFont::GetFont(fontSml);
         int w = font->Width(date);

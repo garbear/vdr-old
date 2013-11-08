@@ -14,6 +14,8 @@
 #include "themes.h"
 #include "videodir.h"
 
+#include "vdr/utils/CalendarUtils.h"
+
 #define ScrollWidth (Setup.FontOsdSize / 4)
 #define TextFrame   (Setup.FontOsdSize / 10)
 #define TextSpacing (Setup.FontOsdSize / 4)
@@ -151,7 +153,7 @@ void cSkinClassicDisplayChannel::SetMessage(eMessageType Type, const char *Text)
 void cSkinClassicDisplayChannel::Flush(void)
 {
   if (!message) {
-     cString date = DayDateTime();
+     cString date = CalendarUtils::DayDateTime().c_str();
      if (!*lastDate || strcmp(date, lastDate)) {
         const cFont *font = cFont::GetFont(fontSml);
         int w = font->Width(date);
@@ -398,7 +400,7 @@ void cSkinClassicDisplayMenu::SetRecording(const cRecording *Recording)
   const cFont *font = cFont::GetFont(fontOsd);
   int y = y2;
   cTextScroller ts;
-  cString t = cString::sprintf("%s  %s  %s", *DateString(Recording->Start()), *TimeString(Recording->Start()), Info->ChannelName() ? Info->ChannelName() : "");
+  cString t = cString::sprintf("%s  %s  %s", CalendarUtils::DateString(Recording->Start()).c_str(), CalendarUtils::TimeString(Recording->Start()).c_str(), Info->ChannelName() ? Info->ChannelName() : "");
   ts.Set(osd, x1, y, x2 - x1, y3 - y, t, font, Theme.Color(clrMenuEventTime), Theme.Color(clrBackground));
   y += ts.Height();
   if (Info->GetEvent()->ParentalRating()) {
@@ -452,7 +454,7 @@ void cSkinClassicDisplayMenu::Flush(void)
 {
   if (cVideoDiskUsage::HasChanged(lastDiskUsageState))
      DrawTitle();
-  cString date = DayDateTime();
+  cString date = CalendarUtils::DayDateTime().c_str();
   if (!*lastDate || strcmp(date, lastDate)) {
      const cFont *font = cFont::GetFont(fontOsd);
      int w = font->Width(date);

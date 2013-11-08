@@ -17,6 +17,7 @@
 #include "skins.h"
 #include "status.h"
 
+#include "vdr/utils/CalendarUtils.h"
 #include "vdr/utils/CharSetConverter.h"
 #include "vdr/utils/UTF8Utils.h"
 
@@ -898,7 +899,7 @@ void cMenuEditDateItem::Set(void)
      struct tm tm_r;
      localtime_r(value, &tm_r);
      strftime(buf, DATEBUFFERSIZE, "%Y-%m-%d ", &tm_r);
-     strcat(buf, WeekDayName(tm_r.tm_wday));
+     strcat(buf, CalendarUtils::WeekDayName(tm_r.tm_wday).c_str());
      }
   else
      *buf = 0;

@@ -32,6 +32,7 @@
 #include "transfer.h"
 #include "videodir.h"
 
+#include "vdr/utils/CalendarUtils.h"
 #include "vdr/utils/UTF8Utils.h"
 
 #include <algorithm>
@@ -1037,7 +1038,7 @@ void cMenuTimerItem::Set(void)
      day = timer->PrintDay(0, timer->WeekDays(), false);
   else if (timer->Day() - time(NULL) < 28 * SECSINDAY) {
      day = itoa(timer->GetMDay(timer->Day()));
-     name = WeekDayName(timer->Day());
+     name = CalendarUtils::WeekDayName(timer->Day()).c_str();
      }
   else {
      struct tm tm_r;

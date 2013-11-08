@@ -63,6 +63,8 @@
 #include "symbols/teletext.xpm"
 #include "symbols/volume.xpm"
 
+#include "vdr/utils/CalendarUtils.h"
+
 #include <algorithm>
 #include <vector>
 
@@ -445,7 +447,7 @@ cSkinLCARSDisplayChannel::~cSkinLCARSDisplayChannel()
 
 void cSkinLCARSDisplayChannel::DrawDate(void)
 {
-  cString s = DayDateTime();
+  cString s = CalendarUtils::DayDateTime().c_str();
   if (initial || strcmp(s, lastDate)) {
      osd->DrawText(xc12, yc11, s, Theme.Color(clrDateFg), Theme.Color(clrDateBg), cFont::GetFont(fontOsd), xc13 - xc12, lineHeight, taRight | taBorder);
      lastDate = s;
@@ -1003,7 +1005,7 @@ void cSkinLCARSDisplayMenu::DrawMenuFrame(void)
 
 void cSkinLCARSDisplayMenu::DrawDate(void)
 {
-  cString s = DayDateTime();
+  cString s = CalendarUtils::DayDateTime().c_str();
   if (initial || strcmp(s, lastDate)) {
      const cFont *font = cFont::GetFont(fontOsd);
      tColor ColorFg = Theme.Color(clrDateFg);
@@ -1149,14 +1151,14 @@ void cSkinLCARSDisplayMenu::DrawTimer(const cTimer *Timer, int y, bool MultiRec)
   osd->DrawRectangle(xs00, y, xs03 - 1, y + lineHeight - 1, ColorBg);
   cString Date;
   if (Timer->Recording())
-     Date = cString::sprintf("-%s", *TimeString(Timer->StopTime()));
+     Date = cString::sprintf("-%s", CalendarUtils::TimeString(Timer->StopTime()).c_str());
   else {
      time_t Now = time(NULL);
-     cString Today = WeekDayName(Now);
-     cString Time = TimeString(Timer->StartTime());
-     cString Day = WeekDayName(Timer->StartTime());
+     cString Today = CalendarUtils::WeekDayName(Now).c_str();
+     cString Time = CalendarUtils::TimeString(Timer->StartTime()).c_str();
+     cString Day = CalendarUtils::WeekDayName(Timer->StartTime()).c_str();
      if (Timer->StartTime() > Now + 6 * SECSINDAY)
-        Date = DayDateTime(Timer->StartTime());
+        Date = CalendarUtils::DayDateTime(Timer->StartTime()).c_str();
      else if (strcmp(Day, Today) != 0)
         Date = cString::sprintf("%s %s", *Day, *Time);
      else
@@ -1407,8 +1409,8 @@ void cSkinLCARSDisplayMenu::DrawPlay(cControl *Control)
            }
         else
            osd->DrawText(xa03, yt04, Recording->Name(), Theme.Color(clrEventTitle), Theme.Color(clrBackground), font, xd00 - xa03, 0, taTop | taLeft);
-        osd->DrawText(xa00, yt04, ShortDateString(Recording->Start()), Theme.Color(clrReplayFrameFg), Theme.Color(clrReplayFrameBg), font, xa02 - xa00, 0, taTop | taRight | taBorder);
-        osd->DrawText(xa00, yt06 - lineHeight, TimeString(Recording->Start()), Theme.Color(clrReplayFrameFg), Theme.Color(clrReplayFrameBg), font, xa02 - xa00, 0, taBottom | taRight | taBorder);
+        osd->DrawText(xa00, yt04, CalendarUtils::ShortDateString(Recording->Start()).c_str(), Theme.Color(clrReplayFrameFg), Theme.Color(clrReplayFrameBg), font, xa02 - xa00, 0, taTop | taRight | taBorder);
+        osd->DrawText(xa00, yt06 - lineHeight, CalendarUtils::TimeString(Recording->Start()).c_str(), Theme.Color(clrReplayFrameFg), Theme.Color(clrReplayFrameBg), font, xa02 - xa00, 0, taBottom | taRight | taBorder);
         lastRecording = Recording;
         }
      }
@@ -1613,7 +1615,7 @@ void cSkinLCARSDisplayMenu::SetRecording(const cRecording *Recording)
   int xl = xi00;
   int y = yi00;
   cTextScroller ts;
-  cString t = cString::sprintf("%s  %s  %s", *DateString(Recording->Start()), *TimeString(Recording->Start()), Info->ChannelName() ? Info->ChannelName() : "");
+  cString t = cString::sprintf("%s  %s  %s", CalendarUtils::DateString(Recording->Start()).c_str(), CalendarUtils::TimeString(Recording->Start()).c_str(), Info->ChannelName() ? Info->ChannelName() : "");
   ts.Set(osd, xl, y, xi01 - xl, yi01 - y, t, font, Theme.Color(clrEventTime), Theme.Color(clrBackground));
   y += ts.Height();
   if (Info->GetEvent()->ParentalRating()) {
@@ -1783,7 +1785,7 @@ cSkinLCARSDisplayReplay::~cSkinLCARSDisplayReplay()
 
 void cSkinLCARSDisplayReplay::DrawDate(void)
 {
-  cString s = DayDateTime();
+  cString s = CalendarUtils::DayDateTime().c_str();
   if (!*lastDate || strcmp(s, lastDate)) {
      osd->DrawText(xp12, yp08, s, Theme.Color(clrDateFg), Theme.Color(clrDateBg), cFont::GetFont(fontOsd), xp13 - xp12, lineHeight, taRight | taBorder);
      lastDate = s;
@@ -1805,8 +1807,8 @@ void cSkinLCARSDisplayReplay::SetRecording(const cRecording *Recording)
   const cRecordingInfo *RecordingInfo = Recording->Info();
   SetTitle(RecordingInfo->Title());
   osd->DrawText(xp03, yp01 - lineHeight, RecordingInfo->ShortText(), Theme.Color(clrEventShortText), Theme.Color(clrBackground), cFont::GetFont(fontSml), xp13 - xp03);
-  osd->DrawText(xp00, yp00, ShortDateString(Recording->Start()), Theme.Color(clrReplayFrameFg), frameColor, cFont::GetFont(fontOsd), xp02 - xp00, 0, taTop | taRight | taBorder);
-  osd->DrawText(xp00, yp01 - lineHeight, TimeString(Recording->Start()), Theme.Color(clrReplayFrameFg), frameColor, cFont::GetFont(fontOsd), xp02 - xp00, 0, taBottom | taRight | taBorder);
+  osd->DrawText(xp00, yp00, CalendarUtils::ShortDateString(Recording->Start()).c_str(), Theme.Color(clrReplayFrameFg), frameColor, cFont::GetFont(fontOsd), xp02 - xp00, 0, taTop | taRight | taBorder);
+  osd->DrawText(xp00, yp01 - lineHeight, CalendarUtils::TimeString(Recording->Start()).c_str(), Theme.Color(clrReplayFrameFg), frameColor, cFont::GetFont(fontOsd), xp02 - xp00, 0, taBottom | taRight | taBorder);
 }
 
 void cSkinLCARSDisplayReplay::SetTitle(const char *Title)

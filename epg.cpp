@@ -17,6 +17,7 @@
 #include "libsi/si.h"
 #include "timers.h"
 
+#include "vdr/utils/CalendarUtils.h"
 #include "vdr/utils/UTF8Utils.h"
 
 #define RUNNINGSTATUSTIMEOUT 30 // seconds before the running status is considered unknown
@@ -447,17 +448,17 @@ cString cEvent::GetStarRatingString(void) const
 
 cString cEvent::GetDateString(void) const
 {
-  return DateString(startTime);
+  return CalendarUtils::DateString(startTime).c_str();
 }
 
 cString cEvent::GetTimeString(void) const
 {
-  return TimeString(startTime);
+  return CalendarUtils::TimeString(startTime).c_str();
 }
 
 cString cEvent::GetEndTimeString(void) const
 {
-  return TimeString(startTime + duration);
+  return CalendarUtils::TimeString(startTime + duration).c_str();
 }
 
 cString cEvent::GetVpsString(void) const

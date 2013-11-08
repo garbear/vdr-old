@@ -24,6 +24,8 @@
 #include "timers.h"
 #include "tools.h"
 
+#include "vdr/utils/CalendarUtils.h"
+
 cShutdownHandler ShutdownHandler;
 
 cCountdown::cCountdown(void)
@@ -251,16 +253,16 @@ bool cShutdownHandler::DoShutdown(bool Force)
      Delta = Setup.MinEventTimeout * 60;
      Next = Now + Delta;
      timer = NULL;
-     dsyslog("reboot at %s", *TimeToString(Next));
+     dsyslog("reboot at %s", CalendarUtils::TimeToString(Next).c_str());
      }
 
   if (Next && timer) {
-     dsyslog("next timer event at %s", *TimeToString(Next));
+     dsyslog("next timer event at %s", CalendarUtils::TimeToString(Next).c_str());
      CallShutdownCommand(Next, timer->Channel()->Number(), timer->File(), Force);
      }
   else if (Next && Plugin) {
      CallShutdownCommand(Next, 0, Plugin->Name(), Force);
-     dsyslog("next plugin wakeup at %s", *TimeToString(Next));
+     dsyslog("next plugin wakeup at %s", CalendarUtils::TimeToString(Next).c_str());
      }
   else
      CallShutdownCommand(Next, 0, "", Force); // Next should always be 0 here. Just for safety, pass it.
