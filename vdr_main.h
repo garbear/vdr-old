@@ -17,11 +17,11 @@ class cOsdObject;
 class cSkin;
 class cPluginManager;
 
-class cVDRDaemon : public PLATFORM::CThread, public ISignalReceiver
+class cVDRDaemon2 : public PLATFORM::CThread, public ISignalReceiver
 {
 public:
-  static cVDRDaemon& Get(void);
-  virtual ~cVDRDaemon(void);
+  static cVDRDaemon2& Get(void);
+  virtual ~cVDRDaemon2(void);
 
   bool ReadCommandLineOptions(int argc, char *argv[]);
   bool Init(void);
@@ -39,7 +39,7 @@ protected:
   virtual void OnSignal(int signum);
 
 private:
-  cVDRDaemon(void);
+  cVDRDaemon2(void);
 
   void DirectMainFunction(eOSState function);
 

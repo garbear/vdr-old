@@ -1,10 +1,22 @@
 #
-# Makefile for the Video Disk Recorder
+#      Copyright (C) 2013 Garrett Brown
+#      Copyright (C) 2013 Lars Op den Kamp
+#      Portions Copyright (C) 2000, 2003, 2006, 2008, 2013 Klaus Schmidinger
 #
-# See the main source file 'vdr.c' for copyright information and
-# how to reach the author.
+#  This Program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2, or (at your option)
+#  any later version.
 #
-# $Id: Makefile 2.54 2013/03/11 15:01:01 kls Exp $
+#  This Program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this Program; see the file COPYING. If not, see
+#  <http://www.gnu.org/licenses/>.
+#
 
 .DELETE_ON_ERROR:
 
@@ -16,27 +28,33 @@ CC       ?= gcc
 CFLAGS   ?= -g -O3 -Wall
 
 CXX      ?= g++
-CXXFLAGS ?= -g -O3 -Wall -Werror=overloaded-virtual -Wno-parentheses
+CXXFLAGS ?= -g -O3 -Wall -Wextra -Werror=overloaded-virtual -Wno-parentheses -pthread
 
 CDEFINES  = -D_GNU_SOURCE
 CDEFINES += -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE
 
 ifdef ANDROID
-LIBS      = -ljpeg -ldl -lintl $(shell $(PKGCONFIG) --libs freetype2 fontconfig)
+#LIBS      = -ljpeg -ldl -lintl $(shell $(PKGCONFIG) --libs freetype2 fontconfig)
+LIBS      =
 else
-LIBS      = -ljpeg -lpthread -ldl -lcap -lrt $(shell $(PKGCONFIG) --libs freetype2 fontconfig)
+#LIBS      = -ljpeg -lpthread -ldl -lcap -lrt $(shell $(PKGCONFIG) --libs freetype2 fontconfig)
+LIBS      =
 endif
-INCLUDES ?= $(shell $(PKGCONFIG) --cflags freetype2 fontconfig)
+#INCLUDES ?= $(shell $(PKGCONFIG) --cflags freetype2 fontconfig)
+INCLUDES ?=
 
 # Directories:
 
-CWD       ?= $(shell pwd)
-LSIDIR    ?= $(CWD)/lib/libsi
-VDRDIR    ?= $(CWD)/vdr
-FSDIR     ?= $(CWD)/vdr/filesystem
-SETTINGSDIR ?= $(CWD)/vdr/settings
-UTILSDIR  ?= $(CWD)/vdr/utils
-PLUGINDIR ?= $(CWD)/PLUGINS
+CWD             ?= $(shell pwd)
+GTEST_DIR       ?= $(CWD)/lib/gtest
+LSIDIR          ?= $(CWD)/lib/libsi
+VDRDIR          ?= $(CWD)/vdr
+VDRTESTDIR      ?= $(VDRDIR)/test
+DEVICESDIR      ?= $(VDRDIR)/devices
+DEVICESSUBYSDIR ?= $(VDRDIR)/devices/subsystems
+FSDIR           ?= $(VDRDIR)/filesystem
+SETTINGSDIR     ?= $(VDRDIR)/settings
+UTILSDIR        ?= $(VDRDIR)/utils
 
 DESTDIR   ?=
 
@@ -45,6 +63,48 @@ INCDIR    ?= /usr/local/include
 MANDIR    ?= /usr/local/share/man
 PCDIR     ?= /usr/local/lib/pkgconfig
 
+INCLUDES += -I$(CWD) \
+            -I$(VDRDIR)# \
+#            -I$(GTEST_DIR)
+
+# Flags passed to the preprocessor
+# Set Google Test's header directory as a system directory, such that
+# the compiler doesn't generate warnings in Google Test headers
+
+CPPFLAGS += -isystem $(GTEST_DIR)/include
+
+# Object files
+
+SILIB            = $(LSIDIR)/libsi.a
+VDRLIB           = $(VDRDIR)/vdr.a
+VDRTESTLIB       = $(VDRTESTDIR)/vdr_test.a
+DEVICESLIB       = $(DEVICESDIR)/devices.a
+DEVICESSUBSYSLIB = $(DEVICESSUBYSDIR)/subsystems.a
+FSLIB            = $(FSDIR)/filesystem.a
+SETTINGSLIB      = $(SETTINGSDIR)/settings.a
+UTILSLIB         = $(UTILSDIR)/utils.a
+
+#VDRLIBS = $(VDRLIB) \
+#          $(SILIB) \
+#          $(DEVICESLIB) \
+#          $(DEVICESSUBSYSLIB) \
+#          $(FSLIB) \
+#          $(SETTINGSLIB) \
+#          $(UTILSLIB)
+
+VDRLIBS = $(VDRLIB)
+
+VDRTESTLIBS = $(VDRTESTLIB)
+
+#COBJS = android_sort.o android_strchrnul.o android_getline.o android_timegm.o
+
+#CXXOBJS = audio.o channels.o ci.o config.o cutter.o device.o diseqc.o dvbdevice.o dvbci.o\
+#       dvbplayer.o dvbspu.o dvbsubtitle.o eit.o eitscan.o epg.o filter.o font.o i18n.o interface.o keys.o\
+#       lirc.o menu.o menuitems.o nit.o osdbase.o osd.o pat.o player.o plugin.o\
+#       receiver.o recorder.o recording.o remote.o remux.o ringbuffer.o sdt.o sections.o shutdown.o\
+#       skinclassic.o skinlcars.o skins.o skinsttng.o sourceparams.o sources.o spu.o status.o svdrp.o themes.o thread.o\
+#       timers.o tools.o transfer.o vdr.o videodir.o
+
 # Source documentation
 
 DOXYGEN  ?= /usr/bin/doxygen
@@ -52,12 +112,12 @@ DOXYFILE  = Doxyfile
 
 # User configuration
 
--include Make.config
+#-include Make.config
 
 # Mandatory compiler flags:
 
-CFLAGS   += -fPIC
-CXXFLAGS += -fPIC
+#CFLAGS   += -fPIC
+#CXXFLAGS += -fPIC
 
 # Common include files:
 
@@ -65,98 +125,116 @@ ifdef DVBDIR
 CINCLUDES += -I$(DVBDIR)
 endif
 
-# Object files
-
-SILIB       = $(LSIDIR)/libsi.a
-VDRLIB      = $(VDRDIR)/vdr.a
-FSLIB       = $(FSDIR)/filesystem.a
-SETTINGSLIB = $(SETTINGSDIR)/settings.a
-UTILSLIB    = $(UTILSDIR)/utils.a
-
-VDRLIBS = $(VDRLIB) \
-          $(SILIB) \
-          $(FSLIB) \
-          $(SETTINGSLIB) \
-          $(UTILSLIB)
-
-COBJS = android_sort.o android_strchrnul.o android_getline.o android_timegm.o
-
-CXXOBJS = audio.o channels.o ci.o config.o cutter.o device.o diseqc.o dvbdevice.o dvbci.o\
-       dvbplayer.o dvbspu.o dvbsubtitle.o eit.o eitscan.o epg.o filter.o font.o i18n.o interface.o keys.o\
-       lirc.o menu.o menuitems.o nit.o osdbase.o osd.o pat.o player.o plugin.o\
-       receiver.o recorder.o recording.o remote.o remux.o ringbuffer.o sdt.o sections.o shutdown.o\
-       skinclassic.o skinlcars.o skins.o skinsttng.o sourceparams.o sources.o spu.o status.o svdrp.o themes.o thread.o\
-       timers.o tools.o transfer.o vdr.o videodir.o
-
 DEFINES  += $(CDEFINES)
 INCLUDES += $(CINCLUDES)
 
-ifdef HDRDIR
-HDRDIR   := -I$(HDRDIR)
-endif
-ifndef NO_KBD
-DEFINES += -DREMOTE_KBD
-endif
-ifdef REMOTE
-DEFINES += -DREMOTE_$(REMOTE)
-endif
-ifdef VDR_USER
-DEFINES += -DVDR_USER=\"$(VDR_USER)\"
-endif
-ifdef BIDI
-INCLUDES += $(shell pkg-config --cflags fribidi)
-DEFINES += -DBIDI
-LIBS += $(shell pkg-config --libs fribidi)
-endif
+#ifdef HDRDIR
+#HDRDIR   := -I$(HDRDIR)
+#endif
+#ifndef NO_KBD
+#DEFINES += -DREMOTE_KBD
+#endif
+#ifdef REMOTE
+#DEFINES += -DREMOTE_$(REMOTE)
+#endif
+#ifdef VDR_USER
+#DEFINES += -DVDR_USER=\"$(VDR_USER)\"
+#endif
+#ifdef BIDI
+#INCLUDES += $(shell pkg-config --cflags fribidi)
+#DEFINES += -DBIDI
+#LIBS += $(shell pkg-config --libs fribidi)
+#endif
 
 # The version numbers of VDR and the plugin API (taken from VDR's "config.h"):
 
 VDRVERSION = $(shell sed -ne '/define VDRVERSION/s/^.*"\(.*\)".*$$/\1/p' config.h)
 APIVERSION = $(shell sed -ne '/define APIVERSION/s/^.*"\(.*\)".*$$/\1/p' config.h)
 
-all: vdr.bin libvdr.so i18n plugins
+all: vdr.bin libvdr.so test #i18n plugins
+
+test: test-vdr.bin
 
 # Implicit rules:
 
-%.o: %.c
-	$(CXX) $(CXXFLAGS) -c $(DEFINES) $(INCLUDES) -o $@ $<
+#%.o: %.c
+#	$(CXX) $(CXXFLAGS) -c $(DEFINES) $(INCLUDES) -o $@ $<
 
 %.o: %.cpp
 	$(CXX) $(CXXFLAGS) -c $(DEFINES) $(INCLUDES) -o $@ $<
 
 # Dependencies:
 
-MAKEDEP = $(CXX) -MM -MG
-DEPFILE = .dependencies
-$(DEPFILE): Makefile
-	@$(MAKEDEP) $(DEFINES) $(INCLUDES) $(COBJS:%.o=%.c) $(CXXOBJS:%.o=%.cpp) > $@
+#MAKEDEP = $(CXX) -MM -MG
+#DEPFILE = .dependencies
+#$(DEPFILE): Makefile
+#	@$(MAKEDEP) $(DEFINES) $(INCLUDES) $(COBJS:%.o=%.c) $(CXXOBJS:%.o=%.cpp) > $@
 
--include $(DEPFILE)
+#-include $(DEPFILE)
 
 # The main program:
 
-vdr.bin: $(COBJS) $(CXXOBJS) $(VDRLIBS)
-	$(CXX) $(CXXFLAGS) -rdynamic $(LDFLAGS) $(COBJS) $(CXXOBJS) $(VDRLIBS) $(LIBS) -o vdr.bin
+vdr.bin: $(VDRDIR)/main.o $(VDRLIBS)
+	$(CXX) $(CXXFLAGS) -rdynamic $(LDFLAGS) $^ $(LIBS) -o $@
 
-libvdr.so: $(COBJS) $(CXXOBJS) $(VDRLIBS)
-	$(CXX) $(CXXFLAGS) -shared $(LDFLAGS) $(CXXOBJS) $(VDRLIBS) $(LIBS) -o libvdr.so
+addon.a: $(VDRDIR)/addon.o
+	$(AR) $(ARFLAGS) $@ $(VDRDIR)/addon.o
+
+libvdr.so: addon.a $(VDRLIBS)
+	$(CXX) $(CXXFLAGS) -shared $(LDFLAGS) $^ $(LIBS) -o $@
+
+test-vdr.bin: $(VDRLIBS) gtest_main.a $(VDRTESTLIBS)
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -lpthread -Wl,--whole-archive $(VDRTESTLIBS) -Wl,--no-whole-archive $(VDRLIBS) gtest_main.a  $(LIBS) -o $@
 
 # The libsi library:
 
-$(SILIB):
-	$(MAKE) --no-print-directory -C $(LSIDIR) CXXFLAGS="$(CXXFLAGS)" DEFINES="$(CDEFINES)" all
+#$(SILIB):
+#	$(MAKE) --no-print-directory -C $(LSIDIR) CXXFLAGS="$(CXXFLAGS)" DEFINES="$(CDEFINES)" all
 
+# Builds gtest.a and gtest_main.a.
+
+# All Google Test headers.  Usually you shouldn't change this
+# definition.
+GTEST_HEADERS = $(GTEST_DIR)/include/gtest/*.h \
+                $(GTEST_DIR)/include/gtest/internal/*.h
+
+# Usually you shouldn't tweak such internal variables, indicated by a
+# trailing _.
+GTEST_SRCS_ = $(GTEST_DIR)/src/*.cc $(GTEST_DIR)/src/*.h # $(GTEST_HEADERS)
+
+# For simplicity and to avoid depending on Google Test's
+# implementation details, the dependencies specified below are
+# conservative and not optimized.  This is fine as Google Test
+# compiles fast and for ordinary users its source rarely changes.
+gtest-all.o : $(GTEST_SRCS_)
+	$(CXX) $(CPPFLAGS) -I$(GTEST_DIR) $(CXXFLAGS) -c \
+            $(GTEST_DIR)/src/gtest-all.cc
+
+gtest_main.o : $(GTEST_SRCS_)
+	$(CXX) $(CPPFLAGS) -I$(GTEST_DIR) $(CXXFLAGS) -c \
+            $(GTEST_DIR)/src/gtest_main.cc
+
+gtest.a : gtest-all.o
+	$(AR) $(ARFLAGS) $@ $^
+
+gtest_main.a : gtest-all.o gtest_main.o
+	$(AR) $(ARFLAGS) $@ $^
+
+.PHONY: $(VDRLIBS) $(VDRTESTLIBS)
 $(VDRLIB):
-	$(MAKE) --no-print-directory -C $(VDRDIR) CXXFLAGS="$(CXXFLAGS)" DEFINES="$(CDEFINES)" all
+	$(MAKE) --no-print-directory -C $(VDRDIR) CPPFLAGS="$(CPPFLAGS)" CXXFLAGS="$(CXXFLAGS)" DEFINES="$(CDEFINES)" INCLUDES="$(INCLUDES)" all
 
-$(FSLIB):
-	$(MAKE) --no-print-directory -C $(FSDIR) CXXFLAGS="$(CXXFLAGS)" DEFINES="$(CDEFINES)" all
+$(VDRTESTLIB):
+	$(MAKE) --no-print-directory -C $(VDRTESTDIR) CPPFLAGS="$(CPPFLAGS)" CXXFLAGS="$(CXXFLAGS)" DEFINES="$(CDEFINES)" INCLUDES="$(INCLUDES)" all
 
-$(SETTINGSLIB):
-	$(MAKE) --no-print-directory -C $(SETTINGSDIR) CXXFLAGS="$(CXXFLAGS)" DEFINES="$(CDEFINES)" all
+#$(FSLIB):
+#	$(MAKE) --no-print-directory -C $(FSDIR) CXXFLAGS="$(CXXFLAGS)" DEFINES="$(CDEFINES)" all
 
-$(UTILSLIB):
-	$(MAKE) --no-print-directory -C $(UTILSDIR) CXXFLAGS="$(CXXFLAGS)" DEFINES="$(CDEFINES)" all
+#$(SETTINGSLIB):
+#	$(MAKE) --no-print-directory -C $(SETTINGSDIR) CXXFLAGS="$(CXXFLAGS)" DEFINES="$(CDEFINES)" all
+
+#$(UTILSLIB):
+#	$(MAKE) --no-print-directory -C $(UTILSDIR) CXXFLAGS="$(CXXFLAGS)" DEFINES="$(CDEFINES)" all
 
 # pkg-config file:
 

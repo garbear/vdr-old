@@ -21,12 +21,13 @@
 
 #include "SignalHandler.h"
 
+#include <signal.h>
 #include <stddef.h>
 
 CSignalHandler &CSignalHandler::Get()
 {
-  static CSignalHandler _instance;
-  return _instance;
+  static CSignalHandler instance;
+  return instance;
 }
 
 void CSignalHandler::SetSignalReceiver(int signum, ISignalReceiver *callback)

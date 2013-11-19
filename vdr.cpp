@@ -92,7 +92,7 @@ ADDON_STATUS   m_CurStatus      = ADDON_STATUS_UNKNOWN;
 #define VPSLOOKAHEADTIME      24 // hours within which VPS timers will make sure their events are up to date
 #define VPSUPTODATETIME     3600 // seconds before the event or schedule of a VPS timer needs to be refreshed
 
-cVDRDaemon::cVDRDaemon()
+cVDRDaemon2::cVDRDaemon2()
  : m_EpgDataReader(NULL),
    m_Menu(NULL),
    m_LastChannel(0),
@@ -110,13 +110,13 @@ cVDRDaemon::cVDRDaemon()
   m_PreviousChannel[1] = 1;
 }
 
-cVDRDaemon& cVDRDaemon::Get(void)
+cVDRDaemon2& cVDRDaemon2::Get(void)
 {
-  static cVDRDaemon _instance;
+  static cVDRDaemon2 _instance;
   return _instance;
 }
 
-cVDRDaemon::~cVDRDaemon(void)
+cVDRDaemon2::~cVDRDaemon2(void)
 {
   if (ShutdownHandler.EmergencyExitRequested())
     esyslog("emergency exit requested - shutting down");
@@ -152,7 +152,7 @@ cVDRDaemon::~cVDRDaemon(void)
     closelog();
 }
 
-void* cVDRDaemon::Process(void)
+void* cVDRDaemon2::Process(void)
 {
   m_finished = false;
   while (IsRunning())
@@ -165,7 +165,7 @@ void* cVDRDaemon::Process(void)
   return NULL;
 }
 
-void cVDRDaemon::OnSignal(int signum)
+void cVDRDaemon2::OnSignal(int signum)
 {
   switch (signum)
   {
@@ -195,12 +195,12 @@ void cVDRDaemon::OnSignal(int signum)
   }
 }
 
-bool cVDRDaemon::ReadCommandLineOptions(int argc, char *argv[])
+bool cVDRDaemon2::ReadCommandLineOptions(int argc, char *argv[])
 {
   return m_settings.LoadFromCmdLine(argc, argv);
 }
 
-bool cVDRDaemon::Init(void)
+bool cVDRDaemon2::Init(void)
 {
   CLockObject lock(m_critSection);
 
@@ -379,7 +379,7 @@ bool cVDRDaemon::Init(void)
   return true;
 }
 
-bool cVDRDaemon::Iterate(void)
+bool cVDRDaemon2::Iterate(void)
 {
   // Main program loop:
   CLockObject lock(m_critSection);
@@ -664,7 +664,7 @@ time_t      Soon = Now + SHUTDOWNWAIT;
   return !ShutdownHandler.DoExit();
 }
 
-void cVDRDaemon::DirectMainFunction(eOSState function)
+void cVDRDaemon2::DirectMainFunction(eOSState function)
 {
   m_IsInfoMenu &= (m_Menu == NULL);
   delete m_Menu;
@@ -674,7 +674,7 @@ void cVDRDaemon::DirectMainFunction(eOSState function)
   m_Menu = new cMenuMain(function);
 }
 
-bool cVDRDaemon::HandleInput(time_t Now)
+bool cVDRDaemon2::HandleInput(time_t Now)
 {
   cOsdObject *Interact = m_Menu ? m_Menu : cControl::Control();
   eKeys key = Interface->GetKey(!Interact || !Interact->NeedsFastResponse());
@@ -1080,7 +1080,7 @@ bool cVDRDaemon::HandleInput(time_t Now)
   return false; // Iterate() should continue normally
 }
 
-void cVDRDaemon::WaitForShutdown()
+void cVDRDaemon2::WaitForShutdown()
 {
   CMutex mutex; // private mutex
   CLockObject lock(mutex);
@@ -1112,9 +1112,9 @@ void SetSystemCharacterTable()
 #endif
 }
 
-int main(int argc, char *argv[])
+int main2(int argc, char *argv[])
 {
-  cVDRDaemon* daemon = &cVDRDaemon::Get();
+  cVDRDaemon2* daemon = &cVDRDaemon2::Get();
 
   // Initiate locale:
   setlocale(LC_ALL, "");
@@ -1146,82 +1146,4 @@ int main(int argc, char *argv[])
   CSignalHandler::Get().ResetSignalReceivers();
 
   return ShutdownHandler.GetExitCode();
-}
-
-extern "C" {
-
-void ADDON_ReadSettings(void)
-{
-}
-
-ADDON_STATUS ADDON_Create(void* hdl, void* props)
-{
-  if (!hdl || !props)
-    return ADDON_STATUS_UNKNOWN;
-
-  CONTENT_PROPERTIES* cprops = (CONTENT_PROPERTIES*)props;
-
-  try
-  {
-    XBMC = new CHelper_libXBMC_addon;
-    if (!XBMC || !XBMC->RegisterMe(hdl))
-      throw ADDON_STATUS_PERMANENT_FAILURE;
-
-    cVDRDaemon* daemon = &cVDRDaemon::Get();
-    if (!daemon->Init() && !daemon->CreateThread(true))
-      throw ADDON_STATUS_UNKNOWN;
-  }
-  catch (ADDON_STATUS status)
-  {
-    delete XBMC;
-    XBMC = NULL;
-    return status;
-  }
-
-  m_CurStatus     = ADDON_STATUS_OK;
-  g_strUserPath   = cprops->strUserPath;
-  g_strClientPath = cprops->strClientPath;
-
-  ADDON_ReadSettings();
-  return m_CurStatus;
-}
-
-ADDON_STATUS ADDON_GetStatus()
-{
-  return m_CurStatus;
-}
-
-void ADDON_Destroy()
-{
-  cVDRDaemon::Get().StopThread();
-  m_CurStatus = ADDON_STATUS_UNKNOWN;
-}
-
-bool ADDON_HasSettings()
-{
-  return true;
-}
-
-unsigned int ADDON_GetSettings(ADDON_StructSetting *** sSet)
-{
-  return 0;
-}
-
-ADDON_STATUS ADDON_SetSetting(const char *settingName, const void *settingValue)
-{
-  if (!settingName || !settingValue)
-    return ADDON_STATUS_UNKNOWN;
-
-  return ADDON_STATUS_OK;
-}
-
-void ADDON_Stop()
-{
-  cVDRDaemon::Get().StopThread();
-}
-
-void ADDON_FreeSettings()
-{
-}
-
 }

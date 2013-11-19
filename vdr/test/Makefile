@@ -26,13 +26,12 @@ RANLIB   ?= ranlib
 
 ### Includes
 
-#CWD      ?= $(shell pwd)
-#INCLUDES += -I$(CWD)/..
+CWD      ?= $(shell pwd)
+INCLUDES += -I$(CWD)
 
 ### The object files (add further files here):
 
-OBJS = SignalHandler.o \
-       VDRDaemon.o
+OBJS = TestVDRDaemon.o
 
 ### Implicit rules:
 
@@ -44,23 +43,17 @@ OBJS = SignalHandler.o \
 MAKEDEP = $(CXX) -MM -MG
 DEPFILE = .dependencies
 $(DEPFILE): Makefile
-	$(MAKEDEP) $(DEFINES) $(INCLUDES) $(OBJS:%.o=%.cpp) > $@
+	@$(MAKEDEP) $(CPPFLAGS) $(DEFINES) $(INCLUDES) $(OBJS:%.o=%.cpp) > $@
 
 -include $(DEPFILE)
 
 ### Targets:
 
-all: vdr.a
+all: vdr_test.a
 
-vdr.a : $(OBJS)
+vdr_test.a : $(OBJS)
 	$(AR) $(ARFLAGS) $@ $(OBJS)
 
 clean:
 	@-rm -f $(OBJS) $(DEPFILE) *.a *.so *.tgz core* *~
 
-dist:
-	# File indentation is 1 tab, four spaces
-	tar cvzf vdr.tar.gz -C ../.. \
-	    vdr/SignalHandler.c \
-	    vdr/SignalHandler.h \
-	    vdr/Makefile

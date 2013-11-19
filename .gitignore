@@ -28,6 +28,7 @@
 
 # VDR ignorables
 vdr.bin
+test-vdr.bin
 libvdr.so
 *.mo
 *.pot
