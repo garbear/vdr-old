@@ -38,7 +38,7 @@ ifdef ANDROID
 LIBS      =
 else
 #LIBS      = -ljpeg -lpthread -ldl -lcap -lrt $(shell $(PKGCONFIG) --libs freetype2 fontconfig)
-LIBS      =
+LIBS      = -lpthread
 endif
 #INCLUDES ?= $(shell $(PKGCONFIG) --cflags freetype2 fontconfig)
 INCLUDES ?=
@@ -184,7 +184,7 @@ libvdr.so: addon.a $(VDRLIBS)
 	$(CXX) $(CXXFLAGS) -shared $(LDFLAGS) $^ $(LIBS) -o $@
 
 test-vdr.bin: $(VDRLIBS) gtest_main.a $(VDRTESTLIBS)
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -lpthread -Wl,--whole-archive $(VDRTESTLIBS) -Wl,--no-whole-archive $(VDRLIBS) gtest_main.a  $(LIBS) -o $@
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -Wl,--whole-archive $(VDRTESTLIBS) -Wl,--no-whole-archive $(VDRLIBS) gtest_main.a  $(LIBS) -o $@
 
 # The libsi library:
 
