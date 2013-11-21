@@ -362,38 +362,6 @@ void cDevice::Shutdown(void)
       }
 }
 
-uchar *cDevice::GrabImage(int &Size, bool Jpeg, int Quality, int SizeX, int SizeY)
-{
-  return NULL;
-}
-
-bool cDevice::GrabImageFile(const char *FileName, bool Jpeg, int Quality, int SizeX, int SizeY)
-{
-  int result = 0;
-  int fd = open(FileName, O_WRONLY | O_CREAT | O_NOFOLLOW | O_TRUNC, DEFFILEMODE);
-  if (fd >= 0) {
-     int ImageSize;
-     uchar *Image = GrabImage(ImageSize, Jpeg, Quality, SizeX, SizeY);
-     if (Image) {
-        if (safe_write(fd, Image, ImageSize) == ImageSize)
-           isyslog("grabbed image to %s", FileName);
-        else {
-           LOG_ERROR_STR(FileName);
-           result |= 1;
-           }
-        free(Image);
-        }
-     else
-        result |= 1;
-     close(fd);
-     }
-  else {
-     LOG_ERROR_STR(FileName);
-     result |= 1;
-     }
-  return result == 0;
-}
-
 void cDevice::SetVideoDisplayFormat(eVideoDisplayFormat VideoDisplayFormat)
 {
   cSpuDecoder *spuDecoder = GetSpuDecoder();

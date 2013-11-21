@@ -298,27 +298,6 @@ public:
   void Detach(cFilter *Filter);
        ///< Detaches the given filter from this device.
 
-// Image Grab facilities
-
-public:
-  virtual uchar *GrabImage(int &Size, bool Jpeg = true, int Quality = -1, int SizeX = -1, int SizeY = -1);
-         ///< Grabs the currently visible screen image.
-         ///< Size is the size of the returned data block.
-         ///< If Jpeg is true it will write a JPEG file. Otherwise a PNM file will be written.
-         ///< Quality is the compression factor for JPEG. 1 will create a very blocky
-         ///< and small image, 70..80 will yield reasonable quality images while keeping the
-         ///< image file size around 50 KB for a full frame. The default will create a big
-         ///< but very high quality image.
-         ///< SizeX is the number of horizontal pixels in the frame (default is the current screen width).
-         ///< SizeY is the number of vertical pixels in the frame (default is the current screen height).
-         ///< Returns a pointer to the grabbed image data, or NULL in case of an error.
-         ///< The caller takes ownership of the returned memory and must free() it once it isn't needed any more.
-  bool GrabImageFile(const char *FileName, bool Jpeg = true, int Quality = -1, int SizeX = -1, int SizeY = -1);
-         ///< Calls GrabImage() and stores the resulting image in a file with the given name.
-         ///< Returns true if all went well.
-         ///< The caller is responsible for making sure that the given file name
-         ///< doesn't lead to overwriting any important other file.
-
 // Video format facilities
 
 public:
