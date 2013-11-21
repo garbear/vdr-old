@@ -408,60 +408,6 @@ void cDevice::GetOsdSize(int &Width, int &Height, double &PixelAspect)
   PixelAspect = 1.0;
 }
 
-void cDevice::StartSectionHandler(void)
-{
-  if (!sectionHandler) {
-     sectionHandler = new cSectionHandler(this);
-     AttachFilter(eitFilter = new cEitFilter);
-     AttachFilter(patFilter = new cPatFilter);
-     AttachFilter(sdtFilter = new cSdtFilter(patFilter));
-     AttachFilter(nitFilter = new cNitFilter);
-     }
-}
-
-void cDevice::StopSectionHandler(void)
-{
-  if (sectionHandler) {
-     delete nitFilter;
-     delete sdtFilter;
-     delete patFilter;
-     delete eitFilter;
-     delete sectionHandler;
-     nitFilter = NULL;
-     sdtFilter = NULL;
-     patFilter = NULL;
-     eitFilter = NULL;
-     sectionHandler = NULL;
-     }
-}
-
-int cDevice::OpenFilter(u_short Pid, u_char Tid, u_char Mask)
-{
-  return -1;
-}
-
-int cDevice::ReadFilter(int Handle, void *Buffer, size_t Length)
-{
-  return safe_read(Handle, Buffer, Length);
-}
-
-void cDevice::CloseFilter(int Handle)
-{
-  close(Handle);
-}
-
-void cDevice::AttachFilter(cFilter *Filter)
-{
-  if (sectionHandler)
-     sectionHandler->Attach(Filter);
-}
-
-void cDevice::Detach(cFilter *Filter)
-{
-  if (sectionHandler)
-     sectionHandler->Detach(Filter);
-}
-
 bool cDevice::DeviceHooksProvidesTransponder(const cChannel *Channel) const
 {
   cDeviceHook *Hook = deviceHooks.First();

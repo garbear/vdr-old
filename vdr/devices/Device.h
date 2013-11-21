@@ -212,42 +212,6 @@ public:
 private:
   virtual void Action(void);
 
-// Section filter facilities
-
-private:
-  cSectionHandler *sectionHandler;
-  cEitFilter *eitFilter;
-  cPatFilter *patFilter;
-  cSdtFilter *sdtFilter;
-  cNitFilter *nitFilter;
-protected:
-  void StartSectionHandler(void);
-       ///< A derived device that provides section data must call
-       ///< this function (typically in its constructor) to actually set
-       ///< up the section handler.
-  void StopSectionHandler(void);
-       ///< A device that has called StartSectionHandler() must call this
-       ///< function (typically in its destructor) to stop the section
-       ///< handler.
-public:
-  virtual int OpenFilter(u_short Pid, u_char Tid, u_char Mask);
-       ///< Opens a file handle for the given filter data.
-       ///< A derived device that provides section data must
-       ///< implement this function.
-  virtual int ReadFilter(int Handle, void *Buffer, size_t Length);
-       ///< Reads data from a handle for the given filter.
-       ///< A derived class need not implement this function, because this
-       ///< is done by the default implementation.
-  virtual void CloseFilter(int Handle);
-       ///< Closes a file handle that has previously been opened
-       ///< by OpenFilter(). If this is as simple as calling close(Handle),
-       ///< a derived class need not implement this function, because this
-       ///< is done by the default implementation.
-  void AttachFilter(cFilter *Filter);
-       ///< Attaches the given filter to this device.
-  void Detach(cFilter *Filter);
-       ///< Detaches the given filter from this device.
-
 // Video format facilities
 
 public:
