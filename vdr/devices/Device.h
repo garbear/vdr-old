@@ -229,38 +229,8 @@ public:
          ///< Returns a pointer to the device's SPU decoder (or NULL, if this
          ///< device doesn't have an SPU decoder).
 
-// PID handle facilities
-
 private:
   virtual void Action(void);
-protected:
-  enum ePidType { ptAudio, ptVideo, ptPcr, ptTeletext, ptDolby, ptOther };
-  class cPidHandle {
-  public:
-    int pid;
-    int streamType;
-    int handle;
-    int used;
-    cPidHandle(void) { pid = streamType = used = 0; handle = -1; }
-    };
-  cPidHandle pidHandles[MAXPIDHANDLES];
-  bool HasPid(int Pid) const;
-         ///< Returns true if this device is currently receiving the given PID.
-  bool AddPid(int Pid, ePidType PidType = ptOther, int StreamType = 0);
-         ///< Adds a PID to the set of PIDs this device shall receive.
-  void DelPid(int Pid, ePidType PidType = ptOther);
-         ///< Deletes a PID from the set of PIDs this device shall receive.
-  virtual bool SetPid(cPidHandle *Handle, int Type, bool On);
-         ///< Does the actual PID setting on this device.
-         ///< On indicates whether the PID shall be added or deleted.
-         ///< Handle->handle can be used by the device to store information it
-         ///< needs to receive this PID (for instance a file handle).
-         ///< Handle->used indicates how many receivers are using this PID.
-         ///< Type indicates some special types of PIDs, which the device may
-         ///< need to set in a specific way.
-public:
-  void DelLivePids(void);
-         ///< Deletes the live viewing PIDs.
 
 // Section filter facilities
 
