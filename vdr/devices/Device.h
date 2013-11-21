@@ -38,29 +38,6 @@ enum eVideoDisplayFormat { vdfPanAndScan,
                            vdfCenterCutOut
                          };
 
-enum eTrackType { ttNone,
-                  ttAudio,
-                  ttAudioFirst = ttAudio,
-                  ttAudioLast  = ttAudioFirst + 31, // MAXAPIDS - 1
-                  ttDolby,
-                  ttDolbyFirst = ttDolby,
-                  ttDolbyLast  = ttDolbyFirst + 15, // MAXDPIDS - 1
-                  ttSubtitle,
-                  ttSubtitleFirst = ttSubtitle,
-                  ttSubtitleLast  = ttSubtitleFirst + 31, // MAXSPIDS - 1
-                  ttMaxTrackTypes
-                };
-
-#define IS_AUDIO_TRACK(t) (ttAudioFirst <= (t) && (t) <= ttAudioLast)
-#define IS_DOLBY_TRACK(t) (ttDolbyFirst <= (t) && (t) <= ttDolbyLast)
-#define IS_SUBTITLE_TRACK(t) (ttSubtitleFirst <= (t) && (t) <= ttSubtitleLast)
-
-struct tTrackId {
-  uint16_t id;                  // The PES packet id or the PID.
-  char language[MAXLANGCODE2];  // something like either "eng" or "deu+eng"
-  char description[32];         // something like "Dolby Digital 5.1"
-  };
-
 class cPlayer;
 class cReceiver;
 class cLiveSubtitle;
@@ -233,71 +210,6 @@ public:
          ///< depending on which dimension shall be fixed). Values less than
          ///< 1.0 work the other way round. Note that the OSD is not guaranteed
          ///< to actually use this hint.
-
-// Track facilities
-
-private:
-  tTrackId availableTracks[ttMaxTrackTypes];
-  eTrackType currentAudioTrack;
-  eTrackType currentSubtitleTrack;
-  cMutex mutexCurrentAudioTrack;
-  cMutex mutexCurrentSubtitleTrack;
-  int currentAudioTrackMissingCount;
-  bool autoSelectPreferredSubtitleLanguage;
-  bool keepTracks;
-  int pre_1_3_19_PrivateStream;
-protected:
-  virtual void SetAudioTrackDevice(eTrackType Type);
-       ///< Sets the current audio track to the given value.
-  virtual void SetSubtitleTrackDevice(eTrackType Type);
-       ///< Sets the current subtitle track to the given value.
-public:
-  void ClrAvailableTracks(bool DescriptionsOnly = false, bool IdsOnly = false);
-       ///< Clears the list of currently available tracks. If DescriptionsOnly
-       ///< is true, only the track descriptions will be cleared. With IdsOnly
-       ///< set to true only the ids will be cleared. IdsOnly is only taken
-       ///< into account if DescriptionsOnly is false.
-  bool SetAvailableTrack(eTrackType Type, int Index, uint16_t Id, const char *Language = NULL, const char *Description = NULL);
-       ///< Sets the track of the given Type and Index to the given values.
-       ///< Type must be one of the basic eTrackType values, like ttAudio or ttDolby.
-       ///< Index tells which track of the given basic type is meant.
-       ///< If Id is 0 any existing id will be left untouched and only the
-       ///< given Language and Description will be set.
-       ///< Returns true if the track was set correctly, false otherwise.
-  const tTrackId *GetTrack(eTrackType Type);
-       ///< Returns a pointer to the given track id, or NULL if Type is not
-       ///< less than ttMaxTrackTypes.
-  int NumTracks(eTrackType FirstTrack, eTrackType LastTrack) const;
-       ///< Returns the number of tracks in the given range that are currently
-       ///< available.
-  int NumAudioTracks(void) const;
-       ///< Returns the number of audio tracks that are currently available.
-       ///< This is just for information, to quickly find out whether there
-       ///< is more than one audio track.
-  int NumSubtitleTracks(void) const;
-       ///< Returns the number of subtitle tracks that are currently available.
-  eTrackType GetCurrentAudioTrack(void) const { return currentAudioTrack; }
-  bool SetCurrentAudioTrack(eTrackType Type);
-       ///< Sets the current audio track to the given Type.
-       ///< Returns true if Type is a valid audio track, false otherwise.
-  eTrackType GetCurrentSubtitleTrack(void) const { return currentSubtitleTrack; }
-  bool SetCurrentSubtitleTrack(eTrackType Type, bool Manual = false);
-       ///< Sets the current subtitle track to the given Type.
-       ///< IF Manual is true, no automatic preferred subtitle language selection
-       ///< will be done for the rest of the current replay session, or until
-       ///< the channel is changed.
-       ///< Returns true if Type is a valid subtitle track, false otherwise.
-  void EnsureAudioTrack(bool Force = false);
-       ///< Makes sure an audio track is selected that is actually available.
-       ///< If Force is true, the language and Dolby Digital settings will
-       ///< be verified even if the current audio track is available.
-  void EnsureSubtitleTrack(void);
-       ///< Makes sure one of the preferred language subtitle tracks is selected.
-       ///< Only has an effect if Setup.DisplaySubtitles is on.
-  void SetKeepTracks(bool KeepTracks) { keepTracks = KeepTracks; }
-       ///< Controls whether the current audio and subtitle track settings shall
-       ///< be kept as they currently are, or if they shall be automatically
-       ///< adjusted. This is used when pausing live video.
   };
 
 /// Derived cDevice classes that can receive channels will have to provide
