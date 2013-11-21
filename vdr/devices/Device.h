@@ -29,15 +29,6 @@
 #define MAXPIDHANDLES      64 // the maximum number of different PIDs per device
 #define MAXOCCUPIEDTIMEOUT 99 // max. time (in seconds) a device may be occupied
 
-enum eVideoSystem { vsPAL,
-                    vsNTSC
-                  };
-
-enum eVideoDisplayFormat { vdfPanAndScan,
-                           vdfLetterBox,
-                           vdfCenterCutOut
-                         };
-
 class cPlayer;
 class cReceiver;
 class cLiveSubtitle;
@@ -178,38 +169,6 @@ protected:
 
 private:
   virtual void Action(void);
-
-// Video format facilities
-
-public:
-  virtual void SetVideoDisplayFormat(eVideoDisplayFormat VideoDisplayFormat);
-         ///< Sets the video display format to the given one (only useful
-         ///< if this device has an MPEG decoder).
-         ///< A derived class must first call the base class function!
-  virtual void SetVideoFormat(bool VideoFormat16_9);
-         ///< Sets the output video format to either 16:9 or 4:3 (only useful
-         ///< if this device has an MPEG decoder).
-  virtual eVideoSystem GetVideoSystem(void);
-         ///< Returns the video system of the currently displayed material
-         ///< (default is PAL).
-  virtual void GetVideoSize(int &Width, int &Height, double &VideoAspect);
-         ///< Returns the Width, Height and VideoAspect ratio of the currently
-         ///< displayed video material. Width and Height are given in pixel
-         ///< (e.g. 720x576) and VideoAspect is e.g. 1.33333 for a 4:3 broadcast,
-         ///< or 1.77778 for 16:9.
-         ///< The default implementation returns 0 for Width and Height
-         ///< and 1.0 for VideoAspect.
-  virtual void GetOsdSize(int &Width, int &Height, double &PixelAspect);
-         ///< Returns the Width, Height and PixelAspect ratio the OSD should use
-         ///< to best fit the resolution of the output device. If PixelAspect
-         ///< is not 1.0, the OSD may take this as a hint to scale its
-         ///< graphics in a way that, e.g., a circle will actually
-         ///< show up as a circle on the screen, and not as an ellipse.
-         ///< Values greater than 1.0 mean to stretch the graphics in the
-         ///< vertical direction (or shrink it in the horizontal direction,
-         ///< depending on which dimension shall be fixed). Values less than
-         ///< 1.0 work the other way round. Note that the OSD is not guaranteed
-         ///< to actually use this hint.
   };
 
 /// Derived cDevice classes that can receive channels will have to provide

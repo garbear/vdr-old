@@ -331,52 +331,6 @@ void cDevice::Shutdown(void)
       }
 }
 
-void cDevice::SetVideoDisplayFormat(eVideoDisplayFormat VideoDisplayFormat)
-{
-  cSpuDecoder *spuDecoder = GetSpuDecoder();
-  if (spuDecoder) {
-     if (Setup.VideoFormat)
-        spuDecoder->setScaleMode(cSpuDecoder::eSpuNormal);
-     else {
-        switch (VideoDisplayFormat) {
-               case vdfPanAndScan:
-                    spuDecoder->setScaleMode(cSpuDecoder::eSpuPanAndScan);
-                    break;
-               case vdfLetterBox:
-                    spuDecoder->setScaleMode(cSpuDecoder::eSpuLetterBox);
-                    break;
-               case vdfCenterCutOut:
-                    spuDecoder->setScaleMode(cSpuDecoder::eSpuNormal);
-                    break;
-               default: esyslog("ERROR: invalid value for VideoDisplayFormat '%d'", VideoDisplayFormat);
-               }
-        }
-     }
-}
-
-void cDevice::SetVideoFormat(bool VideoFormat16_9)
-{
-}
-
-eVideoSystem cDevice::GetVideoSystem(void)
-{
-  return vsPAL;
-}
-
-void cDevice::GetVideoSize(int &Width, int &Height, double &VideoAspect)
-{
-  Width = 0;
-  Height = 0;
-  VideoAspect = 1.0;
-}
-
-void cDevice::GetOsdSize(int &Width, int &Height, double &PixelAspect)
-{
-  Width = 720;
-  Height = 480;
-  PixelAspect = 1.0;
-}
-
 bool cDevice::DeviceHooksProvidesTransponder(const cChannel *Channel) const
 {
   cDeviceHook *Hook = deviceHooks.First();
