@@ -30,8 +30,6 @@
 #define MAXRECEIVERS       16 // the maximum number of receivers per device
 #define MAXOCCUPIEDTIMEOUT 99 // max. time (in seconds) a device may be occupied
 
-enum eSetChannelResult { scrOk, scrNotAvailable, scrNoTransfer, scrFailed };
-
 enum ePlayMode { pmNone,           // audio/video from decoder
                  pmAudioVideo,     // audio/video from player
                  pmAudioOnly,      // audio only from player, video from decoder
@@ -230,111 +228,6 @@ public:
   virtual cSpuDecoder *GetSpuDecoder(void);
          ///< Returns a pointer to the device's SPU decoder (or NULL, if this
          ///< device doesn't have an SPU decoder).
-
-// Channel facilities
-
-private:
-  time_t occupiedTimeout;
-protected:
-  static int currentChannel;
-public:
-  virtual bool ProvidesSource(int Source) const;
-         ///< Returns true if this device can provide the given source.
-  virtual bool ProvidesTransponder(const cChannel *Channel) const;
-         ///< Returns true if this device can provide the transponder of the
-         ///< given Channel (which implies that it can provide the Channel's
-         ///< source).
-  virtual bool ProvidesTransponderExclusively(const cChannel *Channel) const;
-         ///< Returns true if this is the only device that is able to provide
-         ///< the given channel's transponder.
-  virtual bool ProvidesChannel(const cChannel *Channel, int Priority = IDLEPRIORITY, bool *NeedsDetachReceivers = NULL) const;
-         ///< Returns true if this device can provide the given channel.
-         ///< In case the device has cReceivers attached to it, Priority is used to
-         ///< decide whether the caller's request can be honored.
-         ///< The special Priority value IDLEPRIORITY will tell the caller whether this device
-         ///< is principally able to provide the given Channel, regardless of any
-         ///< attached cReceivers.
-         ///< If NeedsDetachReceivers is given, the resulting value in it will tell the
-         ///< caller whether or not it will have to detach any currently attached
-         ///< receivers from this device before calling SwitchChannel. Note
-         ///< that the return value in NeedsDetachReceivers is only meaningful if the
-         ///< function itself actually returns true.
-         ///< The default implementation always returns false, so a derived cDevice
-         ///< class that can provide channels must implement this function.
-  virtual bool ProvidesEIT(void) const;
-         ///< Returns true if this device provides EIT data and thus wants to be tuned
-         ///< to the channels it can receive regularly to update the data.
-         ///< The default implementation returns false.
-  virtual int NumProvidedSystems(void) const;
-         ///< Returns the number of individual "delivery systems" this device provides.
-         ///< The default implementation returns 0, so any derived class that can
-         ///< actually provide channels must implement this function.
-         ///< The result of this function is used when selecting a device, in order
-         ///< to avoid devices that provide more than one system.
-  virtual int SignalStrength(void) const;
-         ///< Returns the "strength" of the currently received signal.
-         ///< This is a value in the range 0 (no signal at all) through
-         ///< 100 (best possible signal). A value of -1 indicates that this
-         ///< device has no concept of a "signal strength".
-  virtual int SignalQuality(void) const;
-         ///< Returns the "quality" of the currently received signal.
-         ///< This is a value in the range 0 (worst quality) through
-         ///< 100 (best possible quality). A value of -1 indicates that this
-         ///< device has no concept of a "signal quality".
-  virtual const cChannel *GetCurrentlyTunedTransponder(void) const;
-         ///< Returns a pointer to the currently tuned transponder.
-         ///< This is not one of the channels in the global cChannels list, but rather
-         ///< a local copy. The result may be NULL if the device is not tuned to any
-         ///< transponder.
-  virtual bool IsTunedToTransponder(const cChannel *Channel) const;
-         ///< Returns true if this device is currently tuned to the given Channel's
-         ///< transponder.
-  virtual bool MaySwitchTransponder(const cChannel *Channel) const;
-         ///< Returns true if it is ok to switch to the Channel's transponder on this
-         ///< device, without disturbing any other activities. If an occupied timeout
-         ///< has been set for this device, and that timeout has not yet expired,
-         ///< this function returns false,
-  bool SwitchChannel(const cChannel *Channel, bool LiveView);
-         ///< Switches the device to the given Channel, initiating transfer mode
-         ///< if necessary.
-  static bool SwitchChannel(int Direction);
-         ///< Switches the primary device to the next available channel in the given
-         ///< Direction (only the sign of Direction is evaluated, positive values
-         ///< switch to higher channel numbers).
-private:
-  eSetChannelResult SetChannel(const cChannel *Channel, bool LiveView);
-         ///< Sets the device to the given channel (general setup).
-protected:
-  virtual bool SetChannelDevice(const cChannel *Channel, bool LiveView);
-         ///< Sets the device to the given channel (actual physical setup).
-public:
-  static int CurrentChannel(void) { return primaryDevice ? currentChannel : 0; }
-         ///< Returns the number of the current channel on the primary device.
-  static void SetCurrentChannel(const cChannel *Channel) { currentChannel = Channel ? Channel->Number() : 0; }
-         ///< Sets the number of the current channel on the primary device, without
-         ///< actually switching to it. This can be used to correct the current
-         ///< channel number while replaying.
-  void ForceTransferMode(void);
-         ///< Forces the device into transfermode for the current channel.
-  int Occupied(void) const;
-         ///< Returns the number of seconds this device is still occupied for.
-  void SetOccupied(int Seconds);
-         ///< Sets the occupied timeout for this device to the given number of
-         ///< Seconds, This can be used to tune a device to a particular transponder
-         ///< and make sure it will stay there for a certain amount of time, for
-         ///< instance to collect EPG data. This function shall only be called
-         ///< after the device has been successfully tuned to the requested transponder.
-         ///< Seconds will be silently limited to MAXOCCUPIEDTIMEOUT. Values less than
-         ///< 0 will be silently ignored.
-  virtual bool HasLock(int TimeoutMs = 0) const;
-         ///< Returns true if the device has a lock on the requested transponder.
-         ///< Default is true, a specific device implementation may return false
-         ///< to indicate that it is not ready yet.
-         ///< If TimeoutMs is not zero, waits for the given number of milliseconds
-         ///< before returning false.
-  virtual bool HasProgramme(void) const;
-         ///< Returns true if the device is currently showing any programme to
-         ///< the user, either through replaying or live.
 
 // PID handle facilities
 
