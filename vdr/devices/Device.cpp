@@ -651,32 +651,9 @@ void cDevice::EnsureSubtitleTrack(void)
      SetCurrentSubtitleTrack(ttNone);
 }
 
-int cDevice::Priority(void) const
-{
-  int priority = IDLEPRIORITY;
-  if (IsPrimaryDevice() && !Replaying() && HasProgramme())
-     priority = TRANSFERPRIORITY; // we use the same value here, no matter whether it's actual Transfer Mode or real live viewing
-  cMutexLock MutexLock(&mutexReceiver);
-  for (int i = 0; i < MAXRECEIVERS; i++) {
-      if (receiver[i])
-         priority = max(receiver[i]->priority, priority);
-      }
-  return priority;
-}
-
 bool cDevice::Ready(void)
 {
   return true;
-}
-
-bool cDevice::Receiving(bool Dummy) const
-{
-  cMutexLock MutexLock(&mutexReceiver);
-  for (int i = 0; i < MAXRECEIVERS; i++) {
-      if (receiver[i])
-         return true;
-      }
-  return false;
 }
 
 #define TS_SCRAMBLING_TIMEOUT     3 // seconds to wait until a TS becomes unscrambled
@@ -733,106 +710,6 @@ void cDevice::Action(void)
            }
      CloseDvr();
      }
-}
-
-bool cDevice::OpenDvr(void)
-{
-  return false;
-}
-
-void cDevice::CloseDvr(void)
-{
-}
-
-bool cDevice::GetTSPacket(uchar *&Data)
-{
-  return false;
-}
-
-bool cDevice::AttachReceiver(cReceiver *Receiver)
-{
-  if (!Receiver)
-     return false;
-  if (Receiver->device == this)
-     return true;
-// activate the following line if you need it - actually the driver should be fixed!
-//#define WAIT_FOR_TUNER_LOCK
-#ifdef WAIT_FOR_TUNER_LOCK
-#define TUNER_LOCK_TIMEOUT 5000 // ms
-  if (!HasLock(TUNER_LOCK_TIMEOUT)) {
-     esyslog("ERROR: device %d has no lock, can't attach receiver!", CardIndex() + 1);
-     return false;
-     }
-#endif
-  cMutexLock MutexLock(&mutexReceiver);
-  for (int i = 0; i < MAXRECEIVERS; i++) {
-      if (!receiver[i]) {
-         for (int n = 0; n < Receiver->numPids; n++) {
-             if (!AddPid(Receiver->pids[n])) {
-                for ( ; n-- > 0; )
-                    DelPid(Receiver->pids[n]);
-                return false;
-                }
-             }
-         Receiver->Activate(true);
-         Lock();
-         Receiver->device = this;
-         receiver[i] = Receiver;
-         Unlock();
-         if (camSlot) {
-            camSlot->StartDecrypting();
-            startScrambleDetection = time(NULL);
-            }
-         Start();
-         return true;
-         }
-      }
-  esyslog("ERROR: no free receiver slot!");
-  return false;
-}
-
-void cDevice::Detach(cReceiver *Receiver)
-{
-  if (!Receiver || Receiver->device != this)
-     return;
-  bool receiversLeft = false;
-  cMutexLock MutexLock(&mutexReceiver);
-  for (int i = 0; i < MAXRECEIVERS; i++) {
-      if (receiver[i] == Receiver) {
-         Lock();
-         receiver[i] = NULL;
-         Receiver->device = NULL;
-         Unlock();
-         Receiver->Activate(false);
-         for (int n = 0; n < Receiver->numPids; n++)
-             DelPid(Receiver->pids[n]);
-         }
-      else if (receiver[i])
-         receiversLeft = true;
-      }
-  if (camSlot)
-     camSlot->StartDecrypting();
-  if (!receiversLeft)
-     Cancel(-1);
-}
-
-void cDevice::DetachAll(int Pid)
-{
-  if (Pid) {
-     cMutexLock MutexLock(&mutexReceiver);
-     for (int i = 0; i < MAXRECEIVERS; i++) {
-         cReceiver *Receiver = receiver[i];
-         if (Receiver && Receiver->WantsPid(Pid))
-            Detach(Receiver);
-         }
-     }
-}
-
-void cDevice::DetachAllReceivers(void)
-{
-  cMutexLock MutexLock(&mutexReceiver);
-  for (int i = 0; i < MAXRECEIVERS; i++)
-      Detach(receiver[i]);
 }
 
 // --- cTSBuffer -------------------------------------------------------------

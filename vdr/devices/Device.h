@@ -27,7 +27,6 @@
 
 #define MAXDEVICES         16 // the maximum number of devices in the system
 #define MAXPIDHANDLES      64 // the maximum number of different PIDs per device
-#define MAXRECEIVERS       16 // the maximum number of receivers per device
 #define MAXOCCUPIEDTIMEOUT 99 // max. time (in seconds) a device may be occupied
 
 enum eVideoSystem { vsPAL,
@@ -345,40 +344,6 @@ public:
        ///< Controls whether the current audio and subtitle track settings shall
        ///< be kept as they currently are, or if they shall be automatically
        ///< adjusted. This is used when pausing live video.
-
-// Receiver facilities
-
-private:
-  mutable cMutex mutexReceiver;
-  cReceiver *receiver[MAXRECEIVERS];
-public:
-  int Priority(void) const;
-      ///< Returns the priority of the current receiving session (-MAXPRIORITY..MAXPRIORITY),
-      ///< or IDLEPRIORITY if no receiver is currently active.
-protected:
-  virtual bool OpenDvr(void);
-      ///< Opens the DVR of this device and prepares it to deliver a Transport
-      ///< Stream for use in a cReceiver.
-  virtual void CloseDvr(void);
-      ///< Shuts down the DVR.
-  virtual bool GetTSPacket(uchar *&Data);
-      ///< Gets exactly one TS packet from the DVR of this device and returns
-      ///< a pointer to it in Data. Only the first 188 bytes (TS_SIZE) Data
-      ///< points to are valid and may be accessed. If there is currently no
-      ///< new data available, Data will be set to NULL. The function returns
-      ///< false in case of a non recoverable error, otherwise it returns true,
-      ///< even if Data is NULL.
-public:
-  bool Receiving(bool Dummy = false) const;
-       ///< Returns true if we are currently receiving. The parameter has no meaning (for backwards compatibility only).
-  bool AttachReceiver(cReceiver *Receiver);
-       ///< Attaches the given receiver to this device.
-  void Detach(cReceiver *Receiver);
-       ///< Detaches the given receiver from this device.
-  void DetachAll(int Pid);
-       ///< Detaches all receivers from this device for this pid.
-  virtual void DetachAllReceivers(void);
-       ///< Detaches all receivers from this device.
   };
 
 /// Derived cDevice classes that can receive channels will have to provide
