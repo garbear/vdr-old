@@ -31,7 +31,7 @@ INCLUDES ?= $(shell $(PKGCONFIG) --cflags freetype2 fontconfig)
 # Directories:
 
 CWD       ?= $(shell pwd)
-LSIDIR    ?= $(CWD)/libsi
+LSIDIR    ?= $(CWD)/lib/libsi
 VDRDIR    ?= $(CWD)/vdr
 FSDIR     ?= $(CWD)/vdr/filesystem
 SETTINGSDIR ?= $(CWD)/vdr/settings
