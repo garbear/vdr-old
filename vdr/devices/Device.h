@@ -199,16 +199,6 @@ private:
 protected:
   bool DeviceHooksProvidesTransponder(const cChannel *Channel) const;
 
-// SPU facilities
-
-private:
-  cLiveSubtitle *liveSubtitle;
-  cDvbSubtitleConverter *dvbSubtitleConverter;
-public:
-  virtual cSpuDecoder *GetSpuDecoder(void);
-         ///< Returns a pointer to the device's SPU decoder (or NULL, if this
-         ///< device doesn't have an SPU decoder).
-
 private:
   virtual void Action(void);
 

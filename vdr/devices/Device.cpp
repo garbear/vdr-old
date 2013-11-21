@@ -207,11 +207,6 @@ bool cDevice::HasDecoder(void) const
   return false;
 }
 
-cSpuDecoder *cDevice::GetSpuDecoder(void)
-{
-  return NULL;
-}
-
 cDevice *cDevice::ActualDevice(void)
 {
   cDevice *d = cTransferControl::ReceiverDevice();
