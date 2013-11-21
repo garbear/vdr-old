@@ -298,26 +298,6 @@ public:
   void Detach(cFilter *Filter);
        ///< Detaches the given filter from this device.
 
-// Common Interface facilities:
-
-private:
-  time_t startScrambleDetection;
-  cCamSlot *camSlot;
-public:
-  virtual bool HasCi(void);
-         ///< Returns true if this device has a Common Interface.
-  virtual bool HasInternalCam(void) { return false; }
-         ///< Returns true if this device handles encrypted channels itself
-         ///< without VDR assistance. This can be e.g. if the device is a
-         ///< client that gets the stream from another VDR instance that has
-         ///< already decrypted the stream. In this case ProvidesChannel()
-         ///< shall check whether the channel can be decrypted.
-  void SetCamSlot(cCamSlot *CamSlot);
-         ///< Sets the given CamSlot to be used with this device.
-  cCamSlot *CamSlot(void) const { return camSlot; }
-         ///< Returns the CAM slot that is currently used with this device,
-         ///< or NULL if no CAM slot is in use.
-
 // Image Grab facilities
 
 public:

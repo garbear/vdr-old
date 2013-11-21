@@ -353,16 +353,6 @@ cDevice *cDevice::GetDeviceForTransponder(const cChannel *Channel, int Priority)
   return Device;
 }
 
-bool cDevice::HasCi(void)
-{
-  return false;
-}
-
-void cDevice::SetCamSlot(cCamSlot *CamSlot)
-{
-  camSlot = CamSlot;
-}
-
 void cDevice::Shutdown(void)
 {
   deviceHooks.Clear();
