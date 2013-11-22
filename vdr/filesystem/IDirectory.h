@@ -28,7 +28,18 @@
 class cDirectoryFileLabel
 {
 public:
-  cDirectoryFileLabel(const std::string &strPath) { }
+  cDirectoryFileLabel(const std::string &strName, bool bHidden = false)
+   : m_strName(strName),
+     m_bHidden(bHidden)
+  {
+  }
+
+  const std::string &Name() const { return m_strName; }
+  bool Hidden() const { return m_bHidden; }
+
+private:
+  std::string m_strName;
+  bool        m_bHidden;
 };
 
 typedef std::vector<cDirectoryFileLabel> cDirectoryListing;

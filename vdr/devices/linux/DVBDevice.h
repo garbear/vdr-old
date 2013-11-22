@@ -137,7 +137,8 @@ private:
   const cSubsystems &CreateSubsystems();
 
   /*!
-   * \brief Checks whether the given adapter/frontend exists
+   * \brief Checks whether the given adapter/frontend exists by opening
+   *        /dev/dvb/adapterN/frontendM in read-only mode
    */
   static bool Exists(unsigned int adapter, unsigned int frontend);
 

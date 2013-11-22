@@ -897,6 +897,12 @@ void StringUtils::Tokenize(const std::string& input, std::vector<std::string>& t
   }
 }
 
+bool StringUtils::IntVal(const std::string &str, long &intVal)
+{
+  string dummy;
+  return IntVal(str, intVal, dummy);
+}
+
 bool StringUtils::IntVal(const std::string &str, long &intVal, std::string &remainder)
 {
   if (!str.empty)

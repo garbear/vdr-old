@@ -32,6 +32,9 @@
 #include "../../devices/subsystems/DeviceSPUSubsystem.h"
 #include "../../devices/subsystems/DeviceTrackSubsystem.h"
 #include "../../devices/subsystems/DeviceVideoFormatSubsystem.h"
+#include "filesystem/Directory.h"
+#include "filesystem/File.h"
+#include "sources/linux/DVBSourceParams.h"
 #include "../../utils/StringUtils.h"
 #include "../../../dvbci.h"
 #include "../../../i18n.h"
@@ -146,57 +149,70 @@ cDvbDevice::~cDvbDevice()
 
 bool cDvbDevice::Initialize()
 {
-  new cDvbSourceParam('A', "ATSC");
-  new cDvbSourceParam('C', "DVB-C");
-  new cDvbSourceParam('S', "DVB-S");
-  new cDvbSourceParam('T', "DVB-T");
+  gSourceParams['A'] = cDvbSourceParams('A', "ATSC");
+  gSourceParams['C'] = cDvbSourceParams('C', "DVB-C");
+  gSourceParams['S'] = cDvbSourceParams('S', "DVB-S");
+  gSourceParams['T'] = cDvbSourceParams('T', "DVB-T");
 
   vector<string> vecNodes;
-  cReadDir DvbDir(DEV_DVB_BASE);
-  if (DvbDir.Ok())
+
+  // Enumerate /dev/dvb
+  cDirectoryListing items;
+  if (cDirectory::GetDirectory(DEV_DVB_BASE, items))
   {
-    struct dirent *a;
-    while ((a = DvbDir.Next()) != NULL)
+    for (cDirectoryListing::const_iterator itemIt = items.begin(); itemIt != items.end(); ++itemIt)
     {
-      if (strstr(a->d_name, DEV_DVB_ADAPTER) == a->d_name)
+      // Adapter node must begin with "adapter"
+      if (!itemIt->Name().find(DEV_DVB_ADAPTER) != string::npos)
+        continue;
+
+      // Get adapter index from directory name
+      long adapter;
+      if (!StringUtils::IntVal(itemIt->Name().substr(strlen(DEV_DVB_ADAPTER)), adapter))
+        continue;
+
+      // Enumerate /dev/dvb/adapterN
+      cDirectoryListing items2;
+      // TODO: Need AddFileToDirectory() function
+      if (!cDirectory::GetDirectory(DEV_DVB_BASE "/" + itemIt->Name(), items))
       {
-        int Adapter = strtol(a->d_name + strlen(DEV_DVB_ADAPTER), NULL, 10);
-        cReadDir AdapterDir(AddDirectory(DEV_DVB_BASE, a->d_name));
-        if (AdapterDir.Ok())
+        for (cDirectoryListing::const_iterator itemIt2 = items2.begin(); itemIt2 != items2.end(); ++itemIt2)
         {
-          struct dirent *f;
-          while ((f = AdapterDir.Next()) != NULL)
-          {
-            if (strstr(f->d_name, DEV_DVB_FRONTEND) == f->d_name)
-            {
-              int Frontend = strtol(f->d_name + strlen(DEV_DVB_FRONTEND), NULL, 10);
-              vecNodes.push_back(StringUtils::Format("%2d %2d", Adapter, Frontend));
-            }
-          }
+          // Frontend node must begin with "frontend"
+          if (!itemIt->Name().find(DEV_DVB_FRONTEND) != string::npos)
+            continue;
+
+          // Get frontend index from directory name
+          long frontend;
+          if (!StringUtils::IntVal(itemIt2->Name().substr(strlen(DEV_DVB_FRONTEND)), frontend))
+            continue;
+
+          // Got our (adapter, frontend) pair, add it to the array
+          vecNodes.push_back(StringUtils::Format("%2d %2d", adapter, frontend));
         }
       }
     }
   }
 
   int Checked = 0;
-  int Found = 0;
+  int found = 0;
   if (!vecNodes.empty())
   {
     std::sort(vecNodes.begin(), vecNodes.end());
     for (vector<string>::const_iterator nodeIt = vecNodes.begin(); nodeIt != vecNodes.end(); ++nodeIt)
     {
-      int Adapter;
-      int Frontend;
-      if (2 == sscanf(nodeIt->c_str(), "%d %d", &Adapter, &Frontend))
+      int adapter;
+      int frontend;
+      if (2 == sscanf(nodeIt->c_str(), "%d %d", &adapter, &frontend))
       {
-        if (Exists(Adapter, Frontend))
+        if (Exists(adapter, frontend))
         {
           if (Checked++ < MAXDVBDEVICES)
           {
-            if (cDeviceManager::Get().UseDevice(cDeviceManager::Get().NextCardIndex()))
+            if (cDeviceManager::Get().UseDevice(0/*cDeviceManager::Get().NextCardIndex()*/))
             {
-              if (Probe(Adapter, Frontend))
-                Found++;
+              if (Probe(adapter, frontend))
+                found++;
             }
             else
               cDeviceManager::Get().AdvanceCardIndex(1); // skips this one
@@ -206,13 +222,11 @@ bool cDvbDevice::Initialize()
     }
   }
 
-  cDeviceManager::Get().NextCardIndex(MAXDVBDEVICES - Checked); // skips the rest
-  if (Found > 0)
-     isyslog("found %d DVB device%s", Found, Found > 1 ? "s" : "");
-  else
-     isyslog("no DVB device found");
+  //cDeviceManager::Get().NextCardIndex(MAXDVBDEVICES - Checked); // skips the rest
 
-  return Found > 0;
+  isyslog("Found %d DVB device%s", found, found == 1 ? "" : "s");
+
+  return found > 0;
 }
 
 bool cDvbDevice::Ready()
@@ -377,23 +391,8 @@ int cDvbDevice::DvbOpen(const char *name, unsigned int adapter, unsigned int fro
 
 bool cDvbDevice::Exists(unsigned int adapter, unsigned int frontend)
 {
-  string fileName = DvbName(DEV_DVB_FRONTEND, adapter, frontend);
-
-  if (access(fileName.c_str(), F_OK) == 0)
-  {
-    int f = open(fileName.c_str(), O_RDONLY);
-    if (f >= 0)
-    {
-      close(f);
-      return true;
-    }
-    else if (errno != ENODEV && errno != EINVAL)
-      LOG_ERROR_STR(fileName.c_str());
-  }
-  else if (errno != ENOENT)
-    LOG_ERROR_STR(fileName.c_str());
-
-  return false;
+  cFile frontendNode;
+  return frontendNode.Open(DvbName(DEV_DVB_FRONTEND, adapter, frontend));
 }
 
 bool cDvbDevice::Probe(unsigned int adapter, unsigned int frontend)
