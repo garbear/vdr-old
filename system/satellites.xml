@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Sources configuration for VDR                                           -->
+
+<!-- S (satellite) xy.z (orbital position in degrees) E or W (east or west)  -->
+<!-- Note: only the first part is actually used by VDR. The description part -->
+<!-- is for the "human" interface for clarity.                               -->
+
+<!-- '&' means same orbital position but different host company.             -->
+<!-- '/' means same (or very little deviation) orbital position &amp; host.  -->
+<!-- A value in () means this satellite is still in it's test phase.         -->
+
+<!-- Please contact vdr@tvdr.de before assigning a new code                  -->
+<!-- to a description, in order to keep them unique.                         -->
+
+<satellites>
+	<!-- Europe -->
+	<satellite code="S3E"     description="Eutelsat 3A &amp; Rascom 1R" />
+	<satellite code="S4E"     description="Eurobird 4A" />
+	<satellite code="S4.8E"   description="Astra 4A" />
+	<satellite code="S7E"     description="Eutelsat W3A" />
+	<satellite code="S9E"     description="Eurobird 9A" />
+	<satellite code="S10E"    description="Eutelsat W2A" />
+	<satellite code="S13E"    description="Hotbird 6/8/9" />
+	<satellite code="S16E"    description="Eutelsat W2M &amp; Eurobird 16A" />
+	<satellite code="S19.2E"  description="Astra 1H/1KR/1L/1M/2C" />
+	<satellite code="S21.6E"  description="Eutelsat W6" />
+	<satellite code="S23.5E"  description="Astra 3A/3B" />
+	<satellite code="S25.5E"  description="Eurobird 2" />
+	<satellite code="S26E"    description="Badr 4/5/6" />
+	<satellite code="S28.2E"  description="Astra 2A/2B/2D" />
+	<satellite code="S28.5E"  description="Eurobird 1" />
+	<satellite code="S30.5E"  description="Arabsat 5A" />
+	<satellite code="S31.5E"  description="Astra 1G" />
+	<satellite code="S33E"    description="Eurobird 3 &amp; Intelsat New Dawn" />
+	<satellite code="S36E"    description="Eutelsat W4/W7" />
+	<satellite code="S38E"    description="Paksat 1" />
+	<satellite code="S39E"    description="Hellas Sat 2" />
+	<satellite code="S40E"    description="Express AM1" />
+	<satellite code="S42E"    description="Turksat 2A/3A" />
+	<satellite code="S45E"    description="Intelsat 12" />
+	<satellite code="S49E"    description="Yamal 202" />
+	<satellite code="S53E"    description="Express AM22" />
+	<satellite code="S55E"    description="Insat 3E" />
+	<satellite code="S56E"    description="Bonum 1" />
+	<satellite code="S57E"    description="NSS 12" />
+	<satellite code="S60E"    description="Intelsat 904" />
+	<satellite code="S62E"    description="Intelsat 902" />
+	<satellite code="S64E"    description="Intelsat 906" />
+	<satellite code="S66E"    description="Intelsat 17" />
+	<satellite code="S68.5E"  description="Intelsat 7/10" />
+	<satellite code="S70.5E"  description="Eutelsat W5" />
+	<satellite code="S72E"    description="Intelsat 709" />
+	<!-- Asia -->
+	<satellite code="S74E"    description="Insat 3C/4CR" />
+	<satellite code="S75E"    description="ABS 1A" />
+	<satellite code="S76.5E"  description="Apstar 2R" />
+	<satellite code="S78.5E"  description="Thaicom 5" />
+	<satellite code="S80E"    description="Express AM2/MD1" />
+	<satellite code="S83E"    description="Insat 2E/4A" />
+	<satellite code="S85.2E"  description="Intelsat 15" />
+	<satellite code="S87.5E"  description="Chinasat 5A" />
+	<satellite code="S88E"    description="ST 1/2" />
+	<satellite code="S90E"    description="Yamal 201" />
+	<satellite code="S91.5E"  description="Measat 3/3A" />
+	<satellite code="S92.2E"  description="Chinasat 9" />
+	<satellite code="S93.5E"  description="Insat 3A/4B" />
+	<satellite code="S95E"    description="NSS 6" />
+	<satellite code="S96.5E"  description="Express AM33" />
+	<satellite code="S100.5E" description="Asiasat 5" />
+	<satellite code="S103E"   description="Express A2" />
+	<satellite code="S105.5E" description="Asiasat 3S" />
+	<satellite code="S108.2E" description="Telkom 1 &amp; NSS 11 &amp; SES 7" />
+	<satellite code="S110E"   description="N-Sat 110 &amp; BSAT 2C/3A" />
+	<satellite code="S110.5E" description="Chinasat 10" />
+	<satellite code="S113E"   description="Palapa D &amp; Koreasat 5" />
+	<satellite code="S116E"   description="Koreasat 6" />
+	<satellite code="S118E"   description="Telkom 2" />
+	<satellite code="S122.2E" description="Asiasat 4" />
+	<satellite code="S124E"   description="JCSAT 4A" />
+	<satellite code="S125E"   description="Chinasat 6A" />
+	<satellite code="S128E"   description="JCSAT RA" />
+	<satellite code="S132E"   description="Vinasat 1 &amp; JCSAT5A" />
+	<satellite code="S134E"   description="Apstar 6" />
+	<satellite code="S138E"   description="Telstar 18" />
+	<satellite code="S140E"   description="Express AM3" />
+	<satellite code="S144E"   description="Superbird C2" />
+	<satellite code="S146E"   description="ABS 5" />
+	<satellite code="S150E"   description="JCSAT 1B" />
+	<satellite code="S152E"   description="Optus D2" />
+	<satellite code="S154E"   description="JCSAT 2A" />
+	<satellite code="S156E"   description="Optus C1/D3" />
+	<satellite code="S160E"   description="Optus D1" />
+	<satellite code="S162E"   description="Superbird B2" />
+	<satellite code="S164E"   description="Optus B3" />
+	<satellite code="S166E"   description="Intelsat 8" />
+	<satellite code="S169E"   description="Intelsat 5" />
+	<satellite code="S172E"   description="GE 23" />
+	<satellite code="S180E"   description="Intelsat 701" />
+	<satellite code="S177W"   description="NSS 9" />
+	<!-- Atlantic -->
+	<satellite code="S1W"     description="Thor 5/6 &amp; Intelsat 10-02" />
+	<satellite code="S4W"     description="Amos 2/3" />
+	<satellite code="S5W"     description="Atlantic Bird 3" />
+	<satellite code="S7W"     description="Nilesat 101/102/201 &amp; Atlantic Bird 4A" />
+	<satellite code="S8W"     description="Telecom 2D &amp; Atlantic Bird 2" />
+	<satellite code="S11W"    description="Express AM44" />
+	<satellite code="S12.5W"  description="Atlantic Bird 1" />
+	<satellite code="S14W"    description="Express A4" />
+	<satellite code="S15W"    description="Telstar 12" />
+	<satellite code="S18W"    description="Intelsat 901" />
+	<satellite code="S20W"    description="NSS 5" />
+	<satellite code="S22W"    description="NSS 7" />
+	<satellite code="S24.5W"  description="Intelsat 905" />
+	<satellite code="S27.5W"  description="Intelsat 907" />
+	<satellite code="S30W"    description="Hispasat 1C/1D/1E" />
+	<satellite code="S31.5W"  description="Intelsat 25" />
+	<satellite code="S34.5W"  description="Intelsat 903" />
+	<satellite code="S37.5W"  description="NSS 10 &amp; Telstar 11N" />
+	<satellite code="S40.5W"  description="NSS 806" />
+	<satellite code="S43W"    description="Intelsat 11" />
+	<satellite code="S45W"    description="Intelsat 14" />
+	<satellite code="S50W"    description="Intelsat 1R" />
+	<satellite code="S53W"    description="Intelsat 707" />
+	<satellite code="S55.5W"  description="Intelsat 805" />
+	<satellite code="S58W"    description="Intelsat 9/16" />
+	<satellite code="S61W"    description="Amazonas 1/2" />
+	<!-- America -->
+	<satellite code="S61.5W"  description="Echostar 12/15" />
+	<satellite code="S63W"    description="Telstar 14R" />
+	<satellite code="S65W"    description="Star One C1" />
+	<satellite code="S70W"    description="Star One C2" />
+	<satellite code="S72W"    description="AMC 6" />
+	<satellite code="S72.5W"  description="DirecTV 1R &amp; Nimiq 5" />
+	<satellite code="S74W"    description="Horizons 2" />
+	<satellite code="S77W"    description="Echostar 1/8" />
+	<satellite code="S79W"    description="AMC 2/5" />
+	<satellite code="S82W"    description="Nimiq 4" />
+	<satellite code="S83W"    description="AMC 9" />
+	<satellite code="S84W"    description="Brasilsat B4" />
+	<satellite code="S85W"    description="AMC 16" />
+	<satellite code="S85.1W"  description="XM 3" />
+	<satellite code="S87W"    description="AMC 3" />
+	<satellite code="S89W"    description="Galaxy 28" />
+	<satellite code="S91W"    description="Galaxy 17 &amp; Nimiq 1" />
+	<satellite code="S93W"    description="Galaxy 25" />
+	<satellite code="S95W"    description="Galaxy 3C" />
+	<satellite code="S97W"    description="Galaxy 19" />
+	<satellite code="S99W"    description="Galaxy 16" />
+	<satellite code="S99.2W"  description="Spaceway 2 &amp; DirecTV 11" />
+	<satellite code="S101W"   description="DirecTV 4S/8 &amp; SES 1" />
+	<satellite code="S103W"   description="AMC 1" />
+	<satellite code="S105W"   description="AMC 15/18" />
+	<satellite code="S107.3W" description="Anik F1/F1R" />
+	<satellite code="S110W"   description="DirecTV 5 &amp; Echostar 10/11" />
+	<satellite code="S111.1W" description="Anik F2" />
+	<satellite code="S113W"   description="SatMex 6" />
+	<satellite code="S116.8W" description="SatMex 5" />
+	<satellite code="S118.8W" description="Anik F3" />
+	<satellite code="S119W"   description="Echostar 14 &amp; DirecTV 7S" />
+	<satellite code="S121W"   description="Echostar 9/Galaxy 23" />
+	<satellite code="S123W"   description="Galaxy 18" />
+	<satellite code="S125W"   description="Galaxy 14 &amp; AMC 21" />
+	<satellite code="S127W"   description="Galaxy 13/Horizons 1" />
+	<satellite code="S129W"   description="Ciel 2" />
+	<satellite code="S131W"   description="AMC 11" />
+	<satellite code="S133W"   description="Galaxy 13/15" />
+	<satellite code="S135W"   description="AMC 10" />
+	<satellite code="S137W"   description="AMC 7" />
+	<satellite code="S139W"   description="AMC 8" />
+	<!-- Cable -->
+	<satellite code="C"       description="DVB-C" />
+	<!-- Terrestrial -->
+	<satellite code="T"       description="DVB-T" />
+	<!-- ATSC -->
+	<satellite code="A"       description="ATSC" />
+	<!-- Plugins -->
+	<satellite code="I"       description="IPTV" />
+	<satellite code="V"       description="Analog Video" />
+</satellites>
