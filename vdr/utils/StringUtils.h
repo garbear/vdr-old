@@ -136,4 +136,12 @@ public:
    */
   static std::string Paramify(const std::string &param);
   static void Tokenize(const std::string& input, std::vector<std::string>& tokens, const std::string& delimiters);
+
+  /*! \brief Convert a string to an integer.
+   \param str The string
+   \param intVal The value, untouched if IntVal() returns false
+   \param remainder The string following the parsed integer, or empty if the integer consumed the entire string
+   \return True on success, or false on error (not an int, overflow, etc)
+   */
+  static bool IntVal(const std::string &str, long &intVal, std::string &remainder);
 };

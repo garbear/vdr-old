@@ -37,6 +37,7 @@
 
 #include <algorithm>
 #include <assert.h>
+#include <errno.h>
 #include <locale>
 #include <math.h>
 #include <sstream>
@@ -894,4 +895,22 @@ void StringUtils::Tokenize(const std::string& input, std::vector<std::string>& t
     // Find next "non-delimiter"
     pos = input.find_first_of(delimiters, lastPos);
   }
+}
+
+bool StringUtils::IntVal(const std::string &str, long &intVal, std::string &remainder)
+{
+  if (!str.empty)
+  {
+    const char *s = str.c_str();
+    char *p = NULL;
+    errno = 0;
+    long n = strtol(s, &p, 10);
+    if (!errno && s != p)
+    {
+      intVal = n;
+      remainder = p;
+      return true;
+    }
+  }
+  return false;
 }
