@@ -905,7 +905,7 @@ bool StringUtils::IntVal(const std::string &str, long &intVal)
 
 bool StringUtils::IntVal(const std::string &str, long &intVal, std::string &remainder)
 {
-  if (!str.empty)
+  if (!str.empty())
   {
     const char *s = str.c_str();
     char *p = NULL;

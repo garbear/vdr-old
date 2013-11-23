@@ -21,7 +21,8 @@
 
 #include "DVBSourceParams.h"
 #include "utils/StringUtils.h"
-#include "channels.h"
+//#include "channels.h"
+class cChannel { };
 #include "i18n.h"
 
 #include <ctype.h> // for toupper
@@ -340,13 +341,13 @@ cDvbSourceParams::cDvbSourceParams(char source, const string &strDescription)
 
 void cDvbSourceParams::SetData(const cChannel &channel)
 {
-  m_srate = channel.Srate();
-  m_dtp.Deserialize(channel.Parameters());
+  //m_srate = channel.Srate();
+  //m_dtp.Deserialize(channel.Parameters());
 }
 
 void cDvbSourceParams::GetData(cChannel &channel) const
 {
-  channel.SetTransponderData(channel.Source(), channel.Frequency(), m_srate, m_dtp.Serialize(Source()).c_str(), true);
+  //channel.SetTransponderData(channel.Source(), channel.Frequency(), m_srate, m_dtp.Serialize(Source()).c_str(), true);
   // TODO: Overload index operators
   //channel[frequency][source] = TransponderData
 }

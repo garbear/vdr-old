@@ -86,8 +86,8 @@ DEVICESSUBSYSLIB = $(DEVICESSUBYSDIR)/subsystems.a
 FSLIB            = $(FSDIR)/filesystem.a
 SETTINGSLIB      = $(SETTINGSDIR)/settings.a
 SOURCES_LIB          = $(SOURCES_DIR)/sources.a
-SOURCES_DVB_LIB      = $(SOURCES_DVB_DIR)/linux/dvb_sources.a
-SOURCES_DVB_TEST_LIB = $(SOURCES_DVB_TEST_DIR)/linux/test/dvb_sources_test.a
+SOURCES_DVB_LIB      = $(SOURCES_DVB_DIR)/dvb_sources.a
+SOURCES_DVB_TEST_LIB = $(SOURCES_DVB_TEST_DIR)/dvb_sources_test.a
 UTILSLIB         = $(UTILSDIR)/utils.a
 
 #VDRLIBS = $(VDRLIB) \
@@ -100,7 +100,8 @@ UTILSLIB         = $(UTILSDIR)/utils.a
 
 VDRLIBS = $(VDRLIB) \
           $(SOURCES_LIB) \
-          $(SOURCES_DVB_LIB)
+          $(SOURCES_DVB_LIB) \
+          $(UTILSLIB)
 
 VDRTESTLIBS = $(VDRTESTLIB) \
               $(SOURCES_DVB_TEST_LIB)
@@ -251,8 +252,8 @@ $(SOURCES_DVB_LIB):
 $(SOURCES_DVB_TEST_LIB):
 	$(MAKE) --no-print-directory -C $(SOURCES_DVB_TEST_DIR) CPPFLAGS="$(CPPFLAGS)" CXXFLAGS="$(CXXFLAGS)" DEFINES="$(CDEFINES)" INCLUDES="$(INCLUDES)" all
 
-#$(UTILSLIB):
-#	$(MAKE) --no-print-directory -C $(UTILSDIR) CXXFLAGS="$(CXXFLAGS)" DEFINES="$(CDEFINES)" all
+$(UTILSLIB):
+	$(MAKE) --no-print-directory -C $(UTILSDIR) CXXFLAGS="$(CXXFLAGS)" DEFINES="$(CDEFINES)" all
 
 # pkg-config file:
 

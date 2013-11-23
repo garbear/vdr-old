@@ -31,7 +31,7 @@ using namespace std;
  * Ensure the object is constructed with the expected default values. This will
  * ensure further tests on an object with default values.
  */
-TEST(cDvbTransponderParams, DefaultValues)
+TEST(DvbTransponderParams, DefaultValues)
 {
   cDvbTransponderParams params;
   EXPECT_EQ(params.Polarization(), 0);
@@ -51,7 +51,7 @@ TEST(cDvbTransponderParams, DefaultValues)
 /*
  * Test serialization of default parameters.
  */
-TEST(cDvbTransponderParams, Serialize)
+TEST(DvbTransponderParams, Serialize)
 {
   cDvbTransponderParams params;
   string serialized;

@@ -17,7 +17,7 @@ OBJS = Base64.o \
        CalendarUtils.o \
        CharSetConverter.o \
        StringUtils.o \
-       UTF8Utils.o
+       #UTF8Utils.o
 
 ### Implicit rules:
 
