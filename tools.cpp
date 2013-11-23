@@ -842,30 +842,6 @@ bool cPoller::Poll(int TimeoutMs)
   return false;
 }
 
-// --- cReadDir --------------------------------------------------------------
-
-cReadDir::cReadDir(const char *Directory)
-{
-  directory = opendir(Directory);
-}
-
-cReadDir::~cReadDir()
-{
-  if (directory)
-     closedir(directory);
-}
-
-struct dirent *cReadDir::Next(void)
-{
-  if (directory) {
-     while (readdir_r(directory, &u.d, &result) == 0 && result) {
-           if (strcmp(result->d_name, ".") && strcmp(result->d_name, ".."))
-              return result;
-           }
-     }
-  return NULL;
-}
-
 bool GetSubDirectories(const string &strDirectory, vector<string> &vecFileNames)
 {
   vecFileNames.clear();

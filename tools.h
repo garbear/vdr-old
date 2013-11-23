@@ -231,21 +231,6 @@ public:
   bool Poll(int TimeoutMs = 0);
   };
 
-class cReadDir {
-private:
-  DIR *directory;
-  struct dirent *result;
-  union { // according to "The GNU C Library Reference Manual"
-    struct dirent d;
-    char b[offsetof(struct dirent, d_name) + NAME_MAX + 1];
-    } u;
-public:
-  cReadDir(const char *Directory);
-  ~cReadDir();
-  bool Ok(void) { return directory != NULL; }
-  struct dirent *Next(void);
-  };
-
 class cVDRFile {
 private:
   static bool files[];

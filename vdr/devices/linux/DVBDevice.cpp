@@ -34,6 +34,7 @@
 #include "../../devices/subsystems/DeviceVideoFormatSubsystem.h"
 #include "filesystem/Directory.h"
 #include "filesystem/File.h"
+#include "filesystem/ReadDir.h"
 #include "sources/linux/DVBSourceParams.h"
 #include "../../utils/StringUtils.h"
 #include "../../../dvbci.h"
@@ -157,35 +158,49 @@ bool cDvbDevice::Initialize()
   vector<string> vecNodes;
 
   // Enumerate /dev/dvb
-  cDirectoryListing items;
-  if (cDirectory::GetDirectory(DEV_DVB_BASE, items))
+  //cDirectoryListing items;
+  vector<string> vecNodes;
+
+  //if (cDirectory::GetDirectory(DEV_DVB_BASE, items))
+  cReadDir DvbDir(DEV_DVB_BASE);
+  if (DvbDir.Ok())
   {
-    for (cDirectoryListing::const_iterator itemIt = items.begin(); itemIt != items.end(); ++itemIt)
+    //for (cDirectoryListing::const_iterator itemIt = items.begin(); itemIt != items.end(); ++itemIt)
+    struct dirent *a;
+    while ((a = DvbDir.Next()) != NULL)
     {
       // Adapter node must begin with "adapter"
-      if (!itemIt->Name().find(DEV_DVB_ADAPTER) != string::npos)
+      //if (!itemIt->Name().find(DEV_DVB_ADAPTER) != string::npos)
+      if (strstr(a->d_name, DEV_DVB_ADAPTER) != a->d_name)
         continue;
 
       // Get adapter index from directory name
       long adapter;
-      if (!StringUtils::IntVal(itemIt->Name().substr(strlen(DEV_DVB_ADAPTER)), adapter))
-        continue;
+      //if (!StringUtils::IntVal(itemIt->Name().substr(strlen(DEV_DVB_ADAPTER)), adapter))
+      //  continue;
+      adapter = strtol(a->d_name + strlen(DEV_DVB_ADAPTER), NULL, 10);
 
       // Enumerate /dev/dvb/adapterN
-      cDirectoryListing items2;
+      //cDirectoryListing items2;
       // TODO: Need AddFileToDirectory() function
-      if (!cDirectory::GetDirectory(DEV_DVB_BASE "/" + itemIt->Name(), items))
+      //if (!cDirectory::GetDirectory(DEV_DVB_BASE "/" + itemIt->Name(), items))
+      cReadDir AdapterDir(AddDirectory(DEV_DVB_BASE, a->d_name));
+      if (AdapterDir.Ok())
       {
-        for (cDirectoryListing::const_iterator itemIt2 = items2.begin(); itemIt2 != items2.end(); ++itemIt2)
+        //for (cDirectoryListing::const_iterator itemIt2 = items2.begin(); itemIt2 != items2.end(); ++itemIt2)
+        struct dirent *f;
+        while ((f = AdapterDir.Next()) != NULL)
         {
           // Frontend node must begin with "frontend"
-          if (!itemIt->Name().find(DEV_DVB_FRONTEND) != string::npos)
+          //if (!itemIt->Name().find(DEV_DVB_FRONTEND) != string::npos)
+          if (strstr(f->d_name, DEV_DVB_FRONTEND) != f->d_name)
             continue;
 
           // Get frontend index from directory name
           long frontend;
-          if (!StringUtils::IntVal(itemIt2->Name().substr(strlen(DEV_DVB_FRONTEND)), frontend))
-            continue;
+          //if (!StringUtils::IntVal(itemIt2->Name().substr(strlen(DEV_DVB_FRONTEND)), frontend))
+          //  continue;
+          frontend = strtol(f->d_name + strlen(DEV_DVB_FRONTEND), NULL, 10);
 
           // Got our (adapter, frontend) pair, add it to the array
           vecNodes.push_back(StringUtils::Format("%2d %2d", adapter, frontend));
@@ -194,8 +209,7 @@ bool cDvbDevice::Initialize()
     }
   }
 
-  int Checked = 0;
-  int found = 0;
+  unsigned int found = 0;
   if (!vecNodes.empty())
   {
     std::sort(vecNodes.begin(), vecNodes.end());
@@ -207,16 +221,13 @@ bool cDvbDevice::Initialize()
       {
         if (Exists(adapter, frontend))
         {
-          if (Checked++ < MAXDVBDEVICES)
+          if (cDeviceManager::Get().UseDevice(0/*cDeviceManager::Get().NextCardIndex()*/))
           {
-            if (cDeviceManager::Get().UseDevice(0/*cDeviceManager::Get().NextCardIndex()*/))
-            {
-              if (Probe(adapter, frontend))
-                found++;
-            }
-            else
-              cDeviceManager::Get().AdvanceCardIndex(1); // skips this one
+            if (Probe(adapter, frontend))
+              found++;
           }
+          else
+            cDeviceManager::Get().AdvanceCardIndex(1); // skips this one
         }
       }
     }
@@ -488,15 +499,15 @@ bool cDvbDevice::QueryDeliverySystems(int fd_frontend)
       ds = StringUtils::Format("%s%s%s", ds.c_str(), i ? "," : "", DeliverySystemNames[m_deliverySystems[i]]);
 
     string ms;
-    if (m_frontendInfo.caps & FE_CAN_QPSK)      { m_numModulations++; ms = StringUtils::Format("%s%s%s", ms.c_str(), !ms.empty() ? "," : "", DvbParameters::MapToUserString(QPSK, ModulationValues)); }
-    if (m_frontendInfo.caps & FE_CAN_QAM_16)    { m_numModulations++; ms = StringUtils::Format("%s%s%s", ms.c_str(), !ms.empty() ? "," : "", DvbParameters::MapToUserString(QAM_16, ModulationValues)); }
-    if (m_frontendInfo.caps & FE_CAN_QAM_32)    { m_numModulations++; ms = StringUtils::Format("%s%s%s", ms.c_str(), !ms.empty() ? "," : "", DvbParameters::MapToUserString(QAM_32, ModulationValues)); }
-    if (m_frontendInfo.caps & FE_CAN_QAM_64)    { m_numModulations++; ms = StringUtils::Format("%s%s%s", ms.c_str(), !ms.empty() ? "," : "", DvbParameters::MapToUserString(QAM_64, ModulationValues)); }
-    if (m_frontendInfo.caps & FE_CAN_QAM_128)   { m_numModulations++; ms = StringUtils::Format("%s%s%s", ms.c_str(), !ms.empty() ? "," : "", DvbParameters::MapToUserString(QAM_128, ModulationValues)); }
-    if (m_frontendInfo.caps & FE_CAN_QAM_256)   { m_numModulations++; ms = StringUtils::Format("%s%s%s", ms.c_str(), !ms.empty() ? "," : "", DvbParameters::MapToUserString(QAM_256, ModulationValues)); }
-    if (m_frontendInfo.caps & FE_CAN_8VSB)      { m_numModulations++; ms = StringUtils::Format("%s%s%s", ms.c_str(), !ms.empty() ? "," : "", DvbParameters::MapToUserString(VSB_8, ModulationValues)); }
-    if (m_frontendInfo.caps & FE_CAN_16VSB)     { m_numModulations++; ms = StringUtils::Format("%s%s%s", ms.c_str(), !ms.empty() ? "," : "", DvbParameters::MapToUserString(VSB_16, ModulationValues)); }
-    if (m_frontendInfo.caps & FE_CAN_TURBO_FEC) { m_numModulations++; ms = StringUtils::Format("%s%s%s", ms.c_str(), !ms.empty() ? "," : "", "TURBO_FEC"); }
+    if (m_frontendInfo.caps & FE_CAN_QPSK)      { m_numModulations++; ms += StringUtils::Format("%s%s", !ms.empty() ? "," : "", DvbParameters::MapToUserString(QPSK, ModulationValues)); }
+    if (m_frontendInfo.caps & FE_CAN_QAM_16)    { m_numModulations++; ms += StringUtils::Format("%s%s", !ms.empty() ? "," : "", DvbParameters::MapToUserString(QAM_16, ModulationValues)); }
+    if (m_frontendInfo.caps & FE_CAN_QAM_32)    { m_numModulations++; ms += StringUtils::Format("%s%s", !ms.empty() ? "," : "", DvbParameters::MapToUserString(QAM_32, ModulationValues)); }
+    if (m_frontendInfo.caps & FE_CAN_QAM_64)    { m_numModulations++; ms += StringUtils::Format("%s%s", !ms.empty() ? "," : "", DvbParameters::MapToUserString(QAM_64, ModulationValues)); }
+    if (m_frontendInfo.caps & FE_CAN_QAM_128)   { m_numModulations++; ms += StringUtils::Format("%s%s", !ms.empty() ? "," : "", DvbParameters::MapToUserString(QAM_128, ModulationValues)); }
+    if (m_frontendInfo.caps & FE_CAN_QAM_256)   { m_numModulations++; ms += StringUtils::Format("%s%s", !ms.empty() ? "," : "", DvbParameters::MapToUserString(QAM_256, ModulationValues)); }
+    if (m_frontendInfo.caps & FE_CAN_8VSB)      { m_numModulations++; ms += StringUtils::Format("%s%s", !ms.empty() ? "," : "", DvbParameters::MapToUserString(VSB_8, ModulationValues)); }
+    if (m_frontendInfo.caps & FE_CAN_16VSB)     { m_numModulations++; ms += StringUtils::Format("%s%s", !ms.empty() ? "," : "", DvbParameters::MapToUserString(VSB_16, ModulationValues)); }
+    if (m_frontendInfo.caps & FE_CAN_TURBO_FEC) { m_numModulations++; ms += StringUtils::Format("%s%s", !ms.empty() ? "," : "", "TURBO_FEC"); }
     if (ms.empty())
       ms = "unknown modulations";
 

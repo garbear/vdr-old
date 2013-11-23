@@ -27,7 +27,7 @@
 #include <linux/dvb/frontend.h>
 #include <string>
 
-#define MAXDVBDEVICES      8
+//#define MAXDVBDEVICES      8
 #define MAXDELIVERYSYSTEMS 8
 
 #define DEV_VIDEO         "/dev/video"
