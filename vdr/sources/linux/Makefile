@@ -29,7 +29,7 @@ INCLUDES += -I$(CWD)
 
 ### The object files (add further files here):
 
-OBJS = TestVDRDaemon.o
+OBJS = DVBSourceParams.o
 
 ### Implicit rules:
 
@@ -47,9 +47,9 @@ $(DEPFILE): Makefile
 
 ### Targets:
 
-all: vdr_test.a
+all: dvb_sources.a
 
-vdr_test.a : $(OBJS)
+dvb_sources.a : $(OBJS)
 	$(AR) $(ARFLAGS) $@ $(OBJS)
 
 clean:

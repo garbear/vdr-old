@@ -21,18 +21,24 @@
 
 #include "DVBSourceParams.h"
 #include "utils/StringUtils.h"
-#include "../../../i18n.h"
-#include "../../../menuitems.h"
-#include "../../../osdbase.h"
+#include "channels.h"
+#include "i18n.h"
 
-#include <assert.h>
 #include <ctype.h> // for toupper
-#include <linux/dvb/frontend.h>
 #include <sstream>
-#include <stdio.h>
-#include <string.h>
 
 using namespace std;
+
+#ifndef ARRAY_SIZE
+#define ARRAY_SIZE(x)  (sizeof(x) / sizeof(x[0]))
+#endif
+
+struct tDvbParameter
+{
+  int         userValue;
+  int         driverValue;
+  const char *userString;
+};
 
 const tDvbParameter _InversionValues[] =
 {
@@ -40,6 +46,7 @@ const tDvbParameter _InversionValues[] =
   {   1, INVERSION_ON,   trNOOP("on") },
   { 999, INVERSION_AUTO, trNOOP("auto") },
 };
+
 const tDvbParameter _BandwidthValues[] =
 {
   {    5,  5000000, "5 MHz" },
@@ -135,148 +142,9 @@ const tDvbParameter _RollOffValues[] =
   {  35, ROLLOFF_35, "0.35" },
 };
 
-const DvbParameterVector &cDvbParameters::InversionValues()
-{
-  static DvbParameterVector values;
-  if (values.empty())
-  {
-    values = ArrayToVector(_InversionValues);
-  }
-  return values;
-}
-
-/*!
- * \brief Break a C array out into a std::vector
- * \param dvbParam the tDvbParameterMap array
- * \return A vector of pointers
- */
-template <size_t N>
-DvbParameterVector ArrayToVector(const tDvbParameter (&dvbParam)[N])
-{
-  DvbParameterVector ret;
-  for (unsigned int i = 0; i < N; i++)
-    ret.push_back(&dvbParam[i]);
-  return ret;
-}
-
-// --- DVB Parameter Maps ----------------------------------------------------
-
-string cDvbParameters::MapToUserString(int value, const DvbParameterVector &vecParams)
-{
-  for (DvbParameterVector::const_iterator paramIt = vecParams.begin(); paramIt != vecParams.end(); ++paramIt)
-  {
-    if ((*paramIt)->driverValue == value)
-      return (*paramIt)->userString;
-  }
-  return "???";
-}
-
-int cDvbParameters::MapToUser(int value, const DvbParameterVector &vecParams, string &strString)
-{
-  for (DvbParameterVector::const_iterator paramIt = vecParams.begin(); paramIt != vecParams.end(); ++paramIt)
-  {
-    if ((*paramIt)->driverValue == value)
-    {
-      strString = tr((*paramIt)->userString.c_str());
-      return (*paramIt)->userValue;
-    }
-  }
-  return -1;
-}
-
-int cDvbParameters::MapToDriver(int value, const DvbParameterVector &vecParams)
-{
-  for (DvbParameterVector::const_iterator paramIt = vecParams.begin(); paramIt != vecParams.end(); ++paramIt)
-  {
-    if ((*paramIt)->userValue == value)
-      return (*paramIt)->driverValue;
-  }
-  return -1;
-}
-
-const DvbParameterVector &cDvbParameters::InversionValues()
-{
-  static DvbParameterVector values;
-  if (values.empty())
-    values = ArrayToVector(_InversionValues);
-  return values;
-}
-
-const DvbParameterVector &cDvbParameters::BandwidthValues()
-{
-  static DvbParameterVector values;
-  if (values.empty())
-    values = ArrayToVector(_BandwidthValues);
-  return values;
-}
-
-const DvbParameterVector &cDvbParameters::CoderateValues()
-{
-  static DvbParameterVector values;
-  if (values.empty())
-    values = ArrayToVector(_CoderateValues);
-  return values;
-}
-
-const DvbParameterVector &cDvbParameters::ModulationValues()
-{
-  static DvbParameterVector values;
-  if (values.empty())
-    values = ArrayToVector(_ModulationValues);
-  return values;
-}
-
-const DvbParameterVector &cDvbParameters::SystemValuesSat()
-{
-  static DvbParameterVector values;
-  if (values.empty())
-    values = ArrayToVector(_SystemValuesSat);
-  return values;
-}
-
-const DvbParameterVector &cDvbParameters::SystemValuesTerr()
-{
-  static DvbParameterVector values;
-  if (values.empty())
-    values = ArrayToVector(_SystemValuesTerr);
-  return values;
-}
-
-const DvbParameterVector &cDvbParameters::TransmissionValues()
-{
-  static DvbParameterVector values;
-  if (values.empty())
-    values = ArrayToVector(_TransmissionValues);
-  return values;
-}
-
-const DvbParameterVector &cDvbParameters::GuardValues()
-{
-  static DvbParameterVector values;
-  if (values.empty())
-    values = ArrayToVector(_GuardValues);
-  return values;
-}
-
-const DvbParameterVector &cDvbParameters::HierarchyValues()
-{
-  static DvbParameterVector values;
-  if (values.empty())
-    values = ArrayToVector(_HierarchyValues);
-  return values;
-}
-
-const DvbParameterVector &cDvbParameters::RollOffValues()
-{
-  static DvbParameterVector values;
-  if (values.empty())
-    values = ArrayToVector(_RollOffValues);
-  return values;
-}
-
 // --- cDvbTransponderParameters ---------------------------------------------
 
-cDvbTransponderParameters::cDvbTransponderParameters(const string &strParameters)
+cDvbTransponderParams::cDvbTransponderParams(const string &strParameters)
  : m_polarization(0),
    m_inversion(INVERSION_AUTO),
    m_bandwidth(8000000),
@@ -293,134 +161,179 @@ cDvbTransponderParameters::cDvbTransponderParameters(const string &strParameters
   Deserialize(strParameters);
 }
 
-string cDvbTransponderParameters::PrintParameter(char name, int value)
+/*!
+ * \brief Serialization helper function
+ * \param name The parameter name (upper case letter)
+ * \param paramValue The parameter's value
+ * \return Concatenated string of name + parameter's value
+ */
+string SerializeDriverValue(char name, int paramValue)
 {
-  char buffer[64] = {0};
-  if (0 <= value && value != 999)
-    sprintf(buffer, "%c%d", name, value);
-
-  return buffer;
+  return StringUtils::Format("%c%d", name, paramValue);
 }
 
-string cDvbTransponderParameters::Serialize(char type) const
+/*!
+ * \brief Serialization helper function
+ * \param name The parameter name (upper case letter)
+ * \param driverValue The parameter's driver value
+ * \param dvbParamTable The DVB parameter lookup table (see tables above)
+ * \return Concatenated string of name + parameter's user value
+ */
+template <size_t N>
+string SerializeDriverValue(char name, int driverValue, const tDvbParameter (&dvbParamTable)[N])
+{
+  for (unsigned int i = 0; i < N; i++)
+  {
+    if (dvbParamTable[i].driverValue == driverValue)
+      return StringUtils::Format("%c%d", name, dvbParamTable[i].userValue);
+  }
+  return "";
+}
+
+string cDvbTransponderParams::Serialize(char type) const
 {
   stringstream strBuffer;
-  string dummy;
 
   if (type == 'A')
   {
-    strBuffer << PrintParameter('I', cDvbParameters::MapToUser(m_inversion, cDvbParameters::InversionValues(), dummy));
-    strBuffer << PrintParameter('M', cDvbParameters::MapToUser(m_modulation, cDvbParameters::ModulationValues(), dummy));
+    strBuffer << SerializeDriverValue('I', m_inversion,    _InversionValues);
+    strBuffer << SerializeDriverValue('M', m_modulation,   _ModulationValues);
   }
   else if (type == 'C')
   {
-    strBuffer << PrintParameter('C', cDvbParameters::MapToUser(m_coderateH, cDvbParameters::CoderateValues(), dummy));
-    strBuffer << PrintParameter('I', cDvbParameters::MapToUser(m_inversion, cDvbParameters::InversionValues(), dummy));
-    strBuffer << PrintParameter('M', cDvbParameters::MapToUser(m_modulation, cDvbParameters::ModulationValues(), dummy));
+    strBuffer << SerializeDriverValue('C', m_coderateH,    _CoderateValues);
+    strBuffer << SerializeDriverValue('I', m_inversion,    _InversionValues);
+    strBuffer << SerializeDriverValue('M', m_modulation,   _ModulationValues);
   }
   else if (type == 'S')
   {
-    char buffer[64] = {0};
-    sprintf(buffer, "%c", m_polarization); // Empty value
-    strBuffer << buffer;
-    strBuffer << PrintParameter('C', cDvbParameters::MapToUser(m_coderateH, cDvbParameters::CoderateValues(), dummy));
-    strBuffer << PrintParameter('I', cDvbParameters::MapToUser(m_inversion, cDvbParameters::InversionValues(), dummy));
-    strBuffer << PrintParameter('M', cDvbParameters::MapToUser(m_modulation, cDvbParameters::ModulationValues(), dummy));
+    strBuffer << StringUtils::Format("%c", m_polarization);
+    strBuffer << SerializeDriverValue('C', m_coderateH,    _CoderateValues);
+    strBuffer << SerializeDriverValue('I', m_inversion,    _InversionValues);
+    strBuffer << SerializeDriverValue('M', m_modulation,   _ModulationValues);
     if (m_system == 1)
     {
-      strBuffer << PrintParameter('O', cDvbParameters::MapToUser(m_rollOff, cDvbParameters::RollOffValues(), dummy));
-      strBuffer << PrintParameter('P', m_streamId);
+      strBuffer << SerializeDriverValue('O', m_rollOff,    _RollOffValues);
+      strBuffer << SerializeDriverValue('P', m_streamId);
     }
-    strBuffer << PrintParameter('S', cDvbParameters::MapToUser(m_system, cDvbParameters::SystemValuesSat(), dummy)); // we only need the numerical value, so Sat or Terr doesn't matter
+    strBuffer << SerializeDriverValue('S', m_system,       _SystemValuesSat); // we only need the numerical value, so Sat or Terr doesn't matter
   }
   else if (type == 'T')
   {
-    strBuffer << PrintParameter('B', cDvbParameters::MapToUser(m_bandwidth, cDvbParameters::BandwidthValues(), dummy));
-    strBuffer << PrintParameter('C', cDvbParameters::MapToUser(m_coderateH, cDvbParameters::CoderateValues(), dummy));
-    strBuffer << PrintParameter('D', cDvbParameters::MapToUser(m_coderateL, cDvbParameters::CoderateValues(), dummy));
-    strBuffer << PrintParameter('G', cDvbParameters::MapToUser(m_guard, cDvbParameters::GuardValues(), dummy));
-    strBuffer << PrintParameter('I', cDvbParameters::MapToUser(m_inversion, cDvbParameters::InversionValues(), dummy));
-    strBuffer << PrintParameter('M', cDvbParameters::MapToUser(m_modulation, cDvbParameters::ModulationValues(), dummy));
+    strBuffer << SerializeDriverValue('B', m_bandwidth,    _BandwidthValues);
+    strBuffer << SerializeDriverValue('C', m_coderateH,    _CoderateValues);
+    strBuffer << SerializeDriverValue('D', m_coderateL,    _CoderateValues);
+    strBuffer << SerializeDriverValue('G', m_guard,        _GuardValues);
+    strBuffer << SerializeDriverValue('I', m_inversion,    _InversionValues);
+    strBuffer << SerializeDriverValue('M', m_modulation,   _ModulationValues);
     if (m_system == 1)
-      strBuffer << PrintParameter('P', m_streamId);
-    strBuffer << PrintParameter('S', cDvbParameters::MapToUser(m_system, cDvbParameters::SystemValuesSat(), dummy)); // we only need the numerical value, so Sat or Terr doesn't matter
-    strBuffer << PrintParameter('T', cDvbParameters::MapToUser(m_transmission, cDvbParameters::TransmissionValues(), dummy));
-    strBuffer << PrintParameter('Y', cDvbParameters::MapToUser(m_hierarchy, cDvbParameters::HierarchyValues(), dummy));
+      strBuffer << SerializeDriverValue('P', m_streamId);
+    strBuffer << SerializeDriverValue('S', m_system,       _SystemValuesSat); // we only need the numerical value, so Sat or Terr doesn't matter
+    strBuffer << SerializeDriverValue('T', m_transmission, _TransmissionValues);
+    strBuffer << SerializeDriverValue('Y', m_hierarchy,    _HierarchyValues);
   }
 
   return strBuffer.str();
 }
 
-string cDvbTransponderParameters::ParseFirstParameter(const string &paramString, int &value)
+/*!
+ * \brief Deserialization helper function
+ * \param str The serialized string beginning with the parameter's value
+ * \param paramValue The param whose value is set
+ *
+ * If successful, str will be truncated just past the number (e.g. "99C3..."
+ * becomes "C3..."). Otherwise, str will be cleared (stopping deserialization).
+ */
+void DeserializeDriverValue(string &str, int &paramValue)
 {
-  long n;
-  string remainder;
-  if (StringUtils::IntVal(paramString.substr(1), n, remainder))
-  {
-    value = n;
-    if (value >= 0)
-      return remainder;
-  }
-
-  esyslog("ERROR: invalid parameter value: %s", paramString.c_str());
-  return "";
+  long temp;
+  if (StringUtils::IntVal(str, temp, str))
+    paramValue = temp;
+  else
+    str = ""; // Don't continue deserializing
 }
 
-string cDvbTransponderParameters::ParseFirstParameter(const string &paramString, int &value, const DvbParameterVector &vecParams)
+/*!
+ * \brief Deserialization helper function
+ * \param str The serialized string beginning with the parameter's user value
+ * \param driverValue The param whose value is set
+ * \param dvbParamTable The DVB parameter lookup table (see tables above)
+ *
+ * If str begins with a number, it will be truncated just past the number (e.g.
+ * "99C3..." becomes "C3..."). If the user value doesn't exist in the lookup
+ * table, the string will still be truncated but driverValue will be untouched.
+ * If str doesn't begin with a number, str will be cleared (stopping
+ * deserialization).
+ */
+template <size_t N>
+void DeserializeDriverValue(string &str, int &driverValue, const tDvbParameter (&dvbParamTable)[N])
 {
-  assert(!vecParams.empty());
-  long n;
-  string remainder;
-  // Skip the
-  if (StringUtils::IntVal(paramString.substr(1), n, remainder))
+  long userValue;
+  if (StringUtils::IntVal(str, userValue, str))
   {
-    value = cDvbParameters::MapToDriver(n, vecParams);
-    if (value >= 0)
-      return remainder;
+    for (unsigned int i = 0; i < N; i++)
+    {
+      if (dvbParamTable[i].userValue == userValue)
+        driverValue = dvbParamTable[i].userValue;
+    }
   }
-
-  esyslog("ERROR: invalid parameter value: %s", paramString.c_str());
-  return "";
+  else
+    str = ""; // Don't continue deserializing
 }
 
-bool cDvbTransponderParameters::Deserialize(const std::string &str)
+bool cDvbTransponderParams::Deserialize(const std::string &str)
 {
-  while (str.size())
+  string str2(str);
+  long temp;
+
+  while (str2.size())
   {
-    char c = str[0];
-    str = str.substr(1);
+    char c = str2[0];
+    str2 = str2.substr(1);
+
     switch (toupper(c))
     {
-    case 'B': str = ParseFirstParameter(str, m_bandwidth,    cDvbParameters::BandwidthValues());    break;
-    case 'C': str = ParseFirstParameter(str, m_coderateH,    cDvbParameters::CoderateValues());     break;
-    case 'D': str = ParseFirstParameter(str, m_coderateL,    cDvbParameters::CoderateValues());     break;
-    case 'G': str = ParseFirstParameter(str, m_guard,        cDvbParameters::GuardValues());        break;
-    case 'I': str = ParseFirstParameter(str, m_inversion,    cDvbParameters::InversionValues());    break;
-    case 'M': str = ParseFirstParameter(str, m_modulation,   cDvbParameters::ModulationValues());   break;
-    case 'O': str = ParseFirstParameter(str, m_rollOff,      cDvbParameters::RollOffValues());      break;
-    case 'P': str = ParseFirstParameter(str, m_streamId);                                           break;
-    case 'S': str = ParseFirstParameter(str, m_system,       cDvbParameters::SystemValuesSat());    break; // we only need the numerical value, so Sat or Terr doesn't matter
-    case 'T': str = ParseFirstParameter(str, m_transmission, cDvbParameters::TransmissionValues()); break;
-    case 'Y': str = ParseFirstParameter(str, m_hierarchy,    cDvbParameters::HierarchyValues());    break;
+    case 'B': DeserializeDriverValue(str2, m_bandwidth,    _BandwidthValues);    break;
+    case 'C': DeserializeDriverValue(str2, m_coderateH,    _CoderateValues);     break;
+    case 'D': DeserializeDriverValue(str2, m_coderateL,    _CoderateValues);     break;
+    case 'G': DeserializeDriverValue(str2, m_guard,        _GuardValues);        break;
+    case 'I': DeserializeDriverValue(str2, m_inversion,    _InversionValues);    break;
+    case 'M': DeserializeDriverValue(str2, m_modulation,   _ModulationValues);   break;
+    case 'P': DeserializeDriverValue(str2, m_streamId);                          break;
+    case 'O': DeserializeDriverValue(str2, m_rollOff,      _RollOffValues);      break;
+    case 'S': DeserializeDriverValue(str2, m_system,       _SystemValuesSat);    break; // we only need the numerical value, so Sat or Terr doesn't matter
+    case 'T': DeserializeDriverValue(str2, m_transmission, _TransmissionValues); break;
+    case 'Y': DeserializeDriverValue(str2, m_hierarchy,    _HierarchyValues);    break;
 
-    case 'H': m_polarization = 'H'; break;
-    case 'L': m_polarization = 'L'; break;
-    case 'R': m_polarization = 'R'; break;
-    case 'V': m_polarization = 'V'; break;
+    case 'H':
+    case 'L':
+    case 'R':
+    case 'V':
+      m_polarization = toupper(c); break;
 
     default:
       esyslog("ERROR: unknown parameter key '%c'", c);
       return false;
     }
   }
+
   return true;
+}
+
+const char *cDvbTransponderParams::TranslateModulation(fe_modulation modulation)
+{
+  for (unsigned int i = 0; i < ARRAY_SIZE(_ModulationValues); i++)
+  {
+    if (_ModulationValues[i].driverValue == modulation)
+      return _ModulationValues[i].userString;
+  }
+  return "";
 }
 
 // --- cDvbSourceParams -------------------------------------------------------
 
 cDvbSourceParams::cDvbSourceParams(char source, const string &strDescription)
  : iSourceParams(source, strDescription),
-   m_param(0),
    m_srate(0)
 {
 }
@@ -429,7 +342,6 @@ void cDvbSourceParams::SetData(const cChannel &channel)
 {
   m_srate = channel.Srate();
   m_dtp.Deserialize(channel.Parameters());
-  m_param = 0;
 }
 
 void cDvbSourceParams::GetData(cChannel &channel) const
@@ -438,29 +350,3 @@ void cDvbSourceParams::GetData(cChannel &channel) const
   // TODO: Overload index operators
   //channel[frequency][source] = TransponderData
 }
-
-/*
-cOsdItem *cDvbSourceParams::GetOsdItem()
-{
-  char type = Source();
-  const tDvbParameterMap *SystemValues = (type == 'S' ? SystemValuesSat : SystemValuesTerr);
-  switch (m_param++)
-  {
-    case  0: return strchr("  S ", type) ? new cMenuEditChrItem(tr("Polarization"), &m_dtp.m_polarization, "HVLR")             : GetOsdItem();
-    case  1: return strchr("  ST", type) ? new cMenuEditMapItem(tr("System"),       &m_dtp.m_system,       SystemValues)       : GetOsdItem();
-    case  2: return strchr(" CS ", type) ? new cMenuEditIntItem(tr("Srate"),        &m_srate)                                  : GetOsdItem();
-    case  3: return strchr("ACST", type) ? new cMenuEditMapItem(tr("Inversion"),    &m_dtp.m_inversion,    InversionValues)    : GetOsdItem();
-    case  4: return strchr(" CST", type) ? new cMenuEditMapItem(tr("CoderateH"),    &m_dtp.m_coderateH,    CoderateValues)     : GetOsdItem();
-    case  5: return strchr("   T", type) ? new cMenuEditMapItem(tr("CoderateL"),    &m_dtp.m_coderateL,    CoderateValues)     : GetOsdItem();
-    case  6: return strchr("ACST", type) ? new cMenuEditMapItem(tr("Modulation"),   &m_dtp.m_modulation,   ModulationValues)   : GetOsdItem();
-    case  7: return strchr("   T", type) ? new cMenuEditMapItem(tr("Bandwidth"),    &m_dtp.m_bandwidth,    BandwidthValues)    : GetOsdItem();
-    case  8: return strchr("   T", type) ? new cMenuEditMapItem(tr("Transmission"), &m_dtp.m_transmission, TransmissionValues) : GetOsdItem();
-    case  9: return strchr("   T", type) ? new cMenuEditMapItem(tr("Guard"),        &m_dtp.m_guard,        GuardValues)        : GetOsdItem();
-    case 10: return strchr("   T", type) ? new cMenuEditMapItem(tr("Hierarchy"),    &m_dtp.m_hierarchy,    HierarchyValues)    : GetOsdItem();
-    case 11: return strchr("  S ", type) ? new cMenuEditMapItem(tr("Rolloff"),      &m_dtp.m_rollOff,      RollOffValues)      : GetOsdItem();
-    case 12: return strchr("  ST", type) ? new cMenuEditIntItem(tr("StreamId"),     &m_dtp.m_streamId,     0, 255)             : GetOsdItem();
-    default: return NULL;
-  }
-  return NULL;
-}
-*/

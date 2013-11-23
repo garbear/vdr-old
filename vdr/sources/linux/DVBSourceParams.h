@@ -22,120 +22,82 @@
 
 #include "sources/ISourceParams.h"
 
+#include <linux/dvb/frontend.h>
 #include <string>
-#include <vector>
 
-#define DVB_SYSTEM_1 0 // see also nit.c
-#define DVB_SYSTEM_2 1
+#define DVB_SYSTEM_1  0 // see also nit.c
+#define DVB_SYSTEM_2  1
 
-struct tDvbParameter
+class cDvbTransponderParams
 {
-  int         userValue;
-  int         driverValue;
-  std::string userString;
-};
-
-typedef std::vector<const tDvbParameter*> DvbParameterVector;
-
-class cDvbParameters
-{
-  static std::string MapToUserString(int value, const DvbParameterVector &vecParams);
-  static int         MapToUser(int value, const DvbParameterVector &vecParams, std::string &strString); // TODO: strString?
-  static int         MapToDriver(int value, const DvbParameterVector &vecParams);
-
-  static const DvbParameterVector &InversionValues();
-  static const DvbParameterVector &BandwidthValues();
-  static const DvbParameterVector &CoderateValues();
-  static const DvbParameterVector &ModulationValues();
-  static const DvbParameterVector &SystemValuesSat();
-  static const DvbParameterVector &SystemValuesTerr();
-  static const DvbParameterVector &TransmissionValues();
-  static const DvbParameterVector &GuardValues();
-  static const DvbParameterVector &HierarchyValues();
-  static const DvbParameterVector &RollOffValues();
-
-private:
-  /*!
-   * \brief Get the tDvbParameterMap from the vector with a matching value
-   * \param value The value to match
-   * \param vecMap A vector of tDvbParameterMap pointers (returned from the *Values() functions below)
-   * \param map The map, if discovered
-   * \return True if the map was discovered, false if value didn't match any map values
-   */
-  //static bool        DriverIndex(int value, const DvbParameterVector &vecMap, tDvbParameter &map);
-
-  //static int         UserIndex(int value, const DvbParameterVector &vecParams);
-};
-
-class cDvbTransponderParameters
-{
-  friend class cDvbSourceParams;
-
 public:
-  cDvbTransponderParameters(const std::string &strParameters = "");
+  /*!
+   * \brief Create a new cDvbTransponderParams object with default values
+   * \param strParameters If given, the string will be deserialized, overriding
+   *        the members' default values
+   */
+  cDvbTransponderParams(const std::string &strParameters = "");
 
-  char Polarization(void) const { return m_polarization; }
+  char Polarization() const { return m_polarization; }
   void SetPolarization(char polarization) { m_polarization = polarization; }
 
-  int Inversion(void) const { return m_inversion; }
+  int Inversion() const { return m_inversion; }
   void SetInversion(int inversion) { m_inversion = inversion; }
 
-  int Bandwidth(void) const { return m_coderateH; }
+  int Bandwidth() const { return m_coderateH; }
   void SetBandwidth(int bandwidth) { m_bandwidth = bandwidth; }
 
-  int CoderateH(void) const { return m_coderateH; }
+  int CoderateH() const { return m_coderateH; }
   void SetCoderateH(int coderateH) { m_coderateH = coderateH; }
 
-  int CoderateL(void) const { return m_coderateL; }
+  int CoderateL() const { return m_coderateL; }
   void SetCoderateL(int coderateL) { m_coderateL = coderateL; }
 
-  int Modulation(void) const { return m_modulation; }
+  int Modulation() const { return m_modulation; }
   void SetModulation(int modulation) { m_modulation = modulation; }
 
-  int System(void) const { return m_system; }
+  int System() const { return m_system; }
   void SetSystem(int system) { m_system = system; }
 
-  int Transmission(void) const { return m_transmission; }
+  int Transmission() const { return m_transmission; }
   void SetTransmission(int transmission) { m_transmission = transmission; }
 
-  int Guard(void) const { return m_guard; }
+  int Guard() const { return m_guard; }
   void SetGuard(int guard) { m_guard = guard; }
 
-  int Hierarchy(void) const { return m_hierarchy; }
+  int Hierarchy() const { return m_hierarchy; }
   void SetHierarchy(int hierarchy) { m_hierarchy = hierarchy; }
 
-  int RollOff(void) const { return m_rollOff; }
+  int RollOff() const { return m_rollOff; }
   void SetRollOff(int rollOff) { m_rollOff = rollOff; }
 
-  int StreamId(void) const { return m_streamId; }
+  int StreamId() const { return m_streamId; }
   void SetStreamId(int streamId) { m_streamId = streamId; }
 
   /*!
    * \brief Serialize the object to a string using a confusing sequence of
    *        capital letters and variable-length numbers
+   * \param type 'A', 'C', 'S' or 'T', presumably for the DVB type?
+   * \return Serialized string, or empty on invalid type
    */
   std::string Serialize(char type) const;
+
+  /*!
+   * \brief Deserialize a serialized string
+   * \param str The serialized representation of a cDvbTransponderParams object
+   * \return True on success, or false if deserialization fails (the object may
+   *         still be modified in this case)
+   */
   bool Deserialize(const std::string &str);
 
+  /*!
+   * \brief Translate a modulation enum value into its string representation
+   * \param modulation The modulation value, e.g. QAM_256
+   * \return The string representation, e.g. "QAM256"
+   */
+  static const char *TranslateModulation(fe_modulation modulation);
+
 private:
-  /*!
-   * \brief Return a string of name + value
-   * \param name Parameter name (capital letter)
-   * \param value Parameter value (in the range 0..999)
-   * \return The concatenated string, or empty if value lays outside the range
-   */
-  static std::string PrintParameter(char name, int value);
-
-  /*!
-   * \brief Return the value of the first serialized parameter pair in a string
-   * \param paramString The serialized parameter pairs
-   * \param value The discovered parameter value
-   * \param map If map is provided, ParseFirstParameter will interpret the value as the index of a map value
-   * \return The remainder of the string after the parameter pair, or empty on failure
-   */
-  static std::string ParseFirstParameter(const std::string &paramString, int &value);
-  static std::string ParseFirstParameter(const std::string &paramString, int &value, const DvbParameterVector &vecParams);
-
   char m_polarization;
   int  m_inversion;
   int  m_bandwidth;
@@ -151,7 +113,6 @@ private:
 };
 
 class cChannel;
-class cOsdItem;
 
 class cDvbSourceParams : public iSourceParams
 {
@@ -160,8 +121,6 @@ public:
 
   /*!
    * \brief Sets all source specific parameters to those of the given Channel
-   *
-   * Must also reset a counter to use with later calls to GetOsdItem().
    * */
   virtual void SetData(const cChannel &channel);
 
@@ -173,7 +132,6 @@ public:
   //virtual cOsdItem *GetOsdItem();
 
 private:
-  cDvbTransponderParameters m_dtp;
-  int m_param;
-  int m_srate;
+  cDvbTransponderParams m_dtp;
+  int                   m_srate;
 };

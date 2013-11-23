@@ -22,7 +22,7 @@
 
 #include "../Device.h"
 #include "DVBLegacy.h"
-#include "DVBParameters.h"
+#include "sources/linux/DVBSourceParams.h"
 
 #include <linux/dvb/frontend.h>
 #include <string>

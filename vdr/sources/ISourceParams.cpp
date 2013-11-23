@@ -20,7 +20,7 @@
  */
 
 #include "ISourceParams.h"
-#include "Source.h"
+//#include "Source.h"
 #include "tools.h" // for logging
 
 using namespace std;
@@ -36,8 +36,8 @@ iSourceParams::iSourceParams(char source, const string &strDescription)
         m_source != 'T') // no, it's not "ATSC" ;-)
     {
       // Define the appropriate cSource
-      cSource sourceObject(m_source, strDescription);
-      gSources[sourceObject.Code()] = sourceObject;
+      //cSource sourceObject(m_source, strDescription);
+      //gSources[sourceObject.Code()] = sourceObject;
     }
 
     dsyslog("registered source parameters for '%c - %s'", m_source, strDescription.c_str());

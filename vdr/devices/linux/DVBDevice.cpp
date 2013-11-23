@@ -499,14 +499,14 @@ bool cDvbDevice::QueryDeliverySystems(int fd_frontend)
       ds = StringUtils::Format("%s%s%s", ds.c_str(), i ? "," : "", DeliverySystemNames[m_deliverySystems[i]]);
 
     string ms;
-    if (m_frontendInfo.caps & FE_CAN_QPSK)      { m_numModulations++; ms += StringUtils::Format("%s%s", !ms.empty() ? "," : "", DvbParameters::MapToUserString(QPSK, ModulationValues)); }
-    if (m_frontendInfo.caps & FE_CAN_QAM_16)    { m_numModulations++; ms += StringUtils::Format("%s%s", !ms.empty() ? "," : "", DvbParameters::MapToUserString(QAM_16, ModulationValues)); }
-    if (m_frontendInfo.caps & FE_CAN_QAM_32)    { m_numModulations++; ms += StringUtils::Format("%s%s", !ms.empty() ? "," : "", DvbParameters::MapToUserString(QAM_32, ModulationValues)); }
-    if (m_frontendInfo.caps & FE_CAN_QAM_64)    { m_numModulations++; ms += StringUtils::Format("%s%s", !ms.empty() ? "," : "", DvbParameters::MapToUserString(QAM_64, ModulationValues)); }
-    if (m_frontendInfo.caps & FE_CAN_QAM_128)   { m_numModulations++; ms += StringUtils::Format("%s%s", !ms.empty() ? "," : "", DvbParameters::MapToUserString(QAM_128, ModulationValues)); }
-    if (m_frontendInfo.caps & FE_CAN_QAM_256)   { m_numModulations++; ms += StringUtils::Format("%s%s", !ms.empty() ? "," : "", DvbParameters::MapToUserString(QAM_256, ModulationValues)); }
-    if (m_frontendInfo.caps & FE_CAN_8VSB)      { m_numModulations++; ms += StringUtils::Format("%s%s", !ms.empty() ? "," : "", DvbParameters::MapToUserString(VSB_8, ModulationValues)); }
-    if (m_frontendInfo.caps & FE_CAN_16VSB)     { m_numModulations++; ms += StringUtils::Format("%s%s", !ms.empty() ? "," : "", DvbParameters::MapToUserString(VSB_16, ModulationValues)); }
+    if (m_frontendInfo.caps & FE_CAN_QPSK)      { m_numModulations++; ms += StringUtils::Format("%s%s", !ms.empty() ? "," : "", cDvbTransponderParams::TranslateModulation(QPSK)); }
+    if (m_frontendInfo.caps & FE_CAN_QAM_16)    { m_numModulations++; ms += StringUtils::Format("%s%s", !ms.empty() ? "," : "", cDvbTransponderParams::TranslateModulation(QAM_16)); }
+    if (m_frontendInfo.caps & FE_CAN_QAM_32)    { m_numModulations++; ms += StringUtils::Format("%s%s", !ms.empty() ? "," : "", cDvbTransponderParams::TranslateModulation(QAM_32)); }
+    if (m_frontendInfo.caps & FE_CAN_QAM_64)    { m_numModulations++; ms += StringUtils::Format("%s%s", !ms.empty() ? "," : "", cDvbTransponderParams::TranslateModulation(QAM_64)); }
+    if (m_frontendInfo.caps & FE_CAN_QAM_128)   { m_numModulations++; ms += StringUtils::Format("%s%s", !ms.empty() ? "," : "", cDvbTransponderParams::TranslateModulation(QAM_128)); }
+    if (m_frontendInfo.caps & FE_CAN_QAM_256)   { m_numModulations++; ms += StringUtils::Format("%s%s", !ms.empty() ? "," : "", cDvbTransponderParams::TranslateModulation(QAM_256)); }
+    if (m_frontendInfo.caps & FE_CAN_8VSB)      { m_numModulations++; ms += StringUtils::Format("%s%s", !ms.empty() ? "," : "", cDvbTransponderParams::TranslateModulation(VSB_8)); }
+    if (m_frontendInfo.caps & FE_CAN_16VSB)     { m_numModulations++; ms += StringUtils::Format("%s%s", !ms.empty() ? "," : "", cDvbTransponderParams::TranslateModulation(VSB_16)); }
     if (m_frontendInfo.caps & FE_CAN_TURBO_FEC) { m_numModulations++; ms += StringUtils::Format("%s%s", !ms.empty() ? "," : "", "TURBO_FEC"); }
     if (ms.empty())
       ms = "unknown modulations";

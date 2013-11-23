@@ -54,6 +54,9 @@ DEVICESDIR      ?= $(VDRDIR)/devices
 DEVICESSUBYSDIR ?= $(VDRDIR)/devices/subsystems
 FSDIR           ?= $(VDRDIR)/filesystem
 SETTINGSDIR     ?= $(VDRDIR)/settings
+SOURCES_DIR          ?= $(VDRDIR)/sources
+SOURCES_DVB_DIR      ?= $(VDRDIR)/sources/linux
+SOURCES_DVB_TEST_DIR ?= $(VDRDIR)/sources/linux/test
 UTILSDIR        ?= $(VDRDIR)/utils
 
 DESTDIR   ?=
@@ -82,6 +85,9 @@ DEVICESLIB       = $(DEVICESDIR)/devices.a
 DEVICESSUBSYSLIB = $(DEVICESSUBYSDIR)/subsystems.a
 FSLIB            = $(FSDIR)/filesystem.a
 SETTINGSLIB      = $(SETTINGSDIR)/settings.a
+SOURCES_LIB          = $(SOURCES_DIR)/sources.a
+SOURCES_DVB_LIB      = $(SOURCES_DVB_DIR)/linux/dvb_sources.a
+SOURCES_DVB_TEST_LIB = $(SOURCES_DVB_TEST_DIR)/linux/test/dvb_sources_test.a
 UTILSLIB         = $(UTILSDIR)/utils.a
 
 #VDRLIBS = $(VDRLIB) \
@@ -92,9 +98,12 @@ UTILSLIB         = $(UTILSDIR)/utils.a
 #          $(SETTINGSLIB) \
 #          $(UTILSLIB)
 
-VDRLIBS = $(VDRLIB)
+VDRLIBS = $(VDRLIB) \
+          $(SOURCES_LIB) \
+          $(SOURCES_DVB_LIB)
 
-VDRTESTLIBS = $(VDRTESTLIB)
+VDRTESTLIBS = $(VDRTESTLIB) \
+              $(SOURCES_DVB_TEST_LIB)
 
 #COBJS = android_sort.o android_strchrnul.o android_getline.o android_timegm.o
 
@@ -232,6 +241,15 @@ $(VDRTESTLIB):
 
 #$(SETTINGSLIB):
 #	$(MAKE) --no-print-directory -C $(SETTINGSDIR) CXXFLAGS="$(CXXFLAGS)" DEFINES="$(CDEFINES)" all
+
+$(SOURCES_LIB):
+	$(MAKE) --no-print-directory -C $(SOURCES_DIR) CPPFLAGS="$(CPPFLAGS)" CXXFLAGS="$(CXXFLAGS)" DEFINES="$(CDEFINES)" INCLUDES="$(INCLUDES)" all
+
+$(SOURCES_DVB_LIB):
+	$(MAKE) --no-print-directory -C $(SOURCES_DVB_DIR) CPPFLAGS="$(CPPFLAGS)" CXXFLAGS="$(CXXFLAGS)" DEFINES="$(CDEFINES)" INCLUDES="$(INCLUDES)" all
+
+$(SOURCES_DVB_TEST_LIB):
+	$(MAKE) --no-print-directory -C $(SOURCES_DVB_TEST_DIR) CPPFLAGS="$(CPPFLAGS)" CXXFLAGS="$(CXXFLAGS)" DEFINES="$(CDEFINES)" INCLUDES="$(INCLUDES)" all
 
 #$(UTILSLIB):
 #	$(MAKE) --no-print-directory -C $(UTILSDIR) CXXFLAGS="$(CXXFLAGS)" DEFINES="$(CDEFINES)" all

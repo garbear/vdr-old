@@ -47,8 +47,6 @@ public:
 
   /*!
    * \brief Sets all source specific parameters to those of the given Channel
-   *
-   * Must also reset a counter to use with later calls to GetOsdItem().
    * */
   virtual void SetData(const cChannel &channel) = 0;
 
@@ -73,4 +71,4 @@ private:
 
 // TODO: I need a home!
 #include <map>
-std::map<char, *iSourceParams> gSourceParams;
+std::map<char, iSourceParams*> gSourceParams;
