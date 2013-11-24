@@ -20,6 +20,8 @@
  */
 #pragma once
 
+#include "tools.h"
+
 #include <string>
 
 class cSource : public cListObject

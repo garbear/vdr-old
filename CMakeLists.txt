@@ -15,6 +15,9 @@ include_directories(${CMAKE_SOURCE_DIR}/lib)
 set(VDR_SRCS
 	vdr/SignalHandler.cpp
 	vdr/VDRDaemon.cpp
+	vdr/channels/Channel.cpp
+	vdr/channels/ChannelID.cpp
+	vdr/channels/Channels.cpp
 	vdr/devices/Device.cpp
 	vdr/devices/DeviceManager.cpp
 	vdr/devices/DeviceSubsystem.cpp
@@ -47,6 +50,7 @@ set(VDR_SRCS
 	vdr/filesystem/VFSDirectory.cpp
 	vdr/filesystem/VFSFile.cpp
 	vdr/sources/ISourceParams.cpp
+	vdr/sources/Source.cpp
 	vdr/sources/linux/DVBSourceParams.cpp
 	vdr/utils/StringUtils.cpp
 )

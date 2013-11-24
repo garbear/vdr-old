@@ -13,7 +13,7 @@
 #ifndef __EPG_H
 #define __EPG_H
 
-#include "channels.h"
+#include "channels/Channel.h"
 #include "libsi/section.h"
 #include "thread.h"
 #include "tools.h"
