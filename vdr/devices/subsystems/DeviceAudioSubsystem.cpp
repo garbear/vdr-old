@@ -62,7 +62,7 @@ int cDeviceAudioSubsystem::GetAudioChannel()
 void cDeviceAudioSubsystem::SetAudioChannel(int audioChannel)
 {
   if (0 <= audioChannel && audioChannel <= 2)
-    SetAudioChannelDevice(AudioChannel);
+    SetAudioChannelDevice(audioChannel);
 }
 
 void cDeviceAudioSubsystem::SetVolume(int volume, bool bAbsolute)

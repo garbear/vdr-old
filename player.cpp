@@ -31,6 +31,11 @@ int cPlayer::PlayPes(const uchar *Data, int Length, bool VideoOnly)
   return -1;
 }
 
+int cPlayer::PlayTs(const uchar *Data, int Length, bool VideoOnly /* = false */)
+{
+  return device ? device->PlayTs(Data, Length, VideoOnly) : -1;
+}
+
 void cPlayer::Detach(void)
 {
   if (device)
@@ -103,4 +108,85 @@ void cControl::Shutdown(void)
   cControl *c = control; // avoids recursions
   control = NULL;
   delete c;
+}
+
+void cPlayer::DeviceClrAvailableTracks(bool DescriptionsOnly /* = false */)
+{
+  if (device) device->ClrAvailableTracks(DescriptionsOnly);
+}
+
+bool cPlayer::DeviceSetAvailableTrack(eTrackType Type, int Index, uint16_t Id, const char *Language /* = NULL */, const char *Description /* = NULL*/)
+{
+  if (device)
+    return device->SetAvailableTrack(Type, Index, Id, Language, Description);
+  return false;
+}
+
+bool cPlayer::DeviceSetCurrentAudioTrack(eTrackType Type)
+{
+  return device ? device->SetCurrentAudioTrack(Type) : false;
+}
+
+bool cPlayer::DeviceSetCurrentSubtitleTrack(eTrackType Type)
+{
+  return device ? device->SetCurrentSubtitleTrack(Type) : false;
+}
+
+bool cPlayer::DevicePoll(cPoller &Poller, int TimeoutMs = 0)
+{
+  return device ? device->Poll(Poller, TimeoutMs) : false;
+}
+
+bool cPlayer::DeviceFlush(int TimeoutMs = 0)
+{
+  return device ? device->Flush(TimeoutMs) : true;
+}
+
+bool cPlayer::DeviceHasIBPTrickSpeed(void)
+{
+  return device ? device->HasIBPTrickSpeed() : false;
+}
+
+bool cPlayer::DeviceIsPlayingVideo(void)
+{
+  return device ? device->IsPlayingVideo() : false;
+}
+
+void cPlayer::DeviceTrickSpeed(int Speed)
+{
+  if (device) device->TrickSpeed(Speed);
+}
+
+void cPlayer::DeviceClear(void)
+{
+  if (device) device->Clear();
+}
+
+void cPlayer::DevicePlay(void)
+{
+  if (device) device->Play();
+}
+
+void cPlayer::DeviceFreeze(void)
+{
+  if (device) device->Freeze();
+}
+void cPlayer::DeviceMute(void)
+{
+  if (device) device->Mute();
+}
+
+void cPlayer::DeviceSetVideoDisplayFormat(eVideoDisplayFormat VideoDisplayFormat)
+{
+  if (device) device->SetVideoDisplayFormat(VideoDisplayFormat);
+}
+
+void cPlayer::DeviceStillPicture(const uchar *Data, int Length)
+{
+  if (device) device->StillPicture(Data, Length);
+}
+
+uint64_t cPlayer::DeviceGetSTC(void)
+{
+  return device ? device->GetSTC() : -1;
 }

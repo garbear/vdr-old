@@ -24,7 +24,10 @@
 #include "DevicePlayerSubsystem.h"
 #include "DeviceReceiverSubsystem.h"
 #include "DeviceSPUSubsystem.h"
-#include "../../devices/Device.h"
+#include "devices/Device.h"
+#include "devices/DeviceManager.h"
+#include "dvbsubtitle.h"
+#include "player.h"
 
 #include <limits.h>
 
@@ -150,7 +153,7 @@ bool cDeviceTrackSubsystem::SetCurrentAudioTrack(eTrackType type)
       Player()->m_player->SetAudioTrack(m_currentAudioTrack, success ? &trackId : NULL);
     }
     else
-      SetAudioTrackDevice(currentAudioTrack);
+      SetAudioTrackDevice(m_currentAudioTrack);
     if (IS_AUDIO_TRACK(type))
       Audio()->SetDigitalAudioDevice(false);
     return true;
@@ -164,14 +167,14 @@ bool cDeviceTrackSubsystem::SetCurrentSubtitleTrack(eTrackType type, bool bManua
   {
     m_currentSubtitleTrack = type;
     m_bAutoSelectPreferredSubtitleLanguage = !bManual;
-    if (SPU()->m_dvbSubtitleConverter)
-      SPU()->m_dvbSubtitleConverter->Reset();
-    if (type == ttNone && SPU()->m_dvbSubtitleConverter)
+    if (Device()->m_dvbSubtitleConverter)
+      Device()->m_dvbSubtitleConverter->Reset();
+    if (type == ttNone && Device()->m_dvbSubtitleConverter)
     {
       cMutexLock MutexLock(&m_mutexCurrentSubtitleTrack);
-      DELETENULL(dvbSubtitleConverter);
+      DELETENULL(Device()->m_dvbSubtitleConverter);
     }
-    DELETENULL(SPU()->m_liveSubtitle);
+    DELETENULL(Device()->m_liveSubtitle);
     if (Player()->m_player)
     {
       tTrackId TrackId;
@@ -179,14 +182,14 @@ bool cDeviceTrackSubsystem::SetCurrentSubtitleTrack(eTrackType type, bool bManua
       Player()->m_player->SetSubtitleTrack(m_currentSubtitleTrack, success ? &TrackId : NULL);
     }
     else
-      SetSubtitleTrackDevice(currentSubtitleTrack);
+      SetSubtitleTrackDevice(m_currentSubtitleTrack);
     if (m_currentSubtitleTrack != ttNone && !Player()->Replaying() && !Player()->Transferring())
     {
       tTrackId trackId;
       if (GetTrack(m_currentSubtitleTrack, trackId) && trackId.id)
       {
-        SPU()->m_liveSubtitle = new cLiveSubtitle(trackId.id);
-        Receiver()->AttachReceiver(SPU()->m_liveSubtitle);
+        Device()->m_liveSubtitle = new cLiveSubtitle(trackId.id);
+        Receiver()->AttachReceiver(Device()->m_liveSubtitle);
       }
     }
     return true;

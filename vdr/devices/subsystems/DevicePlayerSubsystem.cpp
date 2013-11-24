@@ -19,15 +19,17 @@
  *
  */
 
+#include "DeviceAudioSubsystem.h"
 #include "DevicePlayerSubsystem.h"
 #include "DeviceReceiverSubsystem.h"
 #include "DeviceSPUSubsystem.h"
 #include "DeviceTrackSubsystem.h"
 #include "DeviceVideoFormatSubsystem.h"
-#include "../../../audio.h"
-#include "../../../osd.h"
-#include "../../../player.h"
-#include "../../../transfer.h"
+#include "audio.h"
+#include "dvbsubtitle.h"
+#include "osd.h"
+#include "player.h"
+#include "transfer.h"
 
 #ifndef SAFE_DELETE
 #define SAFE_DELETE(p) \
@@ -62,22 +64,22 @@ cDevicePlayerSubsystem::~cDevicePlayerSubsystem()
 void cDevicePlayerSubsystem::Clear()
 {
   Audios.ClearAudio();
-  if (SPU()->m_dvbSubtitleConverter)
-    SPU()->m_dvbSubtitleConverter->Reset();
+  if (Device()->m_dvbSubtitleConverter)
+    Device()->m_dvbSubtitleConverter->Reset();
 }
 
 void cDevicePlayerSubsystem::Play()
 {
   Audios.MuteAudio(Audio()->m_bMute);
-  if (SPU()->m_dvbSubtitleConverter)
-    SPU()->m_dvbSubtitleConverter->Freeze(false);
+  if (Device()->m_dvbSubtitleConverter)
+    Device()->m_dvbSubtitleConverter->Freeze(false);
 }
 
 void cDevicePlayerSubsystem::Freeze()
 {
   Audios.MuteAudio(true);
-  if (SPU()->m_dvbSubtitleConverter)
-    SPU()->m_dvbSubtitleConverter->Freeze(true);
+  if (Device()->m_dvbSubtitleConverter)
+    Device()->m_dvbSubtitleConverter->Freeze(true);
 }
 
 void cDevicePlayerSubsystem::Mute()
@@ -94,7 +96,7 @@ void cDevicePlayerSubsystem::StillPicture(const vector<uchar> &data)
     // TS data
     cTsToPes TsToPes;
     uchar *buf = NULL;
-    uchar *dataptr = data.data();
+    const uchar *dataptr = data.data();
     size_t length = data.size();
     int Size = 0;
     while (length >= TS_SIZE)
@@ -162,10 +164,10 @@ void cDevicePlayerSubsystem::StillPicture(const vector<uchar> &data)
 
 int cDevicePlayerSubsystem::PlayPes(const vector<uchar> &data, bool bVideoOnly /* = false */)
 {
-  if (!data)
+  if (data.empty())
   {
-    if (SPU()->m_dvbSubtitleConverter)
-      SPU()->m_dvbSubtitleConverter->Reset();
+    if (Device()->m_dvbSubtitleConverter)
+      Device()->m_dvbSubtitleConverter->Reset();
     return 0;
   }
   int i = 0;
@@ -206,13 +208,13 @@ int cDevicePlayerSubsystem::PlayTs(const vector<uchar> &data, bool bVideoOnly /*
   }
   else if (data.size() < TS_SIZE)
   {
-    esyslog("ERROR: skipped %d bytes of TS fragment", data.size());
+    esyslog("ERROR: skipped %d bytes of TS fragment", (int)data.size());
     return data.size();
   }
   else
   {
     size_t length = data.size();
-    uchar *dataptr = data.data();
+    const uchar *dataptr = data.data();
     while (length >= TS_SIZE)
     {
       vector<uchar> vecData(dataptr, dataptr + TS_SIZE);
@@ -302,14 +304,14 @@ bool cDevicePlayerSubsystem::AttachPlayer(cPlayer *player)
   {
     if (m_player)
       Detach(m_player);
-    SAFE_DELETE(SPU()->m_liveSubtitle);
-    SAFE_DELETE(SPU()->m_dvbSubtitleConverter);
+    SAFE_DELETE(Device()->m_liveSubtitle);
+    SAFE_DELETE(Device()->m_dvbSubtitleConverter);
     m_patPmtParser.Reset();
     m_player = player;
     if (!Transferring())
       Track()->ClrAvailableTracks(false, true);
     SetPlayMode(m_player->playMode);
-    m_player->device = this;
+    m_player->device = Device();
     m_player->Activate(true);
     return true;
   }
@@ -325,8 +327,8 @@ void cDevicePlayerSubsystem::Detach(cPlayer *player)
     p->Activate(false);
     p->device = NULL;
     cMutexLock MutexLock(&Track()->m_mutexCurrentSubtitleTrack);
-    delete SPU()->m_dvbSubtitleConverter;
-    SPU()->m_dvbSubtitleConverter = NULL;
+    delete Device()->m_dvbSubtitleConverter;
+    Device()->m_dvbSubtitleConverter = NULL;
     SetPlayMode(pmNone);
     VideoFormat()->SetVideoDisplayFormat(eVideoDisplayFormat(Setup.VideoDisplayFormat));
     PlayTs(vector<uchar>());
@@ -343,9 +345,9 @@ bool cDevicePlayerSubsystem::CanReplay() const
 
 int cDevicePlayerSubsystem::PlaySubtitle(const vector<uchar> &data)
 {
-  if (!SPU()->m_dvbSubtitleConverter)
-    SPU()->m_dvbSubtitleConverter = new cDvbSubtitleConverter;
-  return SPU()->m_dvbSubtitleConverter->ConvertFragments(data.data(), data.size());
+  if (!Device()->m_dvbSubtitleConverter)
+    Device()->m_dvbSubtitleConverter = new cDvbSubtitleConverter;
+  return Device()->m_dvbSubtitleConverter->ConvertFragments(data.data(), data.size());
 }
 
 unsigned int cDevicePlayerSubsystem::PlayPesPacket(const vector<uchar> &data, bool bVideoOnly /* = false */)
@@ -451,9 +453,9 @@ pre_1_3_19_PrivateStreamDetected:
       Start += w;
     else
     {
-      if (Start != data)
+      if (Start != data.data())
         esyslog("ERROR: incomplete PES packet write!");
-      return Start == data ? w : Start - data;
+      return Start == data.data() ? w : Start - data.data();
     }
     FirstLoop = false;
   }
@@ -504,14 +506,14 @@ int cDevicePlayerSubsystem::PlayTsAudio(const vector<uchar> &data)
 
 int cDevicePlayerSubsystem::PlayTsSubtitle(const vector<uchar> &data)
 {
-  if (!SPU()->m_dvbSubtitleConverter)
-    SPU()->m_dvbSubtitleConverter = new cDvbSubtitleConverter;
+  if (!Device()->m_dvbSubtitleConverter)
+    Device()->m_dvbSubtitleConverter = new cDvbSubtitleConverter;
   m_tsToPesSubtitle.PutTs(data.data(), data.size());
   int length;
   if (const uchar *p = m_tsToPesSubtitle.GetPes(length))
   {
     vector<uchar> vecP(p, p + length);
-    SPU()->m_dvbSubtitleConverter->Convert(vecP.data(), vecP.size());
+    Device()->m_dvbSubtitleConverter->Convert(vecP.data(), vecP.size());
     m_tsToPesSubtitle.Reset();
   }
   return length;

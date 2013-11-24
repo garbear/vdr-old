@@ -20,7 +20,7 @@
  */
 #pragma once
 
-#include "../../devices/DeviceSubsystem.h"
+#include "devices/DeviceSubsystem.h"
 
 #define MAXVOLUME         255
 #define VOLUMEDELTA         5 // used to increase/decrease the volume
@@ -29,10 +29,8 @@ class cDevice;
 
 class cDeviceAudioSubsystem : protected cDeviceSubsystem
 {
-protected:
-  cDeviceAudioSubsystem(cDevice *device);
-
 public:
+  cDeviceAudioSubsystem(cDevice *device);
   virtual ~cDeviceAudioSubsystem() { }
 
   bool IsMute() const { return m_bMute; }
@@ -81,6 +79,7 @@ protected:
    * \brief Sets the audio volume on this device
    * \param volume The volume in the range 0..255
    */
+public: // TODO
   virtual void SetVolumeDevice(unsigned int volume) { }
 
   /*!
@@ -89,7 +88,8 @@ protected:
    */
   virtual void SetDigitalAudioDevice(bool bOn) { }
 
-private:
+//private:
   bool          m_bMute;
+private:
   unsigned int  m_volume; // In the range 0..255
 };

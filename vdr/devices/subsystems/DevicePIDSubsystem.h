@@ -20,7 +20,7 @@
  */
 #pragma once
 
-#include "../../devices/DeviceSubsystem.h"
+#include "devices/DeviceSubsystem.h"
 
 #define MAXPIDHANDLES      64 // the maximum number of different PIDs per device
 
@@ -34,9 +34,12 @@ enum ePidType
   ptOther
 };
 
+class cDevice;
+
 class cDevicePIDSubsystem : protected cDeviceSubsystem
 {
 public:
+  cDevicePIDSubsystem(cDevice *device);
   virtual ~cDevicePIDSubsystem() { }
 
   /*!
@@ -45,8 +48,6 @@ public:
   void DelLivePids();
 
 protected:
-  cDevicePIDSubsystem(cDevice *device);
-
   class cPidHandle
   {
   public:
@@ -60,6 +61,7 @@ protected:
   /*!
    * \brief Returns true if this device is currently receiving the given PID
    */
+public: // TODO
   bool HasPid(int pid) const;
 
   /*!
@@ -87,5 +89,6 @@ protected:
 private:
   static void PrintPIDs(const char *s);
 
+public: // TODO
   cPidHandle m_pidHandles[MAXPIDHANDLES];
 };

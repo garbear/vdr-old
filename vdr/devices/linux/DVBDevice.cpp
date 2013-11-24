@@ -21,6 +21,8 @@
 
 #include "DVBDevice.h"
 #include "DVBDeviceProbe.h"
+#include "DVBTuner.h"
+#include "devices/DeviceManager.h"
 #include "subsystems/DVBAudioSubsystem.h"
 #include "subsystems/DVBChannelSubsystem.h"
 #include "subsystems/DVBCommonInterfaceSubsystem.h"
@@ -95,8 +97,8 @@ const char *DeliverySystemNames[] =
 cDvbDevice::cDvbDevice(unsigned int adapter, unsigned int frontend)
  : cDevice(CreateSubsystems(), 0 /* ??? */)
 {
-  m_adapter = Adapter;
-  m_frontend = Frontend;
+  m_adapter = adapter;
+  m_frontend = frontend;
   m_numDeliverySystems = 0;
   m_numModulations = 0;
   m_bondedDevice = NULL;
@@ -150,12 +152,10 @@ cDvbDevice::~cDvbDevice()
 
 bool cDvbDevice::Initialize()
 {
-  gSourceParams['A'] = cDvbSourceParams('A', "ATSC");
-  gSourceParams['C'] = cDvbSourceParams('C', "DVB-C");
-  gSourceParams['S'] = cDvbSourceParams('S', "DVB-S");
-  gSourceParams['T'] = cDvbSourceParams('T', "DVB-T");
-
-  vector<string> vecNodes;
+  //gSourceParams['A'] = cDvbSourceParams('A', "ATSC");
+  //gSourceParams['C'] = cDvbSourceParams('C', "DVB-C");
+  //gSourceParams['S'] = cDvbSourceParams('S', "DVB-S");
+  //gSourceParams['T'] = cDvbSourceParams('T', "DVB-T");
 
   // Enumerate /dev/dvb
   //cDirectoryListing items;
@@ -318,9 +318,11 @@ bool cDvbDevice::BondingOk(const cChannel &channel, bool bConsiderOccupied) cons
 {
   cMutexLock MutexLock(&m_bondMutex);
   if (m_bondedDevice)
-    return DvbChannel()->m_dvbTuner && DvbChannel()->m_dvbTuner->BondingOk(&channel, bConsiderOccupied);
+    return DvbChannel()->m_dvbTuner && DvbChannel()->m_dvbTuner->BondingOk(channel, bConsiderOccupied);
   return true;
 }
+
+#define MAXDEVICES 64
 
 bool cDvbDevice::BondDevices(const char *bondings)
 {
@@ -535,7 +537,7 @@ bool cDvbDevice::FindDvbApiVersion(int fd_frontend)
     Frontend[CmdSeq.num].u.data = 0;
     if (CmdSeq.num++ > MAXFRONTENDCMDS)
     {
-      esyslog("ERROR: too many tuning commands on frontend %d/%d", m_adapter, m_frontend);
+      //esyslog("ERROR: too many tuning commands on frontend %d/%d", m_adapter, m_frontend);
       return false;
     }
 

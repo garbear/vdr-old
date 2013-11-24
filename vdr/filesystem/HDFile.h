@@ -61,7 +61,7 @@ public:
   virtual bool Open(const std::string &url, unsigned int flags = 0);
   virtual bool OpenForWrite(const std::string &url, bool bOverWrite = false);
   virtual int64_t Read(void *lpBuf, uint64_t uiBufSize);
-  virtual int Write(const void* lpBuf, uint64_t uiBufSize);
+  virtual int64_t Write(const void* lpBuf, uint64_t uiBufSize);
   virtual void Flush();
   virtual int64_t Seek(int64_t iFilePosition, int iWhence = SEEK_SET);
   virtual int Truncate(int64_t size);

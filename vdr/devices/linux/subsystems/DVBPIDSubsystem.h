@@ -22,13 +22,11 @@
 
 #include "../../../devices/subsystems/DevicePIDSubsystem.h"
 
-class cDvbPIDSubsystem : protected cDevicePIDSubsystem
+class cDvbPIDSubsystem : public cDevicePIDSubsystem
 {
 public:
-  virtual ~cDvbPIDSubsystem() { }
-
-protected:
   cDvbPIDSubsystem(cDevice *device);
+  virtual ~cDvbPIDSubsystem() { }
 
   /*!
    * \brief Does the actual PID setting on this device.

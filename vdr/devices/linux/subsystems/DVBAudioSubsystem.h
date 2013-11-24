@@ -20,14 +20,12 @@
  */
 #pragma once
 
-#include "../../../devices/subsystems/DeviceAudioSubsystem.h"
+#include "devices/subsystems/DeviceAudioSubsystem.h"
 
 class cDvbAudioSubsystem : public cDeviceAudioSubsystem
 {
-protected:
-  cDvbAudioSubsystem(cDevice *device);
-
 public:
+  cDvbAudioSubsystem(cDevice *device);
   virtual ~cDvbAudioSubsystem() { }
 
   /*!

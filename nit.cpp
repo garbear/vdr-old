@@ -128,7 +128,7 @@ void cNitFilter::Process(u_short Pid, u_char Tid, const u_char *Data, int Length
           switch (d->getDescriptorTag()) {
             case SI::SatelliteDeliverySystemDescriptorTag: {
                  SI::SatelliteDeliverySystemDescriptor *sd = (SI::SatelliteDeliverySystemDescriptor *)d;
-                 cDvbTransponderParameters dtp;
+                 cDvbTransponderParams dtp;
                  int Source = cSource::FromData(cSource::stSat, BCD2INT(sd->getOrbitalPosition()), sd->getWestEastFlag());
                  int Frequency = Frequencies[0] = BCD2INT(sd->getFrequency()) / 100;
                  static char Polarizations[] = { 'H', 'V', 'L', 'R' };
@@ -190,7 +190,7 @@ void cNitFilter::Process(u_short Pid, u_char Tid, const u_char *Data, int Length
                     for (cChannel *Channel = Channels.First(); Channel; Channel = Channels.Next(Channel)) {
                         if (!Channel->GroupSep() && cSource::IsSat(Channel->Source()) && Channel->Nid() == ts.getOriginalNetworkId() && Channel->Tid() == ts.getTransportStreamId()) {
                            SI::S2SatelliteDeliverySystemDescriptor *sd = (SI::S2SatelliteDeliverySystemDescriptor *)d;
-                           cDvbTransponderParameters dtp(Channel->Parameters());
+                           cDvbTransponderParams dtp(Channel->Parameters());
                            dtp.SetSystem(DVB_SYSTEM_2);
                            dtp.SetStreamId(sd->getInputStreamIdentifier());
                            Channel->SetTransponderData(Channel->Source(), Channel->Frequency(), Channel->Srate(), dtp.ToString('S'));
@@ -202,7 +202,7 @@ void cNitFilter::Process(u_short Pid, u_char Tid, const u_char *Data, int Length
                  break;
             case SI::CableDeliverySystemDescriptorTag: {
                  SI::CableDeliverySystemDescriptor *sd = (SI::CableDeliverySystemDescriptor *)d;
-                 cDvbTransponderParameters dtp;
+                 cDvbTransponderParams dtp;
                  int Source = cSource::FromData(cSource::stCable);
                  int Frequency = Frequencies[0] = BCD2INT(sd->getFrequency()) / 10;
                  //XXX FEC_outer???
@@ -257,7 +257,7 @@ void cNitFilter::Process(u_short Pid, u_char Tid, const u_char *Data, int Length
                  break;
             case SI::TerrestrialDeliverySystemDescriptorTag: {
                  SI::TerrestrialDeliverySystemDescriptor *sd = (SI::TerrestrialDeliverySystemDescriptor *)d;
-                 cDvbTransponderParameters dtp;
+                 cDvbTransponderParams dtp;
                  int Source = cSource::FromData(cSource::stTerr);
                  int Frequency = Frequencies[0] = sd->getFrequency() * 10;
                  static int Bandwidths[] = { 8000000, 7000000, 6000000, 5000000, 0, 0, 0, 0 };
@@ -330,7 +330,7 @@ void cNitFilter::Process(u_short Pid, u_char Tid, const u_char *Data, int Length
                                   int Frequency = Channel->Frequency();
                                   int SymbolRate = Channel->Srate();
                                   //int SystemId = td->getSystemId();
-                                  cDvbTransponderParameters dtp(Channel->Parameters());
+                                  cDvbTransponderParams dtp(Channel->Parameters());
                                   dtp.SetSystem(DVB_SYSTEM_2);
                                   dtp.SetStreamId(td->getPlpId());
                                   if (td->getExtendedDataFlag()) {

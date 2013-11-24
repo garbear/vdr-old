@@ -20,20 +20,19 @@
  */
 #pragma once
 
-#include "../../../devices/subsystems/DeviceCommonInterfaceSubsystem.h"
+#include "devices/subsystems/DeviceCommonInterfaceSubsystem.h"
 
 class cCiAdapter;
 
 class cDvbCommonInterfaceSubsystem : public cDeviceCommonInterfaceSubsystem
 {
-protected:
-  cDvbCommonInterfaceSubsystem(cDevice *device);
-
 public:
+  cDvbCommonInterfaceSubsystem(cDevice *device);
   virtual ~cDvbCommonInterfaceSubsystem();
 
   virtual bool HasCi() { return m_ciAdapter != 0; }
 
-private:
+//private: // TODO
+public:
   cCiAdapter *m_ciAdapter;
 };

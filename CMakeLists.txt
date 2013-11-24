@@ -10,6 +10,7 @@ add_definitions(-DTARGET_LINUX)
 include_directories(${CMAKE_SOURCE_DIR})
 include_directories(${CMAKE_SOURCE_DIR}/vdr)
 include_directories(${gtest_SOURCE_DIR}/include)
+include_directories(${CMAKE_SOURCE_DIR}/lib)
 
 set(VDR_SRCS
 	vdr/SignalHandler.cpp

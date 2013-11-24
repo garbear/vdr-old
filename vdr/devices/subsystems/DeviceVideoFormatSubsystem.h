@@ -20,7 +20,7 @@
  */
 #pragma once
 
-#include "../../devices/DeviceSubsystem.h"
+#include "devices/DeviceSubsystem.h"
 
 enum eVideoSystem
 {
@@ -37,10 +37,8 @@ enum eVideoDisplayFormat
 
 class cDeviceVideoFormatSubsystem : protected cDeviceSubsystem
 {
-protected:
-  cDeviceVideoFormatSubsystem(cDevice *device);
-
 public:
+  cDeviceVideoFormatSubsystem(cDevice *device);
   virtual ~cDeviceVideoFormatSubsystem() { }
 
   /*!

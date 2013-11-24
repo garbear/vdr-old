@@ -24,8 +24,8 @@
  * Device.h: The basic device interface
  */
 
-#include "../../thread.h" // for cThread
-#include "../../tools.h" // for cListObject
+#include "thread.h" // for cThread
+#include "tools.h" // for cListObject
 
 #include <list>
 #include <string>
@@ -42,6 +42,9 @@ class cDeviceSPUSubsystem;
 class cDeviceTrackSubsystem;
 class cDeviceVideoFormatSubsystem;
 
+class cDvbSubtitleConverter;
+class cLiveSubtitle;
+
 struct cSubsystems
 {
   cDeviceAudioSubsystem           *Audio;
@@ -57,6 +60,7 @@ struct cSubsystems
   cDeviceVideoFormatSubsystem     *VideoFormat;
 };
 
+// TODO: better memory management (preferably smart pointers)
 #define FREE_SUBSYSTEMS(s) \
   do \
   { \
@@ -133,6 +137,13 @@ class cLiveSubtitle;
 
 class cDevice : public cThread
 {
+  // TODO
+public:
+  void Lock() { return cThread::Lock(); }
+  void Unlock() { return cThread::Unlock(); }
+  void Cancel(int WaitSeconds = 0) { return cThread::Cancel(WaitSeconds); }
+
+
   //friend class cLiveSubtitle;
   //friend class cDeviceHook;
   //friend class cDeviceSubtitle;
@@ -194,6 +205,7 @@ protected:
    * up and running. This function is called in a loop at startup until all
    * devices are ready (see WaitForAllDevicesReady()).
    */
+public: // TODO
   virtual bool Ready() { return true; }
 
   /*!
@@ -204,6 +216,7 @@ protected:
    * (bOn = false), it should do so in this function. A derived class must call
    * the MakePrimaryDevice() function of its base class.
    */
+public: // TODO
   virtual void MakePrimaryDevice(bool bOn);
 
 
@@ -227,4 +240,7 @@ private:
 
   unsigned int m_number; // Strictly positive
   unsigned int m_cardIndex;
+public: // TODO
+  cLiveSubtitle         *m_liveSubtitle; // TODO: Should this be in SPU subsystem?
+  cDvbSubtitleConverter *m_dvbSubtitleConverter; // TODO: Should this be in SPU subsystem?
 };

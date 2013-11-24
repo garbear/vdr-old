@@ -10,11 +10,14 @@
 #include "DVBTuner.h"
 #include "DVBDevice.h"
 #include "DVBDeviceProbe.h"
-#include "DVBParameters.h"
-#include "../../devices/DeviceManager.h"
-#include "../../utils/StringUtils.h"
-#include "../../../diseqc.h"
-#include "../../../tools.h"
+#include "devices/DeviceManager.h"
+#include "devices/subsystems/DeviceChannelSubsystem.h"
+#include "devices/subsystems/DevicePIDSubsystem.h"
+#include "devices/subsystems/DeviceReceiverSubsystem.h"
+#include "sources/linux/DVBSourceParams.h"
+#include "utils/StringUtils.h"
+#include "diseqc.h"
+#include "tools.h"
 
 #include <errno.h>
 #include <string.h>
@@ -100,7 +103,7 @@ void cDvbTuner::Action()
     fe_status_t NewStatus;
     if (GetFrontendStatus(NewStatus))
       Status = NewStatus;
-    cMutexLock MutexLock(&mutex);
+    cMutexLock MutexLock(&m_mutex);
     int WaitTime = 1000;
     switch (m_tunerStatus)
     {
@@ -158,7 +161,7 @@ void cDvbTuner::Action()
       esyslog("ERROR: unknown tuner status %d", m_tunerStatus);
       break;
     }
-    m_newSet.TimedWait(mutex, WaitTime);
+    m_newSet.TimedWait(m_mutex, WaitTime);
   }
 }
 
@@ -199,7 +202,7 @@ void cDvbTuner::UnBond()
 
 string cDvbTuner::GetBondingParams(const cChannel &channel) const
 {
-  cDvbTransponderParameters dtp(channel.Parameters());
+  cDvbTransponderParams dtp(channel.Parameters());
   if (Setup.DiSEqC)
   {
     if (const cDiseqc *diseqc = Diseqcs.Get(m_device->CardIndex() + 1, channel.Source(), channel.Frequency(), dtp.Polarization(), NULL))
@@ -285,10 +288,10 @@ void cDvbTuner::SetChannel(const cChannel &channel)
     else if (GetBondingParams(channel) != BondedMaster->GetBondingParams())
       BondedMaster->SetChannel(channel);
   }
-  cMutexLock MutexLock(&mutex);
+  cMutexLock MutexLock(&m_mutex);
   if (!IsTunedTo(channel))
     m_tunerStatus = tsSet;
-  m_channel = *channel;
+  m_channel = channel;
   m_lastTimeoutReport = 0;
   m_newSet.Broadcast();
 
@@ -298,7 +301,7 @@ void cDvbTuner::SetChannel(const cChannel &channel)
 
 void cDvbTuner::ClearChannel()
 {
-  cMutexLock MutexLock(&mutex);
+  cMutexLock MutexLock(&m_mutex);
   m_tunerStatus = tsIdle;
   ResetToneAndVoltage();
 
@@ -312,10 +315,10 @@ bool cDvbTuner::Locked(int timeoutMs)
   if (isLocked || !timeoutMs)
     return isLocked;
 
-  cMutexLock MutexLock(&mutex);
+  cMutexLock MutexLock(&m_mutex);
 
   if (timeoutMs && m_tunerStatus < tsLocked)
-    m_locked.TimedWait(mutex, timeoutMs);
+    m_locked.TimedWait(m_mutex, timeoutMs);
   return m_tunerStatus >= tsLocked;
 }
 
@@ -499,7 +502,7 @@ int cDvbTuner::GetSignalQuality() const
   return -1;
 }
 
-int cDvbTuner::GetRequiredDeliverySystem(const cChannel &channel, const cDvbTransponderParameters *dtp)
+int cDvbTuner::GetRequiredDeliverySystem(const cChannel &channel, const cDvbTransponderParams *dtp)
 {
   int ds = SYS_UNDEFINED;
   if (channel.IsAtsc())
@@ -578,7 +581,7 @@ bool cDvbTuner::SetFrontend()
   }
   CmdSeq.num = 0;
 
-  cDvbTransponderParameters dtp(m_channel.Parameters());
+  cDvbTransponderParams dtp(m_channel.Parameters());
 
   // Determine the required frontend type:
   m_frontendType = GetRequiredDeliverySystem(m_channel, &dtp);

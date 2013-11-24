@@ -39,7 +39,7 @@ cHDFile::~cHDFile()
 }
 
 
-bool cHDFile::Open(const std::string &url, unsigned int flags = 0)
+bool cHDFile::Open(const std::string &url, unsigned int flags /* = 0 */)
 {
   Close();
   int fileDes = open(url.c_str(), flags, DEFFILEMODE);
@@ -51,7 +51,7 @@ bool cHDFile::Open(const std::string &url, unsigned int flags = 0)
   return false;
 }
 
-bool cHDFile::OpenForWrite(const std::string &url, bool bOverWrite = false)
+bool cHDFile::OpenForWrite(const std::string &url, bool bOverWrite /* = false */)
 {
   return false;
 }
@@ -79,7 +79,7 @@ int64_t cHDFile::Read(void *lpBuf, uint64_t uiBufSize)
   return bytesRead;
 }
 
-int cHDFile::Write(const void* lpBuf, uint64_t uiBufSize)
+int64_t cHDFile::Write(const void* lpBuf, uint64_t uiBufSize)
 {
   return 0;
 }
@@ -89,7 +89,7 @@ void cHDFile::Flush()
   return;
 }
 
-int64_t cHDFile::Seek(int64_t iFilePosition, int iWhence = SEEK_SET)
+int64_t cHDFile::Seek(int64_t iFilePosition, int iWhence /* = SEEK_SET */)
 {
   if (m_fd < 0)
     return 0;

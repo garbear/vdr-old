@@ -20,9 +20,9 @@
  */
 #pragma once
 
-#include "../../devices/DeviceSubsystem.h"
-#include "../../../receiver.h"
-#include "../../../tools.h"
+#include "devices/DeviceSubsystem.h"
+#include "receiver.h"
+#include "tools.h"
 
 #include <string>
 #include <vector>
@@ -67,10 +67,8 @@ protected:
 
 class cDeviceTrackSubsystem : protected cDeviceSubsystem
 {
-protected:
-  cDeviceTrackSubsystem(cDevice *device);
-
 public:
+  cDeviceTrackSubsystem(cDevice *device);
   virtual ~cDeviceTrackSubsystem();
 
   /*!
@@ -163,12 +161,17 @@ protected:
 
 private:
   bool         m_bKeepTracks;
+public: // TODO
   tTrackId     m_availableTracks[ttMaxTrackTypes];
   eTrackType   m_currentAudioTrack;
   eTrackType   m_currentSubtitleTrack;
+private:
   cMutex       m_mutexCurrentAudioTrack;
+public: // TODO
   cMutex       m_mutexCurrentSubtitleTrack;
+private:
   unsigned int m_currentAudioTrackMissingCount;
   bool         m_bAutoSelectPreferredSubtitleLanguage;
+public: // TODO
   int          m_pre_1_3_19_PrivateStream;
 };

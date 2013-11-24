@@ -20,7 +20,13 @@
  */
 
 #include "DeviceSectionFilterSubsystem.h"
-#include "../../../sections.h"
+#include "eit.h"
+#include "nit.h"
+#include "pat.h"
+#include "sdt.h"
+#include "sections.h"
+
+#include <unistd.h>
 
 cDeviceSectionFilterSubsystem::cDeviceSectionFilterSubsystem(cDevice *device)
  : cDeviceSubsystem(device),

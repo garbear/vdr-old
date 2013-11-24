@@ -20,7 +20,8 @@
  */
 
 #include "DVBDeviceProbe.h"
-#include "../../utils/StringUtils.h"
+#include "utils/StringUtils.h"
+#include "filesystem/ReadDir.h"
 
 #include <dirent.h>
 #include <stdio.h>

@@ -20,11 +20,12 @@
  */
 
 #include "DVBPIDSubsystem.h"
-#include "../../../devices/linux/DVBDevice.h" // for DEV_DVB_DEMUX
-#include "../../../../tools.h"
+#include "devices/linux/DVBDevice.h" // for DEV_DVB_DEMUX
+#include "tools.h"
 
 #include <linux/dvb/dmx.h>
 #include <sys/ioctl.h>
+#include <unistd.h>
 
 cDvbPIDSubsystem::cDvbPIDSubsystem(cDevice *device)
  : cDevicePIDSubsystem(device)

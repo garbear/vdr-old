@@ -20,7 +20,7 @@
  */
 #pragma once
 
-#include "../../devices/DeviceSubsystem.h"
+#include "devices/DeviceSubsystem.h"
 
 #include <time.h>
 
@@ -28,10 +28,8 @@ class cCamSlot;
 
 class cDeviceCommonInterfaceSubsystem : protected cDeviceSubsystem
 {
-protected:
-  cDeviceCommonInterfaceSubsystem(cDevice *device);
-
 public:
+  cDeviceCommonInterfaceSubsystem(cDevice *device);
   virtual ~cDeviceCommonInterfaceSubsystem() { }
 
   /*!
@@ -61,6 +59,7 @@ public:
   cCamSlot *CamSlot() const { return m_camSlot; }
 
 private:
+public: // TODO
   cCamSlot *m_camSlot;
   time_t    m_startScrambleDetection;
 };

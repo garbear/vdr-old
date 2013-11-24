@@ -20,8 +20,15 @@
  */
 
 #include "DVBChannelSubsystem.h"
-#include "../../../devices/subsystems/DeviceReceiverSubsystem.h"
-#include "../../../../channels.h"
+#include "devices/DeviceManager.h"
+#include "devices/linux/DVBDevice.h"
+#include "devices/linux/DVBTuner.h"
+#include "devices/subsystems/DeviceCommonInterfaceSubsystem.h"
+#include "devices/subsystems/DevicePIDSubsystem.h"
+#include "devices/subsystems/DeviceReceiverSubsystem.h"
+#include "channels.h"
+#include "ci.h"
+#include "diseqc.h"
 
 #include <linux/dvb/frontend.h>
 
@@ -69,7 +76,7 @@ bool cDvbChannelSubsystem::ProvidesTransponder(const cChannel &channel) const
   if (!ProvidesSource(channel.Source()))
     return false; // doesn't provide source
 
-  cDvbTransponderParameters dtp(channel.Parameters());
+  cDvbTransponderParams dtp(channel.Parameters());
 
   // requires modulation system which frontend doesn't provide - return false in these cases
   if (!ProvidesDeliverySystem(cDvbTuner::GetRequiredDeliverySystem(channel, &dtp))) return false;
@@ -87,7 +94,7 @@ bool cDvbChannelSubsystem::ProvidesTransponder(const cChannel &channel) const
   if (dtp.Modulation() == PSK_8    && !(GetDevice<cDvbDevice>()->m_frontendInfo.caps & FE_CAN_TURBO_FEC) && dtp.System() == SYS_DVBS) return false;
 
   if (!cSource::IsSat(channel.Source()) ||
-      (!Setup.DiSEqC || Diseqcs.Get(Device()->CardIndex() + 1, channel.Source(), channel.Frequency(), dtp.Polarization(), NULL)))
+      (/*!Setup.DiSEqC || */Diseqcs.Get(Device()->CardIndex() + 1, channel.Source(), channel.Frequency(), dtp.Polarization(), NULL))) // TODO
     return cDeviceManager::Get().DeviceHooksProvidesTransponder(*Device(), channel);
   return false;
 }
@@ -135,7 +142,7 @@ bool cDvbChannelSubsystem::ProvidesChannel(const cChannel &channel, int priority
         if (!GetDevice<cDvbDevice>()->BondingOk(channel))
         {
           // This device is bonded, so we need to check the priorities of the others:
-          for (cDvbDevice *d = GetDevice<cDvbDevice>()->m_bondedDevice; d && d != this; d = d->m_bondedDevice)
+          for (cDvbDevice *d = GetDevice<cDvbDevice>()->m_bondedDevice; d && d != GetDevice<cDvbDevice>(); d = d->m_bondedDevice)
           {
             if (d->Receiver()->Priority() >= priority)
             {

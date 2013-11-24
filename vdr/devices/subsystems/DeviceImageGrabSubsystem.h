@@ -20,17 +20,15 @@
  */
 #pragma once
 
-#include "../../devices/DeviceSubsystem.h"
-#include "../../../tools.h"
+#include "devices/DeviceSubsystem.h"
+#include "tools.h"
 
 #include <string>
 
 class cDeviceImageGrabSubsystem : protected cDeviceSubsystem
 {
-protected:
-  cDeviceImageGrabSubsystem(cDevice *device);
-
 public:
+  cDeviceImageGrabSubsystem(cDevice *device);
   virtual ~cDeviceImageGrabSubsystem() { }
 
   /*!

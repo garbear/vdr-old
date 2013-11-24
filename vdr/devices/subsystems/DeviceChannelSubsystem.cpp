@@ -20,18 +20,23 @@
  */
 
 #include "DeviceChannelSubsystem.h"
+#include "DeviceCommonInterfaceSubsystem.h"
 #include "DevicePIDSubsystem.h"
 #include "DevicePlayerSubsystem.h"
 #include "DeviceReceiverSubsystem.h"
 #include "DeviceSectionFilterSubsystem.h"
 #include "DeviceSPUSubsystem.h"
-#include "../../devices/Device.h"
-#include "../../devices/DeviceManager.h"
-#include "../../../channels.h"
-#include "../../../player.h"
-#include "../../../skins.h"
-#include "../../../tools.h"
-#include "../../../transfer.h"
+#include "devices/Device.h"
+#include "devices/DeviceManager.h"
+#include "ci.h"
+#include "channels.h"
+#include "dvbsubtitle.h"
+#include "player.h"
+#include "sections.h"
+#include "skins.h"
+#include "status.h"
+#include "tools.h"
+#include "transfer.h"
 
 #include <time.h>
 
@@ -132,13 +137,13 @@ eSetChannelResult cDeviceChannelSubsystem::SetChannel(const cChannel &channel, b
   if (bLiveView)
   {
     Player()->StopReplay();
-    SAFE_DELETE(SPU()->m_liveSubtitle);
-    SAFE_DELETE(SPU()->m_dvbSubtitleConverter);
+    SAFE_DELETE(Device()->m_liveSubtitle);
+    SAFE_DELETE(Device()->m_dvbSubtitleConverter);
   }
 
   cDevice *device = (bLiveView && Device()->IsPrimaryDevice()) ? cDeviceManager::Get().GetDevice(channel, LIVEPRIORITY, true) : Device();
 
-  bool NeedsTransferMode = device != this;
+  bool NeedsTransferMode = (device != Device());
 
   eSetChannelResult Result = scrOk;
 

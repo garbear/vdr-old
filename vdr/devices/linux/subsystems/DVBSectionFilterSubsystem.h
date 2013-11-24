@@ -20,14 +20,12 @@
  */
 #pragma once
 
-#include "../../../devices/subsystems/DeviceSectionFilterSubsystem.h"
+#include "devices/subsystems/DeviceSectionFilterSubsystem.h"
 
 class cDvbSectionFilterSubsystem : public cDeviceSectionFilterSubsystem
 {
-protected:
-  cDvbSectionFilterSubsystem(cDevice *device);
-
 public:
+  cDvbSectionFilterSubsystem(cDevice *device);
   virtual ~cDvbSectionFilterSubsystem() { }
 
   virtual int OpenFilter(u_short pid, u_char tid, u_char mask);

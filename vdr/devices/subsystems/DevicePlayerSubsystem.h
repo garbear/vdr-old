@@ -20,9 +20,10 @@
  */
 #pragma once
 
-#include "../../devices/DeviceSubsystem.h"
-#include "../../../remux.h"
-#include "../../../tools.h"
+#include "devices/DeviceSubsystem.h"
+#include "osd.h" // for eTextAlignment
+#include "remux.h"
+#include "tools.h"
 
 #include <vector>
 #include <sys/types.h>
@@ -41,10 +42,8 @@ class cPlayer;
 
 class cDevicePlayerSubsystem : protected cDeviceSubsystem
 {
-protected:
-  cDevicePlayerSubsystem(cDevice *device);
-
 public:
+  cDevicePlayerSubsystem(cDevice *device);
   virtual ~cDevicePlayerSubsystem();
 
   /*!
@@ -242,6 +241,7 @@ protected:
   /*!
    * \brief Returns true if this device can currently start a replay session
    */
+public: // TODO
   virtual bool CanReplay() const;
 
   /*!
@@ -338,7 +338,9 @@ protected:
   virtual int PlayTsSubtitle(const std::vector<uchar> &data);
 
 private:
+public: // TODO
   cPlayer       *m_player;
+private:
   cPatPmtParser  m_patPmtParser;
   cTsToPes       m_tsToPesVideo;
   cTsToPes       m_tsToPesAudio;

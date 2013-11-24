@@ -20,10 +20,11 @@
  */
 #pragma once
 
+#include "Device.h"
+
 #include <assert.h>
 #include <typeinfo>
 
-class cDevice;
 class cDeviceAudioSubsystem;
 class cDeviceChannelSubsystem;
 class cDeviceCommonInterfaceSubsystem;

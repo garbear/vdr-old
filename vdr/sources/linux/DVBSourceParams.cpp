@@ -145,7 +145,7 @@ const tDvbParameter _RollOffValues[] =
   {  35, ROLLOFF_35, "0.35" },
 };
 
-// --- cDvbTransponderParameters ---------------------------------------------
+// --- cDvbTransponderParams ---------------------------------------------
 
 cDvbTransponderParams::cDvbTransponderParams(const string &strParameters)
  : m_polarization(0), // TODO: Default to a valid polarization: H, L, R, V

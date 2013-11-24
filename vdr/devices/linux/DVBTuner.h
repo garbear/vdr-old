@@ -20,8 +20,8 @@
  */
 #pragma once
 
-#include "../../../channels.h"
-#include "../../../thread.h"
+#include "channels.h"
+#include "thread.h"
 
 #include <linux/dvb/frontend.h>
 #include <stdint.h>
@@ -29,7 +29,7 @@
 #include <time.h>
 
 class cDvbDevice;
-class cDvbTransponderParameters;
+class cDvbTransponderParams;
 class cDiseqc;
 class cScr;
 
@@ -54,7 +54,7 @@ public:
   int GetSignalStrength() const;
   int GetSignalQuality() const;
 
-  static int GetRequiredDeliverySystem(const cChannel &channel, const cDvbTransponderParameters *dtp);
+  static int GetRequiredDeliverySystem(const cChannel &channel, const cDvbTransponderParams *dtp);
 
 private:
   virtual void Action();

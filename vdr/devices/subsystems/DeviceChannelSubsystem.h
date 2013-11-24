@@ -20,8 +20,8 @@
  */
 #pragma once
 
-#include "../../devices/DeviceSubsystem.h"
-#include "../../../config.h" // For IDLEPRIORITY
+#include "devices/DeviceSubsystem.h"
+#include "config.h" // For IDLEPRIORITY
 
 enum eSetChannelResult
 {
@@ -35,10 +35,8 @@ class cChannel;
 
 class cDeviceChannelSubsystem : protected cDeviceSubsystem
 {
-protected:
-  cDeviceChannelSubsystem(cDevice *device);
-
 public:
+  cDeviceChannelSubsystem(cDevice *device);
   virtual ~cDeviceChannelSubsystem() { }
 
   /*!

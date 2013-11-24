@@ -21,7 +21,9 @@
 
 #include "DeviceVideoFormatSubsystem.h"
 #include "DeviceSPUSubsystem.h"
-#include "../../../tools.h"
+#include "config.h"
+#include "spu.h"
+#include "tools.h"
 
 cDeviceVideoFormatSubsystem::cDeviceVideoFormatSubsystem(cDevice *device)
  : cDeviceSubsystem(device)

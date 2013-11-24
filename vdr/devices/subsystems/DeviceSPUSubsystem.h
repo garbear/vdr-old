@@ -20,19 +20,18 @@
  */
 #pragma once
 
-#include "../../devices/DeviceSubsystem.h"
+#include "devices/DeviceSubsystem.h"
 
 #include <stddef.h>
 
 class cLiveSubtitle;
 class cDvbSubtitleConverter;
+class cSpuDecoder;
 
 class cDeviceSPUSubsystem : protected cDeviceSubsystem
 {
-protected:
-  cDeviceSPUSubsystem(cDevice *device);
-
 public:
+  cDeviceSPUSubsystem(cDevice *device);
   virtual ~cDeviceSPUSubsystem() { }
 
   /*!
@@ -40,8 +39,4 @@ public:
    * \return The SPU decoder, or NULL if this device doesn't have an SPU decoder
    */
   virtual cSpuDecoder *GetSpuDecoder() { return NULL; }
-
-private:
-  cLiveSubtitle         *m_liveSubtitle;
-  cDvbSubtitleConverter *m_dvbSubtitleConverter;
 };

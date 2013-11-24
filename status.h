@@ -11,12 +11,12 @@
 #define __STATUS_H
 
 #include "config.h"
-#include "device.h"
 #include "player.h"
 #include "tools.h"
 
 enum eTimerChange { tcMod, tcAdd, tcDel };
 
+class cDevice;
 class cTimer;
 
 class cStatus : public cListObject {

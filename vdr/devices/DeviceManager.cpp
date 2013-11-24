@@ -20,8 +20,15 @@
  */
 
 #include "DeviceManager.h"
-#include "../../channels.h"
-#include "../../tools.h"
+#include "subsystems/DeviceAudioSubsystem.h"
+#include "subsystems/DeviceChannelSubsystem.h"
+#include "subsystems/DeviceCommonInterfaceSubsystem.h"
+#include "subsystems/DeviceReceiverSubsystem.h"
+#include "subsystems/DeviceVideoFormatSubsystem.h"
+#include "channels.h"
+#include "ci.h"
+#include "tools.h"
+#include "transfer.h"
 
 #include <assert.h>
 
@@ -35,7 +42,7 @@ cDeviceManager::cDeviceManager()
 {
 }
 
-static cDeviceManager &cDeviceManager::Get()
+cDeviceManager &cDeviceManager::Get()
 {
   static cDeviceManager instance;
   return instance;
@@ -83,7 +90,7 @@ void cDeviceManager::AddHook(cDeviceHook *hook)
 
 bool cDeviceManager::DeviceHooksProvidesTransponder(const cDevice &device, const cChannel &channel) const
 {
-  for (list<cDeviceHook*>::const_iterator deviceHookIt = m_deviceHooks.begin(); deviceHookIt != m_deviceHooks.end(); ++deviceHookIt)
+  for (vector<cDeviceHook*>::const_iterator deviceHookIt = m_deviceHooks.begin(); deviceHookIt != m_deviceHooks.end(); ++deviceHookIt)
   {
     if (!(*deviceHookIt)->DeviceProvidesTransponder(device, channel))
       return false;
@@ -110,19 +117,6 @@ bool cDeviceManager::WaitForAllDevicesReady(unsigned int timeout /* = 0 */)
       return true;
   }
   return false;
-}
-
-int cDeviceManager::NextCardIndex(int n /* = 0 */)
-{
-  if (n > 0)
-  {
-    m_nextCardIndex += n;
-    if (m_nextCardIndex >= MAXDEVICES)
-      esyslog("ERROR: nextCardIndex too big (%d)", m_nextCardIndex);
-  }
-  else if (n < 0)
-    esyslog("ERROR: invalid value in nextCardIndex(%d)", n);
-  return m_nextCardIndex;
 }
 
 cDevice *cDeviceManager::ActualDevice()

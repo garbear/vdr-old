@@ -10,26 +10,34 @@
 #ifndef __RECEIVER_H
 #define __RECEIVER_H
 
-#include "device.h"
+#include "channels.h"
+#include "config.h"
 
 #define MAXRECEIVEPIDS  64 // the maximum number of PIDs per receiver
+
+class cDevice;
 
 class cReceiver {
   friend class cDevice;
 private:
+public: // TODO
   cDevice *device;
+private:
   tChannelID channelID;
+public: // TODO
   int priority;
   int pids[MAXRECEIVEPIDS];
   int numPids;
   bool WantsPid(int Pid);
 protected:
   void Detach(void);
+public: // TODO
   virtual void Activate(bool On) {}
                ///< This function is called just before the cReceiver gets attached to
                ///< (On == true) and right after it gets detached from (On == false) a cDevice. It can be used
                ///< to do things like starting/stopping a thread.
                ///< It is guaranteed that Receive() will not be called before Activate(true).
+protected:
   virtual void Receive(uchar *Data, int Length) = 0;
                ///< This function is called from the cDevice we are attached to, and
                ///< delivers one TS packet from the set of PIDs the cReceiver has requested.

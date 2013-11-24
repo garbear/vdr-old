@@ -24,8 +24,10 @@
 #include "DeviceCommonInterfaceSubsystem.h"
 #include "DevicePIDSubsystem.h"
 #include "DevicePlayerSubsystem.h"
-#include "../../devices/Device.h"
-#include "../../../config.h"
+#include "devices/Device.h"
+#include "ci.h"
+#include "config.h"
+#include "receiver.h"
 
 using namespace std;
 
@@ -74,7 +76,7 @@ bool cDeviceReceiverSubsystem::AttachReceiver(cReceiver *receiver)
 {
   if (!receiver)
     return false;
-  if (receiver->device == this)
+  if (receiver->device == Device())
     return true;
 #if WAIT_FOR_TUNER_LOCK
 #define TUNER_LOCK_TIMEOUT 5000 // ms
@@ -100,7 +102,7 @@ bool cDeviceReceiverSubsystem::AttachReceiver(cReceiver *receiver)
       }
       receiver->Activate(true);
       Device()->Lock();
-      receiver->device = this;
+      receiver->device = Device();
       m_receivers[i] = receiver;
       Device()->Unlock();
       if (CommonInterface()->m_camSlot)
@@ -108,7 +110,7 @@ bool cDeviceReceiverSubsystem::AttachReceiver(cReceiver *receiver)
         CommonInterface()->m_camSlot->StartDecrypting();
         CommonInterface()->m_startScrambleDetection = time(NULL);
       }
-      Start();
+      Device()->Start();
       return true;
     }
   }
@@ -118,7 +120,7 @@ bool cDeviceReceiverSubsystem::AttachReceiver(cReceiver *receiver)
 
 void cDeviceReceiverSubsystem::Detach(cReceiver *receiver)
 {
-  if (!receiver || receiver->device != this)
+  if (!receiver || receiver->device != Device())
     return;
   bool receiversLeft = false;
   cMutexLock MutexLock(&m_mutexReceiver);

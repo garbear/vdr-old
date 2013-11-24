@@ -41,8 +41,6 @@
 #define DEV_DVB_AUDIO     "audio"
 #define DEV_DVB_CA        "ca"
 
-class cDvbTuner;
-
 class cDvbAudioSubsystem;
 class cDvbChannelSubsystem;
 class cDvbCommonInterfaceSubsystem;
@@ -130,6 +128,7 @@ public:
   cDvbSectionFilterSubsystem   *DvbSectionFilter() const;
 
 protected:
+public: // TODO
   static std::string DvbName(const char *name, unsigned int adapter, unsigned int frontend);
   static int DvbOpen(const char *name, unsigned int adapter, unsigned int frontend, int mode, bool bReportError = false);
 
@@ -155,6 +154,7 @@ private:
   static bool FindDvbApiVersion(int fd_frontend);
 
   cSubsystems       m_subsystems;
+public: // TODO
   unsigned int      m_adapter;
   unsigned int      m_frontend;
   dvb_frontend_info m_frontendInfo;
@@ -162,10 +162,15 @@ private:
   unsigned int      m_numDeliverySystems;
   unsigned int      m_numModulations;
   //int               m_fd_dvr; // (Moved to DVBReceiverSubsystem.h)
+private:
   int               m_fd_ca;
+public: // TODO
   cDvbDevice       *m_bondedDevice;
   mutable bool      m_bNeedsDetachBondedReceivers;
 
+private:
   static int        m_dvbApiVersion;
+
+public: // TODO
   static cMutex     m_bondMutex;
 };

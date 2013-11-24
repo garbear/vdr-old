@@ -27,6 +27,7 @@
 #include <linux/dvb/dmx.h>
 #include <string>
 #include <sys/ioctl.h>
+#include <unistd.h>
 
 using namespace std;
 

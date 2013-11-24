@@ -20,7 +20,7 @@
  */
 #pragma once
 
-#include "../../devices/DeviceSubsystem.h"
+#include "devices/DeviceSubsystem.h"
 
 #include <sys/types.h>
 
@@ -34,10 +34,8 @@ class cNitFilter;
 
 class cDeviceSectionFilterSubsystem : protected cDeviceSubsystem
 {
-protected:
-  cDeviceSectionFilterSubsystem(cDevice *device);
-
 public:
+  cDeviceSectionFilterSubsystem(cDevice *device);
   virtual ~cDeviceSectionFilterSubsystem() { }
 
   /*!
@@ -78,6 +76,7 @@ protected:
    * \brief A derived device that provides section data must call this function
    *        (typically in its constructor) to actually set up the section handler
    */
+public: // TODO
   void StartSectionHandler();
 
   /*!
@@ -86,8 +85,9 @@ protected:
    */
   void StopSectionHandler();
 
-private:
+//private: // TODO
   cSectionHandler *m_sectionHandler;
+private:
   cEitFilter      *m_eitFilter;
   cPatFilter      *m_patFilter;
   cSdtFilter      *m_sdtFilter;

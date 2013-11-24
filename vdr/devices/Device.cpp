@@ -33,8 +33,10 @@
 #include "subsystems/DeviceSPUSubsystem.h"
 #include "subsystems/DeviceTrackSubsystem.h"
 #include "subsystems/DeviceVideoFormatSubsystem.h"
-#include "../utils/StringUtils.h"
-#include "../../ringbuffer.h"
+#include "utils/StringUtils.h"
+#include "ringbuffer.h"
+#include "dvbsubtitle.h"
+#include "ci.h"
 
 using namespace std;
 
@@ -157,8 +159,8 @@ void cDevice::MakePrimaryDevice(bool bOn)
 {
   if (!bOn)
   {
-    SAFE_DELETE(SPU()->m_liveSubtitle);
-    SAFE_DELETE(SPU()->m_dvbSubtitleConverter);
+    SAFE_DELETE(m_liveSubtitle);
+    SAFE_DELETE(m_dvbSubtitleConverter);
   }
 }
 

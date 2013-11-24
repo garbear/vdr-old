@@ -23,6 +23,7 @@
 
 #include <fcntl.h>
 #include <sys/stat.h>
+#include <unistd.h>
 
 using namespace std;
 
@@ -48,7 +49,7 @@ bool cDeviceImageGrabSubsystem::GrabImageFile(const string &strFileName, bool bJ
         esyslog("ERROR (%s,%d): %s: %m", __FILE__, __LINE__, strFileName.c_str());
         result |= 1;
       }
-      free(Image);
+      free(image);
     }
     else
       result |= 1;

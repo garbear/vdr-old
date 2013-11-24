@@ -21,6 +21,9 @@
 
 #include "ReadDir.h"
 
+#include <dirent.h>
+#include <string.h>
+
 cReadDir::cReadDir(const char *Directory)
  : result(NULL)
 {

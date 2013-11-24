@@ -10,41 +10,49 @@
 #ifndef __PLAYER_H
 #define __PLAYER_H
 
-#include "device.h"
+#include "devices/subsystems/DevicePlayerSubsystem.h"
+#include "devices/subsystems/DeviceTrackSubsystem.h"
+#include "devices/subsystems/DeviceVideoFormatSubsystem.h"
+
 #include "osdbase.h"
+
+class cDevice;
 
 class cPlayer {
   friend class cDevice;
 private:
+public: // TODO
   cDevice *device;
   ePlayMode playMode;
 protected:
-  void DeviceClrAvailableTracks(bool DescriptionsOnly = false) { if (device) device->ClrAvailableTracks(DescriptionsOnly); }
-  bool DeviceSetAvailableTrack(eTrackType Type, int Index, uint16_t Id, const char *Language = NULL, const char *Description = NULL) { return device ? device->SetAvailableTrack(Type, Index, Id, Language, Description) : false; }
-  bool DeviceSetCurrentAudioTrack(eTrackType Type) { return device ? device->SetCurrentAudioTrack(Type) : false; }
-  bool DeviceSetCurrentSubtitleTrack(eTrackType Type) { return device ? device->SetCurrentSubtitleTrack(Type) : false; }
-  bool DevicePoll(cPoller &Poller, int TimeoutMs = 0) { return device ? device->Poll(Poller, TimeoutMs) : false; }
-  bool DeviceFlush(int TimeoutMs = 0) { return device ? device->Flush(TimeoutMs) : true; }
-  bool DeviceHasIBPTrickSpeed(void) { return device ? device->HasIBPTrickSpeed() : false; }
-  bool DeviceIsPlayingVideo(void) { return device ? device->IsPlayingVideo() : false; }
-  void DeviceTrickSpeed(int Speed) { if (device) device->TrickSpeed(Speed); }
-  void DeviceClear(void) { if (device) device->Clear(); }
-  void DevicePlay(void) { if (device) device->Play(); }
-  void DeviceFreeze(void) { if (device) device->Freeze(); }
-  void DeviceMute(void) { if (device) device->Mute(); }
-  void DeviceSetVideoDisplayFormat(eVideoDisplayFormat VideoDisplayFormat) { if (device) device->SetVideoDisplayFormat(VideoDisplayFormat); }
-  void DeviceStillPicture(const uchar *Data, int Length) { if (device) device->StillPicture(Data, Length); }
-  uint64_t DeviceGetSTC(void) { return device ? device->GetSTC() : -1; }
+  void DeviceClrAvailableTracks(bool DescriptionsOnly = false);
+  bool DeviceSetAvailableTrack(eTrackType Type, int Index, uint16_t Id, const char *Language = NULL, const char *Description = NULL);
+  bool DeviceSetCurrentAudioTrack(eTrackType Type);
+  bool DeviceSetCurrentSubtitleTrack(eTrackType Type);
+  bool DevicePoll(cPoller &Poller, int TimeoutMs = 0);
+  bool DeviceFlush(int TimeoutMs = 0);
+  bool DeviceHasIBPTrickSpeed(void);
+  bool DeviceIsPlayingVideo(void);
+  void DeviceTrickSpeed(int Speed);
+  void DeviceClear(void);
+  void DevicePlay(void);
+  void DeviceFreeze(void);
+  void DeviceMute(void);
+  void DeviceSetVideoDisplayFormat(eVideoDisplayFormat VideoDisplayFormat);
+  void DeviceStillPicture(const uchar *Data, int Length);
+  uint64_t DeviceGetSTC(void);
   void Detach(void);
+public: // TODO
   virtual void Activate(bool On) {}
        // This function is called right after the cPlayer has been attached to
        // (On == true) or before it gets detached from (On == false) a cDevice.
        // It can be used to do things like starting/stopping a thread.
+protected:
   int PlayPes(const uchar *Data, int Length, bool VideoOnly = false);
        // Sends the given PES Data to the device and returns the number of
        // bytes that have actually been accepted by the device (or a
        // negative value in case of an error).
-  int PlayTs(const uchar *Data, int Length, bool VideoOnly = false) { return device ? device->PlayTs(Data, Length, VideoOnly) : -1; }
+  int PlayTs(const uchar *Data, int Length, bool VideoOnly = false);
        // Sends the given TS packet to the device and returns a positive number
        // if the packet has been accepted by the device, or a negative value in
        // case of an error.

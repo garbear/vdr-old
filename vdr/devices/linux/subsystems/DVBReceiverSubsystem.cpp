@@ -22,6 +22,8 @@
 #include "DVBReceiverSubsystem.h"
 #include "../../../devices/linux/DVBDevice.h"
 
+#include <unistd.h>
+
 cDvbReceiverSubsystem::cDvbReceiverSubsystem(cDevice *device)
  : cDeviceReceiverSubsystem(device),
    m_tsBuffer(NULL),
@@ -62,13 +64,13 @@ bool cDvbReceiverSubsystem::GetTSPacket(uchar *&Data)
 void cDvbReceiverSubsystem::DetachAllReceivers()
 {
   cMutexLock MutexLock(&GetDevice<cDvbDevice>()->m_bondMutex);
-  cDvbDevice *d = this;
+  cDvbDevice *d = GetDevice<cDvbDevice>();
 
   do
   {
     d->Receiver()->cDeviceReceiverSubsystem::DetachAllReceivers();
     d = d->m_bondedDevice;
-  } while (d && d != this && GetDevice<cDvbDevice>()->m_bNeedsDetachBondedReceivers);
+  } while (d && d !=  GetDevice<cDvbDevice>() && GetDevice<cDvbDevice>()->m_bNeedsDetachBondedReceivers);
 
   GetDevice<cDvbDevice>()->m_bNeedsDetachBondedReceivers = false;
 }

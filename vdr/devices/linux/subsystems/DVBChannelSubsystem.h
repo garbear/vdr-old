@@ -20,16 +20,15 @@
  */
 #pragma once
 
-#include "../../../devices/subsystems/DeviceChannelSubsystem.h"
+#include "devices/subsystems/DeviceChannelSubsystem.h"
 
 class cChannel;
+class cDvbTuner;
 
 class cDvbChannelSubsystem : public cDeviceChannelSubsystem
 {
-protected:
-  cDvbChannelSubsystem(cDevice *device);
-
 public:
+  cDvbChannelSubsystem(cDevice *device);
   virtual ~cDvbChannelSubsystem();
 
   // Not inherited from cDeviceChannelSubsystem
@@ -55,6 +54,7 @@ public:
 protected:
   virtual bool SetChannelDevice(const cChannel &channel, bool bLiveView);
 
-private:
+//private: // TODO
+public:
   cDvbTuner *m_dvbTuner;
 };

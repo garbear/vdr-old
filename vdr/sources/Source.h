@@ -22,26 +22,26 @@
 
 #include <string>
 
-enum eSourceType
-{
-  stNone  = 0x00000000,
-  stAtsc  = ('A' << 24),
-  stCable = ('C' << 24),
-  stSat   = ('S' << 24),
-  stTerr  = ('T' << 24),
-  st_Mask = 0xFF000000,
-  st_Pos  = 0x0000FFFF,
-};
-
-enum eSatelliteDirection
-{
-  sdEast,
-  sdWest,
-};
-
 class cSource : public cListObject
 {
 public:
+  enum eSourceType
+  {
+    stNone  = 0x00000000,
+    stAtsc  = ('A' << 24),
+    stCable = ('C' << 24),
+    stSat   = ('S' << 24),
+    stTerr  = ('T' << 24),
+    st_Mask = 0xFF000000,
+    st_Pos  = 0x0000FFFF,
+  };
+
+  enum eSatelliteDirection
+  {
+    sdEast,
+    sdWest,
+  };
+
   cSource();
   cSource(char source, const std::string &strDescription);
   ~cSource() { }
@@ -69,5 +69,5 @@ private:
 };
 
 // TODO: I need a home!
-#include <map>
-std::map<int, cSource> gSources;
+//#include <map>
+//std::map<int, cSource> gSources;

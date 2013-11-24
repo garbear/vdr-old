@@ -20,9 +20,9 @@
  */
 #pragma once
 
-#include "../../devices/DeviceSubsystem.h"
-#include "../../../thread.h"
-#include "../../../tools.h"
+#include "devices/DeviceSubsystem.h"
+#include "thread.h"
+#include "tools.h"
 
 #define MAXRECEIVERS       16 // the maximum number of receivers per device
 
@@ -30,10 +30,8 @@ class cReceiver;
 
 class cDeviceReceiverSubsystem : protected cDeviceSubsystem
 {
-protected:
-  cDeviceReceiverSubsystem(cDevice *device);
-
 public:
+  cDeviceReceiverSubsystem(cDevice *device);
   virtual ~cDeviceReceiverSubsystem() { }
 
 public:
@@ -69,7 +67,7 @@ public:
    */
   virtual void DetachAllReceivers();
 
-protected:
+//protected:
   /*!
    * \brief Opens the DVR of this device and prepares it to deliver a Transport
    *        Stream for use in a cReceiver
@@ -95,5 +93,6 @@ protected:
 
 private:
   mutable cMutex  m_mutexReceiver;
+public: // TODO
   cReceiver      *m_receivers[MAXRECEIVERS];
 };

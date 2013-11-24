@@ -11,7 +11,7 @@
 #define __CHANNELS_H
 
 #include "config.h"
-#include "sources.h"
+#include "sources/Source.h"
 #include "thread.h"
 #include "tools.h"
 

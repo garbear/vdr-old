@@ -20,15 +20,13 @@
  */
 #pragma once
 
-#include "../../../devices/subsystems/DeviceReceiverSubsystem.h"
+#include "devices/subsystems/DeviceReceiverSubsystem.h"
 
 class cDvbReceiverSubsystem : public cDeviceReceiverSubsystem
 {
 public:
-  virtual ~cDvbReceiverSubsystem() { }
-
-protected:
   cDvbReceiverSubsystem(cDevice *device);
+  virtual ~cDvbReceiverSubsystem() { }
 
   virtual bool OpenDvr();
   virtual void CloseDvr();

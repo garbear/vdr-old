@@ -22,14 +22,6 @@
 #include "DeviceSPUSubsystem.h"
 
 cDeviceSPUSubsystem::cDeviceSPUSubsystem(cDevice *device)
- : cDeviceSubsystem(device),
-   m_liveSubtitle(NULL),
-   m_dvbSubtitleConverter(NULL)
+ : cDeviceSubsystem(device)
 {
-}
-
-cDeviceSPUSubsystem::~cDeviceSPUSubsystem()
-{
-  delete m_liveSubtitle;
-  delete m_dvbSubtitleConverter;
 }
