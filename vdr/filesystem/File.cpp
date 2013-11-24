@@ -23,6 +23,7 @@
  */
 
 #include "File.h"
+#include "HDFile.h"
 #include "VFSFile.h"
 
 #include <auto_ptr.h>
@@ -44,9 +45,11 @@ cFile::~cFile()
 
 IFile *cFile::CreateLoader(const std::string &url)
 {
-  bool isXBMC = true;
+  bool isXBMC = false;
   if (isXBMC)
     return new cVFSFile();
+  else
+    return new cHDFile();
   return NULL;
 }
 

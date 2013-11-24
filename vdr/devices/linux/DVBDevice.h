@@ -166,6 +166,6 @@ private:
   cDvbDevice       *m_bondedDevice;
   mutable bool      m_bNeedsDetachBondedReceivers;
 
-  static int        m_dvbApiVersion = 0x0000;
+  static int        m_dvbApiVersion;
   static cMutex     m_bondMutex;
 };

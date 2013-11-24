@@ -168,12 +168,12 @@ public:
    * shall be that of the currently used system. The length of the returned
    * string should not exceed 6 characters.
    */
-  virtual cString DeviceType() const { return ""; }
+  virtual std::string DeviceType() const { return ""; }
 
   /*!
    * \brief Returns a string identifying the name of this device
    */
-  virtual cString DeviceName() const { return ""; }
+  virtual std::string DeviceName() const { return ""; }
 
   /*!
    * \brief Tells whether this device has an MPEG decoder

@@ -20,7 +20,7 @@
  */
 
 #include "VDRDaemon.h"
-//#include "devices/linux/DVBDevice.h"
+#include "devices/linux/DVBDevice.h"
 
 #include <signal.h> // or #include <bits/signum.h>
 
@@ -39,7 +39,7 @@ cVDRDaemon::~cVDRDaemon()
 
 bool cVDRDaemon::Init()
 {
-  //cDvbDevice::Initialize();
+  cDvbDevice::Initialize();
   //cDvbDevice::BondDevices(Setup.DeviceBondings);
 
   return CreateThread(true);

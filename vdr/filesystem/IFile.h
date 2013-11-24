@@ -62,7 +62,7 @@ public:
   virtual bool Open(const std::string &url, unsigned int flags = 0) = 0;
   virtual bool OpenForWrite(const std::string &url, bool bOverWrite = false) { return false; }
   virtual int64_t Read(void *lpBuf, uint64_t uiBufSize) = 0;
-  virtual bool ReadLine(std::string &strLine) = 0;
+  virtual bool ReadLine(std::string &strLine) { return false; }
   virtual int64_t Write(const void *lpBuf, uint64_t uiBufSize) = 0;
   virtual void Flush() { }
   virtual int64_t Seek(int64_t iFilePosition, int iWhence = SEEK_SET) = 0;

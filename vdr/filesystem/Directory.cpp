@@ -32,7 +32,7 @@ using namespace std;
 
 IDirectory *cDirectory::CreateLoader(const std::string &strPath)
 {
-  bool isXBMC = true;
+  bool isXBMC = false;
   if (isXBMC)
     return new cVFSDirectory();
   return NULL;

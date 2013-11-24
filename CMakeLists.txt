@@ -5,6 +5,8 @@ project(VDR)
 ADD_SUBDIRECTORY(lib/gtest)
 enable_testing()
 
+add_definitions(-DTARGET_LINUX)
+
 include_directories(${CMAKE_SOURCE_DIR})
 include_directories(${CMAKE_SOURCE_DIR}/vdr)
 include_directories(${gtest_SOURCE_DIR}/include)
@@ -12,6 +14,13 @@ include_directories(${gtest_SOURCE_DIR}/include)
 set(VDR_SRCS
 	vdr/SignalHandler.cpp
 	vdr/VDRDaemon.cpp
+	vdr/filesystem/Directory.cpp
+	vdr/filesystem/DirectoryFetchJob.cpp
+	vdr/filesystem/File.cpp
+	vdr/filesystem/HDFile.cpp
+	vdr/filesystem/IDirectory.cpp #vdr/filesystem/ReadDir.cpp
+	vdr/filesystem/VFSDirectory.cpp
+	vdr/filesystem/VFSFile.cpp
 	vdr/sources/ISourceParams.cpp
 	vdr/sources/linux/DVBSourceParams.cpp
 	vdr/utils/StringUtils.cpp
