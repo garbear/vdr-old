@@ -22,7 +22,7 @@
 #include "VDRDaemon.h"
 //#include "devices/linux/DVBDevice.h"
 
-#include <signal.h>
+#include <signal.h> // or #include <bits/signum.h>
 
 using namespace PLATFORM;
 

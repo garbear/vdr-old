@@ -12,10 +12,14 @@ include_directories(${gtest_SOURCE_DIR}/include)
 set(VDR_SRCS
 	vdr/SignalHandler.cpp
 	vdr/VDRDaemon.cpp
+	vdr/sources/ISourceParams.cpp
+	vdr/sources/linux/DVBSourceParams.cpp
+	vdr/utils/StringUtils.cpp
 )
 
 set(VDR_TEST_SRCS
 	vdr/test/TestVDRDaemon.cpp
+	vdr/sources/linux/test/TestDVBSourceParams.cpp
 )
 
 set(VDR_MAIN vdr/main.cpp)

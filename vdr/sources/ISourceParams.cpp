@@ -21,7 +21,7 @@
 
 #include "ISourceParams.h"
 //#include "Source.h"
-#include "tools.h" // for logging
+//#include "tools.h" // for logging
 
 using namespace std;
 
@@ -40,8 +40,8 @@ iSourceParams::iSourceParams(char source, const string &strDescription)
       //gSources[sourceObject.Code()] = sourceObject;
     }
 
-    dsyslog("registered source parameters for '%c - %s'", m_source, strDescription.c_str());
+    //dsyslog("registered source parameters for '%c - %s'", m_source, strDescription.c_str());
   }
-  else
-    esyslog("ERROR: invalid source '%c'", m_source);
+  //else
+    //esyslog("ERROR: invalid source '%c'", m_source);
 }

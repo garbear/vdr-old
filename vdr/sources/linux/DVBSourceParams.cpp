@@ -23,7 +23,9 @@
 #include "utils/StringUtils.h"
 //#include "channels.h"
 class cChannel { };
-#include "i18n.h"
+//#include "i18n.h"
+#define trNOOP(s) (s)
+//#include "tools.h" // for logging
 
 #include <ctype.h> // for toupper
 #include <sstream>
@@ -313,7 +315,7 @@ bool cDvbTransponderParams::Deserialize(const std::string &str)
       m_polarization = toupper(c); break;
 
     default:
-      esyslog("ERROR: unknown parameter key '%c'", c);
+      //esyslog("ERROR: unknown parameter key '%c'", c);
       return false;
     }
   }
