@@ -1,38 +1,7 @@
-# Object files
-*.o
-*.ko
-*.slo
-*.lo
-
-# Libraries
-*.lib
-*.a
-*.lai
-*.la
-
-# Shared objects (inc. Windows DLLs)
-*.dll
-*.so
-*.so.*
-*.dylib
-
-# Executables
-*.exe
-*.out
-*.app
-
 # Eclipse project files
 .cproject
 .project
 .settings
 
 # VDR ignorables
-vdr.bin
-test-vdr.bin
-libvdr.so
-*.mo
-*.pot
-.dependencies
-include
-*.pc
-
+/build
