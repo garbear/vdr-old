@@ -29,6 +29,8 @@
 #include "config.h"
 #include "receiver.h"
 
+#include <algorithm>
+
 using namespace std;
 
 #ifndef ARRAY_SIZE
@@ -56,7 +58,7 @@ int cDeviceReceiverSubsystem::Priority() const
   for (int i = 0; i < MAXRECEIVERS; i++)
   {
     if (m_receivers[i])
-      priority = ::max(m_receivers[i]->priority, priority);
+      priority = std::max(m_receivers[i]->priority, priority);
   }
   return priority;
 }

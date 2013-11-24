@@ -23,6 +23,10 @@
 #include "devices/Device.h"
 #include "devices/DeviceManager.h"
 
+#include <algorithm>
+
+using namespace std;
+
 cChannels Channels;
 
 // --- cChannelSorter --------------------------------------------------------
@@ -274,7 +278,7 @@ int cChannels::MaxChannelNameLength()
     for (cChannel *channel = First(); channel; channel = Next(channel))
     {
       if (!channel->GroupSep())
-        maxChannelNameLength = max(cUtf8Utils::Utf8StrLen(channel->Name()), maxChannelNameLength);
+        maxChannelNameLength = std::max(cUtf8Utils::Utf8StrLen(channel->Name()), maxChannelNameLength);
     }
   }
   return maxChannelNameLength;
@@ -287,7 +291,7 @@ int cChannels::MaxShortChannelNameLength()
     for (cChannel *channel = First(); channel; channel = Next(channel))
     {
       if (!channel->GroupSep())
-        maxShortChannelNameLength = max(cUtf8Utils::Utf8StrLen(channel->ShortName(true)), maxShortChannelNameLength);
+        maxShortChannelNameLength = std::max(cUtf8Utils::Utf8StrLen(channel->ShortName(true)), maxShortChannelNameLength);
     }
   }
   return maxShortChannelNameLength;
@@ -322,7 +326,7 @@ cChannel *cChannels::NewChannel(const cChannel *Transponder, const char *Name, c
   return NULL;
 }
 
-cString ChannelString(const cChannel *Channel, int Number)
+string ChannelString(const cChannel *Channel, int Number)
 {
   char buffer[256];
   if (Channel)

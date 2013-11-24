@@ -40,7 +40,7 @@ public:
   int GetPrevGroup(int Idx);   // Get previous channel group
   int GetNextNormal(int Idx);  // Get next normal channel (not group)
   int GetPrevNormal(int Idx);  // Get previous normal channel (not group)
-  void ReNumber();         // Recalculate 'number' based on channel type
+  void ReNumber();             // Recalculate 'number' based on channel type
 
   cChannel *GetByNumber(int Number, int SkipGap = 0);
   cChannel *GetByServiceID(int Source, int Transponder, unsigned short ServiceID);
@@ -83,5 +83,5 @@ private:
 
 extern cChannels Channels;
 
-cString ChannelString(const cChannel *Channel, int Number);
+std::string ChannelString(const cChannel *Channel, int Number);
 
