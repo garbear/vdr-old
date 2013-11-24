@@ -14,11 +14,35 @@ include_directories(${gtest_SOURCE_DIR}/include)
 set(VDR_SRCS
 	vdr/SignalHandler.cpp
 	vdr/VDRDaemon.cpp
+	vdr/devices/Device.cpp
+	vdr/devices/DeviceManager.cpp
+	vdr/devices/DeviceSubsystem.cpp
+	vdr/devices/linux/DVBDevice.cpp
+	vdr/devices/linux/DVBDeviceProbe.cpp
+	vdr/devices/linux/DVBTuner.cpp
+	vdr/devices/linux/subsystems/DVBAudioSubsystem.cpp
+	vdr/devices/linux/subsystems/DVBChannelSubsystem.cpp
+	vdr/devices/linux/subsystems/DVBCommonInterfaceSubsystem.cpp
+	vdr/devices/linux/subsystems/DVBPIDSubsystem.cpp
+	vdr/devices/linux/subsystems/DVBReceiverSubsystem.cpp
+	vdr/devices/linux/subsystems/DVBSectionFilterSubsystem.cpp
+	vdr/devices/subsystems/DeviceAudioSubsystem.cpp
+	vdr/devices/subsystems/DeviceChannelSubsystem.cpp
+	vdr/devices/subsystems/DeviceCommonInterfaceSubsystem.cpp
+	vdr/devices/subsystems/DeviceImageGrabSubsystem.cpp
+	vdr/devices/subsystems/DevicePIDSubsystem.cpp
+	vdr/devices/subsystems/DevicePlayerSubsystem.cpp
+	vdr/devices/subsystems/DeviceReceiverSubsystem.cpp
+	vdr/devices/subsystems/DeviceSectionFilterSubsystem.cpp
+	vdr/devices/subsystems/DeviceSPUSubsystem.cpp
+	vdr/devices/subsystems/DeviceTrackSubsystem.cpp
+	vdr/devices/subsystems/DeviceVideoFormatSubsystem.cpp
 	vdr/filesystem/Directory.cpp
 	vdr/filesystem/DirectoryFetchJob.cpp
 	vdr/filesystem/File.cpp
 	vdr/filesystem/HDFile.cpp
-	vdr/filesystem/IDirectory.cpp #vdr/filesystem/ReadDir.cpp
+	vdr/filesystem/IDirectory.cpp
+	vdr/filesystem/ReadDir.cpp
 	vdr/filesystem/VFSDirectory.cpp
 	vdr/filesystem/VFSFile.cpp
 	vdr/sources/ISourceParams.cpp

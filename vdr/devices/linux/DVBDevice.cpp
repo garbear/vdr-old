@@ -549,3 +549,45 @@ bool cDvbDevice::FindDvbApiVersion(int fd_frontend)
   }
   return true;
 }
+
+cDvbAudioSubsystem *cDvbDevice::DvbAudio() const
+{
+  cDvbAudioSubsystem *audio = dynamic_cast<cDvbAudioSubsystem*>(Audio());
+  assert(audio);
+  return audio;
+}
+
+cDvbChannelSubsystem *cDvbDevice::DvbChannel() const
+{
+  cDvbChannelSubsystem *channel = dynamic_cast<cDvbChannelSubsystem*>(Channel());
+  assert(channel);
+  return channel;
+}
+
+cDvbCommonInterfaceSubsystem *cDvbDevice::DvbCommonInterface() const
+{
+  cDvbCommonInterfaceSubsystem *commonInterface = dynamic_cast<cDvbCommonInterfaceSubsystem*>(CommonInterface());
+  assert(commonInterface);
+  return commonInterface;
+}
+
+cDvbPIDSubsystem *cDvbDevice::DvbPID() const
+{
+  cDvbPIDSubsystem *pid = dynamic_cast<cDvbPIDSubsystem*>(PID());
+  assert(pid);
+  return pid;
+}
+
+cDvbReceiverSubsystem *cDvbDevice::DvbReceiver() const
+{
+  cDvbReceiverSubsystem *receiver = dynamic_cast<cDvbReceiverSubsystem*>(Receiver());
+  assert(receiver);
+  return receiver;
+}
+
+cDvbSectionFilterSubsystem *cDvbDevice::DvbSectionFilter() const
+{
+  cDvbSectionFilterSubsystem *sectionFilter = dynamic_cast<cDvbSectionFilterSubsystem*>(SectionFilter());
+  assert(sectionFilter);
+  return sectionFilter;
+}

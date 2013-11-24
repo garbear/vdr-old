@@ -122,12 +122,12 @@ public:
    */
   static void UnBondDevices();
 
-  cDvbAudioSubsystem           *DvbAudio()           const { return dynamic_cast<cDvbAudioSubsystem*>(Audio()); }
-  cDvbChannelSubsystem         *DvbChannel()         const { return dynamic_cast<cDvbChannelSubsystem*>(Channel()); }
-  cDvbCommonInterfaceSubsystem *DvbCommonInterface() const { return dynamic_cast<cDvbCommonInterfaceSubsystem*>(CommonInterface()); }
-  cDvbPIDSubsystem             *DvbPID()             const { return dynamic_cast<cDvbPIDSubsystem*>(PID()); }
-  cDvbReceiverSubsystem        *DvbReceiver()        const { return dynamic_cast<cDvbReceiverSubsystem*>(Receiver()); }
-  cDvbSectionFilterSubsystem   *DvbSectionFilter()   const { return dynamic_cast<cDvbSectionFilterSubsystem*>(SectionFilter()); }
+  cDvbAudioSubsystem           *DvbAudio() const;
+  cDvbChannelSubsystem         *DvbChannel() const;
+  cDvbCommonInterfaceSubsystem *DvbCommonInterface() const;
+  cDvbPIDSubsystem             *DvbPID() const;
+  cDvbReceiverSubsystem        *DvbReceiver() const;
+  cDvbSectionFilterSubsystem   *DvbSectionFilter() const;
 
 protected:
   static std::string DvbName(const char *name, unsigned int adapter, unsigned int frontend);
