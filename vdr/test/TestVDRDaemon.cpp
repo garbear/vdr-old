@@ -45,6 +45,8 @@ TEST(VDRDaemonTest, Init)
   EXPECT_EQ(vdr.GetExitCode(), 0);
 }
 
+// This test kills Eclipse's debugger, uncomment and run tests from command line
+/*
 TEST(VDRDaemonTest, Signals)
 {
   cVDRDaemon vdr;
@@ -65,3 +67,4 @@ TEST(VDRDaemonTest, Signals)
 
   CSignalHandler::Get().ResetSignalReceivers();
 }
+*/

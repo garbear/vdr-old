@@ -44,7 +44,7 @@ public:
   int Inversion() const { return m_inversion; }
   void SetInversion(int inversion) { m_inversion = inversion; }
 
-  int Bandwidth() const { return m_coderateH; }
+  int Bandwidth() const { return m_bandwidth; }
   void SetBandwidth(int bandwidth) { m_bandwidth = bandwidth; }
 
   int CoderateH() const { return m_coderateH; }

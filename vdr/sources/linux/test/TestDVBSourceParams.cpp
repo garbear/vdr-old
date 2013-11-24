@@ -57,17 +57,33 @@ TEST(DvbTransponderParams, Serialize)
   string serialized;
 
   serialized = params.Serialize('A');
-  EXPECT_STREQ(serialized.c_str(), "");
+  EXPECT_STREQ(serialized.c_str(), "I999M2");
 
   serialized = params.Serialize('C');
-  EXPECT_STREQ(serialized.c_str(), "");
+  EXPECT_STREQ(serialized.c_str(), "C999I999M2");
 
   serialized = params.Serialize('S');
-  EXPECT_STREQ(serialized.c_str(), "");
+  EXPECT_STREQ(serialized.c_str(), "C999I999M2S0");
 
   serialized = params.Serialize('T');
-  EXPECT_STREQ(serialized.c_str(), "");
+  EXPECT_STREQ(serialized.c_str(), "B8C999D999G999I999M2S0T999Y999");
 
   serialized = params.Serialize('X');
   EXPECT_STREQ(serialized.c_str(), "");
+}
+
+/*
+ * Test serialization of default parameters.
+ */
+TEST(DvbTransponderParams, Deserialize)
+{
+  cDvbTransponderParams params;
+
+  EXPECT_TRUE(params.Deserialize(""));
+  EXPECT_TRUE(params.Deserialize("I999M2"));
+  EXPECT_TRUE(params.Deserialize("C999I999M2"));
+  EXPECT_TRUE(params.Deserialize("C999I999M2S0"));
+  EXPECT_TRUE(params.Deserialize("B8C999D999G999I999M2S0T999Y999"));
+
+  // TODO: More tests
 }

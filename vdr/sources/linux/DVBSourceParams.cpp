@@ -148,7 +148,7 @@ const tDvbParameter _RollOffValues[] =
 // --- cDvbTransponderParameters ---------------------------------------------
 
 cDvbTransponderParams::cDvbTransponderParams(const string &strParameters)
- : m_polarization(0),
+ : m_polarization(0), // TODO: Default to a valid polarization: H, L, R, V
    m_inversion(INVERSION_AUTO),
    m_bandwidth(8000000),
    m_coderateH(FEC_AUTO),
@@ -210,7 +210,12 @@ string cDvbTransponderParams::Serialize(char type) const
   }
   else if (type == 'S')
   {
-    strBuffer << StringUtils::Format("%c", m_polarization);
+    // Only record valid polarizations
+    if (m_polarization == 'H' ||
+        m_polarization == 'L' ||
+        m_polarization == 'R' ||
+        m_polarization == 'V')
+      strBuffer << m_polarization;
     strBuffer << SerializeDriverValue('C', m_coderateH,    _CoderateValues);
     strBuffer << SerializeDriverValue('I', m_inversion,    _InversionValues);
     strBuffer << SerializeDriverValue('M', m_modulation,   _ModulationValues);
@@ -287,7 +292,6 @@ void DeserializeDriverValue(string &str, int &driverValue, const tDvbParameter (
 bool cDvbTransponderParams::Deserialize(const std::string &str)
 {
   string str2(str);
-  long temp;
 
   while (str2.size())
   {
@@ -312,10 +316,11 @@ bool cDvbTransponderParams::Deserialize(const std::string &str)
     case 'L':
     case 'R':
     case 'V':
-      m_polarization = toupper(c); break;
+      m_polarization = toupper(c);
+      break;
 
     default:
-      //esyslog("ERROR: unknown parameter key '%c'", c);
+      //esyslog("ERROR: unknown parameter key '%c' in string '%s'", c, str.c_str());
       return false;
     }
   }
