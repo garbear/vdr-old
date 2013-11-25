@@ -5,6 +5,7 @@
  *      Portions Copyright (C) 2002 Frodo
  *      Portions Copyright (C) by the authors of ffmpeg and xvid
  *      Portions Copyright (C) 2002-2013 Team XBMC
+ *      http://xbmc.org
  *
  *  This Program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -72,6 +73,7 @@ public:
   virtual void Close() = 0;
 
   virtual std::string GetContent() { return "application/octet-stream"; }
+  virtual std::string GetContentCharset() { return ""; }
 
   /*!
    * @brief Get the minimum size that can be read from the open file. For example,

@@ -5,12 +5,15 @@ project(VDR)
 ADD_SUBDIRECTORY(lib/gtest)
 enable_testing()
 
+ADD_SUBDIRECTORY(lib/pcre)
+
 add_definitions(-DTARGET_LINUX)
 
 include_directories(${CMAKE_SOURCE_DIR})
 include_directories(${CMAKE_SOURCE_DIR}/vdr)
-include_directories(${gtest_SOURCE_DIR}/include)
 include_directories(${CMAKE_SOURCE_DIR}/lib)
+include_directories(${gtest_SOURCE_DIR}/include)
+include_directories(${CMAKE_SOURCE_DIR}/lib/pcre)
 
 set(VDR_SRCS
 	vdr/SignalHandler.cpp
@@ -52,7 +55,12 @@ set(VDR_SRCS
 	vdr/sources/ISourceParams.cpp
 	vdr/sources/Source.cpp
 	vdr/sources/linux/DVBSourceParams.cpp
+	vdr/utils/CharsetConverter.cpp
+	vdr/utils/CharsetDetection.cpp
+	vdr/utils/RegExp.cpp
 	vdr/utils/StringUtils.cpp
+	vdr/utils/XBMCTinyXML.cpp
+	vdr/utils/XMLUtils.cpp
 )
 
 set(VDR_SRCS2 # Sources for testing
@@ -72,8 +80,22 @@ set(VDR_TEST_SRCS
 	vdr/channels/test/TestChannel.cpp
 	vdr/channels/test/TestChannelID.cpp
 	#vdr/channels/test/TestChannels.cpp
+	vdr/filesystem/Directory.cpp
+	vdr/filesystem/DirectoryFetchJob.cpp
+	vdr/filesystem/File.cpp
+	vdr/filesystem/HDFile.cpp
+	vdr/filesystem/IDirectory.cpp
+	vdr/filesystem/ReadDir.cpp
+	#vdr/filesystem/VFSDirectory.cpp
+	#vdr/filesystem/VFSFile.cpp
 	vdr/sources/Source.cpp
 	vdr/sources/linux/test/TestDVBSourceParams.cpp
+	vdr/utils/CharsetConverter.cpp
+	vdr/utils/CharsetDetection.cpp
+	vdr/utils/RegExp.cpp
+	vdr/utils/StringUtils.cpp
+	vdr/utils/XBMCTinyXML.cpp
+	vdr/utils/XMLUtils.cpp
 )
 
 set(VDR_MAIN vdr/main.cpp)
@@ -81,6 +103,9 @@ set(VDR_ADDON vdr/addon.cpp)
 
 set(LIBS
 	pthread # TODO: Not needed on Android
+	pcre
+	fribidi
+	tinyxml
 )
 
 #set(VDR_EXECUTABLE vdr.bin)

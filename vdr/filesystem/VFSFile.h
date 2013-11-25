@@ -21,7 +21,7 @@
 #pragma once
 
 #include "IFile.h"
-#include "../../xbmc/xbmc_vfs_utils.hpp"
+#include "xbmc/xbmc_vfs_utils.hpp"
 
 class cVFSFile : public IFile
 {

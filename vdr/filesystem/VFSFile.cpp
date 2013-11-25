@@ -21,6 +21,8 @@
 
 #include "VFSFile.h"
 
+#include "xbmc/libXBMC_addon.h"
+
 extern ADDON::CHelper_libXBMC_addon *XBMC;
 
 cVFSFile::cVFSFile()

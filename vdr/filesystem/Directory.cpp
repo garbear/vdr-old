@@ -3,6 +3,7 @@
  *      Copyright (C) 2013 Lars Op den Kamp
  *      Portions Copyright (C) 2000, 2003, 2006, 2008, 2013 Klaus Schmidinger
  *      Portions Copyright (C) 2005-2013 Team XBMC
+ *      http://xbmc.org
  *
  *  This Program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -30,12 +31,15 @@
 
 using namespace std;
 
+//#define TARGET_XBMC
+
 IDirectory *cDirectory::CreateLoader(const std::string &strPath)
 {
-  bool isXBMC = false;
-  if (isXBMC)
-    return new cVFSDirectory();
+#ifdef TARGET_XBMC
+  return new cVFSDirectory();
+#else
   return NULL;
+#endif
 }
 
 bool cDirectory::GetDirectory(const string &strPath, cDirectoryListing &items, const string &strMask, int flags)

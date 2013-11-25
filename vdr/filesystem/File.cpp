@@ -5,6 +5,7 @@
  *      Portions Copyright (C) 2002 Frodo
  *      Portions Copyright (C) by the authors of ffmpeg and xvid
  *      Portions Copyright (C) 2002-2013 Team XBMC
+ *      http://xbmc.org
  *
  *  This Program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,6 +29,10 @@
 
 #include <auto_ptr.h>
 
+using namespace std;
+
+//#define TARGET_XBMC
+
 #ifndef SAFE_DELETE
 #define SAFE_DELETE(p)  do { delete (p); (p)=NULL; } while (0)
 #endif
@@ -43,17 +48,16 @@ cFile::~cFile()
   SAFE_DELETE(m_pFileImpl);
 }
 
-IFile *cFile::CreateLoader(const std::string &url)
+IFile *cFile::CreateLoader(const string &url)
 {
-  bool isXBMC = false;
-  if (isXBMC)
-    return new cVFSFile();
-  else
-    return new cHDFile();
-  return NULL;
+#ifdef TARGET_XBMC
+  return new cVFSFile();
+#else
+  return new cHDFile();
+#endif
 }
 
-bool cFile::Open(const std::string &url, unsigned int flags /* = 0 */)
+bool cFile::Open(const string &url, unsigned int flags /* = 0 */)
 {
   m_flags = flags;
   if ((flags & READ_NO_CACHE) == 0)
@@ -98,7 +102,7 @@ bool cFile::Open(const std::string &url, unsigned int flags /* = 0 */)
   return true;
 }
 
-bool cFile::OpenForWrite(const std::string &url, bool bOverWrite /* = false */)
+bool cFile::OpenForWrite(const string &url, bool bOverWrite /* = false */)
 {
   m_pFileImpl = CreateLoader(url);
   if (!m_pFileImpl)
@@ -128,12 +132,72 @@ int64_t cFile::Read(void *lpBuf, int64_t uiBufSize)
   return m_pFileImpl->Read(lpBuf, uiBufSize);
 }
 
-bool cFile::ReadLine(std::string &strLine)
+bool cFile::ReadLine(string &strLine)
 {
   strLine.clear();
   if (!m_pFileImpl)
     return false;
   return m_pFileImpl->ReadLine(strLine);
+}
+
+bool cFile::LoadFile(const string &url, vector<uint8_t> &outputBuffer)
+{
+  static const unsigned int MAX_FILE_SIZE = 0x7FFFFFFF; // TODO
+  static const unsigned int MIN_CHUNK_SIZE = 64 * 1024U;
+  static const unsigned int MAX_CHUNK_SIZEI = 2048 * 1024U;
+
+  outputBuffer.clear();
+  if (!Open(url, READ_TRUNCATED))
+    return false;
+
+  /*
+   * GetLength() will typically return values that fall into three cases:
+   * 1. The real filesize. This is the typical case.
+   * 2. Zero. This is the case for some http:// streams for example.
+   * 3. Some value smaller than the real filesize. This is the case for an expanding file.
+   *
+   * In order to handle all three cases, we read the file in chunks, relying on Read()
+   * returning 0 at EOF.  To minimize (re)allocation of the buffer, the chunksize in
+   * cases 1 and 3 is set to one byte larger than the value returned by GetLength().
+   * The chunksize in case 2 is set to the lowest value larger than MIN_CHUNK_SIZE aligned
+   * to GetChunkSize().
+   *
+   * We fill the buffer entirely before reallocation.  Thus, reallocation never occurs in case 1
+   * as the buffer is larger than the file, so we hit EOF before we hit the end of buffer.
+   *
+   * To minimize reallocation, we double the chunksize each read while chunksize is lower
+   * than MAX_CHUNK_SIZEI.
+   */
+  int64_t filesize = GetLength();
+  if (filesize > MAX_FILE_SIZE)
+    return false; // File is too large for this function // TODO
+
+  unsigned int chunksize = (filesize > 0) ? (unsigned int)(filesize + 1) : GetChunkSize(GetChunkSize(), MIN_CHUNK_SIZE);
+  unsigned int total_read = 0;
+  while (true)
+  {
+    if (total_read == outputBuffer.size())
+    {
+      // (re)alloc
+      if (outputBuffer.size() >= MAX_FILE_SIZE)
+      {
+        outputBuffer.clear();
+        return false;
+      }
+
+      outputBuffer.resize(outputBuffer.size() + chunksize);
+      if (chunksize < MAX_CHUNK_SIZEI)
+        chunksize *= 2;
+    }
+    unsigned int read = Read(outputBuffer.data() + total_read, outputBuffer.size() - total_read);
+    total_read += read;
+    if (!read)
+      break;
+  }
+
+  outputBuffer.resize(total_read);
+
+  return true;
 }
 
 int64_t cFile::Write(const void *lpBuf, int64_t uiBufSize)
@@ -185,11 +249,18 @@ void cFile::Close()
   m_pFileImpl->Close();
 }
 
-std::string cFile::GetContent()
+string cFile::GetContentMimeType()
 {
   if (!m_pFileImpl)
-    return "none/none";
+    return MIME_TYPE_NONE;
   return m_pFileImpl->GetContent();
+}
+
+string cFile::GetContentCharset()
+{
+  if (!m_pFileImpl)
+    return "";
+  return m_pFileImpl->GetContentCharset();
 }
 
 unsigned int cFile::GetChunkSize()
@@ -199,7 +270,7 @@ unsigned int cFile::GetChunkSize()
   return m_pFileImpl->GetChunkSize();
 }
 
-bool cFile::Exists(const std::string &url)
+bool cFile::Exists(const string &url)
 {
   std::auto_ptr<IFile> pFile(CreateLoader(url));
   if (!pFile.get())
@@ -207,7 +278,7 @@ bool cFile::Exists(const std::string &url)
   return pFile->Exists(url);
 }
 
-int cFile::Stat(const std::string &url, struct __stat64 *buffer)
+int cFile::Stat(const string &url, struct __stat64 *buffer)
 {
   if (buffer)
     memset(buffer, 0, sizeof(struct __stat64));
@@ -218,7 +289,7 @@ int cFile::Stat(const std::string &url, struct __stat64 *buffer)
   return pFile->Exists(url);
 }
 
-bool cFile::Delete(const std::string &url)
+bool cFile::Delete(const string &url)
 {
   std::auto_ptr<IFile> pFile(CreateLoader(url));
   if (!pFile.get())
@@ -226,7 +297,7 @@ bool cFile::Delete(const std::string &url)
   return pFile->Delete(url);
 }
 
-bool cFile::Rename(const std::string &url, const std::string &urlnew)
+bool cFile::Rename(const string &url, const string &urlnew)
 {
   std::auto_ptr<IFile> pFile(CreateLoader(url));
   if (!pFile.get())
@@ -234,7 +305,7 @@ bool cFile::Rename(const std::string &url, const std::string &urlnew)
   return pFile->Rename(url, urlnew);
 }
 
-bool cFile::SetHidden(const std::string &url, bool hidden)
+bool cFile::SetHidden(const string &url, bool hidden)
 {
   std::auto_ptr<IFile> pFile(CreateLoader(url));
   if (!pFile.get())
@@ -242,7 +313,7 @@ bool cFile::SetHidden(const std::string &url, bool hidden)
   return pFile->SetHidden(url, false);
 }
 
-bool cFile::OnSameFileSystem(const std::string &strFile1, const std::string &strFile2)
+bool cFile::OnSameFileSystem(const string &strFile1, const string &strFile2)
 {
   struct __stat64 statStruct;
   cFile file;

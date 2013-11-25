@@ -27,7 +27,7 @@
 
 #include <string>
 
-class cChannels : public cRwLock, public cConfig<cChannel>
+class cChannels : public cRwLock, public cList<cChannel>
 {
 public:
   cChannels();
@@ -70,6 +70,88 @@ public:
 
   cChannel *NewChannel(const cChannel *Transponder, const char *Name, const char *ShortName, const char *Provider, int Nid, int Tid, int Sid, int Rid = 0);
 
+  // Inherited from cConfig<cChannel>
+  const std::string &FileName() { return m_fileName; }
+
+  bool Load(const std::string &FileName = "", bool AllowComments = false, bool MustExist = false)
+  {
+    Clear();
+    if (!FileName.empty())
+    {
+      m_fileName = FileName;
+      allowComments = AllowComments;
+    }
+    bool result = !MustExist;
+    if (!m_fileName.empty() && access(m_fileName.c_str(), F_OK) == 0)
+    {
+      isyslog("loading %s", m_fileName.c_str());
+      FILE *f = fopen(m_fileName.c_str(), "r");
+      if (f)
+      {
+        char *s;
+        int line = 0;
+        cReadLine ReadLine;
+        result = true;
+        while ((s = ReadLine.Read(f)) != NULL)
+        {
+          line++;
+          if (allowComments)
+          {
+            char *p = strchr(s, '#');
+            if (p)
+              *p = 0;
+          }
+          stripspace(s);
+          if (!isempty(s))
+          {
+            cChannel *l = new cChannel;
+            if (l->Parse(s))
+              Add(l);
+            else
+            {
+              esyslog("ERROR: error in %s, line %d", m_fileName.c_str(), line);
+              delete l;
+              result = false;
+            }
+          }
+        }
+        fclose(f);
+      }
+      else
+      {
+        LOG_ERROR_STR(m_fileName.c_str());
+        result = false;
+      }
+    }
+    if (!result)
+      fprintf(stderr, "vdr: error while reading '%s'\n", m_fileName.c_str());
+    return result;
+  }
+
+  bool Save(void)
+  {
+    bool result = true;
+    T *l = (T *)this->First();
+    cSafeFile f(fileName);
+    if (f.Open())
+    {
+      while (l)
+      {
+        if (!l->Save(f))
+        {
+          result = false;
+          break;
+        }
+        l = (T *)l->Next();
+      }
+      if (!f.Close())
+        result = false;
+    }
+    else
+      result = false;
+    return result;
+  }
+
 private:
   void DeleteDuplicateChannels();
 
@@ -79,6 +161,16 @@ private:
   int             modified;
   int             beingEdited;
   cHash<cChannel> channelsHashSid;
+
+  // Inherited from cConfig<cChannel>
+  std::string m_fileName;
+  bool allowComments;
+  void Clear(void)
+  {
+    free(fileName);
+    fileName = NULL;
+    cList<cChannel>::Clear();
+  }
 };
 
 extern cChannels Channels;

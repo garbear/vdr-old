@@ -25,9 +25,10 @@
 
 #include <vector>
 
-extern ADDON::CHelper_libXBMC_addon *XBMC;
-
 using namespace std;
+//using namespace ADDON;
+
+extern ADDON::CHelper_libXBMC_addon *XBMC;
 
 cVFSDirectory::cVFSDirectory()
  : m_XBMC(XBMC)
