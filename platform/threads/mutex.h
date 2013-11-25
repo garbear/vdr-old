@@ -162,6 +162,14 @@ namespace PLATFORM
       return m_mutex.Lock();
     }
 
+    /*!
+     * \brief Return true if the provided CMutex is held by this CLockObject
+     */
+    inline bool HoldsMutex(const CMutex &mutex)
+    {
+      return &m_mutex == &mutex;
+    }
+
   private:
     CMutex &m_mutex;
     bool    m_bClearOnExit;
