@@ -82,9 +82,65 @@ void cChannels::DeleteDuplicateChannels()
   }
 }
 
-bool cChannels::Load(const char *FileName, bool AllowComments, bool MustExist)
+bool cChannels::Load(const string &fileName, bool bMustExist /* = false */)
 {
-  if (cConfig<cChannel>::Load(FileName, AllowComments, MustExist))
+  Clear();
+  if (!fileName.empty())
+  {
+    m_fileName = fileName;
+    m_bAllowComments = true;
+  }
+
+  bool result = !bMustExist;
+
+  if (!m_fileName.empty() && access(m_fileName.c_str(), F_OK) == 0)
+  {
+    isyslog("loading %s", m_fileName.c_str());
+    FILE *f = fopen(m_fileName.c_str(), "r");
+    if (f)
+    {
+      char *s;
+      int line = 0;
+      cReadLine ReadLine;
+      result = true;
+      while ((s = ReadLine.Read(f)) != NULL)
+      {
+        line++;
+        if (m_bAllowComments)
+        {
+          char *p = strchr(s, '#');
+          if (p)
+            *p = 0;
+        }
+        stripspace(s);
+        if (!isempty(s))
+        {
+          cChannel *l = new cChannel;
+          if (l->Parse(s))
+            Add(l);
+          else
+          {
+            //esyslog("ERROR: error in %s, line %d", m_fileName.c_str(), line);
+            delete l;
+            result = false;
+          }
+        }
+      }
+      fclose(f);
+    }
+    else
+    {
+      //LOG_ERROR_STR(m_fileName.c_str());
+      result = false;
+    }
+  }
+
+  /*
+  if (!result)
+    fprintf(stderr, "vdr: error while reading '%s'\n", m_fileName.c_str());
+  */
+
+  if (result)
   {
     DeleteDuplicateChannels();
     ReNumber();

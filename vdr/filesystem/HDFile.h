@@ -26,31 +26,7 @@
 
 #include "IFile.h"
 
-#ifdef TARGET_LINUX
-typedef int file_t;
-#else
-typedef int file_t;
-#endif
-
-typedef struct cXHandle *HANDLE;
-
-class cAutoPtrHandle
-{
-public:
-  cAutoPtrHandle(HANDLE hHandle);
-  virtual ~cAutoPtrHandle(void);
-
-  operator HANDLE();
-
-  void attach(HANDLE hHandle);
-  HANDLE release();
-  bool isValid() const;
-  void reset();
-
-protected:
-  virtual void Cleanup();
-  HANDLE m_hHandle;
-};
+#include <fstream>
 
 class cHDFile : public IFile
 {
@@ -61,6 +37,7 @@ public:
   virtual bool Open(const std::string &url, unsigned int flags = 0);
   virtual bool OpenForWrite(const std::string &url, bool bOverWrite = false);
   virtual int64_t Read(void *lpBuf, uint64_t uiBufSize);
+  virtual bool ReadLine(std::string &strLine);
   virtual int64_t Write(const void* lpBuf, uint64_t uiBufSize);
   virtual void Flush();
   virtual int64_t Seek(int64_t iFilePosition, int iWhence = SEEK_SET);
@@ -78,6 +55,7 @@ public:
   //virtual int IoControl(EIoControl request, void* param);
 
 protected:
-  int m_fd;
-  int m_curpos;
+  std::fstream            m_file;
+  std::ios_base::openmode m_mode;
+  int                     m_flags;
 };

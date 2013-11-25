@@ -32,7 +32,7 @@ class cChannels : public cRwLock, public cList<cChannel>
 public:
   cChannels();
 
-  bool Load(const char *FileName, bool AllowComments = false, bool MustExist = false);
+  bool Load(const std::string &fileName, bool bMustExist = false);
   void HashChannel(cChannel *Channel);
   void UnhashChannel(cChannel *Channel);
 
@@ -73,61 +73,6 @@ public:
   // Inherited from cConfig<cChannel>
   const std::string &FileName() { return m_fileName; }
 
-  bool Load(const std::string &FileName = "", bool AllowComments = false, bool MustExist = false)
-  {
-    Clear();
-    if (!FileName.empty())
-    {
-      m_fileName = FileName;
-      allowComments = AllowComments;
-    }
-    bool result = !MustExist;
-    if (!m_fileName.empty() && access(m_fileName.c_str(), F_OK) == 0)
-    {
-      isyslog("loading %s", m_fileName.c_str());
-      FILE *f = fopen(m_fileName.c_str(), "r");
-      if (f)
-      {
-        char *s;
-        int line = 0;
-        cReadLine ReadLine;
-        result = true;
-        while ((s = ReadLine.Read(f)) != NULL)
-        {
-          line++;
-          if (allowComments)
-          {
-            char *p = strchr(s, '#');
-            if (p)
-              *p = 0;
-          }
-          stripspace(s);
-          if (!isempty(s))
-          {
-            cChannel *l = new cChannel;
-            if (l->Parse(s))
-              Add(l);
-            else
-            {
-              esyslog("ERROR: error in %s, line %d", m_fileName.c_str(), line);
-              delete l;
-              result = false;
-            }
-          }
-        }
-        fclose(f);
-      }
-      else
-      {
-        LOG_ERROR_STR(m_fileName.c_str());
-        result = false;
-      }
-    }
-    if (!result)
-      fprintf(stderr, "vdr: error while reading '%s'\n", m_fileName.c_str());
-    return result;
-  }
-
   bool Save(void)
   {
     bool result = true;
@@ -164,7 +109,7 @@ private:
 
   // Inherited from cConfig<cChannel>
   std::string m_fileName;
-  bool allowComments;
+  bool m_bAllowComments;
   void Clear(void)
   {
     free(fileName);

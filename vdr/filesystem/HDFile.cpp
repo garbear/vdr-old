@@ -24,13 +24,11 @@
 
 #include "HDFile.h"
 
-#include <fcntl.h>
+using namespace std;
 
 cHDFile::cHDFile()
- : m_fd(-1),
-   m_curpos(0)
+ : m_mode((std::ios_base::openmode)0)
 {
-
 }
 
 cHDFile::~cHDFile()
@@ -38,67 +36,99 @@ cHDFile::~cHDFile()
   Close();
 }
 
-
-bool cHDFile::Open(const std::string &url, unsigned int flags /* = 0 */)
+bool cHDFile::Open(const string &url, unsigned int flags /* = 0 */)
 {
   Close();
-  int fileDes = open(url.c_str(), flags, DEFFILEMODE);
-  if (fileDes >= 0)
-  {
-    m_fd = fileDes;
-    return true;
-  }
-  return false;
+
+  m_flags = flags;
+
+  m_mode = ios::in;
+  m_file.open(url.c_str(), m_mode);
+
+  return m_file.is_open();
 }
 
-bool cHDFile::OpenForWrite(const std::string &url, bool bOverWrite /* = false */)
+bool cHDFile::OpenForWrite(const string &url, bool bOverWrite /* = false */)
 {
-  return false;
+  Close();
+
+  m_mode = ios::out;
+  m_file.open(url.c_str(), m_mode);
+
+  return m_file.is_open();
 }
 
 int64_t cHDFile::Read(void *lpBuf, uint64_t uiBufSize)
 {
-  if (m_fd < 0)
-    return 0;
-
-  ssize_t bytesRead = 0;
-
-  while (1)
+  if (m_file.is_open() && (m_mode & ios::in))
   {
-    ssize_t p = read(m_fd, lpBuf, uiBufSize);
-    if (p >= 0 || errno == EINTR)
-    {
-      bytesRead =  p;
-      break;
-    }
+    int64_t start = m_file.tellg();
+
+    // TODO: Respect m_flags
+    m_file.read(reinterpret_cast<char*>(lpBuf), uiBufSize);
+
+    if (m_file.eof())
+      return m_file.tellg() - start;
+    else if (!m_file.fail())
+      return uiBufSize;
   }
+  return 0;
+}
 
-  if (bytesRead > 0)
-    m_curpos += bytesRead;
-
-  return bytesRead;
+bool cHDFile::ReadLine(string &strLine)
+{
+  if (m_file.is_open() && (m_mode & ios::in))
+  {
+    //if (m_file.openmode & ios::binary)
+    //  return false; // Shouldn't happen
+    m_file >> strLine;
+    return !strLine.empty();
+  }
+  return false;
 }
 
 int64_t cHDFile::Write(const void* lpBuf, uint64_t uiBufSize)
 {
+  if (m_file.is_open() && (m_mode & ios::out))
+  {
+    m_file.write(reinterpret_cast<const char*>(lpBuf), uiBufSize);
+    return !m_file.fail();
+  }
   return 0;
 }
 
 void cHDFile::Flush()
 {
-  return;
+  if (m_file.is_open())
+    m_file.flush();
 }
 
 int64_t cHDFile::Seek(int64_t iFilePosition, int iWhence /* = SEEK_SET */)
 {
-  if (m_fd < 0)
-    return 0;
+  if (m_file.is_open())
+  {
+    ios::seekdir whence;
+    switch (iWhence)
+    {
+    case SEEK_CUR: whence = ios_base::cur; break;
+    case SEEK_END: whence = ios_base::end; break;
+    default:
+    case SEEK_SET: whence = ios_base::beg; break;
+    }
 
-  if (iWhence == SEEK_SET && iFilePosition == m_curpos)
-     return m_curpos;
+    if (m_mode & ios::in)
+    {
+      m_file.seekg(iFilePosition, whence);
+      return m_file.tellg();
+    }
+    else if (m_mode & ios::out)
+    {
+      m_file.seekp(iFilePosition, whence);
+      return m_file.tellp();
+    }
+  }
 
-  m_curpos = lseek(m_fd, iFilePosition, iWhence);
-  return m_curpos;
+  return 0;
 }
 
 int cHDFile::Truncate(int64_t size)
@@ -108,48 +138,72 @@ int cHDFile::Truncate(int64_t size)
 
 int64_t cHDFile::GetPosition()
 {
-  if (m_fd < 0)
-    return -1;
-
-  return m_curpos;
+  if (m_file.is_open())
+  {
+    if (m_mode & ios::in)
+      return m_file.tellg();
+    else if (m_mode & ios::out)
+      return m_file.tellp();
+  }
+  return -1;
 }
 
 int64_t cHDFile::GetLength()
 {
-  if (m_fd < 0)
-    return 0;
+  int64_t length = 0;
 
-  return 0;
+  if (m_file.is_open())
+  {
+    int pos = GetPosition();
+    if (pos >= 0)
+    {
+      if (m_mode & ios::in)
+      {
+        m_file.seekg(0, ios_base::end);
+        length = m_file.tellg();
+        m_file.seekg(pos);
+      }
+      else if (m_mode & ios::out)
+      {
+        m_file.seekp(0, ios_base::end);
+        length = m_file.tellp();
+        m_file.seekp(pos);
+      }
+    }
+  }
+
+  return length;
 }
 
 void cHDFile::Close()
 {
-  if (m_fd >= 0)
-    close(m_fd);
-  m_fd = -1;
+  if (m_file.is_open())
+    m_file.close();
+  m_mode = (std::ios_base::openmode)0;
+  m_flags = 0;
 }
 
-bool cHDFile::Exists(const std::string &url)
+bool cHDFile::Exists(const string &url)
 {
   return false;
 }
 
-int cHDFile::Stat(const std::string &url, struct __stat64 *buffer)
+int cHDFile::Stat(const string &url, struct __stat64 *buffer)
 {
   return -1;
 }
 
-bool cHDFile::Delete(const std::string &url)
+bool cHDFile::Delete(const string &url)
 {
   return false;
 }
 
-bool cHDFile::Rename(const std::string &url, const std::string &urlnew)
+bool cHDFile::Rename(const string &url, const string &urlnew)
 {
   return false;
 }
 
-bool cHDFile::SetHidden(const std::string &url, bool hidden)
+bool cHDFile::SetHidden(const string &url, bool hidden)
 {
   return false;
 }

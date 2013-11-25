@@ -30,21 +30,6 @@
 #include <sys/types.h>
 #include <vector>
 
-// File flags from File.h of XBMC project
-
-// Indicate that caller can handle truncated reads, where function returns before entire buffer has been filled
-#define READ_TRUNCATED     0x01
-// Indicate that that caller support read in the minimum defined chunk size, this disables internal cache then
-#define READ_CHUNKED       0x02
-// Use cache to access this file
-#define READ_CACHED        0x04
-// Open without caching. regardless to file type.
-#define READ_NO_CACHE      0x08
-// Calcuate bitrate for file while reading
-#define READ_BITRATE       0x10
-// Indicate the caller will seek between multiple streams in the file frequently
-#define READ_MULTI_STREAM  0x20
-
 #define MIME_TYPE_NONE     "none/none"
 
 class cFile
