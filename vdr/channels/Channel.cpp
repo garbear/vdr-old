@@ -39,6 +39,16 @@ using namespace std;
 #define STRDIFF 0x01
 #define VALDIFF 0x02
 
+// TODO
+char *strn0cpy(char *dest, const char *src, size_t n)
+{
+  char *s = dest;
+  for ( ; --n && (*dest = *src) != 0; dest++, src++) ;
+  *dest = 0;
+  return s;
+}
+
+
 static int IntArraysDiffer(const int *a, const int *b, const char na[][MAXLANGCODE2] = NULL, const char nb[][MAXLANGCODE2] = NULL)
 {
   int result = 0;
@@ -89,7 +99,7 @@ cChannel::cChannel()
  : m_channelData(), // value-initialize
    m_modification(CHANNELMOD_NONE),
    m_schedule(NULL),
-   //m_linkChannels(NULL),
+   //m_linkChannels(NULL), // TODO
    m_refChannel(NULL)
 {
 }
@@ -107,6 +117,7 @@ cChannel::~cChannel()
   //delete linkChannels;
   //linkChannels = NULL; // more than one channel can link to this one, so we need the following loop
 
+  /* TODO
   for (cChannel *Channel = Channels.First(); Channel; Channel = Channels.Next(Channel))
   {
     if (Channel->m_linkChannels)
@@ -127,7 +138,7 @@ cChannel::~cChannel()
       }
     }
   }
-
+  */
 }
 
 cChannel& cChannel::operator=(const cChannel &channel)
@@ -148,7 +159,7 @@ cChannel& cChannel::operator=(const cChannel &channel)
 
 string cChannel::Name() const
 {
-  if (Setup.ShowChannelNamesWithSource && !m_channelData.groupSep)
+  if (/*Setup.ShowChannelNamesWithSource && */!m_channelData.groupSep) // TODO
   {
     if (m_nameSource.empty())
       m_nameSource = StringUtils::Format("%s (%c)", m_name.c_str(), cSource::ToChar(m_channelData.source));
@@ -162,7 +173,7 @@ string cChannel::ShortName(bool bOrName /* = false */) const
   if (bOrName && m_shortName.empty())
     return Name();
 
-  if (Setup.ShowChannelNamesWithSource && !m_channelData.groupSep)
+  if (/*Setup.ShowChannelNamesWithSource && */!m_channelData.groupSep) // TODO
   {
     if (m_shortNameSource.c_str())
       m_shortNameSource = StringUtils::Format("%s (%c)", m_shortName.c_str(), cSource::ToChar(m_channelData.source));
@@ -188,7 +199,10 @@ string cChannel::ToText(const cChannel &channel)
   }
   *q = 0;
 
-  strreplace(FullName, ':', '|');
+  //strreplace(FullName, ':', '|'); // TODO
+  char *p = FullName; // TODO
+  while (*p) { if (*p == ':') *p = '|'; p++; } // TODO
+
   string buffer;
   if (channel.m_channelData.groupSep)
   {
@@ -233,7 +247,7 @@ string cChannel::ToText(const cChannel &channel)
     q += IntArrayToString(q, channel.m_channelData.caids, 16);
     *q = 0;
 
-    buffer = cString::sprintf("%s:%d:%s:%s:%d:%s:%s:%s:%s:%d:%d:%d:%d\n",
+    buffer = StringUtils::Format("%s:%d:%s:%s:%d:%s:%s:%s:%s:%d:%d:%d:%d\n",
         FullName, channel.m_channelData.frequency, channel.m_parameters.c_str(), cSource::ToString(channel.m_channelData.source).c_str(), channel.m_channelData.srate,
         vpidbuf, apidbuf, tpidbuf, caidbuf, channel.m_channelData.sid, channel.m_channelData.nid, channel.m_channelData.tid, channel.m_channelData.rid);
   }
@@ -359,7 +373,7 @@ bool cChannel::Parse(const string &str)
               NumApids++;
           }
           else
-            esyslog("ERROR: too many APIDs!"); // no need to set ok to 'false'
+            ;//esyslog("ERROR: too many APIDs!"); // no need to set ok to 'false'
 
           p = NULL;
         }
@@ -397,7 +411,7 @@ bool cChannel::Parse(const string &str)
                 NumDpids++;
             }
             else
-              esyslog("ERROR: too many DPIDs!"); // no need to set ok to 'false'
+              ;//esyslog("ERROR: too many DPIDs!"); // no need to set ok to 'false'
 
             p = NULL;
           }
@@ -427,7 +441,7 @@ bool cChannel::Parse(const string &str)
               m_channelData.spids[NumSpids++] = strtol(q, NULL, 10);
             }
             else
-              esyslog("ERROR: too many SPIDs!"); // no need to set ok to 'false'
+              ;//esyslog("ERROR: too many SPIDs!"); // no need to set ok to 'false'
 
             p = NULL;
           }
@@ -452,14 +466,16 @@ bool cChannel::Parse(const string &str)
                 break;
             }
             else
-              esyslog("ERROR: too many CA ids!"); // no need to set ok to 'false'
+              ;//esyslog("ERROR: too many CA ids!"); // no need to set ok to 'false'
             p = NULL;
           }
           m_channelData.caids[NumCaIds] = 0;
         }
       }
 
-      strreplace(namebuf, '|', ':');
+      //strreplace(namebuf, '|', ':'); // TODO
+      char *p2 = namebuf; // TODO
+      while (*p2) { if (*p2 == '|') *p2 = ':'; p2++; } // TODO
 
       char *p = strchr(namebuf, ';');
       if (p)
@@ -488,7 +504,7 @@ bool cChannel::Parse(const string &str)
 
       if (!GetChannelID().Valid())
       {
-        esyslog("ERROR: channel data results in invalid ID!");
+        //esyslog("ERROR: channel data results in invalid ID!");
         return false;
       }
     }
@@ -529,7 +545,7 @@ int cChannel::Transponder() const
   return transponderFreq;
 }
 
-int cChannel::Transponder(int frequency, char polarization)
+unsigned int cChannel::Transponder(unsigned int frequency, char polarization)
 {
   // some satellites have transponders at the same frequency, just with different polarization:
   switch (toupper(polarization))
@@ -538,7 +554,7 @@ int cChannel::Transponder(int frequency, char polarization)
   case 'V': frequency += 200000; break;
   case 'L': frequency += 300000; break;
   case 'R': frequency += 400000; break;
-  default: esyslog("ERROR: invalid value for Polarization '%c'", polarization); break;
+  default: /*esyslog("ERROR: invalid value for Polarization '%c'", polarization);*/ break;
   }
   return frequency;
 }
@@ -580,7 +596,7 @@ bool cChannel::SetTransponderData(int source, int frequency, int srate, const st
 {
   if (strParameters.find(':') != string::npos)
   {
-    esyslog("ERROR: parameter string '%s' contains ':'", strParameters.c_str());
+    //esyslog("ERROR: parameter string '%s' contains ':'", strParameters.c_str());
     return false;
   }
 
@@ -608,9 +624,9 @@ bool cChannel::SetTransponderData(int source, int frequency, int srate, const st
     m_shortNameSource.clear();
     if (Number() && !bQuiet)
     {
-      dsyslog("changing transponder data of channel %d from %s to %s", Number(), oldTransponderData.c_str(), TransponderDataToString().c_str());
+      //dsyslog("changing transponder data of channel %d from %s to %s", Number(), oldTransponderData.c_str(), TransponderDataToString().c_str());
       m_modification |= CHANNELMOD_TRANSP;
-      Channels.SetModified();
+      //Channels.SetModified(); // TODO
     }
   }
   return true;
@@ -622,17 +638,17 @@ void cChannel::SetId(int nid, int tid, int sid, int rid /* = 0 */)
   {
     if (Number())
     {
-      dsyslog("changing id of channel %d from %d-%d-%d-%d to %d-%d-%d-%d", Number(), m_channelData.nid, m_channelData.tid, m_channelData.sid, m_channelData.rid, nid, tid, sid, rid);
+      //dsyslog("changing id of channel %d from %d-%d-%d-%d to %d-%d-%d-%d", Number(), m_channelData.nid, m_channelData.tid, m_channelData.sid, m_channelData.rid, nid, tid, sid, rid);
       m_modification |= CHANNELMOD_ID;
-      Channels.SetModified();
-      Channels.UnhashChannel(this);
+      //Channels.SetModified(); // TODO
+      //Channels.UnhashChannel(this); // TODO
     }
     m_channelData.nid = nid;
     m_channelData.tid = tid;
     m_channelData.sid = sid;
     m_channelData.rid = rid;
     if (Number())
-      Channels.HashChannel(this);
+      ;//Channels.HashChannel(this); // TODO
     m_schedule = NULL;
   }
 }
@@ -648,11 +664,13 @@ void cChannel::SetName(const string &strName, const string &strShortName, const 
     {
       if (Number())
       {
+        /* TODO
         dsyslog("changing name of channel %d from '%s,%s;%s' to '%s,%s;%s'",
             Number(), m_name.c_str(), m_shortName.c_str(), m_provider.c_str(),
             strName.c_str(), strShortName.c_str(), strProvider.c_str());
+        */
         m_modification |= CHANNELMOD_NAME;
-        Channels.SetModified();
+        //Channels.SetModified(); // TODO
       }
       if (nn)
       {
@@ -676,9 +694,9 @@ void cChannel::SetPortalName(const string &strPortalName)
   {
     if (Number())
     {
-      dsyslog("changing portal name of channel %d from '%s' to '%s'", Number(), m_portalName.c_str(), strPortalName.c_str());
+      //dsyslog("changing portal name of channel %d from '%s' to '%s'", Number(), m_portalName.c_str(), strPortalName.c_str());
       m_modification |= CHANNELMOD_NAME;
-      Channels.SetModified();
+      //Channels.SetModified(); // TODO
     }
     m_portalName = strPortalName;
   }
@@ -737,7 +755,7 @@ void cChannel::SetPids(int vpid, int ppid, int vtype, int *apids, int *atypes, c
     q += IntArrayToString(q, spids, 10, sLangs);
     *q = 0;
     if (Number())
-      dsyslog("changing pids of channel %d from %d+%d=%d:%s:%s:%d to %d+%d=%d:%s:%s:%d", Number(), m_channelData.vpid, m_channelData.ppid, m_channelData.vtype, OldApidsBuf, OldSpidsBuf, m_channelData.tpid, vpid, ppid, vtype, NewApidsBuf, NewSpidsBuf, tpid);
+      ;//dsyslog("changing pids of channel %d from %d+%d=%d:%s:%s:%d to %d+%d=%d:%s:%s:%d", Number(), m_channelData.vpid, m_channelData.ppid, m_channelData.vtype, OldApidsBuf, OldSpidsBuf, m_channelData.tpid, vpid, ppid, vtype, NewApidsBuf, NewSpidsBuf, tpid);
 
     m_channelData.vpid = vpid;
     m_channelData.ppid = ppid;
@@ -768,7 +786,7 @@ void cChannel::SetPids(int vpid, int ppid, int vtype, int *apids, int *atypes, c
 
     m_channelData.tpid = tpid;
     m_modification |= mod;
-    Channels.SetModified();
+    //Channels.SetModified(); // TODO
   }
 }
 
@@ -805,7 +823,7 @@ void cChannel::SetCaIds(const int *caIds)
     IntArrayToString(OldCaIdsBuf, m_channelData.caids, 16);
     IntArrayToString(NewCaIdsBuf, caIds, 16);
     if (Number())
-      dsyslog("changing caids of channel %d from %s to %s", Number(), OldCaIdsBuf, NewCaIdsBuf);
+      ;//dsyslog("changing caids of channel %d from %s to %s", Number(), OldCaIdsBuf, NewCaIdsBuf);
     for (int i = 0; i <= MAXCAIDS; i++) // <= to copy the terminating 0
     {
       m_channelData.caids[i] = caIds[i];
@@ -813,7 +831,7 @@ void cChannel::SetCaIds(const int *caIds)
         break;
     }
     m_modification |= CHANNELMOD_CA;
-    Channels.SetModified();
+    //Channels.SetModified(); // TODO
   }
 }
 
@@ -822,9 +840,9 @@ void cChannel::SetCaDescriptors(int level)
   if (level > 0)
   {
     m_modification |= CHANNELMOD_CA;
-    Channels.SetModified();
+    //Channels.SetModified(); // TODO
     if (Number() && level > 1)
-      dsyslog("changing ca descriptors of channel %d", Number());
+      ;//dsyslog("changing ca descriptors of channel %d", Number());
   }
 }
 /*

@@ -168,7 +168,7 @@ public:
    * Some satellites have transponders at the same frequency, just with different
    * polarization.
    */
-  static int Transponder(int frequency, char polarization);
+  static unsigned int Transponder(unsigned int frequency, char polarization);
 
   int Source()                      const { return m_channelData.source; }
   int Srate()                       const { return m_channelData.srate; }
@@ -178,20 +178,20 @@ public:
   const int *Apids()                const { return m_channelData.apids; }
   const int *Dpids()                const { return m_channelData.dpids; }
   const int *Spids()                const { return m_channelData.spids; }
-  int Apid(int i)                   const { return (0 <= i && i < MAXAPIDS) ? m_channelData.apids[i] : 0; }
-  int Dpid(int i)                   const { return (0 <= i && i < MAXDPIDS) ? m_channelData.dpids[i] : 0; }
-  int Spid(int i)                   const { return (0 <= i && i < MAXSPIDS) ? m_channelData.spids[i] : 0; }
-  const char *Alang(int i)          const { return (0 <= i && i < MAXAPIDS) ? m_channelData.alangs[i] : ""; }
-  const char *Dlang(int i)          const { return (0 <= i && i < MAXDPIDS) ? m_channelData.dlangs[i] : ""; }
-  const char *Slang(int i)          const { return (0 <= i && i < MAXSPIDS) ? m_channelData.slangs[i] : ""; }
-  int Atype(int i)                  const { return (0 <= i && i < MAXAPIDS) ? m_channelData.atypes[i] : 0; }
-  int Dtype(int i)                  const { return (0 <= i && i < MAXDPIDS) ? m_channelData.dtypes[i] : 0; }
-  uchar SubtitlingType(int i)       const { return (0 <= i && i < MAXSPIDS) ? m_channelData.subtitlingTypes[i] : (uchar)0; }
-  uint16_t CompositionPageId(int i) const { return (0 <= i && i < MAXSPIDS) ? m_channelData.compositionPageIds[i] : (uint16_t)0; }
-  uint16_t AncillaryPageId(int i)   const { return (0 <= i && i < MAXSPIDS) ? m_channelData.ancillaryPageIds[i] : (uint16_t)0; }
+  int Apid(unsigned int i)          const { return (i < MAXAPIDS) ? m_channelData.apids[i] : 0; }
+  int Dpid(unsigned int i)          const { return (i < MAXDPIDS) ? m_channelData.dpids[i] : 0; }
+  int Spid(unsigned int i)          const { return (i < MAXSPIDS) ? m_channelData.spids[i] : 0; }
+  const char *Alang(unsigned int i) const { return (i < MAXAPIDS) ? m_channelData.alangs[i] : ""; }
+  const char *Dlang(unsigned int i) const { return (i < MAXDPIDS) ? m_channelData.dlangs[i] : ""; }
+  const char *Slang(unsigned int i) const { return (i < MAXSPIDS) ? m_channelData.slangs[i] : ""; }
+  int Atype(unsigned int i)         const { return (i < MAXAPIDS) ? m_channelData.atypes[i] : 0; }
+  int Dtype(unsigned int i)         const { return (i < MAXDPIDS) ? m_channelData.dtypes[i] : 0; }
+  uchar SubtitlingType(unsigned int i)       const { return (i < MAXSPIDS) ? m_channelData.subtitlingTypes[i] : (uchar)0; }
+  uint16_t CompositionPageId(unsigned int i) const { return (i < MAXSPIDS) ? m_channelData.compositionPageIds[i] : (uint16_t)0; }
+  uint16_t AncillaryPageId(unsigned int i)   const { return (i < MAXSPIDS) ? m_channelData.ancillaryPageIds[i] : (uint16_t)0; }
   int Tpid()                        const { return m_channelData.tpid; }
   const int *Caids()                const { return m_channelData.caids; }
-  int Ca(int index = 0)             const { return index < MAXCAIDS ? m_channelData.caids[index] : 0; }
+  int Ca(unsigned int index = 0)    const { return index < MAXCAIDS ? m_channelData.caids[index] : 0; }
   int Nid()                         const { return m_channelData.nid; }
   int Tid()                         const { return m_channelData.tid; }
   int Sid()                         const { return m_channelData.sid; }

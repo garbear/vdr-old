@@ -58,7 +58,7 @@ set(VDR_SRCS
 set(VDR_SRCS2 # Sources for testing
 	vdr/SignalHandler.cpp
 	vdr/VDRDaemon.cpp
-	#vdr/channels/Channel.cpp
+	vdr/channels/Channel.cpp
 	vdr/channels/ChannelID.cpp
 	#vdr/channels/Channels.cpp
 	vdr/sources/ISourceParams.cpp
@@ -69,7 +69,7 @@ set(VDR_SRCS2 # Sources for testing
 
 set(VDR_TEST_SRCS
 	vdr/test/TestVDRDaemon.cpp
-	#vdr/channels/test/TestChannel.cpp
+	vdr/channels/test/TestChannel.cpp
 	vdr/channels/test/TestChannelID.cpp
 	#vdr/channels/test/TestChannels.cpp
 	vdr/sources/Source.cpp

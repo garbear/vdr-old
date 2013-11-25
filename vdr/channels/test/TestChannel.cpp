@@ -25,4 +25,81 @@
 
 TEST(Channel, Channel)
 {
+  // Test value initialization of data struct
+  cChannel channel;
+  EXPECT_EQ(channel.Frequency(), 0);
+  EXPECT_EQ(channel.Source(), 0);
+  EXPECT_EQ(channel.Srate(), 0);
+  EXPECT_EQ(channel.Vpid(), 0);
+  EXPECT_EQ(channel.Ppid(), 0);
+  EXPECT_NE(channel.Apids(), (const int*)NULL);
+  EXPECT_NE(channel.Dpids(), (const int*)NULL);
+  EXPECT_NE(channel.Spids(), (const int*)NULL);
+  EXPECT_EQ(channel.Apid(0), 0);
+  EXPECT_EQ(channel.Dpid(0), 0);
+  EXPECT_EQ(channel.Spid(0), 0);
+  EXPECT_NE(channel.Alang(0), (const char*)NULL);
+  EXPECT_STREQ(channel.Alang(0), "");
+  EXPECT_NE(channel.Dlang(0), (const char*)NULL);
+  EXPECT_STREQ(channel.Dlang(0), "");
+  EXPECT_NE(channel.Slang(0), (const char*)NULL);
+  EXPECT_STREQ(channel.Slang(0), "");
+  EXPECT_EQ(channel.Atype(0), 0);
+  EXPECT_EQ(channel.Dtype(0), 0);
+  EXPECT_EQ(channel.SubtitlingType(0), (uchar)0);
+  EXPECT_EQ(channel.CompositionPageId(0), (uint16_t)0);
+  EXPECT_EQ(channel.AncillaryPageId(0), (uint16_t)0);
+  EXPECT_EQ(channel.Tpid(), 0);
+  EXPECT_NE(channel.Caids(), (const int*)NULL);
+  EXPECT_EQ(channel.Ca(0), 0);
+  EXPECT_EQ(channel.Nid(), 0);
+  EXPECT_EQ(channel.Tid(), 0);
+  EXPECT_EQ(channel.Sid(), 0);
+  EXPECT_EQ(channel.Rid(), 0);
+  EXPECT_EQ(channel.Number(), 0);
+  EXPECT_EQ(channel.GroupSep(), false);
+
+  EXPECT_STREQ(channel.ToText().c_str(), ":0:::0:0:0:0:0:0:0:0:0\n");
+
+  EXPECT_TRUE(channel.Parse(channel.ToText()));
+  EXPECT_EQ(channel.Frequency(), 0);
+  EXPECT_EQ(channel.Source(), 0);
+  EXPECT_EQ(channel.Srate(), 0);
+  EXPECT_EQ(channel.Vpid(), 0);
+  EXPECT_EQ(channel.Ppid(), 0);
+  EXPECT_NE(channel.Apids(), (const int*)NULL);
+  EXPECT_NE(channel.Dpids(), (const int*)NULL);
+  EXPECT_NE(channel.Spids(), (const int*)NULL);
+  EXPECT_EQ(channel.Apid(0), 0);
+  EXPECT_EQ(channel.Dpid(0), 0);
+  EXPECT_EQ(channel.Spid(0), 0);
+  EXPECT_NE(channel.Alang(0), (const char*)NULL);
+  EXPECT_STREQ(channel.Alang(0), "");
+  EXPECT_NE(channel.Dlang(0), (const char*)NULL);
+  EXPECT_STREQ(channel.Dlang(0), "");
+  EXPECT_NE(channel.Slang(0), (const char*)NULL);
+  EXPECT_STREQ(channel.Slang(0), "");
+  EXPECT_EQ(channel.Atype(0), 0);
+  EXPECT_EQ(channel.Dtype(0), 0);
+  EXPECT_EQ(channel.SubtitlingType(0), (uchar)0);
+  EXPECT_EQ(channel.CompositionPageId(0), (uint16_t)0);
+  EXPECT_EQ(channel.AncillaryPageId(0), (uint16_t)0);
+  EXPECT_EQ(channel.Tpid(), 0);
+  EXPECT_NE(channel.Caids(), (const int*)NULL);
+  EXPECT_EQ(channel.Ca(0), 0);
+  EXPECT_EQ(channel.Nid(), 0);
+  EXPECT_EQ(channel.Tid(), 0);
+  EXPECT_EQ(channel.Sid(), 0);
+  EXPECT_EQ(channel.Rid(), 0);
+  EXPECT_EQ(channel.Number(), 0);
+  //EXPECT_EQ(channel.GroupSep(), false); // TODO: Fails
+
+  EXPECT_FALSE(channel.Parse(""));
+
+  unsigned int frequency = 1000 * 1000 * 1000; // 1GHz
+  EXPECT_EQ(cChannel::Transponder(frequency, 'H'), frequency + 100 * 1000);
+  EXPECT_EQ(cChannel::Transponder(frequency, 'V'), frequency + 200 * 1000);
+  EXPECT_EQ(cChannel::Transponder(frequency, 'L'), frequency + 300 * 1000);
+  EXPECT_EQ(cChannel::Transponder(frequency, 'R'), frequency + 400 * 1000);
+  EXPECT_EQ(cChannel::Transponder(frequency, 'X'), frequency);
 }
