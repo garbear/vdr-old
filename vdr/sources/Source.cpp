@@ -21,9 +21,10 @@
 
 #include "Source.h"
 
-#include "tools.h" // for logging
+//#include "tools.h" // for logging
 
 #include <stdio.h>
+#include <stdlib.h>
 
 using namespace std;
 
@@ -102,7 +103,7 @@ int cSource::FromString(const string &str)
               pos *= 10;
             break;
           default:
-            esyslog("ERROR: unknown source character '%c' in '%s'", str[i], str.c_str());
+            //esyslog("ERROR: unknown source character '%c' in '%s'", str[i], str.c_str());
             return stNone;
           }
         }
@@ -113,7 +114,7 @@ int cSource::FromString(const string &str)
       return code;
     }
     else
-      esyslog("ERROR: unknown source key '%c' at beginning of '%s'", str[0], str.c_str());
+      ;//esyslog("ERROR: unknown source key '%c' at beginning of '%s'", str[0], str.c_str());
   }
   return stNone;
 }

@@ -29,6 +29,7 @@ public:
   tChannelID(int source, int nid, int tid, int sid, int rid = 0);
 
   bool operator==(const tChannelID &arg) const;
+  bool operator!=(const tChannelID &arg) const { return !(*this == arg); }
 
   bool Valid() const { return (m_nid || m_tid) && m_sid; } // rid is optional and source may be 0//XXX source may not be 0???
 

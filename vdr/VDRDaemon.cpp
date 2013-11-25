@@ -39,7 +39,7 @@ cVDRDaemon::~cVDRDaemon()
 
 bool cVDRDaemon::Init()
 {
-  cDvbDevice::Initialize();
+  //cDvbDevice::Initialize();
   //cDvbDevice::BondDevices(Setup.DeviceBondings);
 
   return CreateThread(true);

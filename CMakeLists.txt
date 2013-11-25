@@ -55,8 +55,24 @@ set(VDR_SRCS
 	vdr/utils/StringUtils.cpp
 )
 
+set(VDR_SRCS2 # Sources for testing
+	vdr/SignalHandler.cpp
+	vdr/VDRDaemon.cpp
+	#vdr/channels/Channel.cpp
+	vdr/channels/ChannelID.cpp
+	#vdr/channels/Channels.cpp
+	vdr/sources/ISourceParams.cpp
+	vdr/sources/Source.cpp
+	vdr/sources/linux/DVBSourceParams.cpp
+	vdr/utils/StringUtils.cpp
+)
+
 set(VDR_TEST_SRCS
 	vdr/test/TestVDRDaemon.cpp
+	#vdr/channels/test/TestChannel.cpp
+	vdr/channels/test/TestChannelID.cpp
+	#vdr/channels/test/TestChannels.cpp
+	vdr/sources/Source.cpp
 	vdr/sources/linux/test/TestDVBSourceParams.cpp
 )
 
@@ -67,16 +83,16 @@ set(LIBS
 	pthread # TODO: Not needed on Android
 )
 
-set(VDR_EXECUTABLE vdr.bin)
-add_executable(${VDR_EXECUTABLE} ${VDR_MAIN} ${VDR_SRCS})
-target_link_libraries(${VDR_EXECUTABLE} ${LIBS})
+#set(VDR_EXECUTABLE vdr.bin)
+#add_executable(${VDR_EXECUTABLE} ${VDR_MAIN} ${VDR_SRCS})
+#target_link_libraries(${VDR_EXECUTABLE} ${LIBS})
 
-set(VDR_LIBRARY vdr)
-add_library(${VDR_LIBRARY} SHARED ${VDR_ADDON} ${VDR_SRCS})
-target_link_libraries(${VDR_LIBRARY} ${LIBS})
+#set(VDR_LIBRARY vdr)
+#add_library(${VDR_LIBRARY} SHARED ${VDR_ADDON} ${VDR_SRCS})
+#target_link_libraries(${VDR_LIBRARY} ${LIBS})
 
 set(VDR_TEST_EXECUTABLE test-vdr.bin)
-add_executable(${VDR_TEST_EXECUTABLE} ${VDR_SRCS} ${VDR_TEST_SRCS})
+add_executable(${VDR_TEST_EXECUTABLE} ${VDR_SRCS2} ${VDR_TEST_SRCS})
 target_link_libraries(${VDR_TEST_EXECUTABLE} gtest_main ${LIBS})
 
 add_test(

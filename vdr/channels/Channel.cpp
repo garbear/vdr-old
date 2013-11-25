@@ -86,7 +86,7 @@ static int IntArrayToString(char *s, const int *a, int Base = 10, const char n[]
 }
 
 cChannel::cChannel()
- : m_channelData(),
+ : m_channelData(), // value-initialize
    m_modification(CHANNELMOD_NONE),
    m_schedule(NULL),
    //m_linkChannels(NULL),

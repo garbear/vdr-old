@@ -24,7 +24,7 @@
 
 #include <string>
 
-class cSource : public cListObject
+class cSource// : public cListObject
 {
 public:
   enum eSourceType

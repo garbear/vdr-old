@@ -20,6 +20,8 @@
  */
 
 #include "ChannelID.h"
+#include "sources/Source.h"
+#include "utils/StringUtils.h"
 
 #include <stddef.h>
 #include <stdio.h>
@@ -55,6 +57,14 @@ bool tChannelID::operator==(const tChannelID &arg) const
          m_rid == arg.m_rid;
 }
 
+string tChannelID::Serialize() const
+{
+  if (m_rid)
+    return StringUtils::Format("%s-%d-%d-%d-%d", cSource::ToString(m_source).c_str(), m_nid, m_tid, m_sid, m_rid);
+  else
+    return StringUtils::Format("%s-%d-%d-%d", cSource::ToString(m_source).c_str(), m_nid, m_tid, m_sid);
+}
+
 tChannelID tChannelID::Deserialize(const std::string &str)
 {
   tChannelID ret = tChannelID::InvalidID;
@@ -76,20 +86,10 @@ tChannelID tChannelID::Deserialize(const std::string &str)
   return ret;
 }
 
-cString tChannelID::Serialize() const
-{
-  char buffer[256];
-  if (m_rid)
-    snprintf(buffer, sizeof(buffer), "%s-%d-%d-%d-%d", cSource::Serialize(m_source).c_str(), m_nid, m_tid, m_sid, m_rid);
-  else
-    snprintf(buffer, sizeof(buffer), "%s-%d-%d-%d", cSource::Serialize(m_source).c_str(), m_nid, m_tid, m_sid);
-  return buffer;
-}
-
 //tChannelID &tChannelID::ClrPolarization()
 void tChannelID::ClrPolarization()
 {
-  while (tid > 100000)
-    tid -= 100000;
+  while (m_tid > 100000)
+    m_tid -= 100000;
   //return *this;
 }
