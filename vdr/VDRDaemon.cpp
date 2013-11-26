@@ -21,6 +21,7 @@
 
 #include "VDRDaemon.h"
 #include "devices/linux/DVBDevice.h"
+#include "filesystem/Directory.h"
 
 #include <signal.h> // or #include <bits/signum.h>
 
@@ -39,6 +40,19 @@ cVDRDaemon::~cVDRDaemon()
 
 bool cVDRDaemon::Init()
 {
+  // Create directories
+  //cDirectory::Create("special://home/config");
+
+  // TODO: Implement protocols special:// (handled like XBMC) and vfs:// (or xbmc://)
+  //       (which routes URI through VFS api calls)
+
+  // Directories:
+  // - special://home - Main writable directory, use FHS as a linux app (in which case it maps to e.g. ~/.vdr)
+  //                    or uaddon_data/addon.id/ as an xbmc add-on (in which case it maps to
+  //                    vfs://special%3A%2F%2Fprofile%2Faddon_data%2Faddon.id possibly)
+  //
+  // - special://vdr - URI of source directory (special://vdr/system is repo's /system folder)
+
   //cDvbDevice::Initialize();
   //cDvbDevice::BondDevices(Setup.DeviceBondings);
 
