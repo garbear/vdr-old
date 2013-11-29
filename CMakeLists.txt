@@ -124,11 +124,11 @@ endif()
 
 #set(VDR_EXECUTABLE vdr.bin)
 #add_executable(${VDR_EXECUTABLE} ${VDR_MAIN} ${VDR_SRCS})
-#target_link_libraries(${VDR_EXECUTABLE} ${LIBS})
+#target_link_libraries(${VDR_EXECUTABLE} ${LIBS} ${LIBRT} ${LIBPTHREAD})
 
-#set(VDR_LIBRARY vdr)
-#add_library(${VDR_LIBRARY} SHARED ${VDR_ADDON} ${VDR_SRCS})
-#target_link_libraries(${VDR_LIBRARY} ${LIBS})
+set(VDR_LIBRARY vdr)
+add_library(${VDR_LIBRARY} SHARED ${VDR_ADDON} ${VDR_SRCS})
+target_link_libraries(${VDR_LIBRARY} ${LIBS} ${LIBRT} ${LIBPTHREAD})
 
 set(VDR_TEST_EXECUTABLE test-vdr.bin)
 add_executable(${VDR_TEST_EXECUTABLE} ${VDR_SRCS2} ${VDR_TEST_SRCS})
