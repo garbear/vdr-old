@@ -127,7 +127,7 @@ struct tChannelData
 
 class cSchedule;
 
-class cChannel// : public cListObject
+class cChannel : public cListObject
 {
   //friend class cSchedules;
   //friend class cMenuEditChannel;

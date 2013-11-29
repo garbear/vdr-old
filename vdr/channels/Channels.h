@@ -76,8 +76,8 @@ public:
   bool Save(void)
   {
     bool result = true;
-    T *l = (T *)this->First();
-    cSafeFile f(fileName);
+    cChannel* l = First();
+    cSafeFile f(m_fileName.c_str());
     if (f.Open())
     {
       while (l)
@@ -87,7 +87,7 @@ public:
           result = false;
           break;
         }
-        l = (T *)l->Next();
+        l = Next(l);
       }
       if (!f.Close())
         result = false;
@@ -112,8 +112,7 @@ private:
   bool m_bAllowComments;
   void Clear(void)
   {
-    free(fileName);
-    fileName = NULL;
+    m_fileName.clear();
     cList<cChannel>::Clear();
   }
 };

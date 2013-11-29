@@ -22,6 +22,8 @@
 #include "Channels.h"
 #include "devices/Device.h"
 #include "devices/DeviceManager.h"
+#include "devices/subsystems/DeviceChannelSubsystem.h"
+#include "utils/UTF8Utils.h"
 
 #include <algorithm>
 
@@ -75,7 +77,7 @@ void cChannels::DeleteDuplicateChannels()
     cChannelSorter *next = ChannelSorter.Next(cs);
     if (next && cs->channelID == next->channelID)
     {
-      dsyslog("deleting duplicate channel %s", *next->channel->ToText());
+      dsyslog("deleting duplicate channel %s", next->channel->ToText().c_str());
       Del(next->channel);
     }
     cs = next;
@@ -162,7 +164,7 @@ void cChannels::UnhashChannel(cChannel *Channel)
 int cChannels::GetNextGroup(int Idx)
 {
   cChannel *channel = Get(++Idx);
-  while (channel && !(channel->GroupSep() && *channel->Name()))
+  while (channel && !(channel->GroupSep() && !channel->Name().empty()))
     channel = Get(++Idx);
   return channel ? Idx : -1;
 }
@@ -170,7 +172,7 @@ int cChannels::GetNextGroup(int Idx)
 int cChannels::GetPrevGroup(int Idx)
 {
   cChannel *channel = Get(--Idx);
-  while (channel && !(channel->GroupSep() && *channel->Name()))
+  while (channel && !(channel->GroupSep() && !channel->Name().empty()))
     channel = Get(--Idx);
   return channel ? Idx : -1;
 }
@@ -263,7 +265,7 @@ cChannel *cChannels::GetByChannelID(tChannelID ChannelID, bool TryWithoutRid, bo
       for (cHashObject *hobj = list->First(); hobj; hobj = list->Next(hobj))
       {
         cChannel *channel = (cChannel *)hobj->Object();
-        if (channel->Sid() == sid && channel->GetChannelID().ClrRid() == ChannelID)
+        if (channel->Sid() == sid && channel->GetChannelID() == ChannelID)
           return channel;
       }
     }
@@ -274,7 +276,7 @@ cChannel *cChannels::GetByChannelID(tChannelID ChannelID, bool TryWithoutRid, bo
       for (cHashObject *hobj = list->First(); hobj; hobj = list->Next(hobj))
       {
         cChannel *channel = (cChannel *)hobj->Object();
-        if (channel->Sid() == sid && channel->GetChannelID().ClrPolarization() == ChannelID)
+        if (channel->Sid() == sid && channel->GetChannelID() == ChannelID)
           return channel;
       }
     }
@@ -324,7 +326,7 @@ bool cChannels::HasUniqueChannelID(cChannel *NewChannel, cChannel *OldChannel)
 bool cChannels::SwitchTo(int Number)
 {
   cChannel *channel = GetByNumber(Number);
-  return channel && cDeviceManager::PrimaryDevice()->SwitchChannel(channel, true);
+  return channel && cDeviceManager::Get().PrimaryDevice()->Channel()->SwitchChannel(*channel, true);
 }
 
 int cChannels::MaxChannelNameLength()
@@ -334,7 +336,7 @@ int cChannels::MaxChannelNameLength()
     for (cChannel *channel = First(); channel; channel = Next(channel))
     {
       if (!channel->GroupSep())
-        maxChannelNameLength = std::max(cUtf8Utils::Utf8StrLen(channel->Name()), maxChannelNameLength);
+        maxChannelNameLength = std::max(cUtf8Utils::Utf8StrLen(channel->Name().c_str()), maxChannelNameLength);
     }
   }
   return maxChannelNameLength;
@@ -347,7 +349,7 @@ int cChannels::MaxShortChannelNameLength()
     for (cChannel *channel = First(); channel; channel = Next(channel))
     {
       if (!channel->GroupSep())
-        maxShortChannelNameLength = std::max(cUtf8Utils::Utf8StrLen(channel->ShortName(true)), maxShortChannelNameLength);
+        maxShortChannelNameLength = std::max(cUtf8Utils::Utf8StrLen(channel->ShortName(true).c_str()), maxShortChannelNameLength);
     }
   }
   return maxShortChannelNameLength;
@@ -370,9 +372,9 @@ cChannel *cChannels::NewChannel(const cChannel *Transponder, const char *Name, c
 {
   if (Transponder)
   {
-    dsyslog("creating new channel '%s,%s;%s' on %s transponder %d with id %d-%d-%d-%d", Name, ShortName, Provider, *cSource::ToString(Transponder->Source()), Transponder->Transponder(), Nid, Tid, Sid, Rid);
+    dsyslog("creating new channel '%s,%s;%s' on %s transponder %d with id %d-%d-%d-%d", Name, ShortName, Provider, cSource::ToString(Transponder->Source()).c_str(), Transponder->Transponder(), Nid, Tid, Sid, Rid);
     cChannel *NewChannel = new cChannel;
-    NewChannel->CopyTransponderData(Transponder);
+    NewChannel->CopyTransponderData(*Transponder);
     NewChannel->SetId(Nid, Tid, Sid, Rid);
     NewChannel->SetName(Name, ShortName, Provider);
     Add(NewChannel);
@@ -388,9 +390,9 @@ string ChannelString(const cChannel *Channel, int Number)
   if (Channel)
   {
     if (Channel->GroupSep())
-      snprintf(buffer, sizeof(buffer), "%s", Channel->Name());
+      snprintf(buffer, sizeof(buffer), "%s", Channel->Name().c_str());
     else
-      snprintf(buffer, sizeof(buffer), "%d%s  %s", Channel->Number(), Number ? "-" : "", Channel->Name());
+      snprintf(buffer, sizeof(buffer), "%d%s  %s", Channel->Number(), Number ? "-" : "", Channel->Name().c_str());
   }
   else if (Number)
     snprintf(buffer, sizeof(buffer), "%d-", Number);
