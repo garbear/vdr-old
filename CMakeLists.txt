@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 2.6)
 project(VDR)
 
+include(CheckLibraryExists)
+
 # Setup testing
 ADD_SUBDIRECTORY(lib/gtest)
 enable_testing()
@@ -101,12 +103,24 @@ set(VDR_TEST_SRCS
 set(VDR_MAIN vdr/main.cpp)
 set(VDR_ADDON vdr/addon.cpp)
 
+CHECK_LIBRARY_EXISTS(rt clock_gettime "time.h" HAVE_RT)
+CHECK_LIBRARY_EXISTS(pthread pthread_create "pthread.h" HAVE_PTHREAD)
+CHECK_LIBRARY_EXISTS(pcre pcre_compile "pcre.h" HAVE_PCRE)
+CHECK_LIBRARY_EXISTS(fribidi fribidi_log2vis "fribidi/fribidi.h" HAVE_FRIBIDI)
+
 set(LIBS
-	pthread # TODO: Not needed on Android
 	pcre
 	fribidi
 	tinyxml
 )
+
+if(HAVE_RT)
+  set(LIBRT "rt")
+endif()
+
+if(HAVE_PTHREAD)
+  set(LIBPTHREAD "pthread")
+endif()
 
 #set(VDR_EXECUTABLE vdr.bin)
 #add_executable(${VDR_EXECUTABLE} ${VDR_MAIN} ${VDR_SRCS})
@@ -118,7 +132,7 @@ set(LIBS
 
 set(VDR_TEST_EXECUTABLE test-vdr.bin)
 add_executable(${VDR_TEST_EXECUTABLE} ${VDR_SRCS2} ${VDR_TEST_SRCS})
-target_link_libraries(${VDR_TEST_EXECUTABLE} gtest_main ${LIBS})
+target_link_libraries(${VDR_TEST_EXECUTABLE} gtest_main ${LIBS} ${LIBRT} ${LIBPTHREAD})
 
 add_test(
 	NAME ${VDR_TEST_EXECUTABLE}
