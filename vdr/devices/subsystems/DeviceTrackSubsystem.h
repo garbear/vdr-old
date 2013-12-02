@@ -21,8 +21,8 @@
 #pragma once
 
 #include "devices/DeviceSubsystem.h"
-#include "receiver.h"
-#include "tools.h"
+#include "devices/Receiver.h"
+//#include "tools.h"
 
 #include <string>
 #include <vector>

@@ -12,9 +12,9 @@
 
 #include <stdint.h>
 #include <stdio.h>
-#include "channels.h"
+#include "channels/Channels.h"
 #include "thread.h"
-#include "tools.h"
+#include "utils/Tools.h"
 
 #define MAX_CAM_SLOTS_PER_ADAPTER     8 // maximum possible value is 255
 #define MAX_CONNECTIONS_PER_CAM_SLOT  8 // maximum possible value is 254

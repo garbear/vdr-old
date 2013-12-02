@@ -10,10 +10,10 @@
  * $Id: ringbuffer.c 2.5 2012/09/22 11:26:49 kls Exp $
  */
 
-#include "ringbuffer.h"
+#include "Ringbuffer.h"
 #include <stdlib.h>
 #include <unistd.h>
-#include "tools.h"
+#include "Tools.h"
 
 // --- cRingBuffer -----------------------------------------------------------
 

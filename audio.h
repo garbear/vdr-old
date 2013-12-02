@@ -11,7 +11,7 @@
 #define __AUDIO_H
 
 #include "thread.h"
-#include "tools.h"
+#include "utils/Tools.h"
 
 class cAudio : public cListObject {
 protected:

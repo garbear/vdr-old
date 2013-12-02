@@ -11,12 +11,12 @@
 #define __RECORDING_H
 
 #include <time.h>
-#include "channels.h"
-#include "config.h"
-#include "epg.h"
+#include "channels/Channels.h"
+#include "Config.h"
 #include "thread.h"
-#include "timers.h"
-#include "tools.h"
+#include "Timers.h"
+#include "epg/EPG.h"
+#include "utils/Tools.h"
 
 #define FOLDERDELIMCHAR '~'
 

@@ -10,8 +10,8 @@
 #ifndef __KEYS_H
 #define __KEYS_H
 
-#include "config.h"
-#include "tools.h"
+#include "Config.h"
+#include "utils/Tools.h"
 
 enum eKeys { // "Up" and "Down" must be the first two keys!
              kUp,

@@ -7,7 +7,8 @@
  * $Id: transfer.c 2.8.1.1 2013/08/22 12:37:02 kls Exp $
  */
 
-#include "transfer.h"
+#include "Transfer.h"
+#include "subsystems/DeviceReceiverSubsystem.h"
 
 // --- cTransfer -------------------------------------------------------------
 
@@ -62,8 +63,8 @@ cDevice *cTransferControl::receiverDevice = NULL;
 cTransferControl::cTransferControl(cDevice *ReceiverDevice, const cChannel *Channel)
 :cControl(transfer = new cTransfer(Channel), true)
 {
-  ReceiverDevice->AttachReceiver(transfer);
   receiverDevice = ReceiverDevice;
+  ReceiverDevice->Receiver()->AttachReceiver(transfer);
 }
 
 cTransferControl::~cTransferControl()

@@ -7,14 +7,15 @@
  * $Id: timers.c 2.18 2013/03/29 15:37:16 kls Exp $
  */
 
-#include "timers.h"
+#include "Timers.h"
 #include <ctype.h>
-#include "channels.h"
-#include "device.h"
-#include "i18n.h"
+#include "channels/Channels.h"
+#include "devices/Device.h"
+#include "devices/DeviceManager.h"
+#include "utils/I18N.h"
 #include "libsi/si.h"
-#include "recording.h"
-#include "remote.h"
+#include "recordings/Recording.h"
+//#include "remote.h"
 #include "status.h"
 
 #include "vdr/utils/UTF8Utils.h"
@@ -39,7 +40,7 @@ cTimer::cTimer(bool Instant, bool Pause, cChannel *Channel)
   event = NULL;
   if (Instant)
      SetFlags(tfActive | tfInstant);
-  channel = Channel ? Channel : Channels.GetByNumber(cDevice::CurrentChannel());
+  channel = Channel ? Channel : Channels.GetByNumber(cDeviceManager::Get().CurrentChannel());
   time_t t = time(NULL);
   struct tm tm_r;
   struct tm *now = localtime_r(&t, &tm_r);
@@ -81,7 +82,7 @@ cTimer::cTimer(bool Instant, bool Pause, cChannel *Channel)
   priority = Pause ? Setup.PausePriority : Setup.DefaultPriority;
   lifetime = Pause ? Setup.PauseLifetime : Setup.DefaultLifetime;
   if (Instant && channel)
-     snprintf(file, sizeof(file), "%s%s", Setup.MarkInstantRecord ? "@" : "", *Setup.NameInstantRecord ? Setup.NameInstantRecord : channel->Name());
+     snprintf(file, sizeof(file), "%s%s", Setup.MarkInstantRecord ? "@" : "", *Setup.NameInstantRecord ? Setup.NameInstantRecord : channel->Name().c_str());
 }
 
 cTimer::cTimer(const cEvent *Event)
@@ -175,7 +176,7 @@ int cTimer::Compare(const cListObject &ListObject) const
 cString cTimer::ToText(bool UseChannelID) const
 {
   strreplace(file, ':', '|');
-  cString buffer = cString::sprintf("%u:%s:%s:%04d:%04d:%d:%d:%s:%s\n", flags, UseChannelID ? *Channel()->GetChannelID().ToString() : *itoa(Channel()->Number()), *PrintDay(day, weekdays, true), start, stop, priority, lifetime, file, aux ? aux : "");
+  cString buffer = cString::sprintf("%u:%s:%s:%04d:%04d:%d:%d:%s:%s\n", flags, UseChannelID ? Channel()->GetChannelID().Serialize().c_str() : *itoa(Channel()->Number()), *PrintDay(day, weekdays, true), start, stop, priority, lifetime, file, aux ? aux : "");
   strreplace(file, '|', ':');
   return buffer;
 }
@@ -329,7 +330,7 @@ bool cTimer::Parse(const char *s)
      if (is_number(channelbuffer))
         channel = Channels.GetByNumber(atoi(channelbuffer));
      else
-        channel = Channels.GetByChannelID(tChannelID::FromString(channelbuffer), true, true);
+        channel = Channels.GetByChannelID(tChannelID::Deserialize(channelbuffer), true, true);
      if (!channel) {
         esyslog("ERROR: channel %s not defined", channelbuffer);
         result = false;
@@ -809,8 +810,9 @@ void cTimers::SetEvents(void)
   if (Schedules) {
      if (!lastSetEvents || Schedules->Modified() >= lastSetEvents) {
         for (cTimer *ti = First(); ti; ti = Next(ti)) {
-            if (cRemote::HasKeys())
-               return; // react immediately on user input
+          //TODO
+//            if (cRemote::HasKeys())
+//               return; // react immediately on user input
             ti->SetEventFromSchedule(Schedules);
             }
         }

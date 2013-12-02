@@ -10,12 +10,15 @@
 #ifndef __PLUGIN_H
 #define __PLUGIN_H
 
-#include "i18n.h"
-#include "menuitems.h"
-#include "osdbase.h"
-#include "tools.h"
+#include "utils/I18N.h"
+//#include "menuitems.h"
+//#include "osdbase.h"
+#include "utils/Tools.h"
 
 #define VDRPLUGINCREATOR(PluginClass) extern "C" void *VDRPluginCreator(void) { return new PluginClass; }
+
+class cOsdObject;
+class cMenuSetupPage;
 
 class cPlugin {
   friend class cDll;

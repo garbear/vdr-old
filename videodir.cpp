@@ -16,8 +16,8 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <unistd.h>
-#include "recording.h"
-#include "tools.h"
+#include "recordings/Recording.h"
+#include "utils/Tools.h"
 #include "vdr/filesystem/Directory.h"
 #include "vdr/filesystem/File.h"
 #include "vdr/settings/Settings.h"

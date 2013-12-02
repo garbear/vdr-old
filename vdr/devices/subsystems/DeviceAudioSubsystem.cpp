@@ -21,7 +21,7 @@
 
 #include "DeviceAudioSubsystem.h"
 #include "../../../audio.h" // For Audios
-#include "../../../config.h" // For Setup
+#include "Config.h" // For Setup
 #include "../../../status.h" // For cStatus
 
 #define CONSTRAIN(value, low, high) ((value) < (low) ? (low) : (value) > (high) ? (high) : (value))

@@ -22,7 +22,7 @@
 
 #include "devices/DeviceSubsystem.h"
 #include "thread.h"
-#include "tools.h"
+#include "utils/Tools.h"
 
 #define MAXRECEIVERS       16 // the maximum number of receivers per device
 

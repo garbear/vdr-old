@@ -10,9 +10,9 @@
 #ifndef __INTERFACE_H
 #define __INTERFACE_H
 
-#include "config.h"
-#include "remote.h"
-#include "skins.h"
+#include "Config.h"
+//#include "remote.h"
+//#include "skins.h"
 #include "svdrp.h"
 
 class cInterface {

@@ -10,12 +10,12 @@
  * $Id: epg.c 2.23.1.1 2013/09/01 09:16:53 kls Exp $
  */
 
-#include "epg.h"
+#include "EPG.h"
 #include <ctype.h>
 #include <limits.h>
 #include <time.h>
 #include "libsi/si.h"
-#include "timers.h"
+#include "recordings/Timers.h"
 
 #include "vdr/utils/CalendarUtils.h"
 #include "vdr/utils/UTF8Utils.h"
@@ -177,7 +177,7 @@ void cEvent::SetVersion(uchar Version)
 void cEvent::SetRunningStatus(int RunningStatus, cChannel *Channel)
 {
   if (Channel && runningStatus != RunningStatus && (RunningStatus > SI::RunningStatusNotRunning || runningStatus > SI::RunningStatusUndefined) && Channel->HasTimer())
-     isyslog("channel %d (%s) event %s status %d", Channel->Number(), Channel->Name(), *ToDescr(), RunningStatus);
+     isyslog("channel %d (%s) event %s status %d", Channel->Number(), Channel->Name().c_str(), *ToDescr(), RunningStatus);
   runningStatus = RunningStatus;
 }
 
@@ -669,7 +669,7 @@ void ReportEpgBugFixStats(bool Force)
                       q += snprintf(q, sizeof(buffer) - (q - buffer), "%-3d %-4d", i, p->hits);
                       PrintedStats = true;
                       }
-                   q += snprintf(q, sizeof(buffer) - (q - buffer), "%s%s", delim, channel->Name());
+                   q += snprintf(q, sizeof(buffer) - (q - buffer), "%s%s", delim, channel->Name().c_str());
                    delim = ", ";
                    if (q - buffer > 80) {
                       q += snprintf(q, sizeof(buffer) - (q - buffer), "%s...", delim);
@@ -1114,7 +1114,7 @@ void cSchedule::Dump(FILE *f, const char *Prefix, eDumpMode DumpMode, time_t AtT
 {
   cChannel *channel = Channels.GetByChannelID(channelID, true);
   if (channel) {
-     fprintf(f, "%sC %s %s\n", Prefix, *channel->GetChannelID().ToString(), channel->Name());
+     fprintf(f, "%sC %s %s\n", Prefix, channel->GetChannelID().Serialize().c_str(), channel->Name().c_str());
      const cEvent *p;
      switch (DumpMode) {
        case dmAll: {
@@ -1155,7 +1155,7 @@ bool cSchedule::Read(FILE *f, cSchedules *Schedules)
               if (p)
                  *p = 0; // strips optional channel name
               if (*s) {
-                 tChannelID channelID = tChannelID::FromString(s);
+                 tChannelID channelID = tChannelID::Deserialize(s);
                  if (channelID.Valid()) {
                     cSchedule *p = Schedules->AddSchedule(channelID);
                     if (p) {
@@ -1366,7 +1366,7 @@ cSchedule *cSchedules::AddSchedule(tChannelID ChannelID)
      Add(p);
      cChannel *channel = Channels.GetByChannelID(ChannelID);
      if (channel)
-        channel->schedule = p;
+        channel->SetSchedule(p);
      }
   return p;
 }
@@ -1381,21 +1381,16 @@ const cSchedule *cSchedules::GetSchedule(tChannelID ChannelID) const
   return NULL;
 }
 
-const cSchedule *cSchedules::GetSchedule(const cChannel *Channel, bool AddIfMissing) const
+const cSchedule *cSchedules::GetSchedule(const cChannel *channel, bool bAddIfMissing) const
 {
-  // This is not very beautiful, but it dramatically speeds up the
-  // "What's on now/next?" menus.
-  static cSchedule DummySchedule(tChannelID::InvalidID);
-  if (!Channel->schedule)
-     Channel->schedule = GetSchedule(Channel->GetChannelID());
-  if (!Channel->schedule)
-     Channel->schedule = &DummySchedule;
-  if (Channel->schedule == &DummySchedule && AddIfMissing) {
-     cSchedule *Schedule = new cSchedule(Channel->GetChannelID());
-     ((cSchedules *)this)->Add(Schedule);
-     Channel->schedule = Schedule;
-     }
-  return Channel->schedule != &DummySchedule? Channel->schedule : NULL;
+  if (!channel->HasSchedule() && bAddIfMissing)
+  {
+    cSchedule *Schedule = new cSchedule(channel->GetChannelID());
+    ((cSchedules *)this)->Add(Schedule);
+    channel->SetSchedule(Schedule);
+  }
+
+  return channel->HasSchedule() ? channel->Schedule() : NULL;
 }
 
 // --- cEpgDataReader --------------------------------------------------------

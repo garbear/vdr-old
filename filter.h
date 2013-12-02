@@ -11,7 +11,7 @@
 #define __FILTER_H
 
 #include <sys/types.h>
-#include "tools.h"
+#include "utils/Tools.h"
 
 class cSectionSyncer {
 private:

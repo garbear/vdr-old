@@ -10,10 +10,9 @@
 #ifndef __TIMERS_H
 #define __TIMERS_H
 
-#include "channels.h"
-#include "config.h"
-#include "epg.h"
-#include "tools.h"
+#include "channels/Channels.h"
+#include "Config.h"
+#include "utils/Tools.h"
 
 #include <vector>
 
@@ -25,6 +24,9 @@ enum eTimerFlags { tfNone      = 0x0000,
                    tfAll       = 0xFFFF,
                  };
 enum eTimerMatch { tmNone, tmPartial, tmFull };
+
+class cEvent;
+class cSchedules;
 
 class cTimer : public cListObject {
   friend class cMenuEditTimer;

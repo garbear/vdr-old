@@ -10,9 +10,9 @@
 #ifndef __STATUS_H
 #define __STATUS_H
 
-#include "config.h"
+#include "Config.h"
 #include "player.h"
-#include "tools.h"
+#include "utils/Tools.h"
 
 enum eTimerChange { tcMod, tcAdd, tcDel };
 

@@ -20,7 +20,7 @@
  */
 #pragma once
 
-#include "../Device.h"
+#include "devices/Device.h"
 #include "DVBLegacy.h"
 #include "sources/linux/DVBSourceParams.h"
 

@@ -13,10 +13,10 @@
 #include <limits.h>
 #include <stdio.h>
 #include <stdint.h>
-#include "config.h"
+#include "Config.h"
 #include "font.h"
 #include "thread.h"
-#include "tools.h"
+#include "utils/Tools.h"
 
 #include <vector>
 
@@ -780,10 +780,10 @@ protected:
 public:
   virtual ~cOsd();
        ///< Shuts down the OSD.
-  static int OsdLeft(void) { return osdLeft ? osdLeft : Setup.OSDLeft; }
-  static int OsdTop(void) { return osdTop ? osdTop : Setup.OSDTop; }
-  static int OsdWidth(void) { return osdWidth ? osdWidth : Setup.OSDWidth; }
-  static int OsdHeight(void) { return osdHeight ? osdHeight : Setup.OSDHeight; }
+//  static int OsdLeft(void) { return osdLeft ? osdLeft : Setup.OSDLeft; }
+//  static int OsdTop(void) { return osdTop ? osdTop : Setup.OSDTop; }
+//  static int OsdWidth(void) { return osdWidth ? osdWidth : Setup.OSDWidth; }
+//  static int OsdHeight(void) { return osdHeight ? osdHeight : Setup.OSDHeight; }
   static void SetOsdPosition(int Left, int Top, int Width, int Height);
        ///< Sets the position and size of the OSD to the given values.
        ///< This may be useful for plugins that determine the scaling of the

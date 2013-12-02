@@ -10,8 +10,8 @@
 #ifndef __REMUX_H
 #define __REMUX_H
 
-#include "channels.h"
-#include "tools.h"
+#include "channels/Channels.h"
+#include "utils/Tools.h"
 
 enum ePesHeader {
   phNeedMoreData = -1,

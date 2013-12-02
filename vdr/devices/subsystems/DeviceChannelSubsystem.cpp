@@ -28,15 +28,15 @@
 #include "DeviceSPUSubsystem.h"
 #include "devices/Device.h"
 #include "devices/DeviceManager.h"
-#include "ci.h"
-#include "channels.h"
+#include "devices/CI.h"
+#include "channels/Channels.h"
 #include "dvbsubtitle.h"
 #include "player.h"
 #include "sections.h"
 #include "skins.h"
 #include "status.h"
-#include "tools.h"
-#include "transfer.h"
+#include "utils/Tools.h"
+#include "devices/Transfer.h"
 
 #include <time.h>
 

@@ -213,6 +213,7 @@ public:
 
   tChannelID GetChannelID() const;
 
+  bool HasTimer(void) const { return false; } //TODO
   bool HasTimer(const std::vector<cTimer2> &timers) const; // TODO: cTimer2
 
   int Modification(int mask = CHANNELMOD_ALL);
@@ -232,6 +233,10 @@ public:
   void SetRefChannel(cChannel *refChannel) { m_refChannel = refChannel; }
   void SetSubtitlingDescriptors(uchar *subtitlingTypes, uint16_t *compositionPageIds, uint16_t *ancillaryPageIds);
 
+  void SetSchedule(const cSchedule* schedule) const { m_schedule = schedule; }
+  bool HasSchedule(void) const { return m_schedule != NULL; }
+  const cSchedule* Schedule(void) const { return m_schedule; }
+
 private:
   static std::string ToText(const cChannel &channel);
   std::string TransponderDataToString() const;
@@ -247,7 +252,7 @@ private:
   mutable std::string      m_shortNameSource;
   std::string              m_parameters;
   int                      m_modification;
-  mutable const cSchedule *m_schedule;
+  mutable const cSchedule *m_schedule; //EEEW!
   //cLinkChannels           *m_linkChannels;
   cLinkChannels            m_linkChannels;
   cChannel                *m_refChannel;

@@ -21,9 +21,9 @@
 #pragma once
 
 #include "devices/DeviceSubsystem.h"
-#include "osd.h" // for eTextAlignment
-#include "remux.h"
-#include "tools.h"
+//#include "osd.h" // for eTextAlignment
+#include "devices/Remux.h"
+//#include "tools.h"
 
 #include <vector>
 #include <sys/types.h>
@@ -89,7 +89,7 @@ public:
    * cRect, or even Null. In such cases, the skin may want to fall back to
    * working with full screen video.
    */
-  virtual cRect CanScaleVideo(const cRect &rect, int alignment = taCenter) { return cRect::Null; }
+//  virtual cRect CanScaleVideo(const cRect &rect, int alignment = taCenter) { return cRect::Null; }
 
   /*!
    * \brief Scales the currently shown video in such a way that it fits into the
@@ -102,7 +102,7 @@ public:
    * If this device can't scale the video, nothing happens. To restore full
    * screen video, call this function with a Null rectangle.
    */
-  virtual void ScaleVideo(const cRect &cect = cRect::Null) { }
+//  virtual void ScaleVideo(const cRect &cect = cRect::Null) { }
 
   /*!
    * \brief Returns true if this device can handle all frames in 'fast forward'

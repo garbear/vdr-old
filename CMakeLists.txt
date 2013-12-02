@@ -18,14 +18,19 @@ include_directories(${gtest_SOURCE_DIR}/include)
 include_directories(${CMAKE_SOURCE_DIR}/lib/pcre)
 
 set(VDR_SRCS
+	vdr/Config.cpp
 	vdr/SignalHandler.cpp
 	vdr/VDRDaemon.cpp
 	vdr/channels/Channel.cpp
 	vdr/channels/ChannelID.cpp
 	vdr/channels/Channels.cpp
+	vdr/devices/CI.h
 	vdr/devices/Device.cpp
 	vdr/devices/DeviceManager.cpp
 	vdr/devices/DeviceSubsystem.cpp
+	vdr/devices/Receiver.cpp
+	vdr/devices/Remux.cpp
+	vdr/devices/Transfer.cpp
 	vdr/devices/linux/DVBDevice.cpp
 	vdr/devices/linux/DVBDeviceProbe.cpp
 	vdr/devices/linux/DVBTuner.cpp
@@ -46,6 +51,7 @@ set(VDR_SRCS
 	vdr/devices/subsystems/DeviceSPUSubsystem.cpp
 	vdr/devices/subsystems/DeviceTrackSubsystem.cpp
 	vdr/devices/subsystems/DeviceVideoFormatSubsystem.cpp
+	vdr/epg/EPG.cpp
 	vdr/filesystem/Directory.cpp
 	vdr/filesystem/DirectoryFetchJob.cpp
 	vdr/filesystem/File.cpp
@@ -54,15 +60,21 @@ set(VDR_SRCS
 	vdr/filesystem/ReadDir.cpp
 	vdr/filesystem/VFSDirectory.cpp
 	vdr/filesystem/VFSFile.cpp
+	vdr/recordings/Recording.cpp
+	vdr/recordings/Timers.cpp
 	vdr/sources/ISourceParams.cpp
 	vdr/sources/Source.cpp
 	vdr/sources/linux/DVBSourceParams.cpp
 	vdr/utils/CharsetConverter.cpp
 	vdr/utils/CharsetDetection.cpp
+	vdr/utils/I18N.cpp
 	vdr/utils/RegExp.cpp
+	vdr/utils/Ringbuffer.cpp
 	vdr/utils/StringUtils.cpp
+	vdr/utils/Tools.cpp
 	vdr/utils/XBMCTinyXML.cpp
 	vdr/utils/XMLUtils.cpp
+	thread.cpp
 )
 
 set(VDR_SRCS2 # Sources for testing
@@ -96,8 +108,10 @@ set(VDR_TEST_SRCS
 	vdr/utils/CharsetDetection.cpp
 	vdr/utils/RegExp.cpp
 	vdr/utils/StringUtils.cpp
+	vdr/utils/Tools.cpp
 	vdr/utils/XBMCTinyXML.cpp
 	vdr/utils/XMLUtils.cpp
+	thread.cpp
 )
 
 set(VDR_MAIN vdr/main.cpp)

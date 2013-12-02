@@ -16,7 +16,7 @@
 #include "channels/Channel.h"
 #include "libsi/section.h"
 #include "thread.h"
-#include "tools.h"
+#include "utils/Tools.h"
 
 #define MAXEPGBUGFIXLEVEL 3
 #define VDR_RATINGS_PATCHED_V2

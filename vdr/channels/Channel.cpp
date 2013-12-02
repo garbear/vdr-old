@@ -21,6 +21,7 @@
 
 #include "Channel.h"
 #include "utils/StringUtils.h"
+#include "utils/Tools.h"
 //#include "utils/UTF8Utils.h"
 //#include "epg.h"
 //#include "timers.h"
@@ -38,16 +39,6 @@ using namespace std;
 
 #define STRDIFF 0x01
 #define VALDIFF 0x02
-
-// TODO
-char *strn0cpy(char *dest, const char *src, size_t n)
-{
-  char *s = dest;
-  for ( ; --n && (*dest = *src) != 0; dest++, src++) ;
-  *dest = 0;
-  return s;
-}
-
 
 static int IntArraysDiffer(const int *a, const int *b, const char na[][MAXLANGCODE2] = NULL, const char nb[][MAXLANGCODE2] = NULL)
 {

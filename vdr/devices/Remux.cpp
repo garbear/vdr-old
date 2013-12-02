@@ -7,14 +7,15 @@
  * $Id: remux.c 2.75 2013/03/03 10:37:58 kls Exp $
  */
 
-#include "remux.h"
-#include "device.h"
+#include "Remux.h"
+#include "devices/DeviceManager.h"
+#include "devices/subsystems/DeviceTrackSubsystem.h"
 #include "libsi/si.h"
 #include "libsi/section.h"
 #include "libsi/descriptor.h"
-#include "recording.h"
+#include "recordings/Recording.h"
 #include "shutdown.h"
-#include "tools.h"
+#include "utils/Tools.h"
 
 // Set these to 'true' for debug output:
 static bool DebugPatPmt = false;
@@ -659,7 +660,7 @@ void cPatPmtParser::ParsePmt(const uchar *Data, int Length)
      if (pmtVersion == Pmt.getVersionNumber())
         return;
      if (updatePrimaryDevice)
-        cDevice::PrimaryDevice()->ClrAvailableTracks(false, true);
+       cDeviceManager::Get().PrimaryDevice()->Track()->ClrAvailableTracks(false, true);
      int NumApids = 0;
      int NumDpids = 0;
      int NumSpids = 0;
@@ -716,7 +717,7 @@ void cPatPmtParser::ParsePmt(const uchar *Data, int Length)
                              delete d;
                              }
                          if (updatePrimaryDevice)
-                            cDevice::PrimaryDevice()->SetAvailableTrack(ttAudio, NumApids, apids[NumApids], alangs[NumApids]);
+                           cDeviceManager::Get().PrimaryDevice()->Track()->SetAvailableTrack(ttAudio, NumApids, apids[NumApids], alangs[NumApids]);
                          NumApids++;
                          apids[NumApids] = 0;
                          }
@@ -763,7 +764,7 @@ void cPatPmtParser::ParsePmt(const uchar *Data, int Length)
                                            }
                                         }
                                     if (updatePrimaryDevice)
-                                       cDevice::PrimaryDevice()->SetAvailableTrack(ttSubtitle, NumSpids, spids[NumSpids], slangs[NumSpids]);
+                                      cDeviceManager::Get().PrimaryDevice()->Track()->SetAvailableTrack(ttSubtitle, NumSpids, spids[NumSpids], slangs[NumSpids]);
                                     NumSpids++;
                                     spids[NumSpids] = 0;
                                     }
@@ -784,7 +785,7 @@ void cPatPmtParser::ParsePmt(const uchar *Data, int Length)
                             dtypes[NumDpids] = dtype;
                             strn0cpy(dlangs[NumDpids], lang, sizeof(dlangs[NumDpids]));
                             if (updatePrimaryDevice && Setup.UseDolbyDigital)
-                               cDevice::PrimaryDevice()->SetAvailableTrack(ttDolby, NumDpids, dpid, lang);
+                              cDeviceManager::Get().PrimaryDevice()->Track()->SetAvailableTrack(ttDolby, NumDpids, dpid, lang);
                             NumDpids++;
                             dpids[NumDpids] = 0;
                             }
@@ -813,18 +814,19 @@ void cPatPmtParser::ParsePmt(const uchar *Data, int Length)
                          dtypes[NumDpids] = SI::AC3DescriptorTag;
                          strn0cpy(dlangs[NumDpids], lang, sizeof(dlangs[NumDpids]));
                          if (updatePrimaryDevice && Setup.UseDolbyDigital)
-                            cDevice::PrimaryDevice()->SetAvailableTrack(ttDolby, NumDpids, stream.getPid(), lang);
+                           cDeviceManager::Get().PrimaryDevice()->Track()->SetAvailableTrack(ttDolby, NumDpids, stream.getPid(), lang);
                          NumDpids++;
                          dpids[NumDpids] = 0;
                          }
                       }
                       break;
-           default: ;
+           default:
+             break;
            }
          dbgpatpmt("\n");
          if (updatePrimaryDevice) {
-            cDevice::PrimaryDevice()->EnsureAudioTrack(true);
-            cDevice::PrimaryDevice()->EnsureSubtitleTrack();
+           cDeviceManager::Get().PrimaryDevice()->Track()->EnsureAudioTrack(true);
+           cDeviceManager::Get().PrimaryDevice()->Track()->EnsureSubtitleTrack();
             }
          }
      pmtVersion = Pmt.getVersionNumber();
@@ -1249,7 +1251,8 @@ int cH264Parser::Parse(const uchar *Data, int Length, int Pid)
                                             return tsPayload.Used();
                                             }
                                          break;
-           default: ;
+           default:
+             break;
            }
          }
       if (tsPayload.AtPayloadStart() // stop at any new payload start to have the buffer refilled if necessary
@@ -1392,7 +1395,7 @@ int cFrameDetector::Analyze(const uchar *Data, int Length)
         // Sync on TS packet borders:
         if (Data[0] != TS_SYNC_BYTE) {
            int Skipped = 1;
-           while (Skipped < Length && (Data[Skipped] != TS_SYNC_BYTE || Length - Skipped > TS_SIZE && Data[Skipped + TS_SIZE] != TS_SYNC_BYTE))
+           while (Skipped < Length && (Data[Skipped] != TS_SYNC_BYTE || (Length - Skipped > TS_SIZE) && (Data[Skipped + TS_SIZE] != TS_SYNC_BYTE)))
                  Skipped++;
            esyslog("ERROR: skipped %d bytes to sync on start of TS packet", Skipped);
            return Processed + Skipped;
@@ -1434,7 +1437,7 @@ int cFrameDetector::Analyze(const uchar *Data, int Length)
                  // Determine the frame rate from the PTS values in the PES headers:
                  if (framesPerSecond <= 0.0) {
                     // frame rate unknown, so collect a sequence of PTS values:
-                    if (numPtsValues < 2 || numPtsValues < MaxPtsValues && numIFrames < 2) { // collect a sequence containing at least two I-frames
+                    if (numPtsValues < 2 || (numPtsValues < MaxPtsValues) && (numIFrames < 2)) { // collect a sequence containing at least two I-frames
                        if (newFrame) { // only take PTS values at the beginning of a frame (in case if fields!)
                           const uchar *Pes = Data + TsPayloadOffset(Data);
                           if (numIFrames && PesHasPts(Pes)) {

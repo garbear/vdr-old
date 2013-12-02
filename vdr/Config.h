@@ -16,9 +16,9 @@
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
-#include "i18n.h"
-#include "font.h"
-#include "tools.h"
+#include "utils/I18N.h"
+//#include "font.h"
+#include "utils/Tools.h"
 
 // VDR's own version number:
 
@@ -250,15 +250,15 @@ private:
 public:
   // Also adjust cMenuSetup (menu.c) when adding parameters here!
   int __BeginData__;
-  char OSDLanguage[I18N_MAX_LOCALE_LEN];
-  char OSDSkin[MaxSkinName];
-  char OSDTheme[MaxThemeName];
+//  char OSDLanguage[I18N_MAX_LOCALE_LEN];
+//  char OSDSkin[MaxSkinName];
+//  char OSDTheme[MaxThemeName];
   int PrimaryDVB;
-  int ShowInfoOnChSwitch;
+//  int ShowInfoOnChSwitch;
   int TimeoutRequChInfo;
-  int MenuScrollPage;
-  int MenuScrollWrap;
-  int MenuKeyCloses;
+//  int MenuScrollPage;
+//  int MenuScrollWrap;
+//  int MenuKeyCloses;
   int MarkInstantRecord;
   char NameInstantRecord[NAME_MAX + 1];
   int InstantRecordTime;
@@ -274,8 +274,8 @@ public:
   int AudioLanguages[I18N_MAX_LANGUAGES + 1];
   int DisplaySubtitles;
   int SubtitleLanguages[I18N_MAX_LANGUAGES + 1];
-  int SubtitleOffset;
-  int SubtitleFgTransparency, SubtitleBgTransparency;
+//  int SubtitleOffset;
+//  int SubtitleFgTransparency, SubtitleBgTransparency;
   int EPGLanguages[I18N_MAX_LANGUAGES + 1];
   int EPGScanTimeout;
   int EPGBugfixLevel;
@@ -300,23 +300,23 @@ public:
   int VideoFormat;
   int UpdateChannels;
   int UseDolbyDigital;
-  int ChannelInfoPos;
-  int ChannelInfoTime;
-  double OSDLeftP, OSDTopP, OSDWidthP, OSDHeightP;
-  int OSDLeft, OSDTop, OSDWidth, OSDHeight;
-  double OSDAspect;
-  int OSDMessageTime;
-  int UseSmallFont;
-  int AntiAlias;
-  char FontOsd[MAXFONTNAME];
-  char FontSml[MAXFONTNAME];
-  char FontFix[MAXFONTNAME];
-  double FontOsdSizeP;
-  double FontSmlSizeP;
-  double FontFixSizeP;
-  int FontOsdSize;
-  int FontSmlSize;
-  int FontFixSize;
+//  int ChannelInfoPos;
+//  int ChannelInfoTime;
+//  double OSDLeftP, OSDTopP, OSDWidthP, OSDHeightP;
+//  int OSDLeft, OSDTop, OSDWidth, OSDHeight;
+//  double OSDAspect;
+//  int OSDMessageTime;
+//  int UseSmallFont;
+//  int AntiAlias;
+//  char FontOsd[MAXFONTNAME];
+//  char FontSml[MAXFONTNAME];
+//  char FontFix[MAXFONTNAME];
+//  double FontOsdSizeP;
+//  double FontSmlSizeP;
+//  double FontFixSizeP;
+//  int FontOsdSize;
+//  int FontSmlSize;
+//  int FontFixSize;
   int MaxVideoFileSize;
   int SplitEditedFiles;
   int DelTimeshiftRec;
@@ -333,7 +333,7 @@ public:
   int CurrentDolby;
   int InitialVolume;
   int ChannelsWrap;
-  int ShowChannelNamesWithSource;
+//  int ShowChannelNamesWithSource;
   int EmergencyExit;
   int __EndData__;
   cString InitialChannel;

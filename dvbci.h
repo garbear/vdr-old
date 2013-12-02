@@ -10,7 +10,7 @@
 #ifndef __DVBCI_H
 #define __DVBCI_H
 
-#include "ci.h"
+#include "devices/CI.h"
 
 class cDvbCiAdapter : public cCiAdapter {
 private:

@@ -40,8 +40,8 @@
 #include "sources/linux/DVBSourceParams.h"
 #include "../../utils/StringUtils.h"
 #include "../../../dvbci.h"
-#include "../../../i18n.h"
-#include "../../../tools.h"
+#include "utils/I18N.h"
+#include "utils/Tools.h"
 
 #include <algorithm>
 #include <dirent.h>

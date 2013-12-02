@@ -7,9 +7,10 @@
  * $Id: receiver.c 2.7 2012/06/02 13:20:38 kls Exp $
  */
 
-#include "receiver.h"
+#include "Device.h"
+#include "Receiver.h"
 #include <stdio.h>
-#include "tools.h"
+#include "utils/Tools.h"
 
 cReceiver::cReceiver(const cChannel *Channel, int Priority)
 {
@@ -85,6 +86,7 @@ bool cReceiver::WantsPid(int Pid)
 
 void cReceiver::Detach(void)
 {
-  if (device)
-     device->Detach(this);
+  //TODO
+//  if (device)
+//     device->Detach(this);
 }

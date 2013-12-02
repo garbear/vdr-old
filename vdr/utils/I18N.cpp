@@ -17,12 +17,12 @@
  * replaced with something different...
  */
 
-#include "i18n.h"
+#include "I18N.h"
 #include <ctype.h>
 #include <libintl.h>
 #include <locale.h>
 #include <unistd.h>
-#include "tools.h"
+#include "Tools.h"
 
 #include <algorithm>
 

@@ -11,8 +11,8 @@
 #define __TRANSFER_H
 
 #include "player.h"
-#include "receiver.h"
-#include "remux.h"
+#include "Receiver.h"
+#include "Remux.h"
 
 class cTransfer : public cReceiver, public cPlayer {
 private:

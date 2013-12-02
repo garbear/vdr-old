@@ -7,15 +7,15 @@
  * $Id: config.c 2.38 2013/03/18 08:57:50 kls Exp $
  */
 
-#include "config.h"
+#include "Config.h"
 #include <ctype.h>
 #include <stdlib.h>
-#include "device.h"
-#include "i18n.h"
-#include "interface.h"
-#include "menu.h"
+#include "devices/Device.h"
+#include "devices/subsystems/DeviceAudioSubsystem.h"
+//#include "interface.h"
+//#include "menu.h"
 #include "plugin.h"
-#include "recording.h"
+#include "recordings/Recording.h"
 
 #include "vdr/utils/UTF8Utils.h"
 
@@ -40,7 +40,7 @@ bool cSVDRPhost::Parse(const char *s)
   if (p) {
      char *error = NULL;
      int m = strtoul(p + 1, &error, 10);
-     if (error && *error && !isspace(*error) || m > 32)
+     if ((error && *error && !isspace(*error)) || m > 32)
         return false;
      *(char *)p = 0; // yes, we know it's 'const' - will be restored!
      if (m == 0)
@@ -375,15 +375,15 @@ cSetup Setup;
 
 cSetup::cSetup(void)
 {
-  strcpy(OSDLanguage, ""); // default is taken from environment
-  strcpy(OSDSkin, "lcars");
-  strcpy(OSDTheme, "default");
+//  strcpy(OSDLanguage, ""); // default is taken from environment
+//  strcpy(OSDSkin, "lcars");
+//  strcpy(OSDTheme, "default");
   PrimaryDVB = 1;
-  ShowInfoOnChSwitch = 1;
+//  ShowInfoOnChSwitch = 1;
   TimeoutRequChInfo = 1;
-  MenuScrollPage = 1;
-  MenuScrollWrap = 0;
-  MenuKeyCloses = 0;
+//  MenuScrollPage = 1;
+//  MenuScrollWrap = 0;
+//  MenuKeyCloses = 0;
   MarkInstantRecord = 1;
   strcpy(NameInstantRecord, TIMERMACRO_TITLE " " TIMERMACRO_EPISODE);
   InstantRecordTime = DEFINSTRECTIME;
@@ -400,9 +400,9 @@ cSetup::cSetup(void)
   AudioLanguages[0] = -1;
   DisplaySubtitles = 0;
   SubtitleLanguages[0] = -1;
-  SubtitleOffset = 0;
-  SubtitleFgTransparency = 0;
-  SubtitleBgTransparency = 0;
+//  SubtitleOffset = 0;
+//  SubtitleFgTransparency = 0;
+//  SubtitleBgTransparency = 0;
   EPGLanguages[0] = -1;
   EPGScanTimeout = 5;
   EPGBugfixLevel = 3;
@@ -432,29 +432,29 @@ cSetup::cSetup(void)
   VideoFormat = 0;
   UpdateChannels = 5;
   UseDolbyDigital = 1;
-  ChannelInfoPos = 0;
-  ChannelInfoTime = 5;
-  OSDLeftP = 0.08;
-  OSDTopP = 0.08;
-  OSDWidthP = 0.87;
-  OSDHeightP = 0.84;
-  OSDLeft = 54;
-  OSDTop = 45;
-  OSDWidth = 624;
-  OSDHeight = 486;
-  OSDAspect = 1.0;
-  OSDMessageTime = 1;
-  UseSmallFont = 1;
-  AntiAlias = 1;
-  strcpy(FontOsd, DefaultFontOsd);
-  strcpy(FontSml, DefaultFontSml);
-  strcpy(FontFix, DefaultFontFix);
-  FontOsdSizeP = 0.031;
-  FontSmlSizeP = 0.028;
-  FontFixSizeP = 0.030;
-  FontOsdSize = 22;
-  FontSmlSize = 18;
-  FontFixSize = 20;
+//  ChannelInfoPos = 0;
+//  ChannelInfoTime = 5;
+//  OSDLeftP = 0.08;
+//  OSDTopP = 0.08;
+//  OSDWidthP = 0.87;
+//  OSDHeightP = 0.84;
+//  OSDLeft = 54;
+//  OSDTop = 45;
+//  OSDWidth = 624;
+//  OSDHeight = 486;
+//  OSDAspect = 1.0;
+//  OSDMessageTime = 1;
+//  UseSmallFont = 1;
+//  AntiAlias = 1;
+//  strcpy(FontOsd, DefaultFontOsd);
+//  strcpy(FontSml, DefaultFontSml);
+//  strcpy(FontFix, DefaultFontFix);
+//  FontOsdSizeP = 0.031;
+//  FontSmlSizeP = 0.028;
+//  FontFixSizeP = 0.030;
+//  FontOsdSize = 22;
+//  FontSmlSize = 18;
+//  FontFixSize = 20;
   MaxVideoFileSize = MAXVIDEOFILESIZEDEFAULT;
   SplitEditedFiles = 0;
   DelTimeshiftRec = 0;
@@ -474,7 +474,7 @@ cSetup::cSetup(void)
   DeviceBondings = "";
   InitialVolume = -1;
   ChannelsWrap = 0;
-  ShowChannelNamesWithSource = 0;
+//  ShowChannelNamesWithSource = 0;
   EmergencyExit = 1;
 }
 
@@ -515,7 +515,7 @@ void cSetup::Store(const char *Name, int Value, const char *Plugin)
 
 void cSetup::Store(const char *Name, double &Value, const char *Plugin)
 {
-  Store(Name, dtoa(Value), Plugin);
+  Store(Name, dtoa(Value, "%f"), Plugin);
 }
 
 bool cSetup::Load(const char *FileName)
@@ -580,15 +580,15 @@ bool cSetup::ParseLanguages(const char *Value, int *Values)
 
 bool cSetup::Parse(const char *Name, const char *Value)
 {
-  if      (!strcasecmp(Name, "OSDLanguage"))       { strn0cpy(OSDLanguage, Value, sizeof(OSDLanguage)); I18nSetLocale(OSDLanguage); }
+  /*if      (!strcasecmp(Name, "OSDLanguage"))       { strn0cpy(OSDLanguage, Value, sizeof(OSDLanguage)); I18nSetLocale(OSDLanguage); }
   else if (!strcasecmp(Name, "OSDSkin"))             cUtf8Utils::Utf8Strn0Cpy(OSDSkin, Value, MaxSkinName);
   else if (!strcasecmp(Name, "OSDTheme"))            cUtf8Utils::Utf8Strn0Cpy(OSDTheme, Value, MaxThemeName);
-  else if (!strcasecmp(Name, "PrimaryDVB"))          PrimaryDVB         = atoi(Value);
-  else if (!strcasecmp(Name, "ShowInfoOnChSwitch"))  ShowInfoOnChSwitch = atoi(Value);
+  else*/ if (!strcasecmp(Name, "PrimaryDVB"))          PrimaryDVB         = atoi(Value);
+//  else if (!strcasecmp(Name, "ShowInfoOnChSwitch"))  ShowInfoOnChSwitch = atoi(Value);
   else if (!strcasecmp(Name, "TimeoutRequChInfo"))   TimeoutRequChInfo  = atoi(Value);
-  else if (!strcasecmp(Name, "MenuScrollPage"))      MenuScrollPage     = atoi(Value);
-  else if (!strcasecmp(Name, "MenuScrollWrap"))      MenuScrollWrap     = atoi(Value);
-  else if (!strcasecmp(Name, "MenuKeyCloses"))       MenuKeyCloses      = atoi(Value);
+//  else if (!strcasecmp(Name, "MenuScrollPage"))      MenuScrollPage     = atoi(Value);
+//  else if (!strcasecmp(Name, "MenuScrollWrap"))      MenuScrollWrap     = atoi(Value);
+//  else if (!strcasecmp(Name, "MenuKeyCloses"))       MenuKeyCloses      = atoi(Value);
   else if (!strcasecmp(Name, "MarkInstantRecord"))   MarkInstantRecord  = atoi(Value);
   else if (!strcasecmp(Name, "NameInstantRecord"))   cUtf8Utils::Utf8Strn0Cpy(NameInstantRecord, Value, sizeof(NameInstantRecord));
   else if (!strcasecmp(Name, "InstantRecordTime"))   InstantRecordTime  = atoi(Value);
@@ -605,9 +605,9 @@ bool cSetup::Parse(const char *Name, const char *Value)
   else if (!strcasecmp(Name, "AudioLanguages"))      return ParseLanguages(Value, AudioLanguages);
   else if (!strcasecmp(Name, "DisplaySubtitles"))    DisplaySubtitles   = atoi(Value);
   else if (!strcasecmp(Name, "SubtitleLanguages"))   return ParseLanguages(Value, SubtitleLanguages);
-  else if (!strcasecmp(Name, "SubtitleOffset"))      SubtitleOffset     = atoi(Value);
-  else if (!strcasecmp(Name, "SubtitleFgTransparency")) SubtitleFgTransparency = atoi(Value);
-  else if (!strcasecmp(Name, "SubtitleBgTransparency")) SubtitleBgTransparency = atoi(Value);
+//  else if (!strcasecmp(Name, "SubtitleOffset"))      SubtitleOffset     = atoi(Value);
+//  else if (!strcasecmp(Name, "SubtitleFgTransparency")) SubtitleFgTransparency = atoi(Value);
+//  else if (!strcasecmp(Name, "SubtitleBgTransparency")) SubtitleBgTransparency = atoi(Value);
   else if (!strcasecmp(Name, "EPGLanguages"))        return ParseLanguages(Value, EPGLanguages);
   else if (!strcasecmp(Name, "EPGScanTimeout"))      EPGScanTimeout     = atoi(Value);
   else if (!strcasecmp(Name, "EPGBugfixLevel"))      EPGBugfixLevel     = atoi(Value);
@@ -636,30 +636,30 @@ bool cSetup::Parse(const char *Name, const char *Value)
   else if (!strcasecmp(Name, "VideoDisplayFormat"))  VideoDisplayFormat = atoi(Value);
   else if (!strcasecmp(Name, "VideoFormat"))         VideoFormat        = atoi(Value);
   else if (!strcasecmp(Name, "UpdateChannels"))      UpdateChannels     = atoi(Value);
-  else if (!strcasecmp(Name, "UseDolbyDigital"))     UseDolbyDigital    = atoi(Value);
-  else if (!strcasecmp(Name, "ChannelInfoPos"))      ChannelInfoPos     = atoi(Value);
-  else if (!strcasecmp(Name, "ChannelInfoTime"))     ChannelInfoTime    = atoi(Value);
-  else if (!strcasecmp(Name, "OSDLeftP"))            OSDLeftP           = atod(Value);
-  else if (!strcasecmp(Name, "OSDTopP"))             OSDTopP            = atod(Value);
-  else if (!strcasecmp(Name, "OSDWidthP"))         { OSDWidthP          = atod(Value); ChkDoublePlausibility(OSDWidthP, 0.87); }
-  else if (!strcasecmp(Name, "OSDHeightP"))        { OSDHeightP         = atod(Value); ChkDoublePlausibility(OSDHeightP, 0.84); }
-  else if (!strcasecmp(Name, "OSDLeft"))             OSDLeft            = atoi(Value);
-  else if (!strcasecmp(Name, "OSDTop"))              OSDTop             = atoi(Value);
-  else if (!strcasecmp(Name, "OSDWidth"))          { OSDWidth           = atoi(Value); OSDWidth &= ~0x07; } // OSD width must be a multiple of 8
-  else if (!strcasecmp(Name, "OSDHeight"))           OSDHeight          = atoi(Value);
-  else if (!strcasecmp(Name, "OSDAspect"))           OSDAspect          = atod(Value);
-  else if (!strcasecmp(Name, "OSDMessageTime"))      OSDMessageTime     = atoi(Value);
-  else if (!strcasecmp(Name, "UseSmallFont"))        UseSmallFont       = atoi(Value);
-  else if (!strcasecmp(Name, "AntiAlias"))           AntiAlias          = atoi(Value);
-  else if (!strcasecmp(Name, "FontOsd"))             cUtf8Utils::Utf8Strn0Cpy(FontOsd, Value, MAXFONTNAME);
-  else if (!strcasecmp(Name, "FontSml"))             cUtf8Utils::Utf8Strn0Cpy(FontSml, Value, MAXFONTNAME);
-  else if (!strcasecmp(Name, "FontFix"))             cUtf8Utils::Utf8Strn0Cpy(FontFix, Value, MAXFONTNAME);
-  else if (!strcasecmp(Name, "FontOsdSizeP"))      { FontOsdSizeP       = atod(Value); ChkDoublePlausibility(FontOsdSizeP, 0.038); }
-  else if (!strcasecmp(Name, "FontSmlSizeP"))      { FontSmlSizeP       = atod(Value); ChkDoublePlausibility(FontSmlSizeP, 0.035); }
-  else if (!strcasecmp(Name, "FontFixSizeP"))      { FontFixSizeP       = atod(Value); ChkDoublePlausibility(FontFixSizeP, 0.031); }
-  else if (!strcasecmp(Name, "FontOsdSize"))         FontOsdSize        = atoi(Value);
-  else if (!strcasecmp(Name, "FontSmlSize"))         FontSmlSize        = atoi(Value);
-  else if (!strcasecmp(Name, "FontFixSize"))         FontFixSize        = atoi(Value);
+//  else if (!strcasecmp(Name, "UseDolbyDigital"))     UseDolbyDigital    = atoi(Value);
+//  else if (!strcasecmp(Name, "ChannelInfoPos"))      ChannelInfoPos     = atoi(Value);
+//  else if (!strcasecmp(Name, "ChannelInfoTime"))     ChannelInfoTime    = atoi(Value);
+//  else if (!strcasecmp(Name, "OSDLeftP"))            OSDLeftP           = atod(Value);
+//  else if (!strcasecmp(Name, "OSDTopP"))             OSDTopP            = atod(Value);
+//  else if (!strcasecmp(Name, "OSDWidthP"))         { OSDWidthP          = atod(Value); ChkDoublePlausibility(OSDWidthP, 0.87); }
+//  else if (!strcasecmp(Name, "OSDHeightP"))        { OSDHeightP         = atod(Value); ChkDoublePlausibility(OSDHeightP, 0.84); }
+//  else if (!strcasecmp(Name, "OSDLeft"))             OSDLeft            = atoi(Value);
+//  else if (!strcasecmp(Name, "OSDTop"))              OSDTop             = atoi(Value);
+//  else if (!strcasecmp(Name, "OSDWidth"))          { OSDWidth           = atoi(Value); OSDWidth &= ~0x07; } // OSD width must be a multiple of 8
+//  else if (!strcasecmp(Name, "OSDHeight"))           OSDHeight          = atoi(Value);
+//  else if (!strcasecmp(Name, "OSDAspect"))           OSDAspect          = atod(Value);
+//  else if (!strcasecmp(Name, "OSDMessageTime"))      OSDMessageTime     = atoi(Value);
+//  else if (!strcasecmp(Name, "UseSmallFont"))        UseSmallFont       = atoi(Value);
+//  else if (!strcasecmp(Name, "AntiAlias"))           AntiAlias          = atoi(Value);
+//  else if (!strcasecmp(Name, "FontOsd"))             cUtf8Utils::Utf8Strn0Cpy(FontOsd, Value, MAXFONTNAME);
+//  else if (!strcasecmp(Name, "FontSml"))             cUtf8Utils::Utf8Strn0Cpy(FontSml, Value, MAXFONTNAME);
+//  else if (!strcasecmp(Name, "FontFix"))             cUtf8Utils::Utf8Strn0Cpy(FontFix, Value, MAXFONTNAME);
+//  else if (!strcasecmp(Name, "FontOsdSizeP"))      { FontOsdSizeP       = atod(Value); ChkDoublePlausibility(FontOsdSizeP, 0.038); }
+//  else if (!strcasecmp(Name, "FontSmlSizeP"))      { FontSmlSizeP       = atod(Value); ChkDoublePlausibility(FontSmlSizeP, 0.035); }
+//  else if (!strcasecmp(Name, "FontFixSizeP"))      { FontFixSizeP       = atod(Value); ChkDoublePlausibility(FontFixSizeP, 0.031); }
+//  else if (!strcasecmp(Name, "FontOsdSize"))         FontOsdSize        = atoi(Value);
+//  else if (!strcasecmp(Name, "FontSmlSize"))         FontSmlSize        = atoi(Value);
+//  else if (!strcasecmp(Name, "FontFixSize"))         FontFixSize        = atoi(Value);
   else if (!strcasecmp(Name, "MaxVideoFileSize"))    MaxVideoFileSize   = atoi(Value);
   else if (!strcasecmp(Name, "SplitEditedFiles"))    SplitEditedFiles   = atoi(Value);
   else if (!strcasecmp(Name, "DelTimeshiftRec"))     DelTimeshiftRec    = atoi(Value);
@@ -679,9 +679,9 @@ bool cSetup::Parse(const char *Name, const char *Value)
   else if (!strcasecmp(Name, "InitialVolume"))       InitialVolume      = atoi(Value);
   else if (!strcasecmp(Name, "DeviceBondings"))      DeviceBondings     = Value;
   else if (!strcasecmp(Name, "ChannelsWrap"))        ChannelsWrap       = atoi(Value);
-  else if (!strcasecmp(Name, "ShowChannelNamesWithSource")) ShowChannelNamesWithSource = atoi(Value);
+//  else if (!strcasecmp(Name, "ShowChannelNamesWithSource")) ShowChannelNamesWithSource = atoi(Value);
   else if (!strcasecmp(Name, "EmergencyExit"))       EmergencyExit      = atoi(Value);
-  else if (!strcasecmp(Name, "LastReplayed"))        cReplayControl::SetRecording(Value);
+//  else if (!strcasecmp(Name, "LastReplayed"))        cReplayControl::SetRecording(Value);
   else
      return false;
   return true;
@@ -689,15 +689,15 @@ bool cSetup::Parse(const char *Name, const char *Value)
 
 bool cSetup::Save(void)
 {
-  Store("OSDLanguage",        OSDLanguage);
-  Store("OSDSkin",            OSDSkin);
-  Store("OSDTheme",           OSDTheme);
+//  Store("OSDLanguage",        OSDLanguage);
+//  Store("OSDSkin",            OSDSkin);
+//  Store("OSDTheme",           OSDTheme);
   Store("PrimaryDVB",         PrimaryDVB);
-  Store("ShowInfoOnChSwitch", ShowInfoOnChSwitch);
+//  Store("ShowInfoOnChSwitch", ShowInfoOnChSwitch);
   Store("TimeoutRequChInfo",  TimeoutRequChInfo);
-  Store("MenuScrollPage",     MenuScrollPage);
-  Store("MenuScrollWrap",     MenuScrollWrap);
-  Store("MenuKeyCloses",      MenuKeyCloses);
+//  Store("MenuScrollPage",     MenuScrollPage);
+//  Store("MenuScrollWrap",     MenuScrollWrap);
+//  Store("MenuKeyCloses",      MenuKeyCloses);
   Store("MarkInstantRecord",  MarkInstantRecord);
   Store("NameInstantRecord",  NameInstantRecord);
   Store("InstantRecordTime",  InstantRecordTime);
@@ -706,7 +706,7 @@ bool cSetup::Save(void)
   Store("LnbFrequHi",         LnbFrequHi);
   Store("DiSEqC",             DiSEqC);
   Store("SetSystemTime",      SetSystemTime);
-  Store("TimeSource",         cSource::ToString(TimeSource));
+//  Store("TimeSource",         cSource::ToString(TimeSource));
   Store("TimeTransponder",    TimeTransponder);
   Store("StandardCompliance", StandardCompliance);
   Store("MarginStart",        MarginStart);
@@ -714,9 +714,9 @@ bool cSetup::Save(void)
   StoreLanguages("AudioLanguages", AudioLanguages);
   Store("DisplaySubtitles",   DisplaySubtitles);
   StoreLanguages("SubtitleLanguages", SubtitleLanguages);
-  Store("SubtitleOffset",     SubtitleOffset);
-  Store("SubtitleFgTransparency", SubtitleFgTransparency);
-  Store("SubtitleBgTransparency", SubtitleBgTransparency);
+//  Store("SubtitleOffset",     SubtitleOffset);
+//  Store("SubtitleFgTransparency", SubtitleFgTransparency);
+//  Store("SubtitleBgTransparency", SubtitleBgTransparency);
   StoreLanguages("EPGLanguages", EPGLanguages);
   Store("EPGScanTimeout",     EPGScanTimeout);
   Store("EPGBugfixLevel",     EPGBugfixLevel);
@@ -745,30 +745,30 @@ bool cSetup::Save(void)
   Store("VideoDisplayFormat", VideoDisplayFormat);
   Store("VideoFormat",        VideoFormat);
   Store("UpdateChannels",     UpdateChannels);
-  Store("UseDolbyDigital",    UseDolbyDigital);
-  Store("ChannelInfoPos",     ChannelInfoPos);
-  Store("ChannelInfoTime",    ChannelInfoTime);
-  Store("OSDLeftP",           OSDLeftP);
-  Store("OSDTopP",            OSDTopP);
-  Store("OSDWidthP",          OSDWidthP);
-  Store("OSDHeightP",         OSDHeightP);
-  Store("OSDLeft",            OSDLeft);
-  Store("OSDTop",             OSDTop);
-  Store("OSDWidth",           OSDWidth);
-  Store("OSDHeight",          OSDHeight);
-  Store("OSDAspect",          OSDAspect);
-  Store("OSDMessageTime",     OSDMessageTime);
-  Store("UseSmallFont",       UseSmallFont);
-  Store("AntiAlias",          AntiAlias);
-  Store("FontOsd",            FontOsd);
-  Store("FontSml",            FontSml);
-  Store("FontFix",            FontFix);
-  Store("FontOsdSizeP",       FontOsdSizeP);
-  Store("FontSmlSizeP",       FontSmlSizeP);
-  Store("FontFixSizeP",       FontFixSizeP);
-  Store("FontOsdSize",        FontOsdSize);
-  Store("FontSmlSize",        FontSmlSize);
-  Store("FontFixSize",        FontFixSize);
+//  Store("UseDolbyDigital",    UseDolbyDigital);
+//  Store("ChannelInfoPos",     ChannelInfoPos);
+//  Store("ChannelInfoTime",    ChannelInfoTime);
+//  Store("OSDLeftP",           OSDLeftP);
+//  Store("OSDTopP",            OSDTopP);
+//  Store("OSDWidthP",          OSDWidthP);
+//  Store("OSDHeightP",         OSDHeightP);
+//  Store("OSDLeft",            OSDLeft);
+//  Store("OSDTop",             OSDTop);
+//  Store("OSDWidth",           OSDWidth);
+//  Store("OSDHeight",          OSDHeight);
+//  Store("OSDAspect",          OSDAspect);
+//  Store("OSDMessageTime",     OSDMessageTime);
+//  Store("UseSmallFont",       UseSmallFont);
+//  Store("AntiAlias",          AntiAlias);
+//  Store("FontOsd",            FontOsd);
+//  Store("FontSml",            FontSml);
+//  Store("FontFix",            FontFix);
+//  Store("FontOsdSizeP",       FontOsdSizeP);
+//  Store("FontSmlSizeP",       FontSmlSizeP);
+//  Store("FontFixSizeP",       FontFixSizeP);
+//  Store("FontOsdSize",        FontOsdSize);
+//  Store("FontSmlSize",        FontSmlSize);
+//  Store("FontFixSize",        FontFixSize);
   Store("MaxVideoFileSize",   MaxVideoFileSize);
   Store("SplitEditedFiles",   SplitEditedFiles);
   Store("DelTimeshiftRec",    DelTimeshiftRec);
@@ -788,9 +788,9 @@ bool cSetup::Save(void)
   Store("InitialVolume",      InitialVolume);
   Store("DeviceBondings",     DeviceBondings);
   Store("ChannelsWrap",       ChannelsWrap);
-  Store("ShowChannelNamesWithSource", ShowChannelNamesWithSource);
+//  Store("ShowChannelNamesWithSource", ShowChannelNamesWithSource);
   Store("EmergencyExit",      EmergencyExit);
-  Store("LastReplayed",       cReplayControl::LastReplayed());
+//  Store("LastReplayed",       cReplayControl::LastReplayed());
 
   Sort();
 

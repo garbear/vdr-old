@@ -12,9 +12,9 @@
 #ifndef __DVBSUBTITLE_H
 #define __DVBSUBTITLE_H
 
-#include "osd.h"
+#include "font.h"
 #include "thread.h"
-#include "tools.h"
+#include "utils/Tools.h"
 
 class cDvbSubtitlePage;
 class cDvbSubtitleAssembler; // for legacy PES recordings
@@ -24,7 +24,7 @@ class cDvbSubtitleConverter : public cThread {
 private:
   static int setupLevel;
   cDvbSubtitleAssembler *dvbSubtitleAssembler;
-  cOsd *osd;
+//  cOsd *osd;
   bool frozen;
   int ddsVersionNumber;
   int displayWidth;

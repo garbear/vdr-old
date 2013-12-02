@@ -11,7 +11,7 @@
 #define __I18N_H
 
 #include <stdio.h>
-#include "tools.h"
+#include "Tools.h"
 
 #include <string>
 #include <vector>

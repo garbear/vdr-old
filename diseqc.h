@@ -10,7 +10,7 @@
 #ifndef __DISEQC_H
 #define __DISEQC_H
 
-#include "config.h"
+#include "Config.h"
 #include "thread.h"
 
 class cScr : public cListObject {

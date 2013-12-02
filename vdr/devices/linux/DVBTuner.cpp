@@ -17,7 +17,7 @@
 #include "sources/linux/DVBSourceParams.h"
 #include "utils/StringUtils.h"
 #include "diseqc.h"
-#include "tools.h"
+#include "utils/Tools.h"
 
 #include <errno.h>
 #include <string.h>
@@ -267,7 +267,7 @@ bool cDvbTuner::IsTunedTo(const cChannel &channel) const
     return false; // sufficient mismatch
 
   // Polarization is already checked as part of the Transponder.
-  return strcmp(m_channel.Parameters(), channel.Parameters()) == 0;
+  return strcmp(m_channel.Parameters().c_str(), channel.Parameters().c_str()) == 0;
 }
 
 void cDvbTuner::SetChannel(const cChannel &channel)

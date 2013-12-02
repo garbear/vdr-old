@@ -34,9 +34,9 @@
 #include "subsystems/DeviceTrackSubsystem.h"
 #include "subsystems/DeviceVideoFormatSubsystem.h"
 #include "utils/StringUtils.h"
-#include "ringbuffer.h"
+#include "utils/Ringbuffer.h"
 #include "dvbsubtitle.h"
-#include "ci.h"
+#include "CI.h"
 
 using namespace std;
 

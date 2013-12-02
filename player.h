@@ -13,6 +13,7 @@
 #include "devices/subsystems/DevicePlayerSubsystem.h"
 #include "devices/subsystems/DeviceTrackSubsystem.h"
 #include "devices/subsystems/DeviceVideoFormatSubsystem.h"
+#include "recordings/Recording.h"
 
 #include "osdbase.h"
 

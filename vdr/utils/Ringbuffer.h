@@ -11,7 +11,7 @@
 #define __RINGBUFFER_H
 
 #include "thread.h"
-#include "tools.h"
+#include "Tools.h"
 
 class cRingBuffer {
 private:

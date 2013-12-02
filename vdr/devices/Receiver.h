@@ -10,8 +10,8 @@
 #ifndef __RECEIVER_H
 #define __RECEIVER_H
 
-#include "channels.h"
-#include "config.h"
+#include "channels/Channels.h"
+#include "Config.h"
 
 #define MAXRECEIVEPIDS  64 // the maximum number of PIDs per receiver
 

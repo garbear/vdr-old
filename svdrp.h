@@ -10,8 +10,9 @@
 #ifndef __SVDRP_H
 #define __SVDRP_H
 
-#include "recording.h"
-#include "tools.h"
+#include "utils/Tools.h"
+
+class cRecording;
 
 class cSocket {
 private:

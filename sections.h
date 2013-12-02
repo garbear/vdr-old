@@ -13,7 +13,7 @@
 #include <time.h>
 #include "filter.h"
 #include "thread.h"
-#include "tools.h"
+#include "utils/Tools.h"
 
 class cDevice;
 class cChannel;

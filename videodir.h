@@ -11,7 +11,7 @@
 #define __VIDEODIR_H
 
 #include <stdlib.h>
-#include "tools.h"
+#include "utils/Tools.h"
 
 extern const char *VideoDirectory;
 

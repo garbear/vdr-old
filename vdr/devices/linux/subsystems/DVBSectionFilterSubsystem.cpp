@@ -22,7 +22,7 @@
 #include "DVBSectionFilterSubsystem.h"
 #include "../../../devices/linux/DVBDevice.h" // for DEV_DVB_DEMUX
 //#include "../../../../sections.h"
-#include "../../../../tools.h"
+#include "utils/Tools.h"
 
 #include <linux/dvb/dmx.h>
 #include <string>

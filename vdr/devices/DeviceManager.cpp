@@ -25,10 +25,10 @@
 #include "subsystems/DeviceCommonInterfaceSubsystem.h"
 #include "subsystems/DeviceReceiverSubsystem.h"
 #include "subsystems/DeviceVideoFormatSubsystem.h"
-#include "channels.h"
-#include "ci.h"
-#include "tools.h"
-#include "transfer.h"
+#include "channels/Channels.h"
+#include "CI.h"
+#include "utils/Tools.h"
+#include "Transfer.h"
 
 #include <assert.h>
 
@@ -79,7 +79,7 @@ void cDeviceManager::SetPrimaryDevice(unsigned int index)
   m_primaryDevice = m_devices[index];
   m_primaryDevice->MakePrimaryDevice(true);
   m_primaryDevice->VideoFormat()->SetVideoFormat(Setup.VideoFormat);
-  m_primaryDevice->Audio()->SetVolumeDevice(Setup.CurrentVolume);
+//  m_primaryDevice->Audio()->SetVolumeDevice(Setup.CurrentVolume);
 }
 
 void cDeviceManager::AddHook(cDeviceHook *hook)
@@ -302,8 +302,8 @@ bool cDeviceManager::SwitchChannel(bool bIncrease)
     if (m_primaryDevice->Channel()->SwitchChannel(*channel, true))
       result = true;
   }
-  else if (n != first)
-    Skins.Message(mtError, tr("Channel not available!"));
+//  else if (n != first)
+//    Skins.Message(mtError, tr("Channel not available!"));
 
   return result;
 }

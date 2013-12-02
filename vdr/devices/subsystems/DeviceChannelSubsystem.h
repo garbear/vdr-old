@@ -21,7 +21,7 @@
 #pragma once
 
 #include "devices/DeviceSubsystem.h"
-#include "config.h" // For IDLEPRIORITY
+#include "Config.h" // For IDLEPRIORITY
 
 enum eSetChannelResult
 {

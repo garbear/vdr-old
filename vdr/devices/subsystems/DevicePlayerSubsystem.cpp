@@ -29,7 +29,7 @@
 #include "dvbsubtitle.h"
 #include "osd.h"
 #include "player.h"
-#include "transfer.h"
+#include "devices/Transfer.h"
 
 #ifndef SAFE_DELETE
 #define SAFE_DELETE(p) \

@@ -26,8 +26,8 @@
 #include "devices/subsystems/DeviceCommonInterfaceSubsystem.h"
 #include "devices/subsystems/DevicePIDSubsystem.h"
 #include "devices/subsystems/DeviceReceiverSubsystem.h"
-#include "channels.h"
-#include "ci.h"
+#include "channels/Channels.h"
+#include "devices/CI.h"
 #include "diseqc.h"
 
 #include <linux/dvb/frontend.h>

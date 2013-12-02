@@ -10,8 +10,8 @@
 #ifndef __THEMES_H
 #define __THEMES_H
 
-#include "i18n.h"
-#include "tools.h"
+#include "utils/I18N.h"
+#include "utils/Tools.h"
 #include "osd.h"
 
 #include <string>

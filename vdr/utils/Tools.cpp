@@ -7,7 +7,7 @@
  * $Id: tools.c 2.29 2012/12/08 11:16:30 kls Exp $
  */
 
-#include "tools.h"
+#include "Tools.h"
 #include <ctype.h>
 #include <dirent.h>
 #include <errno.h>
@@ -19,10 +19,11 @@
 #include <unistd.h>
 #include <utime.h>
 #include <string.h>
-#include "i18n.h"
+#include "I18N.h"
 #include "thread.h"
 
 #include "vdr/filesystem/Directory.h"
+#include "vdr/filesystem/ReadDir.h"
 #include "vdr/utils/UTF8Utils.h"
 
 #include <algorithm>

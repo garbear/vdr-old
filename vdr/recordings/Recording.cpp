@@ -7,7 +7,7 @@
  * $Id: recording.c 2.91.1.2 2013/08/21 13:58:35 kls Exp $
  */
 
-#include "recording.h"
+#include "Recording.h"
 #include <ctype.h>
 #include <dirent.h>
 #include <errno.h>
@@ -19,14 +19,15 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <unistd.h>
-#include "channels.h"
-#include "i18n.h"
-#include "interface.h"
-#include "remux.h"
-#include "ringbuffer.h"
+#include "channels/Channels.h"
+#include "utils/I18N.h"
+//#include "interface.h"
+#include "devices/Remux.h"
+#include "utils/Ringbuffer.h"
 #include "skins.h"
-#include "tools.h"
+#include "utils/Tools.h"
 #include "videodir.h"
+#include "filesystem/ReadDir.h"
 
 #include "vdr/filesystem/Directory.h"
 #include "vdr/utils/UTF8Utils.h"
@@ -329,7 +330,7 @@ void cResumeFile::Delete(void)
 cRecordingInfo::cRecordingInfo(const cChannel *Channel, const cEvent *Event)
 {
   channelID = Channel ? Channel->GetChannelID() : tChannelID::InvalidID;
-  channelName = Channel ? strdup(Channel->Name()) : NULL;
+  channelName = Channel ? strdup(Channel->Name().c_str()) : NULL;
   ownEvent = Event ? NULL : new cEvent(0);
   event = ownEvent ? ownEvent : Event;
   aux = NULL;
@@ -445,7 +446,7 @@ bool cRecordingInfo::Read(FILE *f)
                             *p = 0; // strips optional channel name
                             }
                          if (*t)
-                            channelID = tChannelID::FromString(t);
+                            channelID = tChannelID::Deserialize(t);
                        }
                        break;
              case 'E': {
@@ -489,7 +490,7 @@ bool cRecordingInfo::Read(FILE *f)
 bool cRecordingInfo::Write(FILE *f, const char *Prefix) const
 {
   if (channelID.Valid())
-     fprintf(f, "%sC %s%s%s\n", Prefix, *channelID.ToString(), channelName ? " " : "", channelName ? channelName : "");
+     fprintf(f, "%sC %s%s%s\n", Prefix, channelID.Serialize().c_str(), channelName ? " " : "", channelName ? channelName : "");
   event->Dump(f, Prefix, true);
   fprintf(f, "%sF %s\n", Prefix, *dtoa(framesPerSecond, "%.10g"));
   fprintf(f, "%sP %d\n", Prefix, priority);
@@ -749,7 +750,7 @@ cRecording::cRecording(cTimer *Timer, const cEvent *Event)
   const char *Title = Event ? Event->Title() : NULL;
   const char *Subtitle = Event ? Event->ShortText() : NULL;
   if (isempty(Title))
-     Title = Timer->Channel()->Name();
+     Title = Timer->Channel()->Name().c_str();
   if (isempty(Subtitle))
      Subtitle = " ";
   const char *macroTITLE   = strstr(Timer->File(), TIMERMACRO_TITLE);

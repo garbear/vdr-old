@@ -23,8 +23,8 @@
 #include "DeviceCommonInterfaceSubsystem.h"
 #include "DeviceReceiverSubsystem.h"
 #include "devices/Device.h"
-#include "ci.h"
-#include "tools.h"
+#include "devices/CI.h"
+#include "utils/Tools.h"
 
 #ifndef ARRAY_SIZE
 #define ARRAY_SIZE(x)  (sizeof(x) / sizeof(x[0]))

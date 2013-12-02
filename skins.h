@@ -10,15 +10,15 @@
 #ifndef __SKINS_H
 #define __SKINS_H
 
-#include "channels.h"
-#include "epg.h"
+#include "channels/Channels.h"
+#include "epg/EPG.h"
 #include "keys.h"
 #include "osd.h"
-#include "recording.h"
+#include "recordings/Recording.h"
 #include "themes.h"
 #include "thread.h"
-#include "timers.h"
-#include "tools.h"
+#include "recordings/Timers.h"
+#include "utils/Tools.h"
 
 enum eMessageType { mtStatus = 0, mtInfo, mtWarning, mtError }; // will be used to calculate color offsets!
 
@@ -29,7 +29,7 @@ private:
 public:
   cSkinDisplay(void);
   virtual ~cSkinDisplay();
-  static int AvgCharWidth(void) { return Setup.FontOsdSize * 4 / 6; }
+//  static int AvgCharWidth(void) { return Setup.FontOsdSize * 4 / 6; }
        ///< Returns the average width of a character in pixel (just a raw estimate).
   int EditableWidth(void) { return editableWidth; }
   void SetEditableWidth(int Width) { editableWidth = Width; }

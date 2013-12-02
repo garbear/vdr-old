@@ -21,9 +21,9 @@
 #pragma once
 
 #include "Channel.h"
-#include "config.h"
+#include "Config.h"
 #include "thread.h"
-#include "tools.h" // for cHash
+#include "utils/Tools.h" // for cHash
 
 #include <string>
 

@@ -25,9 +25,9 @@
 #include "DevicePIDSubsystem.h"
 #include "DevicePlayerSubsystem.h"
 #include "devices/Device.h"
-#include "ci.h"
-#include "config.h"
-#include "receiver.h"
+#include "devices/CI.h"
+#include "Config.h"
+#include "devices/Receiver.h"
 
 #include <algorithm>
 
