@@ -42,6 +42,7 @@
 #include "../../../dvbci.h"
 #include "utils/I18N.h"
 #include "utils/Tools.h"
+#include "settings/Settings.h"
 
 #include <algorithm>
 #include <dirent.h>
@@ -321,8 +322,6 @@ bool cDvbDevice::BondingOk(const cChannel &channel, bool bConsiderOccupied) cons
     return DvbChannel()->m_dvbTuner && DvbChannel()->m_dvbTuner->BondingOk(channel, bConsiderOccupied);
   return true;
 }
-
-#define MAXDEVICES 64
 
 bool cDvbDevice::BondDevices(const char *bondings)
 {

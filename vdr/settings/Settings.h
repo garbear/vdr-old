@@ -20,6 +20,7 @@
 #pragma once
 
 #include <termios.h>
+#include <string>
 
 #define DEFAULTEPGDATAFILENAME "epg.data"
 
@@ -27,42 +28,43 @@
 #define DEFAULTCACHEDIR "/var/cache/vdr"
 #define DEFAULTRESDIR   "/usr/local/share/vdr"
 #define VIDEODIR        "/srv/vdr/video" // used in videodir.cpp
+#define MAXDEVICES 64
 
 class cPluginManager;
 
 class cSettings
 {
 public:
-  cSettings();
+  static cSettings& Get(void);
   ~cSettings();
 
   bool LoadFromCmdLine(int argc, char *argv[]);
 
-  const char *   m_AudioCommand;
-  const char *   m_CacheDirectory;
-  const char *   m_ConfigDirectory;
+  std::string    m_AudioCommand;
+  std::string    m_CacheDirectory;
+  std::string    m_ConfigDirectory;
   bool           m_DaemonMode;
-  const char *   m_EpgDataFileName;
+  std::string    m_EpgDataFileName;
   bool           m_DisplayHelp;
   int            m_SysLogTarget;
-  cPluginManager* m_pluginManager;
-  const char *   m_LircDevice;
-  const char *   m_LocaleDirectory;
+//  cPluginManager* m_pluginManager;
+  std::string    m_LocaleDirectory;
   bool           m_MuteAudio;
   bool           m_UseKbd;
   int            m_SVDRPport;
-  const char *   m_ResourceDirectory;
-  const char *   m_Terminal;
-  const char *   m_VdrUser;
+  std::string    m_ResourceDirectory;
+  std::string    m_Terminal;
+  std::string    m_VdrUser;
   bool           m_UserDump;
   bool           m_DisplayVersion;
-  const char *   m_VideoDirectory;
+  std::string    m_VideoDirectory;
   bool           m_StartedAsRoot;
   bool           m_HasStdin;
   struct termios m_savedTm;
 
 private:
+  cSettings();
   bool SetKeepCaps(bool On);
-  bool SetUser(const char *UserName, bool UserDump);
+  bool SetUser(const std::string& UserName, bool UserDump);
   bool DropCaps(void);
 };

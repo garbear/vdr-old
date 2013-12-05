@@ -69,6 +69,7 @@ set(VDR_SRCS
 	vdr/filesystem/VFSFile.cpp
 	vdr/recordings/Recording.cpp
 	vdr/recordings/Timers.cpp
+	vdr/settings/Settings.cpp
 	vdr/sources/ISourceParams.cpp
 	vdr/sources/Source.cpp
 	vdr/sources/linux/DVBSourceParams.cpp

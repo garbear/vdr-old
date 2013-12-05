@@ -209,32 +209,32 @@ bool cVDRDaemon2::Init(void)
     return false;
 
   // Directories:
-  SetVideoDirectory(m_settings.m_VideoDirectory);
-  if (!m_settings.m_ConfigDirectory)
+  SetVideoDirectory(m_settings.m_VideoDirectory.c_str());
+  if (m_settings.m_ConfigDirectory.empty())
     m_settings.m_ConfigDirectory = DEFAULTCONFDIR;
-  cPlugin::SetConfigDirectory(m_settings.m_ConfigDirectory);
-  if (!m_settings.m_CacheDirectory)
+  cPlugin::SetConfigDirectory(m_settings.m_ConfigDirectory.c_str());
+  if (m_settings.m_CacheDirectory.empty())
     m_settings.m_CacheDirectory = DEFAULTCACHEDIR;
-  cPlugin::SetCacheDirectory(m_settings.m_CacheDirectory);
-  if (!m_settings.m_ResourceDirectory)
+  cPlugin::SetCacheDirectory(m_settings.m_CacheDirectory.c_str());
+  if (m_settings.m_ResourceDirectory.empty())
     m_settings.m_ResourceDirectory = DEFAULTRESDIR;
-  cPlugin::SetResourceDirectory(m_settings.m_ResourceDirectory);
-  cThemes::SetThemesDirectory(AddDirectory(m_settings.m_ConfigDirectory, "themes"));
+  cPlugin::SetResourceDirectory(m_settings.m_ResourceDirectory.c_str());
+  cThemes::SetThemesDirectory(AddDirectory(m_settings.m_ConfigDirectory.c_str(), "themes"));
 
   // Configuration data:
-  Setup.Load(AddDirectory(m_settings.m_ConfigDirectory, "setup.conf"));
-  Sources.Load(AddDirectory(m_settings.m_ConfigDirectory, "sources.conf"), true, true);
-  Diseqcs.Load(AddDirectory(m_settings.m_ConfigDirectory, "diseqc.conf"), true,
+  Setup.Load(AddDirectory(m_settings.m_ConfigDirectory.c_str(), "setup.conf"));
+  Sources.Load(AddDirectory(m_settings.m_ConfigDirectory.c_str(), "sources.conf"), true, true);
+  Diseqcs.Load(AddDirectory(m_settings.m_ConfigDirectory.c_str(), "diseqc.conf"), true,
       Setup.DiSEqC);
-  Scrs.Load(AddDirectory(m_settings.m_ConfigDirectory, "scr.conf"), true);
-  Channels.Load(AddDirectory(m_settings.m_ConfigDirectory, "channels.conf"), false, true);
-  Timers.Load(AddDirectory(m_settings.m_ConfigDirectory, "timers.conf"));
-  Commands.Load(AddDirectory(m_settings.m_ConfigDirectory, "commands.conf"));
-  RecordingCommands.Load(AddDirectory(m_settings.m_ConfigDirectory, "reccmds.conf"));
-  SVDRPhosts.Load(AddDirectory(m_settings.m_ConfigDirectory, "svdrphosts.conf"), true);
-  Keys.Load(AddDirectory(m_settings.m_ConfigDirectory, "remote.conf"));
-  KeyMacros.Load(AddDirectory(m_settings.m_ConfigDirectory, "keymacros.conf"), true);
-  Folders.Load(AddDirectory(m_settings.m_ConfigDirectory, "folders.conf"));
+  Scrs.Load(AddDirectory(m_settings.m_ConfigDirectory.c_str(), "scr.conf"), true);
+  Channels.Load(AddDirectory(m_settings.m_ConfigDirectory.c_str(), "channels.conf"), false, true);
+  Timers.Load(AddDirectory(m_settings.m_ConfigDirectory.c_str(), "timers.conf"));
+  Commands.Load(AddDirectory(m_settings.m_ConfigDirectory.c_str(), "commands.conf"));
+  RecordingCommands.Load(AddDirectory(m_settings.m_ConfigDirectory.c_str(), "reccmds.conf"));
+  SVDRPhosts.Load(AddDirectory(m_settings.m_ConfigDirectory.c_str(), "svdrphosts.conf"), true);
+  Keys.Load(AddDirectory(m_settings.m_ConfigDirectory.c_str(), "remote.conf"));
+  KeyMacros.Load(AddDirectory(m_settings.m_ConfigDirectory.c_str(), "keymacros.conf"), true);
+  Folders.Load(AddDirectory(m_settings.m_ConfigDirectory.c_str(), "folders.conf"));
 
   if (!*cFont::GetFontFileName(Setup.FontOsd))
   {
@@ -248,21 +248,21 @@ bool cVDRDaemon2::Init(void)
   DeletedRecordings.Update();
 
   // EPG data:
-  if (m_settings.m_EpgDataFileName)
+  if (!m_settings.m_EpgDataFileName.empty())
   {
-    const char *EpgDirectory = NULL;
+    std::string EpgDirectory;
     if (cDirectory::CanWrite(m_settings.m_EpgDataFileName))
     {
       EpgDirectory = m_settings.m_EpgDataFileName;
       m_settings.m_EpgDataFileName = DEFAULTEPGDATAFILENAME;
     }
-    else if (*m_settings.m_EpgDataFileName != '/' && *m_settings.m_EpgDataFileName != '.')
+    else if (m_settings.m_EpgDataFileName.at(0) != '/' && strcmp(".", m_settings.m_EpgDataFileName.c_str()))
       EpgDirectory = m_settings.m_CacheDirectory;
-    if (EpgDirectory)
+    if (!EpgDirectory.empty())
       cSchedules::SetEpgDataFileName(
-          AddDirectory(EpgDirectory, m_settings.m_EpgDataFileName));
+          AddDirectory(EpgDirectory.c_str(), m_settings.m_EpgDataFileName.c_str()));
     else
-      cSchedules::SetEpgDataFileName(m_settings.m_EpgDataFileName);
+      cSchedules::SetEpgDataFileName(m_settings.m_EpgDataFileName.c_str());
     m_EpgDataReader = new cEpgDataReader;
     m_EpgDataReader->Start();
   }
@@ -352,8 +352,8 @@ bool cVDRDaemon2::Init(void)
   Interface->LearnKeys();
 
   // External audio:
-  if (m_settings.m_AudioCommand)
-    new cExternalAudio(m_settings.m_AudioCommand);
+  if (!m_settings.m_AudioCommand.empty())
+    new cExternalAudio(m_settings.m_AudioCommand.c_str());
 
   // Channel:
   if (!cDevice::WaitForAllDevicesReady(DEVICEREADYTIMEOUT))
@@ -1127,7 +1127,7 @@ int main2(int argc, char *argv[])
   ::SetSystemCharacterTable();
 
   // Initialize internationalization:
-  I18nInitialize(daemon->m_settings.m_LocaleDirectory);
+  I18nInitialize(daemon->m_settings.m_LocaleDirectory.c_str());
 
   if (!daemon->Init())
     return -2;

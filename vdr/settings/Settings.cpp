@@ -19,15 +19,15 @@
  */
 
 #include "Settings.h"
-#include "../../vdr/filesystem/Directory.h"
-#include "../../config.h"
-#include "../../cutter.h"
-#include "../../device.h"
-#include "../../plugin.h"
-#include "../../recording.h"
-#include "../../shutdown.h"
-#include "../../svdrp.h"
-#include "../../tools.h"
+#include "filesystem/Directory.h"
+#include "Config.h"
+//#include "cutter.h"
+#include "devices/Device.h"
+//#include "../../plugin.h"
+#include "recordings/Recording.h"
+#include "shutdown.h"
+#include "svdrp.h"
+#include "utils/Tools.h"
 
 #include <getopt.h>
 #include <grp.h>
@@ -119,19 +119,11 @@
 
 cSettings::cSettings()
 {
-  m_AudioCommand = NULL;
-  m_CacheDirectory = NULL;
-  m_ConfigDirectory = NULL;
   m_DaemonMode = false;
   m_EpgDataFileName = DEFAULTEPGDATAFILENAME;
   m_DisplayHelp = false;
   m_SysLogTarget = LOG_USER;
-  m_pluginManager = new cPluginManager(DEFAULTPLUGINDIR);
-#if defined(REMOTE_LIRC)
-  m_LircDevice = LIRC_DEVICE;
-#else
-  m_LircDevice = NULL;
-#endif
+//  m_pluginManager = new cPluginManager(DEFAULTPLUGINDIR);
   m_LocaleDirectory = DEFAULTLOCDIR;
   m_MuteAudio = false;
 #if defined(REMOTE_KBD)
@@ -140,12 +132,8 @@ cSettings::cSettings()
   m_UseKbd = false;
 #endif
   m_SVDRPport = DEFAULTSVDRPPORT;
-  m_ResourceDirectory = NULL;
-  m_Terminal = NULL;
 #if defined(VDR_USER)
   m_VdrUser = VDR_USER;
-#else
-  m_VdrUser = NULL;
 #endif
   m_UserDump = false;
   m_DisplayVersion = false;
@@ -158,7 +146,7 @@ cSettings::~cSettings()
 {
   if (m_HasStdin)
     tcsetattr(STDIN_FILENO, TCSANOW, &m_savedTm);
-  delete m_pluginManager;
+//  delete m_pluginManager;
 }
 
 bool cSettings::LoadFromCmdLine(int argc, char *argv[])
@@ -221,19 +209,19 @@ bool cSettings::LoadFromCmdLine(int argc, char *argv[])
     case 'd':
       m_DaemonMode = true;
       break;
-    // device
-    case 'D':
-      if (is_number(optarg))
-      {
-        int n = atoi(optarg);
-        if (0 <= n && n < MAXDEVICES)
-        {
-          cDevice::SetUseDevice(n);
-          break;
-        }
-      }
-      fprintf(stderr, "vdr: invalid DVB device number: %s\n", optarg);
-      return false;
+//    // device
+//    case 'D':
+//      if (is_number(optarg))
+//      {
+//        int n = atoi(optarg);
+//        if (0 <= n && n < MAXDEVICES)
+//        {
+//          cDevice::SetUseDevice(n);
+//          break;
+//        }
+//      }
+//      fprintf(stderr, "vdr: invalid DVB device number: %s\n", optarg);
+//      return false;
     // dirnames
     case 'd' | 0x100:
       {
@@ -293,11 +281,11 @@ bool cSettings::LoadFromCmdLine(int argc, char *argv[])
       }
       break;
     // edit
-    case 'e' | 0x100:
-      return CutRecording(optarg);
+//    case 'e' | 0x100:
+//      return CutRecording(optarg);
     // epgfile
     case 'E':
-      m_EpgDataFileName = (*optarg != '-' ? optarg : NULL);
+      m_EpgDataFileName = (*optarg != '-' ? optarg : "");
       break;
     // filesize
     case 'f' | 0x100:
@@ -363,17 +351,13 @@ bool cSettings::LoadFromCmdLine(int argc, char *argv[])
       }
     // lib
     case 'L':
-      if (access(optarg, R_OK | X_OK) == 0)
-        m_pluginManager->SetDirectory(optarg);
-      else
-      {
-        fprintf(stderr, "vdr: can't access plugin directory: %s\n", optarg);
-        return false;
-      }
-      break;
-    // lirc
-    case 'l' | 0x100:
-      m_LircDevice = optarg ? optarg : LIRC_DEVICE;
+//      if (access(optarg, R_OK | X_OK) == 0)
+//        m_pluginManager->SetDirectory(optarg);
+//      else
+//      {
+//        fprintf(stderr, "vdr: can't access plugin directory: %s\n", optarg);
+//        return false;
+//      }
       break;
     // localedir
     case 'l' | 0x200:
@@ -404,9 +388,9 @@ bool cSettings::LoadFromCmdLine(int argc, char *argv[])
       }
       break;
     // port
-    case 'P':
-      m_pluginManager->AddPlugin(optarg);
-      break;
+//    case 'P':
+//      m_pluginManager->AddPlugin(optarg);
+//      break;
     // record
     case 'r':
       cRecordingUserCommand::SetCommand(optarg);
@@ -426,9 +410,9 @@ bool cSettings::LoadFromCmdLine(int argc, char *argv[])
     // terminal
     case 't':
       m_Terminal = optarg;
-      if (access(m_Terminal, R_OK | W_OK) < 0)
+      if (access(m_Terminal.c_str(), R_OK | W_OK) < 0)
       {
-        fprintf(stderr, "vdr: can't access terminal: %s\n", m_Terminal);
+        fprintf(stderr, "vdr: can't access terminal: %s\n", m_Terminal.c_str());
         return false;
       }
       break;
@@ -465,9 +449,9 @@ bool cSettings::LoadFromCmdLine(int argc, char *argv[])
   // Help and version info:
   if (m_DisplayHelp || m_DisplayVersion)
   {
-     if (!m_pluginManager->HasPlugins())
-       m_pluginManager->AddPlugin("*"); // adds all available plugins
-     m_pluginManager->LoadPlugins();
+//     if (!m_pluginManager->HasPlugins())
+//       m_pluginManager->AddPlugin("*"); // adds all available plugins
+//     m_pluginManager->LoadPlugins();
 
      if (m_DisplayHelp)
      {
@@ -489,27 +473,27 @@ bool cSettings::LoadFromCmdLine(int argc, char *argv[])
 
     if (m_DisplayVersion)
       printf("vdr (%s/%s) - The Video Disk Recorder\n", VDRVERSION, APIVERSION);
-    if (m_pluginManager->HasPlugins())
-    {
-      if (m_DisplayHelp)
-        printf("Plugins: vdr -P\"name [OPTIONS]\"\n\n");
-      for (int i = 0;; i++)
-      {
-        cPlugin *p = m_pluginManager->GetPlugin(i);
-        if (p)
-        {
-          const char *help = p->CommandLineHelp();
-          printf("%s (%s) - %s\n", p->Name(), p->Version(), p->Description());
-          if (m_DisplayHelp && help)
-          {
-            printf("\n");
-            puts(help);
-          }
-        }
-        else
-          break;
-      }
-    }
+//    if (m_pluginManager->HasPlugins())
+//    {
+//      if (m_DisplayHelp)
+//        printf("Plugins: vdr -P\"name [OPTIONS]\"\n\n");
+//      for (int i = 0;; i++)
+//      {
+//        cPlugin *p = m_pluginManager->GetPlugin(i);
+//        if (p)
+//        {
+//          const char *help = p->CommandLineHelp();
+//          printf("%s (%s) - %s\n", p->Name(), p->Version(), p->Description());
+//          if (m_DisplayHelp && help)
+//          {
+//            printf("\n");
+//            puts(help);
+//          }
+//        }
+//        else
+//          break;
+//      }
+//    }
     return false; // TODO: main() should return 0 instead of 2
   }
 
@@ -518,10 +502,10 @@ bool cSettings::LoadFromCmdLine(int argc, char *argv[])
     openlog("vdr", LOG_CONS, m_SysLogTarget); // LOG_PID doesn't work as expected under NPTL
 
   // Set user id in case we were started as root:
-  if (m_VdrUser && geteuid() == 0)
+  if (!m_VdrUser.empty() && geteuid() == 0)
   {
     m_StartedAsRoot = true;
-    if (strcmp(m_VdrUser, "root"))
+    if (strcmp(m_VdrUser.c_str(), "root"))
     {
       if (!SetKeepCaps(true))
         return false;
@@ -532,13 +516,13 @@ bool cSettings::LoadFromCmdLine(int argc, char *argv[])
       if (!DropCaps())
         return false;
     }
-    isyslog("switched to user '%s'", m_VdrUser);
+    isyslog("switched to user '%s'", m_VdrUser.c_str());
   }
 
   // Check the video directory:
   if (!cDirectory::CanWrite(m_VideoDirectory))
   {
-    fprintf(stderr, "vdr: can't access video directory %s\n", m_VideoDirectory);
+    fprintf(stderr, "vdr: can't access video directory %s\n", m_VideoDirectory.c_str());
     return false;
   }
 
@@ -554,12 +538,12 @@ bool cSettings::LoadFromCmdLine(int argc, char *argv[])
     dsyslog("running as daemon (tid=%d)", cThread::ThreadId());
   }
 #ifndef ANDROID
-  else if (m_Terminal)
+  else if (!m_Terminal.empty())
   {
     // Claim new controlling terminal
-    stdin = freopen(m_Terminal, "r", stdin);
-    stdout = freopen(m_Terminal, "w", stdout);
-    stderr = freopen(m_Terminal, "w", stderr);
+    stdin = freopen(m_Terminal.c_str(), "r", stdin);
+    stdout = freopen(m_Terminal.c_str(), "w", stdout);
+    stderr = freopen(m_Terminal.c_str(), "w", stderr);
     m_HasStdin = true;
     tcgetattr(STDIN_FILENO, &m_savedTm);
   }
@@ -581,14 +565,14 @@ bool cSettings::SetKeepCaps(bool On)
   return true;
 }
 
-bool cSettings::SetUser(const char *UserName, bool UserDump)
+bool cSettings::SetUser(const std::string& UserName, bool UserDump)
 {
-  if (UserName)
+  if (!UserName.empty())
   {
-    struct passwd *user = getpwnam(UserName);
+    struct passwd *user = getpwnam(UserName.c_str());
     if (!user)
     {
-      fprintf(stderr, "vdr: unknown user: '%s'\n", UserName);
+      fprintf(stderr, "vdr: unknown user: '%s'\n", UserName.c_str());
       return false;
     }
     if (setgid(user->pw_gid) < 0)
@@ -635,4 +619,10 @@ bool cSettings::DropCaps(void)
   cap_free(caps);
 #endif
   return true;
+}
+
+cSettings& cSettings::Get(void)
+{
+  static cSettings _instance;
+  return _instance;
 }
