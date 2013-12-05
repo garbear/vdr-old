@@ -173,7 +173,7 @@ namespace PLATFORM
 
     fd_set fd_read;
     struct timeval tv;
-    while (iBytesRead >= 0 && iBytesRead < (ssize_t)len && (iTimeoutMs == 0 || iTarget > iNow) && *iError == 0)
+    while (iBytesRead >= 0 && iBytesRead < (ssize_t)len && (iTimeoutMs == 0 || iTarget > iNow))
     {
       if (iTimeoutMs > 0)
       {
@@ -186,6 +186,7 @@ namespace PLATFORM
         if (select((int)socket + 1, &fd_read, NULL, NULL, &tv) == 0)
         {
           *iError = ETIMEDOUT;
+          return ETIMEDOUT;
         }
         TcpSocketSetBlocking(socket, false);
       }
@@ -193,7 +194,7 @@ namespace PLATFORM
       ssize_t iReadResult = (iTimeoutMs > 0) ?
           recv(socket, (char*)data + iBytesRead, (int)(len - iBytesRead), 0) :
           recv(socket, (char*)data, (int)len, MSG_WAITALL);
-      int iSocketError = GetSocketError();
+      *iError = GetSocketError();
 
       if (iTimeoutMs > 0)
       {
@@ -203,14 +204,14 @@ namespace PLATFORM
 
       if (iReadResult < 0)
       {
-        if (iSocketError == EAGAIN && iTimeoutMs > 0)
+        if (*iError == EAGAIN && iTimeoutMs > 0)
           continue;
-        *iError = iSocketError;
-        return (iBytesRead > 0) ? iBytesRead : -iSocketError;
+        return -1;
       }
       else if (iReadResult == 0 || (iReadResult != (ssize_t)len && iTimeoutMs == 0))
       {
         *iError = ECONNRESET;
+        return -1;
       }
 
       iBytesRead += iReadResult;
