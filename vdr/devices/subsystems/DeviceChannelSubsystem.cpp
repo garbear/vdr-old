@@ -33,7 +33,6 @@
 #include "dvbsubtitle.h"
 #include "player.h"
 #include "sections.h"
-#include "skins.h"
 #include "status.h"
 #include "utils/Tools.h"
 #include "devices/Transfer.h"
@@ -88,10 +87,10 @@ bool cDeviceChannelSubsystem::SwitchChannel(const cChannel &channel, bool bLiveV
     case scrOk:
       return true;
     case scrNotAvailable:
-      Skins.Message(mtInfo, tr("Channel not available!"));
+      esyslog(tr("Channel not available!"));
       return false;
     case scrNoTransfer:
-      Skins.Message(mtError, tr("Can't start Transfer Mode!"));
+      esyslog(tr("Can't start Transfer Mode!"));
       return false;
     case scrFailed:
       break; // loop will retry

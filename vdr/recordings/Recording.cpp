@@ -24,7 +24,6 @@
 //#include "interface.h"
 #include "devices/Remux.h"
 #include "utils/Ringbuffer.h"
-#include "skins.h"
 #include "utils/Tools.h"
 #include "videodir.h"
 #include "filesystem/ReadDir.h"
@@ -216,7 +215,7 @@ void AssertFreeDiskSpace(int Priority, bool Force)
            }
         else
            isyslog("...no deleted recording found, priority %d too low to trigger deleting an old recording", Priority);
-        Skins.QueueMessage(mtWarning, tr("Low disk space!"), 5, -1);
+        esyslog(tr("Low disk space!"));
         }
      LastFreeDiskCheck = time(NULL);
      }
@@ -1708,7 +1707,7 @@ void cIndexFileGenerator::Action(void)
   int BufferChunks = KILOBYTE(1); // no need to read a lot at the beginning when parsing PAT/PMT
   off_t FileSize = 0;
   off_t FrameOffset = -1;
-  Skins.QueueMessage(mtInfo, tr("Regenerating index file"));
+  isyslog(tr("Regenerating index file"));
   while (Running()) {
         // Rewind input file:
         if (Rewind) {
@@ -1794,11 +1793,11 @@ void cIndexFileGenerator::Action(void)
               Recordings.UpdateByName(recordingName);
               }
            }
-        Skins.QueueMessage(mtInfo, tr("Index file regeneration complete"));
+        isyslog(tr("Index file regeneration complete"));
         return;
         }
      else
-        Skins.QueueMessage(mtError, tr("Index file regeneration failed!"));
+       esyslog(tr("Index file regeneration failed!"));
      }
   // Delete the index file if the recording has not been processed entirely:
   IndexFile.Delete();
