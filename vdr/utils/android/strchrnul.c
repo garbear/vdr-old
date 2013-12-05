@@ -43,7 +43,7 @@
 
 #ifdef ANDROID
 
-#include "android_strchrnul.h"
+#include "strchrnul.h"
 
 /* Specification.  */
 #include <string.h>

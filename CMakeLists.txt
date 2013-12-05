@@ -17,6 +17,13 @@ include_directories(${CMAKE_SOURCE_DIR}/lib)
 include_directories(${gtest_SOURCE_DIR}/include)
 include_directories(${CMAKE_SOURCE_DIR}/lib/pcre)
 
+set(ANDROID_HELPER_SRCS
+	vdr/utils/android/getline.c
+	vdr/utils/android/sort.c
+	vdr/utils/android/strchrnul.c
+	vdr/utils/android/timegm.c
+)
+
 set(VDR_SRCS
 	vdr/Config.cpp
 	vdr/SignalHandler.cpp
@@ -141,7 +148,7 @@ endif()
 #target_link_libraries(${VDR_EXECUTABLE} ${LIBS} ${LIBRT} ${LIBPTHREAD})
 
 set(VDR_LIBRARY vdr)
-add_library(${VDR_LIBRARY} SHARED ${VDR_ADDON} ${VDR_SRCS})
+add_library(${VDR_LIBRARY} SHARED ${VDR_ADDON} ${VDR_SRCS} ${ANDROID_HELPER_SRCS})
 target_link_libraries(${VDR_LIBRARY} ${LIBS} ${LIBRT} ${LIBPTHREAD})
 
 set(VDR_TEST_EXECUTABLE test-vdr.bin)

@@ -16,7 +16,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include "android_getline.h"
+#include "getline.h"
 
 #ifdef ANDROID
 
