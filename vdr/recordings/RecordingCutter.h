@@ -10,14 +10,14 @@
 #ifndef __CUTTER_H
 #define __CUTTER_H
 
-#include "thread.h"
-#include "tools.h"
+#include "utils/Tools.h"
+#include "platform/threads/threads.h"
 
 class cCuttingThread;
 
 class cCutter {
 private:
-  static cMutex mutex;
+  static PLATFORM::CMutex mutex;
   static cString originalVersionName;
   static cString editedVersionName;
   static cCuttingThread *cuttingThread;

@@ -53,8 +53,8 @@ bool cVDRDaemon::Init()
   //
   // - special://vdr - URI of source directory (special://vdr/system is repo's /system folder)
 
-  //cDvbDevice::Initialize();
-  //cDvbDevice::BondDevices(Setup.DeviceBondings);
+//  cDvbDevice::Initialize();
+//  cDvbDevice::BondDevices(Setup.DeviceBondings);
 
   return CreateThread(true);
 }

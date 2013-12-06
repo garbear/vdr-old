@@ -7,13 +7,15 @@
  * $Id: cutter.c 2.25.1.2 2013/08/21 13:43:46 kls Exp $
  */
 
-#include "cutter.h"
-#include "menu.h"
-#include "recording.h"
-#include "remux.h"
+#include "RecordingCutter.h"
+//#include "menu.h"
+#include "Recording.h"
+#include "devices/Remux.h"
 #include "videodir.h"
 
 #include "vdr/filesystem/Directory.h"
+
+using namespace PLATFORM;
 
 // --- cPacketBuffer ---------------------------------------------------------
 
@@ -222,7 +224,7 @@ void cMpeg2Fixer::AdjTref(int TrefOffset)
 
 // --- cCuttingThread --------------------------------------------------------
 
-class cCuttingThread : public cThread {
+class cCuttingThread : public CThread {
 private:
   const char *error;
   bool isPesRecording;
@@ -257,7 +259,7 @@ private:
   bool FixFrame(uchar *Data, int &Length, bool Independent, int Index, bool CutIn, bool CutOut);
   bool ProcessSequence(int LastEndIndex, int BeginIndex, int EndIndex, int NextBeginIndex);
 protected:
-  virtual void Action(void);
+  virtual void* Process(void);
 public:
   cCuttingThread(const char *FromFileName, const char *ToFileName);
   virtual ~cCuttingThread();
@@ -265,7 +267,7 @@ public:
   };
 
 cCuttingThread::cCuttingThread(const char *FromFileName, const char *ToFileName)
-:cThread("video cutting", true)
+:CThread()
 {
   error = NULL;
   fromFile = toFile = NULL;
@@ -296,7 +298,7 @@ cCuttingThread::cCuttingThread(const char *FromFileName, const char *ToFileName)
         maxVideoFileSize = MEGABYTE(Setup.MaxVideoFileSize);
         if (isPesRecording && maxVideoFileSize > MEGABYTE(MAXVIDEOFILESIZEPES))
            maxVideoFileSize = MEGABYTE(MAXVIDEOFILESIZEPES);
-        Start();
+        CreateThread();
         }
      else
         esyslog("no editing sequences found for %s", FromFileName);
@@ -307,7 +309,7 @@ cCuttingThread::cCuttingThread(const char *FromFileName, const char *ToFileName)
 
 cCuttingThread::~cCuttingThread()
 {
-  Cancel(3);
+  StopThread(3000);
   delete fromFileName;
   delete toFileName;
   delete fromIndex;
@@ -554,7 +556,7 @@ bool cCuttingThread::ProcessSequence(int LastEndIndex, int BeginIndex, int EndIn
      error = "malloc";
      return false;
      }
-  for (int Index = BeginIndex; Running() && Index < EndIndex; Index++) {
+  for (int Index = BeginIndex; !IsStopped() && Index < EndIndex; Index++) {
       bool Independent;
       int Length;
       if (LoadFrame(Index, Buffer, Independent, Length)) {
@@ -598,15 +600,15 @@ bool cCuttingThread::ProcessSequence(int LastEndIndex, int BeginIndex, int EndIn
   return true;
 }
 
-void cCuttingThread::Action(void)
+void* cCuttingThread::Process(void)
 {
   if (cMark *BeginMark = fromMarks.GetNextBegin()) {
      fromFile = fromFileName->Open();
      toFile = toFileName->Open();
      if (!fromFile || !toFile)
-        return;
+        return NULL;
      int LastEndIndex = -1;
-     while (BeginMark && Running()) {
+     while (BeginMark && !IsStopped()) {
            // Suspend cutting if we have severe throughput problems:
            if (Throttled()) {
               cCondWait::SleepMs(100);
@@ -640,11 +642,13 @@ void cCuttingThread::Action(void)
      }
   else
      esyslog("no editing marks found!");
+
+  return NULL;
 }
 
 // --- cCutter ---------------------------------------------------------------
 
-cMutex cCutter::mutex;
+CMutex cCutter::mutex;
 cString cCutter::originalVersionName;
 cString cCutter::editedVersionName;
 cCuttingThread *cCutter::cuttingThread = NULL;
@@ -653,7 +657,7 @@ bool cCutter::ended = false;
 
 bool cCutter::Start(const char *FileName)
 {
-  cMutexLock MutexLock(&mutex);
+  CLockObject lock(mutex);
   if (!cuttingThread) {
      error = false;
      ended = false;
@@ -691,8 +695,8 @@ bool cCutter::Start(const char *FileName)
 
 void cCutter::Stop(void)
 {
-  cMutexLock MutexLock(&mutex);
-  bool Interrupted = cuttingThread && cuttingThread->Active();
+  CLockObject lock(mutex);
+  bool Interrupted = cuttingThread && cuttingThread->IsRunning();
   const char *Error = cuttingThread ? cuttingThread->Error() : NULL;
   delete cuttingThread;
   cuttingThread = NULL;
@@ -701,8 +705,8 @@ void cCutter::Stop(void)
         isyslog("editing process has been interrupted");
      if (Error)
         esyslog("ERROR: '%s' during editing process", Error);
-     if (cReplayControl::NowReplaying() && strcmp(cReplayControl::NowReplaying(), editedVersionName) == 0)
-        cControl::Shutdown();
+//     if (cReplayControl::NowReplaying() && strcmp(cReplayControl::NowReplaying(), editedVersionName) == 0)
+//        cControl::Shutdown();
      RemoveVideoFile(editedVersionName);
      Recordings.DelByName(editedVersionName);
      }
@@ -710,9 +714,9 @@ void cCutter::Stop(void)
 
 bool cCutter::Active(const char *FileName)
 {
-  cMutexLock MutexLock(&mutex);
+  CLockObject lock(mutex);
   if (cuttingThread) {
-     if (cuttingThread->Active())
+     if (cuttingThread->IsRunning())
         return !FileName || strcmp(FileName, originalVersionName) == 0 || strcmp(FileName, editedVersionName) == 0;
      error = cuttingThread->Error();
      Stop();
@@ -727,7 +731,7 @@ bool cCutter::Active(const char *FileName)
 
 bool cCutter::Error(void)
 {
-  cMutexLock MutexLock(&mutex);
+  CLockObject lock(mutex);
   bool result = error;
   error = false;
   return result;
@@ -735,7 +739,7 @@ bool cCutter::Error(void)
 
 bool cCutter::Ended(void)
 {
-  cMutexLock MutexLock(&mutex);
+  CLockObject lock(mutex);
   bool result = ended;
   ended = false;
   return result;

@@ -68,6 +68,7 @@ set(VDR_SRCS
 	vdr/filesystem/VFSDirectory.cpp
 	vdr/filesystem/VFSFile.cpp
 	vdr/recordings/Recording.cpp
+	vdr/recordings/RecordingCutter.cpp
 	vdr/recordings/Timers.cpp
 	vdr/settings/Settings.cpp
 	vdr/sources/ISourceParams.cpp
