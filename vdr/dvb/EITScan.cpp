@@ -7,12 +7,13 @@
  * $Id: eitscan.c 2.7 2012/04/07 14:39:28 kls Exp $
  */
 
-#include "eitscan.h"
+#include "EITScan.h"
 #include <stdlib.h>
-#include "channels.h"
-#include "dvbdevice.h"
-#include "skins.h"
-#include "transfer.h"
+#include "channels/Channels.h"
+#include "devices/Transfer.h"
+#include "devices/DeviceManager.h"
+#include "devices/subsystems/DeviceChannelSubsystem.h"
+#include "devices/subsystems/DeviceReceiverSubsystem.h"
 
 // --- cScanData -------------------------------------------------------------
 
@@ -140,26 +141,26 @@ void cEITScanner::Process(void)
               scanList->AddTransponders(&Channels);
               }
            bool AnyDeviceSwitched = false;
-           for (int i = 0; i < cDevice::NumDevices(); i++) {
-               cDevice *Device = cDevice::GetDevice(i);
-               if (Device && Device->ProvidesEIT()) {
+           for (int i = 0; i < cDeviceManager::Get().NumDevices(); i++) {
+               cDevice *Device = cDeviceManager::Get().GetDevice(i);
+               if (Device && Device->Channel()->ProvidesEIT()) {
                   for (cScanData *ScanData = scanList->First(); ScanData; ScanData = scanList->Next(ScanData)) {
                       const cChannel *Channel = ScanData->GetChannel();
                       if (Channel) {
                          if (!Channel->Ca() || Channel->Ca() == Device->DeviceNumber() + 1 || Channel->Ca() >= CA_ENCRYPTED_MIN) {
-                            if (Device->ProvidesTransponder(Channel)) {
-                               if (Device->Priority() < 0) {
-                                  bool MaySwitchTransponder = Device->MaySwitchTransponder(Channel);
-                                  if (MaySwitchTransponder || Device->ProvidesTransponderExclusively(Channel) && now - lastActivity > Setup.EPGScanTimeout * 3600) {
+                            if (Device->Channel()->ProvidesTransponder(*Channel)) {
+                               if (Device->Receiver()->Priority() < 0) {
+                                  bool MaySwitchTransponder = Device->Channel()->MaySwitchTransponder(*Channel);
+                                  if (MaySwitchTransponder || Device->Channel()->ProvidesTransponderExclusively(*Channel) && now - lastActivity > Setup.EPGScanTimeout * 3600) {
                                      if (!MaySwitchTransponder) {
-                                        if (Device == cDevice::ActualDevice() && !currentChannel) {
-                                           cDevice::PrimaryDevice()->StopReplay(); // stop transfer mode
-                                           currentChannel = Device->CurrentChannel();
-                                           Skins.Message(mtInfo, tr("Starting EPG scan"));
+                                        if (Device == cDeviceManager::Get().ActualDevice() && !currentChannel) {
+                                           cDeviceManager::Get().PrimaryDevice()->Player()->StopReplay(); // stop transfer mode
+                                           currentChannel = cDeviceManager::Get().CurrentChannel();
+                                           isyslog(tr("Starting EPG scan"));
                                            }
                                         }
                                      //dsyslog("EIT scan: device %d  source  %-8s tp %5d", Device->DeviceNumber() + 1, *cSource::ToString(Channel->Source()), Channel->Transponder());
-                                     Device->SwitchChannel(Channel, false);
+                                     Device->Channel()->SwitchChannel(*Channel, false);
                                      scanList->Del(ScanData);
                                      AnyDeviceSwitched = true;
                                      break;

@@ -7,9 +7,9 @@
  * $Id: pat.c 2.19 2012/11/25 14:12:21 kls Exp $
  */
 
-#include "pat.h"
+#include "PAT.h"
 #include <malloc.h>
-#include "channels.h"
+#include "channels/Channels.h"
 #include "libsi/section.h"
 #include "libsi/descriptor.h"
 #include "thread.h"

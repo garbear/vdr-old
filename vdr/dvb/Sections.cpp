@@ -7,10 +7,12 @@
  * $Id: sections.c 2.2 2012/10/04 12:21:59 kls Exp $
  */
 
-#include "sections.h"
+#include "Sections.h"
 #include <unistd.h>
-#include "channels.h"
-#include "device.h"
+#include "channels/Channels.h"
+#include "devices/Device.h"
+#include "devices/subsystems/DeviceSectionFilterSubsystem.h"
+#include "devices/subsystems/DeviceChannelSubsystem.h"
 #include "thread.h"
 
 // --- cFilterHandle----------------------------------------------------------
@@ -85,7 +87,7 @@ void cSectionHandler::Add(const cFilterData *FilterData)
          break;
       }
   if (!fh) {
-     int handle = device->OpenFilter(FilterData->pid, FilterData->tid, FilterData->mask);
+     int handle = device->SectionFilter()->OpenFilter(FilterData->pid, FilterData->tid, FilterData->mask);
      if (handle >= 0) {
         fh = new cFilterHandle(*FilterData);
         fh->handle = handle;
@@ -105,7 +107,7 @@ void cSectionHandler::Del(const cFilterData *FilterData)
   for (fh = filterHandles.First(); fh; fh = filterHandles.Next(fh)) {
       if (fh->filterData.Is(FilterData->pid, FilterData->tid, FilterData->mask)) {
          if (--fh->used <= 0) {
-            device->CloseFilter(fh->handle);
+            device->SectionFilter()->CloseFilter(fh->handle);
             filterHandles.Del(fh);
             break;
             }
@@ -146,7 +148,7 @@ void cSectionHandler::SetStatus(bool On)
 {
   Lock();
   if (on != On) {
-     if (!On || device->HasLock()) {
+     if (!On || device->Channel()->HasLock()) {
         statusCount++;
         for (cFilter *fi = filters.First(); fi; fi = filters.Next(fi)) {
             fi->SetStatus(false);
@@ -181,7 +183,7 @@ void cSectionHandler::Action(void)
         Unlock();
 
         if (poll(pfd, NumFilters, 1000) > 0) {
-           bool DeviceHasLock = device->HasLock();
+           bool DeviceHasLock = device->Channel()->HasLock();
            if (!DeviceHasLock)
               cCondWait::SleepMs(100);
            for (int i = 0; i < NumFilters; i++) {
@@ -197,7 +199,7 @@ void cSectionHandler::Action(void)
                   if (fh) {
                      // Read section data:
                      unsigned char buf[4096]; // max. allowed size for any EIT section
-                     int r = device->ReadFilter(fh->handle, buf, sizeof(buf));
+                     int r = device->SectionFilter()->ReadFilter(fh->handle, buf, sizeof(buf));
                      if (!DeviceHasLock)
                         continue; // we do the read anyway, to flush any data that might have come from a different transponder
                      if (r > 3) { // minimum number of bytes necessary to get section length

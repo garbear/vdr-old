@@ -11,10 +11,11 @@
  * $Id: eit.c 2.23.1.1 2013/10/12 11:24:51 kls Exp $
  */
 
-#include "eit.h"
+#include "EIT.h"
 #include <sys/time.h>
-#include "epg.h"
-#include "i18n.h"
+#include "epg/EPG.h"
+#include "channels/Channels.h"
+#include "utils/I18N.h"
 #include "libsi/section.h"
 #include "libsi/descriptor.h"
 #include "libsi/dish.h"
@@ -128,7 +129,7 @@ cEIT::cEIT(cSchedules *Schedules, int Source, u_char Tid, const u_char *Data, bo
       SI::DishDescriptor *DishShortEventDescriptor = NULL;
       SI::ExtendedEventDescriptors *ExtendedEventDescriptors = NULL;
       SI::ShortEventDescriptor *ShortEventDescriptor = NULL;
-      cLinkChannels *LinkChannels = NULL;
+      cLinkChannels LinkChannels;
       cComponents *Components = NULL;
       for (SI::Loop::Iterator it2; (d = SiEitEvent.eventDescriptors.getNext(it2)); ) {
           switch (d->getDescriptorTag()) {
@@ -277,9 +278,7 @@ cEIT::cEIT(cSchedules *Schedules, int Source, u_char Tid, const u_char *Data, bo
                              //XXX patFilter->Trigger();
                              }
                           if (link) {
-                             if (!LinkChannels)
-                                LinkChannels = new cLinkChannels;
-                             LinkChannels->Add(new cLinkChannel(link));
+                             LinkChannels.push_back(new cLinkChannel(link));
                              }
                           }
                        else
@@ -337,7 +336,7 @@ cEIT::cEIT(cSchedules *Schedules, int Source, u_char Tid, const u_char *Data, bo
       EpgHandlers.SetComponents(pEvent, Components);
 
       EpgHandlers.FixEpgBugs(pEvent);
-      if (LinkChannels)
+      if (!LinkChannels.empty())
          channel->SetLinkChannels(LinkChannels);
       Modified = true;
       EpgHandlers.HandleEvent(pEvent);

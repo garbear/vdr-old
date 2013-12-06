@@ -11,9 +11,8 @@
 #define __EITSCAN_H
 
 #include <time.h>
-#include "channels.h"
-#include "config.h"
-#include "device.h"
+#include "Config.h"
+#include "devices/Device.h"
 
 class cScanList;
 class cTransponderList;

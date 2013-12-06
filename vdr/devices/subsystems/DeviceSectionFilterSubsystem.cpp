@@ -20,11 +20,11 @@
  */
 
 #include "DeviceSectionFilterSubsystem.h"
-#include "eit.h"
-#include "nit.h"
-#include "pat.h"
-#include "sdt.h"
-#include "sections.h"
+#include "dvb/EIT.h"
+#include "dvb/NIT.h"
+#include "dvb/PAT.h"
+#include "dvb/SDT.h"
+#include "dvb/Sections.h"
 
 #include <unistd.h>
 

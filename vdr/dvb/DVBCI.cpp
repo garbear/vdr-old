@@ -7,10 +7,10 @@
  * $Id: dvbci.c 2.0 2007/01/04 12:49:10 kls Exp $
  */
 
-#include "dvbci.h"
+#include "DVBCI.h"
 #include <linux/dvb/ca.h>
 #include <sys/ioctl.h>
-#include "device.h"
+#include "devices/Device.h"
 
 // --- cDvbCiAdapter ---------------------------------------------------------
 

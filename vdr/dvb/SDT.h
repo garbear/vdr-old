@@ -11,7 +11,7 @@
 #define __SDT_H
 
 #include "filter.h"
-#include "pat.h"
+#include "PAT.h"
 
 class cSdtFilter : public cFilter {
 private:

@@ -7,9 +7,9 @@
  * $Id: sdt.c 2.5 2010/05/16 14:23:21 kls Exp $
  */
 
-#include "sdt.h"
-#include "channels.h"
-#include "config.h"
+#include "SDT.h"
+#include "channels/Channels.h"
+#include "Config.h"
 #include "libsi/section.h"
 #include "libsi/descriptor.h"
 
@@ -46,7 +46,7 @@ void cSdtFilter::Process(u_short Pid, u_char Tid, const u_char *Data, int Length
       if (!channel)
          channel = Channels.GetByChannelID(tChannelID(Source(), 0, Transponder(), SiSdtService.getServiceId()));
 
-      cLinkChannels *LinkChannels = NULL;
+      cLinkChannels LinkChannels;
       SI::Descriptor *d;
       for (SI::Loop::Iterator it2; (d = SiSdtService.serviceDescriptors.getNext(it2)); ) {
           switch (d->getDescriptorTag()) {
@@ -123,9 +123,7 @@ void cSdtFilter::Process(u_short Pid, u_char Tid, const u_char *Data, int Length
                         patFilter->Trigger();
                         }
                      if (link) {
-                        if (!LinkChannels)
-                           LinkChannels = new cLinkChannels;
-                        LinkChannels->Add(new cLinkChannel(link));
+                        LinkChannels.push_back(new cLinkChannel(link));
                         }
                      }
                  }
@@ -134,12 +132,11 @@ void cSdtFilter::Process(u_short Pid, u_char Tid, const u_char *Data, int Length
             }
           delete d;
           }
-      if (LinkChannels) {
+      if (!LinkChannels.empty()) {
          if (channel)
             channel->SetLinkChannels(LinkChannels);
-         else
-            delete LinkChannels;
-         }
       }
+  }
+
   Channels.Unlock();
 }

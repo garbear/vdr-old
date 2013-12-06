@@ -39,7 +39,7 @@
 #include "filesystem/ReadDir.h"
 #include "sources/linux/DVBSourceParams.h"
 #include "../../utils/StringUtils.h"
-#include "../../../dvbci.h"
+#include "dvb/DVBCI.h"
 #include "utils/I18N.h"
 #include "utils/Tools.h"
 #include "settings/Settings.h"

@@ -89,7 +89,7 @@ class cLinkChannels : public cList<cLinkChannel>
 {
 };
 */
-typedef std::vector<cLinkChannel> cLinkChannels;
+typedef std::vector<cLinkChannel*> cLinkChannels;
 
 struct tChannelData
 {
@@ -210,6 +210,8 @@ public:
   const std::string &Parameters()     const { return m_parameters; }
   const cLinkChannels &LinkChannels() const { return m_linkChannels; }
   const cChannel *RefChannel()        const { return m_refChannel; }
+
+  void SetLinkChannels(cLinkChannels& channels) { m_linkChannels = channels; }
 
   tChannelID GetChannelID() const;
 

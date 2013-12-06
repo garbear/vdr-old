@@ -32,7 +32,7 @@
 #include "channels/Channels.h"
 #include "dvbsubtitle.h"
 #include "player.h"
-#include "sections.h"
+#include "dvb/Sections.h"
 #include "status.h"
 #include "utils/Tools.h"
 #include "devices/Transfer.h"
