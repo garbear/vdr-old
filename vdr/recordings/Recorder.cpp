@@ -7,7 +7,7 @@
  * $Id: recorder.c 2.17.1.1 2013/10/12 12:10:05 kls Exp $
  */
 
-#include "recorder.h"
+#include "Recorder.h"
 #include "shutdown.h"
 
 #include "vdr/filesystem/Directory.h"
@@ -21,11 +21,12 @@
 #define MINFREEDISKSPACE    (512) // MB
 #define DISKCHECKINTERVAL   100 // seconds
 
+using namespace PLATFORM;
+
 // --- cRecorder -------------------------------------------------------------
 
 cRecorder::cRecorder(const char *FileName, const cChannel *Channel, int Priority)
-:cReceiver(Channel, Priority)
-,cThread("recording")
+:cReceiver(Channel, Priority), CThread()
 {
   recordingName = strdup(FileName);
 
@@ -105,32 +106,32 @@ bool cRecorder::NextFile(void)
 void cRecorder::Activate(bool On)
 {
   if (On)
-     Start();
+     CreateThread();
   else
-     Cancel(3);
+     StopThread(3);
 }
 
 void cRecorder::Receive(uchar *Data, int Length)
 {
-  if (Running()) {
+  if (!IsStopped()) {
      int p = ringBuffer->Put(Data, Length);
-     if (p != Length && Running())
+     if (p != Length && !IsStopped())
         ringBuffer->ReportOverflow(Length - p);
      }
 }
 
-void cRecorder::Action(void)
+void* cRecorder::Process(void)
 {
   cTimeMs t(MAXBROKENTIMEOUT);
   bool InfoWritten = false;
   bool FirstIframeSeen = false;
-  while (Running()) {
+  while (!IsStopped()) {
         int r;
         uchar *b = ringBuffer->Get(r);
         if (b) {
            int Count = frameDetector->Analyze(b, r);
            if (Count) {
-              if (!Running() && frameDetector->IndependentFrame()) // finish the recording before the next independent frame
+              if (IsStopped() && frameDetector->IndependentFrame()) // finish the recording before the next independent frame
                  break;
               if (frameDetector->Synced()) {
                  if (!InfoWritten) {
@@ -176,4 +177,5 @@ void cRecorder::Action(void)
            t.Set(MAXBROKENTIMEOUT);
            }
         }
+  return NULL;
 }

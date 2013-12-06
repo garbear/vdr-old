@@ -10,13 +10,13 @@
 #ifndef __RECORDER_H
 #define __RECORDER_H
 
-#include "receiver.h"
-#include "recording.h"
-#include "remux.h"
-#include "ringbuffer.h"
-#include "thread.h"
+#include "devices/Receiver.h"
+#include "Recording.h"
+#include "devices/Remux.h"
+#include "utils/Ringbuffer.h"
+#include "platform/threads/threads.h"
 
-class cRecorder : public cReceiver, cThread {
+class cRecorder : public cReceiver, PLATFORM::CThread {
 private:
   cRingBufferLinear *ringBuffer;
   cFrameDetector *frameDetector;
@@ -32,7 +32,7 @@ private:
 protected:
   virtual void Activate(bool On);
   virtual void Receive(uchar *Data, int Length);
-  virtual void Action(void);
+  virtual void* Process(void);
 public:
   cRecorder(const char *FileName, const cChannel *Channel, int Priority);
                // Creates a new recorder for the given Channel and

@@ -67,6 +67,7 @@ set(VDR_SRCS
 	vdr/filesystem/ReadDir.cpp
 	vdr/filesystem/VFSDirectory.cpp
 	vdr/filesystem/VFSFile.cpp
+	vdr/recordings/Recorder.cpp
 	vdr/recordings/Recording.cpp
 	vdr/recordings/RecordingCutter.cpp
 	vdr/recordings/Timers.cpp
