@@ -265,6 +265,7 @@ cChannel *cChannels::GetByChannelID(tChannelID ChannelID, bool TryWithoutRid, bo
       for (cHashObject *hobj = list->First(); hobj; hobj = list->Next(hobj))
       {
         cChannel *channel = (cChannel *)hobj->Object();
+        channel->GetChannelID().ClrRid();
         if (channel->Sid() == sid && channel->GetChannelID() == ChannelID)
           return channel;
       }
@@ -276,6 +277,7 @@ cChannel *cChannels::GetByChannelID(tChannelID ChannelID, bool TryWithoutRid, bo
       for (cHashObject *hobj = list->First(); hobj; hobj = list->Next(hobj))
       {
         cChannel *channel = (cChannel *)hobj->Object();
+        channel->GetChannelID().ClrPolarization();
         if (channel->Sid() == sid && channel->GetChannelID() == ChannelID)
           return channel;
       }
