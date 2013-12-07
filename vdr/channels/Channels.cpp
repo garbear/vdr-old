@@ -370,20 +370,16 @@ int cChannels::Modified()
   return Result;
 }
 
-cChannel *cChannels::NewChannel(const cChannel *Transponder, const char *Name, const char *ShortName, const char *Provider, int Nid, int Tid, int Sid, int Rid)
+cChannel *cChannels::NewChannel(const cChannel& Transponder, const std::string& Name, const std::string& ShortName, const std::string& Provider, int Nid, int Tid, int Sid, int Rid)
 {
-  if (Transponder)
-  {
-    dsyslog("creating new channel '%s,%s;%s' on %s transponder %d with id %d-%d-%d-%d", Name, ShortName, Provider, cSource::ToString(Transponder->Source()).c_str(), Transponder->Transponder(), Nid, Tid, Sid, Rid);
-    cChannel *NewChannel = new cChannel;
-    NewChannel->CopyTransponderData(*Transponder);
-    NewChannel->SetId(Nid, Tid, Sid, Rid);
-    NewChannel->SetName(Name, ShortName, Provider);
-    Add(NewChannel);
-    ReNumber();
-    return NewChannel;
-  }
-  return NULL;
+  dsyslog("creating new channel '%s,%s;%s' on %s transponder %d with id %d-%d-%d-%d", Name.c_str(), ShortName.c_str(), Provider.c_str(), cSource::ToString(Transponder.Source()).c_str(), Transponder.Transponder(), Nid, Tid, Sid, Rid);
+  cChannel *NewChannel = new cChannel;
+  NewChannel->CopyTransponderData(Transponder);
+  NewChannel->SetId(Nid, Tid, Sid, Rid);
+  NewChannel->SetName(Name, ShortName, Provider);
+  Add(NewChannel);
+  ReNumber();
+  return NewChannel;
 }
 
 string ChannelString(const cChannel *Channel, int Number)

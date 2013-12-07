@@ -93,7 +93,9 @@ void cSdtFilter::Process(u_short Pid, u_char Tid, const u_char *Data, int Length
                            // channel->SetCa(SiSdtService.getFreeCaMode() ? 0xFFFF : 0);
                            }
                         else if (*pn && Setup.UpdateChannels >= 4) {
-                           channel = Channels.NewChannel(Channel(), pn, ps, pp, sdt.getOriginalNetworkId(), sdt.getTransportStreamId(), SiSdtService.getServiceId());
+                           channel = Channel() ?
+                               Channels.NewChannel(*Channel(), pn, ps, pp, sdt.getOriginalNetworkId(), sdt.getTransportStreamId(), SiSdtService.getServiceId()) :
+                               NULL;
                            patFilter->Trigger();
                            }
                         }
@@ -119,7 +121,9 @@ void cSdtFilter::Process(u_short Pid, u_char Tid, const u_char *Data, int Length
                  for (SI::Loop::Iterator it; nrd->serviceLoop.getNext(Service, it); ) {
                      cChannel *link = Channels.GetByChannelID(tChannelID(Source(), Service.getOriginalNetworkId(), Service.getTransportStream(), Service.getServiceId()));
                      if (!link && Setup.UpdateChannels >= 4) {
-                        link = Channels.NewChannel(Channel(), "NVOD", "", "", Service.getOriginalNetworkId(), Service.getTransportStream(), Service.getServiceId());
+                        link = Channel() ?
+                            Channels.NewChannel(*Channel(), "NVOD", "", "", Service.getOriginalNetworkId(), Service.getTransportStream(), Service.getServiceId()) :
+                            NULL;
                         patFilter->Trigger();
                         }
                      if (link) {

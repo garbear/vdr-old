@@ -274,7 +274,7 @@ cEIT::cEIT(cSchedules *Schedules, int Source, u_char Tid, const u_char *Data, bo
                              cChannel *transponder = channel;
                              if (channel->Tid() != ld->getTransportStreamId())
                                 transponder = Channels.GetByTransponderID(linkID);
-                             link = Channels.NewChannel(transponder, linkName, "", "", ld->getOriginalNetworkId(), ld->getTransportStreamId(), ld->getServiceId());
+                             link = Channels.NewChannel(*transponder, linkName, "", "", ld->getOriginalNetworkId(), ld->getTransportStreamId(), ld->getServiceId());
                              //XXX patFilter->Trigger();
                              }
                           if (link) {

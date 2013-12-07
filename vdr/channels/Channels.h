@@ -68,7 +68,7 @@ public:
    */
   int Modified();
 
-  cChannel *NewChannel(const cChannel *Transponder, const char *Name, const char *ShortName, const char *Provider, int Nid, int Tid, int Sid, int Rid = 0);
+  cChannel *NewChannel(const cChannel& Transponder, const std::string& Name, const std::string& ShortName, const std::string& Provider, int Nid, int Tid, int Sid, int Rid = 0);
 
   // Inherited from cConfig<cChannel>
   const std::string &FileName() { return m_fileName; }
