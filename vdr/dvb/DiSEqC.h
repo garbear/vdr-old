@@ -11,7 +11,7 @@
 #define __DISEQC_H
 
 #include "Config.h"
-#include "thread.h"
+#include "platform/threads/mutex.h"
 
 class cScr : public cListObject {
 private:
@@ -33,7 +33,7 @@ public:
 
 class cScrs : public cConfig<cScr> {
 private:
-  cMutex mutex;
+  PLATFORM::CMutex mutex;
 public:
   cScr *GetUnused(int Device);
   };

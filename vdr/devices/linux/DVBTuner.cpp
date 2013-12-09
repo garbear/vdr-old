@@ -16,7 +16,7 @@
 #include "devices/subsystems/DeviceReceiverSubsystem.h"
 #include "sources/linux/DVBSourceParams.h"
 #include "utils/StringUtils.h"
-#include "diseqc.h"
+#include "dvb/DiSEqC.h"
 #include "utils/Tools.h"
 
 #include <errno.h>

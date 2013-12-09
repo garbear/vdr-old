@@ -58,6 +58,7 @@ set(VDR_SRCS
 	vdr/devices/subsystems/DeviceSPUSubsystem.cpp
 	vdr/devices/subsystems/DeviceTrackSubsystem.cpp
 	vdr/devices/subsystems/DeviceVideoFormatSubsystem.cpp
+	vdr/dvb/DiSEqC.cpp
 	vdr/dvb/DVBCI.cpp
 	vdr/dvb/EIT.cpp
 	vdr/dvb/EITScan.cpp

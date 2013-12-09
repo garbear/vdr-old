@@ -7,10 +7,11 @@
  * $Id: diseqc.c 2.9.1.1 2013/05/02 09:33:12 kls Exp $
  */
 
-#include "diseqc.h"
+#include "DiSEqC.h"
+#include "sources/Source.h"
 #include <ctype.h>
-#include "sources.h"
-#include "thread.h"
+
+using namespace PLATFORM;
 
 static bool ParseDeviceNumbers(const char *s, int &Devices)
 {
@@ -70,7 +71,7 @@ cScrs Scrs;
 
 cScr *cScrs::GetUnused(int Device)
 {
-  cMutexLock MutexLock(&mutex);
+  CLockObject lock(mutex);
   int Devices = 0;
   for (cScr *p = First(); p; p = Next(p)) {
       if (p->Devices()) {
@@ -119,7 +120,7 @@ bool cDiseqc::Parse(const char *s)
      commands = NULL; //XXX Apparently sscanf() doesn't work correctly if the last %a argument results in an empty string
   if (4 <= fields && fields <= 5) {
      source = cSource::FromString(sourcebuf);
-     if (Sources.Get(source)) {
+     if (source) {
         polarization = char(toupper(polarization));
         if (polarization == 'V' || polarization == 'H' || polarization == 'L' || polarization == 'R') {
            parsing = true;
@@ -171,7 +172,7 @@ const char *cDiseqc::Wait(const char *s) const
   int n = strtol(s, &p, 10);
   if (!errno && p != s && n >= 0) {
      if (!parsing)
-        cCondWait::SleepMs(n);
+       CEvent::Sleep(n);
      return p;
      }
   esyslog("ERROR: invalid value for wait time in '%s'", s - 1);
