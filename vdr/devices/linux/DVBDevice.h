@@ -23,6 +23,7 @@
 #include "devices/Device.h"
 #include "DVBLegacy.h"
 #include "sources/linux/DVBSourceParams.h"
+#include "platform/threads/threads.h"
 
 #include <linux/dvb/frontend.h>
 #include <string>
@@ -172,5 +173,5 @@ private:
   static int        m_dvbApiVersion;
 
 public: // TODO
-  static cMutex     m_bondMutex;
+  static PLATFORM::CMutex m_bondMutex;
 };

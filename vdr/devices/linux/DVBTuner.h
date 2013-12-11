@@ -21,7 +21,7 @@
 #pragma once
 
 #include "channels/Channels.h"
-#include "thread.h"
+#include "platform/threads/threads.h"
 
 #include <linux/dvb/frontend.h>
 #include <stdint.h>
@@ -80,25 +80,27 @@ private:
     tsLocked
   };
 
-  int               m_frontendType;
-  const cDvbDevice *m_device;
-  int               m_fd_frontend;
-  unsigned int      m_adapter;
-  unsigned int      m_frontend;
-  uint32_t          m_subsystemId;
-  int               m_tuneTimeout;
-  int               m_lockTimeout;
-  time_t            m_lastTimeoutReport;
-  cChannel          m_channel;
-  const cDiseqc    *m_lastDiseqc;
-  const cScr       *m_scr;
-  bool              m_bLnbPowerTurnedOn;
-  eTunerStatus      m_tunerStatus;
-  cMutex            m_mutex;
-  cCondVar          m_locked;
-  cCondVar          m_newSet;
-  cDvbTuner        *m_bondedTuner;
-  bool              m_bBondedMaster;
+  int                        m_frontendType;
+  const cDvbDevice*          m_device;
+  int                        m_fd_frontend;
+  unsigned int               m_adapter;
+  unsigned int               m_frontend;
+  uint32_t                   m_subsystemId;
+  int                        m_tuneTimeout;
+  int                        m_lockTimeout;
+  time_t                     m_lastTimeoutReport;
+  cChannel                   m_channel;
+  const cDiseqc*             m_lastDiseqc;
+  const cScr*                m_scr;
+  bool                       m_bLnbPowerTurnedOn;
+  eTunerStatus               m_tunerStatus;
+  PLATFORM::CMutex           m_mutex;
+  PLATFORM::CCondition<bool> m_locked;
+  PLATFORM::CCondition<bool> m_newSet;
+  cDvbTuner*                 m_bondedTuner;
+  bool                       m_bBondedMaster;
+  bool                       m_bLocked;
+  bool                       m_bNewSet;
 
-  static cMutex     m_bondMutex;
+  static PLATFORM::CMutex    m_bondMutex;
 };

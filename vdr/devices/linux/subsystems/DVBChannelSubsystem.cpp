@@ -138,7 +138,7 @@ bool cDvbChannelSubsystem::ProvidesChannel(const cChannel &channel, int priority
 
       if (result)
       {
-        cMutexLock MutexLock(&GetDevice<cDvbDevice>()->m_bondMutex);
+        PLATFORM::CLockObject lock(GetDevice<cDvbDevice>()->m_bondMutex);
         if (!GetDevice<cDvbDevice>()->BondingOk(channel))
         {
           // This device is bonded, so we need to check the priorities of the others:

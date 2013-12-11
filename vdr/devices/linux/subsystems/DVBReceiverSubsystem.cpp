@@ -63,7 +63,7 @@ bool cDvbReceiverSubsystem::GetTSPacket(uchar *&Data)
 
 void cDvbReceiverSubsystem::DetachAllReceivers()
 {
-  cMutexLock MutexLock(&GetDevice<cDvbDevice>()->m_bondMutex);
+  PLATFORM::CLockObject lock(GetDevice<cDvbDevice>()->m_bondMutex);
   cDvbDevice *d = GetDevice<cDvbDevice>();
 
   do

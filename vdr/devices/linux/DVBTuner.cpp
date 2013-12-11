@@ -24,6 +24,7 @@
 #include <sys/ioctl.h>
 
 using namespace std;
+using namespace PLATFORM;
 
 #define DVBS_TUNE_TIMEOUT  9000 //ms
 #define DVBS_LOCK_TIMEOUT  2000 //ms
@@ -54,7 +55,7 @@ using namespace std;
     } \
   } while (0)
 
-cMutex cDvbTuner::m_bondMutex;
+CMutex cDvbTuner::m_bondMutex;
 
 cDvbTuner::cDvbTuner(const cDvbDevice *device, int fd_frontend, unsigned int adapter, unsigned int frontend)
  : m_frontendType(SYS_UNDEFINED),
@@ -71,7 +72,9 @@ cDvbTuner::cDvbTuner(const cDvbDevice *device, int fd_frontend, unsigned int ada
    m_bLnbPowerTurnedOn(false),
    m_tunerStatus(tsIdle),
    m_bondedTuner(NULL),
-   m_bBondedMaster(false)
+   m_bBondedMaster(false),
+   m_bLocked(false),
+   m_bNewSet(false)
 {
   SetDescription("tuner on frontend %d/%d", m_adapter, m_frontend);
   Start();
@@ -103,8 +106,9 @@ void cDvbTuner::Action()
     fe_status_t NewStatus;
     if (GetFrontendStatus(NewStatus))
       Status = NewStatus;
-    cMutexLock MutexLock(&m_mutex);
+    CLockObject lock(m_mutex);
     int WaitTime = 1000;
+    m_bNewSet = false;
     switch (m_tunerStatus)
     {
     case tsIdle:
@@ -144,6 +148,7 @@ void cDvbTuner::Action()
           LostLock = false;
         }
         m_tunerStatus = tsLocked;
+        m_bLocked = m_tunerStatus >= tsLocked;
         m_locked.Broadcast();
         m_lastTimeoutReport = 0;
       }
@@ -161,13 +166,13 @@ void cDvbTuner::Action()
       esyslog("ERROR: unknown tuner status %d", m_tunerStatus);
       break;
     }
-    m_newSet.TimedWait(m_mutex, WaitTime);
+    m_newSet.Wait(m_mutex, m_bNewSet, WaitTime);
   }
 }
 
 bool cDvbTuner::Bond(cDvbTuner *tuner)
 {
-  cMutexLock MutexLock(&m_bondMutex);
+  CLockObject lock(m_bondMutex);
   if (!m_bondedTuner)
   {
     ResetToneAndVoltage();
@@ -185,7 +190,7 @@ bool cDvbTuner::Bond(cDvbTuner *tuner)
 
 void cDvbTuner::UnBond()
 {
-  cMutexLock MutexLock(&m_bondMutex);
+  CLockObject lock(m_bondMutex);
   if (cDvbTuner *t = m_bondedTuner)
   {
     dsyslog("tuner %d/%d unbonded from tuner %d/%d", m_adapter, m_frontend, m_bondedTuner->m_adapter, m_bondedTuner->m_frontend);
@@ -219,7 +224,7 @@ string cDvbTuner::GetBondingParams(const cChannel &channel) const
 
 bool cDvbTuner::BondingOk(const cChannel &channel, bool bConsiderOccupied) const
 {
-  cMutexLock MutexLock(&m_bondMutex);
+  CLockObject lock(m_bondMutex);
   if (cDvbTuner *t = m_bondedTuner)
   {
     string BondingParams = GetBondingParams(channel);
@@ -240,7 +245,7 @@ cDvbTuner *cDvbTuner::GetBondedMaster()
 {
   if (!m_bondedTuner)
     return this; // an unbonded tuner is always "master"
-  cMutexLock MutexLock(&m_bondMutex);
+  CLockObject lock(m_bondMutex);
   if (m_bBondedMaster)
     return this;
   // This tuner is bonded, but it's not the master, so let's see if there is a master at all:
@@ -274,7 +279,7 @@ void cDvbTuner::SetChannel(const cChannel &channel)
 {
   if (m_bondedTuner)
   {
-    cMutexLock MutexLock(&m_bondMutex);
+    CLockObject lock(m_bondMutex);
     cDvbTuner *BondedMaster = GetBondedMaster();
     if (BondedMaster == this)
     {
@@ -288,11 +293,12 @@ void cDvbTuner::SetChannel(const cChannel &channel)
     else if (GetBondingParams(channel) != BondedMaster->GetBondingParams())
       BondedMaster->SetChannel(channel);
   }
-  cMutexLock MutexLock(&m_mutex);
+  CLockObject lock(m_mutex);
   if (!IsTunedTo(channel))
     m_tunerStatus = tsSet;
   m_channel = channel;
   m_lastTimeoutReport = 0;
+  m_bNewSet = true;
   m_newSet.Broadcast();
 
   if (m_bondedTuner && m_device->IsPrimaryDevice())
@@ -301,7 +307,7 @@ void cDvbTuner::SetChannel(const cChannel &channel)
 
 void cDvbTuner::ClearChannel()
 {
-  cMutexLock MutexLock(&m_mutex);
+  CLockObject lock(m_mutex);
   m_tunerStatus = tsIdle;
   ResetToneAndVoltage();
 
@@ -315,10 +321,11 @@ bool cDvbTuner::Locked(int timeoutMs)
   if (isLocked || !timeoutMs)
     return isLocked;
 
-  cMutexLock MutexLock(&m_mutex);
+  CLockObject lock(m_mutex);
 
+  m_bLocked = m_tunerStatus >= tsLocked;
   if (timeoutMs && m_tunerStatus < tsLocked)
-    m_locked.TimedWait(m_mutex, timeoutMs);
+    m_locked.Wait(m_mutex, m_bLocked, timeoutMs);
   return m_tunerStatus >= tsLocked;
 }
 

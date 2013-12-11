@@ -55,6 +55,7 @@
 #include <vector>
 
 using namespace std;
+using namespace PLATFORM;
 
 #define MAXFRONTENDCMDS 16
 
@@ -70,7 +71,7 @@ using namespace std;
 }
 
 int    cDvbDevice::m_dvbApiVersion = 0x0000;
-cMutex cDvbDevice::m_bondMutex;
+CMutex cDvbDevice::m_bondMutex;
 
 const char *DeliverySystemNames[] =
 {
@@ -267,7 +268,7 @@ string cDvbDevice::DeviceName() const
 
 bool cDvbDevice::Bond(cDvbDevice *device)
 {
-  cMutexLock MutexLock(&m_bondMutex);
+  CLockObject lock(m_bondMutex);
 
   if (!m_bondedDevice)
   {
@@ -299,7 +300,7 @@ bool cDvbDevice::Bond(cDvbDevice *device)
 
 void cDvbDevice::UnBond()
 {
-  cMutexLock MutexLock(&m_bondMutex);
+  CLockObject lock(m_bondMutex);
   if (cDvbDevice *d = m_bondedDevice)
   {
     if (DvbChannel()->m_dvbTuner)
@@ -317,7 +318,7 @@ void cDvbDevice::UnBond()
 
 bool cDvbDevice::BondingOk(const cChannel &channel, bool bConsiderOccupied) const
 {
-  cMutexLock MutexLock(&m_bondMutex);
+  CLockObject lock(m_bondMutex);
   if (m_bondedDevice)
     return DvbChannel()->m_dvbTuner && DvbChannel()->m_dvbTuner->BondingOk(channel, bConsiderOccupied);
   return true;
