@@ -1,6 +1,5 @@
 #pragma once
 
-#ifdef ANDROID
     /* Declarations for System V style searching functions.
        Copyright (C) 1995-1999, 2000 Free Software Foundation, Inc.
        This file is part of the GNU C Library.
@@ -171,6 +170,3 @@
                           size_t *__nmemb, size_t __size, __compar_fn_t __compar);
 
     __END_DECLS
-
-#endif
-

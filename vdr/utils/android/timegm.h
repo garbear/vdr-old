@@ -18,6 +18,4 @@
  */
 #pragma once
 
-#ifdef ANDROID
 time_t timegm(struct tm *tm);
-#endif

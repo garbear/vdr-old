@@ -9,6 +9,8 @@ enable_testing()
 
 ADD_SUBDIRECTORY(lib/pcre)
 
+SET(IS_ANDROID $ENV{ANDROID})
+
 add_definitions(-DTARGET_LINUX)
 
 include_directories(${CMAKE_SOURCE_DIR})
@@ -17,12 +19,16 @@ include_directories(${CMAKE_SOURCE_DIR}/lib)
 include_directories(${gtest_SOURCE_DIR}/include)
 include_directories(${CMAKE_SOURCE_DIR}/lib/pcre)
 
+if ("${IS_ANDROID}" STREQUAL "")
+set(ANDROID_HELPER_SRCS "")
+else ("${IS_ANDROID}" STREQUAL "")
 set(ANDROID_HELPER_SRCS
 	vdr/utils/android/getline.c
 	vdr/utils/android/sort.c
 	vdr/utils/android/strchrnul.c
 	vdr/utils/android/timegm.c
 )
+endif("${IS_ANDROID}" STREQUAL "")
 
 set(VDR_SRCS
 	vdr/Config.cpp

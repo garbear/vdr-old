@@ -41,8 +41,6 @@
    License along with the GNU C Library; if not, see
    <http://www.gnu.org/licenses/>.  */
 
-#ifdef ANDROID
-
 #include "strchrnul.h"
 
 /* Specification.  */
@@ -318,6 +316,3 @@ strchrnul (const char *s, int c_in)
     char_ptr++;
   return (char *) char_ptr;
 }
-
-#endif
-

@@ -18,8 +18,6 @@
 #include <stdio.h>
 #include "getline.h"
 
-#ifdef ANDROID
-
 ssize_t getline(char **lineptr, size_t *n, FILE *stream)
 {
     char *ptr;
@@ -51,6 +49,3 @@ ssize_t getline(char **lineptr, size_t *n, FILE *stream)
     /* Return the length of the new buffer */
     return len;
 }
-
-#endif
-

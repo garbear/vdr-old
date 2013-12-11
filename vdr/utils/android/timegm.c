@@ -21,8 +21,6 @@
 #include <time.h>
 #include <assert.h>
 
-#ifdef ANDROID
-
 // Based on algorithms from http://stackoverflow.com/questions/16647819/timegm-cross-platform
 // and https://lists.torproject.org/pipermail/tor-commits/2003-November/022083.html
 
@@ -74,5 +72,3 @@ time_t timegm(struct tm *tm)
    const time_t seconds = minutes * 60 + tm->tm_sec;
    return seconds;
 }
-
-#endif // ANDROID
