@@ -59,9 +59,9 @@ TEST(Channel, Channel)
   EXPECT_EQ(channel.Number(), 0);
   EXPECT_EQ(channel.GroupSep(), false);
 
-  EXPECT_STREQ(channel.ToText().c_str(), ":0:::0:0:0:0:0:0:0:0:0\n");
+  EXPECT_STREQ(channel.Serialise().c_str(), ":0:::0:0:0:0:0:0:0:0:0\n");
 
-  EXPECT_TRUE(channel.Parse(channel.ToText()));
+  EXPECT_TRUE(channel.Deserialise(channel.Serialise()));
   EXPECT_EQ(channel.Frequency(), 0);
   EXPECT_EQ(channel.Source(), 0);
   EXPECT_EQ(channel.Srate(), 0);
@@ -94,7 +94,7 @@ TEST(Channel, Channel)
   EXPECT_EQ(channel.Number(), 0);
   //EXPECT_EQ(channel.GroupSep(), false); // TODO: Fails
 
-  EXPECT_FALSE(channel.Parse(""));
+  EXPECT_FALSE(channel.Deserialise(""));
 
   unsigned int frequency = 1000 * 1000 * 1000; // 1GHz
   EXPECT_EQ(cChannel::Transponder(frequency, 'H'), frequency + 100 * 1000);

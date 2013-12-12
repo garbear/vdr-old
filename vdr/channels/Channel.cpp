@@ -141,6 +141,8 @@ cChannel& cChannel::operator=(const cChannel &channel)
   m_channelData = channel.m_channelData;
   m_parameters  = channel.m_parameters;
 
+  SetChanged();
+
   return *this;
 }
 
@@ -152,7 +154,7 @@ string cChannel::ShortName(bool bOrName /* = false */) const
   return m_shortName;
 }
 
-string cChannel::ToText(const cChannel &channel)
+string cChannel::Serialise(const cChannel &channel)
 {
   char FullName[channel.m_name.size() + 1 + channel.m_shortName.size() + 1 + channel.m_provider.size() + 1 + 10]; // +10: paranoia
   char *q = FullName;
@@ -225,7 +227,7 @@ string cChannel::ToText(const cChannel &channel)
   return buffer;
 }
 
-bool cChannel::Parse(const string &str)
+bool cChannel::Deserialise(const string &str)
 {
   bool ok = true;
   const char *s = str.c_str();
@@ -485,7 +487,7 @@ bool cChannel::Parse(const string &str)
 
 bool cChannel::Save(FILE *f) const
 {
-  return fprintf(f, "%s", ToText().c_str()) > 0;
+  return fprintf(f, "%s", Serialise().c_str()) > 0;
 }
 
 int cChannel::Transponder() const
@@ -558,6 +560,7 @@ void cChannel::CopyTransponderData(const cChannel &channel)
   m_channelData.source    = channel.m_channelData.source;
   m_channelData.srate     = channel.m_channelData.srate;
   m_parameters            = channel.m_parameters;
+  SetChanged();
 }
 
 bool cChannel::SetTransponderData(int source, int frequency, int srate, const string &strParameters, bool bQuiet /* = false */)

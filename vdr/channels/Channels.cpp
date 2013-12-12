@@ -77,7 +77,7 @@ void cChannels::DeleteDuplicateChannels()
     cChannelSorter *next = ChannelSorter.Next(cs);
     if (next && cs->channelID == next->channelID)
     {
-      dsyslog("deleting duplicate channel %s", next->channel->ToText().c_str());
+      dsyslog("deleting duplicate channel %s", next->channel->Serialise().c_str());
       Del(next->channel);
     }
     cs = next;
@@ -118,7 +118,7 @@ bool cChannels::Load(const string &fileName, bool bMustExist /* = false */)
         if (!isempty(s))
         {
           cChannel *l = new cChannel;
-          if (l->Parse(s))
+          if (l->Deserialise(s))
             Add(l);
           else
           {

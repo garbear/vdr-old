@@ -969,7 +969,7 @@ void cSVDRP::CmdLSTC(const char *Option)
      if (is_number(Option)) {
         cChannel *channel = Channels.GetByNumber(strtol(Option, NULL, 10));
         if (channel)
-           Reply(250, "%d %s", channel->Number(), *channel->ToText());
+           Reply(250, "%d %s", channel->Number(), *channel->Serialise());
         else
            Reply(501, "Channel \"%s\" not defined", Option);
         }
@@ -980,14 +980,14 @@ void cSVDRP::CmdLSTC(const char *Option)
               if (!channel->GroupSep()) {
                  if (strcasestr(channel->Name(), Option)) {
                     if (next)
-                       Reply(-250, "%d %s", next->Number(), *next->ToText());
+                       Reply(-250, "%d %s", next->Number(), *next->Serialise());
                     next = channel;
                     }
                  }
               }
            }
         if (next)
-           Reply(250, "%d %s", next->Number(), *next->ToText());
+           Reply(250, "%d %s", next->Number(), *next->Serialise());
         else
            Reply(501, "Channel \"%s\" not defined", Option);
         }
@@ -995,9 +995,9 @@ void cSVDRP::CmdLSTC(const char *Option)
   else if (Channels.MaxNumber() >= 1) {
      for (cChannel *channel = Channels.First(); channel; channel = Channels.Next(channel)) {
          if (WithGroupSeps)
-            Reply(channel->Next() ? -250: 250, "%d %s", channel->GroupSep() ? 0 : channel->Number(), *channel->ToText());
+            Reply(channel->Next() ? -250: 250, "%d %s", channel->GroupSep() ? 0 : channel->Number(), *channel->Serialise());
          else if (!channel->GroupSep())
-            Reply(channel->Number() < Channels.MaxNumber() ? -250 : 250, "%d %s", channel->Number(), *channel->ToText());
+            Reply(channel->Number() < Channels.MaxNumber() ? -250 : 250, "%d %s", channel->Number(), *channel->Serialise());
          }
      }
   else
@@ -1172,7 +1172,7 @@ void cSVDRP::CmdLSTT(const char *Option)
   if (Number) {
      cTimer *timer = Timers.Get(Number - 1);
      if (timer)
-        Reply(250, "%d %s", timer->Index() + 1, *timer->ToText(Id));
+        Reply(250, "%d %s", timer->Index() + 1, *timer->Serialise(Id));
      else
         Reply(501, "Timer \"%s\" not defined", Option);
      }
@@ -1180,7 +1180,7 @@ void cSVDRP::CmdLSTT(const char *Option)
      for (int i = 0; i < Timers.Count(); i++) {
          cTimer *timer = Timers.Get(i);
         if (timer)
-           Reply(i < Timers.Count() - 1 ? -250 : 250, "%d %s", timer->Index() + 1, *timer->ToText(Id));
+           Reply(i < Timers.Count() - 1 ? -250 : 250, "%d %s", timer->Index() + 1, *timer->Serialise(Id));
         else
            Reply(501, "Timer \"%d\" not found", i + 1);
          }
@@ -1211,13 +1211,13 @@ void cSVDRP::CmdMODC(const char *Option)
            cChannel *channel = Channels.GetByNumber(n);
            if (channel) {
               cChannel ch;
-              if (ch.Parse(tail)) {
+              if (ch.Deserialise(tail)) {
                  if (Channels.HasUniqueChannelID(&ch, channel)) {
                     *channel = ch;
                     Channels.ReNumber();
                     Channels.SetModified(true);
-                    isyslog("modifed channel %d %s", channel->Number(), *channel->ToText());
-                    Reply(250, "%d %s", channel->Number(), *channel->ToText());
+                    isyslog("modifed channel %d %s", channel->Number(), *channel->Serialise());
+                    Reply(250, "%d %s", channel->Number(), *channel->Serialise());
                     }
                  else
                     Reply(501, "Channel settings are not unique");
@@ -1253,14 +1253,14 @@ void cSVDRP::CmdMODT(const char *Option)
                  t.SetFlags(tfActive);
               else if (strcasecmp(tail, "OFF") == 0)
                  t.ClrFlags(tfActive);
-              else if (!t.Parse(tail)) {
+              else if (!t.Deserialise(tail)) {
                  Reply(501, "Error in timer settings");
                  return;
                  }
               *timer = t;
               Timers.SetModified();
               isyslog("timer %s modified (%s)", *timer->ToDescr(), timer->HasFlags(tfActive) ? "active" : "inactive");
-              Reply(250, "%d %s", timer->Index() + 1, *timer->ToText());
+              Reply(250, "%d %s", timer->Index() + 1, *timer->Serialise());
               }
            else
               Reply(501, "Timer \"%d\" not defined", n);
@@ -1332,15 +1332,15 @@ void cSVDRP::CmdNEWC(const char *Option)
 {
   if (*Option) {
      cChannel ch;
-     if (ch.Parse(Option)) {
+     if (ch.Deserialise(Option)) {
         if (Channels.HasUniqueChannelID(&ch)) {
            cChannel *channel = new cChannel;
            *channel = ch;
            Channels.Add(channel);
            Channels.ReNumber();
            Channels.SetModified(true);
-           isyslog("new channel %d %s", channel->Number(), *channel->ToText());
-           Reply(250, "%d %s", channel->Number(), *channel->ToText());
+           isyslog("new channel %d %s", channel->Number(), *channel->Serialise());
+           Reply(250, "%d %s", channel->Number(), *channel->Serialise());
            }
         else
            Reply(501, "Channel settings are not unique");
@@ -1356,11 +1356,11 @@ void cSVDRP::CmdNEWT(const char *Option)
 {
   if (*Option) {
      cTimer *timer = new cTimer;
-     if (timer->Parse(Option)) {
+     if (timer->Deserialise(Option)) {
         Timers.Add(timer);
         Timers.SetModified();
         isyslog("timer %s added", *timer->ToDescr());
-        Reply(250, "%d %s", timer->Index() + 1, *timer->ToText());
+        Reply(250, "%d %s", timer->Index() + 1, *timer->Serialise());
         return;
         }
      else
@@ -1572,11 +1572,11 @@ void cSVDRP::CmdUPDT(const char *Option)
 {
   if (*Option) {
      cTimer *timer = new cTimer;
-     if (timer->Parse(Option)) {
+     if (timer->Deserialise(Option)) {
         if (!Timers.BeingEdited()) {
            cTimer *t = Timers.GetTimer(timer);
            if (t) {
-              t->Parse(Option);
+              t->Deserialise(Option);
               delete timer;
               timer = t;
               isyslog("timer %s updated", *timer->ToDescr());
@@ -1586,7 +1586,7 @@ void cSVDRP::CmdUPDT(const char *Option)
               isyslog("timer %s added", *timer->ToDescr());
               }
            Timers.SetModified();
-           Reply(250, "%d %s", timer->Index() + 1, *timer->ToText());
+           Reply(250, "%d %s", timer->Index() + 1, *timer->Serialise());
            return;
            }
         else

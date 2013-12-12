@@ -146,8 +146,8 @@ public:
   const std::string &Provider() const { return m_provider; }
   const std::string &PortalName() const { return m_portalName; }
 
-  std::string ToText() const { return ToText(*this); }
-  bool Parse(const std::string &str);
+  std::string Serialise() const { return Serialise(*this); }
+  bool Deserialise(const std::string &str);
   bool Save(FILE *f) const;
 
   /*!
@@ -241,7 +241,7 @@ public:
   const cSchedule* Schedule(void) const { return m_schedule; }
 
 private:
-  static std::string ToText(const cChannel &channel);
+  static std::string Serialise(const cChannel &channel);
   std::string TransponderDataToString() const;
 
   std::string              m_name;

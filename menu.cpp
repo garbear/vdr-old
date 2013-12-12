@@ -250,7 +250,7 @@ eOSState cMenuEditChannel::ProcessKey(eKeys Key)
            data.name = strcpyrealloc(data.name, name);
            if (channel) {
               *channel = data;
-              isyslog("edited channel %d %s", channel->Number(), *data.ToText());
+              isyslog("edited channel %d %s", channel->Number(), *data.Serialise());
               state = osBack;
               }
            else {
@@ -258,7 +258,7 @@ eOSState cMenuEditChannel::ProcessKey(eKeys Key)
               *channel = data;
               Channels.Add(channel);
               Channels.ReNumber();
-              isyslog("added channel %d %s", channel->Number(), *data.ToText());
+              isyslog("added channel %d %s", channel->Number(), *data.Serialise());
               state = osUser1;
               }
            Channels.SetModified(true);
