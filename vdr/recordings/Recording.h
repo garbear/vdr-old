@@ -17,6 +17,7 @@
 #include "Timers.h"
 #include "epg/EPG.h"
 #include "utils/Tools.h"
+#include "platform/threads/threads.h"
 
 #define FOLDERDELIMCHAR '~'
 
@@ -294,7 +295,7 @@ private:
   bool isPesRecording;
   cResumeFile resumeFile;
   cIndexFileGenerator *indexFileGenerator;
-  cMutex mutex;
+  PLATFORM::CMutex mutex;
   void ConvertFromPes(tIndexTs *IndexTs, int Count);
   void ConvertToPes(tIndexTs *IndexTs, int Count);
   bool CatchUp(int Index = -1);

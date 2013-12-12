@@ -19,6 +19,7 @@
  */
 
 #include "Observer.h"
+#include <algorithm>
 
 using namespace std;
 using namespace PLATFORM;
@@ -36,7 +37,7 @@ void Observer::StopObserving(void)
   m_observables.clear();
 }
 
-bool Observer::IsObserving(const Observable &obs) const
+bool Observer::IsObserving(const Observable &obs)
 {
   CLockObject lock(m_obsCritSection);
   return find(m_observables.begin(), m_observables.end(), &obs) != m_observables.end();
@@ -87,7 +88,7 @@ void Observable::StopObserver(void)
   m_observers.clear();
 }
 
-bool Observable::IsObserving(const Observer &obs) const
+bool Observable::IsObserving(const Observer &obs)
 {
   CLockObject lock(m_obsCritSection);
   return find(m_observers.begin(), m_observers.end(), &obs) != m_observers.end();
@@ -134,7 +135,7 @@ void Observable::SetChanged(bool SetTo)
   m_bObservableChanged = SetTo;
 }
 
-void Observable::SendMessage(const Observable& obs, const ObservableMessage message)
+void Observable::SendMessage(Observable& obs, const ObservableMessage message)
 {
   CLockObject lock(obs.m_obsCritSection);
   for(int ptr = obs.m_observers.size() - 1; ptr >= 0; ptr--)

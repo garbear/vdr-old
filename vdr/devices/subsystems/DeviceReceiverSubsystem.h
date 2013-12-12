@@ -23,6 +23,7 @@
 #include "devices/DeviceSubsystem.h"
 #include "thread.h"
 #include "utils/Tools.h"
+#include "platform/threads/threads.h"
 
 #define MAXRECEIVERS       16 // the maximum number of receivers per device
 
@@ -40,12 +41,12 @@ public:
    * \return Value in the range -MAXPRIORITY..MAXPRIORITY, or IDLEPRIORITY if no
    *         receiver is currently active
    */
-  int Priority() const;
+  int Priority();
 
   /*!
    * \brief Returns true if we are currently receiving
    */
-  bool Receiving() const;
+  bool Receiving();
 
   /*!
    * \brief Attaches the given receiver to this device
@@ -92,7 +93,7 @@ public:
   virtual bool GetTSPacket(uchar *&data) { return false; }
 
 private:
-  mutable cMutex  m_mutexReceiver;
+  PLATFORM::CMutex  m_mutexReceiver;
 public: // TODO
   cReceiver      *m_receivers[MAXRECEIVERS];
 };

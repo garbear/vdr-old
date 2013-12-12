@@ -22,6 +22,7 @@
 
 #include "devices/DeviceSubsystem.h"
 #include "devices/Receiver.h"
+#include "platform/threads/threads.h"
 //#include "tools.h"
 
 #include <string>
@@ -166,9 +167,9 @@ public: // TODO
   eTrackType   m_currentAudioTrack;
   eTrackType   m_currentSubtitleTrack;
 private:
-  cMutex       m_mutexCurrentAudioTrack;
+  PLATFORM::CMutex m_mutexCurrentAudioTrack;
 public: // TODO
-  cMutex       m_mutexCurrentSubtitleTrack;
+  PLATFORM::CMutex m_mutexCurrentSubtitleTrack;
 private:
   unsigned int m_currentAudioTrackMissingCount;
   bool         m_bAutoSelectPreferredSubtitleLanguage;

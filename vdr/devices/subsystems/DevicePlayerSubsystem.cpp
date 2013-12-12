@@ -326,7 +326,7 @@ void cDevicePlayerSubsystem::Detach(cPlayer *player)
     m_player = NULL; // avoids recursive calls to Detach()
     p->Activate(false);
     p->device = NULL;
-    cMutexLock MutexLock(&Track()->m_mutexCurrentSubtitleTrack);
+    PLATFORM::CLockObject lock(Track()->m_mutexCurrentSubtitleTrack);
     delete Device()->m_dvbSubtitleConverter;
     Device()->m_dvbSubtitleConverter = NULL;
     SetPlayMode(pmNone);

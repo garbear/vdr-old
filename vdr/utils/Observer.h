@@ -49,7 +49,7 @@ public:
    * @param obs The observable to check.
    * @return True if this observer is observing the given observable, false otherwise.
    */
-  virtual bool IsObserving(const Observable &obs) const;
+  virtual bool IsObserving(const Observable &obs);
 
   /*!
    * @brief Process a message from an observable.
@@ -116,7 +116,7 @@ public:
    * @param obs The observer to check.
    * @return True if this observable is being observed by the given observer, false otherwise.
    */
-  virtual bool IsObserving(const Observer &obs) const;
+  virtual bool IsObserving(const Observer &obs);
 
 protected:
   /*!
@@ -124,7 +124,7 @@ protected:
    * @param obs The observer that sends the message.
    * @param message The message to send.
    */
-  static void SendMessage(const Observable& obs, const ObservableMessage message);
+  static void SendMessage(Observable& obs, const ObservableMessage message);
 
   bool                    m_bObservableChanged; /*!< true when the observable is marked as changed, false otherwise */
   std::vector<Observer *> m_observers;          /*!< all observers */

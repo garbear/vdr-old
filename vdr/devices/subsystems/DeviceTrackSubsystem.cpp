@@ -142,7 +142,7 @@ bool cDeviceTrackSubsystem::SetCurrentAudioTrack(eTrackType type)
 {
   if (ttNone < type && type <= ttDolbyLast)
   {
-    cMutexLock MutexLock(&m_mutexCurrentAudioTrack);
+    PLATFORM::CLockObject lock(m_mutexCurrentAudioTrack);
     if (IS_DOLBY_TRACK(type))
       Audio()->SetDigitalAudioDevice(true);
     m_currentAudioTrack = type;
@@ -171,7 +171,7 @@ bool cDeviceTrackSubsystem::SetCurrentSubtitleTrack(eTrackType type, bool bManua
       Device()->m_dvbSubtitleConverter->Reset();
     if (type == ttNone && Device()->m_dvbSubtitleConverter)
     {
-      cMutexLock MutexLock(&m_mutexCurrentSubtitleTrack);
+      PLATFORM::CLockObject lock(m_mutexCurrentSubtitleTrack);
       DELETENULL(Device()->m_dvbSubtitleConverter);
     }
     DELETENULL(Device()->m_liveSubtitle);

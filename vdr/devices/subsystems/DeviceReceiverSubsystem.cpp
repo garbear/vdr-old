@@ -47,13 +47,13 @@ cDeviceReceiverSubsystem::cDeviceReceiverSubsystem(cDevice *device)
     m_receivers[i] = NULL;
 }
 
-int cDeviceReceiverSubsystem::Priority() const
+int cDeviceReceiverSubsystem::Priority()
 {
   int priority = IDLEPRIORITY;
   if (Device()->IsPrimaryDevice() && !Player()->Replaying() && Channel()->HasProgramme())
     priority = TRANSFERPRIORITY; // we use the same value here, no matter whether it's actual Transfer Mode or real live viewing
 
-  cMutexLock MutexLock(&m_mutexReceiver);
+  PLATFORM::CLockObject lock(m_mutexReceiver);
 
   for (int i = 0; i < MAXRECEIVERS; i++)
   {
@@ -63,9 +63,9 @@ int cDeviceReceiverSubsystem::Priority() const
   return priority;
 }
 
-bool cDeviceReceiverSubsystem::Receiving() const
+bool cDeviceReceiverSubsystem::Receiving()
 {
-  cMutexLock MutexLock(&m_mutexReceiver);
+  PLATFORM::CLockObject lock(m_mutexReceiver);
   for (int i = 0; i < ARRAY_SIZE(m_receivers); i++)
   {
     if (m_receivers[i])
@@ -88,7 +88,7 @@ bool cDeviceReceiverSubsystem::AttachReceiver(cReceiver *receiver)
     return false;
   }
 #endif
-  cMutexLock MutexLock(&m_mutexReceiver);
+  PLATFORM::CLockObject lock(m_mutexReceiver);
   for (int i = 0; i < ARRAY_SIZE(m_receivers); i++)
   {
     if (!m_receivers[i])
@@ -125,7 +125,7 @@ void cDeviceReceiverSubsystem::Detach(cReceiver *receiver)
   if (!receiver || receiver->device != Device())
     return;
   bool receiversLeft = false;
-  cMutexLock MutexLock(&m_mutexReceiver);
+  PLATFORM::CLockObject lock(m_mutexReceiver);
   for (int i = 0; i < ARRAY_SIZE(m_receivers); i++)
   {
     if (m_receivers[i] == receiver)
@@ -151,7 +151,7 @@ void cDeviceReceiverSubsystem::DetachAll(int pid)
 {
   if (pid)
   {
-    cMutexLock MutexLock(&m_mutexReceiver);
+    PLATFORM::CLockObject lock(m_mutexReceiver);
     for (int i = 0; i < ARRAY_SIZE(m_receivers); i++)
     {
       cReceiver *receiver = m_receivers[i];
@@ -163,7 +163,7 @@ void cDeviceReceiverSubsystem::DetachAll(int pid)
 
 void cDeviceReceiverSubsystem::DetachAllReceivers()
 {
-  cMutexLock MutexLock(&m_mutexReceiver);
+  PLATFORM::CLockObject lock(m_mutexReceiver);
   for (int i = 0; i < ARRAY_SIZE(m_receivers); i++)
     Detach(m_receivers[i]);
 }

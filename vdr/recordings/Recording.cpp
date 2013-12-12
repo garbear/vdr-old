@@ -33,6 +33,12 @@
 
 #include <algorithm>
 
+using namespace PLATFORM;
+
+#ifndef PRId64
+#define PRId64       "I64d"
+#endif
+
 #define SUMMARYFALLBACK
 
 #define RECEXT       ".rec"
@@ -142,8 +148,8 @@ void RemoveDeletedRecordings(void)
 
 void AssertFreeDiskSpace(int Priority, bool Force)
 {
-  static cMutex Mutex;
-  cMutexLock MutexLock(&Mutex);
+  static CMutex Mutex;
+  CLockObject lock(Mutex);
   // With every call to this function we try to actually remove
   // a file, or mark a file for removal ("delete" it), so that
   // it will get removed during the next call.
@@ -1451,7 +1457,7 @@ void cRecordings::ClearSortNames(void)
 // --- cMark -----------------------------------------------------------------
 
 double MarkFramesPerSecond = DEFAULTFRAMESPERSECOND;
-cMutex MutexMarkFramesPerSecond;
+CMutex MutexMarkFramesPerSecond;
 
 cMark::cMark(int Position, const char *Comment, double FramesPerSecond)
 {
@@ -1521,7 +1527,7 @@ bool cMarks::Update(void)
         lastFileTime = LastModified;
         if (lastFileTime == t)
            lastFileTime--; // make sure we don't miss updates in the remaining second
-        cMutexLock MutexLock(&MutexMarkFramesPerSecond);
+        CLockObject lock(MutexMarkFramesPerSecond);
         MarkFramesPerSecond = framesPerSecond;
         if (cConfig<cMark>::Load(fileName)) {
            Align();
@@ -1962,7 +1968,7 @@ bool cIndexFile::CatchUp(int Index)
 {
   // returns true unless something really goes wrong, so that 'index' becomes NULL
   if (index && f >= 0) {
-     cMutexLock MutexLock(&mutex);
+     CLockObject lock(mutex);
      // Note that CatchUp() is triggered even if Index is 'last' (and thus valid).
      // This is done to make absolutely sure we don't miss any data at the very end.
      for (int i = 0; i <= MAXINDEXCATCHUP && (Index < 0 || Index >= last); i++) {
@@ -2007,8 +2013,9 @@ bool cIndexFile::CatchUp(int Index)
             LOG_ERROR_STR(*fileName);
          if (Index < last)
             break;
-         cCondVar CondVar;
-         CondVar.TimedWait(mutex, INDEXCATCHUPWAIT);
+         CCondition<bool> CondVar;
+         bool b = false;
+         CondVar.Wait(mutex, b, INDEXCATCHUPWAIT);
          }
      }
   return index != NULL;

@@ -16,6 +16,7 @@
 #include <time.h>
 #include "libsi/si.h"
 #include "recordings/Timers.h"
+#include "platform/threads/threads.h"
 
 #include "vdr/utils/CalendarUtils.h"
 #include "vdr/utils/UTF8Utils.h"
@@ -1185,7 +1186,7 @@ bool cSchedule::Read(FILE *f, cSchedules *Schedules)
 
 class cEpgDataWriter : public cThread {
 private:
-  cMutex mutex;
+  PLATFORM::CMutex mutex;
   bool dump;
 protected:
   virtual void Action(void);
@@ -1208,7 +1209,7 @@ void cEpgDataWriter::Action(void)
 
 void cEpgDataWriter::Perform(void)
 {
-  cMutexLock MutexLock(&mutex); // to make sure fore- and background calls don't cause parellel dumps!
+  PLATFORM::CLockObject lock(mutex); // to make sure fore- and background calls don't cause parellel dumps!
   {
     cSchedulesLock SchedulesLock(true, 1000);
     cSchedules *s = (cSchedules *)cSchedules::Schedules(SchedulesLock);

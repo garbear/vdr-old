@@ -13,6 +13,7 @@
 #include "libsi/section.h"
 #include "libsi/descriptor.h"
 #include "thread.h"
+#include "platform/threads/threads.h"
 
 #define PMT_SCAN_TIMEOUT  10 // seconds
 
@@ -183,7 +184,7 @@ int cCaDescriptors::GetCaDescriptors(const int *CaSystemIds, int BufSize, uchar 
 
 class cCaDescriptorHandler : public cList<cCaDescriptors> {
 private:
-  cMutex mutex;
+  PLATFORM::CMutex mutex;
 public:
   int AddCaDescriptors(cCaDescriptors *CaDescriptors);
       // Returns 0 if this is an already known descriptor,
@@ -194,7 +195,7 @@ public:
 
 int cCaDescriptorHandler::AddCaDescriptors(cCaDescriptors *CaDescriptors)
 {
-  cMutexLock MutexLock(&mutex);
+  PLATFORM::CLockObject lock(mutex);
   for (cCaDescriptors *ca = First(); ca; ca = Next(ca)) {
       if (ca->Is(CaDescriptors)) {
          if (*ca == *CaDescriptors) {
@@ -212,7 +213,7 @@ int cCaDescriptorHandler::AddCaDescriptors(cCaDescriptors *CaDescriptors)
 
 int cCaDescriptorHandler::GetCaDescriptors(int Source, int Transponder, int ServiceId, const int *CaSystemIds, int BufSize, uchar *Data, int EsPid)
 {
-  cMutexLock MutexLock(&mutex);
+  PLATFORM::CLockObject lock(mutex);
   for (cCaDescriptors *ca = First(); ca; ca = Next(ca)) {
       if (ca->Is(Source, Transponder, ServiceId))
          return ca->GetCaDescriptors(CaSystemIds, BufSize, Data, EsPid);
