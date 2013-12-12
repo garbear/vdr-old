@@ -141,22 +141,7 @@ cChannel& cChannel::operator=(const cChannel &channel)
   m_channelData = channel.m_channelData;
   m_parameters  = channel.m_parameters;
 
-  // these will be recalculated automatically
-  m_nameSource.clear();
-  m_shortNameSource.clear();
-
   return *this;
-}
-
-string cChannel::Name() const
-{
-  if (/*Setup.ShowChannelNamesWithSource && */!m_channelData.groupSep) // TODO
-  {
-    if (m_nameSource.empty())
-      m_nameSource = StringUtils::Format("%s (%c)", m_name.c_str(), cSource::ToChar(m_channelData.source));
-    return m_nameSource;
-  }
-  return m_name;
 }
 
 string cChannel::ShortName(bool bOrName /* = false */) const
@@ -164,12 +149,6 @@ string cChannel::ShortName(bool bOrName /* = false */) const
   if (bOrName && m_shortName.empty())
     return Name();
 
-  if (/*Setup.ShowChannelNamesWithSource && */!m_channelData.groupSep) // TODO
-  {
-    if (m_shortNameSource.c_str())
-      m_shortNameSource = StringUtils::Format("%s (%c)", m_shortName.c_str(), cSource::ToChar(m_channelData.source));
-    return m_shortNameSource;
-  }
   return m_shortName;
 }
 
@@ -490,8 +469,6 @@ bool cChannel::Parse(const string &str)
       free(tpidbuf);
       free(caidbuf);
       free(namebuf);
-      m_nameSource.clear();
-      m_shortNameSource.clear();
 
       if (!GetChannelID().Valid())
       {
@@ -611,8 +588,7 @@ bool cChannel::SetTransponderData(int source, int frequency, int srate, const st
     m_channelData.srate = srate;
     m_parameters = strParameters;
     m_schedule = NULL;
-    m_nameSource.clear();
-    m_shortNameSource.clear();
+
     if (Number() && !bQuiet)
     {
       //dsyslog("changing transponder data of channel %d from %s to %s", Number(), oldTransponderData.c_str(), TransponderDataToString().c_str());
@@ -666,15 +642,18 @@ void cChannel::SetName(const string &strName, const string &strShortName, const 
       if (nn)
       {
         m_name = strName;
-        m_nameSource.clear();
+        SetChanged();
       }
       if (ns)
       {
         m_shortName = strShortName;
-        m_shortNameSource.clear();
+        SetChanged();
       }
       if (np)
+      {
         m_provider = strProvider;
+        SetChanged();
+      }
     }
   }
 }

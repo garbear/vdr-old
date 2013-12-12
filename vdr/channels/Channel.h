@@ -141,7 +141,7 @@ public:
 
   cChannel& operator=(const cChannel &channel);
 
-  std::string Name() const;
+  std::string Name() const { return m_name; }
   std::string ShortName(bool bOrName = false) const;
   const std::string &Provider() const { return m_provider; }
   const std::string &PortalName() const { return m_portalName; }
@@ -251,8 +251,6 @@ private:
 
   tChannelData             m_channelData;
 
-  mutable std::string      m_nameSource;
-  mutable std::string      m_shortNameSource;
   std::string              m_parameters;
   int                      m_modification;
   mutable const cSchedule *m_schedule; //EEEW!
