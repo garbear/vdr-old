@@ -268,7 +268,10 @@ cEIT::cEIT(cSchedules *Schedules, int Source, u_char Tid, const u_char *Data, bo
                           //fprintf(stderr, "Linkage %s %4d %4d %5d %5d %5d %5d  %02X  '%s'\n", hit ? "*" : "", channel->Number(), link ? link->Number() : -1, SiEitEvent.getEventId(), ld->getOriginalNetworkId(), ld->getTransportStreamId(), ld->getServiceId(), ld->getLinkageType(), linkName);//XXX
                           if (link) {
                              if (Setup.UpdateChannels == 1 || Setup.UpdateChannels >= 3)
+                             {
                                 link->SetName(linkName, "", "");
+                                link->NotifyObservers(ObservableMessageChannelChanged);
+                             }
                              }
                           else if (Setup.UpdateChannels >= 4) {
                              cChannel *transponder = channel;
@@ -282,7 +285,10 @@ cEIT::cEIT(cSchedules *Schedules, int Source, u_char Tid, const u_char *Data, bo
                              }
                           }
                        else
+                       {
                           channel->SetPortalName(linkName);
+                          channel->NotifyObservers(ObservableMessageChannelChanged);
+                       }
                        }
                     }
                  }

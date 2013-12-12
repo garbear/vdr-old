@@ -91,6 +91,7 @@ void cSdtFilter::Process(u_short Pid, u_char Tid, const u_char *Data, int Length
                            // The special value 0xFFFF was supposed to mean "unknown encryption"
                            // and would have been overwritten with real CA values later:
                            // channel->SetCa(SiSdtService.getFreeCaMode() ? 0xFFFF : 0);
+                           channel->NotifyObservers(ObservableMessageChannelChanged);
                            }
                         else if (*pn && Setup.UpdateChannels >= 4) {
                            channel = Channel() ?

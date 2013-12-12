@@ -28,6 +28,7 @@ class Observable;
 typedef enum
 {
   ObservableMessageNone,
+  ObservableMessageChannelChanged,
 } ObservableMessage;
 
 class Observer

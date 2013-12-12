@@ -381,6 +381,7 @@ void cLivePatFilter::Process(u_short Pid, u_char Tid, const u_char *Data, int Le
        pmtChannel->SetPids(Vpid, Ppid, Vtype, Apids, Atypes, ALangs, Dpids, Dtypes, DLangs, Spids, SLangs, Tpid);
        pmtChannel->SetSubtitlingDescriptors(SubtitlingTypes, CompositionPageIds, AncillaryPageIds);
        m_VideoInput->PmtChange(pmtChannel->Modification(CHANNELMOD_PIDS));
+       pmtChannel->NotifyObservers(ObservableMessageChannelChanged);
     }
   }
 }

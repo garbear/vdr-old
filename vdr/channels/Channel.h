@@ -37,6 +37,7 @@ public:
 //#include "thread.h"
 //#include "tools.h"
 
+#include "utils/Observer.h"
 #include <string>
 #include <vector>
 
@@ -127,7 +128,7 @@ struct tChannelData
 
 class cSchedule;
 
-class cChannel : public cListObject
+class cChannel : public cListObject, public Observable
 {
   //friend class cSchedules;
   //friend class cMenuEditChannel;

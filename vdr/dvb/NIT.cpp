@@ -177,7 +177,10 @@ void cNitFilter::Process(u_short Pid, u_char Tid, const u_char *Data, int Length
                            cChannel *Channel = new cChannel;
                            Channel->SetId(ts.getOriginalNetworkId(), ts.getTransportStreamId(), 0, 0);
                            if (Channel->SetTransponderData(Source, Frequencies[n], SymbolRate, dtp.Serialize('S')))
+                           {
                               EITScanner.AddTransponder(Channel);
+                              Channel->NotifyObservers(ObservableMessageChannelChanged);
+                           }
                            else
                               delete Channel;
                            }
@@ -194,6 +197,7 @@ void cNitFilter::Process(u_short Pid, u_char Tid, const u_char *Data, int Length
                            dtp.SetSystem(DVB_SYSTEM_2);
                            dtp.SetStreamId(sd->getInputStreamIdentifier());
                            Channel->SetTransponderData(Channel->Source(), Channel->Frequency(), Channel->Srate(), dtp.Serialize('S'));
+                           Channel->NotifyObservers(ObservableMessageChannelChanged);
                            break;
                            }
                         }
@@ -247,7 +251,10 @@ void cNitFilter::Process(u_short Pid, u_char Tid, const u_char *Data, int Length
                            cChannel *Channel = new cChannel;
                            Channel->SetId(ts.getOriginalNetworkId(), ts.getTransportStreamId(), 0, 0);
                            if (Channel->SetTransponderData(Source, Frequencies[n], SymbolRate, dtp.Serialize('C')))
+                           {
                               EITScanner.AddTransponder(Channel);
+                              Channel->NotifyObservers(ObservableMessageChannelChanged);
+                           }
                            else
                               delete Channel;
                            }
@@ -310,7 +317,10 @@ void cNitFilter::Process(u_short Pid, u_char Tid, const u_char *Data, int Length
                            cChannel *Channel = new cChannel;
                            Channel->SetId(ts.getOriginalNetworkId(), ts.getTransportStreamId(), 0, 0);
                            if (Channel->SetTransponderData(Source, Frequencies[n], 0, dtp.Serialize('T')))
+                           {
                               EITScanner.AddTransponder(Channel);
+                              Channel->NotifyObservers(ObservableMessageChannelChanged);
+                           }
                            else
                               delete Channel;
                            }
@@ -343,6 +353,7 @@ void cNitFilter::Process(u_short Pid, u_char Tid, const u_char *Data, int Length
                                      //TODO add parsing of frequencies
                                      }
                                   Channel->SetTransponderData(Source, Frequency, SymbolRate, dtp.Serialize('T'));
+                                  Channel->NotifyObservers(ObservableMessageChannelChanged);
                                   }
                                }
                            }

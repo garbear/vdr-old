@@ -551,6 +551,7 @@ void cPatFilter::Process(u_short Pid, u_char Tid, const u_char *Data, int Length
            Channel->SetSubtitlingDescriptors(SubtitlingTypes, CompositionPageIds, AncillaryPageIds);
            }
         Channel->SetCaDescriptors(CaDescriptorHandler.AddCaDescriptors(CaDescriptors));
+        Channel->NotifyObservers(ObservableMessageChannelChanged);
         }
      lastPmtScan = 0; // this triggers the next scan
      Channels.Unlock();

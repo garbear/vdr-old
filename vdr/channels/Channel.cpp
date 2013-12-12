@@ -617,7 +617,7 @@ bool cChannel::SetTransponderData(int source, int frequency, int srate, const st
     {
       //dsyslog("changing transponder data of channel %d from %s to %s", Number(), oldTransponderData.c_str(), TransponderDataToString().c_str());
       m_modification |= CHANNELMOD_TRANSP;
-      //Channels.SetModified(); // TODO
+      SetChanged();
     }
   }
   return true;
@@ -631,7 +631,6 @@ void cChannel::SetId(int nid, int tid, int sid, int rid /* = 0 */)
     {
       //dsyslog("changing id of channel %d from %d-%d-%d-%d to %d-%d-%d-%d", Number(), m_channelData.nid, m_channelData.tid, m_channelData.sid, m_channelData.rid, nid, tid, sid, rid);
       m_modification |= CHANNELMOD_ID;
-      //Channels.SetModified(); // TODO
       //Channels.UnhashChannel(this); // TODO
     }
     m_channelData.nid = nid;
@@ -641,6 +640,7 @@ void cChannel::SetId(int nid, int tid, int sid, int rid /* = 0 */)
     if (Number())
       ;//Channels.HashChannel(this); // TODO
     m_schedule = NULL;
+    SetChanged();
   }
 }
 
@@ -661,7 +661,7 @@ void cChannel::SetName(const string &strName, const string &strShortName, const 
             strName.c_str(), strShortName.c_str(), strProvider.c_str());
         */
         m_modification |= CHANNELMOD_NAME;
-        //Channels.SetModified(); // TODO
+        SetChanged();
       }
       if (nn)
       {
@@ -687,7 +687,7 @@ void cChannel::SetPortalName(const string &strPortalName)
     {
       //dsyslog("changing portal name of channel %d from '%s' to '%s'", Number(), m_portalName.c_str(), strPortalName.c_str());
       m_modification |= CHANNELMOD_NAME;
-      //Channels.SetModified(); // TODO
+      SetChanged();
     }
     m_portalName = strPortalName;
   }
@@ -777,7 +777,7 @@ void cChannel::SetPids(int vpid, int ppid, int vtype, int *apids, int *atypes, c
 
     m_channelData.tpid = tpid;
     m_modification |= mod;
-    //Channels.SetModified(); // TODO
+    SetChanged();
   }
 }
 
@@ -800,6 +800,9 @@ void cChannel::SetSubtitlingDescriptors(uchar *subtitlingTypes, uint16_t *compos
     for (int i = 0; i < MAXSPIDS; i++)
       m_channelData.ancillaryPageIds[i] = ancillaryPageIds[i];
   }
+
+  if (subtitlingTypes || compositionPageIds || ancillaryPageIds)
+    SetChanged();
 }
 
 void cChannel::SetCaIds(const int *caIds)
@@ -822,7 +825,7 @@ void cChannel::SetCaIds(const int *caIds)
         break;
     }
     m_modification |= CHANNELMOD_CA;
-    //Channels.SetModified(); // TODO
+    SetChanged();
   }
 }
 
@@ -831,7 +834,7 @@ void cChannel::SetCaDescriptors(int level)
   if (level > 0)
   {
     m_modification |= CHANNELMOD_CA;
-    //Channels.SetModified(); // TODO
+    SetChanged();
     if (Number() && level > 1)
       ;//dsyslog("changing ca descriptors of channel %d", Number());
   }
