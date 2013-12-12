@@ -92,6 +92,7 @@ set(VDR_SRCS
 	vdr/utils/CharsetConverter.cpp
 	vdr/utils/CharsetDetection.cpp
 	vdr/utils/I18N.cpp
+	vdr/utils/Observer.cpp
 	vdr/utils/RegExp.cpp
 	vdr/utils/Ringbuffer.cpp
 	vdr/utils/StringUtils.cpp
