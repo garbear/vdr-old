@@ -60,6 +60,23 @@ cChannels::cChannels()
   modified = CHANNELSMOD_NONE;
 }
 
+void cChannels::Notify(const Observable &obs, const ObservableMessage msg)
+{
+  //TODO
+}
+
+void cChannels::AddChannel(cChannel* channel)
+{
+  channel->RegisterObserver(this);
+  Add(channel);
+}
+
+void cChannels::RemoveChannel(cChannel* channel)
+{
+  channel->UnregisterObserver(this);
+  Del(channel);
+}
+
 void cChannels::DeleteDuplicateChannels()
 {
   cList<cChannelSorter> ChannelSorter;
@@ -78,7 +95,7 @@ void cChannels::DeleteDuplicateChannels()
     if (next && cs->channelID == next->channelID)
     {
       dsyslog("deleting duplicate channel %s", next->channel->Serialise().c_str());
-      Del(next->channel);
+      RemoveChannel(next->channel);
     }
     cs = next;
   }
@@ -119,7 +136,7 @@ bool cChannels::Load(const string &fileName, bool bMustExist /* = false */)
         {
           cChannel *l = new cChannel;
           if (l->Deserialise(s))
-            Add(l);
+            AddChannel(l);
           else
           {
             //esyslog("ERROR: error in %s, line %d", m_fileName.c_str(), line);
@@ -377,7 +394,7 @@ cChannel *cChannels::NewChannel(const cChannel& Transponder, const std::string& 
   NewChannel->CopyTransponderData(Transponder);
   NewChannel->SetId(Nid, Tid, Sid, Rid);
   NewChannel->SetName(Name, ShortName, Provider);
-  Add(NewChannel);
+  AddChannel(NewChannel);
   ReNumber();
   return NewChannel;
 }

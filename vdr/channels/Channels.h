@@ -24,10 +24,11 @@
 #include "Config.h"
 #include "thread.h"
 #include "utils/Tools.h" // for cHash
+#include "utils/Observer.h"
 
 #include <string>
 
-class cChannels : public cRwLock, public cList<cChannel>
+class cChannels : public cRwLock, public cList<cChannel>, public Observer
 {
 public:
   cChannels();
@@ -35,6 +36,10 @@ public:
   bool Load(const std::string &fileName, bool bMustExist = false);
   void HashChannel(cChannel *Channel);
   void UnhashChannel(cChannel *Channel);
+
+  void Notify(const Observable &obs, const ObservableMessage msg);
+  void AddChannel(cChannel* channel);
+  void RemoveChannel(cChannel* channel);
 
   int GetNextGroup(int Idx);   // Get next channel group
   int GetPrevGroup(int Idx);   // Get previous channel group
