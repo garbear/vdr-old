@@ -391,11 +391,14 @@ cChannel *cChannels::NewChannel(const cChannel& Transponder, const std::string& 
 {
   dsyslog("creating new channel '%s,%s;%s' on %s transponder %d with id %d-%d-%d-%d", Name.c_str(), ShortName.c_str(), Provider.c_str(), cSource::ToString(Transponder.Source()).c_str(), Transponder.Transponder(), Nid, Tid, Sid, Rid);
   cChannel *NewChannel = new cChannel;
-  NewChannel->CopyTransponderData(Transponder);
-  NewChannel->SetId(Nid, Tid, Sid, Rid);
-  NewChannel->SetName(Name, ShortName, Provider);
-  AddChannel(NewChannel);
-  ReNumber();
+  if (NewChannel)
+  {
+    NewChannel->CopyTransponderData(Transponder);
+    NewChannel->SetId(Nid, Tid, Sid, Rid);
+    NewChannel->SetName(Name, ShortName, Provider);
+    AddChannel(NewChannel);
+    ReNumber();
+  }
   return NewChannel;
 }
 
