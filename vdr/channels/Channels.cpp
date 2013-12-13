@@ -23,6 +23,7 @@
 #include "devices/Device.h"
 #include "devices/DeviceManager.h"
 #include "devices/subsystems/DeviceChannelSubsystem.h"
+#include "utils/StringUtils.h"
 #include "utils/UTF8Utils.h"
 
 #include <algorithm>
