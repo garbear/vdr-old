@@ -27,31 +27,11 @@
 #include "utils/UTF8Utils.h"
 
 #include <algorithm>
+#include <assert.h>
 
 using namespace std;
 
 cChannels Channels;
-
-// --- cChannelSorter --------------------------------------------------------
-
-class cChannelSorter : public cListObject
-{
-public:
-  cChannel *channel;
-  tChannelID channelID;
-
-  cChannelSorter(cChannel *Channel)
-  {
-    channel = Channel;
-    channelID = channel->GetChannelID();
-  }
-
-  virtual int Compare(const cListObject &ListObject) const
-  {
-    cChannelSorter *cs = (cChannelSorter *)&ListObject;
-    return memcmp(&channelID, &cs->channelID, sizeof(channelID));
-  }
-};
 
 cChannels::cChannels()
  : maxNumber(0),
@@ -62,6 +42,14 @@ cChannels::cChannels()
 {
 }
 
+void cChannels::Clear()
+{
+  m_fileName.clear();
+  for (vector<cChannel*>::iterator itChannel = m_channels.begin(); itChannel != m_channels.end(); ++itChannel)
+    delete *itChannel;
+  m_channels.clear();
+}
+
 void cChannels::Notify(const Observable &obs, const ObservableMessage msg)
 {
   //TODO
@@ -69,38 +57,36 @@ void cChannels::Notify(const Observable &obs, const ObservableMessage msg)
 
 void cChannels::AddChannel(cChannel* channel)
 {
+  assert(channel);
+
+  // If the channel is a duplicate, delete it instead of adding to the vector
+  for (vector<cChannel*>::iterator itChannel = m_channels.begin(); itChannel != m_channels.end(); ++itChannel)
+  {
+    if (*itChannel == channel)
+    {
+      delete channel;
+      return;
+    }
+  }
+
   channel->RegisterObserver(this);
-  Add(channel);
+  m_channels.push_back(channel);
 }
 
 void cChannels::RemoveChannel(cChannel* channel)
 {
+  assert(channel);
+
   channel->UnregisterObserver(this);
-  Del(channel);
-}
-
-void cChannels::DeleteDuplicateChannels()
-{
-  cList<cChannelSorter> ChannelSorter;
-  for (cChannel *channel = First(); channel; channel = Next(channel))
+  for (vector<cChannel*>::iterator itChannel = m_channels.begin(); itChannel != m_channels.end(); ++itChannel)
   {
-    if (!channel->GroupSep())
-      ChannelSorter.Add(new cChannelSorter(channel));
-  }
-
-  ChannelSorter.Sort();
-  cChannelSorter *cs = ChannelSorter.First();
-
-  while (cs)
-  {
-    cChannelSorter *next = ChannelSorter.Next(cs);
-    if (next && cs->channelID == next->channelID)
+    if (channel == *itChannel)
     {
-      dsyslog("deleting duplicate channel %s", next->channel->Serialise().c_str());
-      RemoveChannel(next->channel);
+      m_channels.erase(itChannel);
+      break;
     }
-    cs = next;
   }
+  delete channel;
 }
 
 bool cChannels::Load(const string &fileName, bool bMustExist /* = false */)
@@ -164,11 +150,34 @@ bool cChannels::Load(const string &fileName, bool bMustExist /* = false */)
 
   if (result)
   {
-    DeleteDuplicateChannels();
     ReNumber();
     return true;
   }
   return false;
+}
+
+bool cChannels::Save(void)
+{
+  bool result = true;
+  //cChannel* l = First();
+  cSafeFile f(m_fileName.c_str());
+  if (f.Open())
+  {
+    for (vector<cChannel*>::iterator itChannel = m_channels.begin(); itChannel != m_channels.end(); ++itChannel)
+    {
+      if (!(*itChannel)->Save(f))
+      {
+        result = false;
+        break;
+      }
+    }
+    if (!f.Close())
+      result = false;
+  }
+  else
+    result = false;
+
+  return result;
 }
 
 void cChannels::HashChannel(cChannel *Channel)
@@ -181,55 +190,82 @@ void cChannels::UnhashChannel(cChannel *Channel)
   channelsHashSid.Del(Channel, Channel->Sid());
 }
 
-int cChannels::GetNextGroup(int Idx)
+int cChannels::GetNextGroup(unsigned int index)
 {
-  cChannel *channel = Get(++Idx);
-  while (channel && !(channel->GroupSep() && !channel->Name().empty()))
-    channel = Get(++Idx);
-  return channel ? Idx : -1;
+  for (vector<cChannel*>::const_iterator itChannel = m_channels.begin() + index + 1; itChannel != m_channels.end(); ++itChannel)
+  {
+    if ((*itChannel)->GroupSep() && !(*itChannel)->Name().empty())
+    {
+      ++itChannel;
+      return itChannel != m_channels.end() ? m_channels.begin() - itChannel + 1 : -1;
+    }
+  }
+  return -1;
 }
 
-int cChannels::GetPrevGroup(int Idx)
+int cChannels::GetPrevGroup(unsigned int index)
 {
-  cChannel *channel = Get(--Idx);
-  while (channel && !(channel->GroupSep() && !channel->Name().empty()))
-    channel = Get(--Idx);
-  return channel ? Idx : -1;
+  if (index == 0)
+    return -1;
+
+  for (vector<cChannel*>::const_iterator itChannel = m_channels.begin() + index - 1; itChannel != m_channels.begin(); --itChannel)
+  {
+    if ((*itChannel)->GroupSep() && !(*itChannel)->Name().empty())
+    {
+      --itChannel;
+      return itChannel != m_channels.begin() ? m_channels.begin() - itChannel - 1 : -1;
+    }
+  }
+  return -1;
 }
 
-int cChannels::GetNextNormal(int Idx)
+int cChannels::GetNextNormal(unsigned int index)
 {
-  cChannel *channel = Get(++Idx);
-  while (channel && channel->GroupSep())
-    channel = Get(++Idx);
-  return channel ? Idx : -1;
+  for (vector<cChannel*>::const_iterator itChannel = m_channels.begin() + index + 1; itChannel != m_channels.end(); ++itChannel)
+  {
+    if ((*itChannel)->GroupSep())
+    {
+      ++itChannel;
+      return itChannel != m_channels.end() ? m_channels.begin() - itChannel + 1 : -1;
+    }
+  }
+  return -1;
 }
 
-int cChannels::GetPrevNormal(int Idx)
+int cChannels::GetPrevNormal(unsigned int index)
 {
-  cChannel *channel = Get(--Idx);
-  while (channel && channel->GroupSep())
-    channel = Get(--Idx);
-  return channel ? Idx : -1;
+  if (index == 0)
+    return -1;
+
+  for (vector<cChannel*>::const_iterator itChannel = m_channels.begin() + index - 1; itChannel != m_channels.begin(); --itChannel)
+  {
+    if ((*itChannel)->GroupSep())
+    {
+      --itChannel;
+      return itChannel != m_channels.begin() ? m_channels.begin() - itChannel - 1 : -1;
+    }
+  }
+  return -1;
 }
 
 void cChannels::ReNumber()
 {
   channelsHashSid.Clear();
   maxNumber = 0;
-  int Number = 1;
-  for (cChannel *channel = First(); channel; channel = Next(channel))
+  int number = 1;
+  for (vector<cChannel*>::const_iterator itChannel = m_channels.begin(); itChannel != m_channels.end(); ++itChannel)
   {
+    cChannel *channel = *itChannel;
     if (channel->GroupSep())
     {
-      if (channel->Number() > Number)
-        Number = channel->Number();
+      if (channel->Number() > number)
+        number = channel->Number();
     }
     else
     {
       HashChannel(channel);
-      maxNumber = Number;
-      channel->SetNumber(Number++);
+      maxNumber = number;
+      channel->SetNumber(number++);
     }
   }
 }
@@ -237,8 +273,9 @@ void cChannels::ReNumber()
 cChannel *cChannels::GetByNumber(int Number, int SkipGap)
 {
   cChannel *previous = NULL;
-  for (cChannel *channel = First(); channel; channel = Next(channel))
+  for (vector<cChannel*>::const_iterator itChannel = m_channels.begin(); itChannel != m_channels.end(); ++itChannel)
   {
+    cChannel *channel = *itChannel;
     if (!channel->GroupSep())
     {
       if (channel->Number() == Number)
@@ -326,9 +363,10 @@ cChannel *cChannels::GetByTransponderID(tChannelID ChannelID)
   int source = ChannelID.Source();
   int nid = ChannelID.Nid();
   int tid = ChannelID.Tid();
-  for (cChannel *channel = First(); channel; channel = Next(channel))
+  for (vector<cChannel*>::const_iterator itChannel = m_channels.begin(); itChannel != m_channels.end(); ++itChannel)
   {
-    if (channel->Tid() == tid && channel->Nid() == nid && channel->Source() == source)
+    cChannel *channel = *itChannel;
+    if (channel->Nid() == nid && channel->Tid() == tid && channel->Source() == source)
       return channel;
   }
   return NULL;
@@ -337,8 +375,9 @@ cChannel *cChannels::GetByTransponderID(tChannelID ChannelID)
 bool cChannels::HasUniqueChannelID(cChannel *NewChannel, cChannel *OldChannel)
 {
   tChannelID NewChannelID = NewChannel->GetChannelID();
-  for (cChannel *channel = First(); channel; channel = Next(channel))
+  for (vector<cChannel*>::const_iterator itChannel = m_channels.begin(); itChannel != m_channels.end(); ++itChannel)
   {
+    cChannel *channel = *itChannel;
     if (!channel->GroupSep() && channel != OldChannel && channel->GetChannelID() == NewChannelID)
       return false;
   }
@@ -355,8 +394,9 @@ int cChannels::MaxChannelNameLength()
 {
   if (!maxChannelNameLength)
   {
-    for (cChannel *channel = First(); channel; channel = Next(channel))
+    for (vector<cChannel*>::const_iterator itChannel = m_channels.begin(); itChannel != m_channels.end(); ++itChannel)
     {
+      cChannel *channel = *itChannel;
       if (!channel->GroupSep())
         maxChannelNameLength = std::max(cUtf8Utils::Utf8StrLen(channel->Name().c_str()), maxChannelNameLength);
     }
@@ -368,8 +408,9 @@ int cChannels::MaxShortChannelNameLength()
 {
   if (!maxShortChannelNameLength)
   {
-    for (cChannel *channel = First(); channel; channel = Next(channel))
+    for (vector<cChannel*>::const_iterator itChannel = m_channels.begin(); itChannel != m_channels.end(); ++itChannel)
     {
+      cChannel *channel = *itChannel;
       if (!channel->GroupSep())
         maxShortChannelNameLength = std::max(cUtf8Utils::Utf8StrLen(channel->ShortName(true).c_str()), maxShortChannelNameLength);
     }

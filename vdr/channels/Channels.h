@@ -27,13 +27,16 @@
 #include "utils/Observer.h"
 
 #include <string>
+#include <vector>
 
-class cChannels : public cRwLock, public cList<cChannel>, public Observer
+class cChannels : public cRwLock, public Observer
 {
 public:
   cChannels();
+  ~cChannels() { Clear(); }
 
   bool Load(const std::string &fileName, bool bMustExist = false);
+  bool Save(void);
   void HashChannel(cChannel *Channel);
   void UnhashChannel(cChannel *Channel);
 
@@ -41,10 +44,10 @@ public:
   void AddChannel(cChannel* channel);
   void RemoveChannel(cChannel* channel);
 
-  int GetNextGroup(int Idx);   // Get next channel group
-  int GetPrevGroup(int Idx);   // Get previous channel group
-  int GetNextNormal(int Idx);  // Get next normal channel (not group)
-  int GetPrevNormal(int Idx);  // Get previous normal channel (not group)
+  int GetNextGroup(unsigned int index);   // Get next channel group
+  int GetPrevGroup(unsigned int index);   // Get previous channel group
+  int GetNextNormal(unsigned int index);  // Get next normal channel (not group)
+  int GetPrevNormal(unsigned int index);  // Get previous normal channel (not group)
   void ReNumber();             // Recalculate 'number' based on channel type
 
   cChannel *GetByNumber(int Number, int SkipGap = 0);
@@ -78,33 +81,8 @@ public:
   // Inherited from cConfig<cChannel>
   const std::string &FileName() { return m_fileName; }
 
-  bool Save(void)
-  {
-    bool result = true;
-    cChannel* l = First();
-    cSafeFile f(m_fileName.c_str());
-    if (f.Open())
-    {
-      while (l)
-      {
-        if (!l->Save(f))
-        {
-          result = false;
-          break;
-        }
-        l = Next(l);
-      }
-      if (!f.Close())
-        result = false;
-    }
-    else
-      result = false;
-    return result;
-  }
-
 private:
-  void DeleteDuplicateChannels();
-
+  std::vector<cChannel*> m_channels;
   int             maxNumber;
   int             maxChannelNameLength;
   int             maxShortChannelNameLength;
@@ -114,11 +92,7 @@ private:
 
   // Inherited from cConfig<cChannel>
   std::string m_fileName;
-  void Clear(void)
-  {
-    m_fileName.clear();
-    cList<cChannel>::Clear();
-  }
+  void Clear(void);
 };
 
 extern cChannels Channels;
