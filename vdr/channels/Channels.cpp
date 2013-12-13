@@ -54,11 +54,12 @@ public:
 };
 
 cChannels::cChannels()
+ : maxNumber(0),
+   maxChannelNameLength(0),
+   maxShortChannelNameLength(0),
+   modified(CHANNELSMOD_NONE),
+   beingEdited(0)
 {
-  maxNumber = 0;
-  maxChannelNameLength = 0;
-  maxShortChannelNameLength = 0;
-  modified = CHANNELSMOD_NONE;
 }
 
 void cChannels::Notify(const Observable &obs, const ObservableMessage msg)
@@ -105,10 +106,11 @@ void cChannels::DeleteDuplicateChannels()
 bool cChannels::Load(const string &fileName, bool bMustExist /* = false */)
 {
   Clear();
+  bool bAllowComments = false;
   if (!fileName.empty())
   {
     m_fileName = fileName;
-    m_bAllowComments = true;
+    bAllowComments = true;
   }
 
   bool result = !bMustExist;
@@ -126,7 +128,7 @@ bool cChannels::Load(const string &fileName, bool bMustExist /* = false */)
       while ((s = ReadLine.Read(f)) != NULL)
       {
         line++;
-        if (m_bAllowComments)
+        if (bAllowComments)
         {
           char *p = strchr(s, '#');
           if (p)

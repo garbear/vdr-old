@@ -114,7 +114,6 @@ private:
 
   // Inherited from cConfig<cChannel>
   std::string m_fileName;
-  bool m_bAllowComments;
   void Clear(void)
   {
     m_fileName.clear();
