@@ -401,17 +401,17 @@ cChannel *cChannels::NewChannel(const cChannel& Transponder, const std::string& 
 
 string ChannelString(const cChannel *Channel, int Number)
 {
-  char buffer[256];
+  string retval;
   if (Channel)
   {
     if (Channel->GroupSep())
-      snprintf(buffer, sizeof(buffer), "%s", Channel->Name().c_str());
+      retval = StringUtils::Format("%s", Channel->Name().c_str());
     else
-      snprintf(buffer, sizeof(buffer), "%d%s  %s", Channel->Number(), Number ? "-" : "", Channel->Name().c_str());
+      retval = StringUtils::Format("%d%s  %s", Channel->Number(), Number ? "-" : "", Channel->Name().c_str());
   }
   else if (Number)
-    snprintf(buffer, sizeof(buffer), "%d-", Number);
+    retval = StringUtils::Format("%d-", Number);
   else
-    snprintf(buffer, sizeof(buffer), "%s", tr("*** Invalid Channel ***"));
-  return buffer;
+    retval = StringUtils::Format("%s", tr("*** Invalid Channel ***"));
+  return retval;
 }
