@@ -120,8 +120,7 @@ void Observable::NotifyObservers(const ObservableMessage message /* = Observable
   bool bNotify(false);
   {
     CLockObject lock(m_obsCritSection);
-    if (m_bObservableChanged)
-      bNotify = true;
+    bNotify = m_bObservableChanged;
     m_bObservableChanged = false;
   }
 
