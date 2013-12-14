@@ -60,6 +60,8 @@ IFile *cFile::CreateLoader(const string &url)
 bool cFile::Open(const string &url, unsigned int flags /* = 0 */)
 {
   m_flags = flags;
+
+  /*
   if ((flags & READ_NO_CACHE) == 0)
     m_flags |= READ_CACHED;
 
@@ -69,6 +71,7 @@ bool cFile::Open(const string &url, unsigned int flags /* = 0 */)
     //m_pFileImpl = new cFileCache((m_flags & READ_MULTI_STREAM) !=0 );
     return m_pFileImpl && m_pFileImpl->Open(url);
   }
+  */
 
   m_pFileImpl = CreateLoader(url);
   if (!m_pFileImpl)
