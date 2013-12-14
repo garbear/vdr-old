@@ -21,7 +21,7 @@
 
 #include "UTF8Utils.h"
 #include "CharSetConverter.h"
-#include "../../tools.h"
+#include "Tools.h"
 
 // Mask Test
 #define MT(s, m, v) ((*(s) & (m)) == (v))
