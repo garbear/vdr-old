@@ -144,5 +144,5 @@ public:
    \return True on success, or false on error (not an int, overflow, etc)
    */
   static long IntVal(const std::string &str, long iDefault = 0);
-  static long IntVal(const std::string &str, std::string &remainder, long iDefault = 0);
+  static long IntVal(const std::string &str, std::string &remainder, long iDefault = 0); // TODO: Remove me
 };

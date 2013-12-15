@@ -154,6 +154,7 @@ set(VDR_TEST_SRCS
 	vdr/channels/test/TestChannelID.cpp
 	vdr/channels/test/TestChannelManager.cpp
 	vdr/sources/linux/test/TestDVBSourceParams.cpp
+	vdr/utils/test/TestStringUtils.cpp
 )
 
 set(VDR_MAIN vdr/main.cpp)
