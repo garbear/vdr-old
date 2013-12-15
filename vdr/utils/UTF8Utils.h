@@ -68,7 +68,7 @@ public:
    * \brief Returns the number of UTF-8 symbols formed by the given string of
    *        character bytes.
    */
-  static int Utf8StrLen(const char *s);
+  static unsigned int Utf8StrLen(const char *s);
 
   /*!
    * \brief Copies at most n character bytes from Src to Dest, making sure that
@@ -83,7 +83,7 @@ public:
    *        into an array of UTF-8 symbols of the given Size
    * \return The number of symbols in the array (without the terminating 0)
    */
-  static int Utf8ToArray(const char *s, uint *a, int Size);
+  static unsigned int Utf8ToArray(const char *s, uint *a, int Size);
 
   /*!
    * \brief Converts the given array of UTF-8 symbols (including the terminating

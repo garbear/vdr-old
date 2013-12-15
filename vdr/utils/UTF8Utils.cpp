@@ -112,11 +112,11 @@ int cUtf8Utils::Utf8SymChars(const char *s, int Symbols)
   return n;
 }
 
-int cUtf8Utils::Utf8StrLen(const char *s)
+unsigned int cUtf8Utils::Utf8StrLen(const char *s)
 {
   if (cCharSetConv::SystemCharacterTable())
     return strlen(s);
-  int n = 0;
+  unsigned int n = 0;
   while (*s)
   {
     s += Utf8CharLen(s);
@@ -146,9 +146,9 @@ char *cUtf8Utils::Utf8Strn0Cpy(char *Dest, const char *Src, int n)
   return Dest;
 }
 
-int cUtf8Utils::Utf8ToArray(const char *s, uint *a, int Size)
+unsigned int cUtf8Utils::Utf8ToArray(const char *s, uint *a, int Size)
 {
-  int n = 0;
+  unsigned int n = 0;
   while (*s && --Size > 0)
   {
     if (cCharSetConv::SystemCharacterTable())
