@@ -86,10 +86,8 @@ tChannelID tChannelID::Deserialize(const std::string &str)
   return ret;
 }
 
-//tChannelID &tChannelID::ClrPolarization()
 void tChannelID::ClrPolarization()
 {
   while (m_tid > 100000)
     m_tid -= 100000;
-  //return *this;
 }

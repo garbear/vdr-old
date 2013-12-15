@@ -24,7 +24,10 @@
 #include "sources/Source.h"
 //#include "timers.h"
 
+#include <memory>
+
 class cChannel;
+typedef std::shared_ptr<cChannel> ChannelPtr;
 
 // TODO
 class cTimer2
@@ -74,6 +77,7 @@ public:
 #define CA_ENCRYPTED_MAX 0xFFFF
 
 class cChannel;
+class TiXmlNode;
 
 class cLinkChannel : public cListObject
 {
@@ -122,7 +126,7 @@ struct tChannelData
   int      tid;
   int      sid;
   int      rid;
-  int      number;    // Sequence number assigned on load
+  unsigned int number;    // Sequence number assigned on load
   bool     groupSep;
 };
 
@@ -146,9 +150,12 @@ public:
   const std::string &Provider() const { return m_provider; }
   const std::string &PortalName() const { return m_portalName; }
 
-  std::string Serialise() const { return Serialise(*this); }
-  bool Deserialise(const std::string &str);
-  bool Save(FILE *f) const;
+  bool SerialiseChannel(TiXmlNode *node) const; // Serialize as a channel (TODO)
+  bool SerialiseSep(TiXmlNode *node) const; // Serialize as a group separator (TODO)
+  bool SerialiseConf(std::string &str) const;
+  bool Deserialise(const TiXmlNode *node, bool bSeparator = false);
+  bool DeserialiseConf(const std::string &str);
+  bool SaveConf(FILE *f) const;
 
   /*!
    * \brief Returns the actual frequency, as given in 'channels.conf'
@@ -241,7 +248,6 @@ public:
   const cSchedule* Schedule(void) const { return m_schedule; }
 
 private:
-  static std::string Serialise(const cChannel &channel);
   std::string TransponderDataToString() const;
 
   std::string              m_name;

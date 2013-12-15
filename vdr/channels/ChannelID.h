@@ -33,10 +33,7 @@ public:
 
   bool Valid() const { return (m_nid || m_tid) && m_sid; } // rid is optional and source may be 0//XXX source may not be 0???
 
-  //tChannelID &ClrRid() { m_rid = 0; return *this; }
   void ClrRid() { m_rid = 0; }
-
-  //tChannelID &ClrPolarization();
   void ClrPolarization();
 
   int Source() const { return m_source; }
@@ -52,8 +49,8 @@ public:
 
 private:
   int m_source;
-  int m_nid; ///< actually the "original" network id
+  int m_nid; // Actually the "original" network id
   int m_tid;
-  int m_sid;
+  int m_sid; // Service ID
   int m_rid;
 };
