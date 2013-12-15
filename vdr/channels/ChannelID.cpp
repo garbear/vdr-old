@@ -68,12 +68,92 @@ string tChannelID::Serialize() const
 tChannelID tChannelID::Deserialize(const std::string &str)
 {
   tChannelID ret = tChannelID::InvalidID;
-  char *sourcebuf = NULL;
+  string sourcebuf;
+  string strcopy(str);
   int nid;
   int tid;
   int sid;
   int rid = 0;
-  int fields = sscanf(str.c_str(), "%a[^-]-%d-%d-%d-%d", &sourcebuf, &nid, &tid, &sid, &rid);
+
+  //int fields = sscanf(str.c_str(), "%a[^-]-%d-%d-%d-%d", &sourcebuf, &nid, &tid, &sid, &rid);
+
+  int fields = 0;
+  size_t pos;
+
+  if (!strcopy.empty())
+  {
+    fields++;
+    if ((pos = strcopy.find('-')) != string::npos)
+    {
+      sourcebuf = strcopy.substr(0, pos);
+      strcopy = strcopy.substr(pos + 1);
+    }
+    else
+    {
+      sourcebuf = strcopy;
+      strcopy.clear();
+    }
+  }
+
+  if (!strcopy.empty())
+  {
+    fields++;
+    if ((pos = strcopy.find('-')) != string::npos)
+    {
+      nid = StringUtils::IntVal(strcopy.substr(0, pos));
+      strcopy = strcopy.substr(pos + 1);
+    }
+    else
+    {
+      nid = StringUtils::IntVal(strcopy);
+      strcopy.clear();
+    }
+  }
+
+  if (!strcopy.empty())
+  {
+    fields++;
+    if ((pos = strcopy.find('-')) != string::npos)
+    {
+      tid = StringUtils::IntVal(strcopy.substr(0, pos));
+      strcopy = strcopy.substr(pos + 1);
+    }
+    else
+    {
+      tid = StringUtils::IntVal(strcopy);
+      strcopy.clear();
+    }
+  }
+
+  if (!strcopy.empty())
+  {
+    fields++;
+    if ((pos = strcopy.find('-')) != string::npos)
+    {
+      sid = StringUtils::IntVal(strcopy.substr(0, pos));
+      strcopy = strcopy.substr(pos + 1);
+    }
+    else
+    {
+      sid = StringUtils::IntVal(strcopy);
+      strcopy.clear();
+    }
+  }
+
+  if (!strcopy.empty())
+  {
+    fields++;
+    if ((pos = strcopy.find('-')) != string::npos)
+    {
+      rid = StringUtils::IntVal(strcopy.substr(0, pos));
+      strcopy = strcopy.substr(pos + 1);
+    }
+    else
+    {
+      rid = StringUtils::IntVal(strcopy);
+      strcopy.clear();
+    }
+  }
 
   if (fields == 4 || fields == 5)
   {
@@ -82,7 +162,6 @@ tChannelID tChannelID::Deserialize(const std::string &str)
       ret = tChannelID(source, nid, tid, sid, rid);
   }
 
-  free(sourcebuf);
   return ret;
 }
 

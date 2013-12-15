@@ -605,17 +605,227 @@ bool cChannel::DeserialiseConf(const string &str)
   else
   {
     m_channelData.groupSep = false;
-    char *namebuf = NULL;
-    char *sourcebuf = NULL;
-    char *parambuf = NULL;
-    char *vpidbuf = NULL;
-    char *apidbuf = NULL;
-    char *tpidbuf = NULL;
-    char *caidbuf = NULL;
+    string strnamebuf;
+    string strsourcebuf;
+    string strparambuf;
+    string strvpidbuf;
+    string strapidbuf;
+    string strtpidbuf;
+    string strcaidbuf;
 
+    /*!
     int fields = sscanf(s, "%a[^:]:%d :%a[^:]:%a[^:] :%d :%a[^:]:%a[^:]:%a[^:]:%a[^:]:%d :%d :%d :%d ",
         &namebuf, &m_channelData.frequency, &parambuf, &sourcebuf, &m_channelData.srate, &vpidbuf, &apidbuf, &tpidbuf, &caidbuf,
         &m_channelData.sid, &m_channelData.nid, &m_channelData.tid, &m_channelData.rid);
+    */
+
+    string strcopy = str;
+    int fields = 0;
+    size_t pos;
+
+    if (!strcopy.empty())
+    {
+      fields++;
+      if ((pos = strcopy.find(':')) != string::npos)
+      {
+        strnamebuf = strcopy.substr(0, pos);
+        strcopy = strcopy.substr(pos + 1);
+      }
+      else
+      {
+        strnamebuf = strcopy;
+        strcopy.clear();
+      }
+    }
+
+    if (!strcopy.empty())
+    {
+      fields++;
+      if ((pos = strcopy.find(':')) != string::npos)
+      {
+        m_channelData.frequency = StringUtils::IntVal(strcopy.substr(0, pos));
+        strcopy = strcopy.substr(pos + 1);
+      }
+      else
+      {
+        m_channelData.frequency = StringUtils::IntVal(strcopy);
+        strcopy.clear();
+      }
+    }
+
+    if (!strcopy.empty())
+    {
+      fields++;
+      if ((pos = strcopy.find(':')) != string::npos)
+      {
+        strparambuf = strcopy.substr(0, pos);
+        strcopy = strcopy.substr(pos + 1);
+      }
+      else
+      {
+        strparambuf = strcopy;
+        strcopy.clear();
+      }
+    }
+
+    if (!strcopy.empty())
+    {
+      fields++;
+      if ((pos = strcopy.find(':')) != string::npos)
+      {
+        strsourcebuf = strcopy.substr(0, pos);
+        strcopy = strcopy.substr(pos + 1);
+      }
+      else
+      {
+        strsourcebuf = strcopy;
+        strcopy.clear();
+      }
+    }
+
+    if (!strcopy.empty())
+    {
+      fields++;
+      if ((pos = strcopy.find(':')) != string::npos)
+      {
+        m_channelData.srate = StringUtils::IntVal(strcopy.substr(0, pos));
+        strcopy = strcopy.substr(pos + 1);
+      }
+      else
+      {
+        m_channelData.srate = StringUtils::IntVal(strcopy);
+        strcopy.clear();
+      }
+    }
+
+    if (!strcopy.empty())
+    {
+      fields++;
+      if ((pos = strcopy.find(':')) != string::npos)
+      {
+        strvpidbuf = strcopy.substr(0, pos);
+        strcopy = strcopy.substr(pos + 1);
+      }
+      else
+      {
+        strvpidbuf = strcopy;
+        strcopy.clear();
+      }
+    }
+
+    if (!strcopy.empty())
+    {
+      fields++;
+      if ((pos = strcopy.find(':')) != string::npos)
+      {
+        strapidbuf = strcopy.substr(0, pos);
+        strcopy = strcopy.substr(pos + 1);
+      }
+      else
+      {
+        strapidbuf = strcopy;
+        strcopy.clear();
+      }
+    }
+
+    if (!strcopy.empty())
+    {
+      fields++;
+      if ((pos = strcopy.find(':')) != string::npos)
+      {
+        strtpidbuf = strcopy.substr(0, pos);
+        strcopy = strcopy.substr(pos + 1);
+      }
+      else
+      {
+        strtpidbuf = strcopy;
+        strcopy.clear();
+      }
+    }
+
+    if (!strcopy.empty())
+    {
+      fields++;
+      if ((pos = strcopy.find(':')) != string::npos)
+      {
+        strcaidbuf = strcopy.substr(0, pos);
+        strcopy = strcopy.substr(pos + 1);
+      }
+      else
+      {
+        strcaidbuf = strcopy;
+        strcopy.clear();
+      }
+    }
+
+    if (!strcopy.empty())
+    {
+      fields++;
+      if ((pos = strcopy.find(':')) != string::npos)
+      {
+        m_channelData.sid = StringUtils::IntVal(strcopy.substr(0, pos));
+        strcopy = strcopy.substr(pos + 1);
+      }
+      else
+      {
+        m_channelData.sid = StringUtils::IntVal(strcopy);
+        strcopy.clear();
+      }
+    }
+
+    if (!strcopy.empty())
+    {
+      fields++;
+      if ((pos = strcopy.find(':')) != string::npos)
+      {
+        m_channelData.nid = StringUtils::IntVal(strcopy.substr(0, pos));
+        strcopy = strcopy.substr(pos + 1);
+      }
+      else
+      {
+        m_channelData.nid = StringUtils::IntVal(strcopy);
+        strcopy.clear();
+      }
+    }
+
+    if (!strcopy.empty())
+    {
+      fields++;
+      if ((pos = strcopy.find(':')) != string::npos)
+      {
+        m_channelData.tid = StringUtils::IntVal(strcopy.substr(0, pos));
+        strcopy = strcopy.substr(pos + 1);
+      }
+      else
+      {
+        m_channelData.tid = StringUtils::IntVal(strcopy);
+        strcopy.clear();
+      }
+    }
+
+    if (!strcopy.empty())
+    {
+      fields++;
+      if ((pos = strcopy.find(':')) != string::npos)
+      {
+        m_channelData.rid = StringUtils::IntVal(strcopy.substr(0, pos));
+        strcopy = strcopy.substr(pos + 1);
+      }
+      else
+      {
+        m_channelData.rid = StringUtils::IntVal(strcopy);
+        strcopy.clear();
+      }
+    }
+
+    char *namebuf = const_cast<char*>(strnamebuf.c_str());
+    char *sourcebuf = const_cast<char*>(strsourcebuf.c_str());
+    char *parambuf = const_cast<char*>(strparambuf.c_str());
+    char *vpidbuf = const_cast<char*>(strvpidbuf.c_str());
+    char *apidbuf = const_cast<char*>(strapidbuf.c_str());
+    char *tpidbuf = const_cast<char*>(strtpidbuf.c_str());
+    char *caidbuf = const_cast<char*>(strcaidbuf.c_str());
+
     if (fields >= 9)
     {
       if (fields == 9)
@@ -816,14 +1026,6 @@ bool cChannel::DeserialiseConf(const string &str)
       }
 
       m_name = namebuf;
-
-      free(parambuf);
-      free(sourcebuf);
-      free(vpidbuf);
-      free(apidbuf);
-      free(tpidbuf);
-      free(caidbuf);
-      free(namebuf);
 
       if (!GetChannelID().Valid())
       {
