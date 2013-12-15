@@ -157,6 +157,7 @@ set(VDR_TEST_SRCS
 	vdr/utils/test/TestRegExp.cpp
 	vdr/utils/test/TestStringUtils.cpp
 	vdr/utils/test/TestXBMCTinyXML.cpp
+	vdr/utils/test/TestXMLUtils.cpp
 )
 
 set(VDR_MAIN vdr/main.cpp)
