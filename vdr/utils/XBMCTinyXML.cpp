@@ -71,7 +71,7 @@ bool CXBMCTinyXML::LoadFile(const std::string& _filename, TiXmlEncoding encoding
 {
   value = _filename.c_str();
 
-  cFile file;
+  CFile file;
   vector<uint8_t> buffer;
 
   if (!file.LoadFile(value, buffer))
@@ -121,7 +121,7 @@ bool CXBMCTinyXML::SaveFile(const char *_filename) const
 
 bool CXBMCTinyXML::SaveFile(const std::string& filename) const
 {
-  cFile file;
+  CFile file;
   if (file.OpenForWrite(filename, true))
   {
     TiXmlPrinter printer;

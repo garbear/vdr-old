@@ -156,6 +156,7 @@ set(VDR_TEST_SRCS
 	vdr/sources/linux/test/TestDVBSourceParams.cpp
 	vdr/utils/test/TestRegExp.cpp
 	vdr/utils/test/TestStringUtils.cpp
+	vdr/utils/test/TestXBMCTinyXML.cpp
 )
 
 set(VDR_MAIN vdr/main.cpp)
