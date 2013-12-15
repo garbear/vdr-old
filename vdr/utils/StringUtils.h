@@ -143,6 +143,6 @@ public:
    \param remainder The string following the parsed integer, or empty if the integer consumed the entire string
    \return True on success, or false on error (not an int, overflow, etc)
    */
-  static bool IntVal(const std::string &str, long &intVal);
-  static bool IntVal(const std::string &str, long &intVal, std::string &remainder);
+  static long IntVal(const std::string &str, long iDefault = 0);
+  static long IntVal(const std::string &str, std::string &remainder, long iDefault = 0);
 };

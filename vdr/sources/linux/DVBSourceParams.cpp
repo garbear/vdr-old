@@ -245,7 +245,7 @@ string cDvbTransponderParams::Serialize(char type) const
 }
 
 /*!
- * \brief Deserialization helper function
+ * \brief Deserialisation helper function
  * \param str The serialized string beginning with the parameter's value
  * \param paramValue The param whose value is set
  *
@@ -254,8 +254,8 @@ string cDvbTransponderParams::Serialize(char type) const
  */
 void DeserializeDriverValue(string &str, int &paramValue)
 {
-  long temp;
-  if (StringUtils::IntVal(str, temp, str))
+  long temp = StringUtils::IntVal(str, str, -1);
+  if (temp != -1)
     paramValue = temp;
   else
     str = ""; // Don't continue deserializing
@@ -276,8 +276,8 @@ void DeserializeDriverValue(string &str, int &paramValue)
 template <size_t N>
 void DeserializeDriverValue(string &str, int &driverValue, const tDvbParameter (&dvbParamTable)[N])
 {
-  long userValue;
-  if (StringUtils::IntVal(str, userValue, str))
+  long userValue = StringUtils::IntVal(str, str, -1);
+  if (userValue != -1)
   {
     for (unsigned int i = 0; i < N; i++)
     {
