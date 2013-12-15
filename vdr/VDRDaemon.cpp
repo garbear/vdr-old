@@ -41,17 +41,23 @@ cVDRDaemon::~cVDRDaemon()
 bool cVDRDaemon::Init()
 {
   // Create directories
-  cDirectory::Create("special://home/config");
+  cDirectory::Create("special://home/system/");
 
-  // TODO: Implement protocols special:// (handled like XBMC) and vfs:// (or xbmc://)
-  //       (which routes URI through VFS api calls)
+  // TODO: Implement protocols special:// (handled like XBMC)
 
   // Directories:
   // - special://home - Main writable directory, use FHS as a linux app (in which case it maps to e.g. ~/.vdr)
-  //                    or uaddon_data/addon.id/ as an xbmc add-on (in which case it maps to
-  //                    vfs://special%3A%2F%2Fprofile%2Faddon_data%2Faddon.id possibly)
+  //                    or special://profile/addon_data/addon.id as an xbmc add-on (note: this is routed through
+  //                    XBMC's VFS api)
+  //
+  // - special://xbmchome - Routed through XBMC's VFS api as special://home
   //
   // - special://vdr - URI of source directory (special://vdr/system is repo's /system folder)
+  //
+  // - special://*** (everything else) - routed through VFS api calls
+
+  if (!m_channelManager.LoadConf("special://home/system/channels.conf"))
+    m_channelManager.LoadConf("special://vdr/system/channels.conf");
 
   cDvbDevice::Initialize();
 //  cDvbDevice::BondDevices(Setup.DeviceBondings);
@@ -94,6 +100,7 @@ void cVDRDaemon::OnSignal(int signum)
 
 void cVDRDaemon::Cleanup()
 {
+  m_channelManager.Clear();
 }
 
 bool cVDRDaemon::WaitForShutdown(uint32_t iTimeout /* = 0 */)

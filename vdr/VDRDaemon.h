@@ -21,6 +21,7 @@
 #pragma once
 
 #include "SignalHandler.h"
+#include "channels/ChannelManager.h"
 
 #include "platform/threads/mutex.h"
 #include "platform/threads/threads.h"
@@ -74,6 +75,8 @@ private:
    * \brief Perform all clean-up tasks that should be executed upon finish
    */
   void Cleanup();
+
+  cChannelManager m_channelManager;
 
   PLATFORM::CEvent m_exitEvent;
   PLATFORM::CEvent m_sleepEvent;
