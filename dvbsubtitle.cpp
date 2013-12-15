@@ -16,7 +16,7 @@
 #include "device.h"
 #include "libsi/si.h"
 
-#include "vdr/utils/CharSetConverter.h"
+#include "vdr/utils/CharSetConverterVDR.h"
 #include "vdr/utils/UTF8Utils.h"
 
 #include <vector>

@@ -20,7 +20,7 @@
  */
 
 #include "UTF8Utils.h"
-#include "CharSetConverter.h"
+#include "CharSetConverterVDR.h"
 #include "Tools.h"
 
 // Mask Test

@@ -30,7 +30,7 @@
 #include <vdr/tools.h>
 #include <vdr/receiver.h>
 #include <vdr/status.h>
-#include "../../../vdr/utils/CharSetConverter.h"
+#include "utils/CharSetConverterVDR.h"
 
 #include "config.h"
 #include "cxsocket.h"

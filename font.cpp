@@ -22,7 +22,7 @@
 #include "tools.h"
 
 #ifdef BIDI
-  #include "vdr/utils/CharSetConverter.h"
+  #include "vdr/utils/CharSetConverterVDR.h"
 #endif
 #include "vdr/utils/UTF8Utils.h"
 

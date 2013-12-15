@@ -43,7 +43,7 @@
 #include "videodir.h"
 
 #include "vdr/utils/CalendarUtils.h"
-#include "vdr/utils/CharSetConverter.h"
+#include "vdr/utils/CharSetConverterVDR.h"
 
 #include <string>
 

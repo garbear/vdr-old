@@ -18,7 +18,7 @@
 #include "status.h"
 
 #include "vdr/utils/CalendarUtils.h"
-#include "vdr/utils/CharSetConverter.h"
+#include "vdr/utils/CharSetConverterVDR.h"
 #include "vdr/utils/UTF8Utils.h"
 
 using namespace std;

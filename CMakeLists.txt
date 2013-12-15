@@ -90,6 +90,7 @@ set(VDR_SRCS
 	vdr/sources/Source.cpp
 	vdr/sources/linux/DVBSourceParams.cpp
 	vdr/utils/CharsetConverter.cpp
+	vdr/utils/CharSetConverterVDR.cpp
 	vdr/utils/CharsetDetection.cpp
 	vdr/utils/I18N.cpp
 	vdr/utils/Observer.cpp
@@ -130,6 +131,7 @@ set(VDR_TEST_SRCS
 	vdr/sources/Source.cpp
 	vdr/sources/linux/test/TestDVBSourceParams.cpp
 	vdr/utils/CharsetConverter.cpp
+	vdr/utils/CharSetConverterVDR.cpp
 	vdr/utils/CharsetDetection.cpp
 	vdr/utils/RegExp.cpp
 	vdr/utils/StringUtils.cpp
