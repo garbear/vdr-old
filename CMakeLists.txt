@@ -113,6 +113,9 @@ set(VDR_SRCS
 	vdr/utils/XMLUtils.cpp
 	vdr/utils/UTF8Utils.cpp
 	vdr/utils/Status.cpp
+	vdr/utils/url/URL.cpp
+	vdr/utils/url/UrlOptions.cpp
+	vdr/utils/url/URLUtils.cpp
 	thread.cpp
 )
 
@@ -145,6 +148,9 @@ set(VDR_SRCS2 # Sources for testing
 	vdr/utils/XMLUtils.cpp
 	vdr/utils/UTF8Utils.cpp
 	vdr/utils/Status.cpp
+	vdr/utils/url/URL.cpp
+	vdr/utils/url/UrlOptions.cpp
+	vdr/utils/url/URLUtils.cpp
 	thread.cpp
 )
 
@@ -158,6 +164,9 @@ set(VDR_TEST_SRCS
 	vdr/utils/test/TestStringUtils.cpp
 	vdr/utils/test/TestXBMCTinyXML.cpp
 	vdr/utils/test/TestXMLUtils.cpp
+	vdr/utils/url/test/TestURL.cpp
+	vdr/utils/url/test/TestUrlOptions.cpp
+	vdr/utils/url/test/TestURLUtils.cpp
 )
 
 set(VDR_MAIN vdr/main.cpp)
