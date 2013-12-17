@@ -47,6 +47,15 @@ bool CFilesystem::CreateDirectory(const std::string& strPath)
 #endif
 }
 
+bool CalculateDiskSpace(const std::string &strPath, unsigned int &size, unsigned int &used, unsigned int &free)
+{
+#ifdef TARGET_XBMC
+  //TODO
+#else
+  return cDirectory::CalculateDiskSpace(strPath, size, used, free);
+#endif
+}
+
 bool CFilesystem::FileExists(const std::string& strPath)
 {
 #ifdef TARGET_XBMC
