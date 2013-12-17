@@ -85,6 +85,12 @@ public:
 
   void AddTransponders(cScanList* list) const;
 
+  //XXX temp
+  typedef std::vector<cChannel*>::const_iterator CHANNELS_CITR;
+  CHANNELS_CITR Iterator(void) const { return m_channels.begin(); }
+  bool HasNext(CHANNELS_CITR& it) const { return it != m_channels.end(); }
+  void Next(CHANNELS_CITR& it) const { ++it; }
+
 private:
   std::vector<cChannel*> m_channels;
   int             maxNumber;
