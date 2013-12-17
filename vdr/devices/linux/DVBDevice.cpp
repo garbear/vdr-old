@@ -34,8 +34,7 @@
 #include "../../devices/subsystems/DeviceSPUSubsystem.h"
 #include "../../devices/subsystems/DeviceTrackSubsystem.h"
 #include "../../devices/subsystems/DeviceVideoFormatSubsystem.h"
-#include "filesystem/Directory.h"
-#include "filesystem/File.h"
+#include "filesystem/Filesystem.h"
 #include "filesystem/ReadDir.h"
 #include "sources/linux/DVBSourceParams.h"
 #include "../../utils/StringUtils.h"
@@ -404,8 +403,7 @@ int cDvbDevice::DvbOpen(const char *name, unsigned int adapter, unsigned int fro
 
 bool cDvbDevice::Exists(unsigned int adapter, unsigned int frontend)
 {
-  cFile frontendNode;
-  return frontendNode.Open(DvbName(DEV_DVB_FRONTEND, adapter, frontend));
+  return CFilesystem::Get().FileExists(DvbName(DEV_DVB_FRONTEND, adapter, frontend));
 }
 
 bool cDvbDevice::Probe(unsigned int adapter, unsigned int frontend)
