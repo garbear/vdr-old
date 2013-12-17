@@ -14,7 +14,31 @@
 #include "Config.h"
 #include "devices/Device.h"
 
-class cScanList;
+class cChannel;
+class cChannels;
+class cTransponderList;
+
+class cScanData : public cListObject {
+private:
+  cChannel* m_channel;
+public:
+  cScanData(const cChannel* channel);
+  virtual ~cScanData(void);
+
+  virtual int Compare(const cListObject &ListObject) const;
+  int Source(void) const;
+  int Transponder(void) const;
+  const cChannel *GetChannel(void) const { return m_channel; }
+};
+
+class cScanList : public cList<cScanData>
+{
+public:
+  void AddTransponders(const cChannels& Channels);
+  void AddTransponders(const cTransponderList& Channels);
+  void AddTransponder(const cChannel *Channel);
+};
+
 class cTransponderList;
 
 class cEITScanner {

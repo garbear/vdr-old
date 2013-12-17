@@ -17,20 +17,24 @@
 
 // --- cScanData -------------------------------------------------------------
 
-class cScanData : public cListObject {
-private:
-  cChannel channel;
-public:
-  cScanData(const cChannel *Channel);
-  virtual int Compare(const cListObject &ListObject) const;
-  int Source(void) const { return channel.Source(); }
-  int Transponder(void) const { return channel.Transponder(); }
-  const cChannel *GetChannel(void) const { return &channel; }
-  };
-
-cScanData::cScanData(const cChannel *Channel)
+cScanData::cScanData(const cChannel* channel)
 {
-  channel = *Channel;
+  m_channel = new cChannel(*channel);
+}
+
+cScanData::~cScanData(void)
+{
+  delete m_channel;
+}
+
+int cScanData::Source(void) const
+{
+  return m_channel->Source();
+}
+
+int cScanData::Transponder(void) const
+{
+  return m_channel->Transponder();
 }
 
 int cScanData::Compare(const cListObject &ListObject) const
@@ -44,16 +48,14 @@ int cScanData::Compare(const cListObject &ListObject) const
 
 // --- cScanList -------------------------------------------------------------
 
-class cScanList : public cList<cScanData> {
-public:
-  void AddTransponders(cList<cChannel> *Channels);
-  void AddTransponder(const cChannel *Channel);
-  };
-
-void cScanList::AddTransponders(cList<cChannel> *Channels)
+void cScanList::AddTransponders(const cTransponderList& Channels)
 {
-  for (cChannel *ch = Channels->First(); ch; ch = Channels->Next(ch))
-      AddTransponder(ch);
+  //TODO convert to std::vector
+}
+
+void cScanList::AddTransponders(const cChannels& channels)
+{
+  channels.AddTransponders(this);
   Sort();
 }
 
@@ -134,11 +136,11 @@ void cEITScanner::Process(void)
            if (!scanList) {
               scanList = new cScanList;
               if (transponderList) {
-                 scanList->AddTransponders(transponderList);
+                 scanList->AddTransponders(*transponderList);
                  delete transponderList;
                  transponderList = NULL;
                  }
-              scanList->AddTransponders(&Channels);
+              scanList->AddTransponders(Channels);
               }
            bool AnyDeviceSwitched = false;
            for (int i = 0; i < cDeviceManager::Get().NumDevices(); i++) {
