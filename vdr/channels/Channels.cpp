@@ -25,6 +25,7 @@
 #include "devices/subsystems/DeviceChannelSubsystem.h"
 #include "utils/StringUtils.h"
 #include "utils/UTF8Utils.h"
+#include "dvb/EITScan.h"
 
 #include <algorithm>
 #include <assert.h>
@@ -398,7 +399,7 @@ int cChannels::MaxChannelNameLength()
     {
       cChannel *channel = *itChannel;
       if (!channel->GroupSep())
-        maxChannelNameLength = std::max(cUtf8Utils::Utf8StrLen(channel->Name().c_str()), maxChannelNameLength);
+        maxChannelNameLength = std::max(cUtf8Utils::Utf8StrLen(channel->Name().c_str()), (unsigned)maxChannelNameLength);
     }
   }
   return maxChannelNameLength;
@@ -412,7 +413,7 @@ int cChannels::MaxShortChannelNameLength()
     {
       cChannel *channel = *itChannel;
       if (!channel->GroupSep())
-        maxShortChannelNameLength = std::max(cUtf8Utils::Utf8StrLen(channel->ShortName(true).c_str()), maxShortChannelNameLength);
+        maxShortChannelNameLength = std::max(cUtf8Utils::Utf8StrLen(channel->ShortName(true).c_str()), (unsigned)maxShortChannelNameLength);
     }
   }
   return maxShortChannelNameLength;
@@ -461,4 +462,10 @@ string ChannelString(const cChannel *Channel, int Number)
   else
     retval = StringUtils::Format("%s", tr("*** Invalid Channel ***"));
   return retval;
+}
+
+void cChannels::AddTransponders(cScanList* list) const
+{
+  for (std::vector<cChannel*>::const_iterator it = m_channels.begin(); it != m_channels.end(); it++)
+    list->AddTransponder(*it);
 }

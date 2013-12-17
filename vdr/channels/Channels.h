@@ -29,6 +29,8 @@
 #include <string>
 #include <vector>
 
+class cScanList;
+
 class cChannels : public cRwLock, public Observer
 {
 public:
@@ -80,6 +82,8 @@ public:
 
   // Inherited from cConfig<cChannel>
   const std::string &FileName() { return m_fileName; }
+
+  void AddTransponders(cScanList* list) const;
 
 private:
   std::vector<cChannel*> m_channels;
