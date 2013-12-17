@@ -1328,33 +1328,42 @@ bool cSchedules::Dump(FILE *f, const char *Prefix, eDumpMode DumpMode, time_t At
   return false;
 }
 
-bool cSchedules::Read(FILE *f)
+bool
+cSchedules::Read(FILE *f)
 {
   cSchedulesLock SchedulesLock(true, 1000);
-  cSchedules *s = (cSchedules *)Schedules(SchedulesLock);
-  if (s) {
-     bool OwnFile = f == NULL;
-     if (OwnFile) {
-        if (epgDataFileName && access(epgDataFileName, R_OK) == 0) {
-           dsyslog("reading EPG data from %s", epgDataFileName);
-           if ((f = fopen(epgDataFileName, "r")) == NULL) {
-              LOG_ERROR;
-              return false;
-              }
-           }
-        else
-           return false;
+  cSchedules *s = (cSchedules *) Schedules(SchedulesLock);
+  if (s)
+  {
+    bool OwnFile = f == NULL;
+    if (OwnFile)
+    {
+      if (epgDataFileName && access(epgDataFileName, R_OK) == 0)
+      {
+        dsyslog("reading EPG data from %s", epgDataFileName);
+        if ((f = fopen(epgDataFileName, "r")) == NULL)
+        {
+          LOG_ERROR;
+          return false;
         }
-     bool result = cSchedule::Read(f, s);
-     if (OwnFile)
-        fclose(f);
-     if (result) {
-        // Initialize the channels' schedule pointers, so that the first WhatsOn menu will come up faster:
-        for (cChannel *Channel = Channels.First(); Channel; Channel = Channels.Next(Channel))
-            s->GetSchedule(Channel);
-        }
-     return result;
-     }
+      }
+      else
+        return false;
+    }
+    bool result = cSchedule::Read(f, s);
+    if (OwnFile)
+      fclose(f);
+    if (result)
+    {
+      // Initialize the channels' schedule pointers, so that the first WhatsOn menu will come up faster:
+      for (cChannels::CHANNELS_CITR it = Channels.Iterator(); Channels.HasNext(it); Channels.Next(it))
+      {
+        cChannel *Channel = (*it);
+        s->GetSchedule(Channel);
+      }
+    }
+    return result;
+  }
   return false;
 }
 
