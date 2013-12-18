@@ -22,7 +22,7 @@
 #include "I18N.h"
 #include "thread.h"
 
-#include "vdr/filesystem/Filesystem.h"
+#include "vdr/filesystem/Directory.h"
 #include "vdr/filesystem/ReadDir.h"
 #include "vdr/utils/UTF8Utils.h"
 
@@ -548,7 +548,7 @@ bool SpinUpDisk(const char *FileName)
 {
   for (int n = 0; n < 10; n++) {
       cString buf;
-      if (CFilesystem::Get().CanWrite(FileName))
+      if (cDirectory::CanWrite(FileName))
          buf = cString::sprintf("%s/vdr-%06d", *FileName ? FileName : ".", n);
       else
          buf = cString::sprintf("%s.vdr-%06d", FileName, n);
@@ -1237,7 +1237,7 @@ cLockFile::cLockFile(const char *Directory)
 {
   fileName = NULL;
   f = -1;
-  if (CFilesystem::Get().CanWrite(Directory))
+  if (cDirectory::CanWrite(Directory))
      fileName = strdup(AddDirectory(Directory, LOCKFILENAME));
 }
 

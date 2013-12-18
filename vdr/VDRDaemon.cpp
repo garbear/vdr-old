@@ -41,7 +41,7 @@ cVDRDaemon::~cVDRDaemon()
 bool cVDRDaemon::Init()
 {
   // Create directories
-  //cDirectory::Create("special://home/config");
+  cDirectory::Create("special://home/config");
 
   // TODO: Implement protocols special:// (handled like XBMC) and vfs:// (or xbmc://)
   //       (which routes URI through VFS api calls)

@@ -22,7 +22,7 @@
  */
 
 #include "Directory.h"
-#include "VFSDirectory.h"
+#include "xbmc/VFSDirectory.h"
 
 #include <auto_ptr.h>
 #include <sys/stat.h>

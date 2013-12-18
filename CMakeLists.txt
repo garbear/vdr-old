@@ -73,15 +73,14 @@ set(VDR_SRCS
 	vdr/dvb/SDT.cpp
 	vdr/dvb/Sections.cpp
 	vdr/epg/EPG.cpp
-	vdr/filesystem/Filesystem.cpp
-	vdr/filesystem/native/Directory.cpp
-	vdr/filesystem/native/DirectoryFetchJob.cpp
+	vdr/filesystem/Directory.cpp
+	vdr/filesystem/DirectoryFetchJob.cpp
 	vdr/filesystem/File.cpp
 	vdr/filesystem/native/HDFile.cpp
-	vdr/filesystem/native/IDirectory.cpp
+	vdr/filesystem/IDirectory.cpp
 	vdr/filesystem/ReadDir.cpp
-	vdr/filesystem/native/VFSDirectory.cpp
-	vdr/filesystem/native/VFSFile.cpp
+	vdr/filesystem/xbmc/VFSDirectory.cpp
+	vdr/filesystem/xbmc/VFSFile.cpp
 	vdr/recordings/Recorder.cpp
 	vdr/recordings/Recording.cpp
 	vdr/recordings/RecordingCutter.cpp
@@ -121,14 +120,13 @@ set(VDR_TEST_SRCS
 	vdr/channels/test/TestChannel.cpp
 	vdr/channels/test/TestChannelID.cpp
 	#vdr/channels/test/TestChannels.cpp
-	vdr/filesystem/native/Directory.cpp
-	vdr/filesystem/native/DirectoryFetchJob.cpp
+	vdr/filesystem/DirectoryFetchJob.cpp
 	vdr/filesystem/File.cpp
 	vdr/filesystem/native/HDFile.cpp
-	vdr/filesystem/native/IDirectory.cpp
+	vdr/filesystem/IDirectory.cpp
 	vdr/filesystem/ReadDir.cpp
-	#vdr/filesystem/native/VFSDirectory.cpp
-	#vdr/filesystem/native/VFSFile.cpp
+	#vdr/filesystem/xbmc/VFSDirectory.cpp
+	#vdr/filesystem/xbmc/VFSFile.cpp
 	vdr/sources/Source.cpp
 	vdr/sources/linux/test/TestDVBSourceParams.cpp
 	vdr/utils/CharsetConverter.cpp

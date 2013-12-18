@@ -24,8 +24,8 @@
  */
 
 #include "File.h"
-#include "HDFile.h"
-#include "VFSFile.h"
+#include "native/HDFile.h"
+#include "xbmc/VFSFile.h"
 
 #include <auto_ptr.h>
 

@@ -8,7 +8,7 @@
  */
 
 #include "Recorder.h"
-#include "filesystem/Filesystem.h"
+#include "filesystem/Directory.h"
 #include "shutdown.h"
 
 #define RECORDERBUFSIZE  (MEGABYTE(20) / TS_SIZE * TS_SIZE) // multiple of TS_SIZE
@@ -80,7 +80,7 @@ bool cRecorder::RunningLowOnDiskSpace(void)
 {
   if (time(NULL) > lastDiskSpaceCheck + DISKCHECKINTERVAL) {
      unsigned int total, used, free;
-     CFilesystem::Get().CalculateDiskSpace(fileName->Name(), total, used, free);
+     cDirectory::CalculateDiskSpace(fileName->Name(), total, used, free);
      int Free = free;
      lastDiskSpaceCheck = time(NULL);
      if (Free < MINFREEDISKSPACE) {
