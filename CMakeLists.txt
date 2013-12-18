@@ -76,7 +76,7 @@ set(VDR_SRCS
 	vdr/filesystem/Filesystem.cpp
 	vdr/filesystem/native/Directory.cpp
 	vdr/filesystem/native/DirectoryFetchJob.cpp
-	vdr/filesystem/native/File.cpp
+	vdr/filesystem/File.cpp
 	vdr/filesystem/native/HDFile.cpp
 	vdr/filesystem/native/IDirectory.cpp
 	vdr/filesystem/ReadDir.cpp
@@ -123,7 +123,7 @@ set(VDR_TEST_SRCS
 	#vdr/channels/test/TestChannels.cpp
 	vdr/filesystem/native/Directory.cpp
 	vdr/filesystem/native/DirectoryFetchJob.cpp
-	vdr/filesystem/native/File.cpp
+	vdr/filesystem/File.cpp
 	vdr/filesystem/native/HDFile.cpp
 	vdr/filesystem/native/IDirectory.cpp
 	vdr/filesystem/ReadDir.cpp
