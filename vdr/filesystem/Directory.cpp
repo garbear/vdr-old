@@ -22,7 +22,12 @@
  */
 
 #include "Directory.h"
+
+#ifdef TARGET_XBMC
 #include "xbmc/VFSDirectory.h"
+#else
+//TODO
+#endif
 
 #include <auto_ptr.h>
 #include <sys/stat.h>
@@ -30,8 +35,6 @@
 #include <unistd.h>
 
 using namespace std;
-
-//#define TARGET_XBMC
 
 IDirectory *cDirectory::CreateLoader(const std::string &strPath)
 {

@@ -24,8 +24,12 @@
  */
 
 #include "File.h"
-#include "native/HDFile.h"
+
+#ifdef TARGET_XBMC
 #include "xbmc/VFSFile.h"
+#else
+#include "native/HDFile.h"
+#endif
 
 #include <auto_ptr.h>
 

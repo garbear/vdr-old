@@ -30,6 +30,15 @@ set(ANDROID_HELPER_SRCS
 )
 endif("${IS_ANDROID}" STREQUAL "")
 
+set(VDR_FS_SRC_NATIVE
+	vdr/filesystem/native/HDFile.cpp
+)
+
+set(VDR_FS_SRC_XBMC
+	vdr/filesystem/xbmc/VFSDirectory.cpp
+	vdr/filesystem/xbmc/VFSFile.cpp
+)
+
 set(VDR_SRCS
 	vdr/Config.cpp
 	vdr/SignalHandler.cpp
@@ -76,11 +85,8 @@ set(VDR_SRCS
 	vdr/filesystem/Directory.cpp
 	vdr/filesystem/DirectoryFetchJob.cpp
 	vdr/filesystem/File.cpp
-	vdr/filesystem/native/HDFile.cpp
 	vdr/filesystem/IDirectory.cpp
 	vdr/filesystem/ReadDir.cpp
-	vdr/filesystem/xbmc/VFSDirectory.cpp
-	vdr/filesystem/xbmc/VFSFile.cpp
 	vdr/recordings/Recorder.cpp
 	vdr/recordings/Recording.cpp
 	vdr/recordings/RecordingCutter.cpp
@@ -122,7 +128,6 @@ set(VDR_TEST_SRCS
 	#vdr/channels/test/TestChannels.cpp
 	vdr/filesystem/DirectoryFetchJob.cpp
 	vdr/filesystem/File.cpp
-	vdr/filesystem/native/HDFile.cpp
 	vdr/filesystem/IDirectory.cpp
 	vdr/filesystem/ReadDir.cpp
 	#vdr/filesystem/xbmc/VFSDirectory.cpp
@@ -163,15 +168,16 @@ if(HAVE_PTHREAD)
 endif()
 
 #set(VDR_EXECUTABLE vdr.bin)
-#add_executable(${VDR_EXECUTABLE} ${VDR_MAIN} ${VDR_SRCS})
+#add_executable(${VDR_EXECUTABLE} ${VDR_MAIN} ${VDR_SRCS} ${VDR_FS_SRC_NATIVE} ${ANDROID_HELPER_SRCS})
 #target_link_libraries(${VDR_EXECUTABLE} ${LIBS} ${LIBRT} ${LIBPTHREAD})
 
 set(VDR_LIBRARY vdr)
-add_library(${VDR_LIBRARY} SHARED ${VDR_ADDON} ${VDR_SRCS} ${ANDROID_HELPER_SRCS})
+add_library(${VDR_LIBRARY} SHARED ${VDR_ADDON} ${VDR_SRCS} ${VDR_FS_SRC_XBMC} ${ANDROID_HELPER_SRCS})
+set_target_properties(${VDR_LIBRARY} PROPERTIES DEFINE_SYMBOL TARGET_XBMC)
 target_link_libraries(${VDR_LIBRARY} ${LIBS} ${LIBRT} ${LIBPTHREAD})
 
 set(VDR_TEST_EXECUTABLE test-vdr.bin)
-add_executable(${VDR_TEST_EXECUTABLE} ${VDR_SRCS2} ${VDR_TEST_SRCS})
+add_executable(${VDR_TEST_EXECUTABLE} ${VDR_SRCS2} ${VDR_TEST_SRCS} ${VDR_FS_SRC_NATIVE})
 target_link_libraries(${VDR_TEST_EXECUTABLE} gtest_main ${LIBS} ${LIBRT} ${LIBPTHREAD})
 
 add_test(
