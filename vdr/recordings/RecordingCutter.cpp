@@ -13,7 +13,7 @@
 #include "devices/Remux.h"
 #include "videodir.h"
 
-#include "vdr/filesystem/Directory.h"
+#include "vdr/filesystem/Filesystem.h"
 
 using namespace PLATFORM;
 
@@ -749,7 +749,7 @@ bool cCutter::Ended(void)
 
 bool CutRecording(const char *FileName)
 {
-  if (cDirectory::CanWrite(FileName)) {
+  if (CFilesystem::Get().CanWrite(FileName)) {
      cRecording Recording(FileName);
      if (Recording.Name()) {
         cMarks Marks;
