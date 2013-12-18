@@ -19,7 +19,7 @@
  */
 
 #include "Settings.h"
-#include "filesystem/Directory.h"
+#include "filesystem/Filesystem.h"
 #include "Config.h"
 //#include "cutter.h"
 #include "devices/Device.h"
@@ -520,7 +520,7 @@ bool cSettings::LoadFromCmdLine(int argc, char *argv[])
   }
 
   // Check the video directory:
-  if (!cDirectory::CanWrite(m_VideoDirectory))
+  if (!CFilesystem::Get().CanWrite(m_VideoDirectory))
   {
     fprintf(stderr, "vdr: can't access video directory %s\n", m_VideoDirectory.c_str());
     return false;
