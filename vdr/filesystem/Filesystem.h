@@ -29,6 +29,7 @@ public:
 
   bool CreateDirectory(const std::string& strPath);
   bool CalculateDiskSpace(const std::string &strPath, unsigned int &size, unsigned int &used, unsigned int &free);
+  bool CanWrite(const std::string &strPath);
 
   bool FileExists(const std::string& strPath);
 

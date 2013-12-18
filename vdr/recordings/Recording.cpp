@@ -28,7 +28,7 @@
 #include "videodir.h"
 #include "filesystem/ReadDir.h"
 
-#include "vdr/filesystem/Directory.h"
+#include "vdr/filesystem/Filesystem.h"
 #include "vdr/utils/UTF8Utils.h"
 
 #include <algorithm>
@@ -2172,7 +2172,7 @@ int cIndexFile::GetLength(const char *FileName, bool IsPesRecording)
 
 bool GenerateIndex(const char *FileName)
 {
-  if (cDirectory::CanWrite(FileName)) {
+  if (CFilesystem::Get().CanWrite(FileName)) {
      cRecording Recording(FileName);
      if (Recording.Name()) {
         if (!Recording.IsPesRecording()) {
