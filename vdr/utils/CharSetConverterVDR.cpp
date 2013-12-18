@@ -19,7 +19,7 @@
  *
  */
 
-#include "CharSetConverter.h"
+#include "CharSetConverterVDR.h"
 #include "UTF8Utils.h"
 #include "Tools.h"
 
