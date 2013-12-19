@@ -98,6 +98,7 @@ set(VDR_SRCS
 	vdr/sources/ISourceParams.cpp
 	vdr/sources/Source.cpp
 	vdr/sources/linux/DVBSourceParams.cpp
+	vdr/utils/CalendarUtils.cpp
 	vdr/utils/CharsetConverter.cpp
 	vdr/utils/CharSetConverterVDR.cpp
 	vdr/utils/CharsetDetection.cpp
@@ -138,6 +139,7 @@ set(VDR_TEST_SRCS
 	#vdr/filesystem/xbmc/VFSFile.cpp
 	vdr/sources/Source.cpp
 	vdr/sources/linux/test/TestDVBSourceParams.cpp
+	vdr/utils/CalendarUtils.cpp
 	vdr/utils/CharsetConverter.cpp
 	vdr/utils/CharSetConverterVDR.cpp
 	vdr/utils/CharsetDetection.cpp

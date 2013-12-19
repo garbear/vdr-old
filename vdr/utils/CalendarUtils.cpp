@@ -22,7 +22,7 @@
 #include "CalendarUtils.h"
 #include "StringUtils.h"
 #include "UTF8Utils.h"
-#include "../../i18n.h"
+#include "I18N.h"
 
 using namespace std;
 
