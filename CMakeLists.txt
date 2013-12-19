@@ -8,6 +8,7 @@ ADD_SUBDIRECTORY(lib/gtest)
 enable_testing()
 
 ADD_SUBDIRECTORY(lib/pcre)
+ADD_SUBDIRECTORY(lib/libsi)
 
 SET(IS_ANDROID $ENV{ANDROID})
 
@@ -18,6 +19,7 @@ include_directories(${CMAKE_SOURCE_DIR}/vdr)
 include_directories(${CMAKE_SOURCE_DIR}/lib)
 include_directories(${gtest_SOURCE_DIR}/include)
 include_directories(${CMAKE_SOURCE_DIR}/lib/pcre)
+include_directories(${CMAKE_SOURCE_DIR}/lib/libsi)
 
 if ("${IS_ANDROID}" STREQUAL "")
 set(ANDROID_HELPER_SRCS "")
@@ -155,6 +157,7 @@ CHECK_LIBRARY_EXISTS(fribidi fribidi_log2vis "fribidi/fribidi.h" HAVE_FRIBIDI)
 
 set(LIBS
 	pcre
+	libsi
 	fribidi
 	tinyxml
 )
