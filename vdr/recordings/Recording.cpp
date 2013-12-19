@@ -25,7 +25,7 @@
 #include "devices/Remux.h"
 #include "utils/Ringbuffer.h"
 #include "utils/Tools.h"
-#include "videodir.h"
+#include "filesystem/Videodir.h"
 #include "filesystem/ReadDir.h"
 
 #include "vdr/filesystem/Directory.h"

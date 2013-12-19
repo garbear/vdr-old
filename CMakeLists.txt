@@ -90,6 +90,7 @@ set(VDR_SRCS
 	vdr/filesystem/File.cpp
 	vdr/filesystem/IDirectory.cpp
 	vdr/filesystem/ReadDir.cpp
+	vdr/filesystem/Videodir.cpp
 	vdr/recordings/Recorder.cpp
 	vdr/recordings/Recording.cpp
 	vdr/recordings/RecordingCutter.cpp
@@ -137,6 +138,7 @@ set(VDR_TEST_SRCS
 	vdr/filesystem/ReadDir.cpp
 	#vdr/filesystem/xbmc/VFSDirectory.cpp
 	#vdr/filesystem/xbmc/VFSFile.cpp
+	vdr/filesystem/Videodir.cpp
 	vdr/sources/Source.cpp
 	vdr/sources/linux/test/TestDVBSourceParams.cpp
 	vdr/utils/CalendarUtils.cpp

@@ -7,7 +7,7 @@
  * $Id: videodir.c 2.4 2012/09/30 12:06:33 kls Exp $
  */
 
-#include "videodir.h"
+#include "Videodir.h"
 #include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -18,9 +18,9 @@
 #include <unistd.h>
 #include "recordings/Recording.h"
 #include "utils/Tools.h"
-#include "vdr/filesystem/Directory.h"
-#include "vdr/filesystem/File.h"
-#include "vdr/settings/Settings.h"
+#include "Directory.h"
+#include "File.h"
+#include "settings/Settings.h"
 
 #include <string>
 

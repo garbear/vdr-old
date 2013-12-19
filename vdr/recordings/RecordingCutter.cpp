@@ -11,9 +11,8 @@
 //#include "menu.h"
 #include "Recording.h"
 #include "devices/Remux.h"
-#include "videodir.h"
-
-#include "vdr/filesystem/Directory.h"
+#include "filesystem/Videodir.h"
+#include "filesystem/Directory.h"
 
 using namespace PLATFORM;
 
