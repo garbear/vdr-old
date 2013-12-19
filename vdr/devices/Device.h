@@ -43,7 +43,6 @@ class cDeviceTrackSubsystem;
 class cDeviceVideoFormatSubsystem;
 
 class cDvbSubtitleConverter;
-class cLiveSubtitle;
 
 struct cSubsystems
 {
@@ -133,7 +132,6 @@ private:
 
 class cPlayer;
 class cReceiver;
-class cLiveSubtitle;
 
 class cDevice : public cThread
 {
@@ -144,7 +142,6 @@ public:
   void Cancel(int WaitSeconds = 0) { return cThread::Cancel(WaitSeconds); }
 
 
-  //friend class cLiveSubtitle;
   //friend class cDeviceHook;
   //friend class cDeviceSubtitle;
 
@@ -240,6 +237,4 @@ private:
 
   unsigned int m_number; // Strictly positive
   unsigned int m_cardIndex;
-public: // TODO
-  cLiveSubtitle         *m_liveSubtitle; // TODO: Should this be in SPU subsystem?
 };

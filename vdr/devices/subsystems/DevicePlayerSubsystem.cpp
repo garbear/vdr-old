@@ -295,7 +295,6 @@ bool cDevicePlayerSubsystem::AttachPlayer(cPlayer *player)
   {
     if (m_player)
       Detach(m_player);
-    SAFE_DELETE(Device()->m_liveSubtitle);
     m_patPmtParser.Reset();
     m_player = player;
     if (!Transferring())

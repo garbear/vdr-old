@@ -156,10 +156,7 @@ bool cDevice::IsPrimaryDevice() const
 
 void cDevice::MakePrimaryDevice(bool bOn)
 {
-  if (!bOn)
-  {
-    SAFE_DELETE(m_liveSubtitle);
-  }
+  // XXX do we need this?
 }
 
 void cDevice::Action()

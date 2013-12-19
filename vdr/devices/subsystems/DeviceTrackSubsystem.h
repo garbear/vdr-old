@@ -55,17 +55,6 @@ struct tTrackId
   std::string strDescription;   // something like "Dolby Digital 5.1"
 };
 
-class cLiveSubtitle : public cReceiver
-{
-public:
-  cLiveSubtitle(int SPid) { AddPid(SPid); }
-  virtual ~cLiveSubtitle() { cReceiver::Detach(); }
-
-protected:
-  virtual void Receive(uchar *data, int length);
-  virtual void Receive(const std::vector<uchar> &data);
-};
-
 class cDeviceTrackSubsystem : protected cDeviceSubsystem
 {
 public:

@@ -24,8 +24,6 @@
 
 #include <stddef.h>
 
-class cLiveSubtitle;
-class cDvbSubtitleConverter;
 class cSpuDecoder;
 
 class cDeviceSPUSubsystem : protected cDeviceSubsystem

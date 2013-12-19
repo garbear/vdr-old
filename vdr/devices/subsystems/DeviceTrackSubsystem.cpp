@@ -32,18 +32,6 @@
 
 using namespace std;
 
-void cLiveSubtitle::Receive(uchar *data, int length)
-{
-  vector<uchar> vecData(data, data + length);
-  Receive(vecData);
-}
-
-void cLiveSubtitle::Receive(const vector<uchar> &data)
-{
-  if (cDeviceManager::Get().PrimaryDevice())
-    cDeviceManager::Get().PrimaryDevice()->Player()->PlayTs(data);
-}
-
 cDeviceTrackSubsystem::cDeviceTrackSubsystem(cDevice *device)
  : cDeviceSubsystem(device),
    m_bKeepTracks(false), // used in ClrAvailableTracks()!
@@ -166,7 +154,6 @@ bool cDeviceTrackSubsystem::SetCurrentSubtitleTrack(eTrackType type, bool bManua
   {
     m_currentSubtitleTrack = type;
     m_bAutoSelectPreferredSubtitleLanguage = !bManual;
-    DELETENULL(Device()->m_liveSubtitle);
     if (Player()->m_player)
     {
       tTrackId TrackId;
@@ -175,15 +162,6 @@ bool cDeviceTrackSubsystem::SetCurrentSubtitleTrack(eTrackType type, bool bManua
     }
     else
       SetSubtitleTrackDevice(m_currentSubtitleTrack);
-    if (m_currentSubtitleTrack != ttNone && !Player()->Replaying() && !Player()->Transferring())
-    {
-      tTrackId trackId;
-      if (GetTrack(m_currentSubtitleTrack, trackId) && trackId.id)
-      {
-        Device()->m_liveSubtitle = new cLiveSubtitle(trackId.id);
-        Receiver()->AttachReceiver(Device()->m_liveSubtitle);
-      }
-    }
     return true;
   }
   return false;

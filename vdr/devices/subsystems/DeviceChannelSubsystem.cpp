@@ -135,7 +135,6 @@ eSetChannelResult cDeviceChannelSubsystem::SetChannel(const cChannel &channel, b
   if (bLiveView)
   {
     Player()->StopReplay();
-    SAFE_DELETE(Device()->m_liveSubtitle);
   }
 
   cDevice *device = (bLiveView && Device()->IsPrimaryDevice()) ? cDeviceManager::Get().GetDevice(channel, LIVEPRIORITY, true) : Device();
