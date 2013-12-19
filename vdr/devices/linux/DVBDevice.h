@@ -51,6 +51,12 @@ class cDvbSectionFilterSubsystem;
 
 /// The cDvbDevice implements a DVB device which can be accessed through the Linux DVB driver API.
 
+typedef struct
+{
+  unsigned long iAdapter;
+  unsigned long iFrontend;
+} linux_dvb_device_t;
+
 class cDvbDevice : public cDevice
 {
 public:
@@ -134,6 +140,9 @@ public: // TODO
   static int DvbOpen(const char *name, unsigned int adapter, unsigned int frontend, int mode, bool bReportError = false);
 
 private:
+  static void FindAdapters(std::vector<linux_dvb_device_t>& nodes);
+  static size_t InitialiseAdapters(std::vector<linux_dvb_device_t>& nodes);
+
   const cSubsystems &CreateSubsystems();
 
   /*!
