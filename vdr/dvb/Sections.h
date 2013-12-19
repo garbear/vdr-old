@@ -11,7 +11,7 @@
 #define __SECTIONS_H
 
 #include <time.h>
-#include "filter.h"
+#include "Filter.h"
 #include "thread.h"
 #include "utils/Tools.h"
 

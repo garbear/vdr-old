@@ -10,7 +10,7 @@
 #ifndef __EIT_H
 #define __EIT_H
 
-#include "filter.h"
+#include "Filter.h"
 
 class cEitFilter : public cFilter {
 private:

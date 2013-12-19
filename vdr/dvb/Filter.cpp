@@ -7,8 +7,8 @@
  * $Id: filter.c 2.0 2004/01/11 13:31:34 kls Exp $
  */
 
-#include "filter.h"
-#include "sections.h"
+#include "Filter.h"
+#include "Sections.h"
 
 // --- cSectionSyncer --------------------------------------------------------
 

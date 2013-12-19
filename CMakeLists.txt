@@ -77,6 +77,7 @@ set(VDR_SRCS
 	vdr/devices/subsystems/DeviceVideoFormatSubsystem.cpp
 	vdr/dvb/DiSEqC.cpp
 	vdr/dvb/DVBCI.cpp
+	vdr/dvb/Filter.cpp
 	vdr/dvb/EIT.cpp
 	vdr/dvb/EITScan.cpp
 	vdr/dvb/NIT.cpp

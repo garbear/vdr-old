@@ -10,7 +10,7 @@
 #ifndef __SDT_H
 #define __SDT_H
 
-#include "filter.h"
+#include "Filter.h"
 #include "PAT.h"
 
 class cSdtFilter : public cFilter {

@@ -11,7 +11,7 @@
 #define __PAT_H
 
 #include <stdint.h>
-#include "filter.h"
+#include "Filter.h"
 
 #define MAXPMTENTRIES 64
 

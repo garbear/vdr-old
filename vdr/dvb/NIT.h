@@ -10,7 +10,7 @@
 #ifndef __NIT_H
 #define __NIT_H
 
-#include "filter.h"
+#include "Filter.h"
 
 // From UTF8Utils.h
 #define Utf8BufSize(s) ((s) * 4)
