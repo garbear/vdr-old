@@ -108,6 +108,7 @@ set(VDR_SRCS
 	vdr/utils/Tools.cpp
 	vdr/utils/XBMCTinyXML.cpp
 	vdr/utils/XMLUtils.cpp
+	vdr/utils/UTF8Utils.cpp
 	thread.cpp
 )
 
@@ -144,6 +145,7 @@ set(VDR_TEST_SRCS
 	vdr/utils/Tools.cpp
 	vdr/utils/XBMCTinyXML.cpp
 	vdr/utils/XMLUtils.cpp
+	vdr/utils/UTF8Utils.cpp
 	thread.cpp
 )
 
