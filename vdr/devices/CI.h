@@ -15,6 +15,7 @@
 #include "channels/Channels.h"
 #include "thread.h"
 #include "utils/Tools.h"
+#include "platform/threads/threads.h"
 
 #define MAX_CAM_SLOTS_PER_ADAPTER     8 // maximum possible value is 255
 #define MAX_CONNECTIONS_PER_CAM_SLOT  8 // maximum possible value is 254
@@ -28,7 +29,7 @@ class cCiMenu {
 private:
   enum { MAX_CIMENU_ENTRIES = 64 }; ///< XXX is there a specified maximum?
   cCiMMI *mmi;
-  cMutex *mutex;
+  PLATFORM::CMutex* mutex;
   bool selectable;
   char *titleText;
   char *subTitleText;
@@ -56,7 +57,7 @@ class cCiEnquiry {
   friend class cCiMMI;
 private:
   cCiMMI *mmi;
-  cMutex *mutex;
+  PLATFORM::CMutex *mutex;
   char *text;
   bool blind;
   int expectedLength;
@@ -126,8 +127,9 @@ class cCamSlot : public cListObject {
   friend class cCiAdapter;
   friend class cCiTransportConnection;
 private:
-  cMutex mutex;
-  cCondVar processed;
+  PLATFORM::CMutex mutex;
+  PLATFORM::CCondition<bool> processed;
+  bool bProcessed;
   cCiAdapter *ciAdapter;
   int slotIndex;
   int slotNumber;
@@ -240,7 +242,7 @@ class cChannelCamRelation;
 
 class cChannelCamRelations : public cList<cChannelCamRelation> {
 private:
-  cMutex mutex;
+  PLATFORM::CMutex mutex;
   cChannelCamRelation *GetEntry(tChannelID ChannelID);
   cChannelCamRelation *AddEntry(tChannelID ChannelID);
   time_t lastCleanup;

@@ -7,7 +7,7 @@
  * $Id: ci.c 2.12 2013/02/17 13:17:28 kls Exp $
  */
 
-#include "ci.h"
+#include "CI.h"
 #include <ctype.h>
 #include <linux/dvb/ca.h>
 #include <malloc.h>
@@ -17,9 +17,13 @@
 #include <sys/ioctl.h>
 #include <time.h>
 #include <unistd.h>
-#include "device.h"
-#include "pat.h"
-#include "tools.h"
+#include "Device.h"
+#include "dvb/PAT.h"
+#include "utils/Tools.h"
+#include "devices/subsystems/DeviceCommonInterfaceSubsystem.h"
+#include "devices/subsystems/DeviceReceiverSubsystem.h"
+
+using namespace PLATFORM;
 
 // Set these to 'true' for debug output:
 static bool DumpTPDUDataTransfer = false;
@@ -946,12 +950,12 @@ cCiMMI::cCiMMI(uint16_t SessionId, cCiTransportConnection *Tc)
 cCiMMI::~cCiMMI()
 {
   if (fetchedMenu) {
-     cMutexLock MutexLock(fetchedMenu->mutex);
+    CLockObject lock(*fetchedMenu->mutex);
      fetchedMenu->mmi = NULL;
      }
   delete menu;
   if (fetchedEnquiry) {
-     cMutexLock MutexLock(fetchedEnquiry->mutex);
+    CLockObject lock(*fetchedEnquiry->mutex);
      fetchedEnquiry->mmi = NULL;
      }
   delete enquiry;
@@ -1111,7 +1115,6 @@ bool cCiMMI::SendCloseMMI(void)
 cCiMenu::cCiMenu(cCiMMI *MMI, bool Selectable)
 {
   mmi = MMI;
-  mutex = NULL;
   selectable = Selectable;
   titleText = subTitleText = bottomText = NULL;
   numEntries = 0;
@@ -1119,7 +1122,7 @@ cCiMenu::cCiMenu(cCiMMI *MMI, bool Selectable)
 
 cCiMenu::~cCiMenu()
 {
-  cMutexLock MutexLock(mutex);
+  CLockObject lock(*mutex);
   if (mmi)
      mmi->Menu(true);
   free(titleText);
@@ -1146,7 +1149,7 @@ bool cCiMenu::HasUpdate(void)
 
 void cCiMenu::Select(int Index)
 {
-  cMutexLock MutexLock(mutex);
+  CLockObject lock(*mutex);
   if (mmi && -1 <= Index && Index < numEntries)
      mmi->SendMenuAnswer(Index + 1);
 }
@@ -1158,7 +1161,7 @@ void cCiMenu::Cancel(void)
 
 void cCiMenu::Abort(void)
 {
-  cMutexLock MutexLock(mutex);
+  CLockObject lock(*mutex);
   if (mmi)
      mmi->SendCloseMMI();
 }
@@ -1175,7 +1178,7 @@ cCiEnquiry::cCiEnquiry(cCiMMI *MMI)
 
 cCiEnquiry::~cCiEnquiry()
 {
-  cMutexLock MutexLock(mutex);
+  CLockObject lock(*mutex);
   if (mmi)
      mmi->Enquiry(true);
   free(text);
@@ -1183,7 +1186,7 @@ cCiEnquiry::~cCiEnquiry()
 
 void cCiEnquiry::Reply(const char *s)
 {
-  cMutexLock MutexLock(mutex);
+  CLockObject lock(*mutex);
   if (mmi)
      mmi->SendAnswer(s);
 }
@@ -1195,7 +1198,7 @@ void cCiEnquiry::Cancel(void)
 
 void cCiEnquiry::Abort(void)
 {
-  cMutexLock MutexLock(mutex);
+  CLockObject lock(*mutex);
   if (mmi)
      mmi->SendCloseMMI();
 }
@@ -1564,6 +1567,7 @@ cCamSlot::cCamSlot(cCiAdapter *CiAdapter)
       tc[i] = NULL;
   CamSlots.Add(this);
   slotNumber = Index() + 1;
+  bProcessed = false;
   if (ciAdapter)
      ciAdapter->AddCamSlot(this);
   Reset();
@@ -1577,18 +1581,18 @@ cCamSlot::~cCamSlot()
 
 bool cCamSlot::Assign(cDevice *Device, bool Query)
 {
-  cMutexLock MutexLock(&mutex);
+  CLockObject lock(mutex);
   if (ciAdapter) {
      if (ciAdapter->Assign(Device, true)) {
         if (!Device && ciAdapter->assignedDevice)
-           ciAdapter->assignedDevice->SetCamSlot(NULL);
+           ciAdapter->assignedDevice->CommonInterface()->SetCamSlot(NULL);
         if (!Query) {
            StopDecrypting();
            source = transponder = 0;
            if (ciAdapter->Assign(Device)) {
               ciAdapter->assignedDevice = Device;
               if (Device) {
-                 Device->SetCamSlot(this);
+                 Device->CommonInterface()->SetCamSlot(this);
                  dsyslog("CAM %d: assigned to device %d", slotNumber, Device->DeviceNumber() + 1);
                  }
               else
@@ -1605,10 +1609,10 @@ bool cCamSlot::Assign(cDevice *Device, bool Query)
 
 cDevice *cCamSlot::Device(void)
 {
-  cMutexLock MutexLock(&mutex);
+  CLockObject lock(mutex);
   if (ciAdapter) {
      cDevice *d = ciAdapter->assignedDevice;
-     if (d && d->CamSlot() == this)
+     if (d && d->CommonInterface()->CamSlot() == this)
         return d;
      }
   return NULL;
@@ -1616,7 +1620,7 @@ cDevice *cCamSlot::Device(void)
 
 void cCamSlot::NewConnection(void)
 {
-  cMutexLock MutexLock(&mutex);
+  CLockObject lock(mutex);
   for (int i = 1; i <= MAX_CONNECTIONS_PER_CAM_SLOT; i++) {
       if (!tc[i]) {
          tc[i] = new cCiTransportConnection(this, i);
@@ -1629,7 +1633,7 @@ void cCamSlot::NewConnection(void)
 
 void cCamSlot::DeleteAllConnections(void)
 {
-  cMutexLock MutexLock(&mutex);
+  CLockObject lock(mutex);
   for (int i = 1; i <= MAX_CONNECTIONS_PER_CAM_SLOT; i++) {
       delete tc[i];
       tc[i] = NULL;
@@ -1638,7 +1642,7 @@ void cCamSlot::DeleteAllConnections(void)
 
 void cCamSlot::Process(cTPDU *TPDU)
 {
-  cMutexLock MutexLock(&mutex);
+  CLockObject lock(mutex);
   if (TPDU) {
      int n = TPDU->Tcid();
      if (1 <= n && n <= MAX_CONNECTIONS_PER_CAM_SLOT) {
@@ -1687,18 +1691,19 @@ void cCamSlot::Process(cTPDU *TPDU)
      }
   if (resendPmt)
      SendCaPmt(CPCI_OK_DESCRAMBLING);
+  bProcessed = true;
   processed.Broadcast();
 }
 
 cCiSession *cCamSlot::GetSessionByResourceId(uint32_t ResourceId)
 {
-  cMutexLock MutexLock(&mutex);
+  CLockObject lock(mutex);
   return tc[1] ? tc[1]->GetSessionByResourceId(ResourceId) : NULL;
 }
 
 void cCamSlot::Write(cTPDU *TPDU)
 {
-  cMutexLock MutexLock(&mutex);
+  CLockObject lock(mutex);
   if (ciAdapter && TPDU->Size()) {
      TPDU->Dump(SlotNumber(), true);
      ciAdapter->Write(TPDU->Buffer(), TPDU->Size());
@@ -1707,7 +1712,7 @@ void cCamSlot::Write(cTPDU *TPDU)
 
 bool cCamSlot::Reset(void)
 {
-  cMutexLock MutexLock(&mutex);
+  CLockObject lock(mutex);
   ChannelCamRelations.Reset(slotNumber);
   DeleteAllConnections();
   if (ciAdapter) {
@@ -1725,7 +1730,7 @@ bool cCamSlot::Reset(void)
 
 eModuleStatus cCamSlot::ModuleStatus(void)
 {
-  cMutexLock MutexLock(&mutex);
+  CLockObject lock(mutex);
   eModuleStatus ms = ciAdapter ? ciAdapter->ModuleStatus(slotIndex) : msNone;
   if (resetTime) {
      if (ms <= msReset) {
@@ -1739,13 +1744,13 @@ eModuleStatus cCamSlot::ModuleStatus(void)
 
 const char *cCamSlot::GetCamName(void)
 {
-  cMutexLock MutexLock(&mutex);
+  CLockObject lock(mutex);
   return tc[1] ? tc[1]->GetCamName() : NULL;
 }
 
 bool cCamSlot::Ready(void)
 {
-  cMutexLock MutexLock(&mutex);
+  CLockObject lock(mutex);
   return ModuleStatus() == msNone || tc[1] && tc[1]->Ready();
 }
 
@@ -1756,25 +1761,25 @@ bool cCamSlot::HasMMI(void)
 
 bool cCamSlot::HasUserIO(void)
 {
-  cMutexLock MutexLock(&mutex);
+  CLockObject lock(mutex);
   return tc[1] && tc[1]->HasUserIO();
 }
 
 bool cCamSlot::EnterMenu(void)
 {
-  cMutexLock MutexLock(&mutex);
+  CLockObject lock(mutex);
   cCiApplicationInformation *api = (cCiApplicationInformation *)GetSessionByResourceId(RI_APPLICATION_INFORMATION);
   return api ? api->EnterMenu() : false;
 }
 
 cCiMenu *cCamSlot::GetMenu(void)
 {
-  cMutexLock MutexLock(&mutex);
+  CLockObject lock(mutex);
   cCiMMI *mmi = (cCiMMI *)GetSessionByResourceId(RI_MMI);
   if (mmi) {
      cCiMenu *Menu = mmi->Menu();
      if (Menu)
-        Menu->mutex = &mutex;
+       Menu->mutex = &mutex;
      return Menu;
      }
   return NULL;
@@ -1782,12 +1787,12 @@ cCiMenu *cCamSlot::GetMenu(void)
 
 cCiEnquiry *cCamSlot::GetEnquiry(void)
 {
-  cMutexLock MutexLock(&mutex);
+  CLockObject lock(mutex);
   cCiMMI *mmi = (cCiMMI *)GetSessionByResourceId(RI_MMI);
   if (mmi) {
      cCiEnquiry *Enquiry = mmi->Enquiry();
      if (Enquiry)
-        Enquiry->mutex = &mutex;
+       Enquiry->mutex = &mutex;
      return Enquiry;
      }
   return NULL;
@@ -1795,7 +1800,7 @@ cCiEnquiry *cCamSlot::GetEnquiry(void)
 
 void cCamSlot::SendCaPmt(uint8_t CmdId)
 {
-  cMutexLock MutexLock(&mutex);
+  CLockObject lock(mutex);
   cCiConditionalAccessSupport *cas = (cCiConditionalAccessSupport *)GetSessionByResourceId(RI_CONDITIONAL_ACCESS_SUPPORT);
   if (cas) {
      const int *CaSystemIds = cas->GetCaSystemIds();
@@ -1834,7 +1839,7 @@ void cCamSlot::SendCaPmt(uint8_t CmdId)
 
 const int *cCamSlot::GetCaSystemIds(void)
 {
-  cMutexLock MutexLock(&mutex);
+  CLockObject lock(mutex);
   cCiConditionalAccessSupport *cas = (cCiConditionalAccessSupport *)GetSessionByResourceId(RI_CONDITIONAL_ACCESS_SUPPORT);
   return cas ? cas->GetCaSystemIds() : NULL;
 }
@@ -1842,12 +1847,12 @@ const int *cCamSlot::GetCaSystemIds(void)
 int cCamSlot::Priority(void)
 {
   cDevice *d = Device();
-  return d ? d->Priority() : IDLEPRIORITY;
+  return d ? d->Receiver()->Priority() : IDLEPRIORITY;
 }
 
 bool cCamSlot::ProvidesCa(const int *CaSystemIds)
 {
-  cMutexLock MutexLock(&mutex);
+  CLockObject lock(mutex);
   cCiConditionalAccessSupport *cas = (cCiConditionalAccessSupport *)GetSessionByResourceId(RI_CONDITIONAL_ACCESS_SUPPORT);
   if (cas) {
      for (const int *ids = cas->GetCaSystemIds(); ids && *ids; ids++) {
@@ -1862,7 +1867,7 @@ bool cCamSlot::ProvidesCa(const int *CaSystemIds)
 
 void cCamSlot::AddPid(int ProgramNumber, int Pid, int StreamType)
 {
-  cMutexLock MutexLock(&mutex);
+  CLockObject lock(mutex);
   cCiCaProgramData *ProgramData = NULL;
   for (cCiCaProgramData *p = caProgramList.First(); p; p = caProgramList.Next(p)) {
       if (p->programNumber == ProgramNumber) {
@@ -1880,7 +1885,7 @@ void cCamSlot::AddPid(int ProgramNumber, int Pid, int StreamType)
 
 void cCamSlot::SetPid(int Pid, bool Active)
 {
-  cMutexLock MutexLock(&mutex);
+  CLockObject lock(mutex);
   for (cCiCaProgramData *p = caProgramList.First(); p; p = caProgramList.Next(p)) {
       for (cCiCaPidData *q = p->pidList.First(); q; q = p->pidList.Next(q)) {
           if (q->pid == Pid) {
@@ -1901,7 +1906,7 @@ void cCamSlot::SetPid(int Pid, bool Active)
 
 void cCamSlot::AddChannel(const cChannel *Channel)
 {
-  cMutexLock MutexLock(&mutex);
+  CLockObject lock(mutex);
   if (source != Channel->Source() || transponder != Channel->Transponder())
      StopDecrypting();
   source = Channel->Source();
@@ -1925,7 +1930,7 @@ bool cCamSlot::CanDecrypt(const cChannel *Channel)
      return true; // channel not encrypted
   if (!IsDecrypting())
      return true; // any CAM can decrypt at least one channel
-  cMutexLock MutexLock(&mutex);
+  CLockObject lock(mutex);
   cCiConditionalAccessSupport *cas = (cCiConditionalAccessSupport *)GetSessionByResourceId(RI_CONDITIONAL_ACCESS_SUPPORT);
   if (cas && cas->RepliesToQuery()) {
      cCiCaPmt CaPmt(CPCI_QUERY, Channel->Source(), Channel->Transponder(), Channel->Sid(), GetCaSystemIds());
@@ -1940,7 +1945,8 @@ bool cCamSlot::CanDecrypt(const cChannel *Channel)
      cas->SendPMT(&CaPmt);
      cTimeMs Timeout(QUERY_REPLY_TIMEOUT);
      do {
-        processed.TimedWait(mutex, QUERY_REPLY_WAIT);
+        if (processed.Wait(mutex, bProcessed, QUERY_REPLY_WAIT))
+          bProcessed = false;
         if ((cas = (cCiConditionalAccessSupport *)GetSessionByResourceId(RI_CONDITIONAL_ACCESS_SUPPORT)) != NULL) { // must re-fetch it, there might have been a reset
            if (cas->ReceivedReply())
               return cas->CanDecrypt();
@@ -1960,7 +1966,7 @@ void cCamSlot::StartDecrypting(void)
 
 void cCamSlot::StopDecrypting(void)
 {
-  cMutexLock MutexLock(&mutex);
+  CLockObject lock(mutex);
   if (caProgramList.Count()) {
      caProgramList.Clear();
      SendCaPmt(CPCI_NOT_SELECTED);
@@ -1969,7 +1975,7 @@ void cCamSlot::StopDecrypting(void)
 
 bool cCamSlot::IsDecrypting(void)
 {
-  cMutexLock MutexLock(&mutex);
+  CLockObject lock(mutex);
   if (caProgramList.Count()) {
      for (cCiCaProgramData *p = caProgramList.First(); p; p = caProgramList.Next(p)) {
          if (p->modified)
@@ -2069,7 +2075,7 @@ cChannelCamRelations::cChannelCamRelations(void)
 
 void cChannelCamRelations::Cleanup(void)
 {
-  cMutexLock MutexLock(&mutex);
+  CLockObject lock(mutex);
   if (time(NULL) - lastCleanup > CHANNEL_CAM_RELATIONS_CLEANUP_INTERVAL) {
      for (cChannelCamRelation *ccr = First(); ccr; ) {
          cChannelCamRelation *c = ccr;
@@ -2083,7 +2089,7 @@ void cChannelCamRelations::Cleanup(void)
 
 cChannelCamRelation *cChannelCamRelations::GetEntry(tChannelID ChannelID)
 {
-  cMutexLock MutexLock(&mutex);
+  CLockObject lock(mutex);
   Cleanup();
   for (cChannelCamRelation *ccr = First(); ccr; ccr = Next(ccr)) {
       if (ccr->ChannelID() == ChannelID)
@@ -2094,7 +2100,7 @@ cChannelCamRelation *cChannelCamRelations::GetEntry(tChannelID ChannelID)
 
 cChannelCamRelation *cChannelCamRelations::AddEntry(tChannelID ChannelID)
 {
-  cMutexLock MutexLock(&mutex);
+  CLockObject lock(mutex);
   cChannelCamRelation *ccr = GetEntry(ChannelID);
   if (!ccr)
      Add(ccr = new cChannelCamRelation(ChannelID));
@@ -2103,7 +2109,7 @@ cChannelCamRelation *cChannelCamRelations::AddEntry(tChannelID ChannelID)
 
 void cChannelCamRelations::Reset(int CamSlotNumber)
 {
-  cMutexLock MutexLock(&mutex);
+  CLockObject lock(mutex);
   for (cChannelCamRelation *ccr = First(); ccr; ccr = Next(ccr)) {
       ccr->ClrChecked(CamSlotNumber);
       ccr->ClrDecrypt(CamSlotNumber);
@@ -2112,21 +2118,21 @@ void cChannelCamRelations::Reset(int CamSlotNumber)
 
 bool cChannelCamRelations::CamChecked(tChannelID ChannelID, int CamSlotNumber)
 {
-  cMutexLock MutexLock(&mutex);
+  CLockObject lock(mutex);
   cChannelCamRelation *ccr = GetEntry(ChannelID);
   return ccr ? ccr->CamChecked(CamSlotNumber) : false;
 }
 
 bool cChannelCamRelations::CamDecrypt(tChannelID ChannelID, int CamSlotNumber)
 {
-  cMutexLock MutexLock(&mutex);
+  CLockObject lock(mutex);
   cChannelCamRelation *ccr = GetEntry(ChannelID);
   return ccr ? ccr->CamDecrypt(CamSlotNumber) : false;
 }
 
 void cChannelCamRelations::SetChecked(tChannelID ChannelID, int CamSlotNumber)
 {
-  cMutexLock MutexLock(&mutex);
+  CLockObject lock(mutex);
   cChannelCamRelation *ccr = AddEntry(ChannelID);
   if (ccr)
      ccr->SetChecked(CamSlotNumber);
@@ -2134,7 +2140,7 @@ void cChannelCamRelations::SetChecked(tChannelID ChannelID, int CamSlotNumber)
 
 void cChannelCamRelations::SetDecrypt(tChannelID ChannelID, int CamSlotNumber)
 {
-  cMutexLock MutexLock(&mutex);
+  CLockObject lock(mutex);
   cChannelCamRelation *ccr = AddEntry(ChannelID);
   if (ccr)
      ccr->SetDecrypt(CamSlotNumber);
@@ -2142,7 +2148,7 @@ void cChannelCamRelations::SetDecrypt(tChannelID ChannelID, int CamSlotNumber)
 
 void cChannelCamRelations::ClrChecked(tChannelID ChannelID, int CamSlotNumber)
 {
-  cMutexLock MutexLock(&mutex);
+  CLockObject lock(mutex);
   cChannelCamRelation *ccr = GetEntry(ChannelID);
   if (ccr)
      ccr->ClrChecked(CamSlotNumber);
@@ -2150,7 +2156,7 @@ void cChannelCamRelations::ClrChecked(tChannelID ChannelID, int CamSlotNumber)
 
 void cChannelCamRelations::ClrDecrypt(tChannelID ChannelID, int CamSlotNumber)
 {
-  cMutexLock MutexLock(&mutex);
+  CLockObject lock(mutex);
   cChannelCamRelation *ccr = GetEntry(ChannelID);
   if (ccr)
      ccr->ClrDecrypt(CamSlotNumber);

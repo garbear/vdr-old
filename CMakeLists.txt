@@ -46,7 +46,7 @@ set(VDR_SRCS
 	vdr/channels/Channel.cpp
 	vdr/channels/ChannelID.cpp
 	vdr/channels/Channels.cpp
-	vdr/devices/CI.h
+	vdr/devices/CI.cpp
 	vdr/devices/Device.cpp
 	vdr/devices/DeviceManager.cpp
 	vdr/devices/DeviceSubsystem.cpp
@@ -167,9 +167,9 @@ if(HAVE_PTHREAD)
   set(LIBPTHREAD "pthread")
 endif()
 
-#set(VDR_EXECUTABLE vdr.bin)
-#add_executable(${VDR_EXECUTABLE} ${VDR_MAIN} ${VDR_SRCS} ${VDR_FS_SRC_NATIVE} ${ANDROID_HELPER_SRCS})
-#target_link_libraries(${VDR_EXECUTABLE} ${LIBS} ${LIBRT} ${LIBPTHREAD})
+set(VDR_EXECUTABLE vdr.bin)
+add_executable(${VDR_EXECUTABLE} ${VDR_MAIN} ${VDR_SRCS} ${VDR_FS_SRC_NATIVE} ${ANDROID_HELPER_SRCS})
+target_link_libraries(${VDR_EXECUTABLE} ${LIBS} ${LIBRT} ${LIBPTHREAD})
 
 set(VDR_LIBRARY vdr)
 add_library(${VDR_LIBRARY} SHARED ${VDR_ADDON} ${VDR_SRCS} ${VDR_FS_SRC_XBMC} ${ANDROID_HELPER_SRCS})
