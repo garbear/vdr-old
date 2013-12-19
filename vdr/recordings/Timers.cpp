@@ -16,7 +16,7 @@
 #include "libsi/si.h"
 #include "recordings/Recording.h"
 //#include "remote.h"
-#include "status.h"
+#include "utils/Status.h"
 
 #include "vdr/utils/UTF8Utils.h"
 

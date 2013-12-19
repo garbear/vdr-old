@@ -33,7 +33,7 @@
 #include "dvbsubtitle.h"
 #include "player.h"
 #include "dvb/Sections.h"
-#include "status.h"
+#include "utils/Status.h"
 #include "utils/Tools.h"
 #include "devices/Transfer.h"
 
