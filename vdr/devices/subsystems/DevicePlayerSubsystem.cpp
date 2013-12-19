@@ -26,7 +26,6 @@
 #include "DeviceTrackSubsystem.h"
 #include "DeviceVideoFormatSubsystem.h"
 #include "audio.h"
-#include "dvbsubtitle.h"
 #include "osd.h"
 #include "player.h"
 #include "devices/Transfer.h"
@@ -64,22 +63,16 @@ cDevicePlayerSubsystem::~cDevicePlayerSubsystem()
 void cDevicePlayerSubsystem::Clear()
 {
   Audios.ClearAudio();
-  if (Device()->m_dvbSubtitleConverter)
-    Device()->m_dvbSubtitleConverter->Reset();
 }
 
 void cDevicePlayerSubsystem::Play()
 {
   Audios.MuteAudio(Audio()->m_bMute);
-  if (Device()->m_dvbSubtitleConverter)
-    Device()->m_dvbSubtitleConverter->Freeze(false);
 }
 
 void cDevicePlayerSubsystem::Freeze()
 {
   Audios.MuteAudio(true);
-  if (Device()->m_dvbSubtitleConverter)
-    Device()->m_dvbSubtitleConverter->Freeze(true);
 }
 
 void cDevicePlayerSubsystem::Mute()
@@ -166,8 +159,6 @@ int cDevicePlayerSubsystem::PlayPes(const vector<uchar> &data, bool bVideoOnly /
 {
   if (data.empty())
   {
-    if (Device()->m_dvbSubtitleConverter)
-      Device()->m_dvbSubtitleConverter->Reset();
     return 0;
   }
   int i = 0;
@@ -305,7 +296,6 @@ bool cDevicePlayerSubsystem::AttachPlayer(cPlayer *player)
     if (m_player)
       Detach(m_player);
     SAFE_DELETE(Device()->m_liveSubtitle);
-    SAFE_DELETE(Device()->m_dvbSubtitleConverter);
     m_patPmtParser.Reset();
     m_player = player;
     if (!Transferring())
@@ -327,8 +317,6 @@ void cDevicePlayerSubsystem::Detach(cPlayer *player)
     p->Activate(false);
     p->device = NULL;
     PLATFORM::CLockObject lock(Track()->m_mutexCurrentSubtitleTrack);
-    delete Device()->m_dvbSubtitleConverter;
-    Device()->m_dvbSubtitleConverter = NULL;
     SetPlayMode(pmNone);
     VideoFormat()->SetVideoDisplayFormat(eVideoDisplayFormat(Setup.VideoDisplayFormat));
     PlayTs(vector<uchar>());
@@ -345,9 +333,7 @@ bool cDevicePlayerSubsystem::CanReplay() const
 
 int cDevicePlayerSubsystem::PlaySubtitle(const vector<uchar> &data)
 {
-  if (!Device()->m_dvbSubtitleConverter)
-    Device()->m_dvbSubtitleConverter = new cDvbSubtitleConverter;
-  return Device()->m_dvbSubtitleConverter->ConvertFragments(data.data(), data.size());
+  return -1; //XXX remove this method
 }
 
 unsigned int cDevicePlayerSubsystem::PlayPesPacket(const vector<uchar> &data, bool bVideoOnly /* = false */)
@@ -506,15 +492,5 @@ int cDevicePlayerSubsystem::PlayTsAudio(const vector<uchar> &data)
 
 int cDevicePlayerSubsystem::PlayTsSubtitle(const vector<uchar> &data)
 {
-  if (!Device()->m_dvbSubtitleConverter)
-    Device()->m_dvbSubtitleConverter = new cDvbSubtitleConverter;
-  m_tsToPesSubtitle.PutTs(data.data(), data.size());
-  int length;
-  if (const uchar *p = m_tsToPesSubtitle.GetPes(length))
-  {
-    vector<uchar> vecP(p, p + length);
-    Device()->m_dvbSubtitleConverter->Convert(vecP.data(), vecP.size());
-    m_tsToPesSubtitle.Reset();
-  }
-  return length;
+  return -1; //XXX remove this method
 }

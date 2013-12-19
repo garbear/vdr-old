@@ -26,7 +26,6 @@
 #include "DeviceSPUSubsystem.h"
 #include "devices/Device.h"
 #include "devices/DeviceManager.h"
-#include "dvbsubtitle.h"
 #include "player.h"
 
 #include <limits.h>
@@ -167,13 +166,6 @@ bool cDeviceTrackSubsystem::SetCurrentSubtitleTrack(eTrackType type, bool bManua
   {
     m_currentSubtitleTrack = type;
     m_bAutoSelectPreferredSubtitleLanguage = !bManual;
-    if (Device()->m_dvbSubtitleConverter)
-      Device()->m_dvbSubtitleConverter->Reset();
-    if (type == ttNone && Device()->m_dvbSubtitleConverter)
-    {
-      PLATFORM::CLockObject lock(m_mutexCurrentSubtitleTrack);
-      DELETENULL(Device()->m_dvbSubtitleConverter);
-    }
     DELETENULL(Device()->m_liveSubtitle);
     if (Player()->m_player)
     {
@@ -238,28 +230,5 @@ void cDeviceTrackSubsystem::EnsureAudioTrack(bool bForce /* = false */)
 
 void cDeviceTrackSubsystem::EnsureSubtitleTrack()
 {
-  if (m_bKeepTracks)
-     return;
-  if (Setup.DisplaySubtitles)
-  {
-    eTrackType PreferredTrack = ttNone;
-    int LanguagePreference = INT_MAX; // higher than the maximum possible value
-    for (int i = ttSubtitleFirst; i <= ttSubtitleLast; i++)
-    {
-      tTrackId TrackId;
-      if (GetTrack(eTrackType(i), TrackId) && TrackId.id)
-      {
-        if (I18nIsPreferredLanguage(Setup.SubtitleLanguages, TrackId.strLanguage.c_str(), LanguagePreference) ||
-            (i == ttSubtitleFirst + 8 && TrackId.strLanguage.empty() && LanguagePreference == INT_MAX)) // compatibility mode for old subtitles plugin
-          PreferredTrack = eTrackType(i);
-      }
-    }
-
-    // Make sure we're set to an available subtitle track:
-    tTrackId Track;
-    if (!GetTrack(GetCurrentSubtitleTrack(), Track) || !Track.id || PreferredTrack != GetCurrentSubtitleTrack())
-      SetCurrentSubtitleTrack(PreferredTrack);
-  }
-  else
-    SetCurrentSubtitleTrack(ttNone);
+  // XXX remove this method
 }

@@ -30,7 +30,6 @@
 #include "devices/DeviceManager.h"
 #include "devices/CI.h"
 #include "channels/Channels.h"
-#include "dvbsubtitle.h"
 #include "player.h"
 #include "dvb/Sections.h"
 #include "utils/Status.h"
@@ -137,7 +136,6 @@ eSetChannelResult cDeviceChannelSubsystem::SetChannel(const cChannel &channel, b
   {
     Player()->StopReplay();
     SAFE_DELETE(Device()->m_liveSubtitle);
-    SAFE_DELETE(Device()->m_dvbSubtitleConverter);
   }
 
   cDevice *device = (bLiveView && Device()->IsPrimaryDevice()) ? cDeviceManager::Get().GetDevice(channel, LIVEPRIORITY, true) : Device();

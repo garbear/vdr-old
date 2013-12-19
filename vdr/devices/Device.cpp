@@ -35,7 +35,6 @@
 #include "subsystems/DeviceVideoFormatSubsystem.h"
 #include "utils/StringUtils.h"
 #include "utils/Ringbuffer.h"
-#include "dvbsubtitle.h"
 #include "CI.h"
 
 using namespace std;
@@ -160,7 +159,6 @@ void cDevice::MakePrimaryDevice(bool bOn)
   if (!bOn)
   {
     SAFE_DELETE(m_liveSubtitle);
-    SAFE_DELETE(m_dvbSubtitleConverter);
   }
 }
 

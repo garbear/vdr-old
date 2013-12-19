@@ -242,5 +242,4 @@ private:
   unsigned int m_cardIndex;
 public: // TODO
   cLiveSubtitle         *m_liveSubtitle; // TODO: Should this be in SPU subsystem?
-  cDvbSubtitleConverter *m_dvbSubtitleConverter; // TODO: Should this be in SPU subsystem?
 };
