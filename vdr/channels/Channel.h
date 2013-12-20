@@ -56,10 +56,6 @@ public:
 #define CHANNELMOD_LANGS    0x40
 #define CHANNELMOD_RETUNE   (CHANNELMOD_PIDS | CHANNELMOD_CA | CHANNELMOD_TRANSP)
 
-#define CHANNELSMOD_NONE    0
-#define CHANNELSMOD_AUTO    1
-#define CHANNELSMOD_USER    2
-
 #define MAXAPIDS 32 // audio
 #define MAXDPIDS 16 // dolby (AC3 + DTS)
 #define MAXSPIDS 32 // subtitles
@@ -126,8 +122,8 @@ struct tChannelData
   int      tid;
   int      sid;
   int      rid;
-  unsigned int number;    // Sequence number assigned on load
-  bool     groupSep;
+  unsigned int number;    // Sequence number assigned on load // TODO: Doesn't belong in tChannelData
+  bool     groupSep;      // TODO: Doesn't belong in tChannelData
 };
 
 class cSchedule;
@@ -204,7 +200,7 @@ public:
   int Tid()                         const { return m_channelData.tid; }
   int Sid()                         const { return m_channelData.sid; }
   int Rid()                         const { return m_channelData.rid; }
-  int Number()                      const { return m_channelData.number; }
+  unsigned int Number()             const { return m_channelData.number; }
   bool GroupSep()                   const { return m_channelData.groupSep; }
 
   bool IsAtsc()                     const { return cSource::IsAtsc(m_channelData.source); }
@@ -213,7 +209,7 @@ public:
   bool IsTerr()                     const { return cSource::IsTerr(m_channelData.source); }
   bool IsSourceType(char source)    const { return cSource::IsType(m_channelData.source, source); }
 
-  void SetNumber(int number) { m_channelData.number = number; }
+  void SetNumber(unsigned int number) { m_channelData.number = number; }
 
   const std::string &Parameters()     const { return m_parameters; }
   const cLinkChannels &LinkChannels() const { return m_linkChannels; }

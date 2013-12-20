@@ -47,7 +47,7 @@ set(VDR_SRCS
 	vdr/VDRDaemon.cpp
 	vdr/channels/Channel.cpp
 	vdr/channels/ChannelID.cpp
-	vdr/channels/Channels.cpp
+	vdr/channels/ChannelManager.cpp
 	vdr/devices/CI.cpp
 	vdr/devices/Device.cpp
 	vdr/devices/DeviceManager.cpp
@@ -121,7 +121,7 @@ set(VDR_SRCS2 # Sources for testing
 	vdr/VDRDaemon.cpp
 	vdr/channels/Channel.cpp
 	vdr/channels/ChannelID.cpp
-	#vdr/channels/Channels.cpp
+	vdr/channels/ChannelManager.cpp
 	vdr/sources/ISourceParams.cpp
 	vdr/sources/Source.cpp
 	vdr/sources/linux/DVBSourceParams.cpp
@@ -132,7 +132,7 @@ set(VDR_TEST_SRCS
 	vdr/test/TestVDRDaemon.cpp
 	vdr/channels/test/TestChannel.cpp
 	vdr/channels/test/TestChannelID.cpp
-	#vdr/channels/test/TestChannels.cpp
+	vdr/channels/test/TestChannelManager.cpp
 	vdr/filesystem/DirectoryFetchJob.cpp
 	vdr/filesystem/File.cpp
 	vdr/filesystem/IDirectory.cpp
