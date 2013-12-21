@@ -24,6 +24,7 @@
 #include "devices/Device.h"
 #include "devices/DeviceManager.h"
 #include "devices/subsystems/DeviceChannelSubsystem.h"
+#include "dvb/EITScan.h"
 //#include "utils/I18N.h"
 #include "utils/StringUtils.h"
 #include "utils/XBMCTinyXML.h"
@@ -477,7 +478,7 @@ unsigned int cChannelManager::MaxChannelNameLength()
     {
       const ChannelPtr &channel = *itChannel;
       if (!channel->GroupSep())
-        m_maxChannelNameLength = std::max(cUtf8Utils::Utf8StrLen(channel->Name().c_str()), m_maxChannelNameLength);
+        m_maxChannelNameLength = std::max(cUtf8Utils::Utf8StrLen(channel->Name().c_str()), (unsigned)m_maxChannelNameLength);
     }
   }
   return m_maxChannelNameLength;
@@ -491,7 +492,7 @@ unsigned int cChannelManager::MaxShortChannelNameLength()
     {
       const ChannelPtr &channel = *itChannel;
       if (!channel->GroupSep())
-        m_maxShortChannelNameLength = std::max(cUtf8Utils::Utf8StrLen(channel->ShortName(true).c_str()), m_maxShortChannelNameLength);
+        m_maxShortChannelNameLength = std::max(cUtf8Utils::Utf8StrLen(channel->ShortName(true).c_str()), (unsigned)m_maxShortChannelNameLength);
     }
   }
   return m_maxShortChannelNameLength;
@@ -527,4 +528,10 @@ ChannelPtr cChannelManager::NewChannel(const cChannel& transponder, const string
     ReNumber();
   }
   return newChannel;
+}
+
+void cChannels::AddTransponders(cScanList* list) const
+{
+  for (std::vector<cChannel*>::const_iterator it = m_channels.begin(); it != m_channels.end(); it++)
+    list->AddTransponder(*it);
 }

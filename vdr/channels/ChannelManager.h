@@ -38,6 +38,8 @@ enum eLastModifiedType
 
 //std::string ChannelString(const ChannelPtr &channel, int number);
 
+class cScanList;
+
 class cChannelManager : public Observer
 {
 public:
@@ -169,6 +171,8 @@ public:
   int BeingEdited() const { return m_beingEdited; }
   void IncBeingEdited() { m_beingEdited++; }
   void DecBeingEdited() { m_beingEdited--; }
+
+  void AddTransponders(cScanList* list) const;
 
 private:
   typedef std::vector<ChannelPtr>      ChannelVector;
