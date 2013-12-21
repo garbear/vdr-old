@@ -25,7 +25,7 @@
 #include "subsystems/DeviceCommonInterfaceSubsystem.h"
 #include "subsystems/DeviceReceiverSubsystem.h"
 #include "subsystems/DeviceVideoFormatSubsystem.h"
-#include "channels/Channels.h"
+#include "channels/ChannelManager.h"
 #include "CI.h"
 #include "utils/Tools.h"
 #include "Transfer.h"

@@ -9,7 +9,7 @@
 
 #include "NIT.h"
 #include <linux/dvb/frontend.h>
-#include "channels/Channels.h"
+#include "channels/ChannelManager.h"
 #include "EITScan.h"
 #include "sources/linux/DVBSourceParams.h"
 #include "libsi/section.h"

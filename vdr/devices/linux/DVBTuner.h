@@ -20,7 +20,7 @@
  */
 #pragma once
 
-#include "channels/Channels.h"
+#include "channels/ChannelManager.h"
 #include "platform/threads/threads.h"
 
 #include <linux/dvb/frontend.h>

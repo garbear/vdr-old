@@ -530,8 +530,8 @@ ChannelPtr cChannelManager::NewChannel(const cChannel& transponder, const string
   return newChannel;
 }
 
-void cChannels::AddTransponders(cScanList* list) const
+void cChannelManager::AddTransponders(cScanList* list) const
 {
-  for (std::vector<cChannel*>::const_iterator it = m_channels.begin(); it != m_channels.end(); it++)
-    list->AddTransponder(*it);
+  for (std::vector<ChannelPtr>::const_iterator it = m_channels.begin(); it != m_channels.end(); it++)
+    list->AddTransponder(it->get());
 }

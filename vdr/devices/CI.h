@@ -12,7 +12,7 @@
 
 #include <stdint.h>
 #include <stdio.h>
-#include "channels/Channels.h"
+#include "channels/ChannelManager.h"
 #include "thread.h"
 #include "utils/Tools.h"
 #include "platform/threads/threads.h"

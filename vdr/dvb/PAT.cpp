@@ -9,7 +9,7 @@
 
 #include "PAT.h"
 #include <malloc.h>
-#include "channels/Channels.h"
+#include "channels/ChannelManager.h"
 #include "libsi/section.h"
 #include "libsi/descriptor.h"
 #include "thread.h"

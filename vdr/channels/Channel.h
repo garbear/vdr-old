@@ -24,10 +24,10 @@
 #include "sources/Source.h"
 //#include "timers.h"
 
-#include <memory>
+#include <shared_ptr/shared_ptr.hpp>
 
 class cChannel;
-typedef std::shared_ptr<cChannel> ChannelPtr;
+typedef shared_ptr<cChannel> ChannelPtr;
 
 // TODO
 class cTimer2

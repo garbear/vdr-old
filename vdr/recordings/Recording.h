@@ -11,7 +11,7 @@
 #define __RECORDING_H
 
 #include <time.h>
-#include "channels/Channels.h"
+#include "channels/ChannelManager.h"
 #include "Config.h"
 #include "thread.h"
 #include "Timers.h"

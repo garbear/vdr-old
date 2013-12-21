@@ -15,7 +15,7 @@
 #include "devices/Device.h"
 
 class cChannel;
-class cChannels;
+class cChannelManager;
 class cTransponderList;
 
 class cScanData : public cListObject {
@@ -34,7 +34,7 @@ public:
 class cScanList : public cList<cScanData>
 {
 public:
-  void AddTransponders(const cChannels& Channels);
+  void AddTransponders(const cChannelManager& Channels);
   void AddTransponders(const cTransponderList& Channels);
   void AddTransponder(const cChannel *Channel);
 };

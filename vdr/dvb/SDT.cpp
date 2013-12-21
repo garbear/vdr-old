@@ -8,7 +8,7 @@
  */
 
 #include "SDT.h"
-#include "channels/Channels.h"
+#include "channels/ChannelManager.h"
 #include "Config.h"
 #include "libsi/section.h"
 #include "libsi/descriptor.h"

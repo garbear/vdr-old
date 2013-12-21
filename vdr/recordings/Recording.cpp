@@ -19,7 +19,7 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <unistd.h>
-#include "channels/Channels.h"
+#include "channels/ChannelManager.h"
 #include "utils/I18N.h"
 //#include "interface.h"
 #include "devices/Remux.h"

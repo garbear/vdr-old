@@ -29,7 +29,7 @@
 #include "devices/Device.h"
 #include "devices/DeviceManager.h"
 #include "devices/CI.h"
-#include "channels/Channels.h"
+#include "channels/ChannelManager.h"
 #include "player.h"
 #include "dvb/Sections.h"
 #include "utils/Status.h"

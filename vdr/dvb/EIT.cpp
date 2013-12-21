@@ -14,7 +14,7 @@
 #include "EIT.h"
 #include <sys/time.h>
 #include "epg/EPG.h"
-#include "channels/Channels.h"
+#include "channels/ChannelManager.h"
 #include "utils/I18N.h"
 #include "libsi/section.h"
 #include "libsi/descriptor.h"

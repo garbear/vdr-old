@@ -9,7 +9,7 @@
 
 #include "Sections.h"
 #include <unistd.h>
-#include "channels/Channels.h"
+#include "channels/ChannelManager.h"
 #include "devices/Device.h"
 #include "devices/subsystems/DeviceSectionFilterSubsystem.h"
 #include "devices/subsystems/DeviceChannelSubsystem.h"

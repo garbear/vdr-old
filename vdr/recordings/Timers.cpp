@@ -9,7 +9,7 @@
 
 #include "Timers.h"
 #include <ctype.h>
-#include "channels/Channels.h"
+#include "channels/ChannelManager.h"
 #include "devices/Device.h"
 #include "devices/DeviceManager.h"
 #include "utils/I18N.h"

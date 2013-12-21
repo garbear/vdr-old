@@ -9,7 +9,7 @@
 
 #include "EITScan.h"
 #include <stdlib.h>
-#include "channels/Channels.h"
+#include "channels/ChannelManager.h"
 #include "devices/Transfer.h"
 #include "devices/DeviceManager.h"
 #include "devices/subsystems/DeviceChannelSubsystem.h"
@@ -53,7 +53,7 @@ void cScanList::AddTransponders(const cTransponderList& Channels)
   //TODO convert to std::vector
 }
 
-void cScanList::AddTransponders(const cChannels& channels)
+void cScanList::AddTransponders(const cChannelManager& channels)
 {
   channels.AddTransponders(this);
   Sort();
