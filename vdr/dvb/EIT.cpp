@@ -42,16 +42,19 @@ cEIT::cEIT(cSchedules *Schedules, int Source, u_char Tid, const u_char *Data, bo
   if (Now < VALID_TIME)
      return; // we need the current time for handling PDC descriptors
 
-  if (!Channels.Lock(false, 10))
-     return;
-  cChannel *channel = Channels.GetByChannelID(getOriginalNetworkId(), getTransportStreamId(), getServiceId());
-  if (!channel || EpgHandlers.IgnoreChannel(channel)) {
-     Channels.Unlock();
-     return;
-     }
+  //if (!cChannelManager::Get().Lock(false, 10)) // TODO
+    return;
+  ChannelPtr channel = cChannelManager::Get().GetByChannelID(getOriginalNetworkId(), getTransportStreamId(), getServiceId());
+  /* TODO
+  if (!channel || EpgHandlers.IgnoreChannel(channel))
+  {
+    cChannelManager::Get().Unlock();
+    return;
+  }
+  */
 
-  bool handledExternally = EpgHandlers.HandledExternally(channel);
-  cSchedule *pSchedule = (cSchedule *)Schedules->GetSchedule(channel, true);
+  bool handledExternally = EpgHandlers.HandledExternally(channel.get());
+  cSchedule *pSchedule = (cSchedule *)Schedules->GetSchedule(channel.get(), true);
 
   bool Empty = true;
   bool Modified = false;

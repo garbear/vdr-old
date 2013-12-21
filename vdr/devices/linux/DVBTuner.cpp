@@ -101,7 +101,7 @@ void cDvbTuner::Action()
   cTimeMs Timer;
   bool LostLock = false;
   fe_status_t Status = (fe_status_t)0;
-  while (Running())
+  while (Running()) // TODO: This should be !IsStopped() when converted to the new PLATFORM::CThread
   {
     fe_status_t NewStatus;
     if (GetFrontendStatus(NewStatus))

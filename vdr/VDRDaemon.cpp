@@ -41,7 +41,7 @@ cVDRDaemon::~cVDRDaemon()
 bool cVDRDaemon::Init()
 {
   // Create directories
-  cDirectory::Create("special://home/system/");
+//  cDirectory::Create("special://home/system/");
 
   // TODO: Implement protocols special:// (handled like XBMC)
 
@@ -56,10 +56,10 @@ bool cVDRDaemon::Init()
   //
   // - special://*** (everything else) - routed through VFS api calls
 
-  if (!m_channelManager.LoadConf("special://home/system/channels.conf"))
-    m_channelManager.LoadConf("special://vdr/system/channels.conf");
+  if (!cChannelManager::Get().LoadConf("special://home/system/channels.conf"))
+    cChannelManager::Get().LoadConf("special://vdr/system/channels.conf");
 
-  cDvbDevice::Initialize();
+//  cDvbDevice::Initialize();
 //  cDvbDevice::BondDevices(Setup.DeviceBondings);
 
   return CreateThread(true);
@@ -100,7 +100,7 @@ void cVDRDaemon::OnSignal(int signum)
 
 void cVDRDaemon::Cleanup()
 {
-  m_channelManager.Clear();
+  cChannelManager::Get().Clear();
 }
 
 bool cVDRDaemon::WaitForShutdown(uint32_t iTimeout /* = 0 */)

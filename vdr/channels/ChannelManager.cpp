@@ -64,6 +64,12 @@ cChannelManager::cChannelManager()
 {
 }
 
+cChannelManager &cChannelManager::Get()
+{
+  static cChannelManager instance;
+  return instance;
+}
+
 void cChannelManager::Clear(void)
 {
   m_channels.clear();
@@ -532,6 +538,8 @@ ChannelPtr cChannelManager::NewChannel(const cChannel& transponder, const string
 
 void cChannelManager::AddTransponders(cScanList* list) const
 {
+  /*
   for (std::vector<ChannelPtr>::const_iterator it = m_channels.begin(); it != m_channels.end(); it++)
     list->AddTransponder(it->get());
+  */
 }

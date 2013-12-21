@@ -106,7 +106,7 @@ void cDeviceChannelSubsystem::ForceTransferMode()
 {
   if (!cTransferControl::ReceiverDevice())
   {
-    cChannel *channel = Channels.GetByNumber(cDeviceManager::Get().CurrentChannel());
+    ChannelPtr channel = cChannelManager::Get().GetByNumber(cDeviceManager::Get().CurrentChannel());
     if (channel)
       SetChannelDevice(*channel, false); // this implicitly starts Transfer Mode
   }
@@ -160,7 +160,7 @@ eSetChannelResult cDeviceChannelSubsystem::SetChannel(const cChannel &channel, b
   }
   else
   {
-    Channels.Lock(false);
+    //cChannelManager::Get().Lock(false); // TODO
 
     // Stop section handling:
     if (SectionFilter()->m_sectionHandler)
@@ -189,7 +189,7 @@ eSetChannelResult cDeviceChannelSubsystem::SetChannel(const cChannel &channel, b
     }
     else
       Result = scrFailed;
-    Channels.Unlock();
+    //cChannelManager::Get().Unlock(); // TODO
   }
 
   if (Result == scrOk)

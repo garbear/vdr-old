@@ -122,30 +122,22 @@ set(VDR_SRCS2 # Sources for testing
 	vdr/channels/Channel.cpp
 	vdr/channels/ChannelID.cpp
 	vdr/channels/ChannelManager.cpp
-	vdr/sources/ISourceParams.cpp
-	vdr/sources/Source.cpp
-	vdr/sources/linux/DVBSourceParams.cpp
-	vdr/utils/StringUtils.cpp
-)
-
-set(VDR_TEST_SRCS
-	vdr/test/TestVDRDaemon.cpp
-	vdr/channels/test/TestChannel.cpp
-	vdr/channels/test/TestChannelID.cpp
-	vdr/channels/test/TestChannelManager.cpp
+	vdr/filesystem/Directory.cpp
 	vdr/filesystem/DirectoryFetchJob.cpp
 	vdr/filesystem/File.cpp
 	vdr/filesystem/IDirectory.cpp
 	vdr/filesystem/ReadDir.cpp
 	#vdr/filesystem/xbmc/VFSDirectory.cpp
 	#vdr/filesystem/xbmc/VFSFile.cpp
-	vdr/filesystem/Videodir.cpp
+	vdr/sources/ISourceParams.cpp
 	vdr/sources/Source.cpp
-	vdr/sources/linux/test/TestDVBSourceParams.cpp
+	vdr/sources/linux/DVBSourceParams.cpp
 	vdr/utils/CalendarUtils.cpp
 	vdr/utils/CharsetConverter.cpp
 	vdr/utils/CharSetConverterVDR.cpp
 	vdr/utils/CharsetDetection.cpp
+	vdr/utils/I18N.cpp
+	vdr/utils/Observer.cpp
 	vdr/utils/RegExp.cpp
 	vdr/utils/StringUtils.cpp
 	vdr/utils/Tools.cpp
@@ -154,6 +146,14 @@ set(VDR_TEST_SRCS
 	vdr/utils/UTF8Utils.cpp
 	vdr/utils/Status.cpp
 	thread.cpp
+)
+
+set(VDR_TEST_SRCS
+	vdr/test/TestVDRDaemon.cpp
+	vdr/channels/test/TestChannel.cpp
+	vdr/channels/test/TestChannelID.cpp
+	vdr/channels/test/TestChannelManager.cpp
+	vdr/sources/linux/test/TestDVBSourceParams.cpp
 )
 
 set(VDR_MAIN vdr/main.cpp)

@@ -46,6 +46,8 @@ public:
   cChannelManager();
   ~cChannelManager() { }
 
+  static cChannelManager &Get();
+
   void Clear(void);
 
   void Notify(const Observable &obs, const ObservableMessage msg);

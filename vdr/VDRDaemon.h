@@ -76,8 +76,6 @@ private:
    */
   void Cleanup();
 
-  cChannelManager m_channelManager;
-
   PLATFORM::CEvent m_exitEvent;
   PLATFORM::CEvent m_sleepEvent;
   int              m_exitCode;

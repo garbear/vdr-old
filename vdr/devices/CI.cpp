@@ -8,6 +8,7 @@
  */
 
 #include "CI.h"
+#include "Config.h"
 #include <ctype.h>
 #include <linux/dvb/ca.h>
 #include <malloc.h>

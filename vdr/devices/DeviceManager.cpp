@@ -284,13 +284,15 @@ bool cDeviceManager::SwitchChannel(bool bIncrease)
   int n = CurrentChannel() + offset;
   int first = n;
   cChannel *channel;
-  while ((channel = Channels.GetByNumber(n, offset)) != NULL)
+  /* TODO
+  while ((channel = cChannelManager.GetByNumber(n, offset)) != NULL)
   {
     // try only channels which are currently available
     if (GetDevice(*channel, LIVEPRIORITY, true, true))
       break;
     n = channel->Number() + offset;
   }
+  */
 
   if (channel)
   {

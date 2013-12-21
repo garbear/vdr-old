@@ -215,7 +215,7 @@ size_t cDvbDevice::InitialiseAdapters(vector<linux_dvb_device_t>& nodes)
     }
   }
 
-  isyslog("Found %d DVB device%s", found, found == 1 ? "" : "s");
+  isyslog("Found %lu DVB device%s", found, found == 1 ? "" : "s");
 
   return found;
 }
