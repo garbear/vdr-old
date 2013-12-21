@@ -12,7 +12,7 @@ ADD_SUBDIRECTORY(lib/libsi)
 
 SET(IS_ANDROID $ENV{ANDROID})
 
-add_definitions(-DTARGET_LINUX)
+add_definitions(-DTARGET_LINUX -DTARGET_POSIX)
 
 include_directories(${CMAKE_SOURCE_DIR})
 include_directories(${CMAKE_SOURCE_DIR}/vdr)
