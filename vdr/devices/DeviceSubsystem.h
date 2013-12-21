@@ -37,6 +37,15 @@ class cDeviceSPUSubsystem;
 class cDeviceTrackSubsystem;
 class cDeviceVideoFormatSubsystem;
 
+/*!
+ * \brief cDeviceSubsystem is the base class for the various subsystems of a
+ *        device (Audio, Track, etc). The class provides a way to access the
+ *        device's other subsystems (as well as the device itself) in a
+ *        straightforward syntax. The subsystem pointer is accessed by a member
+ *        function of the same name. To call cDeviceAudioSubsystem::ToggleMute()
+ *        in the same device's context, use Audio()->ToggleMute(). Subsystem
+ *        class names follow the "cDevice[Name]Subsystem" pattern.
+ */
 class cDeviceSubsystem
 {
 public:
@@ -56,7 +65,7 @@ protected:
    * validity of the returned pointer.
    */
   template <class DeviceType>
-  DeviceType *GetDevice() const
+  DeviceType *GetDevice() const // TODO: Rename to Define() (overloading the definition below)
   {
     DeviceType *device = dynamic_cast<DeviceType*>(m_device);
     assert(device);
