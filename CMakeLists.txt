@@ -18,10 +18,43 @@ include_directories(${CMAKE_SOURCE_DIR})
 include_directories(${CMAKE_SOURCE_DIR}/vdr)
 include_directories(${CMAKE_SOURCE_DIR}/lib)
 include_directories(${gtest_SOURCE_DIR}/include)
-include_directories(${CMAKE_SOURCE_DIR}/lib/pcre)
 include_directories(${CMAKE_SOURCE_DIR}/lib/libsi)
 
-if ("${IS_ANDROID}" STREQUAL "")
+CHECK_LIBRARY_EXISTS(rt clock_gettime "time.h" HAVE_RT)
+CHECK_LIBRARY_EXISTS(pthread pthread_create "pthread.h" HAVE_PTHREAD)
+CHECK_LIBRARY_EXISTS(pcre pcre_compile "pcre.h" HAVE_PCRE)
+CHECK_LIBRARY_EXISTS(fribidi fribidi_log2vis "fribidi/fribidi.h" HAVE_FRIBIDI) # TODO: Fails
+
+if(NOT HAVE_PCRE)
+  ADD_SUBDIRECTORY(lib/pcre)
+  set(HAVE_PCRE 1)
+endif()
+
+if(HAVE_RT)
+  list(APPEND LIBS rt)
+endif()
+if(HAVE_PTHREAD)
+  list(APPEND LIBS pthread)
+endif()
+if(HAVE_PCRE)
+  list(APPEND LIBS pcre)
+endif()
+if(HAVE_FRIBIDI)
+  list(APPEND LIBS fribidi)
+else()                      # TODO
+  list(APPEND LIBS fribidi) # TODO
+endif()
+# TODO: CHECK_LIBRARY_EXISTS
+list(APPEND LIBS tinyxml)
+
+add_definitions(-DTARGET_LINUX -DTARGET_POSIX)
+
+# Enable gtest
+enable_testing()
+
+SET(IS_ANDROID $ENV{ANDROID})
+
+if("${IS_ANDROID}" STREQUAL "")
 set(ANDROID_HELPER_SRCS "")
 else ("${IS_ANDROID}" STREQUAL "")
 set(ANDROID_HELPER_SRCS
@@ -172,38 +205,18 @@ set(VDR_TEST_SRCS
 set(VDR_MAIN vdr/main.cpp)
 set(VDR_ADDON vdr/addon.cpp)
 
-CHECK_LIBRARY_EXISTS(rt clock_gettime "time.h" HAVE_RT)
-CHECK_LIBRARY_EXISTS(pthread pthread_create "pthread.h" HAVE_PTHREAD)
-CHECK_LIBRARY_EXISTS(pcre pcre_compile "pcre.h" HAVE_PCRE)
-CHECK_LIBRARY_EXISTS(fribidi fribidi_log2vis "fribidi/fribidi.h" HAVE_FRIBIDI)
-
-set(LIBS
-	pcre
-	libsi
-	fribidi
-	tinyxml
-)
-
-if(HAVE_RT)
-  set(LIBRT "rt")
-endif()
-
-if(HAVE_PTHREAD)
-  set(LIBPTHREAD "pthread")
-endif()
-
 set(VDR_EXECUTABLE vdr.bin)
 add_executable(${VDR_EXECUTABLE} ${VDR_MAIN} ${VDR_SRCS} ${VDR_FS_SRC_NATIVE} ${ANDROID_HELPER_SRCS})
-target_link_libraries(${VDR_EXECUTABLE} ${LIBS} ${LIBRT} ${LIBPTHREAD})
+target_link_libraries(${VDR_EXECUTABLE} ${LIBS})
 
 set(VDR_LIBRARY vdr)
 add_library(${VDR_LIBRARY} SHARED ${VDR_ADDON} ${VDR_SRCS} ${VDR_FS_SRC_XBMC} ${ANDROID_HELPER_SRCS})
 set_target_properties(${VDR_LIBRARY} PROPERTIES DEFINE_SYMBOL TARGET_XBMC)
-target_link_libraries(${VDR_LIBRARY} ${LIBS} ${LIBRT} ${LIBPTHREAD})
+target_link_libraries(${VDR_LIBRARY} ${LIBS})
 
 set(VDR_TEST_EXECUTABLE test-vdr.bin)
 add_executable(${VDR_TEST_EXECUTABLE} ${VDR_SRCS2} ${VDR_TEST_SRCS} ${VDR_FS_SRC_NATIVE})
-target_link_libraries(${VDR_TEST_EXECUTABLE} gtest_main ${LIBS} ${LIBRT} ${LIBPTHREAD})
+target_link_libraries(${VDR_TEST_EXECUTABLE} gtest_main ${LIBS})
 
 add_test(
 	NAME ${VDR_TEST_EXECUTABLE}
