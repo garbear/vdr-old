@@ -2,6 +2,7 @@
  *      Copyright (C) 2013 Garrett Brown
  *      Copyright (C) 2013 Lars Op den Kamp
  *      Portions Copyright (C) 2000, 2003, 2006, 2008, 2013 Klaus Schmidinger
+ *      Portions Copyright (C) 2005-2013 Team XBMC
  *
  *  This Program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -21,61 +22,30 @@
 #pragma once
 
 #include "filesystem/IDirectory.h"
-#include "xbmc/libXBMC_addon.h"
 
-#include <string>
-
-class cVFSDirectory : public IDirectory
+class CHDDirectory : public IDirectory
 {
 public:
+  CHDDirectory();
+  virtual ~CHDDirectory();
 
-  /*!
-   * @brief Construct a new directory
-   * @param XBMC The libXBMC helper instance. Must remain valid during the lifetime of this class.
-   */
-  cVFSDirectory();
-  virtual ~cVFSDirectory() { }
-
-  /*!
-   * \brief Get the contents of a directory
-   * \param strPath Directory to read
-   * \param items The directory entries retrieved by GetDirectory()
-   * \return true on success
-   */
   virtual bool GetDirectory(const std::string &strPath, DirectoryListing &items);
-
-  /*!
-  * \brief Create the directory
-  * \param strPath Directory to create
-  * \return true if directory is created or already exists
-  */
+  //virtual void GetDirectoryAsync(const std::string &strPath, IDirectoryCallback *callback);
+  //virtual void CancelDirectory();
   virtual bool Create(const std::string &strPath);
-
-  /*!
-  * \brief Check if the directory exists
-  * \param strPath Directory to check
-  * \return true if directory exists
-  */
   virtual bool Exists(const std::string &strPath);
-
-  /*!
-  * \brief Removes the directory
-  * \param strPath Directory to remove
-  * \return true on success
-  */
   virtual bool Remove(const std::string &strPath);
-
-  /*!
-  * \brief Renames the directory
-  * \param strPath Directory to rename
-  * \param strNewPath Target directory name
-  * \return true on success
-  */
   virtual bool Rename(const std::string &strPath, const std::string &strNewPath);
 
-  void SetMask(const std::string &strMask);
-  void SetFlags(int flags);
-
-private:
-  ADDON::CHelper_libXBMC_addon* m_XBMC;
+protected:
+  /*!
+   * \brief Return a new CDirectoryFetchJob (allows subclasses to override)
+   *
+   * The default job is to simply run GetDirectory() in another thread.
+   *
+   * \param strPath The path to fetch
+   * \param callback The callback to invoke on success or failure
+   * \return The newly-allocated job. Deallocation is the responsibility of IDirectory
+   */
+  //virtual CDirectoryFetchJob *GetJob(const std::string &strPath, IDirectoryCallback *callback);
 };

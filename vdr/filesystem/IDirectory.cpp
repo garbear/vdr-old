@@ -28,13 +28,13 @@
 
 using namespace std;
 
-class AsynchronousFetch : public cDirectoryFetchJob
+class AsynchronousFetch : public CDirectoryFetchJob
 {
 public:
-  AsynchronousFetch(IDirectory *dir, const string &strPath, IDirectoryCallback *callback) : cDirectoryFetchJob(dir, strPath, callback) { }
+  AsynchronousFetch(IDirectory *dir, const string &strPath, IDirectoryCallback *callback) : CDirectoryFetchJob(dir, strPath, callback) { }
 
 protected:
-  virtual bool DoFetch(IDirectory *dir, const std::string &strPath, cDirectoryListing &items)
+  virtual bool DoFetch(IDirectory *dir, const std::string &strPath, DirectoryListing &items)
   {
     if (!dir)
       return false;
@@ -42,7 +42,7 @@ protected:
   }
 };
 
-cDirectoryFetchJob *IDirectory::GetJob(const std::string &strPath, IDirectoryCallback *callback)
+CDirectoryFetchJob *IDirectory::GetJob(const std::string &strPath, IDirectoryCallback *callback)
 {
   return new AsynchronousFetch(this, strPath, callback);
 }

@@ -3,7 +3,6 @@
  *      Copyright (C) 2013 Lars Op den Kamp
  *      Portions Copyright (C) 2000, 2003, 2006, 2008, 2013 Klaus Schmidinger
  *      Portions Copyright (C) 2005-2013 Team XBMC
- *      http://xbmc.org
  *
  *  This Program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -27,14 +26,14 @@
 #include <string>
 #include <vector>
 
-class cDirectory
+class CDirectory
 {
 public:
-  cDirectory() { }
-  ~cDirectory() { }
+  CDirectory() { }
+  ~CDirectory() { }
 
   static bool GetDirectory(const std::string &strPath,
-                           cDirectoryListing &items,
+                           DirectoryListing &items,
                            const std::string &strMask = "",
                            int flags = DEFAULTS);
   // Need to manually delete IDirectory object (TODO: fix this)
@@ -52,5 +51,5 @@ public:
   static bool CanWrite(const std::string &strPath);
 
 private:
-  static IDirectory *CreateLoader(const std::string &strPath);
+  static IDirectory *CreateLoader(const std::string &path);
 };

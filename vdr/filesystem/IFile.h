@@ -24,7 +24,7 @@
  */
 #pragma once
 
-#include "../../platform/os.h"
+#include "platform/os.h"
 
 #include <stdint.h>
 #include <stdio.h>

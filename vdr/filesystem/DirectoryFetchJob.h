@@ -22,12 +22,12 @@
 
 #include "IDirectory.h"
 
-#include "../../platform/threads/threads.h"
-#include "../../platform/threads/mutex.h"
+#include "platform/threads/threads.h"
+#include "platform/threads/mutex.h"
 
 #include <string>
 
-class cDirectoryFetchJob : public PLATFORM::CThread
+class CDirectoryFetchJob : public PLATFORM::CThread
 {
 public:
   /*!
@@ -35,7 +35,7 @@ public:
    *
    * The job can be aborted via Abort().
    */
-  cDirectoryFetchJob(IDirectory *dir, const std::string &strPath, IDirectoryCallback *callback);
+  CDirectoryFetchJob(IDirectory *dir, const std::string &strPath, IDirectoryCallback *callback);
 
   /*!
    * \brief Main thread for directory fetch jobs
@@ -70,7 +70,7 @@ protected:
    * \param items The vector of items to fill with the directory listing
    * \return True on success, false on failure or abort (items can be non-empty)
    */
-  virtual bool DoFetch(IDirectory *dir, const std::string &strPath, cDirectoryListing &items) = 0;
+  virtual bool DoFetch(IDirectory *dir, const std::string &strPath, DirectoryListing &items) = 0;
 
   /*!
    * \brief Set the progress of this job

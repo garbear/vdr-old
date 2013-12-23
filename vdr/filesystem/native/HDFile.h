@@ -24,15 +24,17 @@
  */
 #pragma once
 
-#include "../IFile.h"
+#include "filesystem/IFile.h"
 
 #include <fstream>
 
-class cHDFile : public IFile
+class CURL;
+
+class CHDFile : public IFile
 {
 public:
-  cHDFile();
-  virtual ~cHDFile();
+  CHDFile();
+  virtual ~CHDFile();
 
   virtual bool Open(const std::string &url, unsigned int flags = 0);
   virtual bool OpenForWrite(const std::string &url, bool bOverWrite = false);
@@ -55,6 +57,13 @@ public:
   //virtual int IoControl(EIoControl request, void* param);
 
 protected:
+  /*!
+   * \brief Create a path properly formatted for the local filesystem
+   * \param url If an alias or shortcut, the return value will be be translated
+   *        to the target path
+   */
+  std::string GetLocal(const CURL &url);
+
   std::fstream            m_file;
   std::ios_base::openmode m_mode;
   int                     m_flags;

@@ -67,6 +67,7 @@ endif("${IS_ANDROID}" STREQUAL "")
 
 set(VDR_FS_SRC_NATIVE
 	vdr/filesystem/native/HDFile.cpp
+	vdr/filesystem/native/HDDirectory.cpp
 )
 
 set(VDR_FS_SRC_XBMC
@@ -152,7 +153,7 @@ set(VDR_SRCS
 	thread.cpp
 )
 
-set(VDR_SRCS2 # Sources for testing
+set(VDR_SRCS_TESTING # Sources for testing (remove this when all of the above compile)
 	vdr/SignalHandler.cpp
 	vdr/VDRDaemon.cpp
 	vdr/channels/Channel.cpp
@@ -163,6 +164,7 @@ set(VDR_SRCS2 # Sources for testing
 	vdr/filesystem/File.cpp
 	vdr/filesystem/IDirectory.cpp
 	vdr/filesystem/ReadDir.cpp
+	vdr/filesystem/SpecialProtocol.cpp
 	#vdr/filesystem/xbmc/VFSDirectory.cpp
 	#vdr/filesystem/xbmc/VFSFile.cpp
 	vdr/sources/ISourceParams.cpp
@@ -192,7 +194,13 @@ set(VDR_TEST_SRCS
 	vdr/channels/test/TestChannel.cpp
 	vdr/channels/test/TestChannelID.cpp
 	vdr/channels/test/TestChannelManager.cpp
+	vdr/filesystem/test/TestSpecialProtocol.cpp
+	vdr/filesystem/native/test/TestHDDirectory.cpp
+	vdr/filesystem/native/test/TestHDFile.cpp
 	vdr/sources/linux/test/TestDVBSourceParams.cpp
+	vdr/test/gtest/TestBasicEnvironment.cpp
+	vdr/test/gtest/TestUtils.cpp
+	vdr/test/gtest/vdr-test.cpp
 	vdr/utils/test/TestRegExp.cpp
 	vdr/utils/test/TestStringUtils.cpp
 	vdr/utils/test/TestXBMCTinyXML.cpp
@@ -215,8 +223,8 @@ set_target_properties(${VDR_LIBRARY} PROPERTIES DEFINE_SYMBOL TARGET_XBMC)
 target_link_libraries(${VDR_LIBRARY} ${LIBS})
 
 set(VDR_TEST_EXECUTABLE test-vdr.bin)
-add_executable(${VDR_TEST_EXECUTABLE} ${VDR_SRCS2} ${VDR_TEST_SRCS} ${VDR_FS_SRC_NATIVE})
-target_link_libraries(${VDR_TEST_EXECUTABLE} gtest_main ${LIBS})
+add_executable(${VDR_TEST_EXECUTABLE} ${VDR_SRCS_TESTING} ${VDR_FS_SRC_NATIVE} ${VDR_TEST_SRCS})
+target_link_libraries(${VDR_TEST_EXECUTABLE} gtest ${LIBS})
 
 add_test(
 	NAME ${VDR_TEST_EXECUTABLE}

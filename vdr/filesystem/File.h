@@ -2,10 +2,7 @@
  *      Copyright (C) 2013 Garrett Brown
  *      Copyright (C) 2013 Lars Op den Kamp
  *      Portions Copyright (C) 2000, 2003, 2006, 2008, 2013 Klaus Schmidinger
- *      Portions Copyright (C) 2002 Frodo
- *      Portions Copyright (C) by the authors of ffmpeg and xvid
  *      Portions Copyright (C) 2002-2013 Team XBMC
- *      http://xbmc.org
  *
  *  This Program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -32,11 +29,11 @@
 
 #define MIME_TYPE_NONE     "none/none"
 
-class cFile
+class CFile
 {
 public:
-  cFile();
-  ~cFile();
+  CFile();
+  ~CFile();
 
   bool Open(const std::string &url, unsigned int flags = 0);
   bool OpenForWrite(const std::string &url, bool bOverWrite = false);
@@ -72,18 +69,18 @@ public:
     return chunk ? chunk * ((minimum + chunk - 1) / chunk) : minimum;
   }
 
-  bool Exists(const std::string &url);
-  int Stat(const std::string &url, struct __stat64 *buffer);
-  bool Delete(const std::string &url);
-  bool Rename(const std::string &url, const std::string &urlnew);
-  bool SetHidden(const std::string &url, bool hidden);
+  static bool Exists(const std::string &url);
+  static int Stat(const std::string &url, struct __stat64 *buffer);
+  static bool Delete(const std::string &url);
+  static bool Rename(const std::string &url, const std::string &urlnew);
+  static bool SetHidden(const std::string &url, bool hidden);
 
   //int IoControl(EIoControl request, void* param) { return -1; }
 
   static bool OnSameFileSystem(const std::string &strFile1, const std::string &strFile2);
 
 private:
-  static IFile *CreateLoader(const std::string &url);
+  static IFile *CreateLoader(const std::string &path);
 
   IFile        *m_pFileImpl;
   unsigned int  m_flags;

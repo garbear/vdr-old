@@ -70,7 +70,7 @@ int cVideoDirectory::FreeMB(int *UsedMB)
 {
   string strPath = name ? name : VideoDirectory;
   unsigned int total, used, free;
-  cDirectory::CalculateDiskSpace(strPath, total, used, free);
+  CDirectory::CalculateDiskSpace(strPath, total, used, free);
   if (UsedMB)
     *UsedMB = used;
   return free;
@@ -95,7 +95,7 @@ bool cVideoDirectory::Next(void)
         char buf[16];
         if (sprintf(buf, "%0*d", digits, number) == digits) {
            strcpy(&name[length - digits], buf);
-           return cDirectory::CanWrite(name);
+           return CDirectory::CanWrite(name);
            }
         }
      }
@@ -138,7 +138,7 @@ cUnbufferedFile *OpenVideoFile(const char *FileName, int Flags)
         int MaxFree = Dir.FreeMB();
         while (Dir.Next()) {
               unsigned int total, used, free;
-              cDirectory::CalculateDiskSpace(Dir.Name(), total, used, free);
+              CDirectory::CalculateDiskSpace(Dir.Name(), total, used, free);
               int Free = free;
               if (Free > MaxFree) {
                  Dir.Store();
@@ -255,7 +255,7 @@ bool IsOnVideoDirectoryFileSystem(const char *FileName)
 {
   cVideoDirectory Dir;
   do {
-     if (cFile::OnSameFileSystem(Dir.Name(), FileName))
+     if (CFile::OnSameFileSystem(Dir.Name(), FileName))
         return true;
      } while (Dir.Next());
   return false;

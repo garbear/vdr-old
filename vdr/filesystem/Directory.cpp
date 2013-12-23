@@ -3,7 +3,6 @@
  *      Copyright (C) 2013 Lars Op den Kamp
  *      Portions Copyright (C) 2000, 2003, 2006, 2008, 2013 Klaus Schmidinger
  *      Portions Copyright (C) 2005-2013 Team XBMC
- *      http://xbmc.org
  *
  *  This Program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -22,11 +21,12 @@
  */
 
 #include "Directory.h"
+#include "native/HDDirectory.h"
+#include "SpecialProtocol.h"
+#include "utils/StringUtils.h"
 
 #ifdef TARGET_XBMC
 #include "xbmc/VFSDirectory.h"
-#else
-//TODO
 #endif
 
 #include <auto_ptr.h>
@@ -36,16 +36,24 @@
 
 using namespace std;
 
-IDirectory *cDirectory::CreateLoader(const std::string &strPath)
+IDirectory *CDirectory::CreateLoader(const std::string &path)
 {
-#ifdef TARGET_XBMC
+  string translatedPath = CSpecialProtocol::TranslatePath(path);
+  CURL url(translatedPath);
+  string protocol = url.GetProtocol();
+  StringUtils::ToLower(protocol); // TODO: See File.cpp
+
+  if (protocol == "file" || protocol.empty())
+    return new CHDDirectory();
+
+#if TARGET_XBMC
   return new cVFSDirectory();
-#else
-  return NULL;
 #endif
+
+  return NULL;
 }
 
-bool cDirectory::GetDirectory(const string &strPath, cDirectoryListing &items, const string &strMask, int flags)
+bool CDirectory::GetDirectory(const string &strPath, DirectoryListing &items, const string &strMask, int flags)
 {
   try
   {
@@ -59,16 +67,17 @@ bool cDirectory::GetDirectory(const string &strPath, cDirectoryListing &items, c
     // Now filter for allowed files
     for (size_t i = 0; i < items.size(); i++)
     {
-      cDirectoryFileLabel &label = items[i];
+      CDirectoryFileLabel &label = items[i];
       bool isHidden = false;
       if (isHidden && !(flags & GET_HIDDEN))
       {
         items.erase(items.begin() + i);
         i--;
       }
-
-      return result;
     }
+
+    items.PATH = strPath;
+    return result;
   }
   catch (...)
   {
@@ -77,7 +86,7 @@ bool cDirectory::GetDirectory(const string &strPath, cDirectoryListing &items, c
   return false;
 }
 
-IDirectory *cDirectory::GetDirectory(const string &strPath, IDirectoryCallback *callback, const string &strMask, int flags)
+IDirectory *CDirectory::GetDirectory(const string &strPath, IDirectoryCallback *callback, const string &strMask, int flags)
 {
   IDirectory *pDirectory = CreateLoader(strPath);
   if (!pDirectory)
@@ -88,7 +97,7 @@ IDirectory *cDirectory::GetDirectory(const string &strPath, IDirectoryCallback *
   return pDirectory;
 }
 
-bool cDirectory::Create(const string &strPath)
+bool CDirectory::Create(const string &strPath)
 {
   try
   {
@@ -104,7 +113,7 @@ bool cDirectory::Create(const string &strPath)
   return false;
 }
 
-bool cDirectory::Exists(const string &strPath)
+bool CDirectory::Exists(const string &strPath)
 {
   try
   {
@@ -120,7 +129,7 @@ bool cDirectory::Exists(const string &strPath)
   return false;
 }
 
-bool cDirectory::Remove(const string &strPath)
+bool CDirectory::Remove(const string &strPath)
 {
   try
   {
@@ -136,7 +145,7 @@ bool cDirectory::Remove(const string &strPath)
   return false;
 }
 
-bool cDirectory::Rename(const string &strPath, const string &strNewPath)
+bool CDirectory::Rename(const string &strPath, const string &strNewPath)
 {
   try
   {
@@ -152,7 +161,7 @@ bool cDirectory::Rename(const string &strPath, const string &strNewPath)
   return false;
 }
 
-bool cDirectory::CalculateDiskSpace(const string &strPath, unsigned int &size, unsigned int &used, unsigned int &free)
+bool CDirectory::CalculateDiskSpace(const string &strPath, unsigned int &size, unsigned int &used, unsigned int &free)
 {
   struct statfs64 statFs;
   if (statfs64(strPath.c_str(), &statFs) == 0)
@@ -165,7 +174,7 @@ bool cDirectory::CalculateDiskSpace(const string &strPath, unsigned int &size, u
   return false;
 }
 
-bool cDirectory::CanWrite(const string &strPath)
+bool CDirectory::CanWrite(const string &strPath)
 {
   struct stat64 ds;
   if (stat64(strPath.c_str(), &ds) == 0)

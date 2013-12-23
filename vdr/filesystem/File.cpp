@@ -2,10 +2,7 @@
  *      Copyright (C) 2013 Garrett Brown
  *      Copyright (C) 2013 Lars Op den Kamp
  *      Portions Copyright (C) 2000, 2003, 2006, 2008, 2013 Klaus Schmidinger
- *      Portions Copyright (C) 2002 Frodo
- *      Portions Copyright (C) by the authors of ffmpeg and xvid
  *      Portions Copyright (C) 2002-2013 Team XBMC
- *      http://xbmc.org
  *
  *  This Program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -24,45 +21,58 @@
  */
 
 #include "File.h"
+#include "native/HDFile.h"
+#include "SpecialProtocol.h"
+#include "utils/StringUtils.h"
+#include "utils/url/URL.h"
 
 #ifdef TARGET_XBMC
 #include "xbmc/VFSFile.h"
-#else
-#include "native/HDFile.h"
 #endif
 
 #include <auto_ptr.h>
 
 using namespace std;
 
-//#define TARGET_XBMC
+#define TARGET_XBMC 0 // TODO
 
 #ifndef SAFE_DELETE
-#define SAFE_DELETE(p)  do { delete (p); (p)=NULL; } while (0)
+#define SAFE_DELETE(p)  do { delete (p); (p) = NULL; } while (0)
 #endif
 
-cFile::cFile()
+CFile::CFile()
  : m_pFileImpl(NULL),
    m_flags(0)
 {
 }
 
-cFile::~cFile()
+CFile::~CFile()
 {
   SAFE_DELETE(m_pFileImpl);
 }
 
-IFile *cFile::CreateLoader(const string &url)
+IFile *CFile::CreateLoader(const string &path)
 {
-#ifdef TARGET_XBMC
+  CURL url(path);
+  string protocol = url.GetProtocol();
+  StringUtils::ToLower(protocol); // TODO: have GetProtocol() canonicalize to lowercase
+
+  if (protocol == "file" || protocol.empty())
+    return new CHDFile();
+
+#if TARGET_XBMC
   return new cVFSFile();
-#else
-  return new cHDFile();
 #endif
+
+  return NULL;
 }
 
-bool cFile::Open(const string &url, unsigned int flags /* = 0 */)
+bool CFile::Open(const string &url, unsigned int flags /* = 0 */)
 {
+  // TODO: Evaluate if we should import SpecialProtocolFile from XBMC so that
+  // we can remove calls to TranslatePath() at the beginning of most functions
+  string translatedPath = CSpecialProtocol::TranslatePath(url);
+
   m_flags = flags;
 
   /*
@@ -72,18 +82,18 @@ bool cFile::Open(const string &url, unsigned int flags /* = 0 */)
   if (m_flags & READ_CACHED)
   {
     // for internet stream, if it contains multiple stream, file cache need handle it specially.
-    //m_pFileImpl = new cFileCache((m_flags & READ_MULTI_STREAM) !=0 );
+    //m_pFileImpl = new CFileCache((m_flags & READ_MULTI_STREAM) !=0 );
     return m_pFileImpl && m_pFileImpl->Open(url);
   }
   */
 
-  m_pFileImpl = CreateLoader(url);
+  m_pFileImpl = CreateLoader(translatedPath);
   if (!m_pFileImpl)
     return false;
 
   try
   {
-    if (!m_pFileImpl->Open(url, m_flags))
+    if (!m_pFileImpl->Open(translatedPath, m_flags))
     {
       SAFE_DELETE(m_pFileImpl);
       return false;
@@ -109,15 +119,17 @@ bool cFile::Open(const string &url, unsigned int flags /* = 0 */)
   return true;
 }
 
-bool cFile::OpenForWrite(const string &url, bool bOverWrite /* = false */)
+bool CFile::OpenForWrite(const string &url, bool bOverWrite /* = false */)
 {
-  m_pFileImpl = CreateLoader(url);
+  string translatedPath = CSpecialProtocol::TranslatePath(url);
+
+  m_pFileImpl = CreateLoader(translatedPath);
   if (!m_pFileImpl)
     return false;
 
   try
   {
-    if (!m_pFileImpl->OpenForWrite(url, bOverWrite))
+    if (!m_pFileImpl->OpenForWrite(translatedPath, bOverWrite))
     {
       SAFE_DELETE(m_pFileImpl);
       return false;
@@ -132,14 +144,14 @@ bool cFile::OpenForWrite(const string &url, bool bOverWrite /* = false */)
   return true;
 }
 
-int64_t cFile::Read(void *lpBuf, int64_t uiBufSize)
+int64_t CFile::Read(void *lpBuf, int64_t uiBufSize)
 {
   if (!m_pFileImpl)
     return 0;
   return m_pFileImpl->Read(lpBuf, uiBufSize);
 }
 
-bool cFile::ReadLine(string &strLine)
+bool CFile::ReadLine(string &strLine)
 {
   strLine.clear();
   if (!m_pFileImpl)
@@ -147,14 +159,16 @@ bool cFile::ReadLine(string &strLine)
   return m_pFileImpl->ReadLine(strLine);
 }
 
-bool cFile::LoadFile(const string &url, vector<uint8_t> &outputBuffer)
+bool CFile::LoadFile(const string &url, vector<uint8_t> &outputBuffer)
 {
+  string translatedPath = CSpecialProtocol::TranslatePath(url);
+
   static const unsigned int MAX_FILE_SIZE = 0x7FFFFFFF; // TODO
   static const unsigned int MIN_CHUNK_SIZE = 64 * 1024U;
   static const unsigned int MAX_CHUNK_SIZEI = 2048 * 1024U;
 
   outputBuffer.clear();
-  if (!Open(url, READ_TRUNCATED))
+  if (!Open(translatedPath, READ_TRUNCATED))
     return false;
 
   /*
@@ -207,128 +221,142 @@ bool cFile::LoadFile(const string &url, vector<uint8_t> &outputBuffer)
   return true;
 }
 
-int64_t cFile::Write(const void *lpBuf, int64_t uiBufSize)
+int64_t CFile::Write(const void *lpBuf, int64_t uiBufSize)
 {
   if (!m_pFileImpl)
     return 0;
   return m_pFileImpl->Write(lpBuf, uiBufSize);
 }
 
-void cFile::Flush()
+void CFile::Flush()
 {
   if (!m_pFileImpl)
     return;
   return m_pFileImpl->Flush();
 }
 
-int64_t cFile::Seek(int64_t iFilePosition, int iWhence /* = SEEK_SET */)
+int64_t CFile::Seek(int64_t iFilePosition, int iWhence /* = SEEK_SET */)
 {
   if (!m_pFileImpl)
     return -1;
   return m_pFileImpl->Seek(iFilePosition, iWhence);
 }
 
-int64_t cFile::GetPosition()
+int64_t CFile::GetPosition()
 {
   if (!m_pFileImpl)
     return -1;
   return m_pFileImpl->GetPosition();
 }
 
-int64_t cFile::GetLength()
+int64_t CFile::GetLength()
 {
   if (!m_pFileImpl)
     return 0;
   return m_pFileImpl->GetLength();
 }
 
-int64_t cFile::Truncate(uint64_t size)
+int64_t CFile::Truncate(uint64_t size)
 {
   if (!m_pFileImpl)
     return -1;
   return m_pFileImpl->Truncate(size);
 }
 
-void cFile::Close()
+void CFile::Close()
 {
   if (!m_pFileImpl)
     return;
   m_pFileImpl->Close();
 }
 
-string cFile::GetContentMimeType()
+string CFile::GetContentMimeType()
 {
   if (!m_pFileImpl)
     return MIME_TYPE_NONE;
   return m_pFileImpl->GetContent();
 }
 
-string cFile::GetContentCharset()
+string CFile::GetContentCharset()
 {
   if (!m_pFileImpl)
     return "";
   return m_pFileImpl->GetContentCharset();
 }
 
-unsigned int cFile::GetChunkSize()
+unsigned int CFile::GetChunkSize()
 {
   if (!m_pFileImpl)
     return 0;
   return m_pFileImpl->GetChunkSize();
 }
 
-bool cFile::Exists(const string &url)
+bool CFile::Exists(const string &url)
 {
-  std::auto_ptr<IFile> pFile(CreateLoader(url));
+  string translatedPath = CSpecialProtocol::TranslatePath(url);
+
+  std::auto_ptr<IFile> pFile(CreateLoader(translatedPath));
   if (!pFile.get())
     return false;
-  return pFile->Exists(url);
+  return pFile->Exists(translatedPath);
 }
 
-int cFile::Stat(const string &url, struct __stat64 *buffer)
+int CFile::Stat(const string &url, struct __stat64 *buffer)
 {
+  string translatedPath = CSpecialProtocol::TranslatePath(url);
+
   if (buffer)
     memset(buffer, 0, sizeof(struct __stat64));
 
-  std::auto_ptr<IFile> pFile(CreateLoader(url));
+  std::auto_ptr<IFile> pFile(CreateLoader(translatedPath));
   if (!pFile.get())
     return -1;
-  return pFile->Exists(url);
+  return pFile->Stat(translatedPath, buffer);
 }
 
-bool cFile::Delete(const string &url)
+bool CFile::Delete(const string &url)
 {
-  std::auto_ptr<IFile> pFile(CreateLoader(url));
+  string translatedPath = CSpecialProtocol::TranslatePath(url);
+
+  std::auto_ptr<IFile> pFile(CreateLoader(translatedPath));
   if (!pFile.get())
     return false;
-  return pFile->Delete(url);
+  return pFile->Delete(translatedPath);
 }
 
-bool cFile::Rename(const string &url, const string &urlnew)
+bool CFile::Rename(const string &url, const string &urlnew)
 {
-  std::auto_ptr<IFile> pFile(CreateLoader(url));
+  string translatedPath = CSpecialProtocol::TranslatePath(url);
+  string translatedPathNew = CSpecialProtocol::TranslatePath(urlnew);
+
+  std::auto_ptr<IFile> pFile(CreateLoader(translatedPath));
   if (!pFile.get())
     return false;
-  return pFile->Rename(url, urlnew);
+  return pFile->Rename(translatedPath, translatedPathNew);
 }
 
-bool cFile::SetHidden(const string &url, bool hidden)
+bool CFile::SetHidden(const string &url, bool hidden)
 {
-  std::auto_ptr<IFile> pFile(CreateLoader(url));
+  string translatedPath = CSpecialProtocol::TranslatePath(url);
+
+  std::auto_ptr<IFile> pFile(CreateLoader(translatedPath));
   if (!pFile.get())
     return false;
-  return pFile->SetHidden(url, false);
+  return pFile->SetHidden(translatedPath, false);
 }
 
-bool cFile::OnSameFileSystem(const string &strFile1, const string &strFile2)
+bool CFile::OnSameFileSystem(const string &strFile1, const string &strFile2)
 {
+  string translatedPath1 = CSpecialProtocol::TranslatePath(strFile1);
+  string translatedPath2 = CSpecialProtocol::TranslatePath(strFile2);
+
   struct __stat64 statStruct;
-  cFile file;
-  file.Stat(strFile1, &statStruct);
+  CFile file;
+  file.Stat(translatedPath1, &statStruct);
   dev_t dev1 = statStruct.st_dev;
   if (dev1)
   {
-    file.Stat(strFile2, &statStruct);
+    file.Stat(translatedPath2, &statStruct);
     return dev1 == statStruct.st_dev;
   }
   return false;

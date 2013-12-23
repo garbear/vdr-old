@@ -25,7 +25,7 @@
 using namespace PLATFORM;
 using namespace std;
 
-cDirectoryFetchJob::cDirectoryFetchJob(IDirectory *dir, const string &strPath, IDirectoryCallback *callback)
+CDirectoryFetchJob::CDirectoryFetchJob(IDirectory *dir, const string &strPath, IDirectoryCallback *callback)
  : m_dir(dir),
    m_strPath(strPath),
    m_progress(0),
@@ -34,9 +34,9 @@ cDirectoryFetchJob::cDirectoryFetchJob(IDirectory *dir, const string &strPath, I
   CreateThread(false);
 }
 
-void *cDirectoryFetchJob::Process()
+void *CDirectoryFetchJob::Process()
 {
-  cDirectoryListing items;
+  DirectoryListing items;
   bool bSuccess = DoFetch(m_dir, m_strPath, items);
 
   SetProgress(100);
@@ -47,18 +47,18 @@ void *cDirectoryFetchJob::Process()
   return NULL;
 }
 
-void cDirectoryFetchJob::Abort(int iWaitMs)
+void CDirectoryFetchJob::Abort(int iWaitMs)
 {
   StopThread(iWaitMs);
 }
 
-unsigned int cDirectoryFetchJob::GetProgress()
+unsigned int CDirectoryFetchJob::GetProgress()
 {
   CLockObject lock(m_progressMutex);
   return m_progress;
 }
 
-void cDirectoryFetchJob::SetProgress(unsigned int progress)
+void CDirectoryFetchJob::SetProgress(unsigned int progress)
 {
   CLockObject lock(m_progressMutex);
   m_progress = progress;

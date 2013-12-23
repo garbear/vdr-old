@@ -26,10 +26,10 @@
 #include <vector>
 
 // TODO
-class cDirectoryFileLabel
+class CDirectoryFileLabel
 {
 public:
-  cDirectoryFileLabel(const std::string &strName, bool bHidden = false)
+  CDirectoryFileLabel(const std::string &strName, bool bHidden = false)
    : m_strName(strName),
      m_bHidden(bHidden)
   {
@@ -43,17 +43,26 @@ private:
   bool        m_bHidden;
 };
 
-typedef std::vector<cDirectoryFileLabel> cDirectoryListing;
+//typedef std::vector<CDirectoryFileLabel> DirectoryListing;
+/*
+ * \brief DirectoryListing is a vector of file labels with an additional
+ *        property, PATH, that specifies the path of the directory being listed.
+ */
+class DirectoryListing : public std::vector<CDirectoryFileLabel>
+{
+public:
+  std::string PATH;
+};
 
 class IDirectoryCallback
 {
 public:
-  virtual void OnDirectoryFetchComplete(bool bSuccess, const cDirectoryListing &items) = 0;
+  virtual void OnDirectoryFetchComplete(bool bSuccess, const DirectoryListing &items) = 0;
 
   virtual ~IDirectoryCallback() { }
 };
 
-class cDirectoryFetchJob;
+class CDirectoryFetchJob;
 
 /*!
  * \brief Available directory flags
@@ -72,9 +81,6 @@ enum DIR_FLAG
 
 /*!
  * \brief Interface to the directory on a file system
- *
- * This Interface is retrieved from CDirectoryFactory and can be used to access
- * the directories on a filesystem.
  */
 class IDirectory
 {
@@ -88,7 +94,7 @@ public:
    * \param items The directory entries retrieved by GetDirectory()
    * \return true on success
    */
-  virtual bool GetDirectory(const std::string &strPath, cDirectoryListing &items) = 0;
+  virtual bool GetDirectory(const std::string &strPath, DirectoryListing &items) = 0;
 
   /*!
    * \brief Get the contents of a directory (asynchronous)
@@ -149,7 +155,7 @@ public:
 
 protected:
   /*!
-   * \brief Return a new cDirectoryFetchJob (allows subclasses to override)
+   * \brief Return a new CDirectoryFetchJob (allows subclasses to override)
    *
    * The default job is to simply run GetDirectory() in another thread.
    *
@@ -157,7 +163,7 @@ protected:
    * \param callback The callback to invoke on success or failure
    * \return The newly-allocated job. Deallocation is the responsibility of IDirectory
    */
-  virtual cDirectoryFetchJob *GetJob(const std::string &strPath, IDirectoryCallback *callback);
+  virtual CDirectoryFetchJob *GetJob(const std::string &strPath, IDirectoryCallback *callback);
 
 private:
   // Directory flags - see DIR_FLAG
@@ -166,5 +172,5 @@ private:
   // Holds the file mask specified by SetMask()
   std::string m_strFileMask;
 
-  cDirectoryFetchJob *m_fetchJob;
+  CDirectoryFetchJob *m_fetchJob;
 };

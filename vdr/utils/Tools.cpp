@@ -548,7 +548,7 @@ bool SpinUpDisk(const char *FileName)
 {
   for (int n = 0; n < 10; n++) {
       cString buf;
-      if (cDirectory::CanWrite(FileName))
+      if (CDirectory::CanWrite(FileName))
          buf = cString::sprintf("%s/vdr-%06d", *FileName ? FileName : ".", n);
       else
          buf = cString::sprintf("%s.vdr-%06d", FileName, n);
@@ -1237,7 +1237,7 @@ cLockFile::cLockFile(const char *Directory)
 {
   fileName = NULL;
   f = -1;
-  if (cDirectory::CanWrite(Directory))
+  if (CDirectory::CanWrite(Directory))
      fileName = strdup(AddDirectory(Directory, LOCKFILENAME));
 }
 

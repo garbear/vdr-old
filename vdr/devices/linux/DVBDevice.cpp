@@ -155,11 +155,11 @@ cDvbDevice::~cDvbDevice()
 void cDvbDevice::FindAdapters(vector<linux_dvb_device_t>& nodes)
 {
   // Enumerate /dev/dvb
-  cDirectoryListing items;
+  DirectoryListing items;
 
-  if (cDirectory::GetDirectory(DEV_DVB_BASE, items))
+  if (CDirectory::GetDirectory(DEV_DVB_BASE, items))
   {
-    for (cDirectoryListing::const_iterator itemIt = items.begin(); itemIt != items.end(); ++itemIt)
+    for (DirectoryListing::const_iterator itemIt = items.begin(); itemIt != items.end(); ++itemIt)
     {
       // Adapter node must begin with "adapter"
       if (!itemIt->Name().find(DEV_DVB_ADAPTER) != string::npos)
@@ -171,11 +171,11 @@ void cDvbDevice::FindAdapters(vector<linux_dvb_device_t>& nodes)
         continue;
 
       // Enumerate /dev/dvb/adapterN
-      cDirectoryListing adapterDirItems;
+      DirectoryListing adapterDirItems;
       // TODO: Need AddFileToDirectory() function
-      if (!cDirectory::GetDirectory(DEV_DVB_BASE "/" + itemIt->Name(), adapterDirItems))
+      if (!CDirectory::GetDirectory(DEV_DVB_BASE "/" + itemIt->Name(), adapterDirItems))
       {
-        for (cDirectoryListing::const_iterator itemIt2 = adapterDirItems.begin(); itemIt2 != adapterDirItems.end(); ++itemIt2)
+        for (DirectoryListing::const_iterator itemIt2 = adapterDirItems.begin(); itemIt2 != adapterDirItems.end(); ++itemIt2)
         {
           // Frontend node must begin with "frontend"
           if (!itemIt2->Name().find(DEV_DVB_FRONTEND) != string::npos)
@@ -396,8 +396,7 @@ int cDvbDevice::DvbOpen(const char *name, unsigned int adapter, unsigned int fro
 
 bool cDvbDevice::Exists(unsigned int adapter, unsigned int frontend)
 {
-  cFile file;
-  return file.Exists(DvbName(DEV_DVB_FRONTEND, adapter, frontend));
+  return CFile::Exists(DvbName(DEV_DVB_FRONTEND, adapter, frontend));
 }
 
 bool cDvbDevice::Probe(unsigned int adapter, unsigned int frontend)

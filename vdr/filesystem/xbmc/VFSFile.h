@@ -20,7 +20,7 @@
  */
 #pragma once
 
-#include "../IFile.h"
+#include "filesystem/IFile.h"
 #include "xbmc/xbmc_vfs_utils.hpp"
 
 class cVFSFile : public IFile

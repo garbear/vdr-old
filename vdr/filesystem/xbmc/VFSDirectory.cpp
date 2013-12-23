@@ -20,8 +20,8 @@
  */
 
 #include "VFSDirectory.h"
-#include "../../xbmc/xbmc_content_types.h"
-#include "../../xbmc/xbmc_file_utils.hpp"
+#include "xbmc/xbmc_content_types.h"
+#include "xbmc/xbmc_file_utils.hpp"
 
 #include <vector>
 
@@ -35,7 +35,7 @@ cVFSDirectory::cVFSDirectory()
 {
 }
 
-bool cVFSDirectory::GetDirectory(const string &strPath, cDirectoryListing &items)
+bool cVFSDirectory::GetDirectory(const string &strPath, DirectoryListing &items)
 {
   CONTENT_ADDON_FILELIST *directory = NULL;
   if (m_XBMC->GetDirectory(strPath.c_str(), &directory) && directory)
@@ -46,7 +46,7 @@ bool cVFSDirectory::GetDirectory(const string &strPath, cDirectoryListing &items
     for (vector<AddonFileItem>::const_iterator it = list.m_fileItems.begin(); it != list.m_fileItems.end(); ++it)
     {
       string path = it->GetPropertyString("path");
-      items.push_back(cDirectoryFileLabel(path));
+      items.push_back(CDirectoryFileLabel(path));
     }
     return true;
   }

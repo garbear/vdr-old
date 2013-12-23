@@ -23,20 +23,22 @@
  */
 
 #include "HDFile.h"
+#include "utils/url/URL.h"
 
 using namespace std;
 
-cHDFile::cHDFile()
- : m_mode((std::ios_base::openmode)0)
+CHDFile::CHDFile()
+ : m_mode((std::ios_base::openmode)0),
+   m_flags(0)
 {
 }
 
-cHDFile::~cHDFile()
+CHDFile::~CHDFile()
 {
   Close();
 }
 
-bool cHDFile::Open(const string &url, unsigned int flags /* = 0 */)
+bool CHDFile::Open(const string &url, unsigned int flags /* = 0 */)
 {
   Close();
 
@@ -48,9 +50,12 @@ bool cHDFile::Open(const string &url, unsigned int flags /* = 0 */)
   return m_file.is_open();
 }
 
-bool cHDFile::OpenForWrite(const string &url, bool bOverWrite /* = false */)
+bool CHDFile::OpenForWrite(const string &url, bool bOverWrite /* = false */)
 {
   Close();
+
+  if (!bOverWrite && Exists(url))
+    return false;
 
   m_mode = ios::out;
   m_file.open(url.c_str(), m_mode);
@@ -58,9 +63,9 @@ bool cHDFile::OpenForWrite(const string &url, bool bOverWrite /* = false */)
   return m_file.is_open();
 }
 
-int64_t cHDFile::Read(void *lpBuf, uint64_t uiBufSize)
+int64_t CHDFile::Read(void *lpBuf, uint64_t uiBufSize)
 {
-  if (m_file.is_open() && (m_mode & ios::in))
+  if (lpBuf && uiBufSize && m_file.is_open() && (m_mode & ios::in))
   {
     int64_t start = m_file.tellg();
 
@@ -68,14 +73,19 @@ int64_t cHDFile::Read(void *lpBuf, uint64_t uiBufSize)
     m_file.read(reinterpret_cast<char*>(lpBuf), uiBufSize);
 
     if (m_file.eof())
-      return m_file.tellg() - start;
+    {
+      m_file.clear();
+      // Can't use m_file.tellg(), EOF causes tellg() to return -1
+      int64_t size = Seek(0, SEEK_END);
+      return size > 0 ? size - start : 0;
+    }
     else if (!m_file.fail())
       return uiBufSize;
   }
   return 0;
 }
 
-bool cHDFile::ReadLine(string &strLine)
+bool CHDFile::ReadLine(string &strLine)
 {
   if (m_file.is_open() && (m_mode & ios::in))
   {
@@ -87,23 +97,23 @@ bool cHDFile::ReadLine(string &strLine)
   return false;
 }
 
-int64_t cHDFile::Write(const void* lpBuf, uint64_t uiBufSize)
+int64_t CHDFile::Write(const void* lpBuf, uint64_t uiBufSize)
 {
-  if (m_file.is_open() && (m_mode & ios::out))
+  if (lpBuf && uiBufSize && m_file.is_open() && (m_mode & ios::out))
   {
     m_file.write(reinterpret_cast<const char*>(lpBuf), uiBufSize);
-    return !m_file.fail();
+    return !m_file.fail() ? uiBufSize : 0;
   }
   return 0;
 }
 
-void cHDFile::Flush()
+void CHDFile::Flush()
 {
   if (m_file.is_open())
     m_file.flush();
 }
 
-int64_t cHDFile::Seek(int64_t iFilePosition, int iWhence /* = SEEK_SET */)
+int64_t CHDFile::Seek(int64_t iFilePosition, int iWhence /* = SEEK_SET */)
 {
   if (m_file.is_open())
   {
@@ -131,12 +141,12 @@ int64_t cHDFile::Seek(int64_t iFilePosition, int iWhence /* = SEEK_SET */)
   return 0;
 }
 
-int cHDFile::Truncate(int64_t size)
+int CHDFile::Truncate(int64_t size)
 {
   return -1;
 }
 
-int64_t cHDFile::GetPosition()
+int64_t CHDFile::GetPosition()
 {
   if (m_file.is_open())
   {
@@ -148,7 +158,7 @@ int64_t cHDFile::GetPosition()
   return -1;
 }
 
-int64_t cHDFile::GetLength()
+int64_t CHDFile::GetLength()
 {
   int64_t length = 0;
 
@@ -175,7 +185,7 @@ int64_t cHDFile::GetLength()
   return length;
 }
 
-void cHDFile::Close()
+void CHDFile::Close()
 {
   if (m_file.is_open())
     m_file.close();
@@ -183,27 +193,62 @@ void cHDFile::Close()
   m_flags = 0;
 }
 
-bool cHDFile::Exists(const string &url)
+bool CHDFile::Exists(const string &url)
 {
-  return false;
+  ifstream file(url.c_str());
+  return (bool)file;
 }
 
-int cHDFile::Stat(const string &url, struct __stat64 *buffer)
+int CHDFile::Stat(const string &url, struct __stat64 *buffer)
 {
   return -1;
 }
 
-bool cHDFile::Delete(const string &url)
+bool CHDFile::Delete(const string &url)
+{
+  string strFile(GetLocal(url));
+
+#ifdef TARGET_WINDOWS
+  //return ::DeleteFileW(CWIN32Util::ConvertPathToWin32Form(strFile).c_str()) ? true : false; // TODO
+#else
+  return remove(strFile.c_str()) == 0;
+#endif
+}
+
+bool CHDFile::Rename(const string &url, const string &urlnew)
 {
   return false;
 }
 
-bool cHDFile::Rename(const string &url, const string &urlnew)
+bool CHDFile::SetHidden(const string &url, bool hidden)
 {
   return false;
 }
 
-bool cHDFile::SetHidden(const string &url, bool hidden)
+std::string CHDFile::GetLocal(const CURL &url)
 {
-  return false;
+  std::string path(url.GetFileName());
+
+  if (url.GetProtocol() == "file")
+  {
+    // file://drive[:]/path
+    // file:///drive:/path
+    std::string host(url.GetHostName());
+
+    if (!host.empty())
+    {
+      if (*(host.end() - 1) == ':')
+        path = host + "/" + path;
+      else
+        path = host + ":/" + path;
+    }
+  }
+
+  // Linux does not use alias or shortcut methods (TODO for other OSes)
+  /*
+  if (IsAliasShortcut(path))
+    TranslateAliasShortcut(path);
+  */
+
+  return path;
 }
