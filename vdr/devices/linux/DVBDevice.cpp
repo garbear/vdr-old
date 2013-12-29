@@ -105,6 +105,7 @@ cDvbDevice::cDvbDevice(unsigned int adapter, unsigned int frontend)
    m_bondedDevice(NULL),
    m_bNeedsDetachBondedReceivers(false)
 {
+  /*
   // Devices that are present on all card types:
   int fd_frontend = DvbOpen(DEV_DVB_FRONTEND, m_adapter, m_frontend, O_RDWR | O_NONBLOCK);
 
@@ -117,12 +118,13 @@ cDvbDevice::cDvbDevice(unsigned int adapter, unsigned int frontend)
   if (fd_frontend >= 0)
   {
     if (QueryDeliverySystems(fd_frontend))
-      DvbChannel()->m_dvbTuner = new cDvbTuner(this, fd_frontend, m_adapter, m_frontend);
+      ;//DvbChannel()->m_dvbTuner = new cDvbTuner(this, fd_frontend, m_adapter, m_frontend); // TODO
   }
   else
-    esyslog("ERROR: can't open DVB device %d/%d", m_adapter, m_frontend);
+    ;//esyslog("ERROR: can't open DVB device %d/%d", m_adapter, m_frontend);
 
-  SectionFilter()->StartSectionHandler();
+  //SectionFilter()->StartSectionHandler(); // TODO
+  */
 }
 
 cSubsystems cDvbDevice::CreateSubsystems(cDvbDevice* device)

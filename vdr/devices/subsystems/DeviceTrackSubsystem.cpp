@@ -65,7 +65,7 @@ void cDeviceTrackSubsystem::ClrAvailableTracks(bool bDescriptionsOnly /* = false
       }
     }
     m_pre_1_3_19_PrivateStream = 0;
-    Audio()->SetAudioChannel(0); // fall back to stereo
+    //Audio()->SetAudioChannel(0); // fall back to stereo // TODO: Can't call from constructor (references m_device)
     m_currentAudioTrackMissingCount = 0;
     m_currentAudioTrack = ttNone;
     m_currentSubtitleTrack = ttNone;

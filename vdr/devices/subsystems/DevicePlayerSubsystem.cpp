@@ -56,8 +56,7 @@ cDevicePlayerSubsystem::cDevicePlayerSubsystem(cDevice *device)
 cDevicePlayerSubsystem::~cDevicePlayerSubsystem()
 {
   Detach(m_player);
-  // TODO: Must not call subsystems in destructor!!!!!!!!!!!
-  Receiver()->DetachAllReceivers();
+  //Receiver()->DetachAllReceivers(); TODO: Must not call subsystems in destructor!!!!!!!!!!!
 }
 
 void cDevicePlayerSubsystem::Clear()
