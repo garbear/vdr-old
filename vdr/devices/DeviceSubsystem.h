@@ -49,11 +49,16 @@ class cDeviceVideoFormatSubsystem;
 class cDeviceSubsystem
 {
 public:
+  /*!
+   * \brief cDeviceSubsystem destructors must not reference m_device or other
+   *        subsystems, as m_device is destructed before its subsystems
+   */
   virtual ~cDeviceSubsystem() { }
 
 protected:
   /*!
    * \brief Construct the subsystem with a pointer to the device it belongs to
+   * \param device Pointer to subsystem's cDevice owner (don't dereference - not fully constructed)
    */
   cDeviceSubsystem(cDevice *device) : m_device(device) { assert(m_device); }
 
@@ -93,5 +98,5 @@ protected:
 private:
   cDeviceSubsystem(const cDeviceSubsystem &other); // non copy
 
-  cDevice *m_device;
+  cDevice* const m_device;
 };

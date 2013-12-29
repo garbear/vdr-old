@@ -97,15 +97,14 @@ const char *DeliverySystemNames[] =
 };
 
 cDvbDevice::cDvbDevice(unsigned int adapter, unsigned int frontend)
- : cDevice(CreateSubsystems(), 0 /* ??? */)
+ : cDevice(CreateSubsystems(this), 0 /* ??? */),
+   m_adapter(adapter),
+   m_frontend(frontend),
+   m_numDeliverySystems(0),
+   m_numModulations(0),
+   m_bondedDevice(NULL),
+   m_bNeedsDetachBondedReceivers(false)
 {
-  m_adapter = adapter;
-  m_frontend = frontend;
-  m_numDeliverySystems = 0;
-  m_numModulations = 0;
-  m_bondedDevice = NULL;
-  m_bNeedsDetachBondedReceivers = false;
-
   // Devices that are present on all card types:
   int fd_frontend = DvbOpen(DEV_DVB_FRONTEND, m_adapter, m_frontend, O_RDWR | O_NONBLOCK);
 
@@ -126,22 +125,24 @@ cDvbDevice::cDvbDevice(unsigned int adapter, unsigned int frontend)
   SectionFilter()->StartSectionHandler();
 }
 
-const cSubsystems &cDvbDevice::CreateSubsystems()
+cSubsystems cDvbDevice::CreateSubsystems(cDvbDevice* device)
 {
-  m_subsystems.Audio           = new cDvbAudioSubsystem(this);
-  m_subsystems.Channel         = new cDvbChannelSubsystem(this);
-  m_subsystems.CommonInterface = new cDvbCommonInterfaceSubsystem(this);
-  m_subsystems.PID             = new cDvbPIDSubsystem(this);
-  m_subsystems.Receiver        = new cDvbReceiverSubsystem(this);
-  m_subsystems.SectionFilter   = new cDvbSectionFilterSubsystem(this);
+  cSubsystems subsystems;
 
-  m_subsystems.ImageGrab       = new cDeviceImageGrabSubsystem(this);
-  m_subsystems.Player          = new cDevicePlayerSubsystem(this);
-  m_subsystems.SPU             = new cDeviceSPUSubsystem(this);
-  m_subsystems.Track           = new cDeviceTrackSubsystem(this);
-  m_subsystems.VideoFormat     = new cDeviceVideoFormatSubsystem(this);
+  subsystems.Audio           = new cDvbAudioSubsystem(device);
+  subsystems.Channel         = new cDvbChannelSubsystem(device);
+  subsystems.CommonInterface = new cDvbCommonInterfaceSubsystem(device);
+  subsystems.PID             = new cDvbPIDSubsystem(device);
+  subsystems.Receiver        = new cDvbReceiverSubsystem(device);
+  subsystems.SectionFilter   = new cDvbSectionFilterSubsystem(device);
 
-  return m_subsystems;
+  subsystems.ImageGrab       = new cDeviceImageGrabSubsystem(device);
+  subsystems.Player          = new cDevicePlayerSubsystem(device);
+  subsystems.SPU             = new cDeviceSPUSubsystem(device);
+  subsystems.Track           = new cDeviceTrackSubsystem(device);
+  subsystems.VideoFormat     = new cDeviceVideoFormatSubsystem(device);
+
+  return subsystems;
 }
 
 cDvbDevice::~cDvbDevice()

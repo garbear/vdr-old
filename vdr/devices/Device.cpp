@@ -129,6 +129,37 @@ uchar *cTSBuffer::Get()
   return NULL;
 }
 
+// --- cSubsystems -----------------------------------------------------------
+void cSubsystems::Free() const
+{
+  delete Audio;
+  delete Channel;
+  delete CommonInterface;
+  delete ImageGrab;
+  delete PID;
+  delete Player;
+  delete Receiver;
+  delete SectionFilter;
+  delete SPU;
+  delete Track;
+  delete VideoFormat;
+}
+
+void cSubsystems::AssertValid() const
+{
+  assert(Audio);
+  assert(Channel);
+  assert(CommonInterface);
+  assert(ImageGrab);
+  assert(PID);
+  assert(Player);
+  assert(Receiver);
+  assert(SectionFilter);
+  assert(SPU);
+  assert(Track);
+  assert(VideoFormat);
+}
+
 // --- cDeviceHook -----------------------------------------------------------
 
 cDeviceHook::cDeviceHook()
@@ -142,11 +173,21 @@ cDevice::cDevice(const cSubsystems &subsystems, unsigned int index)
  : m_subsystems(subsystems),
    m_cardIndex(index)
 {
+  m_subsystems.AssertValid();
+
   dsyslog("new device number %d", m_cardIndex + 1);
 
   string strThreadDescription = StringUtils::Format("Receiver on device %d", m_cardIndex + 1);
 
   m_number = cDeviceManager::Get().AddDevice(this);
+}
+
+// TODO: Remove the following comment unless we switch cSubsystems to use shared_ptrs
+// Destructor can't appear in class declaration because subsystem classes (needed
+// by shared_ptr's destructor) aren't defined
+cDevice::~cDevice()
+{
+  m_subsystems.Free(); // TODO: Remove me if we switch cSubsystems to use shared_ptrs
 }
 
 bool cDevice::IsPrimaryDevice() const

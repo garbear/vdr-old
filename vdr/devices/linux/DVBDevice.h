@@ -143,7 +143,12 @@ private:
   static void FindAdapters(std::vector<linux_dvb_device_t>& nodes);
   static size_t InitialiseAdapters(std::vector<linux_dvb_device_t>& nodes);
 
-  const cSubsystems &CreateSubsystems();
+  /*!
+   * \brief Create a struct with the allocated subsystems
+   * \param device The owner of the subsystems
+   * \return A fully-allocated cSubsystems struct. Must be freed by calling cSubsystems::Free()
+   */
+  static cSubsystems CreateSubsystems(cDvbDevice* device);
 
   /*!
    * \brief Checks whether the given adapter/frontend exists by opening

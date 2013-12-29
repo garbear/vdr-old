@@ -42,10 +42,10 @@ class cDeviceSPUSubsystem;
 class cDeviceTrackSubsystem;
 class cDeviceVideoFormatSubsystem;
 
-class cDvbSubtitleConverter;
-
 struct cSubsystems
 {
+  void Free() const; // Free the subsystem pointers (TODO: Consider removing this function by switching to shared_ptrs)
+  void AssertValid() const; // Asserts on empty pointer for the subsystems below
   cDeviceAudioSubsystem           *Audio;
   cDeviceChannelSubsystem         *Channel;
   cDeviceCommonInterfaceSubsystem *CommonInterface;
@@ -59,25 +59,8 @@ struct cSubsystems
   cDeviceVideoFormatSubsystem     *VideoFormat;
 };
 
-// TODO: better memory management (preferably smart pointers)
-#define FREE_SUBSYSTEMS(s) \
-  do \
-  { \
-    delete s.Audio;           s.Audio = NULL; \
-    delete s.Channel;         s.Channel = NULL; \
-    delete s.CommonInterface; s.CommonInterface = NULL; \
-    delete s.ImageGrab;       s.ImageGrab = NULL; \
-    delete s.PID;             s.PID = NULL; \
-    delete s.Player;          s.Player = NULL; \
-    delete s.Receiver;        s.Receiver = NULL; \
-    delete s.SectionFilter;   s.SectionFilter = NULL; \
-    delete s.SPU;             s.SPU = NULL; \
-    delete s.Track;           s.Track = NULL; \
-    delete s.VideoFormat;     s.VideoFormat = NULL; \
-  } \
-  while (0)
-
 class cDevice;
+class cDvbSubtitleConverter;
 class cChannel;
 
 class cDeviceHook : public cListObject
@@ -154,7 +137,7 @@ protected:
   cDevice(const cSubsystems &subsystems, unsigned int index);
 
 public:
-  virtual ~cDevice() { }
+  virtual ~cDevice();
 
   bool IsPrimaryDevice() const;
 
@@ -233,7 +216,7 @@ public:
 private:
   virtual void Action();
 
-  cSubsystems m_subsystems;
+  const cSubsystems m_subsystems;
 
   unsigned int m_number; // Strictly positive
   unsigned int m_cardIndex;
