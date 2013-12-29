@@ -24,8 +24,8 @@
 #include "DeviceCommonInterfaceSubsystem.h"
 #include "DevicePIDSubsystem.h"
 #include "DevicePlayerSubsystem.h"
+#include "devices/commoninterface/CI.h"
 #include "devices/Device.h"
-#include "devices/CI.h"
 #include "Config.h"
 #include "devices/Receiver.h"
 
@@ -109,10 +109,10 @@ bool cDeviceReceiverSubsystem::AttachReceiver(cReceiver *receiver)
       Device()->Unlock();
       if (CommonInterface()->m_camSlot)
       {
-        CommonInterface()->m_camSlot->StartDecrypting();
+        //CommonInterface()->m_camSlot->StartDecrypting(); // TODO
         CommonInterface()->m_startScrambleDetection = time(NULL);
       }
-      Device()->Start();
+      Device()->CreateThread();
       return true;
     }
   }
@@ -142,9 +142,9 @@ void cDeviceReceiverSubsystem::Detach(cReceiver *receiver)
       receiversLeft = true;
   }
   if (CommonInterface()->m_camSlot)
-    CommonInterface()->m_camSlot->StartDecrypting();
+    ;//CommonInterface()->m_camSlot->StartDecrypting(); // TODO
   if (!receiversLeft)
-    Device()->Cancel(-1);
+    Device()->StopThread();
 }
 
 void cDeviceReceiverSubsystem::DetachAll(int pid)

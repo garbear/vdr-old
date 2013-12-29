@@ -33,7 +33,7 @@ class cDvbTransponderParams;
 class cDiseqc;
 class cScr;
 
-class cDvbTuner : public cThread
+class cDvbTuner : public PLATFORM::CThread
 {
 public:
   cDvbTuner(const cDvbDevice *device, int fd_frontend, unsigned int adapter, unsigned int frontend);
@@ -57,7 +57,7 @@ public:
   static int GetRequiredDeliverySystem(const cChannel &channel, const cDvbTransponderParams *dtp);
 
 private:
-  virtual void Action();
+  virtual void *Process();
 
   bool SetFrontendType(const cChannel *Channel);
   std::string GetBondingParams() const { return GetBondingParams(m_channel); }

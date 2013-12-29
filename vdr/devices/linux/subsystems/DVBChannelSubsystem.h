@@ -35,7 +35,6 @@ public:
   virtual bool ProvidesDeliverySystem(int deliverySystem) const;
   virtual bool ProvidesSource(int source) const;
   virtual bool ProvidesTransponder(const cChannel &channel) const;
-  virtual bool ProvidesTransponderExclusively(const cChannel &channel) const;
   virtual bool ProvidesChannel(const cChannel &channel, int priority = IDLEPRIORITY, bool *pNeedsDetachReceivers = NULL) const;
   virtual bool ProvidesEIT() const;
   virtual unsigned int NumProvidedSystems() const;
@@ -49,7 +48,6 @@ public:
   unsigned int Occupied() const;
   void SetOccupied(unsigned int seconds);
   virtual bool HasLock(unsigned int timeoutMs = 0) const;
-  virtual bool HasProgramme() const;
 
 protected:
   virtual bool SetChannelDevice(const cChannel &channel, bool bLiveView);

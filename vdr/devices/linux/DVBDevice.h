@@ -27,6 +27,7 @@
 
 #include <linux/dvb/frontend.h>
 #include <string>
+#include <vector>
 
 //#define MAXDVBDEVICES      8
 #define MAXDELIVERYSYSTEMS 8

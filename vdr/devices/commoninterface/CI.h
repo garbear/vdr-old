@@ -10,12 +10,13 @@
 #ifndef __CI_H
 #define __CI_H
 
-#include <stdint.h>
-#include <stdio.h>
-#include "channels/ChannelManager.h"
+#include "channels/ChannelID.h"
 #include "thread.h"
 #include "utils/Tools.h"
 #include "platform/threads/threads.h"
+
+#include <stdint.h>
+#include <stdio.h>
 
 #define MAX_CAM_SLOTS_PER_ADAPTER     8 // maximum possible value is 255
 #define MAX_CONNECTIONS_PER_CAM_SLOT  8 // maximum possible value is 254
@@ -119,6 +120,7 @@ public:
   };
 
 class cTPDU;
+class cChannel;
 class cCiTransportConnection;
 class cCiSession;
 class cCiCaProgramData;

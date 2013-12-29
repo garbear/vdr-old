@@ -8,7 +8,15 @@
  */
 
 #include "CI.h"
-#include "Config.h"
+#include "channels/Channel.h"
+#include "devices/Device.h"
+#include "devices/subsystems/DeviceCommonInterfaceSubsystem.h"
+#include "devices/subsystems/DeviceReceiverSubsystem.h"
+
+//#include "Config.h"
+//#include "dvb/PAT.h"
+//#include "utils/Tools.h"
+
 #include <ctype.h>
 #include <linux/dvb/ca.h>
 #include <malloc.h>
@@ -18,11 +26,6 @@
 #include <sys/ioctl.h>
 #include <time.h>
 #include <unistd.h>
-#include "Device.h"
-#include "dvb/PAT.h"
-#include "utils/Tools.h"
-#include "devices/subsystems/DeviceCommonInterfaceSubsystem.h"
-#include "devices/subsystems/DeviceReceiverSubsystem.h"
 
 using namespace PLATFORM;
 

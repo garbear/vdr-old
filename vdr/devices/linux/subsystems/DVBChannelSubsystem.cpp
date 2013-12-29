@@ -20,6 +20,7 @@
  */
 
 #include "DVBChannelSubsystem.h"
+#include "devices/commoninterface/CI.h"
 #include "devices/DeviceManager.h"
 #include "devices/linux/DVBDevice.h"
 #include "devices/linux/DVBTuner.h"
@@ -27,7 +28,6 @@
 #include "devices/subsystems/DevicePIDSubsystem.h"
 #include "devices/subsystems/DeviceReceiverSubsystem.h"
 #include "channels/ChannelManager.h"
-#include "devices/CI.h"
 #include "dvb/DiSEqC.h"
 
 #include <linux/dvb/frontend.h>
@@ -93,9 +93,11 @@ bool cDvbChannelSubsystem::ProvidesTransponder(const cChannel &channel) const
   // "turbo fec" is a non standard FEC used by North American broadcasters - this is a best guess to determine this condition
   if (dtp.Modulation() == PSK_8    && !(GetDevice<cDvbDevice>()->m_frontendInfo.caps & FE_CAN_TURBO_FEC) && dtp.System() == SYS_DVBS) return false;
 
+  /* TODO
   if (!cSource::IsSat(channel.Source()) ||
-      (/*!Setup.DiSEqC || */Diseqcs.Get(Device()->CardIndex() + 1, channel.Source(), channel.Frequency(), dtp.Polarization(), NULL))) // TODO
+      (!Setup.DiSEqC || Diseqcs.Get(Device()->CardIndex() + 1, channel.Source(), channel.Frequency(), dtp.Polarization(), NULL)))
     return cDeviceManager::Get().DeviceHooksProvidesTransponder(*Device(), channel);
+  */
   return false;
 }
 
@@ -121,10 +123,12 @@ bool cDvbChannelSubsystem::ProvidesChannel(const cChannel &channel, int priority
           {
             if (CommonInterface()->CamSlot() && channel.Ca() >= CA_ENCRYPTED_MIN)
             {
+              /* TODO
               if (CommonInterface()->CamSlot()->CanDecrypt(&channel))
                 result = true;
               else
                 needsDetachReceivers = true;
+              */
             }
             else
               result = true;

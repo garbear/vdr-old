@@ -24,8 +24,7 @@
  * Device.h: The basic device interface
  */
 
-#include "thread.h" // for cThread
-#include "utils/Tools.h" // for cListObject
+#include "platform/threads/threads.h"
 
 #include <list>
 #include <string>
@@ -63,7 +62,7 @@ class cDevice;
 class cDvbSubtitleConverter;
 class cChannel;
 
-class cDeviceHook : public cListObject
+class cDeviceHook// : public cListObject
 {
 public:
   /*!
@@ -77,6 +76,7 @@ public:
    * new cDeviceHook();
    */
   cDeviceHook();
+  virtual ~cDeviceHook() { }
 
   /*!
    * \brief Returns true if the given Device can provide the given Channel's transponder
@@ -84,46 +84,17 @@ public:
   virtual bool DeviceProvidesTransponder(const cDevice &device, const cChannel &channel) const { return true; }
 };
 
-/// Derived cDevice classes that can receive channels will have to provide
-/// Transport Stream (TS) packets one at a time. cTSBuffer implements a
-/// simple buffer that allows the device to read a larger amount of data
-/// from the driver with each call to Read(), thus avoiding the overhead
-/// of getting each TS packet separately from the driver. It also makes
-/// sure the returned data points to a TS packet and automatically
-/// re-synchronizes after broken packets.
-
-class cRingBufferLinear;
-
-class cTSBuffer : public cThread
-{
-public:
-  cTSBuffer(int file, unsigned int size, int cardIndex);
-  ~cTSBuffer();
-
-  uchar *Get();
-
-private:
-  virtual void Action();
-
-  int                m_file;
-  int                m_cardIndex;
-  bool               m_bDelivered;
-  cRingBufferLinear *m_ringBuffer;
-};
-
 /// The cDevice class is the base from which actual devices can be derived.
 
 class cPlayer;
 class cReceiver;
 
-class cDevice : public cThread
+class cDevice : public PLATFORM::CThread
 {
   // TODO
 public:
-  void Lock() { return cThread::Lock(); }
-  void Unlock() { return cThread::Unlock(); }
-  void Cancel(int WaitSeconds = 0) { return cThread::Cancel(WaitSeconds); }
-
+  void Lock() { /*return cThread::Lock();*/ }
+  void Unlock() { /*return cThread::Unlock();*/ }
 
   //friend class cDeviceHook;
   //friend class cDeviceSubtitle;
@@ -214,7 +185,7 @@ public:
   cDeviceVideoFormatSubsystem     *VideoFormat()     const { return m_subsystems.VideoFormat; }
 
 private:
-  virtual void Action();
+  virtual void *Process();
 
   const cSubsystems m_subsystems;
 

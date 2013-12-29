@@ -22,8 +22,8 @@
 #include "DevicePIDSubsystem.h"
 #include "DeviceCommonInterfaceSubsystem.h"
 #include "DeviceReceiverSubsystem.h"
+#include "devices/commoninterface/CI.h"
 #include "devices/Device.h"
-#include "devices/CI.h"
 #include "utils/Tools.h"
 
 #ifndef ARRAY_SIZE
@@ -82,6 +82,7 @@ bool cDevicePIDSubsystem::AddPid(int pid, ePidType pidType /* = ptOther */, int 
       {
         // It's a special PID that may have to be switched into "tap" mode
         PrintPIDs("A");
+        /* TODO
         if (!SetPid(m_pidHandles[n], n, true))
         {
           esyslog("ERROR: can't set PID %d on device %d", pid, Device()->CardIndex() + 1);
@@ -92,6 +93,7 @@ bool cDevicePIDSubsystem::AddPid(int pid, ePidType pidType /* = ptOther */, int 
         }
         if (CommonInterface()->m_camSlot)
           CommonInterface()->m_camSlot->SetPid(pid, true);
+        */
       }
       PrintPIDs("a");
       return true;
@@ -117,6 +119,7 @@ bool cDevicePIDSubsystem::AddPid(int pid, ePidType pidType /* = ptOther */, int 
       m_pidHandles[n].streamType = StreamType;
       m_pidHandles[n].used = 1;
       PrintPIDs("C");
+      /*
       if (!SetPid(m_pidHandles[n], n, true))
       {
         esyslog("ERROR: can't set PID %d on device %d", pid, Device()->CardIndex() + 1);
@@ -127,6 +130,7 @@ bool cDevicePIDSubsystem::AddPid(int pid, ePidType pidType /* = ptOther */, int 
       }
       if (CommonInterface()->m_camSlot)
         CommonInterface()->m_camSlot->SetPid(pid, true);
+      */
     }
   }
   return true;
@@ -155,6 +159,7 @@ void cDevicePIDSubsystem::DelPid(int pid, ePidType pidType /* = ptOther */)
       PrintPIDs("D");
       if (--m_pidHandles[n].used < 2)
       {
+        /* TODO
         SetPid(m_pidHandles[n], n, false);
         if (m_pidHandles[n].used == 0)
         {
@@ -163,6 +168,7 @@ void cDevicePIDSubsystem::DelPid(int pid, ePidType pidType /* = ptOther */)
           if (CommonInterface()->m_camSlot)
             CommonInterface()->m_camSlot->SetPid(pid, false);
         }
+        */
       }
       PrintPIDs("E");
     }

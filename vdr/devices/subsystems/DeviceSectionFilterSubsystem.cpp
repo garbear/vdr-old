@@ -43,11 +43,13 @@ void cDeviceSectionFilterSubsystem::StartSectionHandler()
 {
   if (!m_sectionHandler)
   {
+    /* TODO
     m_sectionHandler = new cSectionHandler(Device());
     AttachFilter(m_eitFilter = new cEitFilter);
     AttachFilter(m_patFilter = new cPatFilter);
     AttachFilter(m_sdtFilter = new cSdtFilter(m_patFilter));
     AttachFilter(m_nitFilter = new cNitFilter);
+    */
   }
 }
 
@@ -80,12 +82,16 @@ void cDeviceSectionFilterSubsystem::CloseFilter(int handle)
 
 void cDeviceSectionFilterSubsystem::AttachFilter(cFilter *filter)
 {
+  /* TODO
   if (m_sectionHandler)
     m_sectionHandler->Attach(filter);
+  */
 }
 
 void cDeviceSectionFilterSubsystem::Detach(cFilter *filter)
 {
+  /* TODO
   if (m_sectionHandler)
     m_sectionHandler->Detach(filter);
+  */
 }

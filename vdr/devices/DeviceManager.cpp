@@ -20,13 +20,13 @@
  */
 
 #include "DeviceManager.h"
-#include "subsystems/DeviceAudioSubsystem.h"
-#include "subsystems/DeviceChannelSubsystem.h"
-#include "subsystems/DeviceCommonInterfaceSubsystem.h"
-#include "subsystems/DeviceReceiverSubsystem.h"
-#include "subsystems/DeviceVideoFormatSubsystem.h"
+#include "devices/commoninterface/CI.h"
+#include "devices/subsystems/DeviceAudioSubsystem.h"
+#include "devices/subsystems/DeviceChannelSubsystem.h"
+#include "devices/subsystems/DeviceCommonInterfaceSubsystem.h"
+#include "devices/subsystems/DeviceReceiverSubsystem.h"
+#include "devices/subsystems/DeviceVideoFormatSubsystem.h"
 #include "channels/ChannelManager.h"
-#include "CI.h"
 #include "utils/Tools.h"
 #include "Transfer.h"
 
@@ -78,7 +78,7 @@ void cDeviceManager::SetPrimaryDevice(unsigned int index)
     m_primaryDevice->MakePrimaryDevice(false);
   m_primaryDevice = m_devices[index];
   m_primaryDevice->MakePrimaryDevice(true);
-  m_primaryDevice->VideoFormat()->SetVideoFormat(Setup.VideoFormat);
+  //m_primaryDevice->VideoFormat()->SetVideoFormat(Setup.VideoFormat); // TODO
 //  m_primaryDevice->Audio()->SetVolumeDevice(Setup.CurrentVolume);
 }
 
@@ -121,10 +121,13 @@ bool cDeviceManager::WaitForAllDevicesReady(unsigned int timeout /* = 0 */)
 
 cDevice *cDeviceManager::ActualDevice()
 {
+  /* TODO
   cDevice *d = cTransferControl::ReceiverDevice();
   if (!d)
     d = PrimaryDevice();
   return d;
+  */
+  return NULL; // TODO
 }
 
 cDevice *cDeviceManager::GetDevice(unsigned int index)
@@ -134,6 +137,7 @@ cDevice *cDeviceManager::GetDevice(unsigned int index)
 
 cDevice *cDeviceManager::GetDevice(const cChannel &channel, int priority, bool bLiveView, bool bQuery /* = false */)
 {
+  /* TODO
   // Collect the current priorities of all CAM slots that can decrypt the channel:
   int NumCamSlots = CamSlots.Count();
   int SlotPriority[NumCamSlots];
@@ -235,6 +239,8 @@ cDevice *cDeviceManager::GetDevice(const cChannel &channel, int priority, bool b
       d->CommonInterface()->CamSlot()->Assign(NULL);
   }
   return d;
+  */
+  return NULL;
 }
 
 cDevice *cDeviceManager::GetDeviceForTransponder(const cChannel &channel, int priority)
@@ -279,7 +285,7 @@ bool cDeviceManager::SwitchChannel(bool bIncrease)
   int offset = bIncrease ? 1 : -1;
 
   // prevents old channel from being shown too long if GetDevice() takes longer
-  cControl::Shutdown();
+  //cControl::Shutdown(); // TODO
 
   int n = CurrentChannel() + offset;
   int first = n;

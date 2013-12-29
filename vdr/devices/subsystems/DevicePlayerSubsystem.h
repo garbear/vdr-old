@@ -236,7 +236,7 @@ protected:
    * \brief Returns a pointer to the patPmtParser, so that a derived device can
    *        use the stream information from it
    */
-  const cPatPmtParser *PatPmtParser() const { return &m_patPmtParser; }
+  //const cPatPmtParser *PatPmtParser() const { return &m_patPmtParser; } // TODO
 
   /*!
    * \brief Returns true if this device can currently start a replay session
@@ -341,9 +341,11 @@ private:
 public: // TODO
   cPlayer       *m_player;
 private:
+  /* TODO
   cPatPmtParser  m_patPmtParser;
   cTsToPes       m_tsToPesVideo;
   cTsToPes       m_tsToPesAudio;
   cTsToPes       m_tsToPesSubtitle;
+  */
   bool           m_bIsPlayingVideo;
 };

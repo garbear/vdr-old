@@ -25,6 +25,8 @@ public:
   virtual ~cTransfer();
   };
 
+class cDevice;
+
 class cTransferControl : public cControl {
 private:
   cTransfer *transfer;

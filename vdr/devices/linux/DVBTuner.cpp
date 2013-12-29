@@ -76,8 +76,8 @@ cDvbTuner::cDvbTuner(const cDvbDevice *device, int fd_frontend, unsigned int ada
    m_bLocked(false),
    m_bNewSet(false)
 {
-  SetDescription("tuner on frontend %d/%d", m_adapter, m_frontend);
-  Start();
+  //SetDescription("tuner on frontend %d/%d", m_adapter, m_frontend);
+  CreateThread();
 }
 
 cDvbTuner::~cDvbTuner()
@@ -85,7 +85,7 @@ cDvbTuner::~cDvbTuner()
   m_tunerStatus = tsIdle;
   m_newSet.Broadcast();
   m_locked.Broadcast();
-  Cancel(3);
+  StopThread(3000);
   UnBond();
   /* looks like this irritates the SCR switch, so let's leave it out for now
   if (m_lastDiseqc && m_lastDiseqc->IsScr())
@@ -96,12 +96,12 @@ cDvbTuner::~cDvbTuner()
   */
 }
 
-void cDvbTuner::Action()
+void *cDvbTuner::Process()
 {
   cTimeMs Timer;
   bool LostLock = false;
   fe_status_t Status = (fe_status_t)0;
-  while (Running()) // TODO: This should be !IsStopped() when converted to the new PLATFORM::CThread
+  while (!IsStopped()) // TODO: This should be !IsStopped() when converted to the new PLATFORM::CThread
   {
     fe_status_t NewStatus;
     if (GetFrontendStatus(NewStatus))
@@ -208,6 +208,7 @@ void cDvbTuner::UnBond()
 string cDvbTuner::GetBondingParams(const cChannel &channel) const
 {
   cDvbTransponderParams dtp(channel.Parameters());
+  /* TODO
   if (Setup.DiSEqC)
   {
     if (const cDiseqc *diseqc = Diseqcs.Get(m_device->CardIndex() + 1, channel.Source(), channel.Frequency(), dtp.Polarization(), NULL))
@@ -219,6 +220,7 @@ string cDvbTuner::GetBondingParams(const cChannel &channel) const
     bool VoltOff = dtp.Polarization() == 'V' || dtp.Polarization() == 'R';
     return StringUtils::Format("%c %c", ToneOff ? 't' : 'T', VoltOff ? 'v' : 'V');
   }
+  */
   return "";
 }
 
@@ -230,7 +232,7 @@ bool cDvbTuner::BondingOk(const cChannel &channel, bool bConsiderOccupied) const
     string BondingParams = GetBondingParams(channel);
     do
     {
-      if (t->m_device->Receiver()->Priority() > IDLEPRIORITY || bConsiderOccupied && t->m_device->Channel()->Occupied())
+      if (t->m_device->Receiver()->Priority() > IDLEPRIORITY || (bConsiderOccupied && t->m_device->Channel()->Occupied()))
       {
         if (BondingParams != t->GetBondedMaster()->GetBondingParams())
           return false;
@@ -543,6 +545,7 @@ void cDvbTuner::ExecuteDiseqc(const cDiseqc *Diseqc, unsigned int *Frequency)
   for (;;)
   {
     cmd.msg_len = sizeof(cmd.msg);
+    /* TODO
     cDiseqc::eDiseqcActions da = Diseqc->Execute(&CurrentAction, cmd.msg, &cmd.msg_len, m_scr, Frequency);
     if (da == cDiseqc::daNone)
       break;
@@ -559,6 +562,7 @@ void cDvbTuner::ExecuteDiseqc(const cDiseqc *Diseqc, unsigned int *Frequency)
       esyslog("ERROR: unknown diseqc command %d", da);
       break;
     }
+    */
   }
 
   if (m_scr)
@@ -599,6 +603,7 @@ bool cDvbTuner::SetFrontend()
   if (m_frontendType == SYS_DVBS || m_frontendType == SYS_DVBS2)
   {
     unsigned int frequency = m_channel.Frequency();
+    /* TODO
     if (Setup.DiSEqC)
     {
       if (const cDiseqc *diseqc = Diseqcs.Get(m_device->CardIndex() + 1, m_channel.Source(), frequency, dtp.Polarization(), &m_scr))
@@ -645,6 +650,7 @@ bool cDvbTuner::SetFrontend()
       CHECK(ioctl(m_fd_frontend, FE_SET_VOLTAGE, volt));
       CHECK(ioctl(m_fd_frontend, FE_SET_TONE, tone));
     }
+    */
     frequency = ::abs(frequency); // Allow for C-band, where the frequency is less than the LOF
 
     // DVB-S/DVB-S2 (common parts)

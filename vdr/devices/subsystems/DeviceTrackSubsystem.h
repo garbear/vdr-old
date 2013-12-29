@@ -59,7 +59,7 @@ class cDeviceTrackSubsystem : protected cDeviceSubsystem
 {
 public:
   cDeviceTrackSubsystem(cDevice *device);
-  virtual ~cDeviceTrackSubsystem();
+  virtual ~cDeviceTrackSubsystem() { }
 
   /*!
    * \brief Clears the list of currently available tracks

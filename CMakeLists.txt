@@ -82,13 +82,15 @@ set(VDR_SRCS
 	vdr/channels/Channel.cpp
 	vdr/channels/ChannelID.cpp
 	vdr/channels/ChannelManager.cpp
-	vdr/devices/CI.cpp
+	vdr/devices/commoninterface/CI.cpp
+	vdr/devices/commoninterface/linux/DVBCI.cpp
 	vdr/devices/Device.cpp
 	vdr/devices/DeviceManager.cpp
 	vdr/devices/DeviceSubsystem.cpp
 	vdr/devices/Receiver.cpp
 	vdr/devices/Remux.cpp
 	vdr/devices/Transfer.cpp
+	vdr/devices/TSBuffer.cpp
 	vdr/devices/linux/DVBDevice.cpp
 	vdr/devices/linux/DVBDeviceProbe.cpp
 	vdr/devices/linux/DVBTuner.cpp
@@ -110,7 +112,6 @@ set(VDR_SRCS
 	vdr/devices/subsystems/DeviceTrackSubsystem.cpp
 	vdr/devices/subsystems/DeviceVideoFormatSubsystem.cpp
 	vdr/dvb/DiSEqC.cpp
-	vdr/dvb/DVBCI.cpp
 	vdr/dvb/Filter.cpp
 	vdr/dvb/EIT.cpp
 	vdr/dvb/EITScan.cpp
@@ -161,13 +162,15 @@ set(VDR_SRCS_TESTING # Sources for testing (remove this when all of the above co
 	vdr/channels/Channel.cpp
 	vdr/channels/ChannelID.cpp
 	vdr/channels/ChannelManager.cpp
-	vdr/devices/CI.cpp
+	#vdr/devices/commoninterface/CI.cpp
+	#vdr/devices/commoninterface/linux/DVBCI.cpp
 	vdr/devices/Device.cpp
 	vdr/devices/DeviceManager.cpp
 	vdr/devices/DeviceSubsystem.cpp
 	vdr/devices/Receiver.cpp
-	vdr/devices/Remux.cpp
-	vdr/devices/Transfer.cpp
+	#vdr/devices/Remux.cpp
+	#vdr/devices/Transfer.cpp
+	vdr/devices/TSBuffer.cpp
 	vdr/devices/linux/DVBDevice.cpp
 	vdr/devices/linux/DVBDeviceProbe.cpp
 	vdr/devices/linux/DVBTuner.cpp
@@ -189,7 +192,6 @@ set(VDR_SRCS_TESTING # Sources for testing (remove this when all of the above co
 	vdr/devices/subsystems/DeviceTrackSubsystem.cpp
 	vdr/devices/subsystems/DeviceVideoFormatSubsystem.cpp
 	#vdr/dvb/DiSEqC.cpp
-	#vdr/dvb/DVBCI.cpp
 	#vdr/dvb/Filter.cpp
 	#vdr/dvb/EIT.cpp
 	#vdr/dvb/EITScan.cpp

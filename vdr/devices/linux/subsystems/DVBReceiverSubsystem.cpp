@@ -20,7 +20,8 @@
  */
 
 #include "DVBReceiverSubsystem.h"
-#include "../../../devices/linux/DVBDevice.h"
+#include "devices/linux/DVBDevice.h"
+#include "devices/TSBuffer.h"
 
 #include <unistd.h>
 

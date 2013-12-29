@@ -73,7 +73,7 @@ protected:
    * \brief Sets the audio channel
    * \param audioChannel Either stereo (0), mono left (1) or mono right (2)
    */
-  virtual void SetAudioChannelDevice(int audioChannel);
+  virtual void SetAudioChannelDevice(int audioChannel) { }
 
   /*!
    * \brief Sets the audio volume on this device

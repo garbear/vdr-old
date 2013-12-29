@@ -20,7 +20,7 @@
  */
 
 #include "DVBCommonInterfaceSubsystem.h"
-#include "devices/CI.h"
+#include "devices/commoninterface/CI.h"
 
 #include <stddef.h>
 

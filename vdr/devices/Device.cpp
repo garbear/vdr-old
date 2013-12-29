@@ -34,8 +34,8 @@
 #include "subsystems/DeviceTrackSubsystem.h"
 #include "subsystems/DeviceVideoFormatSubsystem.h"
 #include "utils/StringUtils.h"
-#include "utils/Ringbuffer.h"
-#include "CI.h"
+//#include "utils/Ringbuffer.h"
+//#include "CI.h"
 
 using namespace std;
 
@@ -49,85 +49,6 @@ using namespace std;
     delete p; p = NULL; \
   } while (0)
 #endif
-
-// --- cTSBuffer -------------------------------------------------------------
-
-cTSBuffer::cTSBuffer(int file, unsigned int size, int cardIndex)
- : m_file(file),
-   m_cardIndex(cardIndex),
-   m_bDelivered(false)
-{
-  SetDescription("TS buffer on device %d", cardIndex);
-
-  m_ringBuffer = new cRingBufferLinear(size, TS_SIZE, true, "TS");
-  m_ringBuffer->SetTimeouts(100, 100);
-  m_ringBuffer->SetIoThrottle();
-  Start();
-}
-
-cTSBuffer::~cTSBuffer()
-{
-  Cancel(3);
-  delete m_ringBuffer;
-}
-
-void cTSBuffer::Action()
-{
-  if (m_ringBuffer)
-  {
-    bool firstRead = true;
-    cPoller Poller(m_file);
-    while (Running())
-    {
-      if (firstRead || Poller.Poll(100))
-      {
-        firstRead = false;
-        int r = m_ringBuffer->Read(m_file);
-        if (r < 0 && FATALERRNO)
-        {
-          if (errno == EOVERFLOW)
-            esyslog("ERROR: driver buffer overflow on device %d", m_cardIndex);
-          else
-          {
-            LOG_ERROR;
-            break;
-          }
-        }
-      }
-    }
-  }
-}
-
-uchar *cTSBuffer::Get()
-{
-  int Count = 0;
-  if (m_bDelivered)
-  {
-    m_ringBuffer->Del(TS_SIZE);
-    m_bDelivered = false;
-  }
-  uchar *p = m_ringBuffer->Get(Count);
-  if (p && Count >= TS_SIZE)
-  {
-    if (*p != TS_SYNC_BYTE)
-    {
-      for (int i = 1; i < Count; i++)
-      {
-        if (p[i] == TS_SYNC_BYTE)
-        {
-          Count = i;
-          break;
-        }
-      }
-      m_ringBuffer->Del(Count);
-      esyslog("ERROR: skipped %d bytes to sync on TS packet on device %d", Count, m_cardIndex);
-      return NULL;
-    }
-    m_bDelivered = true;
-    return p;
-  }
-  return NULL;
-}
 
 // --- cSubsystems -----------------------------------------------------------
 void cSubsystems::Free() const
@@ -200,11 +121,11 @@ void cDevice::MakePrimaryDevice(bool bOn)
   // XXX do we need this?
 }
 
-void cDevice::Action()
+void *cDevice::Process()
 {
-  if (Running() && Receiver()->OpenDvr())
+  if (!IsStopped() && Receiver()->OpenDvr())
   {
-    while (Running())
+    while (!IsStopped())
     {
       // Read data from the DVR device:
       uchar *b = NULL;
@@ -220,6 +141,7 @@ void cDevice::Action()
           int CamSlotNumber = 0;
           if (CommonInterface()->m_startScrambleDetection)
           {
+            /* TODO
             cCamSlot *cs = CommonInterface()->CamSlot();
             CamSlotNumber = cs ? cs->SlotNumber() : 0;
             if (CamSlotNumber)
@@ -237,6 +159,7 @@ void cDevice::Action()
                 CommonInterface()->m_startScrambleDetection = 0;
               }
             }
+            */
           }
 
           // Distribute the packet to all attached receivers:
@@ -247,13 +170,13 @@ void cDevice::Action()
             {
               if (DetachReceivers)
               {
-                ChannelCamRelations.SetChecked(Receiver()->m_receivers[i]->ChannelID(), CamSlotNumber);
+                //ChannelCamRelations.SetChecked(Receiver()->m_receivers[i]->ChannelID(), CamSlotNumber); // TODO
                 Receiver()->Detach(Receiver()->m_receivers[i]);
               }
               else
                 Receiver()->m_receivers[i]->Receive(b, TS_SIZE);
               if (DescramblingOk)
-                ChannelCamRelations.SetDecrypt(Receiver()->m_receivers[i]->ChannelID(), CamSlotNumber);
+                ;//ChannelCamRelations.SetDecrypt(Receiver()->m_receivers[i]->ChannelID(), CamSlotNumber); // TODO
             }
           }
           Unlock();
@@ -264,4 +187,5 @@ void cDevice::Action()
     }
     Receiver()->CloseDvr();
   }
+  return NULL;
 }

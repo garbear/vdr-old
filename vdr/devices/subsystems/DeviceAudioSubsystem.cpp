@@ -20,7 +20,7 @@
  */
 
 #include "DeviceAudioSubsystem.h"
-#include "../../../audio.h" // For Audios
+#include "audio.h" // For Audios
 #include "Config.h" // For Setup
 #include "utils/Status.h" // For cStatus
 
@@ -28,8 +28,8 @@
 
 cDeviceAudioSubsystem::cDeviceAudioSubsystem(cDevice *device)
  : cDeviceSubsystem(device),
-   m_bMute(false),
-   m_volume(Setup.CurrentVolume)
+   m_bMute(false)//,
+   //m_volume(Setup.CurrentVolume) // TODO
 {
 }
 
@@ -42,11 +42,11 @@ bool cDeviceAudioSubsystem::ToggleMute()
   if (m_bMute)
   {
     SetVolume(0, true);
-    Audios.MuteAudio(m_bMute); // Mute external audio after analog audio
+    //Audios.MuteAudio(m_bMute); // Mute external audio after analog audio // TODO
   }
   else
   {
-    Audios.MuteAudio(m_bMute); // Enable external audio before analog audio
+    //Audios.MuteAudio(m_bMute); // Enable external audio before analog audio // TODO
     SetVolume(oldVolume, true);
   }
   m_volume = oldVolume;
@@ -75,6 +75,6 @@ void cDeviceAudioSubsystem::SetVolume(int volume, bool bAbsolute)
   if (m_volume > 0)
   {
     m_bMute = false;
-    Audios.MuteAudio(m_bMute);
+    //Audios.MuteAudio(m_bMute); // TODO
   }
 }

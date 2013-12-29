@@ -26,9 +26,9 @@
 #include "DeviceReceiverSubsystem.h"
 #include "DeviceSectionFilterSubsystem.h"
 #include "DeviceSPUSubsystem.h"
+#include "devices/commoninterface/CI.h"
 #include "devices/Device.h"
 #include "devices/DeviceManager.h"
-#include "devices/CI.h"
 #include "channels/ChannelManager.h"
 #include "player.h"
 #include "dvb/Sections.h"
@@ -76,8 +76,8 @@ bool cDeviceChannelSubsystem::SwitchChannel(const cChannel &channel, bool bLiveV
 {
   if (bLiveView)
   {
-    isyslog("switching to channel %d", channel.Number());
-    cControl::Shutdown(); // prevents old channel from being shown too long if cDeviceManager::GetDevice() takes longer
+    //isyslog("switching to channel %d", channel.Number());
+    //cControl::Shutdown(); // prevents old channel from being shown too long if cDeviceManager::GetDevice() takes longer // TODO
   }
   for (int i = 3; i--; )
   {
@@ -104,12 +104,14 @@ bool cDeviceChannelSubsystem::SwitchChannel(const cChannel &channel, bool bLiveV
 
 void cDeviceChannelSubsystem::ForceTransferMode()
 {
+  /* TODO
   if (!cTransferControl::ReceiverDevice())
   {
     ChannelPtr channel = cChannelManager::Get().GetByNumber(cDeviceManager::Get().CurrentChannel());
     if (channel)
       SetChannelDevice(*channel, false); // this implicitly starts Transfer Mode
   }
+  */
 }
 
 unsigned int cDeviceChannelSubsystem::Occupied() const
@@ -130,7 +132,7 @@ bool cDeviceChannelSubsystem::HasProgramme() const
 
 eSetChannelResult cDeviceChannelSubsystem::SetChannel(const cChannel &channel, bool bLiveView)
 {
-  cStatus::MsgChannelSwitch(Device(), 0, bLiveView);
+  //cStatus::MsgChannelSwitch(Device(), 0, bLiveView); // TODO
 
   if (bLiveView)
   {
@@ -150,10 +152,12 @@ eSetChannelResult cDeviceChannelSubsystem::SetChannel(const cChannel &channel, b
   {
     if (device && Player()->CanReplay())
     {
+      /* TODO
       if (device->Channel()->SetChannel(channel, false) == scrOk) // calling SetChannel() directly, not SwitchChannel()!
         cControl::Launch(new cTransferControl(device, &channel));
       else
         Result = scrNoTransfer;
+      */
     }
     else
       Result = scrNotAvailable;
@@ -165,27 +169,31 @@ eSetChannelResult cDeviceChannelSubsystem::SetChannel(const cChannel &channel, b
     // Stop section handling:
     if (SectionFilter()->m_sectionHandler)
     {
+      /* TODO
       SectionFilter()->m_sectionHandler->SetStatus(false);
       SectionFilter()->m_sectionHandler->SetChannel(NULL);
+      */
     }
 
     // Tell the camSlot about the channel switch and add all PIDs of this
     // channel to it, for possible later decryption:
     if (CommonInterface()->m_camSlot)
-      CommonInterface()->m_camSlot->AddChannel(&channel);
+      ;//CommonInterface()->m_camSlot->AddChannel(&channel); // TODO
 
     if (SetChannelDevice(channel, bLiveView))
     {
       // Start section handling:
       if (SectionFilter()->m_sectionHandler)
       {
+        /* TODO
         SectionFilter()->m_sectionHandler->SetChannel(&channel);
         SectionFilter()->m_sectionHandler->SetStatus(true);
+        */
       }
 
       // Start decrypting any PIDs that might have been set in SetChannelDevice():
       if (CommonInterface()->m_camSlot)
-        CommonInterface()->m_camSlot->StartDecrypting();
+        ;//CommonInterface()->m_camSlot->StartDecrypting(); // TODO
     }
     else
       Result = scrFailed;
@@ -201,11 +209,13 @@ eSetChannelResult cDeviceChannelSubsystem::SetChannel(const cChannel &channel, b
       Track()->ClrAvailableTracks();
       for (int i = 0; i < MAXAPIDS; i++)
         Track()->SetAvailableTrack(ttAudio, i, channel.Apid(i), channel.Alang(i));
+      /* TODO
       if (Setup.UseDolbyDigital)
       {
         for (int i = 0; i < MAXDPIDS; i++)
           Track()->SetAvailableTrack(ttDolby, i, channel.Dpid(i), channel.Dlang(i));
       }
+      */
       for (int i = 0; i < MAXSPIDS; i++)
         Track()->SetAvailableTrack(ttSubtitle, i, channel.Spid(i), channel.Slang(i));
       if (!NeedsTransferMode)

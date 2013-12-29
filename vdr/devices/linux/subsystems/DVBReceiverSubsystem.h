@@ -22,6 +22,8 @@
 
 #include "devices/subsystems/DeviceReceiverSubsystem.h"
 
+class cTSBuffer;
+
 class cDvbReceiverSubsystem : public cDeviceReceiverSubsystem
 {
 public:

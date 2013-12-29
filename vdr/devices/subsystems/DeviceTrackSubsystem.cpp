@@ -176,6 +176,7 @@ void cDeviceTrackSubsystem::EnsureAudioTrack(bool bForce /* = false */)
     eTrackType PreferredTrack = ttAudioFirst;
     int PreferredAudioChannel = 0;
     int LanguagePreference = -1;
+    /* TODO
     int StartCheck = Setup.CurrentDolby ? ttDolbyFirst : ttAudioFirst;
     int EndCheck = ttDolbyLast;
     for (int i = StartCheck; i <= EndCheck; i++)
@@ -193,6 +194,7 @@ void cDeviceTrackSubsystem::EnsureAudioTrack(bool bForce /* = false */)
         EndCheck = ttAudioLast;
       }
     }
+    */
 
     // Make sure we're set to an available audio track:
     tTrackId Track;

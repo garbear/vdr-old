@@ -22,24 +22,24 @@
 #include "DVBDevice.h"
 #include "DVBDeviceProbe.h"
 #include "DVBTuner.h"
+#include "devices/commoninterface/linux/DVBCI.h"
 #include "devices/DeviceManager.h"
-#include "subsystems/DVBAudioSubsystem.h"
-#include "subsystems/DVBChannelSubsystem.h"
-#include "subsystems/DVBCommonInterfaceSubsystem.h"
-#include "subsystems/DVBPIDSubsystem.h"
-#include "subsystems/DVBReceiverSubsystem.h"
-#include "subsystems/DVBSectionFilterSubsystem.h"
-#include "../../devices/subsystems/DeviceImageGrabSubsystem.h"
-#include "../../devices/subsystems/DevicePlayerSubsystem.h"
-#include "../../devices/subsystems/DeviceSPUSubsystem.h"
-#include "../../devices/subsystems/DeviceTrackSubsystem.h"
-#include "../../devices/subsystems/DeviceVideoFormatSubsystem.h"
+#include "devices/linux/subsystems/DVBAudioSubsystem.h"
+#include "devices/linux/subsystems/DVBChannelSubsystem.h"
+#include "devices/linux/subsystems/DVBCommonInterfaceSubsystem.h"
+#include "devices/linux/subsystems/DVBPIDSubsystem.h"
+#include "devices/linux/subsystems/DVBReceiverSubsystem.h"
+#include "devices/linux/subsystems/DVBSectionFilterSubsystem.h"
+#include "devices/subsystems/DeviceImageGrabSubsystem.h"
+#include "devices/subsystems/DevicePlayerSubsystem.h"
+#include "devices/subsystems/DeviceSPUSubsystem.h"
+#include "devices/subsystems/DeviceTrackSubsystem.h"
+#include "devices/subsystems/DeviceVideoFormatSubsystem.h"
 #include "filesystem/File.h"
 #include "filesystem/Directory.h"
 #include "filesystem/ReadDir.h"
 #include "sources/linux/DVBSourceParams.h"
-#include "../../utils/StringUtils.h"
-#include "dvb/DVBCI.h"
+#include "utils/StringUtils.h"
 #include "utils/I18N.h"
 #include "utils/Tools.h"
 #include "settings/Settings.h"
@@ -111,7 +111,7 @@ cDvbDevice::cDvbDevice(unsigned int adapter, unsigned int frontend)
   // Common Interface:
   m_fd_ca = DvbOpen(DEV_DVB_CA, m_adapter, m_frontend, O_RDWR);
   if (m_fd_ca >= 0)
-    DvbCommonInterface()->m_ciAdapter = cDvbCiAdapter::CreateCiAdapter(this, m_fd_ca);
+    ;//DvbCommonInterface()->m_ciAdapter = cDvbCiAdapter::CreateCiAdapter(this, m_fd_ca); // TODO
 
   // We only check the devices that must be present - the others will be checked before accessing them://XXX
   if (fd_frontend >= 0)
@@ -322,6 +322,7 @@ bool cDvbDevice::BondDevices(const char *bondings)
   UnBondDevices();
   if (bondings)
   {
+    /* TODO
     cSatCableNumbers SatCableNumbers(MAXDEVICES, bondings);
     for (int i = 0; i < cDeviceManager::Get().NumDevices(); i++)
     {
@@ -365,6 +366,7 @@ bool cDvbDevice::BondDevices(const char *bondings)
         }
       }
     }
+    */
   }
   return true;
 }
