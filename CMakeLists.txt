@@ -238,6 +238,7 @@ set(VDR_TEST_SRCS
 	vdr/channels/test/TestChannel.cpp
 	vdr/channels/test/TestChannelID.cpp
 	vdr/channels/test/TestChannelManager.cpp
+	vdr/devices/linux/test/TestDVBDevice.cpp
 	vdr/filesystem/test/TestSpecialProtocol.cpp
 	vdr/filesystem/native/test/TestHDDirectory.cpp
 	vdr/filesystem/native/test/TestHDFile.cpp
