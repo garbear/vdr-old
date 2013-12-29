@@ -124,6 +124,7 @@ set(VDR_SRCS
 	vdr/filesystem/File.cpp
 	vdr/filesystem/IDirectory.cpp
 	vdr/filesystem/ReadDir.cpp
+	vdr/filesystem/SpecialProtocol.cpp
 	vdr/filesystem/Videodir.cpp
 	vdr/recordings/Recorder.cpp
 	vdr/recordings/Recording.cpp
@@ -154,6 +155,7 @@ set(VDR_SRCS
 )
 
 set(VDR_SRCS_TESTING # Sources for testing (remove this when all of the above compile)
+	#vdr/Config.cpp
 	vdr/SignalHandler.cpp
 	vdr/VDRDaemon.cpp
 	vdr/channels/Channel.cpp
@@ -186,14 +188,28 @@ set(VDR_SRCS_TESTING # Sources for testing (remove this when all of the above co
 	vdr/devices/subsystems/DeviceSPUSubsystem.cpp
 	vdr/devices/subsystems/DeviceTrackSubsystem.cpp
 	vdr/devices/subsystems/DeviceVideoFormatSubsystem.cpp
+	#vdr/dvb/DiSEqC.cpp
+	#vdr/dvb/DVBCI.cpp
+	#vdr/dvb/Filter.cpp
+	#vdr/dvb/EIT.cpp
+	#vdr/dvb/EITScan.cpp
+	#vdr/dvb/NIT.cpp
+	#vdr/dvb/PAT.cpp
+	#vdr/dvb/SDT.cpp
+	#vdr/dvb/Sections.cpp
+	#vdr/epg/EPG.cpp
 	vdr/filesystem/Directory.cpp
 	vdr/filesystem/DirectoryFetchJob.cpp
 	vdr/filesystem/File.cpp
 	vdr/filesystem/IDirectory.cpp
 	vdr/filesystem/ReadDir.cpp
 	vdr/filesystem/SpecialProtocol.cpp
-	#vdr/filesystem/xbmc/VFSDirectory.cpp
-	#vdr/filesystem/xbmc/VFSFile.cpp
+	#vdr/filesystem/Videodir.cpp
+	#vdr/recordings/Recorder.cpp
+	#vdr/recordings/Recording.cpp
+	#vdr/recordings/RecordingCutter.cpp
+	#vdr/recordings/Timers.cpp
+	#vdr/settings/Settings.cpp
 	vdr/sources/ISourceParams.cpp
 	vdr/sources/Source.cpp
 	vdr/sources/linux/DVBSourceParams.cpp
@@ -204,6 +220,7 @@ set(VDR_SRCS_TESTING # Sources for testing (remove this when all of the above co
 	vdr/utils/I18N.cpp
 	vdr/utils/Observer.cpp
 	vdr/utils/RegExp.cpp
+	#vdr/utils/Ringbuffer.cpp
 	vdr/utils/StringUtils.cpp
 	vdr/utils/Tools.cpp
 	vdr/utils/XBMCTinyXML.cpp
