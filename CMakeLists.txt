@@ -159,6 +159,33 @@ set(VDR_SRCS_TESTING # Sources for testing (remove this when all of the above co
 	vdr/channels/Channel.cpp
 	vdr/channels/ChannelID.cpp
 	vdr/channels/ChannelManager.cpp
+	vdr/devices/CI.cpp
+	vdr/devices/Device.cpp
+	vdr/devices/DeviceManager.cpp
+	vdr/devices/DeviceSubsystem.cpp
+	vdr/devices/Receiver.cpp
+	vdr/devices/Remux.cpp
+	vdr/devices/Transfer.cpp
+	vdr/devices/linux/DVBDevice.cpp
+	vdr/devices/linux/DVBDeviceProbe.cpp
+	vdr/devices/linux/DVBTuner.cpp
+	vdr/devices/linux/subsystems/DVBAudioSubsystem.cpp
+	vdr/devices/linux/subsystems/DVBChannelSubsystem.cpp
+	vdr/devices/linux/subsystems/DVBCommonInterfaceSubsystem.cpp
+	vdr/devices/linux/subsystems/DVBPIDSubsystem.cpp
+	vdr/devices/linux/subsystems/DVBReceiverSubsystem.cpp
+	vdr/devices/linux/subsystems/DVBSectionFilterSubsystem.cpp
+	vdr/devices/subsystems/DeviceAudioSubsystem.cpp
+	vdr/devices/subsystems/DeviceChannelSubsystem.cpp
+	vdr/devices/subsystems/DeviceCommonInterfaceSubsystem.cpp
+	vdr/devices/subsystems/DeviceImageGrabSubsystem.cpp
+	vdr/devices/subsystems/DevicePIDSubsystem.cpp
+	vdr/devices/subsystems/DevicePlayerSubsystem.cpp
+	vdr/devices/subsystems/DeviceReceiverSubsystem.cpp
+	vdr/devices/subsystems/DeviceSectionFilterSubsystem.cpp
+	vdr/devices/subsystems/DeviceSPUSubsystem.cpp
+	vdr/devices/subsystems/DeviceTrackSubsystem.cpp
+	vdr/devices/subsystems/DeviceVideoFormatSubsystem.cpp
 	vdr/filesystem/Directory.cpp
 	vdr/filesystem/DirectoryFetchJob.cpp
 	vdr/filesystem/File.cpp
