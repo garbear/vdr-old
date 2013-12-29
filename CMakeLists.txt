@@ -92,7 +92,6 @@ set(VDR_SRCS
 	vdr/devices/Transfer.cpp
 	vdr/devices/TSBuffer.cpp
 	vdr/devices/linux/DVBDevice.cpp
-	vdr/devices/linux/DVBDeviceProbe.cpp
 	vdr/devices/linux/DVBTuner.cpp
 	vdr/devices/linux/subsystems/DVBAudioSubsystem.cpp
 	vdr/devices/linux/subsystems/DVBChannelSubsystem.cpp
@@ -172,7 +171,6 @@ set(VDR_SRCS_TESTING # Sources for testing (remove this when all of the above co
 	#vdr/devices/Transfer.cpp
 	vdr/devices/TSBuffer.cpp
 	vdr/devices/linux/DVBDevice.cpp
-	vdr/devices/linux/DVBDeviceProbe.cpp
 	vdr/devices/linux/DVBTuner.cpp
 	vdr/devices/linux/subsystems/DVBAudioSubsystem.cpp
 	vdr/devices/linux/subsystems/DVBChannelSubsystem.cpp

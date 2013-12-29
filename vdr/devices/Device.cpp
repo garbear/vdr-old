@@ -96,11 +96,12 @@ cDevice::cDevice(const cSubsystems &subsystems, unsigned int index)
 {
   m_subsystems.AssertValid();
 
-  dsyslog("new device number %d", m_cardIndex + 1);
+  //dsyslog("new device number %d", m_cardIndex + 1);
 
   string strThreadDescription = StringUtils::Format("Receiver on device %d", m_cardIndex + 1);
 
-  m_number = cDeviceManager::Get().AddDevice(this);
+  // TODO: Verify that AddDevice() is called outside the constructor after constructing this class
+  //m_number = cDeviceManager::Get().AddDevice(this);
 }
 
 // TODO: Remove the following comment unless we switch cSubsystems to use shared_ptrs

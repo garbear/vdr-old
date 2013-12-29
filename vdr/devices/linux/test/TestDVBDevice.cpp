@@ -26,8 +26,27 @@
 
 //using namespace std;
 
+cDvbDevice *GetDevice()
+{
+  DeviceVector devices = cDvbDevice::InitialiseDevices();
+  if (!devices.empty())
+    return dynamic_cast<cDvbDevice*>(devices[0].get());
+  return NULL;
+}
+
 TEST(DVBDevice, Initialize)
 {
-  cDvbDevice dvbDevice(0, 0);
-  //EXPECT_TRUE(dvbDevice.Initialize());
+  cDvbDevice *device = GetDevice();
+  ASSERT_TRUE(device);
+
+  EXPECT_EQ(0, device->Frontend());
+  EXPECT_EQ(0, device->Adapter());
+}
+
+TEST(DVBDevice, GetSubsystemId)
+{
+  cDvbDevice *device = GetDevice();
+  ASSERT_TRUE(device);
+
+  EXPECT_EQ(0, device->GetSubsystemId());
 }

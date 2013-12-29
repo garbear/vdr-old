@@ -52,12 +52,6 @@ class cDvbSectionFilterSubsystem;
 
 /// The cDvbDevice implements a DVB device which can be accessed through the Linux DVB driver API.
 
-typedef struct
-{
-  unsigned long iAdapter;
-  unsigned long iFrontend;
-} linux_dvb_device_t;
-
 class cDvbDevice : public cDevice
 {
 public:
@@ -68,7 +62,13 @@ public:
    * \brief Initializes the DVB devices. Must be called before accessing any DVB functions.
    * \return True if any devices are available
    */
-  static bool Initialize();
+  static DeviceVector InitialiseDevices();
+  static bool Exists(unsigned int adapter, unsigned int frontend);
+
+  /*!
+   * \brief Probes for existing DVB devices
+   */
+  unsigned int GetSubsystemId() const;
 
   virtual bool Ready();
 
@@ -141,26 +141,12 @@ public: // TODO
   static int DvbOpen(const char *name, unsigned int adapter, unsigned int frontend, int mode, bool bReportError = false);
 
 private:
-  static void FindAdapters(std::vector<linux_dvb_device_t>& nodes);
-  static size_t InitialiseAdapters(std::vector<linux_dvb_device_t>& nodes);
-
   /*!
    * \brief Create a struct with the allocated subsystems
    * \param device The owner of the subsystems
    * \return A fully-allocated cSubsystems struct. Must be freed by calling cSubsystems::Free()
    */
   static cSubsystems CreateSubsystems(cDvbDevice* device);
-
-  /*!
-   * \brief Checks whether the given adapter/frontend exists by opening
-   *        /dev/dvb/adapterN/frontendM in read-only mode
-   */
-  static bool Exists(unsigned int adapter, unsigned int frontend);
-
-  /*!
-   * \brief Probes for existing DVB devices
-   */
-  static bool Probe(unsigned int adapter, unsigned int frontend);
 
   bool QueryDeliverySystems(int fd_frontend);
 
