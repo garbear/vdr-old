@@ -21,8 +21,8 @@
 
 #include "DVBDevice.h"
 #include "DVBTuner.h"
-#include "devices/commoninterface/linux/DVBCI.h"
 #include "devices/DeviceManager.h"
+#include "devices/linux/commoninterface/DVBCI.h"
 #include "devices/linux/subsystems/DVBAudioSubsystem.h"
 #include "devices/linux/subsystems/DVBChannelSubsystem.h"
 #include "devices/linux/subsystems/DVBCommonInterfaceSubsystem.h"
@@ -108,12 +108,12 @@ cDvbDevice::cDvbDevice(unsigned int adapter, unsigned int frontend)
   // Devices that are present on all card types:
   m_fd_frontend = DvbOpen(DEV_DVB_FRONTEND, O_RDWR | O_NONBLOCK);
 
-  /* TODO
   // Common Interface:
   m_fd_ca = DvbOpen(DEV_DVB_CA, O_RDWR);
   if (m_fd_ca >= 0)
     DvbCommonInterface()->m_ciAdapter = cDvbCiAdapter::CreateCiAdapter(this, m_fd_ca);
 
+  /* TODO
   // We only check the devices that must be present - the others will be checked before accessing them://XXX
   if (fd_frontend >= 0)
   {
