@@ -81,7 +81,7 @@ private:
   };
 
   int                        m_frontendType;
-  const cDvbDevice*          m_device;
+  cDvbDevice* const          m_device;
   int                        m_fd_frontend;
   unsigned int               m_adapter;
   unsigned int               m_frontend;

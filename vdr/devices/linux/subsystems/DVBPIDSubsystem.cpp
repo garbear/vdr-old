@@ -43,7 +43,7 @@ bool cDvbPIDSubsystem::SetPid(cPidHandle &handle, int type, bool bOn)
     {
       if (handle.handle < 0)
       {
-        handle.handle = cDvbDevice::DvbOpen(DEV_DVB_DEMUX, GetDevice<cDvbDevice>()->m_adapter, GetDevice<cDvbDevice>()->m_frontend, O_RDWR | O_NONBLOCK, true);
+        handle.handle = GetDevice<cDvbDevice>()->DvbOpen(DEV_DVB_DEMUX, O_RDWR | O_NONBLOCK);
         if (handle.handle < 0)
         {
           LOG_ERROR;

@@ -38,7 +38,7 @@ cDvbSectionFilterSubsystem::cDvbSectionFilterSubsystem(cDevice *device)
 
 int cDvbSectionFilterSubsystem::OpenFilter(u_short pid, u_char tid, u_char mask)
 {
-  string fileName = cDvbDevice::DvbName(DEV_DVB_DEMUX, GetDevice<cDvbDevice>()->m_adapter, GetDevice<cDvbDevice>()->m_frontend);
+  string fileName = cDvbDevice::DvbName(DEV_DVB_DEMUX, GetDevice<cDvbDevice>()->Adapter(), GetDevice<cDvbDevice>()->Frontend());
   int f = open(fileName.c_str(), O_RDWR | O_NONBLOCK);
   if (f >= 0)
   {

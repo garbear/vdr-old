@@ -26,11 +26,16 @@
 
 //using namespace std;
 
+DeviceVector g_devices;
+
 cDvbDevice *GetDevice()
 {
-  DeviceVector devices = cDvbDevice::InitialiseDevices();
-  if (!devices.empty())
-    return dynamic_cast<cDvbDevice*>(devices[0].get());
+  g_devices = cDvbDevice::InitialiseDevices();
+  if (!g_devices.empty())
+  {
+    cDvbDevice* firstDevice = dynamic_cast<cDvbDevice*>(g_devices[0].get());
+    return firstDevice;
+  }
   return NULL;
 }
 
@@ -41,6 +46,7 @@ TEST(DVBDevice, Initialize)
 
   EXPECT_EQ(0, device->Frontend());
   EXPECT_EQ(0, device->Adapter());
+  g_devices.clear();
 }
 
 TEST(DVBDevice, GetSubsystemId)
@@ -49,4 +55,14 @@ TEST(DVBDevice, GetSubsystemId)
   ASSERT_TRUE(device);
 
   EXPECT_EQ(0, device->GetSubsystemId());
+  g_devices.clear();
+}
+
+TEST(DVBDevice, GetDvbApiVersion)
+{
+  cDvbDevice *device = GetDevice();
+  ASSERT_TRUE(device);
+
+  EXPECT_NE(0, device->GetDvbApiVersion());
+  g_devices.clear();
 }

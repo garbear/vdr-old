@@ -35,7 +35,7 @@ cDvbReceiverSubsystem::cDvbReceiverSubsystem(cDevice *device)
 bool cDvbReceiverSubsystem::OpenDvr()
 {
   CloseDvr();
-  m_fd_dvr = cDvbDevice::DvbOpen(DEV_DVB_DVR, GetDevice<cDvbDevice>()->m_adapter, GetDevice<cDvbDevice>()->m_frontend, O_RDONLY | O_NONBLOCK, true);
+  m_fd_dvr = GetDevice<cDvbDevice>()->DvbOpen(DEV_DVB_DVR, O_RDONLY | O_NONBLOCK);
   if (m_fd_dvr >= 0)
     m_tsBuffer = new cTSBuffer(m_fd_dvr, MEGABYTE(5), Device()->CardIndex() + 1);
   return m_fd_dvr >= 0;

@@ -70,7 +70,6 @@ using namespace PLATFORM;
   } \
 }
 
-int    cDvbDevice::m_dvbApiVersion = 0x0000;
 CMutex cDvbDevice::m_bondMutex;
 
 const char *DeliverySystemNames[] =
@@ -103,16 +102,17 @@ cDvbDevice::cDvbDevice(unsigned int adapter, unsigned int frontend)
    m_numDeliverySystems(0),
    m_numModulations(0),
    m_bondedDevice(NULL),
-   m_bNeedsDetachBondedReceivers(false)
+   m_bNeedsDetachBondedReceivers(false),
+   m_fd_frontend(-1)
 {
-  /*
   // Devices that are present on all card types:
-  int fd_frontend = DvbOpen(DEV_DVB_FRONTEND, m_adapter, m_frontend, O_RDWR | O_NONBLOCK);
+  m_fd_frontend = DvbOpen(DEV_DVB_FRONTEND, O_RDWR | O_NONBLOCK);
 
+  /* TODO
   // Common Interface:
-  m_fd_ca = DvbOpen(DEV_DVB_CA, m_adapter, m_frontend, O_RDWR);
+  m_fd_ca = DvbOpen(DEV_DVB_CA, O_RDWR);
   if (m_fd_ca >= 0)
-    ;//DvbCommonInterface()->m_ciAdapter = cDvbCiAdapter::CreateCiAdapter(this, m_fd_ca); // TODO
+    DvbCommonInterface()->m_ciAdapter = cDvbCiAdapter::CreateCiAdapter(this, m_fd_ca);
 
   // We only check the devices that must be present - the others will be checked before accessing them://XXX
   if (fd_frontend >= 0)
@@ -149,6 +149,9 @@ cSubsystems cDvbDevice::CreateSubsystems(cDvbDevice* device)
 
 cDvbDevice::~cDvbDevice()
 {
+  if (m_fd_frontend > 0)
+    close(m_fd_frontend);
+
   SectionFilter()->StopSectionHandler();
   UnBond();
   // We're not explicitly closing any device files here, since this sometimes
@@ -216,11 +219,9 @@ unsigned int cDvbDevice::GetSubsystemId() const
   static unsigned int subsystemId = 0;
 
   // Only attempt once
-  static bool attempt = true;
-  if (attempt)
+  static unsigned int attempts = 0;
+  if (attempts++ == 0)
   {
-    attempt = false;
-
     string dvbName = DvbName(DEV_DVB_FRONTEND, m_adapter, m_frontend);
     struct __stat64 st;
     if (CFile::Stat(dvbName, &st) == 0)
@@ -269,6 +270,42 @@ unsigned int cDvbDevice::GetSubsystemId() const
   return subsystemId;
 }
 
+unsigned int cDvbDevice::GetDvbApiVersion()
+{
+  static unsigned int dvbApiVersion = 0x0000;
+
+  // Only attempt once
+  static unsigned int attempts = 0;
+  if (attempts++ == 0)
+  {
+    dtv_property frontend[1] = { };
+    dtv_properties cmdSeq = { };
+
+    memset(&frontend, 0, sizeof(frontend));
+    memset(&cmdSeq, 0, sizeof(cmdSeq));
+
+    cmdSeq.props = frontend;
+    frontend[cmdSeq.num].cmd = DTV_API_VERSION;
+    frontend[cmdSeq.num].u.data = 0;
+    if (cmdSeq.num++ > MAXFRONTENDCMDS)
+    {
+      // Too many tuning commands on frontend
+      return false;
+    }
+
+    int res = ioctl(m_fd_frontend, FE_GET_PROPERTY, &cmdSeq);
+    if (res != 0)
+    {
+      // Log
+      return false;
+    }
+
+    dvbApiVersion = frontend[0].u.data;
+  }
+
+  return dvbApiVersion;
+}
+
 bool cDvbDevice::Ready()
 {
   if (DvbCommonInterface()->m_ciAdapter)
@@ -304,6 +341,7 @@ bool cDvbDevice::Bond(cDvbDevice *device)
       if ((DvbChannel()->ProvidesDeliverySystem(SYS_DVBS) || DvbChannel()->ProvidesDeliverySystem(SYS_DVBS2)) &&
           (device->DvbChannel()->ProvidesDeliverySystem(SYS_DVBS) || device->DvbChannel()->ProvidesDeliverySystem(SYS_DVBS2)))
       {
+        /* TODO
         if (DvbChannel()->m_dvbTuner && device->DvbChannel()->m_dvbTuner &&
             DvbChannel()->m_dvbTuner->Bond(device->DvbChannel()->m_dvbTuner))
         {
@@ -312,6 +350,7 @@ bool cDvbDevice::Bond(cDvbDevice *device)
           dsyslog("device %d bonded with device %d", CardIndex() + 1, m_bondedDevice->CardIndex() + 1);
           return true;
         }
+        */
       }
       else
         esyslog("ERROR: can't bond device %d with device %d (only DVB-S(2) devices can be bonded)", CardIndex() + 1, device->CardIndex() + 1);
@@ -330,9 +369,11 @@ void cDvbDevice::UnBond()
   CLockObject lock(m_bondMutex);
   if (cDvbDevice *d = m_bondedDevice)
   {
+    /* TODO
     if (DvbChannel()->m_dvbTuner)
       DvbChannel()->m_dvbTuner->UnBond();
     dsyslog("device %d unbonded from device %d", CardIndex() + 1, m_bondedDevice->CardIndex() + 1);
+    */
     while (d->m_bondedDevice != this)
       d = d->m_bondedDevice;
     if (d == m_bondedDevice)
@@ -346,8 +387,10 @@ void cDvbDevice::UnBond()
 bool cDvbDevice::BondingOk(const cChannel &channel, bool bConsiderOccupied) const
 {
   CLockObject lock(m_bondMutex);
+  /* TODO
   if (m_bondedDevice)
     return DvbChannel()->m_dvbTuner && DvbChannel()->m_dvbTuner->BondingOk(channel, bConsiderOccupied);
+  */
   return true;
 }
 
@@ -420,28 +463,21 @@ string cDvbDevice::DvbName(const char *name, unsigned int adapter, unsigned int 
   return StringUtils::Format("%s/%s%d/%s%d", DEV_DVB_BASE, DEV_DVB_ADAPTER, adapter, name, frontend);
 }
 
-int cDvbDevice::DvbOpen(const char *name, unsigned int adapter, unsigned int frontend, int mode, bool bReportError /* = false */)
+int cDvbDevice::DvbOpen(const char *name, int mode) const
 {
-  string fileName = DvbName(name, adapter, frontend);
-
-  int fd = open(fileName.c_str(), mode);
-  if (fd < 0 && bReportError)
-    LOG_ERROR_STR(fileName.c_str());
-
-  return fd;
+  return open(DvbName(name, m_adapter, m_frontend).c_str(), mode);
 }
 
-
-bool cDvbDevice::QueryDeliverySystems(int fd_frontend)
+bool cDvbDevice::QueryDeliverySystems()
 {
   m_numDeliverySystems = 0;
-  if (ioctl(fd_frontend, FE_GET_INFO, &m_frontendInfo) < 0)
+  if (ioctl(m_fd_frontend, FE_GET_INFO, &m_frontendInfo) < 0)
   {
     LOG_ERROR;
     return false;
   }
 
-  if (!FindDvbApiVersion(fd_frontend))
+  if (!GetDvbApiVersion())
     return false;
 
   dtv_property Frontend[1];
@@ -449,13 +485,13 @@ bool cDvbDevice::QueryDeliverySystems(int fd_frontend)
 
   // Determine the types of delivery systems this device provides:
   bool LegacyMode = true;
-  if (m_dvbApiVersion >= 0x0505)
+  if (GetDvbApiVersion() >= 0x0505)
   {
     memset(&Frontend, 0, sizeof(Frontend));
     memset(&CmdSeq, 0, sizeof(CmdSeq));
     CmdSeq.props = Frontend;
     SETCMD(DTV_ENUM_DELSYS, 0);
-    int Result = ioctl(fd_frontend, FE_GET_PROPERTY, &CmdSeq);
+    int Result = ioctl(m_fd_frontend, FE_GET_PROPERTY, &CmdSeq);
     if (Result == 0)
     {
       for (uint i = 0; i < Frontend[0].u.buffer.len; i++)
@@ -528,36 +564,6 @@ bool cDvbDevice::QueryDeliverySystems(int fd_frontend)
     esyslog("ERROR: frontend %d/%d doesn't provide any delivery systems", m_adapter, m_frontend);
 
   return false;
-}
-
-bool cDvbDevice::FindDvbApiVersion(int fd_frontend)
-{
-  if (!m_dvbApiVersion)
-  {
-    dtv_property Frontend[1];
-    dtv_properties CmdSeq;
-
-    memset(&Frontend, 0, sizeof(Frontend));
-    memset(&CmdSeq, 0, sizeof(CmdSeq));
-
-    CmdSeq.props = Frontend;
-    Frontend[CmdSeq.num].cmd = DTV_API_VERSION;
-    Frontend[CmdSeq.num].u.data = 0;
-    if (CmdSeq.num++ > MAXFRONTENDCMDS)
-    {
-      //esyslog("ERROR: too many tuning commands on frontend %d/%d", m_adapter, m_frontend);
-      return false;
-    }
-
-    if (ioctl(fd_frontend, FE_GET_PROPERTY, &CmdSeq) != 0)
-    {
-      LOG_ERROR;
-      return false;
-    }
-    m_dvbApiVersion = Frontend[0].u.data;
-    isyslog("DVB API version is 0x%04X (VDR was built with 0x%04X)", m_dvbApiVersion, DVBAPIVERSION);
-  }
-  return true;
 }
 
 cDvbAudioSubsystem *cDvbDevice::DvbAudio() const

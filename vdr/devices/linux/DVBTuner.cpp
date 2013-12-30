@@ -9,7 +9,6 @@
 
 #include "DVBTuner.h"
 #include "DVBDevice.h"
-#include "DVBDeviceProbe.h"
 #include "devices/DeviceManager.h"
 #include "devices/subsystems/DeviceChannelSubsystem.h"
 #include "devices/subsystems/DevicePIDSubsystem.h"
@@ -703,9 +702,9 @@ bool cDvbTuner::SetFrontend()
     if (m_frontendType == SYS_DVBT2)
     {
       // DVB-T2
-      if (cDvbDevice::GetDvbApiVersion() >= 0x0508)
+      if (m_device->GetDvbApiVersion() >= 0x0508)
         SETCMD(DTV_STREAM_ID, dtp.StreamId());
-      else if (cDvbDevice::GetDvbApiVersion() >= 0x0503)
+      else if (m_device->GetDvbApiVersion() >= 0x0503)
         SETCMD(DTV_DVBT2_PLP_ID_LEGACY, dtp.StreamId());
     }
 

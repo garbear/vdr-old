@@ -70,6 +70,12 @@ public:
    */
   unsigned int GetSubsystemId() const;
 
+  /*!
+   * \brief Get the version of the DVB driver actually in use
+   * \return The DVB API version. Compare to DVBAPIVERSION in DVBLegacy.h
+   */
+  unsigned int GetDvbApiVersion() ;
+
   virtual bool Ready();
 
   unsigned int Adapter() const { return m_adapter; }
@@ -108,12 +114,6 @@ public:
   bool BondingOk(const cChannel &channel, bool bConsiderOccupied = false) const;
 
   /*!
-   * \brief Get the version of the DVB driver actually in use (will be
-   *        determined by the first device created)
-   */
-  static int GetDvbApiVersion() { return m_dvbApiVersion; }
-
-  /*!
    * \brief Bonds the devices as defined in the given string
    * \param bondings The bondings string
    * \return False if an error occurred
@@ -138,7 +138,7 @@ public:
 protected:
 public: // TODO
   static std::string DvbName(const char *name, unsigned int adapter, unsigned int frontend);
-  static int DvbOpen(const char *name, unsigned int adapter, unsigned int frontend, int mode, bool bReportError = false);
+  int DvbOpen(const char *name, int mode) const;
 
 private:
   /*!
@@ -148,23 +148,19 @@ private:
    */
   static cSubsystems CreateSubsystems(cDvbDevice* device);
 
-  bool QueryDeliverySystems(int fd_frontend);
-
-  /*!
-   * \brief Determine the version of the running DVB API
-   */
-  static bool FindDvbApiVersion(int fd_frontend);
+  bool QueryDeliverySystems();
 
   cSubsystems       m_subsystems;
-public: // TODO
   unsigned int      m_adapter;
   unsigned int      m_frontend;
+public: // TODO
   dvb_frontend_info m_frontendInfo;
   int               m_deliverySystems[MAXDELIVERYSYSTEMS];
   unsigned int      m_numDeliverySystems;
   unsigned int      m_numModulations;
   //int               m_fd_dvr; // (Moved to DVBReceiverSubsystem.h)
 private:
+  int               m_fd_frontend;
   int               m_fd_ca;
 public: // TODO
   cDvbDevice       *m_bondedDevice;
