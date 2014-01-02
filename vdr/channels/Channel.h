@@ -78,11 +78,11 @@ class TiXmlNode;
 class cLinkChannel : public cListObject
 {
 public:
-  cLinkChannel(cChannel *channel) : m_channel(channel) { }
-  cChannel *Channel() { return m_channel; }
+  cLinkChannel(ChannelPtr channel) : m_channel(channel) { }
+  ChannelPtr Channel() { return m_channel; }
 
 private:
-  cChannel *m_channel;
+  ChannelPtr m_channel;
 };
 
 /*
