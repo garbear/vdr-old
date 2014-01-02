@@ -12,6 +12,7 @@
  */
 
 #include "EIT.h"
+#include "Config.h"
 #include <sys/time.h>
 #include "epg/EPG.h"
 #include "channels/ChannelManager.h"
@@ -116,7 +117,7 @@ cEIT::cEIT(cSchedules *Schedules, int Source, u_char Tid, const u_char *Data, bo
          pEvent->SetTableID(Tid);
       if (Tid == 0x4E) { // we trust only the present/following info on the actual TS
          if (SiEitEvent.getRunningStatus() >= SI::RunningStatusNotRunning)
-            pSchedule->SetRunningStatus(pEvent, SiEitEvent.getRunningStatus(), channel);
+            pSchedule->SetRunningStatus(pEvent, SiEitEvent.getRunningStatus(), channel.get());
          }
       if (OnlyRunningStatus) {
          pEvent->SetVersion(0xFF); // we have already changed the table id above, so set the version to an invalid value to make sure the next full run will be executed
@@ -266,7 +267,7 @@ cEIT::cEIT(cSchedules *Schedules, int Source, u_char Tid, const u_char *Data, bo
                        char linkName[ld->privateData.getLength() + 1];
                        strn0cpy(linkName, (const char *)ld->privateData.getData(), sizeof(linkName));
                        // TODO is there a standard way to determine the character set of this string?
-                       cChannel *link = Channels.GetByChannelID(linkID);
+                       ChannelPtr link = cChannelManager::Get().GetByChannelID(linkID);
                        if (link != channel) { // only link to other channels, not the same one
                           //fprintf(stderr, "Linkage %s %4d %4d %5d %5d %5d %5d  %02X  '%s'\n", hit ? "*" : "", channel->Number(), link ? link->Number() : -1, SiEitEvent.getEventId(), ld->getOriginalNetworkId(), ld->getTransportStreamId(), ld->getServiceId(), ld->getLinkageType(), linkName);//XXX
                           if (link) {
@@ -277,10 +278,10 @@ cEIT::cEIT(cSchedules *Schedules, int Source, u_char Tid, const u_char *Data, bo
                              }
                              }
                           else if (Setup.UpdateChannels >= 4) {
-                             cChannel *transponder = channel;
+                             ChannelPtr transponder = channel;
                              if (channel->Tid() != ld->getTransportStreamId())
-                                transponder = Channels.GetByTransponderID(linkID);
-                             link = Channels.NewChannel(*transponder, linkName, "", "", ld->getOriginalNetworkId(), ld->getTransportStreamId(), ld->getServiceId());
+                                transponder = cChannelManager::Get().GetByTransponderID(linkID);
+                             link = cChannelManager::Get().NewChannel(*transponder, linkName, "", "", ld->getOriginalNetworkId(), ld->getTransportStreamId(), ld->getServiceId());
                              //XXX patFilter->Trigger();
                              }
                           if (link) {
@@ -355,7 +356,7 @@ cEIT::cEIT(cSchedules *Schedules, int Source, u_char Tid, const u_char *Data, bo
   if (Tid == 0x4E) {
      if (Empty && getSectionNumber() == 0)
         // ETR 211: an empty entry in section 0 of table 0x4E means there is currently no event running
-        pSchedule->ClrRunningStatus(channel);
+        pSchedule->ClrRunningStatus(channel.get());
      pSchedule->SetPresentSeen();
      }
   if (Modified && !OnlyRunningStatus) {
@@ -363,7 +364,7 @@ cEIT::cEIT(cSchedules *Schedules, int Source, u_char Tid, const u_char *Data, bo
      EpgHandlers.DropOutdated(pSchedule, SegmentStart, SegmentEnd, Tid, getVersionNumber());
      Schedules->SetModified(pSchedule);
      }
-  Channels.Unlock();
+  // XXX cChannelManager::Get().Unlock();
 }
 
 // --- cTDT ------------------------------------------------------------------
