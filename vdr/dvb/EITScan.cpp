@@ -121,7 +121,7 @@ void cEITScanner::ForceScan(void)
 void cEITScanner::Activity(void)
 {
   if (currentChannel) {
-     Channels.SwitchTo(currentChannel);
+     cChannelManager::Get().SwitchTo(currentChannel);
      currentChannel = 0;
      }
   lastActivity = time(NULL);
@@ -132,7 +132,8 @@ void cEITScanner::Process(void)
   if (Setup.EPGScanTimeout || !lastActivity) { // !lastActivity means a scan was forced
      time_t now = time(NULL);
      if (now - lastScan > ScanTimeout && now - lastActivity > ActivityTimeout) {
-        if (Channels.Lock(false, 10)) {
+//        XXX if (cChannelManager::Get().Lock(false, 10)) {
+       if (1) {
            if (!scanList) {
               scanList = new cScanList;
               if (transponderList) {
@@ -140,7 +141,7 @@ void cEITScanner::Process(void)
                  delete transponderList;
                  transponderList = NULL;
                  }
-              scanList->AddTransponders(Channels);
+              scanList->AddTransponders(cChannelManager::Get());
               }
            bool AnyDeviceSwitched = false;
            for (int i = 0; i < cDeviceManager::Get().NumDevices(); i++) {
@@ -180,7 +181,7 @@ void cEITScanner::Process(void)
               if (lastActivity == 0) // this was a triggered scan
                  Activity();
               }
-           Channels.Unlock();
+//           XXX Channels.Unlock();
            }
         lastScan = time(NULL);
         }
