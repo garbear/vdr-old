@@ -94,8 +94,8 @@ void cNitFilter::Process(u_short Pid, u_char Tid, const u_char *Data, int Length
      return; // ignore all other NITs
   else if (!sectionSyncer.Sync(nit.getVersionNumber(), nit.getSectionNumber(), nit.getLastSectionNumber()))
      return;
-  if (!Channels.Lock(true, 10))
-     return;
+//  XXX if (!Channels.Lock(true, 10))
+//     return;
   SI::NIT::TransportStream ts;
   for (SI::Loop::Iterator it; nit.transportStreamLoop.getNext(ts, it); ) {
       SI::Descriptor *d;
@@ -154,8 +154,8 @@ void cNitFilter::Process(u_short Pid, u_char Tid, const u_char *Data, int Length
                  if (Setup.UpdateChannels >= 5) {
                     bool found = false;
                     bool forceTransponderUpdate = false;
-                    for (cChannels::CHANNELS_CITR it = Channels.Iterator(); Channels.HasNext(it); Channels.Next(it)) {
-                      cChannel *Channel = (*it);
+                    for (std::vector<ChannelPtr>::const_iterator it = cChannelManager::Get().Iterator(); cChannelManager::Get().HasNext(it); cChannelManager::Get().Next(it)) {
+                      ChannelPtr Channel = (*it);
                         if (!Channel->GroupSep() && Channel->Source() == Source && Channel->Nid() == ts.getOriginalNetworkId() && Channel->Tid() == ts.getTransportStreamId()) {
                            int transponder = Channel->Transponder();
                            found = true;
@@ -191,8 +191,8 @@ void cNitFilter::Process(u_short Pid, u_char Tid, const u_char *Data, int Length
                  break;
             case SI::S2SatelliteDeliverySystemDescriptorTag: {
                  if (Setup.UpdateChannels >= 5) {
-                   for (cChannels::CHANNELS_CITR it = Channels.Iterator(); Channels.HasNext(it); Channels.Next(it)) {
-                     cChannel *Channel = (*it);
+                   for (std::vector<ChannelPtr>::const_iterator it = cChannelManager::Get().Iterator(); cChannelManager::Get().HasNext(it); cChannelManager::Get().Next(it)) {
+                     ChannelPtr Channel = (*it);
                         if (!Channel->GroupSep() && cSource::IsSat(Channel->Source()) && Channel->Nid() == ts.getOriginalNetworkId() && Channel->Tid() == ts.getTransportStreamId()) {
                            SI::S2SatelliteDeliverySystemDescriptor *sd = (SI::S2SatelliteDeliverySystemDescriptor *)d;
                            cDvbTransponderParams dtp(Channel->Parameters());
@@ -230,8 +230,8 @@ void cNitFilter::Process(u_short Pid, u_char Tid, const u_char *Data, int Length
                  if (Setup.UpdateChannels >= 5) {
                     bool found = false;
                     bool forceTransponderUpdate = false;
-                    for (cChannels::CHANNELS_CITR it = Channels.Iterator(); Channels.HasNext(it); Channels.Next(it)) {
-                      cChannel *Channel = (*it);
+                    for (std::vector<ChannelPtr>::const_iterator it = cChannelManager::Get().Iterator(); cChannelManager::Get().HasNext(it); cChannelManager::Get().Next(it)) {
+                      ChannelPtr Channel = (*it);
                         if (!Channel->GroupSep() && Channel->Source() == Source && Channel->Nid() == ts.getOriginalNetworkId() && Channel->Tid() == ts.getTransportStreamId()) {
                            int transponder = Channel->Transponder();
                            found = true;
@@ -297,8 +297,8 @@ void cNitFilter::Process(u_short Pid, u_char Tid, const u_char *Data, int Length
                  if (Setup.UpdateChannels >= 5) {
                     bool found = false;
                     bool forceTransponderUpdate = false;
-                    for (cChannels::CHANNELS_CITR it = Channels.Iterator(); Channels.HasNext(it); Channels.Next(it)) {
-                      cChannel *Channel = (*it);
+                    for (std::vector<ChannelPtr>::const_iterator it = cChannelManager::Get().Iterator(); cChannelManager::Get().HasNext(it); cChannelManager::Get().Next(it)) {
+                      ChannelPtr Channel = (*it);
                         if (!Channel->GroupSep() && Channel->Source() == Source && Channel->Nid() == ts.getOriginalNetworkId() && Channel->Tid() == ts.getTransportStreamId()) {
                            int transponder = Channel->Transponder();
                            found = true;
@@ -337,8 +337,8 @@ void cNitFilter::Process(u_short Pid, u_char Tid, const u_char *Data, int Length
                  switch (sd->getExtensionDescriptorTag()) {
                    case SI::T2DeliverySystemDescriptorTag: {
                         if (Setup.UpdateChannels >= 5) {
-                          for (cChannels::CHANNELS_CITR it = Channels.Iterator(); Channels.HasNext(it); Channels.Next(it)) {
-                            cChannel *Channel = (*it);
+                          for (std::vector<ChannelPtr>::const_iterator it = cChannelManager::Get().Iterator(); cChannelManager::Get().HasNext(it); cChannelManager::Get().Next(it)) {
+                            ChannelPtr Channel = (*it);
                                int Source = cSource::FromData(cSource::stTerr);
                                if (!Channel->GroupSep() && Channel->Source() == Source && Channel->Nid() == ts.getOriginalNetworkId() && Channel->Tid() == ts.getTransportStreamId()) {
                                   SI::T2DeliverySystemDescriptor *td = (SI::T2DeliverySystemDescriptor *)d;
@@ -373,5 +373,5 @@ void cNitFilter::Process(u_short Pid, u_char Tid, const u_char *Data, int Length
           delete d;
           }
       }
-  Channels.Unlock();
+  //XXX Channels.Unlock();
 }
