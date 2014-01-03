@@ -2172,7 +2172,7 @@ int cIndexFile::GetLength(const char *FileName, bool IsPesRecording)
 
 bool GenerateIndex(const char *FileName)
 {
-  if (cDirectory::CanWrite(FileName)) {
+  if (CDirectory::CanWrite(FileName)) {
      cRecording Recording(FileName);
      if (Recording.Name()) {
         if (!Recording.IsPesRecording()) {
