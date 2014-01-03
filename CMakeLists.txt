@@ -7,7 +7,6 @@ include(CheckLibraryExists)
 ADD_SUBDIRECTORY(lib/gtest)
 enable_testing()
 
-ADD_SUBDIRECTORY(lib/pcre)
 ADD_SUBDIRECTORY(lib/libsi)
 
 SET(IS_ANDROID $ENV{ANDROID})
