@@ -23,7 +23,6 @@
 #include "DVBTuner.h"
 #include "devices/DeviceManager.h"
 #include "devices/linux/commoninterface/DVBCI.h"
-#include "devices/linux/subsystems/DVBAudioSubsystem.h"
 #include "devices/linux/subsystems/DVBChannelSubsystem.h"
 #include "devices/linux/subsystems/DVBCommonInterfaceSubsystem.h"
 #include "devices/linux/subsystems/DVBPIDSubsystem.h"
@@ -131,7 +130,6 @@ cSubsystems cDvbDevice::CreateSubsystems(cDvbDevice* device)
 {
   cSubsystems subsystems;
 
-  subsystems.Audio           = new cDvbAudioSubsystem(device);
   subsystems.Channel         = new cDvbChannelSubsystem(device);
   subsystems.CommonInterface = new cDvbCommonInterfaceSubsystem(device);
   subsystems.PID             = new cDvbPIDSubsystem(device);
@@ -564,13 +562,6 @@ bool cDvbDevice::QueryDeliverySystems()
     esyslog("ERROR: frontend %d/%d doesn't provide any delivery systems", m_adapter, m_frontend);
 
   return false;
-}
-
-cDvbAudioSubsystem *cDvbDevice::DvbAudio() const
-{
-  cDvbAudioSubsystem *audio = dynamic_cast<cDvbAudioSubsystem*>(Audio());
-  assert(audio);
-  return audio;
 }
 
 cDvbChannelSubsystem *cDvbDevice::DvbChannel() const

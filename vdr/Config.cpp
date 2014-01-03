@@ -11,7 +11,6 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include "devices/Device.h"
-#include "devices/subsystems/DeviceAudioSubsystem.h"
 //#include "interface.h"
 //#include "menu.h"
 #include "plugin.h"
@@ -468,11 +467,8 @@ cSetup::cSetup(void)
   PauseOnMarkSet = 0;
   ResumeID = 0;
   CurrentChannel = -1;
-  CurrentVolume = MAXVOLUME;
-  CurrentDolby = 0;
   InitialChannel = "";
   DeviceBondings = "";
-  InitialVolume = -1;
   ChannelsWrap = 0;
 //  ShowChannelNamesWithSource = 0;
   EmergencyExit = 1;
@@ -673,10 +669,7 @@ bool cSetup::Parse(const char *Name, const char *Value)
   else if (!strcasecmp(Name, "PauseOnMarkSet"))      PauseOnMarkSet     = atoi(Value);
   else if (!strcasecmp(Name, "ResumeID"))            ResumeID           = atoi(Value);
   else if (!strcasecmp(Name, "CurrentChannel"))      CurrentChannel     = atoi(Value);
-  else if (!strcasecmp(Name, "CurrentVolume"))       CurrentVolume      = atoi(Value);
-  else if (!strcasecmp(Name, "CurrentDolby"))        CurrentDolby       = atoi(Value);
   else if (!strcasecmp(Name, "InitialChannel"))      InitialChannel     = Value;
-  else if (!strcasecmp(Name, "InitialVolume"))       InitialVolume      = atoi(Value);
   else if (!strcasecmp(Name, "DeviceBondings"))      DeviceBondings     = Value;
   else if (!strcasecmp(Name, "ChannelsWrap"))        ChannelsWrap       = atoi(Value);
 //  else if (!strcasecmp(Name, "ShowChannelNamesWithSource")) ShowChannelNamesWithSource = atoi(Value);
@@ -782,10 +775,7 @@ bool cSetup::Save(void)
   Store("PauseOnMarkSet",     PauseOnMarkSet);
   Store("ResumeID",           ResumeID);
   Store("CurrentChannel",     CurrentChannel);
-  Store("CurrentVolume",      CurrentVolume);
-  Store("CurrentDolby",       CurrentDolby);
   Store("InitialChannel",     InitialChannel);
-  Store("InitialVolume",      InitialVolume);
   Store("DeviceBondings",     DeviceBondings);
   Store("ChannelsWrap",       ChannelsWrap);
 //  Store("ShowChannelNamesWithSource", ShowChannelNamesWithSource);

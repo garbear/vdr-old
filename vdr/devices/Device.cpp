@@ -22,7 +22,6 @@
 #include "Device.h"
 
 #include "DeviceManager.h"
-#include "subsystems/DeviceAudioSubsystem.h"
 #include "subsystems/DeviceChannelSubsystem.h"
 #include "subsystems/DeviceCommonInterfaceSubsystem.h"
 #include "subsystems/DeviceImageGrabSubsystem.h"

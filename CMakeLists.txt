@@ -102,13 +102,11 @@ set(VDR_SRCS
 	vdr/devices/TSBuffer.cpp
 	vdr/devices/linux/DVBDevice.cpp
 	vdr/devices/linux/DVBTuner.cpp
-	vdr/devices/linux/subsystems/DVBAudioSubsystem.cpp
 	vdr/devices/linux/subsystems/DVBChannelSubsystem.cpp
 	vdr/devices/linux/subsystems/DVBCommonInterfaceSubsystem.cpp
 	vdr/devices/linux/subsystems/DVBPIDSubsystem.cpp
 	vdr/devices/linux/subsystems/DVBReceiverSubsystem.cpp
 	vdr/devices/linux/subsystems/DVBSectionFilterSubsystem.cpp
-	vdr/devices/subsystems/DeviceAudioSubsystem.cpp
 	vdr/devices/subsystems/DeviceChannelSubsystem.cpp
 	vdr/devices/subsystems/DeviceCommonInterfaceSubsystem.cpp
 	vdr/devices/subsystems/DeviceImageGrabSubsystem.cpp

@@ -128,7 +128,6 @@ public:
    */
   static void UnBondDevices();
 
-  cDvbAudioSubsystem           *DvbAudio() const;
   cDvbChannelSubsystem         *DvbChannel() const;
   cDvbCommonInterfaceSubsystem *DvbCommonInterface() const;
   cDvbPIDSubsystem             *DvbPID() const;

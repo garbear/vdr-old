@@ -21,7 +21,6 @@
 
 #include "DeviceManager.h"
 #include "devices/commoninterface/CI.h"
-#include "devices/subsystems/DeviceAudioSubsystem.h"
 #include "devices/subsystems/DeviceChannelSubsystem.h"
 #include "devices/subsystems/DeviceCommonInterfaceSubsystem.h"
 #include "devices/subsystems/DeviceReceiverSubsystem.h"

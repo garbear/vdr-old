@@ -31,7 +31,6 @@
 #include <string>
 #include <vector>
 
-class cDeviceAudioSubsystem;
 class cDeviceChannelSubsystem;
 class cDeviceCommonInterfaceSubsystem;
 class cDeviceImageGrabSubsystem;
@@ -47,7 +46,6 @@ struct cSubsystems
 {
   void Free() const; // Free the subsystem pointers (TODO: Consider removing this function by switching to shared_ptrs)
   void AssertValid() const; // Asserts on empty pointer for the subsystems below
-  cDeviceAudioSubsystem           *Audio;
   cDeviceChannelSubsystem         *Channel;
   cDeviceCommonInterfaceSubsystem *CommonInterface;
   cDeviceImageGrabSubsystem       *ImageGrab;
@@ -177,7 +175,6 @@ public: // TODO
 
 
 public:
-  cDeviceAudioSubsystem           *Audio()           const { return m_subsystems.Audio; }
   cDeviceChannelSubsystem         *Channel()         const { return m_subsystems.Channel; }
   cDeviceCommonInterfaceSubsystem *CommonInterface() const { return m_subsystems.CommonInterface; }
   cDeviceImageGrabSubsystem       *ImageGrab()       const { return m_subsystems.ImageGrab; }

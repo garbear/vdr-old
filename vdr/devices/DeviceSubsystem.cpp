@@ -22,7 +22,6 @@
 #include "DeviceSubsystem.h"
 #include "Device.h"
 
-cDeviceAudioSubsystem           *cDeviceSubsystem::Audio() const           { return m_device->Audio(); }
 cDeviceChannelSubsystem         *cDeviceSubsystem::Channel() const         { return m_device->Channel(); }
 cDeviceCommonInterfaceSubsystem *cDeviceSubsystem::CommonInterface() const { return m_device->CommonInterface(); }
 cDeviceImageGrabSubsystem       *cDeviceSubsystem::ImageGrab() const       { return m_device->ImageGrab(); }

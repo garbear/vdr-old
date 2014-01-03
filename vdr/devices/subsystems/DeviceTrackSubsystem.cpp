@@ -20,7 +20,6 @@
  */
 
 #include "DeviceTrackSubsystem.h"
-#include "DeviceAudioSubsystem.h"
 #include "DevicePlayerSubsystem.h"
 #include "DeviceReceiverSubsystem.h"
 #include "DeviceSPUSubsystem.h"
@@ -65,7 +64,6 @@ void cDeviceTrackSubsystem::ClrAvailableTracks(bool bDescriptionsOnly /* = false
       }
     }
     m_pre_1_3_19_PrivateStream = 0;
-    //Audio()->SetAudioChannel(0); // fall back to stereo // TODO: Can't call from constructor (references m_device)
     m_currentAudioTrackMissingCount = 0;
     m_currentAudioTrack = ttNone;
     m_currentSubtitleTrack = ttNone;
@@ -130,8 +128,6 @@ bool cDeviceTrackSubsystem::SetCurrentAudioTrack(eTrackType type)
   if (ttNone < type && type <= ttDolbyLast)
   {
     PLATFORM::CLockObject lock(m_mutexCurrentAudioTrack);
-    if (IS_DOLBY_TRACK(type))
-      Audio()->SetDigitalAudioDevice(true);
     m_currentAudioTrack = type;
     if (Player()->m_player)
     {
@@ -141,8 +137,6 @@ bool cDeviceTrackSubsystem::SetCurrentAudioTrack(eTrackType type)
     }
     else
       SetAudioTrackDevice(m_currentAudioTrack);
-    if (IS_AUDIO_TRACK(type))
-      Audio()->SetDigitalAudioDevice(false);
     return true;
   }
   return false;
@@ -203,7 +197,6 @@ void cDeviceTrackSubsystem::EnsureAudioTrack(bool bForce /* = false */)
       if (!bForce) // only log this for automatic changes
         dsyslog("setting audio track to %d (%d)", PreferredTrack, PreferredAudioChannel);
       SetCurrentAudioTrack(PreferredTrack);
-      Audio()->SetAudioChannel(PreferredAudioChannel);
     }
   }
 }

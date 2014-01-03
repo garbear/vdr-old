@@ -19,13 +19,11 @@
  *
  */
 
-#include "DeviceAudioSubsystem.h"
 #include "DevicePlayerSubsystem.h"
 #include "DeviceReceiverSubsystem.h"
 #include "DeviceSPUSubsystem.h"
 #include "DeviceTrackSubsystem.h"
 #include "DeviceVideoFormatSubsystem.h"
-#include "audio.h"
 #include "osd.h"
 #include "Player.h"
 #include "devices/Transfer.h"
@@ -61,22 +59,18 @@ cDevicePlayerSubsystem::~cDevicePlayerSubsystem()
 
 void cDevicePlayerSubsystem::Clear()
 {
-  //Audios.ClearAudio(); // TODO
 }
 
 void cDevicePlayerSubsystem::Play()
 {
-  //Audios.MuteAudio(Audio()->m_bMute); // TODO
 }
 
 void cDevicePlayerSubsystem::Freeze()
 {
-  //Audios.MuteAudio(true); // TODO
 }
 
 void cDevicePlayerSubsystem::Mute()
 {
-  //Audios.MuteAudio(true); // TODO
 }
 
 void cDevicePlayerSubsystem::StillPicture(const vector<uchar> &data)
@@ -252,7 +246,6 @@ int cDevicePlayerSubsystem::PlayTs(const vector<uchar> &data, bool bVideoOnly /*
                 return Played ? Played : w;
               if (w == 0)
                 break;
-              Audios.PlayTsAudio(vecData.data(), vecData.size());
             }
           }
           else if (Pid == Track()->m_availableTracks[Track()->m_currentSubtitleTrack].id)
@@ -330,7 +323,6 @@ void cDevicePlayerSubsystem::Detach(cPlayer *player)
     //VideoFormat()->SetVideoDisplayFormat(eVideoDisplayFormat(Setup.VideoDisplayFormat)); // TODO
     PlayTs(vector<uchar>());
     //m_patPmtParser.Reset(); // TODO
-    //Audios.ClearAudio(); // TODO
     m_bIsPlayingVideo = false;
   }
 }
@@ -368,10 +360,7 @@ unsigned int cDevicePlayerSubsystem::PlayPesPacket(const vector<uchar> &data, bo
       if ((!bVideoOnly || HasIBPTrickSpeed()) && c == Track()->m_availableTracks[Track()->m_currentAudioTrack].id)
       {
         w = PlayAudio(vecStart, c);
-        /* TODO
-        if (FirstLoop)
           Audios.PlayAudio(data.data(), data.size(), c);
-        */
       }
       break;
     case 0xBD: { // private stream 1
@@ -412,8 +401,6 @@ pre_1_3_19_PrivateStreamDetected:
             if ((!bVideoOnly || HasIBPTrickSpeed()) && SubStreamId == Track()->m_availableTracks[Track()->m_currentAudioTrack].id)
             {
               w = PlayAudio(vecStart, SubStreamId);
-              if (FirstLoop)
-                Audios.PlayAudio(data.data(), data.size(), SubStreamId);
             }
           }
           */
@@ -423,10 +410,6 @@ pre_1_3_19_PrivateStreamDetected:
           if ((!bVideoOnly || HasIBPTrickSpeed()) && SubStreamId == Track()->m_availableTracks[Track()->m_currentAudioTrack].id)
           {
             w = PlayAudio(vecStart, SubStreamId);
-            /* TODO
-            if (FirstLoop)
-              Audios.PlayAudio(data.data(), data.size(), SubStreamId);
-            */
           }
           break;
         default:

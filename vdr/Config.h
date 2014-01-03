@@ -329,9 +329,6 @@ public:
   int PauseOnMarkSet;
   int ResumeID;
   int CurrentChannel;
-  int CurrentVolume;
-  int CurrentDolby;
-  int InitialVolume;
   int ChannelsWrap;
 //  int ShowChannelNamesWithSource;
   int EmergencyExit;

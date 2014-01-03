@@ -25,7 +25,6 @@
 #include <assert.h>
 #include <typeinfo>
 
-class cDeviceAudioSubsystem;
 class cDeviceChannelSubsystem;
 class cDeviceCommonInterfaceSubsystem;
 class cDeviceImageGrabSubsystem;
@@ -83,7 +82,6 @@ protected:
    */
   cDevice *Device() const { return m_device; }
 
-  cDeviceAudioSubsystem           *Audio() const;
   cDeviceChannelSubsystem         *Channel() const;
   cDeviceCommonInterfaceSubsystem *CommonInterface() const;
   cDeviceImageGrabSubsystem       *ImageGrab() const;
