@@ -653,7 +653,7 @@ void ReportEpgBugFixStats(bool Force)
             char *q = buffer;
             *buffer = 0;
             for (int c = 0; c < p->n; c++) {
-                cChannel *channel = Channels.GetByChannelID(p->channelIDs[c], true);
+                ChannelPtr channel = cChannelManager::Get().GetByChannelID(p->channelIDs[c], true);
                 if (channel) {
                    if (!GotHits) {
                       dsyslog("=====================");
@@ -1113,7 +1113,7 @@ void cSchedule::Cleanup(time_t Time)
 
 void cSchedule::Dump(FILE *f, const char *Prefix, eDumpMode DumpMode, time_t AtTime) const
 {
-  cChannel *channel = Channels.GetByChannelID(channelID, true);
+  ChannelPtr channel = cChannelManager::Get().GetByChannelID(channelID, true);
   if (channel) {
      fprintf(f, "%sC %s %s\n", Prefix, channel->GetChannelID().Serialize().c_str(), channel->Name().c_str());
      const cEvent *p;
@@ -1356,10 +1356,10 @@ cSchedules::Read(FILE *f)
     if (result)
     {
       // Initialize the channels' schedule pointers, so that the first WhatsOn menu will come up faster:
-      for (cChannels::CHANNELS_CITR it = Channels.Iterator(); Channels.HasNext(it); Channels.Next(it))
+      for (std::vector<ChannelPtr>::const_iterator it = cChannelManager::Get().Iterator(); cChannelManager::Get().HasNext(it); cChannelManager::Get().Next(it))
       {
-        cChannel *Channel = (*it);
-        s->GetSchedule(Channel);
+        ChannelPtr Channel = (*it);
+        s->GetSchedule(Channel.get());
       }
     }
     return result;
@@ -1374,7 +1374,7 @@ cSchedule *cSchedules::AddSchedule(tChannelID ChannelID)
   if (!p) {
      p = new cSchedule(ChannelID);
      Add(p);
-     cChannel *channel = Channels.GetByChannelID(ChannelID);
+     ChannelPtr channel = cChannelManager::Get().GetByChannelID(ChannelID);
      if (channel)
         channel->SetSchedule(p);
      }
