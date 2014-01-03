@@ -112,18 +112,11 @@ cDvbDevice::cDvbDevice(unsigned int adapter, unsigned int frontend)
   if (m_fd_ca >= 0)
     DvbCommonInterface()->m_ciAdapter = cDvbCiAdapter::CreateCiAdapter(this, m_fd_ca);
 
-  /* TODO
   // We only check the devices that must be present - the others will be checked before accessing them://XXX
-  if (fd_frontend >= 0)
-  {
-    if (QueryDeliverySystems(fd_frontend))
-      ;//DvbChannel()->m_dvbTuner = new cDvbTuner(this, fd_frontend, m_adapter, m_frontend); // TODO
-  }
-  else
-    ;//esyslog("ERROR: can't open DVB device %d/%d", m_adapter, m_frontend);
+  if (QueryDeliverySystems())
+    DvbChannel()->m_dvbTuner = new cDvbTuner(this, m_fd_frontend, m_adapter, m_frontend);
 
-  //SectionFilter()->StartSectionHandler(); // TODO
-  */
+  SectionFilter()->StartSectionHandler();
 }
 
 cSubsystems cDvbDevice::CreateSubsystems(cDvbDevice* device)
@@ -339,7 +332,6 @@ bool cDvbDevice::Bond(cDvbDevice *device)
       if ((DvbChannel()->ProvidesDeliverySystem(SYS_DVBS) || DvbChannel()->ProvidesDeliverySystem(SYS_DVBS2)) &&
           (device->DvbChannel()->ProvidesDeliverySystem(SYS_DVBS) || device->DvbChannel()->ProvidesDeliverySystem(SYS_DVBS2)))
       {
-        /* TODO
         if (DvbChannel()->m_dvbTuner && device->DvbChannel()->m_dvbTuner &&
             DvbChannel()->m_dvbTuner->Bond(device->DvbChannel()->m_dvbTuner))
         {
@@ -348,7 +340,6 @@ bool cDvbDevice::Bond(cDvbDevice *device)
           dsyslog("device %d bonded with device %d", CardIndex() + 1, m_bondedDevice->CardIndex() + 1);
           return true;
         }
-        */
       }
       else
         esyslog("ERROR: can't bond device %d with device %d (only DVB-S(2) devices can be bonded)", CardIndex() + 1, device->CardIndex() + 1);
@@ -367,11 +358,10 @@ void cDvbDevice::UnBond()
   CLockObject lock(m_bondMutex);
   if (cDvbDevice *d = m_bondedDevice)
   {
-    /* TODO
     if (DvbChannel()->m_dvbTuner)
       DvbChannel()->m_dvbTuner->UnBond();
     dsyslog("device %d unbonded from device %d", CardIndex() + 1, m_bondedDevice->CardIndex() + 1);
-    */
+
     while (d->m_bondedDevice != this)
       d = d->m_bondedDevice;
     if (d == m_bondedDevice)
@@ -385,10 +375,8 @@ void cDvbDevice::UnBond()
 bool cDvbDevice::BondingOk(const cChannel &channel, bool bConsiderOccupied) const
 {
   CLockObject lock(m_bondMutex);
-  /* TODO
   if (m_bondedDevice)
     return DvbChannel()->m_dvbTuner && DvbChannel()->m_dvbTuner->BondingOk(channel, bConsiderOccupied);
-  */
   return true;
 }
 
@@ -397,7 +385,6 @@ bool cDvbDevice::BondDevices(const char *bondings)
   UnBondDevices();
   if (bondings)
   {
-    /* TODO
     cSatCableNumbers SatCableNumbers(MAXDEVICES, bondings);
     for (int i = 0; i < cDeviceManager::Get().NumDevices(); i++)
     {
@@ -441,7 +428,6 @@ bool cDvbDevice::BondDevices(const char *bondings)
         }
       }
     }
-    */
   }
   return true;
 }
@@ -468,6 +454,9 @@ int cDvbDevice::DvbOpen(const char *name, int mode) const
 
 bool cDvbDevice::QueryDeliverySystems()
 {
+  if (m_fd_frontend < 0)
+    return false;
+
   m_numDeliverySystems = 0;
   if (ioctl(m_fd_frontend, FE_GET_INFO, &m_frontendInfo) < 0)
   {
@@ -475,7 +464,7 @@ bool cDvbDevice::QueryDeliverySystems()
     return false;
   }
 
-  if (!GetDvbApiVersion())
+  if (GetDvbApiVersion() == 0)
     return false;
 
   dtv_property Frontend[1];

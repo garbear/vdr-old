@@ -109,7 +109,7 @@ bool cDeviceReceiverSubsystem::AttachReceiver(cReceiver *receiver)
       Device()->Unlock();
       if (CommonInterface()->m_camSlot)
       {
-        //CommonInterface()->m_camSlot->StartDecrypting(); // TODO
+        CommonInterface()->m_camSlot->StartDecrypting();
         CommonInterface()->m_startScrambleDetection = time(NULL);
       }
       Device()->CreateThread();
@@ -142,7 +142,7 @@ void cDeviceReceiverSubsystem::Detach(cReceiver *receiver)
       receiversLeft = true;
   }
   if (CommonInterface()->m_camSlot)
-    ;//CommonInterface()->m_camSlot->StartDecrypting(); // TODO
+    CommonInterface()->m_camSlot->StartDecrypting();
   if (!receiversLeft)
     Device()->StopThread();
 }

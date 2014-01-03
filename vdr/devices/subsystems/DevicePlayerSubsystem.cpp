@@ -46,7 +46,7 @@ using namespace std;
 cDevicePlayerSubsystem::cDevicePlayerSubsystem(cDevice *device)
  : cDeviceSubsystem(device),
    m_player(NULL),
-   //m_patPmtParser(true), // TODO
+   m_patPmtParser(true),
    m_bIsPlayingVideo(false)
 {
 }
@@ -79,7 +79,6 @@ void cDevicePlayerSubsystem::StillPicture(const vector<uchar> &data)
 
   if (data[0] == MAGIC_NUMBER)
   {
-    /* TODO
     // TS data
     cTsToPes TsToPes;
     uchar *buf = NULL;
@@ -146,7 +145,6 @@ void cDevicePlayerSubsystem::StillPicture(const vector<uchar> &data)
       free(buf);
       StillPicture(vec);
     }
-    */
   }
 }
 
@@ -188,11 +186,9 @@ int cDevicePlayerSubsystem::PlayTs(const vector<uchar> &data, bool bVideoOnly /*
   unsigned int Played = 0;
   if (data.empty())
   {
-    /* TODO
     m_tsToPesVideo.Reset();
     m_tsToPesAudio.Reset();
     m_tsToPesSubtitle.Reset();
-    */
   }
   else if (data.size() < TS_SIZE)
   {
@@ -256,7 +252,6 @@ int cDevicePlayerSubsystem::PlayTs(const vector<uchar> &data, bool bVideoOnly /*
           */
         }
       }
-      /* TODO
       else if (Pid == m_patPmtParser.Ppid())
       {
         int w = PlayTsVideo(vecData);
@@ -265,7 +260,6 @@ int cDevicePlayerSubsystem::PlayTs(const vector<uchar> &data, bool bVideoOnly /*
         if (w == 0)
           break;
       }
-      */
       Played += TS_SIZE;
       length -= TS_SIZE;
       dataptr += TS_SIZE;
@@ -276,8 +270,7 @@ int cDevicePlayerSubsystem::PlayTs(const vector<uchar> &data, bool bVideoOnly /*
 
 bool cDevicePlayerSubsystem::Transferring() const
 {
-  //return cTransferControl::ReceiverDevice() != NULL; // TODO
-  return false; // TODO
+  return cTransferControl::ReceiverDevice() != NULL;
 }
 
 void cDevicePlayerSubsystem::StopReplay()
@@ -285,10 +278,8 @@ void cDevicePlayerSubsystem::StopReplay()
   if (m_player)
   {
     Detach(m_player);
-    /* TODO
     if (Device()->IsPrimaryDevice())
       cControl::Shutdown();
-    */
   }
 }
 
@@ -298,7 +289,7 @@ bool cDevicePlayerSubsystem::AttachPlayer(cPlayer *player)
   {
     if (m_player)
       Detach(m_player);
-    //m_patPmtParser.Reset(); // TODO
+    m_patPmtParser.Reset();
     m_player = player;
     if (!Transferring())
       Track()->ClrAvailableTracks(false, true);
@@ -320,9 +311,9 @@ void cDevicePlayerSubsystem::Detach(cPlayer *player)
     p->device = NULL;
     PLATFORM::CLockObject lock(Track()->m_mutexCurrentSubtitleTrack);
     SetPlayMode(pmNone);
-    //VideoFormat()->SetVideoDisplayFormat(eVideoDisplayFormat(Setup.VideoDisplayFormat)); // TODO
+    VideoFormat()->SetVideoDisplayFormat(eVideoDisplayFormat(Setup.VideoDisplayFormat));
     PlayTs(vector<uchar>());
-    //m_patPmtParser.Reset(); // TODO
+    m_patPmtParser.Reset();
     m_bIsPlayingVideo = false;
   }
 }
@@ -393,7 +384,6 @@ pre_1_3_19_PrivateStreamDetected:
             w = PlaySubtitle(vecStart);
           break;
         case 0x80: // AC3 & DTS
-          /* TODO
           if (Setup.UseDolbyDigital)
           {
             Track()->SetAvailableTrack(ttDolby, SubStreamIndex, SubStreamId);
@@ -402,7 +392,6 @@ pre_1_3_19_PrivateStreamDetected:
               w = PlayAudio(vecStart, SubStreamId);
             }
           }
-          */
           break;
         case 0xA0: // LPCM
           Track()->SetAvailableTrack(ttAudio, SubStreamIndex, SubStreamId);
@@ -452,7 +441,6 @@ int cDevicePlayerSubsystem::PlayTsVideo(const vector<uchar> &data)
   if (TsPayloadStart(data.data()))
   {
     int length;
-    /* TODO
     while (const uchar *p = m_tsToPesVideo.GetPes(length))
     {
       vector<uchar> vecP(p, p + length);
@@ -464,9 +452,8 @@ int cDevicePlayerSubsystem::PlayTsVideo(const vector<uchar> &data)
       }
     }
     m_tsToPesVideo.Reset();
-    */
   }
-  //m_tsToPesVideo.PutTs(data.data(), data.size()); // TODO
+  m_tsToPesVideo.PutTs(data.data(), data.size());
   return data.size();
 }
 
@@ -474,7 +461,6 @@ int cDevicePlayerSubsystem::PlayTsAudio(const vector<uchar> &data)
 {
   // Audio PES always has an explicit length and consists of single packets:
   int length;
-  /* TODO
   if (const uchar *p = m_tsToPesAudio.GetPes(length))
   {
     vector<uchar> vecP(p, p + length);
@@ -487,7 +473,6 @@ int cDevicePlayerSubsystem::PlayTsAudio(const vector<uchar> &data)
     m_tsToPesAudio.Reset();
   }
   m_tsToPesAudio.PutTs(data.data(), data.size());
-  */
   return data.size();
 }
 

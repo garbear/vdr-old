@@ -80,7 +80,7 @@ bool cDvbChannelSubsystem::ProvidesTransponder(const cChannel &channel) const
   cDvbTransponderParams dtp(channel.Parameters());
 
   // requires modulation system which frontend doesn't provide - return false in these cases
-  //if (!ProvidesDeliverySystem(cDvbTuner::GetRequiredDeliverySystem(channel, &dtp))) return false; // TODO
+  if (!ProvidesDeliverySystem(cDvbTuner::GetRequiredDeliverySystem(channel, &dtp))) return false;
   if (dtp.StreamId()   != 0        && !(GetDevice<cDvbDevice>()->m_frontendInfo.caps & FE_CAN_MULTISTREAM)) return false;
   if (dtp.Modulation() == QPSK     && !(GetDevice<cDvbDevice>()->m_frontendInfo.caps & FE_CAN_QPSK))        return false;
   if (dtp.Modulation() == QAM_16   && !(GetDevice<cDvbDevice>()->m_frontendInfo.caps & FE_CAN_QAM_16))      return false;
@@ -94,11 +94,9 @@ bool cDvbChannelSubsystem::ProvidesTransponder(const cChannel &channel) const
   // "turbo fec" is a non standard FEC used by North American broadcasters - this is a best guess to determine this condition
   if (dtp.Modulation() == PSK_8    && !(GetDevice<cDvbDevice>()->m_frontendInfo.caps & FE_CAN_TURBO_FEC) && dtp.System() == SYS_DVBS) return false;
 
-  /* TODO
   if (!cSource::IsSat(channel.Source()) ||
       (!Setup.DiSEqC || Diseqcs.Get(Device()->CardIndex() + 1, channel.Source(), channel.Frequency(), dtp.Polarization(), NULL)))
     return cDeviceManager::Get().DeviceHooksProvidesTransponder(*Device(), channel);
-  */
   return false;
 }
 
@@ -116,7 +114,6 @@ bool cDvbChannelSubsystem::ProvidesChannel(const cChannel &channel, int priority
     {
       if (Receiver()->Receiving())
       {
-        /* TODO
         if (m_dvbTuner->IsTunedTo(channel))
         {
           if ((channel.Vpid() && !PID()->HasPid(channel.Vpid())) ||
@@ -125,12 +122,10 @@ bool cDvbChannelSubsystem::ProvidesChannel(const cChannel &channel, int priority
           {
             if (CommonInterface()->CamSlot() && channel.Ca() >= CA_ENCRYPTED_MIN)
             {
-              /* TODO
               if (CommonInterface()->CamSlot()->CanDecrypt(&channel))
                 result = true;
               else
                 needsDetachReceivers = true;
-              *
             }
             else
               result = true;
@@ -140,7 +135,6 @@ bool cDvbChannelSubsystem::ProvidesChannel(const cChannel &channel, int priority
         }
         else
           needsDetachReceivers = Receiver()->Receiving();
-        */
       }
 
       if (result)
@@ -181,37 +175,29 @@ unsigned int cDvbChannelSubsystem::NumProvidedSystems() const
 
 int cDvbChannelSubsystem::SignalStrength() const
 {
-  /* TODO
   if (m_dvbTuner)
     return m_dvbTuner->GetSignalStrength();
-  */
   return -1;
 }
 
 int cDvbChannelSubsystem::SignalQuality() const
 {
-  /* TODO
   if (m_dvbTuner)
     return m_dvbTuner->GetSignalQuality();
-  */
   return -1;
 }
 
 const cChannel *cDvbChannelSubsystem::GetCurrentlyTunedTransponder() const
 {
-  /* TODO
   if (m_dvbTuner)
     return &m_dvbTuner->GetTransponder();
-  */
   return NULL;
 }
 
 bool cDvbChannelSubsystem::IsTunedToTransponder(const cChannel &channel) const
 {
-  /* TODO
   if (m_dvbTuner)
     return m_dvbTuner->IsTunedTo(channel);
-  */
   return false;
 }
 
@@ -222,18 +208,14 @@ bool cDvbChannelSubsystem::MaySwitchTransponder(const cChannel &channel) const
 
 bool cDvbChannelSubsystem::HasLock(unsigned int timeoutMs) const
 {
-  /* TODO
   if (m_dvbTuner)
     return m_dvbTuner->Locked(timeoutMs);
-  */
   return false;
 }
 
 bool cDvbChannelSubsystem::SetChannelDevice(const cChannel &channel, bool bLiveView)
 {
-  /* TODO
   if (m_dvbTuner)
     m_dvbTuner->SetChannel(channel);
-  */
   return true;
 }

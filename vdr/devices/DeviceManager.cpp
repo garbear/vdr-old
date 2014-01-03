@@ -77,8 +77,7 @@ void cDeviceManager::SetPrimaryDevice(unsigned int index)
     m_primaryDevice->MakePrimaryDevice(false);
   m_primaryDevice = m_devices[index];
   m_primaryDevice->MakePrimaryDevice(true);
-  //m_primaryDevice->VideoFormat()->SetVideoFormat(Setup.VideoFormat); // TODO
-//  m_primaryDevice->Audio()->SetVolumeDevice(Setup.CurrentVolume);
+  m_primaryDevice->VideoFormat()->SetVideoFormat(Setup.VideoFormat);
 }
 
 void cDeviceManager::AddHook(cDeviceHook *hook)
@@ -120,13 +119,10 @@ bool cDeviceManager::WaitForAllDevicesReady(unsigned int timeout /* = 0 */)
 
 cDevice *cDeviceManager::ActualDevice()
 {
-  /* TODO
   cDevice *d = cTransferControl::ReceiverDevice();
   if (!d)
     d = PrimaryDevice();
   return d;
-  */
-  return NULL; // TODO
 }
 
 cDevice *cDeviceManager::GetDevice(unsigned int index)
@@ -136,7 +132,6 @@ cDevice *cDeviceManager::GetDevice(unsigned int index)
 
 cDevice *cDeviceManager::GetDevice(const cChannel &channel, int priority, bool bLiveView, bool bQuery /* = false */)
 {
-  /* TODO
   // Collect the current priorities of all CAM slots that can decrypt the channel:
   int NumCamSlots = CamSlots.Count();
   int SlotPriority[NumCamSlots];
@@ -238,8 +233,6 @@ cDevice *cDeviceManager::GetDevice(const cChannel &channel, int priority, bool b
       d->CommonInterface()->CamSlot()->Assign(NULL);
   }
   return d;
-  */
-  return NULL;
 }
 
 cDevice *cDeviceManager::GetDeviceForTransponder(const cChannel &channel, int priority)
@@ -284,20 +277,19 @@ bool cDeviceManager::SwitchChannel(bool bIncrease)
   int offset = bIncrease ? 1 : -1;
 
   // prevents old channel from being shown too long if GetDevice() takes longer
-  //cControl::Shutdown(); // TODO
+  cControl::Shutdown();
 
   int n = CurrentChannel() + offset;
   int first = n;
-  cChannel *channel;
-  /* TODO
-  while ((channel = cChannelManager.GetByNumber(n, offset)) != NULL)
+  ChannelPtr channel = cChannelManager::Get().GetByNumber(n, offset);
+  while (channel)
   {
     // try only channels which are currently available
     if (GetDevice(*channel, LIVEPRIORITY, true, true))
       break;
     n = channel->Number() + offset;
+    channel = cChannelManager::Get().GetByNumber(n, offset);
   }
-  */
 
   if (channel)
   {

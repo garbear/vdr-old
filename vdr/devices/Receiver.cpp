@@ -8,6 +8,7 @@
  */
 
 #include "Device.h"
+#include "devices/subsystems/DeviceReceiverSubsystem.h"
 #include "Receiver.h"
 #include <stdio.h>
 #include "utils/Tools.h"
@@ -86,7 +87,6 @@ bool cReceiver::WantsPid(int Pid)
 
 void cReceiver::Detach(void)
 {
-  //TODO
-//  if (device)
-//     device->Detach(this);
+  if (device)
+    device->Receiver()->Detach(this);
 }

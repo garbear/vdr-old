@@ -168,36 +168,11 @@ void cDeviceTrackSubsystem::EnsureAudioTrack(bool bForce /* = false */)
   if (bForce || !m_availableTracks[m_currentAudioTrack].id)
   {
     eTrackType PreferredTrack = ttAudioFirst;
-    int PreferredAudioChannel = 0;
-    int LanguagePreference = -1;
-    /* TODO
-    int StartCheck = Setup.CurrentDolby ? ttDolbyFirst : ttAudioFirst;
-    int EndCheck = ttDolbyLast;
-    for (int i = StartCheck; i <= EndCheck; i++)
-    {
-      tTrackId TrackId;
-      int pos = 0;
-      if (GetTrack(eTrackType(i), TrackId) && TrackId.id && I18nIsPreferredLanguage(Setup.AudioLanguages, TrackId.strLanguage.c_str(), LanguagePreference, &pos))
-      {
-        PreferredTrack = eTrackType(i);
-        PreferredAudioChannel = pos;
-      }
-      if (Setup.CurrentDolby && i == ttDolbyLast)
-      {
-        i = ttAudioFirst - 1;
-        EndCheck = ttAudioLast;
-      }
-    }
-    */
 
     // Make sure we're set to an available audio track:
     tTrackId Track;
     if (bForce || !GetTrack(GetCurrentAudioTrack(), Track) || !Track.id || PreferredTrack != GetCurrentAudioTrack())
-    {
-      if (!bForce) // only log this for automatic changes
-        dsyslog("setting audio track to %d (%d)", PreferredTrack, PreferredAudioChannel);
       SetCurrentAudioTrack(PreferredTrack);
-    }
   }
 }
 

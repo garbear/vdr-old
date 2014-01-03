@@ -22,19 +22,19 @@
 #include "Device.h"
 
 #include "DeviceManager.h"
-#include "subsystems/DeviceChannelSubsystem.h"
-#include "subsystems/DeviceCommonInterfaceSubsystem.h"
-#include "subsystems/DeviceImageGrabSubsystem.h"
-#include "subsystems/DevicePIDSubsystem.h"
-#include "subsystems/DevicePlayerSubsystem.h"
-#include "subsystems/DeviceReceiverSubsystem.h"
-#include "subsystems/DeviceSectionFilterSubsystem.h"
-#include "subsystems/DeviceSPUSubsystem.h"
-#include "subsystems/DeviceTrackSubsystem.h"
-#include "subsystems/DeviceVideoFormatSubsystem.h"
+#include "devices/commoninterface/CI.h"
+#include "devices/subsystems/DeviceChannelSubsystem.h"
+#include "devices/subsystems/DeviceCommonInterfaceSubsystem.h"
+#include "devices/subsystems/DeviceImageGrabSubsystem.h"
+#include "devices/subsystems/DevicePIDSubsystem.h"
+#include "devices/subsystems/DevicePlayerSubsystem.h"
+#include "devices/subsystems/DeviceReceiverSubsystem.h"
+#include "devices/subsystems/DeviceSectionFilterSubsystem.h"
+#include "devices/subsystems/DeviceSPUSubsystem.h"
+#include "devices/subsystems/DeviceTrackSubsystem.h"
+#include "devices/subsystems/DeviceVideoFormatSubsystem.h"
 #include "utils/StringUtils.h"
 //#include "utils/Ringbuffer.h"
-//#include "CI.h"
 
 using namespace std;
 
@@ -139,7 +139,6 @@ void *cDevice::Process()
           int CamSlotNumber = 0;
           if (CommonInterface()->m_startScrambleDetection)
           {
-            /* TODO
             cCamSlot *cs = CommonInterface()->CamSlot();
             CamSlotNumber = cs ? cs->SlotNumber() : 0;
             if (CamSlotNumber)
@@ -157,7 +156,6 @@ void *cDevice::Process()
                 CommonInterface()->m_startScrambleDetection = 0;
               }
             }
-            */
           }
 
           // Distribute the packet to all attached receivers:
@@ -168,13 +166,13 @@ void *cDevice::Process()
             {
               if (DetachReceivers)
               {
-                //ChannelCamRelations.SetChecked(Receiver()->m_receivers[i]->ChannelID(), CamSlotNumber); // TODO
+                ChannelCamRelations.SetChecked(Receiver()->m_receivers[i]->ChannelID(), CamSlotNumber);
                 Receiver()->Detach(Receiver()->m_receivers[i]);
               }
               else
                 Receiver()->m_receivers[i]->Receive(b, TS_SIZE);
               if (DescramblingOk)
-                ;//ChannelCamRelations.SetDecrypt(Receiver()->m_receivers[i]->ChannelID(), CamSlotNumber); // TODO
+                ChannelCamRelations.SetDecrypt(Receiver()->m_receivers[i]->ChannelID(), CamSlotNumber);
             }
           }
           Unlock();

@@ -207,7 +207,6 @@ void cDvbTuner::UnBond()
 string cDvbTuner::GetBondingParams(const cChannel &channel) const
 {
   cDvbTransponderParams dtp(channel.Parameters());
-  /* TODO
   if (Setup.DiSEqC)
   {
     if (const cDiseqc *diseqc = Diseqcs.Get(m_device->CardIndex() + 1, channel.Source(), channel.Frequency(), dtp.Polarization(), NULL))
@@ -219,7 +218,6 @@ string cDvbTuner::GetBondingParams(const cChannel &channel) const
     bool VoltOff = dtp.Polarization() == 'V' || dtp.Polarization() == 'R';
     return StringUtils::Format("%c %c", ToneOff ? 't' : 'T', VoltOff ? 'v' : 'V');
   }
-  */
   return "";
 }
 
@@ -544,7 +542,6 @@ void cDvbTuner::ExecuteDiseqc(const cDiseqc *Diseqc, unsigned int *Frequency)
   for (;;)
   {
     cmd.msg_len = sizeof(cmd.msg);
-    /* TODO
     cDiseqc::eDiseqcActions da = Diseqc->Execute(&CurrentAction, cmd.msg, &cmd.msg_len, m_scr, Frequency);
     if (da == cDiseqc::daNone)
       break;
@@ -561,7 +558,6 @@ void cDvbTuner::ExecuteDiseqc(const cDiseqc *Diseqc, unsigned int *Frequency)
       esyslog("ERROR: unknown diseqc command %d", da);
       break;
     }
-    */
   }
 
   if (m_scr)
@@ -602,7 +598,6 @@ bool cDvbTuner::SetFrontend()
   if (m_frontendType == SYS_DVBS || m_frontendType == SYS_DVBS2)
   {
     unsigned int frequency = m_channel.Frequency();
-    /* TODO
     if (Setup.DiSEqC)
     {
       if (const cDiseqc *diseqc = Diseqcs.Get(m_device->CardIndex() + 1, m_channel.Source(), frequency, dtp.Polarization(), &m_scr))
@@ -649,7 +644,7 @@ bool cDvbTuner::SetFrontend()
       CHECK(ioctl(m_fd_frontend, FE_SET_VOLTAGE, volt));
       CHECK(ioctl(m_fd_frontend, FE_SET_TONE, tone));
     }
-    */
+
     frequency = ::abs(frequency); // Allow for C-band, where the frequency is less than the LOF
 
     // DVB-S/DVB-S2 (common parts)
