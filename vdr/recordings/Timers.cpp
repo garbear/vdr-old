@@ -28,7 +28,7 @@ using namespace std;
 
 // --- cTimer ----------------------------------------------------------------
 
-cTimer::cTimer(bool Instant, bool Pause, cChannel *Channel)
+cTimer::cTimer(bool Instant, bool Pause, ChannelPtr Channel)
 {
   startTime = stopTime = 0;
   lastSetEvent = 0;
@@ -40,7 +40,7 @@ cTimer::cTimer(bool Instant, bool Pause, cChannel *Channel)
   event = NULL;
   if (Instant)
      SetFlags(tfActive | tfInstant);
-  channel = Channel ? Channel : Channels.GetByNumber(cDeviceManager::Get().CurrentChannel());
+  channel = Channel ? Channel : cChannelManager::Get().GetByNumber(cDeviceManager::Get().CurrentChannel());
   time_t t = time(NULL);
   struct tm tm_r;
   struct tm *now = localtime_r(&t, &tm_r);
@@ -51,7 +51,7 @@ cTimer::cTimer(bool Instant, bool Pause, cChannel *Channel)
   if (!Setup.InstantRecordTime && channel && (Instant || Pause)) {
      cSchedulesLock SchedulesLock;
      if (const cSchedules *Schedules = cSchedules::Schedules(SchedulesLock)) {
-        if (const cSchedule *Schedule = Schedules->GetSchedule(channel)) {
+        if (const cSchedule *Schedule = Schedules->GetSchedule(channel.get())) {
            if (const cEvent *Event = Schedule->GetPresentEvent()) {
               time_t tstart = Event->StartTime();
               time_t tstop = Event->EndTime();
@@ -97,7 +97,7 @@ cTimer::cTimer(const cEvent *Event)
   event = NULL;
   if (Event->Vps() && Setup.UseVps)
      SetFlags(tfVps);
-  channel = Channels.GetByChannelID(Event->ChannelID(), true);
+  channel = cChannelManager::Get().GetByChannelID(Event->ChannelID(), true);
   time_t tstart = (flags & tfVps) ? Event->Vps() : Event->StartTime();
   time_t tstop = tstart + Event->Duration();
   if (!(HasFlags(tfVps))) {
@@ -123,7 +123,7 @@ cTimer::cTimer(const cEvent *Event)
 
 cTimer::cTimer(const cTimer &Timer)
 {
-  channel = NULL;
+  channel = cChannel::EmptyChannel;
   aux = NULL;
   event = NULL;
   flags = tfNone;
@@ -328,9 +328,9 @@ bool cTimer::Parse(const char *s)
      cUtf8Utils::Utf8Strn0Cpy(file, filebuffer, sizeof(file));
      strreplace(file, '|', ':');
      if (is_number(channelbuffer))
-        channel = Channels.GetByNumber(atoi(channelbuffer));
+        channel = cChannelManager::Get().GetByNumber(atoi(channelbuffer));
      else
-        channel = Channels.GetByChannelID(tChannelID::Deserialize(channelbuffer), true, true);
+        channel = cChannelManager::Get().GetByChannelID(tChannelID::Deserialize(channelbuffer), true, true);
      if (!channel) {
         esyslog("ERROR: channel %s not defined", channelbuffer);
         result = false;
@@ -524,7 +524,7 @@ void cTimer::SetEventFromSchedule(const cSchedules *Schedules)
      if (!(Schedules = cSchedules::Schedules(SchedulesLock)))
         return;
      }
-  const cSchedule *Schedule = Schedules->GetSchedule(Channel());
+  const cSchedule *Schedule = Schedules->GetSchedule(Channel().get());
   if (Schedule && Schedule->Events()->First()) {
      time_t now = time(NULL);
      if (!lastSetEvent || Schedule->Modified() >= lastSetEvent) {

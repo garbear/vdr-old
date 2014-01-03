@@ -787,7 +787,7 @@ cRecording::cRecording(cTimer *Timer, const cEvent *Event)
   priority = Timer->Priority();
   lifetime = Timer->Lifetime();
   // handle info:
-  info = new cRecordingInfo(Timer->Channel(), Event);
+  info = new cRecordingInfo(Timer->Channel().get(), Event);
   info->SetAux(Timer->Aux());
   info->priority = priority;
   info->lifetime = lifetime;

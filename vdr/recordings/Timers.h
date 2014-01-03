@@ -36,7 +36,7 @@ private:
   mutable time_t deferred; ///< Matches(time_t, ...) will return false if the current time is before this value
   bool recording, pending, inVpsMargin;
   uint flags;
-  cChannel *channel;
+  ChannelPtr channel;
   mutable time_t day; ///< midnight of the day this timer shall hit, or of the first day it shall hit in case of a repeating timer
   int weekdays;       ///< bitmask, lowest bits: SSFTWTM  (the 'M' is the LSB)
   int start;
@@ -47,7 +47,7 @@ private:
   char *aux;
   const cEvent *event;
 public:
-  cTimer(bool Instant = false, bool Pause = false, cChannel *Channel = NULL);
+  cTimer(bool Instant = false, bool Pause = false, ChannelPtr Channel = cChannel::EmptyChannel);
   cTimer(const cEvent *Event);
   cTimer(const cTimer &Timer);
   virtual ~cTimer();
@@ -57,7 +57,7 @@ public:
   bool Pending(void) const { return pending; }
   bool InVpsMargin(void) const { return inVpsMargin; }
   uint Flags(void) const { return flags; }
-  const cChannel *Channel(void) const { return channel; }
+  ChannelPtr Channel(void) const { return channel; }
   time_t Day(void) const { return day; }
   int WeekDays(void) const { return weekdays; }
   int Start(void) const { return start; }
