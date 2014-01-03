@@ -520,15 +520,15 @@ bool cSetup::Load(const char *FileName)
      bool result = true;
      for (cSetupLine *l = First(); l; l = Next(l)) {
          bool error = false;
-         if (l->Plugin()) {
-            cPlugin *p = cPluginManager::GetPlugin(l->Plugin());
-            if (p && !p->SetupParse(l->Name(), l->Value()))
-               error = true;
-            }
-         else {
+//XXX         if (l->Plugin()) {
+//            cPlugin *p = cPluginManager::GetPlugin(l->Plugin());
+//            if (p && !p->SetupParse(l->Name(), l->Value()))
+//               error = true;
+//            }
+//         else {
             if (!Parse(l->Name(), l->Value()))
                error = true;
-            }
+//            }
          if (error) {
             esyslog("ERROR: unknown config parameter: %s%s%s = %s", l->Plugin() ? l->Plugin() : "", l->Plugin() ? "." : "", l->Name(), l->Value());
             result = false;
