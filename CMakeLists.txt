@@ -158,6 +158,7 @@ set(VDR_SRCS
 	vdr/utils/url/URL.cpp
 	vdr/utils/url/UrlOptions.cpp
 	vdr/utils/url/URLUtils.cpp
+	vdr/utils/Shutdown.cpp
 	vdr/Player.cpp
 	thread.cpp
 )

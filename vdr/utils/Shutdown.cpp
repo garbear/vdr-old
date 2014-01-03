@@ -9,20 +9,21 @@
  * $Id: shutdown.c 2.1 2013/02/18 10:33:26 kls Exp $
  */
 
-#include "shutdown.h"
+#include "Shutdown.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/wait.h>
-#include "channels.h"
-#include "config.h"
-#include "cutter.h"
-#include "i18n.h"
-#include "interface.h"
-#include "menu.h"
-#include "plugin.h"
-#include "timers.h"
-#include "tools.h"
+#include "channels/ChannelManager.h"
+#include "Config.h"
+#include "recordings/RecordingCutter.h"
+#include "I18N.h"
+//#include "interface.h"
+//#include "menu.h"
+//#include "plugin.h"
+#include "recordings/Timers.h"
+#include "recordings/Recording.h"
+#include "Tools.h"
 
 #include "vdr/utils/CalendarUtils.h"
 
@@ -50,7 +51,7 @@ void cCountdown::Cancel(void)
   if (timeout) {
      timeout = 0;
      timedOut = false;
-     Skins.Message(mtStatus, NULL);
+     //XXX Skins.Message(mtStatus, NULL);
      }
 }
 
@@ -74,7 +75,7 @@ bool cCountdown::Update(void)
         char time[10];
         snprintf(time, sizeof(time), "%d:%d0", counter > 0 ? counter / 6 : 0, counter > 0 ? counter % 6 : 0);
         cString Message = cString::sprintf(message, time);
-        Skins.Message(mtStatus, Message);
+        //XXX Skins.Message(mtStatus, Message);
         return true;
         }
      }
@@ -161,51 +162,49 @@ void cShutdownHandler::SetUserInactiveTimeout(int Seconds, bool Force)
 
 bool cShutdownHandler::ConfirmShutdown(bool Interactive)
 {
-  if (!Interactive && !cRemote::Enabled())
-     return false;
-
   if (!shutdownCommand) {
-     if (Interactive)
-        Skins.Message(mtError, tr("Can't shutdown - option '-s' not given!"));
+//XXX     if (Interactive)
+//        Skins.Message(mtError, tr("Can't shutdown - option '-s' not given!"));
      return false;
      }
-  if (cCutter::Active()) {
-     if (!Interactive || !Interface->Confirm(tr("Editing - shut down anyway?")))
-        return false;
-     }
+//XXX  if (cCutter::Active()) {
+//     if (!Interactive || !Interface->Confirm(tr("Editing - shut down anyway?")))
+//        return false;
+//     }
 
   cTimer *timer = Timers.GetNextActiveTimer();
   time_t Next = timer ? timer->StartTime() : 0;
   time_t Delta = timer ? Next - time(NULL) : 0;
 
-  if (cRecordControls::Active() || (Next && Delta <= 0)) {
-     // VPS recordings in timer end margin may cause Delta <= 0
-     if (!Interactive || !Interface->Confirm(tr("Recording - shut down anyway?")))
-        return false;
-     }
-  else if (Next && Delta <= Setup.MinEventTimeout * 60) {
+//XXX  if (cRecordControls::Active() || (Next && Delta <= 0)) {
+//     // VPS recordings in timer end margin may cause Delta <= 0
+//     if (!Interactive || !Interface->Confirm(tr("Recording - shut down anyway?")))
+//        return false;
+//     }
+//  else
+    if (Next && Delta <= Setup.MinEventTimeout * 60) {
      // Timer within Min Event Timeout
      if (!Interactive)
         return false;
      cString buf = cString::sprintf(tr("Recording in %ld minutes, shut down anyway?"), Delta / 60);
-     if (!Interface->Confirm(buf))
-        return false;
+//XXX     if (!Interface->Confirm(buf))
+//        return false;
      }
 
-  if (cPluginManager::Active(Interactive ? tr("shut down anyway?") : NULL))
-     return false;
-
-  cPlugin *Plugin = cPluginManager::GetNextWakeupPlugin();
-  Next = Plugin ? Plugin->WakeupTime() : 0;
-  Delta = Next ? Next - time(NULL) : 0;
-  if (Next && Delta <= Setup.MinEventTimeout * 60) {
-     // Plugin wakeup within Min Event Timeout
-     if (!Interactive)
-        return false;
-     cString buf = cString::sprintf(tr("Plugin %s wakes up in %ld min, continue?"), Plugin->Name(), Delta / 60);
-     if (!Interface->Confirm(buf))
-        return false;
-     }
+//XXX  if (cPluginManager::Active(Interactive ? tr("shut down anyway?") : NULL))
+//     return false;
+//
+//  cPlugin *Plugin = cPluginManager::GetNextWakeupPlugin();
+//  Next = Plugin ? Plugin->WakeupTime() : 0;
+//  Delta = Next ? Next - time(NULL) : 0;
+//  if (Next && Delta <= Setup.MinEventTimeout * 60) {
+//     // Plugin wakeup within Min Event Timeout
+//     if (!Interactive)
+//        return false;
+//     cString buf = cString::sprintf(tr("Plugin %s wakes up in %ld min, continue?"), Plugin->Name(), Delta / 60);
+//     if (!Interface->Confirm(buf))
+//        return false;
+//     }
 
   return true;
 }
@@ -213,22 +212,22 @@ bool cShutdownHandler::ConfirmShutdown(bool Interactive)
 bool cShutdownHandler::ConfirmRestart(bool Interactive)
 {
   if (cCutter::Active()) {
-     if (!Interactive || !Interface->Confirm(tr("Editing - restart anyway?")))
-        return false;
+//XXX     if (!Interactive || !Interface->Confirm(tr("Editing - restart anyway?")))
+//        return false;
      }
 
   cTimer *timer = Timers.GetNextActiveTimer();
   time_t Next  = timer ? timer->StartTime() : 0;
   time_t Delta = timer ? Next - time(NULL) : 0;
 
-  if (cRecordControls::Active() || (Next && Delta <= 0)) {
-     // VPS recordings in timer end margin may cause Delta <= 0
-     if (!Interactive || !Interface->Confirm(tr("Recording - restart anyway?")))
-        return false;
-     }
+//XXX  if (cRecordControls::Active() || (Next && Delta <= 0)) {
+//     // VPS recordings in timer end margin may cause Delta <= 0
+//     if (!Interactive || !Interface->Confirm(tr("Recording - restart anyway?")))
+//        return false;
+//     }
 
-  if (cPluginManager::Active(Interactive ? tr("restart anyway?") : NULL))
-     return false;
+//XXX  if (cPluginManager::Active(Interactive ? tr("restart anyway?") : NULL))
+//     return false;
 
   return true;
 }
@@ -237,14 +236,14 @@ bool cShutdownHandler::DoShutdown(bool Force)
 {
   time_t Now = time(NULL);
   cTimer *timer = Timers.GetNextActiveTimer();
-  cPlugin *Plugin = cPluginManager::GetNextWakeupPlugin();
+//XXX  cPlugin *Plugin = cPluginManager::GetNextWakeupPlugin();
 
   time_t Next = timer ? timer->StartTime() : 0;
-  time_t NextPlugin = Plugin ? Plugin->WakeupTime() : 0;
-  if (NextPlugin && (!Next || Next > NextPlugin)) {
-     Next = NextPlugin;
-     timer = NULL;
-     }
+//XXX  time_t NextPlugin = Plugin ? Plugin->WakeupTime() : 0;
+//  if (NextPlugin && (!Next || Next > NextPlugin)) {
+//     Next = NextPlugin;
+//     timer = NULL;
+//     }
   time_t Delta = Next ? Next - Now : 0;
 
   if (Next && Delta < Setup.MinEventTimeout * 60) {
@@ -260,10 +259,10 @@ bool cShutdownHandler::DoShutdown(bool Force)
      dsyslog("next timer event at %s", CalendarUtils::TimeToString(Next).c_str());
      CallShutdownCommand(Next, timer->Channel()->Number(), timer->File(), Force);
      }
-  else if (Next && Plugin) {
-     CallShutdownCommand(Next, 0, Plugin->Name(), Force);
-     dsyslog("next plugin wakeup at %s", CalendarUtils::TimeToString(Next).c_str());
-     }
+//XXX  else if (Next && Plugin) {
+//     CallShutdownCommand(Next, 0, Plugin->Name(), Force);
+//     dsyslog("next plugin wakeup at %s", CalendarUtils::TimeToString(Next).c_str());
+//     }
   else
      CallShutdownCommand(Next, 0, "", Force); // Next should always be 0 here. Just for safety, pass it.
 

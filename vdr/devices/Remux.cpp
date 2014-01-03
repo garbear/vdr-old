@@ -14,7 +14,7 @@
 #include "libsi/section.h"
 #include "libsi/descriptor.h"
 #include "recordings/Recording.h"
-#include "shutdown.h"
+#include "utils/Shutdown.h"
 #include "utils/Tools.h"
 
 // Set these to 'true' for debug output:

@@ -9,7 +9,7 @@
 
 #include "Recorder.h"
 #include "filesystem/Directory.h"
-#include "shutdown.h"
+#include "utils/Shutdown.h"
 
 #define RECORDERBUFSIZE  (MEGABYTE(20) / TS_SIZE * TS_SIZE) // multiple of TS_SIZE
 
