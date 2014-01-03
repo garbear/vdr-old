@@ -71,6 +71,17 @@ bool cDvbChannelSubsystem::ProvidesSource(int source) const
   return false;
 }
 
+bool cDvbChannelSubsystem::ProvidesTransponderExclusively(const cChannel &channel) const
+{
+  for (int i = 0; i < cDeviceManager::Get().NumDevices(); i++)
+  {
+    cDevice* device = cDeviceManager::Get().GetDevice(i);
+    if (device && device->Channel() != this->Channel() && device->Channel()->ProvidesTransponder(channel))
+      return false;
+  }
+  return true;
+}
+
 bool cDvbChannelSubsystem::ProvidesTransponder(const cChannel &channel) const
 {
   if (!ProvidesSource(channel.Source()))
