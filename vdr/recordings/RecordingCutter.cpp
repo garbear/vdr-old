@@ -748,7 +748,7 @@ bool cCutter::Ended(void)
 
 bool CutRecording(const char *FileName)
 {
-  if (cDirectory::CanWrite(FileName)) {
+  if (CDirectory::CanWrite(FileName)) {
      cRecording Recording(FileName);
      if (Recording.Name()) {
         cMarks Marks;
