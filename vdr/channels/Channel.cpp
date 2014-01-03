@@ -48,6 +48,8 @@ using namespace std;
 #define STRDIFF 0x01
 #define VALDIFF 0x02
 
+ChannelPtr cChannel::EmptyChannel;
+
 static int IntArraysDiffer(const int *a, const int *b, const char na[][MAXLANGCODE2] = NULL, const char nb[][MAXLANGCODE2] = NULL)
 {
   int result = 0;

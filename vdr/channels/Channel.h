@@ -139,6 +139,8 @@ public:
   cChannel(const cChannel &channel);
   ~cChannel();
 
+  static ChannelPtr EmptyChannel;
+
   cChannel& operator=(const cChannel &channel);
 
   std::string Name() const { return m_name; }
