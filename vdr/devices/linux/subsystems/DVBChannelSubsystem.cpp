@@ -25,6 +25,7 @@
 #include "devices/linux/DVBDevice.h"
 #include "devices/linux/DVBTuner.h"
 #include "devices/subsystems/DeviceCommonInterfaceSubsystem.h"
+#include "devices/subsystems/DevicePlayerSubsystem.h"
 #include "devices/subsystems/DevicePIDSubsystem.h"
 #include "devices/subsystems/DeviceReceiverSubsystem.h"
 #include "channels/ChannelManager.h"
@@ -237,6 +238,11 @@ bool cDvbChannelSubsystem::HasLock(unsigned int timeoutMs) const
     return m_dvbTuner->Locked(timeoutMs);
   */
   return false;
+}
+
+bool cDvbChannelSubsystem::HasProgramme(void) const
+{
+  return Player()->Replaying() || PID()->m_pidHandles[ptAudio].pid || PID()->m_pidHandles[ptVideo].pid;
 }
 
 bool cDvbChannelSubsystem::SetChannelDevice(const cChannel &channel, bool bLiveView)
