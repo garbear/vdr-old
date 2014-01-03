@@ -16,6 +16,8 @@
 #include <cassert>
 #define SHARED_ASSERT(x)    assert(x)
 
+namespace VDR
+{
 
 /**
  * @brief implementation of reference counter for the following minimal smart pointer.
@@ -287,4 +289,6 @@ shared_ptr<T> dynamic_pointer_cast(const shared_ptr<U>& ptr) // never throws
     {
         return shared_ptr<T>();
     }
+}
+
 }

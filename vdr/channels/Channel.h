@@ -27,7 +27,7 @@
 #include <shared_ptr/shared_ptr.hpp>
 
 class cChannel;
-typedef shared_ptr<cChannel> ChannelPtr;
+typedef VDR::shared_ptr<cChannel> ChannelPtr;
 
 // TODO
 class cTimer2
