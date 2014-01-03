@@ -47,6 +47,8 @@ endif()
 # TODO: CHECK_LIBRARY_EXISTS
 list(APPEND LIBS tinyxml)
 
+list(APPEND LIBS libsi)
+
 add_definitions(-DTARGET_LINUX -DTARGET_POSIX)
 
 # Enable gtest
