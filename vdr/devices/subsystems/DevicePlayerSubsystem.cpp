@@ -27,7 +27,7 @@
 #include "DeviceVideoFormatSubsystem.h"
 #include "audio.h"
 #include "osd.h"
-#include "player.h"
+#include "Player.h"
 #include "devices/Transfer.h"
 
 #ifndef SAFE_DELETE

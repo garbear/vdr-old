@@ -11,7 +11,7 @@
 #define __STATUS_H
 
 #include "Config.h"
-#include "player.h"
+#include "Player.h"
 #include "utils/Tools.h"
 
 enum eTimerChange { tcMod, tcAdd, tcDel };

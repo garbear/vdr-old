@@ -30,7 +30,7 @@
 #include "devices/Device.h"
 #include "devices/DeviceManager.h"
 #include "channels/ChannelManager.h"
-#include "player.h"
+#include "Player.h"
 #include "dvb/Sections.h"
 #include "utils/Status.h"
 #include "utils/Tools.h"

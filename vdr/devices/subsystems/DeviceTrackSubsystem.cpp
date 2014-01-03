@@ -26,7 +26,7 @@
 #include "DeviceSPUSubsystem.h"
 #include "devices/Device.h"
 #include "devices/DeviceManager.h"
-#include "player.h"
+#include "Player.h"
 
 #include <limits.h>
 
