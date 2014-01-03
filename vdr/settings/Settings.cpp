@@ -35,7 +35,7 @@
 #include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
-#ifndef ANDROID
+#ifdef HAVE_CAP
 #include <sys/capability.h>
 #endif
 #include <sys/prctl.h>
@@ -602,7 +602,7 @@ bool cSettings::SetUser(const std::string& UserName, bool UserDump)
 
 bool cSettings::DropCaps(void)
 {
-#ifndef ANDROID
+#ifdef HAVE_CAP
   // drop all capabilities except selected ones
   cap_t caps = cap_from_text("= cap_sys_nice,cap_sys_time,cap_net_raw=ep");
   if (!caps)

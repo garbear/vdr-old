@@ -24,11 +24,19 @@ CHECK_LIBRARY_EXISTS(pthread pthread_create "pthread.h" HAVE_PTHREAD)
 CHECK_LIBRARY_EXISTS(pcre pcre_compile "pcre.h" HAVE_PCRE)
 CHECK_LIBRARY_EXISTS(fribidi fribidi_log2vis "fribidi/fribidi.h" HAVE_FRIBIDI) # TODO: Fails
 
+if(NOT IS_ANDROID)
+  CHECK_LIBRARY_EXISTS(cap cap_set_proc "sys/capability.h" HAVE_CAP)
+endif()
+
 if(NOT HAVE_PCRE)
   ADD_SUBDIRECTORY(lib/pcre)
   set(HAVE_PCRE 1)
 endif()
 
+if(HAVE_CAP)
+  list(APPEND LIBS cap)
+  add_definitions(-DHAVE_CAP)
+endif()
 if(HAVE_RT)
   list(APPEND LIBS rt)
 endif()
