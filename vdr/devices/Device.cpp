@@ -52,7 +52,6 @@ using namespace std;
 // --- cSubsystems -----------------------------------------------------------
 void cSubsystems::Free() const
 {
-  delete Audio;
   delete Channel;
   delete CommonInterface;
   delete ImageGrab;
@@ -67,7 +66,6 @@ void cSubsystems::Free() const
 
 void cSubsystems::AssertValid() const
 {
-  assert(Audio);
   assert(Channel);
   assert(CommonInterface);
   assert(ImageGrab);

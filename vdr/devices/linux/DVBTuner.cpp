@@ -56,13 +56,13 @@ using namespace PLATFORM;
 
 CMutex cDvbTuner::m_bondMutex;
 
-cDvbTuner::cDvbTuner(const cDvbDevice *device, int fd_frontend, unsigned int adapter, unsigned int frontend)
+cDvbTuner::cDvbTuner(cDvbDevice *device, int fd_frontend, unsigned int adapter, unsigned int frontend)
  : m_frontendType(SYS_UNDEFINED),
    m_device(device),
    m_fd_frontend(fd_frontend),
    m_adapter(adapter),
    m_frontend(frontend),
-   m_subsystemId(cDvbDeviceProbe::GetSubsystemId(adapter, frontend)),
+   m_subsystemId(device->GetSubsystemId()),
    m_tuneTimeout(0),
    m_lockTimeout(0),
    m_lastTimeoutReport(0),
@@ -663,7 +663,7 @@ bool cDvbTuner::SetFrontend()
       // DVB-S2
       SETCMD(DTV_PILOT, PILOT_AUTO);
       SETCMD(DTV_ROLLOFF, dtp.RollOff());
-      if (cDvbDevice::GetDvbApiVersion() >= 0x0508)
+      if (m_device->GetDvbApiVersion() >= 0x0508)
         SETCMD(DTV_STREAM_ID, dtp.StreamId());
     }
     else

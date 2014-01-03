@@ -72,17 +72,6 @@ bool cDvbChannelSubsystem::ProvidesSource(int source) const
   return false;
 }
 
-bool cDvbChannelSubsystem::ProvidesTransponderExclusively(const cChannel &channel) const
-{
-  for (int i = 0; i < cDeviceManager::Get().NumDevices(); i++)
-  {
-    cDevice* device = cDeviceManager::Get().GetDevice(i);
-    if (device && device->Channel() != this->Channel() && device->Channel()->ProvidesTransponder(channel))
-      return false;
-  }
-  return true;
-}
-
 bool cDvbChannelSubsystem::ProvidesTransponder(const cChannel &channel) const
 {
   if (!ProvidesSource(channel.Source()))
@@ -238,11 +227,6 @@ bool cDvbChannelSubsystem::HasLock(unsigned int timeoutMs) const
     return m_dvbTuner->Locked(timeoutMs);
   */
   return false;
-}
-
-bool cDvbChannelSubsystem::HasProgramme(void) const
-{
-  return Player()->Replaying() || PID()->m_pidHandles[ptAudio].pid || PID()->m_pidHandles[ptVideo].pid;
 }
 
 bool cDvbChannelSubsystem::SetChannelDevice(const cChannel &channel, bool bLiveView)

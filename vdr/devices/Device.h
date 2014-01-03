@@ -89,7 +89,7 @@ public:
 class cPlayer;
 class cReceiver;
 
-typedef shared_ptr<cDevice> DevicePtr;
+typedef VDR::shared_ptr<cDevice> DevicePtr;
 typedef std::vector<DevicePtr> DeviceVector;
 
 class cDevice : public PLATFORM::CThread

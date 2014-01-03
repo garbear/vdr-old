@@ -360,7 +360,6 @@ unsigned int cDevicePlayerSubsystem::PlayPesPacket(const vector<uchar> &data, bo
       if ((!bVideoOnly || HasIBPTrickSpeed()) && c == Track()->m_availableTracks[Track()->m_currentAudioTrack].id)
       {
         w = PlayAudio(vecStart, c);
-          Audios.PlayAudio(data.data(), data.size(), c);
       }
       break;
     case 0xBD: { // private stream 1

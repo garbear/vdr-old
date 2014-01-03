@@ -21,7 +21,7 @@
  */
 #pragma once
 
-#include "devices/commoninterface/CIAdapter.h"
+#include "devices/commoninterface/CI.h"
 
 class cDvbCiAdapter : public cCiAdapter
 {

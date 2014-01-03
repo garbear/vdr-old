@@ -42,7 +42,7 @@ cDvbCiAdapter::cDvbCiAdapter(cDevice *device, int fd)
       {
         for (int i = 0; i < NumSlots; i++)
           new cCamSlot(this);
-        Start();
+        CreateThread();
       }
       else
       {
@@ -75,7 +75,7 @@ cDvbCiAdapter::~cDvbCiAdapter()
 
 int cDvbCiAdapter::Read(uint8_t *buffer, int maxLength)
 {
-  if (Buffer && maxLength > 0) {
+  if (buffer && maxLength > 0) {
      struct pollfd pfd[1];
      pfd[0].fd = m_fd;
      pfd[0].events = POLLIN;
@@ -91,7 +91,7 @@ int cDvbCiAdapter::Read(uint8_t *buffer, int maxLength)
 
 void cDvbCiAdapter::Write(const uint8_t *buffer, int length)
 {
-  if (Buffer && length > 0) {
+  if (buffer && length > 0) {
      if (safe_write(m_fd, buffer, length) != length)
         esyslog("ERROR: can't write to CI adapter on device %d: %m", m_device->DeviceNumber());
      }

@@ -36,7 +36,7 @@ class cScr;
 class cDvbTuner : public PLATFORM::CThread
 {
 public:
-  cDvbTuner(const cDvbDevice *device, int fd_frontend, unsigned int adapter, unsigned int frontend);
+  cDvbTuner(cDvbDevice *device, int fd_frontend, unsigned int adapter, unsigned int frontend);
   virtual ~cDvbTuner();
 
   int FrontendType() const { return m_frontendType; }

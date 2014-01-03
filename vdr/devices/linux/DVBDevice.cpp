@@ -22,7 +22,7 @@
 #include "DVBDevice.h"
 #include "DVBTuner.h"
 #include "devices/DeviceManager.h"
-#include "devices/linux/commoninterface/DVBCI.h"
+#include "devices/linux/commoninterface/DVBCIAdapter.h"
 #include "devices/linux/subsystems/DVBChannelSubsystem.h"
 #include "devices/linux/subsystems/DVBCommonInterfaceSubsystem.h"
 #include "devices/linux/subsystems/DVBPIDSubsystem.h"

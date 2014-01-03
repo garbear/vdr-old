@@ -92,7 +92,6 @@ set(VDR_SRCS
 	vdr/channels/ChannelID.cpp
 	vdr/channels/ChannelManager.cpp
 	vdr/devices/commoninterface/CI.cpp
-	vdr/devices/commoninterface/linux/DVBCI.cpp
 	vdr/devices/Device.cpp
 	vdr/devices/DeviceManager.cpp
 	vdr/devices/DeviceSubsystem.cpp
@@ -102,6 +101,7 @@ set(VDR_SRCS
 	vdr/devices/TSBuffer.cpp
 	vdr/devices/linux/DVBDevice.cpp
 	vdr/devices/linux/DVBTuner.cpp
+	vdr/devices/linux/commoninterface/DVBCIAdapter.cpp
 	vdr/devices/linux/subsystems/DVBChannelSubsystem.cpp
 	vdr/devices/linux/subsystems/DVBCommonInterfaceSubsystem.cpp
 	vdr/devices/linux/subsystems/DVBPIDSubsystem.cpp
@@ -170,9 +170,7 @@ set(VDR_SRCS_TESTING # Sources for testing (remove this when all of the above co
 	vdr/channels/Channel.cpp
 	vdr/channels/ChannelID.cpp
 	vdr/channels/ChannelManager.cpp
-	vdr/devices/commoninterface/CamSlot.cpp
 	vdr/devices/commoninterface/CI.cpp
-	vdr/devices/commoninterface/CIAdapter.cpp
 	vdr/devices/Device.cpp
 	vdr/devices/DeviceManager.cpp
 	vdr/devices/DeviceSubsystem.cpp
@@ -183,13 +181,11 @@ set(VDR_SRCS_TESTING # Sources for testing (remove this when all of the above co
 	vdr/devices/linux/DVBDevice.cpp
 	#vdr/devices/linux/DVBTuner.cpp
 	vdr/devices/linux/commoninterface/DVBCIAdapter.cpp
-	vdr/devices/linux/subsystems/DVBAudioSubsystem.cpp
 	vdr/devices/linux/subsystems/DVBChannelSubsystem.cpp
 	vdr/devices/linux/subsystems/DVBCommonInterfaceSubsystem.cpp
 	vdr/devices/linux/subsystems/DVBPIDSubsystem.cpp
 	vdr/devices/linux/subsystems/DVBReceiverSubsystem.cpp
 	vdr/devices/linux/subsystems/DVBSectionFilterSubsystem.cpp
-	vdr/devices/subsystems/DeviceAudioSubsystem.cpp
 	vdr/devices/subsystems/DeviceChannelSubsystem.cpp
 	vdr/devices/subsystems/DeviceCommonInterfaceSubsystem.cpp
 	vdr/devices/subsystems/DeviceImageGrabSubsystem.cpp
