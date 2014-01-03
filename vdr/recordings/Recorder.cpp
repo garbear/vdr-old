@@ -80,7 +80,7 @@ bool cRecorder::RunningLowOnDiskSpace(void)
 {
   if (time(NULL) > lastDiskSpaceCheck + DISKCHECKINTERVAL) {
      unsigned int total, used, free;
-     cDirectory::CalculateDiskSpace(fileName->Name(), total, used, free);
+     CDirectory::CalculateDiskSpace(fileName->Name(), total, used, free);
      int Free = free;
      lastDiskSpaceCheck = time(NULL);
      if (Free < MINFREEDISKSPACE) {
