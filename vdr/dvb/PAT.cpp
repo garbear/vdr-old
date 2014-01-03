@@ -12,6 +12,8 @@
 #include "channels/ChannelManager.h"
 #include "libsi/section.h"
 #include "libsi/descriptor.h"
+#include "utils/I18N.h"
+#include "Config.h"
 #include "thread.h"
 #include "platform/threads/threads.h"
 
@@ -291,7 +293,7 @@ void cPatFilter::Process(u_short Pid, u_char Tid, const u_char *Data, int Length
            int Index = 0;
            for (SI::Loop::Iterator it; pat.associationLoop.getNext(assoc, it); ) {
                if (!assoc.isNITPid()) {
-                  if (Index++ >= pmtIndex && Channels.GetByServiceID(Source(), Transponder(), assoc.getServiceId())) {
+                  if (Index++ >= pmtIndex && cChannelManager::Get().GetByServiceID(Source(), Transponder(), assoc.getServiceId())) {
                      pmtPid = assoc.getPid();
                      pmtSid = assoc.getServiceId();
                      Add(pmtPid, 0x02);
@@ -314,11 +316,12 @@ void cPatFilter::Process(u_short Pid, u_char Tid, const u_char *Data, int Length
         lastPmtScan = 0; // this triggers the next scan
         return;
         }
-     if (!Channels.Lock(true, 10)) {
-        numPmtEntries = 0; // to make sure we try again
-        return;
-        }
-     cChannel *Channel = Channels.GetByServiceID(Source(), Transponder(), pmt.getServiceId());
+     //XXX
+//     if (!Channels.Lock(true, 10)) {
+//        numPmtEntries = 0; // to make sure we try again
+//        return;
+//        }
+     ChannelPtr Channel = cChannelManager::Get().GetByServiceID(Source(), Transponder(), pmt.getServiceId());
      if (Channel) {
         SI::CaDescriptor *d;
         cCaDescriptors *CaDescriptors = new cCaDescriptors(Channel->Source(), Channel->Transponder(), Channel->Sid());
@@ -555,6 +558,6 @@ void cPatFilter::Process(u_short Pid, u_char Tid, const u_char *Data, int Length
         Channel->NotifyObservers(ObservableMessageChannelChanged);
         }
      lastPmtScan = 0; // this triggers the next scan
-     Channels.Unlock();
+//     XXX Channels.Unlock();
      }
 }
