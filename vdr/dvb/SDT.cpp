@@ -38,13 +38,13 @@ void cSdtFilter::Process(u_short Pid, u_char Tid, const u_char *Data, int Length
      return;
   if (!sectionSyncer.Sync(sdt.getVersionNumber(), sdt.getSectionNumber(), sdt.getLastSectionNumber()))
      return;
-  if (!Channels.Lock(true, 10))
-     return;
+//XXX  if (!Channels.Lock(true, 10))
+//     return;
   SI::SDT::Service SiSdtService;
   for (SI::Loop::Iterator it; sdt.serviceLoop.getNext(SiSdtService, it); ) {
-      cChannel *channel = Channels.GetByChannelID(tChannelID(Source(), sdt.getOriginalNetworkId(), sdt.getTransportStreamId(), SiSdtService.getServiceId()));
+      ChannelPtr channel = cChannelManager::Get().GetByChannelID(tChannelID(Source(), sdt.getOriginalNetworkId(), sdt.getTransportStreamId(), SiSdtService.getServiceId()));
       if (!channel)
-         channel = Channels.GetByChannelID(tChannelID(Source(), 0, Transponder(), SiSdtService.getServiceId()));
+         channel = cChannelManager::Get().GetByChannelID(tChannelID(Source(), 0, Transponder(), SiSdtService.getServiceId()));
 
       cLinkChannels LinkChannels;
       SI::Descriptor *d;
@@ -94,9 +94,10 @@ void cSdtFilter::Process(u_short Pid, u_char Tid, const u_char *Data, int Length
                            channel->NotifyObservers(ObservableMessageChannelChanged);
                            }
                         else if (*pn && Setup.UpdateChannels >= 4) {
+                          ChannelPtr empty;
                            channel = Channel() ?
-                               Channels.NewChannel(*Channel(), pn, ps, pp, sdt.getOriginalNetworkId(), sdt.getTransportStreamId(), SiSdtService.getServiceId()) :
-                               NULL;
+                               cChannelManager::Get().NewChannel(*Channel(), pn, ps, pp, sdt.getOriginalNetworkId(), sdt.getTransportStreamId(), SiSdtService.getServiceId()) :
+                               empty;
                            patFilter->Trigger();
                            }
                         }
@@ -120,11 +121,12 @@ void cSdtFilter::Process(u_short Pid, u_char Tid, const u_char *Data, int Length
                  SI::NVODReferenceDescriptor *nrd = (SI::NVODReferenceDescriptor *)d;
                  SI::NVODReferenceDescriptor::Service Service;
                  for (SI::Loop::Iterator it; nrd->serviceLoop.getNext(Service, it); ) {
-                     cChannel *link = Channels.GetByChannelID(tChannelID(Source(), Service.getOriginalNetworkId(), Service.getTransportStream(), Service.getServiceId()));
+                     ChannelPtr link = cChannelManager::Get().GetByChannelID(tChannelID(Source(), Service.getOriginalNetworkId(), Service.getTransportStream(), Service.getServiceId()));
                      if (!link && Setup.UpdateChannels >= 4) {
+                       ChannelPtr empty;
                         link = Channel() ?
-                            Channels.NewChannel(*Channel(), "NVOD", "", "", Service.getOriginalNetworkId(), Service.getTransportStream(), Service.getServiceId()) :
-                            NULL;
+                            cChannelManager::Get().NewChannel(*Channel(), "NVOD", "", "", Service.getOriginalNetworkId(), Service.getTransportStream(), Service.getServiceId()) :
+                            empty;
                         patFilter->Trigger();
                         }
                      if (link) {
@@ -143,5 +145,5 @@ void cSdtFilter::Process(u_short Pid, u_char Tid, const u_char *Data, int Length
       }
   }
 
-  Channels.Unlock();
+//XXX  Channels.Unlock();
 }
