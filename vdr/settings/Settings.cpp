@@ -299,8 +299,8 @@ bool cSettings::LoadFromCmdLine(int argc, char *argv[])
     case 'g' | 0x100:
       return GenerateIndex(optarg);
       // grab
-    case 'g':
-      cSVDRP::SetGrabImageDir(*optarg != '-' ? optarg : NULL);
+//    case 'g':
+//XXX      cSVDRP::SetGrabImageDir(*optarg != '-' ? optarg : NULL);
       break;
     // help
     case 'h':
