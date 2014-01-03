@@ -79,7 +79,7 @@ public:
   virtual ~cOsdObject() {}
   virtual bool NeedsFastResponse(void) { return needsFastResponse; }
   bool IsMenu(void) const { return isMenu; }
-  virtual void Show(void);
+  virtual void Show(void) { /* XXX */ }
 //  virtual eOSState ProcessKey(eKeys Key) { return osUnknown; }
   };
 
