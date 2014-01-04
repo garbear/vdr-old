@@ -24,7 +24,9 @@
 
 #include "gtest/gtest.h"
 
-//using namespace std;
+#include <vector>
+
+using namespace std;
 
 DeviceVector g_devices;
 
@@ -39,6 +41,11 @@ cDvbDevice *GetDevice()
   return NULL;
 }
 
+TEST(DVBDevice, Exists)
+{
+  EXPECT_TRUE(cDvbDevice::Exists(0, 0));
+}
+
 TEST(DVBDevice, Initialize)
 {
   cDvbDevice *device = GetDevice();
@@ -46,6 +53,10 @@ TEST(DVBDevice, Initialize)
 
   EXPECT_EQ(0, device->Frontend());
   EXPECT_EQ(0, device->Adapter());
+
+  EXPECT_GT(device->m_deliverySystems.size(), 0);
+  EXPECT_GT(device->m_numModulations, 0);
+
   g_devices.clear();
 }
 

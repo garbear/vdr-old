@@ -58,17 +58,6 @@ using namespace PLATFORM;
 
 #define MAXFRONTENDCMDS 16
 
-#define SETCMD(c, d) \
-{ \
-  Frontend[CmdSeq.num].cmd = (c); \
-  Frontend[CmdSeq.num].u.data = (d); \
-  if (CmdSeq.num++ > MAXFRONTENDCMDS) \
-  { \
-    esyslog("ERROR: too many tuning commands on frontend %d/%d", m_adapter, m_frontend); \
-    return false; \
-  } \
-}
-
 CMutex cDvbDevice::m_bondMutex;
 
 const char *DeliverySystemNames[] =
@@ -98,7 +87,7 @@ cDvbDevice::cDvbDevice(unsigned int adapter, unsigned int frontend)
  : cDevice(CreateSubsystems(this), 0 /* ??? */),
    m_adapter(adapter),
    m_frontend(frontend),
-   m_numDeliverySystems(0),
+   m_frontendInfo(),
    m_numModulations(0),
    m_bondedDevice(NULL),
    m_bNeedsDetachBondedReceivers(false),
@@ -149,6 +138,117 @@ cDvbDevice::~cDvbDevice()
   // caused segfaults. Besides, the program is about to terminate anyway...
 }
 
+bool cDvbDevice::QueryDeliverySystems()
+{
+  if (m_fd_frontend < 0)
+    return false;
+
+  if (ioctl(m_fd_frontend, FE_GET_INFO, &m_frontendInfo) < 0)
+  {
+    LOG_ERROR;
+    return false;
+  }
+
+  if (GetDvbApiVersion() == 0)
+    return false;
+
+  // Determine the types of delivery systems this device provides:
+  bool LegacyMode = true;
+  if (GetDvbApiVersion() >= 0x0505)
+  {
+    dtv_property Frontend[1];
+    dtv_properties CmdSeq;
+
+    memset(&Frontend, 0, sizeof(Frontend));
+    memset(&CmdSeq, 0, sizeof(CmdSeq));
+    CmdSeq.props = Frontend;
+
+    Frontend[CmdSeq.num].cmd = DTV_ENUM_DELSYS;
+    if (CmdSeq.num++ > MAXFRONTENDCMDS)
+    {
+      esyslog("ERROR: too many tuning commands on frontend %d/%d", m_adapter, m_frontend); \
+      return false;
+    }
+
+    int Result = ioctl(m_fd_frontend, FE_GET_PROPERTY, &CmdSeq);
+    if (Result == 0)
+    {
+      m_deliverySystems.insert(m_deliverySystems.begin(), Frontend[0].u.buffer.data, Frontend[0].u.buffer.data + Frontend[0].u.buffer.len);
+      LegacyMode = false;
+    }
+    else
+    {
+      esyslog("ERROR: can't query delivery systems on frontend %d/%d - falling back to legacy mode", m_adapter, m_frontend);
+    }
+  }
+
+  if (LegacyMode)
+  {
+    // Legacy mode (DVB-API < 5.5):
+    switch (m_frontendInfo.type)
+    {
+    case FE_QPSK:
+      m_deliverySystems.push_back(SYS_DVBS);
+      if (m_frontendInfo.caps & FE_CAN_2G_MODULATION)
+        m_deliverySystems.push_back(SYS_DVBS2);
+      break;
+    case FE_OFDM:
+      m_deliverySystems.push_back(SYS_DVBT);
+      if (m_frontendInfo.caps & FE_CAN_2G_MODULATION)
+        m_deliverySystems.push_back(SYS_DVBT2);
+      break;
+    case FE_QAM:
+      m_deliverySystems.push_back(SYS_DVBC_ANNEX_AC);
+      break;
+    case FE_ATSC:
+      m_deliverySystems.push_back(SYS_ATSC);
+      break;
+    default:
+      esyslog("ERROR: unknown frontend type %d on frontend %d/%d", m_frontendInfo.type, m_adapter, m_frontend);
+      break;
+    }
+  }
+
+  if (!m_deliverySystems.empty())
+  {
+    vector<string> vecDeliverySystemNames;
+    for (vector<uint8_t>::const_iterator it = m_deliverySystems.begin() + 1; it != m_deliverySystems.end(); ++it)
+      vecDeliverySystemNames.push_back(StringUtils::Format("%d", *it));
+    string deliverySystem = StringUtils::Join(vecDeliverySystemNames, ",");
+
+    vector<string> vecModulations = GetModulationsFromCaps(m_frontendInfo.caps);
+    string modulations = StringUtils::Join(vecModulations, ",");
+    if (modulations.empty())
+      modulations = "unknown modulations";
+
+    //m_modulations = vecModulations;
+    m_numModulations = vecModulations.size();
+    isyslog("frontend %d/%d provides %s with %s (\"%s\")", m_adapter, m_frontend, deliverySystem.c_str(), modulations.c_str(), m_frontendInfo.name);
+    return true;
+  }
+  else
+    esyslog("ERROR: frontend %d/%d doesn't provide any delivery systems", m_adapter, m_frontend);
+
+  return false;
+}
+
+vector<string> cDvbDevice::GetModulationsFromCaps(fe_caps_t caps)
+{
+  vector<string> modulations;
+
+  if (caps & FE_CAN_QPSK)      { modulations.push_back(cDvbTransponderParams::TranslateModulation(QPSK)); }
+  if (caps & FE_CAN_QAM_16)    { modulations.push_back(cDvbTransponderParams::TranslateModulation(QAM_16)); }
+  if (caps & FE_CAN_QAM_32)    { modulations.push_back(cDvbTransponderParams::TranslateModulation(QAM_32)); }
+  if (caps & FE_CAN_QAM_64)    { modulations.push_back(cDvbTransponderParams::TranslateModulation(QAM_64)); }
+  if (caps & FE_CAN_QAM_128)   { modulations.push_back(cDvbTransponderParams::TranslateModulation(QAM_128)); }
+  if (caps & FE_CAN_QAM_256)   { modulations.push_back(cDvbTransponderParams::TranslateModulation(QAM_256)); }
+  if (caps & FE_CAN_8VSB)      { modulations.push_back(cDvbTransponderParams::TranslateModulation(VSB_8)); }
+  if (caps & FE_CAN_16VSB)     { modulations.push_back(cDvbTransponderParams::TranslateModulation(VSB_16)); }
+  if (caps & FE_CAN_TURBO_FEC) { modulations.push_back("TURBO_FEC"); }
+
+  return modulations;
+}
+
 DeviceVector cDvbDevice::InitialiseDevices()
 {
   //gSourceParams['A'] = cDvbSourceParams('A', "ATSC");
@@ -170,9 +270,11 @@ DeviceVector cDvbDevice::InitialiseDevices()
       if (!StringUtils::StartsWith(adapterName, DEV_DVB_ADAPTER))
         continue;
 
+      const int INVALID = -1;
+
       // Get adapter index from directory name (e.g. "adapter0")
-      long adapter = StringUtils::IntVal(adapterName.substr(strlen(DEV_DVB_ADAPTER)), -1);
-      if (adapter < 0)
+      long adapter = StringUtils::IntVal(adapterName.substr(strlen(DEV_DVB_ADAPTER)), INVALID);
+      if (adapter == INVALID)
         continue;
 
       // Enumerate /dev/dvb/adapterN
@@ -188,8 +290,8 @@ DeviceVector cDvbDevice::InitialiseDevices()
           continue;
 
         // Get frontend index from directory name (e.g. "frontend0")
-        long frontend = StringUtils::IntVal(frontendName.substr(strlen(DEV_DVB_FRONTEND)), -1);
-        if (frontend < 0)
+        long frontend = StringUtils::IntVal(frontendName.substr(strlen(DEV_DVB_FRONTEND)), INVALID);
+        if (frontend == INVALID)
           continue;
 
         devices.push_back(DevicePtr(new cDvbDevice(adapter, frontend)));
@@ -304,21 +406,21 @@ bool cDvbDevice::Ready()
   return true;
 }
 
+string cDvbDevice::DeviceName() const
+{
+  return m_frontendInfo.name;
+}
+
 string cDvbDevice::DeviceType() const
 {
   if (DvbChannel()->m_dvbTuner)
   {
     if (DvbChannel()->m_dvbTuner->FrontendType() != SYS_UNDEFINED)
       return DeliverySystemNames[DvbChannel()->m_dvbTuner->FrontendType()];
-    if (m_numDeliverySystems)
+    if (!m_deliverySystems.empty())
       return DeliverySystemNames[m_deliverySystems[0]]; // to have some reasonable default
   }
   return "";
-}
-
-string cDvbDevice::DeviceName() const
-{
-  return m_frontendInfo.name;
 }
 
 bool cDvbDevice::Bond(cDvbDevice *device)
@@ -450,107 +552,6 @@ string cDvbDevice::DvbName(const char *name, unsigned int adapter, unsigned int 
 int cDvbDevice::DvbOpen(const char *name, int mode) const
 {
   return open(DvbName(name, m_adapter, m_frontend).c_str(), mode);
-}
-
-bool cDvbDevice::QueryDeliverySystems()
-{
-  if (m_fd_frontend < 0)
-    return false;
-
-  m_numDeliverySystems = 0;
-  if (ioctl(m_fd_frontend, FE_GET_INFO, &m_frontendInfo) < 0)
-  {
-    LOG_ERROR;
-    return false;
-  }
-
-  if (GetDvbApiVersion() == 0)
-    return false;
-
-  dtv_property Frontend[1];
-  dtv_properties CmdSeq;
-
-  // Determine the types of delivery systems this device provides:
-  bool LegacyMode = true;
-  if (GetDvbApiVersion() >= 0x0505)
-  {
-    memset(&Frontend, 0, sizeof(Frontend));
-    memset(&CmdSeq, 0, sizeof(CmdSeq));
-    CmdSeq.props = Frontend;
-    SETCMD(DTV_ENUM_DELSYS, 0);
-    int Result = ioctl(m_fd_frontend, FE_GET_PROPERTY, &CmdSeq);
-    if (Result == 0)
-    {
-      for (uint i = 0; i < Frontend[0].u.buffer.len; i++)
-      {
-        if (m_numDeliverySystems >= MAXDELIVERYSYSTEMS)
-        {
-          esyslog("ERROR: too many delivery systems on frontend %d/%d", m_adapter, m_frontend);
-          break;
-        }
-        m_deliverySystems[m_numDeliverySystems++] = Frontend[0].u.buffer.data[i];
-      }
-      LegacyMode = false;
-    }
-    else
-    {
-      esyslog("ERROR: can't query delivery systems on frontend %d/%d - falling back to legacy mode", m_adapter, m_frontend);
-    }
-  }
-
-  if (LegacyMode)
-  {
-    // Legacy mode (DVB-API < 5.5):
-    switch (m_frontendInfo.type)
-    {
-    case FE_QPSK:
-      m_deliverySystems[m_numDeliverySystems++] = SYS_DVBS;
-      if (m_frontendInfo.caps & FE_CAN_2G_MODULATION)
-        m_deliverySystems[m_numDeliverySystems++] = SYS_DVBS2;
-      break;
-    case FE_OFDM:
-      m_deliverySystems[m_numDeliverySystems++] = SYS_DVBT;
-      if (m_frontendInfo.caps & FE_CAN_2G_MODULATION)
-        m_deliverySystems[m_numDeliverySystems++] = SYS_DVBT2;
-      break;
-    case FE_QAM:
-      m_deliverySystems[m_numDeliverySystems++] = SYS_DVBC_ANNEX_AC;
-      break;
-    case FE_ATSC:
-      m_deliverySystems[m_numDeliverySystems++] = SYS_ATSC;
-      break;
-    default:
-      esyslog("ERROR: unknown frontend type %d on frontend %d/%d", m_frontendInfo.type, m_adapter, m_frontend);
-      break;
-    }
-  }
-
-  if (m_numDeliverySystems > 0)
-  {
-    string ds;
-    for (int i = 0; i < m_numDeliverySystems; i++)
-      ds = StringUtils::Format("%s%s%s", ds.c_str(), i ? "," : "", DeliverySystemNames[m_deliverySystems[i]]);
-
-    string ms;
-    if (m_frontendInfo.caps & FE_CAN_QPSK)      { m_numModulations++; ms += StringUtils::Format("%s%s", !ms.empty() ? "," : "", cDvbTransponderParams::TranslateModulation(QPSK)); }
-    if (m_frontendInfo.caps & FE_CAN_QAM_16)    { m_numModulations++; ms += StringUtils::Format("%s%s", !ms.empty() ? "," : "", cDvbTransponderParams::TranslateModulation(QAM_16)); }
-    if (m_frontendInfo.caps & FE_CAN_QAM_32)    { m_numModulations++; ms += StringUtils::Format("%s%s", !ms.empty() ? "," : "", cDvbTransponderParams::TranslateModulation(QAM_32)); }
-    if (m_frontendInfo.caps & FE_CAN_QAM_64)    { m_numModulations++; ms += StringUtils::Format("%s%s", !ms.empty() ? "," : "", cDvbTransponderParams::TranslateModulation(QAM_64)); }
-    if (m_frontendInfo.caps & FE_CAN_QAM_128)   { m_numModulations++; ms += StringUtils::Format("%s%s", !ms.empty() ? "," : "", cDvbTransponderParams::TranslateModulation(QAM_128)); }
-    if (m_frontendInfo.caps & FE_CAN_QAM_256)   { m_numModulations++; ms += StringUtils::Format("%s%s", !ms.empty() ? "," : "", cDvbTransponderParams::TranslateModulation(QAM_256)); }
-    if (m_frontendInfo.caps & FE_CAN_8VSB)      { m_numModulations++; ms += StringUtils::Format("%s%s", !ms.empty() ? "," : "", cDvbTransponderParams::TranslateModulation(VSB_8)); }
-    if (m_frontendInfo.caps & FE_CAN_16VSB)     { m_numModulations++; ms += StringUtils::Format("%s%s", !ms.empty() ? "," : "", cDvbTransponderParams::TranslateModulation(VSB_16)); }
-    if (m_frontendInfo.caps & FE_CAN_TURBO_FEC) { m_numModulations++; ms += StringUtils::Format("%s%s", !ms.empty() ? "," : "", "TURBO_FEC"); }
-    if (ms.empty())
-      ms = "unknown modulations";
-
-    isyslog("frontend %d/%d provides %s with %s (\"%s\")", m_adapter, m_frontend, ds.c_str(), ms.c_str(), m_frontendInfo.name);
-    return true;
-  }
-  else
-    esyslog("ERROR: frontend %d/%d doesn't provide any delivery systems", m_adapter, m_frontend);
-
-  return false;
 }
 
 cDvbChannelSubsystem *cDvbDevice::DvbChannel() const

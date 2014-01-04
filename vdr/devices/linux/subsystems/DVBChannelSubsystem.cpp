@@ -31,6 +31,7 @@
 #include "channels/ChannelManager.h"
 #include "dvb/DiSEqC.h"
 
+#include <algorithm>
 #include <linux/dvb/frontend.h>
 
 using namespace std;
@@ -48,12 +49,7 @@ cDvbChannelSubsystem::~cDvbChannelSubsystem()
 
 bool cDvbChannelSubsystem::ProvidesDeliverySystem(int deliverySystem) const
 {
-  for (int i = 0; i < GetDevice<cDvbDevice>()->m_numDeliverySystems; i++)
-  {
-    if (GetDevice<cDvbDevice>()->m_deliverySystems[i] == deliverySystem)
-      return true;
-  }
-  return false;
+  return std::find(GetDevice<cDvbDevice>()->m_deliverySystems.begin(), GetDevice<cDvbDevice>()->m_deliverySystems.end(), deliverySystem) != GetDevice<cDvbDevice>()->m_deliverySystems.end();
 }
 
 bool cDvbChannelSubsystem::ProvidesSource(int source) const
@@ -170,7 +166,7 @@ bool cDvbChannelSubsystem::ProvidesEIT() const
 
 unsigned int cDvbChannelSubsystem::NumProvidedSystems() const
 {
-  return GetDevice<cDvbDevice>()->m_numDeliverySystems + GetDevice<cDvbDevice>()->m_numModulations;
+  return GetDevice<cDvbDevice>()->m_deliverySystems.size() + GetDevice<cDvbDevice>()->m_numModulations;
 }
 
 int cDvbChannelSubsystem::SignalStrength() const
