@@ -18,42 +18,23 @@
  *
  */
 
-#include <stdlib.h>
-#include "config.h"
+#ifndef VNSI_DEMUXER_DTS_H
+#define VNSI_DEMUXER_DTS_H
 
-#include "parser_Teletext.h"
+#include "Parser.h"
 
-cParserTeletext::cParserTeletext(int pID, cTSStream *stream, sPtsWrap *ptsWrap, bool observePtsWraps)
- : cParser(pID, stream, ptsWrap, observePtsWraps)
+// --- cParserDTS -------------------------------------------------
+
+class cParserDTS : public cParser
 {
-  m_PesBufferInitialSize      = 4000;
-}
+private:
 
-cParserTeletext::~cParserTeletext()
-{
-}
+public:
+  cParserDTS(int pID, cTSStream *stream, sPtsWrap *ptsWrap, bool observePtsWraps);
+  virtual ~cParserDTS();
 
-void cParserTeletext::Parse(sStreamPacket *pkt)
-{
-  int l = m_PesBufferPtr;
-  if (l < 1)
-    return;
+  virtual void Parse(sStreamPacket *pkt);
+};
 
-  if (m_PesBuffer[0] < 0x10 || m_PesBuffer[0] > 0x1F)
-  {
-    Reset();
-    return;
-  }
 
-  if (l >= m_PesPacketLength)
-  {
-    pkt->id       = m_pID;
-    pkt->data     = m_PesBuffer;
-    pkt->size     = m_PesPacketLength;
-    pkt->duration = 0;
-    pkt->dts      = m_curDTS;
-    pkt->pts      = m_curPTS;
-
-    m_PesBufferPtr = 0;
-  }
-}
+#endif // VNSI_DEMUXER_DTS_H

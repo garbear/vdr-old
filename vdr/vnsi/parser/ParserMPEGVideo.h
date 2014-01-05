@@ -22,7 +22,7 @@
 #define VNSI_DEMUXER_MPEGVIDEO_H
 
 #include <deque>
-#include "parser.h"
+#include "Parser.h"
 
 class cBitstream;
 

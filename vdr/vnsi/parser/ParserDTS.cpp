@@ -18,21 +18,22 @@
  *
  */
 
-#ifndef VNSI_DEMUXER_SUBTITLE_H
-#define VNSI_DEMUXER_SUBTITLE_H
+#include <stdlib.h>
+#include <assert.h>
+#include "../VNSIServerConfig.h"
 
-#include "parser.h"
+#include "ParserDTS.h"
 
-// --- cParserSubtitle -------------------------------------------------
-
-class cParserSubtitle : public cParser
+cParserDTS::cParserDTS(int pID, cTSStream *stream, sPtsWrap *ptsWrap, bool observePtsWraps)
+ : cParser(pID, stream, ptsWrap, observePtsWraps)
 {
-public:
-  cParserSubtitle(int pID, cTSStream *stream, sPtsWrap *ptsWrap, bool observePtsWraps);
-  virtual ~cParserSubtitle();
+}
 
-  virtual void Parse(sStreamPacket *pkt);
-};
+cParserDTS::~cParserDTS()
+{
+}
 
+void cParserDTS::Parse(sStreamPacket *pkt)
+{
 
-#endif // VNSI_DEMUXER_SUBTITLE_H
+}

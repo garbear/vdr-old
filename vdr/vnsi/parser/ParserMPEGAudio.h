@@ -18,15 +18,14 @@
  *
  */
 
-#ifndef VNSI_DEMUXER_AAC_H
-#define VNSI_DEMUXER_AAC_H
+#ifndef VNSI_DEMUXER_MPEGAUDIO_H
+#define VNSI_DEMUXER_MPEGAUDIO_H
 
-#include "parser.h"
-#include "bitstream.h"
+#include "Parser.h"
 
-// --- cParserAAC -------------------------------------------------
+// --- cParserMPEG2Audio -------------------------------------------------
 
-class cParserAAC : public cParser
+class cParserMPEG2Audio : public cParser
 {
 private:
   int         m_SampleRate;
@@ -34,24 +33,17 @@ private:
   int         m_BitRate;
   int         m_FrameSize;
 
-  int64_t     m_PTS;                /* pts of the current frame */
-  int64_t     m_DTS;                /* dts of the current frame */
-
-  bool        m_Configured;
-  int         m_AudioMuxVersion_A;
-  int         m_FrameLengthType;
+  int64_t     m_PTS;
+  int64_t     m_DTS;
 
   int FindHeaders(uint8_t *buf, int buf_size);
-  bool ParseLATMAudioMuxElement(cBitstream *bs);
-  void ReadStreamMuxConfig(cBitstream *bs);
-  void ReadAudioSpecificConfig(cBitstream *bs);
-  uint32_t LATMGetValue(cBitstream *bs) { return bs->readBits(bs->readBits(2) * 8); }
 
 public:
-  cParserAAC(int pID, cTSStream *stream, sPtsWrap *ptsWrap, bool observePtsWraps);
-  virtual ~cParserAAC();
+  cParserMPEG2Audio(int pID, cTSStream *stream, sPtsWrap *ptsWrap, bool observePtsWraps);
+  virtual ~cParserMPEG2Audio();
+
   virtual void Parse(sStreamPacket *pkt);
-  virtual void Reset();
 };
 
-#endif // VNSI_DEMUXER_AAC_H
+
+#endif // VNSI_DEMUXER_MPEGAUDIO_H

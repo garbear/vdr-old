@@ -20,10 +20,10 @@
 
 #include <stdlib.h>
 #include <assert.h>
-#include "config.h"
-#include "bitstream.h"
+#include "../VNSIServerConfig.h"
+#include "Bitstream.h"
 
-#include "parser_h264.h"
+#include "ParserH264.h"
 
 static const int h264_lev2cpbsize[][2] =
 {

@@ -21,7 +21,7 @@
 #ifndef VNSI_DEMUXER_H
 #define VNSI_DEMUXER_H
 
-#include <vdr/device.h>
+#include "devices/Device.h"
 #include <queue>
 
 #define DVD_TIME_BASE 1000000

@@ -40,13 +40,11 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#include <vdr/plugin.h>
-#include <vdr/shutdown.h>
-#include <vdr/videodir.h>
+#include "utils/Shutdown.h"
+#include "filesystem/Videodir.h"
 
-#include "vnsi.h"
-#include "vnsiserver.h"
-#include "vnsiclient.h"
+#include "VNSIServer.h"
+#include "VNSIClient.h"
 
 unsigned int cVNSIServer::m_IdCnt = 0;
 
@@ -251,7 +249,7 @@ void cVNSIServer::Action(void)
       if(m_clients.size() > 0 && chanTimer.TimedOut())
       {
         struct stat s;
-        if(stat(Channels.FileName(), &s) != -1)
+        if(stat(Channels.FileName(), &s) != -1) //XXX
         {
 #ifdef ANDROID
           if (s.st_mtime != channelsUpdate.tv_sec)

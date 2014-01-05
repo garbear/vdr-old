@@ -20,18 +20,18 @@
 
 #include <stdlib.h>
 #include <assert.h>
-#include <vdr/remux.h>
-#include <vdr/channels.h>
-#include "config.h"
-#include "parser.h"
-#include "parser_AAC.h"
-#include "parser_AC3.h"
-#include "parser_DTS.h"
-#include "parser_h264.h"
-#include "parser_MPEGAudio.h"
-#include "parser_MPEGVideo.h"
-#include "parser_Subtitle.h"
-#include "parser_Teletext.h"
+#include "devices/Remux.h"
+#include "channels/ChannelManager.h"
+#include "../VNSIServerConfig.h"
+#include "Parser.h"
+#include "ParserAAC.h"
+#include "ParserAC3.h"
+#include "ParserDTS.h"
+#include "ParserH264.h"
+#include "ParserMPEGAudio.h"
+#include "ParserMPEGVideo.h"
+#include "ParserSubtitle.h"
+#include "ParserTeletext.h"
 
 #define PTS_MASK 0x1ffffffffLL
 //#define PTS_MASK 0x7ffffLL

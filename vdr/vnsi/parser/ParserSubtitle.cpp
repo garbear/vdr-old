@@ -20,21 +20,43 @@
 
 #include <stdlib.h>
 #include <assert.h>
-#include "config.h"
+#include "../VNSIServerConfig.h"
 
-#include "parser_DTS.h"
-#include "bitstream.h"
+#include "ParserSubtitle.h"
 
-cParserDTS::cParserDTS(int pID, cTSStream *stream, sPtsWrap *ptsWrap, bool observePtsWraps)
+cParserSubtitle::cParserSubtitle(int pID, cTSStream *stream, sPtsWrap *ptsWrap, bool observePtsWraps)
  : cParser(pID, stream, ptsWrap, observePtsWraps)
 {
+  m_PesBufferInitialSize = 4000;
 }
 
-cParserDTS::~cParserDTS()
+cParserSubtitle::~cParserSubtitle()
 {
+
 }
 
-void cParserDTS::Parse(sStreamPacket *pkt)
+void cParserSubtitle::Parse(sStreamPacket *pkt)
 {
+  int l = m_PesBufferPtr;
 
+  if (l >= m_PesPacketLength)
+  {
+    if (l < 2 || m_PesBuffer[0] != 0x20 || m_PesBuffer[1] != 0x00)
+    {
+      Reset();
+      return;
+    }
+
+    if(m_PesBuffer[m_PesPacketLength-1] == 0xff)
+    {
+      pkt->id       = m_pID;
+      pkt->data     = m_PesBuffer+2;
+      pkt->size     = m_PesPacketLength-3;
+      pkt->duration = 0;
+      pkt->dts      = m_curDTS;
+      pkt->pts      = m_curPTS;
+    }
+
+    m_PesBufferPtr = 0;
+  }
 }

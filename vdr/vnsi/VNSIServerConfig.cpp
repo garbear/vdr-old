@@ -27,9 +27,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include <vdr/plugin.h>
-
-#include "config.h"
+#include "VNSIServerConfig.h"
 
 cVNSIServerConfig::cVNSIServerConfig()
 {

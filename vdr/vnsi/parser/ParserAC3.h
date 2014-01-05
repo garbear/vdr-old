@@ -18,24 +18,33 @@
  *
  */
 
-#ifndef VNSI_DEMUXER_TELETEXT_H
-#define VNSI_DEMUXER_TELETEXT_H
+#ifndef VNSI_DEMUXER_AC3_H
+#define VNSI_DEMUXER_AC3_H
 
-#include "parser.h"
+#include "Parser.h"
 
-// --- cParserTeletext -------------------------------------------------
+// --- cParserAC3 -------------------------------------------------
 
-class cParserTeletext : public cParser
+class cParserAC3 : public cParser
 {
 private:
-  int64_t     m_lastDTS;
-  int64_t     m_lastPTS;
+  int         m_SampleRate;
+  int         m_Channels;
+  int         m_BitRate;
+  int         m_FrameSize;
+
+  int64_t     m_PTS;                /* pts of the current frame */
+  int64_t     m_DTS;                /* dts of the current frame */
+
+  int FindHeaders(uint8_t *buf, int buf_size);
 
 public:
-  cParserTeletext(int pID, cTSStream *stream, sPtsWrap *ptsWrap, bool observePtsWraps);
-  virtual ~cParserTeletext();
+  cParserAC3(int pID, cTSStream *stream, sPtsWrap *ptsWrap, bool observePtsWraps);
+  virtual ~cParserAC3();
 
   virtual void Parse(sStreamPacket *pkt);
+  virtual void Reset();
 };
 
-#endif // VNSI_DEMUXER_TELETEXT_H
+
+#endif // VNSI_DEMUXER_AC3_H

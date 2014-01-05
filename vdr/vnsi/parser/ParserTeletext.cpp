@@ -19,43 +19,40 @@
  */
 
 #include <stdlib.h>
-#include <assert.h>
-#include "config.h"
+#include "../VNSIServerConfig.h"
 
-#include "parser_Subtitle.h"
+#include "ParserTeletext.h"
 
-cParserSubtitle::cParserSubtitle(int pID, cTSStream *stream, sPtsWrap *ptsWrap, bool observePtsWraps)
+cParserTeletext::cParserTeletext(int pID, cTSStream *stream, sPtsWrap *ptsWrap, bool observePtsWraps)
  : cParser(pID, stream, ptsWrap, observePtsWraps)
 {
-  m_PesBufferInitialSize = 4000;
+  m_PesBufferInitialSize      = 4000;
 }
 
-cParserSubtitle::~cParserSubtitle()
+cParserTeletext::~cParserTeletext()
 {
-
 }
 
-void cParserSubtitle::Parse(sStreamPacket *pkt)
+void cParserTeletext::Parse(sStreamPacket *pkt)
 {
   int l = m_PesBufferPtr;
+  if (l < 1)
+    return;
+
+  if (m_PesBuffer[0] < 0x10 || m_PesBuffer[0] > 0x1F)
+  {
+    Reset();
+    return;
+  }
 
   if (l >= m_PesPacketLength)
   {
-    if (l < 2 || m_PesBuffer[0] != 0x20 || m_PesBuffer[1] != 0x00)
-    {
-      Reset();
-      return;
-    }
-
-    if(m_PesBuffer[m_PesPacketLength-1] == 0xff)
-    {
-      pkt->id       = m_pID;
-      pkt->data     = m_PesBuffer+2;
-      pkt->size     = m_PesPacketLength-3;
-      pkt->duration = 0;
-      pkt->dts      = m_curDTS;
-      pkt->pts      = m_curPTS;
-    }
+    pkt->id       = m_pID;
+    pkt->data     = m_PesBuffer;
+    pkt->size     = m_PesPacketLength;
+    pkt->duration = 0;
+    pkt->dts      = m_curDTS;
+    pkt->pts      = m_curPTS;
 
     m_PesBufferPtr = 0;
   }

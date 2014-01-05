@@ -20,10 +20,10 @@
 
 #include <stdlib.h>
 #include <assert.h>
-#include "config.h"
+#include "../VNSIServerConfig.h"
 
-#include "parser_MPEGAudio.h"
-#include "bitstream.h"
+#include "ParserMPEGAudio.h"
+#include "Bitstream.h"
 
 const uint16_t FrequencyTable[3] = { 44100, 48000, 32000 };
 const uint16_t BitrateTable[2][3][15] =

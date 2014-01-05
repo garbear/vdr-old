@@ -20,10 +20,10 @@
 
 #include <stdlib.h>
 #include <assert.h>
-#include "config.h"
-#include "bitstream.h"
+#include "../VNSIServerConfig.h"
+#include "Bitstream.h"
 
-#include "parser_MPEGVideo.h"
+#include "ParserMPEGVideo.h"
 
 using namespace std;
 

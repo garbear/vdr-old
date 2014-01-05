@@ -24,7 +24,7 @@
 
 #include <stdio.h>
 #include <inttypes.h>
-#include "bitstream.h"
+#include "Bitstream.h"
 
 cBitstream::cBitstream(uint8_t *data, int bits)
 {

@@ -29,7 +29,7 @@
 #include <string.h>
 #include <stdint.h>
 
-#include <vdr/config.h>
+#include "Config.h"
 
 // log output configuration
 

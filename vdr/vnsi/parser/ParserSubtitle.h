@@ -18,32 +18,21 @@
  *
  */
 
-#ifndef VNSI_DEMUXER_MPEGAUDIO_H
-#define VNSI_DEMUXER_MPEGAUDIO_H
+#ifndef VNSI_DEMUXER_SUBTITLE_H
+#define VNSI_DEMUXER_SUBTITLE_H
 
-#include "parser.h"
+#include "Parser.h"
 
-// --- cParserMPEG2Audio -------------------------------------------------
+// --- cParserSubtitle -------------------------------------------------
 
-class cParserMPEG2Audio : public cParser
+class cParserSubtitle : public cParser
 {
-private:
-  int         m_SampleRate;
-  int         m_Channels;
-  int         m_BitRate;
-  int         m_FrameSize;
-
-  int64_t     m_PTS;
-  int64_t     m_DTS;
-
-  int FindHeaders(uint8_t *buf, int buf_size);
-
 public:
-  cParserMPEG2Audio(int pID, cTSStream *stream, sPtsWrap *ptsWrap, bool observePtsWraps);
-  virtual ~cParserMPEG2Audio();
+  cParserSubtitle(int pID, cTSStream *stream, sPtsWrap *ptsWrap, bool observePtsWraps);
+  virtual ~cParserSubtitle();
 
   virtual void Parse(sStreamPacket *pkt);
 };
 
 
-#endif // VNSI_DEMUXER_MPEGAUDIO_H
+#endif // VNSI_DEMUXER_SUBTITLE_H

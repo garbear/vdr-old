@@ -20,10 +20,10 @@
 
 #include <stdlib.h>
 #include <assert.h>
-#include "config.h"
+#include "../VNSIServerConfig.h"
 
-#include "parser_AC3.h"
-#include "bitstream.h"
+#include "ParserAC3.h"
+#include "Bitstream.h"
 
 #define AC3_HEADER_SIZE 7
 

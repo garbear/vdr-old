@@ -18,23 +18,24 @@
  *
  */
 
-#ifndef VNSI_DEMUXER_DTS_H
-#define VNSI_DEMUXER_DTS_H
+#ifndef VNSI_DEMUXER_TELETEXT_H
+#define VNSI_DEMUXER_TELETEXT_H
 
-#include "parser.h"
+#include "Parser.h"
 
-// --- cParserDTS -------------------------------------------------
+// --- cParserTeletext -------------------------------------------------
 
-class cParserDTS : public cParser
+class cParserTeletext : public cParser
 {
 private:
+  int64_t     m_lastDTS;
+  int64_t     m_lastPTS;
 
 public:
-  cParserDTS(int pID, cTSStream *stream, sPtsWrap *ptsWrap, bool observePtsWraps);
-  virtual ~cParserDTS();
+  cParserTeletext(int pID, cTSStream *stream, sPtsWrap *ptsWrap, bool observePtsWraps);
+  virtual ~cParserTeletext();
 
   virtual void Parse(sStreamPacket *pkt);
 };
 
-
-#endif // VNSI_DEMUXER_DTS_H
+#endif // VNSI_DEMUXER_TELETEXT_H

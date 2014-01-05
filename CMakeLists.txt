@@ -160,6 +160,17 @@ set(VDR_SRCS
 	vdr/utils/url/URLUtils.cpp
 	vdr/utils/Shutdown.cpp
 	vdr/Player.cpp
+	vdr/vnsi/parser/Bitstream.cpp
+	vdr/vnsi/parser/Parser.cpp
+	vdr/vnsi/parser/ParserAAC.cpp
+	vdr/vnsi/parser/ParserAC3.cpp
+	vdr/vnsi/parser/ParserDTS.cpp
+	vdr/vnsi/parser/ParserH264.cpp
+	vdr/vnsi/parser/ParserMPEGAudio.cpp
+	vdr/vnsi/parser/ParserMPEGVideo.cpp
+	vdr/vnsi/parser/ParserSubtitle.cpp
+	vdr/vnsi/parser/ParserTeletext.cpp
+	vdr/vnsi/VNSIServerConfig.cpp
 	thread.cpp
 )
 

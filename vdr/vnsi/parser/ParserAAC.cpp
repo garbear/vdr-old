@@ -20,9 +20,9 @@
 
 #include <stdlib.h>
 #include <assert.h>
-#include "config.h"
+#include "../VNSIServerConfig.h"
 
-#include "parser_AAC.h"
+#include "ParserAAC.h"
 
 static int aac_sample_rates[16] =
 {
