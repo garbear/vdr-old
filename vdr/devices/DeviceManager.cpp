@@ -105,7 +105,7 @@ bool cDeviceManager::WaitForAllDevicesReady(unsigned int timeout /* = 0 */)
     bool ready = true;
     for (vector<cDevice*>::iterator deviceIt = m_devices.begin(); deviceIt != m_devices.end(); ++deviceIt)
     {
-      if ((*deviceIt)->Ready())
+      if (!(*deviceIt)->Ready())
       {
         ready = false;
         cCondWait::SleepMs(100);
