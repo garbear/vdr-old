@@ -23,6 +23,7 @@
 #include "ChannelDefinitions.h"
 #include "utils/StringUtils.h"
 #include "utils/Tools.h"
+#include "utils/CRC32.h"
 //#include "utils/UTF8Utils.h"
 //#include "epg.h"
 //#include "timers.h"
@@ -36,6 +37,7 @@
 #include <tinyxml.h>
 
 using namespace std;
+using namespace VDR;
 
 #ifndef ARRAY_SIZE
 #define ARRAY_SIZE(x)  (sizeof(x) / sizeof(x[0]))
@@ -1446,4 +1448,10 @@ string cChannel::TransponderDataToString() const
   if (cSource::IsTerr(m_channelData.source))
     return StringUtils::Format("%d:%s:%s", m_channelData.frequency, m_parameters.c_str(), cSource::ToString(m_channelData.source).c_str());
   return StringUtils::Format("%d:%s:%s:%d", m_channelData.frequency, m_parameters.c_str(), cSource::ToString(m_channelData.source).c_str(), m_channelData.srate);
+}
+
+uint32_t cChannel::Hash(void) const
+{
+  string channelid = GetChannelID().Serialize();
+  return CCRC32::CRC32(channelid);
 }

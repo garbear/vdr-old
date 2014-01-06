@@ -245,6 +245,7 @@ public:
   bool HasSchedule(void) const { return m_schedule != NULL; }
   const cSchedule* Schedule(void) const { return m_schedule; }
 
+  uint32_t Hash(void) const;
 private:
   std::string TransponderDataToString() const;
 

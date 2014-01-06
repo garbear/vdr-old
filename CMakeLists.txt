@@ -155,6 +155,7 @@ set(VDR_SRCS
 	vdr/utils/XMLUtils.cpp
 	vdr/utils/UTF8Utils.cpp
 	vdr/utils/Status.cpp
+	vdr/utils/CRC32.cpp
 	vdr/utils/url/URL.cpp
 	vdr/utils/url/UrlOptions.cpp
 	vdr/utils/url/URLUtils.cpp

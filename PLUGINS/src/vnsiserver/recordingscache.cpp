@@ -22,7 +22,10 @@
 
 #include "config.h"
 #include "recordingscache.h"
-#include "hash.h"
+#include "utils/CRC32.h"
+
+using namespace std;
+using namespace VDR;
 
 cRecordingsCache::cRecordingsCache() {
 }
@@ -36,8 +39,8 @@ cRecordingsCache& cRecordingsCache::GetInstance() {
 }
 
 uint32_t cRecordingsCache::Register(cRecording* recording) {
-  cString filename = recording->FileName();
-  uint32_t uid = CreateStringHash(filename);
+  string filename = recording->FileName();
+  uint32_t uid = CCRC32::CRC32(filename);
 
   m_mutex.Lock();
   if(m_recordings.find(uid) == m_recordings.end())

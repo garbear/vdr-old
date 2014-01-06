@@ -96,6 +96,8 @@ public:
    */
   ChannelPtr GetByChannelID(int nid, int tid, int sid);
 
+  ChannelPtr GetByChannelUID(uint32_t channelUID) const;
+
   /*!
    * \brief Find a channel by the source, NID and TID of a transponder ID
    * \param channelID The channel ID tag (TODO: Is this the transponder ID?)

@@ -296,7 +296,7 @@ void cVNSIClient::EpgChange()
     m_socket.write(resp->getPtr(), resp->getLen());
     delete resp;
 
-    const cChannel *channel = FindChannelByUID(channelId);
+    ChannelPtr channel = cChannelManager::Get().GetByChannelUID(channelId);
     if (channel)
       INFOLOG("Trigger EPG update for channel %s", channel->Name());
   }
@@ -711,12 +711,8 @@ bool cVNSIClient::processChannelStream_Open() /* OPCODE 20 */
   if (m_isStreaming)
     StopChannelStreaming();
 
-  Channels.Lock(false);
-  const cChannel *channel = NULL;
-
   // try to find channel by uid first
-  channel = FindChannelByUID(uid);
-  Channels.Unlock();
+  ChannelPtr channel = cChannelManager::Get().GetByChannelUID(uid);
 
   // try channelnumber
   if (channel == NULL)
@@ -954,7 +950,7 @@ bool cVNSIClient::processCHANNELS_GetChannels() /* OPCODE 63 */
 
     m_resp->add_U32(channel->Number());
     m_resp->add_String(m_toUTF8.Convert(channel->Name()));
-    m_resp->add_U32(CreateChannelUID(channel));
+    m_resp->add_U32(channel->Hash());
     m_resp->add_U32(0); // groupindex unused
     m_resp->add_U32(channel->Ca());
 #if APIVERSNUM >= 10701
@@ -1062,7 +1058,7 @@ bool cVNSIClient::processCHANNELS_GetGroupMembers()
 
     if(name == groupname)
     {
-      m_resp->add_U32(CreateChannelUID(channel));
+      m_resp->add_U32(channel->Hash());
       m_resp->add_U32(++index);
     }
   }
@@ -1221,8 +1217,8 @@ bool cVNSIClient::processTIMER_Add() /* OPCODE 83 */
   int stop = time->tm_hour * 100 + time->tm_min;
 
   cString buffer;
-  const cChannel* channel = FindChannelByUID(channelid);
-  if(channel != NULL)
+  ChannelPtr channel = cChannelManager::Get().GetByChannelUID(channelid);
+  if(channel)
   {
     buffer = cString::sprintf("%u:%s:%s:%04d:%04d:%d:%d:%s:%s\n", flags, (const char*)channel->GetChannelID().ToString(), *cTimer::PrintDay(day, weekdays, true), start, stop, priority, lifetime, file, aux);
   }
@@ -1369,8 +1365,8 @@ bool cVNSIClient::processTIMER_Update() /* OPCODE 85 */
     int stop = time->tm_hour * 100 + time->tm_min;
 
     cString buffer;
-    const cChannel* channel = FindChannelByUID(channelid);
-    if(channel != NULL)
+    ChannelPtr channel = cChannelManager::Get().GetByChannelUID(channelid);
+    if(channel)
     {
       buffer = cString::sprintf("%u:%s:%s:%04d:%04d:%d:%d:%s:%s\n", flags, (const char*)channel->GetChannelID().ToString(), *cTimer::PrintDay(day, weekdays, true), start, stop, priority, lifetime, file, aux);
     }
@@ -1641,10 +1637,8 @@ bool cVNSIClient::processEPG_GetForChannel() /* OPCODE 120 */
 
   Channels.Lock(false);
 
-  const cChannel* channel = NULL;
-
-  channel = FindChannelByUID(channelUID);
-  if(channel != NULL)
+  ChannelPtr channel = cChannelManager::Get().GetByChannelUID(channelUID);
+  if(channel)
   {
     DEBUGLOG("get schedule called for channel '%s'", (const char*)channel->GetChannelID().ToString());
   }

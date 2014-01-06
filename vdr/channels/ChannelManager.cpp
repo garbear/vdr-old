@@ -29,11 +29,13 @@
 #include "utils/StringUtils.h"
 #include "utils/XBMCTinyXML.h"
 #include "utils/UTF8Utils.h"
+#include "utils/CRC32.h"
 
 #include <algorithm>
 #include <assert.h>
 
 using namespace std;
+using namespace VDR;
 
 /*
 string ChannelString(const ChannelPtr &channel, int number)
@@ -542,4 +544,22 @@ void cChannelManager::AddTransponders(cScanList* list) const
   for (std::vector<ChannelPtr>::const_iterator it = m_channels.begin(); it != m_channels.end(); it++)
     list->AddTransponder(it->get());
   */
+}
+
+ChannelPtr cChannelManager::GetByChannelUID(uint32_t channelUID) const
+{
+  ChannelPtr result;
+  ChannelPtr channel;
+
+  // maybe we need to use a lookup table
+  for (ChannelVector::const_iterator it = m_channels.begin(); it != m_channels.end(); ++it)
+  {
+    channel = (*it);
+    if(channelUID == CCRC32::CRC32(channel->GetChannelID().Serialize())) {
+      result = channel;
+      break;
+    }
+  }
+
+  return result;
 }

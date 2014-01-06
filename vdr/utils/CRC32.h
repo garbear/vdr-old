@@ -1,8 +1,8 @@
+#pragma once
 /*
- *      vdr-plugin-vnsi - XBMC server plugin for VDR
- *
- *      Copyright (C) 1986 Gary S. Brown (CRC32 code)
- *      Copyright (C) 2011 Alexander Pipelka
+ *      Copyright (C) 2013 Garrett Brown
+ *      Copyright (C) 2013 Lars Op den Kamp
+ *      Portions Copyright (C) 2000, 2003, 2006, 2008, 2013 Klaus Schmidinger
  *
  *  This Program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -15,23 +15,20 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with XBMC; see the file COPYING.  If not, write to
- *  the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
- *  http://www.gnu.org/copyleft/gpl.html
+ *  along with this Program; see the file COPYING. If not, see
+ *  <http://www.gnu.org/licenses/>.
  *
  */
 
-#ifndef VNSI_HASH_H
-#define VNSI_HASH_H
-
 #include <stdint.h>
-#include <vdr/channels.h>
+#include <string>
 
-class cChannel;
-
-uint32_t CreateChannelUID(const cChannel* channel);
-const cChannel* FindChannelByUID(uint32_t channelUID);
-
-uint32_t CreateStringHash(const cString& string);
-
-#endif // VNSI_HASH_H
+namespace VDR
+{
+  class CCRC32
+  {
+  public:
+    static uint32_t CRC32(const std::string& str);
+    static uint32_t CRC32(const unsigned char *buf, size_t size);
+  };
+}
