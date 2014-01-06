@@ -1452,6 +1452,5 @@ string cChannel::TransponderDataToString() const
 
 uint32_t cChannel::Hash(void) const
 {
-  string channelid = GetChannelID().Serialize();
-  return CCRC32::CRC32(channelid);
+  return GetChannelID().Hash();
 }

@@ -21,6 +21,7 @@
 #pragma once
 
 #include <string>
+#include <stdint.h>
 
 struct tChannelID
 {
@@ -46,6 +47,8 @@ public:
   static tChannelID Deserialize(const std::string &str);
 
   static const tChannelID InvalidID;
+
+  uint32_t Hash(void) const;
 
 private:
   int m_source;

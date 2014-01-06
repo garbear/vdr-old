@@ -22,11 +22,13 @@
 #include "ChannelID.h"
 #include "sources/Source.h"
 #include "utils/StringUtils.h"
+#include "utils/CRC32.h"
 
 #include <stddef.h>
 #include <stdio.h>
 
 using namespace std;
+using namespace VDR;
 
 const tChannelID tChannelID::InvalidID;
 
@@ -169,4 +171,10 @@ void tChannelID::ClrPolarization()
 {
   while (m_tid > 100000)
     m_tid -= 100000;
+}
+
+uint32_t tChannelID::Hash(void) const
+{
+  string channelid = Serialize();
+  return CCRC32::CRC32(channelid);
 }
