@@ -45,6 +45,7 @@
 
 #include "VNSIServer.h"
 #include "VNSIClient.h"
+#include "VNSIServerConfig.h"
 
 unsigned int cVNSIServer::m_IdCnt = 0;
 
@@ -177,7 +178,7 @@ void cVNSIServer::NewClientConnected(int fd)
   m_IdCnt++;
 }
 
-void cVNSIServer::Action(void)
+void* cVNSIServer::Process(void)
 {
   fd_set fds;
   struct timeval tv;
@@ -319,5 +320,5 @@ void cVNSIServer::Action(void)
       ERRORLOG("accept failed");
     }
   }
-  return;
+  return NULL;
 }

@@ -27,19 +27,19 @@
 #define VNSI_SERVER_H
 
 #include <list>
-#include <vdr/thread.h>
+#include "lib/platform/threads/threads.h"
 
-#include "config.h"
+#include "VNSIServerConfig.h"
 
 class cVNSIClient;
 
-class cVNSIServer : public cThread
+class cVNSIServer : public PLATFORM::CThread
 {
 protected:
 
   typedef std::list<cVNSIClient*> ClientList;
 
-  virtual void Action(void);
+  void* Process(void);
   void NewClientConnected(int fd);
 
   int           m_ServerPort;

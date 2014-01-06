@@ -26,14 +26,14 @@
 #ifndef VNSI_CLIENT_H
 #define VNSI_CLIENT_H
 
-#include <vdr/thread.h>
-#include <vdr/tools.h>
-#include <vdr/receiver.h>
-#include <vdr/status.h>
+#include "lib/platform/threads/threads.h"
+#include "utils/Tools.h"
+#include "devices/Receiver.h"
+#include "utils/Status.h"
 #include "utils/CharSetConverterVDR.h"
 
-#include "config.h"
-#include "cxsocket.h"
+#include "VNSIServerConfig.h"
+//#include "cxsocket.h"
 
 #include <map>
 #include <string>
@@ -47,7 +47,7 @@ class cRecPlayer;
 class cCmdControl;
 class cVnsiOsdProvider;
 
-class cVNSIClient : public cThread
+class cVNSIClient : public PLATFORM::CThread
                   , public cStatus
 {
 private:

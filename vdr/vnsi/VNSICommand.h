@@ -29,6 +29,9 @@
 /** Current VNSI Protocol Version number */
 #define VNSI_PROTOCOLVERSION 4
 
+//XXX
+#define VNSI_SERVER_VERSION "TEST"
+
 /** Packet types */
 #define VNSI_CHANNEL_REQUEST_RESPONSE 1
 #define VNSI_CHANNEL_STREAM           2

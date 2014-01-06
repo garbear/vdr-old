@@ -27,27 +27,24 @@
 #include <stdio.h>
 #include <map>
 
-#include <vdr/recording.h>
-#include <vdr/channels.h>
-#include <vdr/videodir.h>
-#include <vdr/plugin.h>
-#include <vdr/timers.h>
-#include <vdr/menu.h>
-#include <vdr/device.h>
+#include "recordings/Recording.h"
+#include "channels/ChannelManager.h"
+#include "filesystem/Videodir.h"
+#include "recordings/Timers.h"
+#include "devices/Device.h"
 
-#include "vnsi.h"
-#include "config.h"
-#include "vnsicommand.h"
-#include "recordingscache.h"
-#include "vnsiclient.h"
-#include "streamer.h"
-#include "vnsiserver.h"
-#include "recplayer.h"
-#include "vnsiosd.h"
-#include "requestpacket.h"
-#include "responsepacket.h"
-#include "hash.h"
-#include "wirbelscanservice.h" /// copied from modified wirbelscan plugin
+//#include "vnsi.h"
+#include "VNSIServerConfig.h"
+#include "VNSICommand.h"
+//#include "recordingscache.h"
+#include "VNSIClient.h"
+//#include "streamer.h"
+#include "VNSIServer.h"
+//#include "recplayer.h"
+//#include "vnsiosd.h"
+#include "RequestPacket.h"
+#include "ResponsePacket.h"
+//#include "wirbelscanservice.h" /// copied from modified wirbelscan plugin
                                /// must be hold up to date with wirbelscan
 
 
@@ -275,7 +272,7 @@ void cVNSIClient::EpgChange()
     if (!lastEvent)
       continue;
 
-    uint32_t channelId = CreateStringHash(schedule->ChannelID().ToString());
+    uint32_t channelId = schedule->ChannelID().Hash();
     it = m_epgUpdate.find(channelId);
     if (it == m_epgUpdate.end())
     {
@@ -340,26 +337,26 @@ void cVNSIClient::OsdStatusMessage(const char *Message)
   if (m_StatusInterfaceEnabled && Message)
   {
     /* Ignore this messages */
-    if (strcasecmp(Message, trVDR("Channel not available!")) == 0) return;
-    else if (strcasecmp(Message, trVDR("Delete timer?")) == 0) return;
-    else if (strcasecmp(Message, trVDR("Delete recording?")) == 0) return;
-    else if (strcasecmp(Message, trVDR("Press any key to cancel shutdown")) == 0) return;
-    else if (strcasecmp(Message, trVDR("Press any key to cancel restart")) == 0) return;
-    else if (strcasecmp(Message, trVDR("Editing - shut down anyway?")) == 0) return;
-    else if (strcasecmp(Message, trVDR("Recording - shut down anyway?")) == 0) return;
-    else if (strcasecmp(Message, trVDR("shut down anyway?")) == 0) return;
-    else if (strcasecmp(Message, trVDR("Recording - restart anyway?")) == 0) return;
-    else if (strcasecmp(Message, trVDR("Editing - restart anyway?")) == 0) return;
-    else if (strcasecmp(Message, trVDR("Delete channel?")) == 0) return;
-    else if (strcasecmp(Message, trVDR("Timer still recording - really delete?")) == 0) return;
-    else if (strcasecmp(Message, trVDR("Delete marks information?")) == 0) return;
-    else if (strcasecmp(Message, trVDR("Delete resume information?")) == 0) return;
-    else if (strcasecmp(Message, trVDR("CAM is in use - really reset?")) == 0) return;
-    else if (strcasecmp(Message, trVDR("Really restart?")) == 0) return;
-    else if (strcasecmp(Message, trVDR("Stop recording?")) == 0) return;
-    else if (strcasecmp(Message, trVDR("Cancel editing?")) == 0) return;
-    else if (strcasecmp(Message, trVDR("Cutter already running - Add to cutting queue?")) == 0) return;
-    else if (strcasecmp(Message, trVDR("No index-file found. Creating may take minutes. Create one?")) == 0) return;
+    if (strcasecmp(Message, tr("Channel not available!")) == 0) return;
+    else if (strcasecmp(Message, tr("Delete timer?")) == 0) return;
+    else if (strcasecmp(Message, tr("Delete recording?")) == 0) return;
+    else if (strcasecmp(Message, tr("Press any key to cancel shutdown")) == 0) return;
+    else if (strcasecmp(Message, tr("Press any key to cancel restart")) == 0) return;
+    else if (strcasecmp(Message, tr("Editing - shut down anyway?")) == 0) return;
+    else if (strcasecmp(Message, tr("Recording - shut down anyway?")) == 0) return;
+    else if (strcasecmp(Message, tr("shut down anyway?")) == 0) return;
+    else if (strcasecmp(Message, tr("Recording - restart anyway?")) == 0) return;
+    else if (strcasecmp(Message, tr("Editing - restart anyway?")) == 0) return;
+    else if (strcasecmp(Message, tr("Delete channel?")) == 0) return;
+    else if (strcasecmp(Message, tr("Timer still recording - really delete?")) == 0) return;
+    else if (strcasecmp(Message, tr("Delete marks information?")) == 0) return;
+    else if (strcasecmp(Message, tr("Delete resume information?")) == 0) return;
+    else if (strcasecmp(Message, tr("CAM is in use - really reset?")) == 0) return;
+    else if (strcasecmp(Message, tr("Really restart?")) == 0) return;
+    else if (strcasecmp(Message, tr("Stop recording?")) == 0) return;
+    else if (strcasecmp(Message, tr("Cancel editing?")) == 0) return;
+    else if (strcasecmp(Message, tr("Cutter already running - Add to cutting queue?")) == 0) return;
+    else if (strcasecmp(Message, tr("No index-file found. Creating may take minutes. Create one?")) == 0) return;
 
     cResponsePacket *resp = new cResponsePacket();
     if (!resp->initStatus(VNSI_STATUS_MESSAGE))
@@ -715,16 +712,16 @@ bool cVNSIClient::processChannelStream_Open() /* OPCODE 20 */
   ChannelPtr channel = cChannelManager::Get().GetByChannelUID(uid);
 
   // try channelnumber
-  if (channel == NULL)
-    channel = Channels.GetByNumber(uid);
+  if (!channel)
+    channel = cChannelManager::Get().GetByNumber(uid);
 
-  if (channel == NULL) {
+  if (!channel) {
     ERRORLOG("Can't find channel %08x", uid);
     m_resp->add_U32(VNSI_RET_DATAINVALID);
   }
   else
   {
-    if (StartChannelStreaming(channel, priority, timeshift, timeout))
+    if (StartChannelStreaming(channel.get(), priority, timeshift, timeout))
     {
       INFOLOG("Started streaming of channel %s (timeout %i seconds)", channel->Name(), timeout);
       // return here without sending the response
@@ -920,9 +917,7 @@ bool cVNSIClient::processRecStream_GetIFrame() /* OPCODE 45 */
 
 bool cVNSIClient::processCHANNELS_ChannelsCount() /* OPCODE 61 */
 {
-  Channels.Lock(false);
-  int count = Channels.MaxNumber();
-  Channels.Unlock();
+  int count = cChannelManager::Get().MaxNumber();
 
   m_resp->add_U32(count);
 
@@ -937,11 +932,12 @@ bool cVNSIClient::processCHANNELS_GetChannels() /* OPCODE 63 */
 
   bool radio = m_req->extract_U32();
 
-  Channels.Lock(false);
+  //XXX Channels.Lock(false);
 
-  for (cChannel *channel = Channels.First(); channel; channel = Channels.Next(channel))
+  for (std::vector<ChannelPtr>::const_iterator it = cChannelManager::Get().Iterator(); cChannelManager::Get().HasNext(it); cChannelManager::Get().Next(it))
   {
-    if (radio != IsRadio(channel))
+    ChannelPtr channel = *it;
+    if (radio != IsRadio(channel.get()))
       continue;
 
     // skip invalid channels
@@ -949,7 +945,7 @@ bool cVNSIClient::processCHANNELS_GetChannels() /* OPCODE 63 */
       continue;
 
     m_resp->add_U32(channel->Number());
-    m_resp->add_String(m_toUTF8.Convert(channel->Name()));
+    m_resp->add_String(m_toUTF8.Convert(channel->Name().c_str()));
     m_resp->add_U32(channel->Hash());
     m_resp->add_U32(0); // groupindex unused
     m_resp->add_U32(channel->Ca());
@@ -960,7 +956,7 @@ bool cVNSIClient::processCHANNELS_GetChannels() /* OPCODE 63 */
 #endif
   }
 
-  Channels.Unlock();
+  //XXXChannels.Unlock();
 
   m_resp->finalise();
   m_socket.write(m_resp->getPtr(), m_resp->getLen());
@@ -972,7 +968,7 @@ bool cVNSIClient::processCHANNELS_GroupsCount()
 {
   uint32_t type = m_req->extract_U32();
 
-  Channels.Lock(false);
+//  XXX Channels.Lock(false);
 
   m_channelgroups[0].clear();
   m_channelgroups[1].clear();
@@ -990,7 +986,7 @@ bool cVNSIClient::processCHANNELS_GroupsCount()
       break;
   }
 
-  Channels.Unlock();
+//  Channels.Unlock();
 
   uint32_t count = m_channelgroups[0].size() + m_channelgroups[1].size();
 
@@ -1034,10 +1030,11 @@ bool cVNSIClient::processCHANNELS_GetGroupMembers()
   bool automatic = m_channelgroups[radio][groupname].automatic;
   std::string name;
 
-  Channels.Lock(false);
+//  XXX Channels.Lock(false);
 
-  for (cChannel *channel = Channels.First(); channel; channel = Channels.Next(channel))
+  for (std::vector<ChannelPtr>::const_iterator it = cChannelManager::Get().Iterator(); cChannelManager::Get().HasNext(it); cChannelManager::Get().Next(it))
   {
+    ChannelPtr channel = *it;
 
     if(automatic && !channel->GroupSep())
       name = channel->Provider();
@@ -1053,7 +1050,7 @@ bool cVNSIClient::processCHANNELS_GetGroupMembers()
     if(name.empty())
       continue;
 
-    if(IsRadio(channel) != radio)
+    if(IsRadio(channel.get()) != radio)
       continue;
 
     if(name == groupname)
@@ -1063,7 +1060,7 @@ bool cVNSIClient::processCHANNELS_GetGroupMembers()
     }
   }
 
-  Channels.Unlock();
+//  Channels.Unlock();
 
   delete[] groupname;
   m_resp->finalise();
@@ -1075,9 +1072,10 @@ void cVNSIClient::CreateChannelGroups(bool automatic)
 {
   std::string groupname;
 
-  for (cChannel *channel = Channels.First(); channel; channel = Channels.Next(channel))
+  for (std::vector<ChannelPtr>::const_iterator it = cChannelManager::Get().Iterator(); cChannelManager::Get().HasNext(it); cChannelManager::Get().Next(it))
   {
-    bool isRadio = IsRadio(channel);
+    ChannelPtr channel = *it;
+    bool isRadio = IsRadio(channel.get());
 
     if(automatic && !channel->GroupSep())
       groupname = channel->Provider();
@@ -1134,7 +1132,7 @@ bool cVNSIClient::processTIMER_Get() /* OPCODE 81 */
       m_resp->add_U32(timer->Priority());
       m_resp->add_U32(timer->Lifetime());
       m_resp->add_U32(timer->Channel()->Number());
-      m_resp->add_U32(CreateChannelUID(timer->Channel()));
+      m_resp->add_U32(timer->Channel()->Hash());
       m_resp->add_U32(timer->StartTime());
       m_resp->add_U32(timer->StopTime());
       m_resp->add_U32(timer->Day());
@@ -1174,7 +1172,7 @@ bool cVNSIClient::processTIMER_GetList() /* OPCODE 82 */
     m_resp->add_U32(timer->Priority());
     m_resp->add_U32(timer->Lifetime());
     m_resp->add_U32(timer->Channel()->Number());
-    m_resp->add_U32(CreateChannelUID(timer->Channel()));
+    m_resp->add_U32(timer->Channel()->Hash());
     m_resp->add_U32(timer->StartTime());
     m_resp->add_U32(timer->StopTime());
     m_resp->add_U32(timer->Day());
@@ -1220,7 +1218,7 @@ bool cVNSIClient::processTIMER_Add() /* OPCODE 83 */
   ChannelPtr channel = cChannelManager::Get().GetByChannelUID(channelid);
   if(channel)
   {
-    buffer = cString::sprintf("%u:%s:%s:%04d:%04d:%d:%d:%s:%s\n", flags, (const char*)channel->GetChannelID().ToString(), *cTimer::PrintDay(day, weekdays, true), start, stop, priority, lifetime, file, aux);
+    buffer = cString::sprintf("%u:%s:%s:%04d:%04d:%d:%d:%s:%s\n", flags, (const char*)channel->GetChannelID().Serialize().c_str(), *cTimer::PrintDay(day, weekdays, true), start, stop, priority, lifetime, file, aux);
   }
 
   delete[] file;
@@ -1368,7 +1366,7 @@ bool cVNSIClient::processTIMER_Update() /* OPCODE 85 */
     ChannelPtr channel = cChannelManager::Get().GetByChannelUID(channelid);
     if(channel)
     {
-      buffer = cString::sprintf("%u:%s:%s:%04d:%04d:%d:%d:%s:%s\n", flags, (const char*)channel->GetChannelID().ToString(), *cTimer::PrintDay(day, weekdays, true), start, stop, priority, lifetime, file, aux);
+      buffer = cString::sprintf("%u:%s:%s:%04d:%04d:%d:%d:%s:%s\n", flags, (const char*)channel->GetChannelID().Serialize().c_str(), *cTimer::PrintDay(day, weekdays, true), start, stop, priority, lifetime, file, aux);
     }
 
     delete[] file;
@@ -1635,7 +1633,7 @@ bool cVNSIClient::processEPG_GetForChannel() /* OPCODE 120 */
   uint32_t startTime      = m_req->extract_U32();
   uint32_t duration       = m_req->extract_U32();
 
-  Channels.Lock(false);
+//  XXX Channels.Lock(false);
 
   ChannelPtr channel = cChannelManager::Get().GetByChannelUID(channelUID);
   if(channel)
@@ -1648,7 +1646,7 @@ bool cVNSIClient::processEPG_GetForChannel() /* OPCODE 120 */
     m_resp->add_U32(0);
     m_resp->finalise();
     m_socket.write(m_resp->getPtr(), m_resp->getLen());
-    Channels.Unlock();
+//    Channels.Unlock();
 
     ERRORLOG("written 0 because channel = NULL");
     return true;
@@ -1662,7 +1660,7 @@ bool cVNSIClient::processEPG_GetForChannel() /* OPCODE 120 */
     m_resp->add_U32(0);
     m_resp->finalise();
     m_socket.write(m_resp->getPtr(), m_resp->getLen());
-    Channels.Unlock();
+//    Channels.Unlock();
 
     DEBUGLOG("written 0 because Schedule!s! = NULL");
     return true;
@@ -1674,7 +1672,7 @@ bool cVNSIClient::processEPG_GetForChannel() /* OPCODE 120 */
     m_resp->add_U32(0);
     m_resp->finalise();
     m_socket.write(m_resp->getPtr(), m_resp->getLen());
-    Channels.Unlock();
+//    Channels.Unlock();
 
     DEBUGLOG("written 0 because Schedule = NULL");
     return true;
@@ -1736,7 +1734,7 @@ bool cVNSIClient::processEPG_GetForChannel() /* OPCODE 120 */
     atLeastOneEvent = true;
   }
 
-  Channels.Unlock();
+//  Channels.Unlock();
   DEBUGLOG("Got all event data");
 
   if (!atLeastOneEvent)
@@ -2014,17 +2012,18 @@ void cVNSIClient::processSCAN_SetStatus(int status)
 
 bool cVNSIClient::processOSD_Connect() /* OPCODE 160 */
 {
-  m_Osd = new cVnsiOsdProvider(&m_socket);
-  int osdWidth, osdHeight;
-  double aspect;
-  cDevice::PrimaryDevice()->GetOsdSize(osdWidth, osdHeight, aspect);
-  m_resp->add_U32(osdWidth);
-  m_resp->add_U32(osdHeight);
-  m_resp->finalise();
-  m_socket.write(m_resp->getPtr(), m_resp->getLen());
-
-  m_Osd = new cVnsiOsdProvider(&m_socket);
-  return true;
+//  XXX
+//  m_Osd = new cVnsiOsdProvider(&m_socket);
+//  int osdWidth, osdHeight;
+//  double aspect;
+//  cDeviceManager::Get().PrimaryDevice()->GetOsdSize(osdWidth, osdHeight, aspect);
+//  m_resp->add_U32(osdWidth);
+//  m_resp->add_U32(osdHeight);
+//  m_resp->finalise();
+//  m_socket.write(m_resp->getPtr(), m_resp->getLen());
+//
+//  m_Osd = new cVnsiOsdProvider(&m_socket);
+  return false;
 }
 
 bool cVNSIClient::processOSD_Disconnect() /* OPCODE 161 */
