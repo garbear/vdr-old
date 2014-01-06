@@ -145,11 +145,9 @@ string CSpecialProtocol::TranslatePath(const CURL &url)
       translatedPath.clear();
   }
 
-  // check if we need to recurse in
-  if (URLUtils::IsSpecial(translatedPath))
-  { // we need to recurse in, as there may be multiple translations required
-    return TranslatePath(translatedPath);
-  }
+  // Don't recurse in - this allows special://xbmchome to map to special://home
+  // and invoke the use of a VFS file. Otherwise, the URL gets incorrectly
+  // resolved to VDR's home folder.
 
   // Validate the final path, just in case
   return URLUtils::ValidatePath(translatedPath);
