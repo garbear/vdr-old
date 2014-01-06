@@ -34,9 +34,9 @@
 
 #include <asm/byteorder.h>
 
-#include "responsepacket.h"
-#include "vnsicommand.h"
-#include "config.h"
+#include "ResponsePacket.h"
+#include "VNSICommand.h"
+#include "VNSIServerConfig.h"
 
 /* Packet format for an RR channel response:
 

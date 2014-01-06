@@ -173,6 +173,7 @@ set(VDR_SRCS
 	vdr/vnsi/parser/ParserTeletext.cpp
 	vdr/vnsi/VNSIServerConfig.cpp
 	vdr/vnsi/RequestPacket.cpp
+	vdr/vnsi/ResponsePacket.cpp
 	thread.cpp
 )
 
