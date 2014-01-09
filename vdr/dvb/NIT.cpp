@@ -154,7 +154,8 @@ void cNitFilter::Process(u_short Pid, u_char Tid, const u_char *Data, int Length
                  if (Setup.UpdateChannels >= 5) {
                     bool found = false;
                     bool forceTransponderUpdate = false;
-                    for (std::vector<ChannelPtr>::const_iterator it = cChannelManager::Get().Iterator(); cChannelManager::Get().HasNext(it); cChannelManager::Get().Next(it)) {
+                    std::vector<ChannelPtr> channels = cChannelManager::Get().GetCurrent();
+                    for (std::vector<ChannelPtr>::const_iterator it = channels.begin(); it != channels.end(); ++it) {
                       ChannelPtr Channel = (*it);
                         if (!Channel->GroupSep() && Channel->Source() == Source && Channel->Nid() == ts.getOriginalNetworkId() && Channel->Tid() == ts.getTransportStreamId()) {
                            int transponder = Channel->Transponder();
@@ -191,7 +192,8 @@ void cNitFilter::Process(u_short Pid, u_char Tid, const u_char *Data, int Length
                  break;
             case SI::S2SatelliteDeliverySystemDescriptorTag: {
                  if (Setup.UpdateChannels >= 5) {
-                   for (std::vector<ChannelPtr>::const_iterator it = cChannelManager::Get().Iterator(); cChannelManager::Get().HasNext(it); cChannelManager::Get().Next(it)) {
+                   std::vector<ChannelPtr> channels = cChannelManager::Get().GetCurrent();
+                   for (std::vector<ChannelPtr>::const_iterator it = channels.begin(); it != channels.end(); ++it) {
                      ChannelPtr Channel = (*it);
                         if (!Channel->GroupSep() && cSource::IsSat(Channel->Source()) && Channel->Nid() == ts.getOriginalNetworkId() && Channel->Tid() == ts.getTransportStreamId()) {
                            SI::S2SatelliteDeliverySystemDescriptor *sd = (SI::S2SatelliteDeliverySystemDescriptor *)d;
@@ -230,7 +232,8 @@ void cNitFilter::Process(u_short Pid, u_char Tid, const u_char *Data, int Length
                  if (Setup.UpdateChannels >= 5) {
                     bool found = false;
                     bool forceTransponderUpdate = false;
-                    for (std::vector<ChannelPtr>::const_iterator it = cChannelManager::Get().Iterator(); cChannelManager::Get().HasNext(it); cChannelManager::Get().Next(it)) {
+                    std::vector<ChannelPtr> channels = cChannelManager::Get().GetCurrent();
+                    for (std::vector<ChannelPtr>::const_iterator it = channels.begin(); it != channels.end(); ++it) {
                       ChannelPtr Channel = (*it);
                         if (!Channel->GroupSep() && Channel->Source() == Source && Channel->Nid() == ts.getOriginalNetworkId() && Channel->Tid() == ts.getTransportStreamId()) {
                            int transponder = Channel->Transponder();
@@ -297,7 +300,8 @@ void cNitFilter::Process(u_short Pid, u_char Tid, const u_char *Data, int Length
                  if (Setup.UpdateChannels >= 5) {
                     bool found = false;
                     bool forceTransponderUpdate = false;
-                    for (std::vector<ChannelPtr>::const_iterator it = cChannelManager::Get().Iterator(); cChannelManager::Get().HasNext(it); cChannelManager::Get().Next(it)) {
+                    std::vector<ChannelPtr> channels = cChannelManager::Get().GetCurrent();
+                    for (std::vector<ChannelPtr>::const_iterator it = channels.begin(); it != channels.end(); ++it) {
                       ChannelPtr Channel = (*it);
                         if (!Channel->GroupSep() && Channel->Source() == Source && Channel->Nid() == ts.getOriginalNetworkId() && Channel->Tid() == ts.getTransportStreamId()) {
                            int transponder = Channel->Transponder();
@@ -337,7 +341,8 @@ void cNitFilter::Process(u_short Pid, u_char Tid, const u_char *Data, int Length
                  switch (sd->getExtensionDescriptorTag()) {
                    case SI::T2DeliverySystemDescriptorTag: {
                         if (Setup.UpdateChannels >= 5) {
-                          for (std::vector<ChannelPtr>::const_iterator it = cChannelManager::Get().Iterator(); cChannelManager::Get().HasNext(it); cChannelManager::Get().Next(it)) {
+                          std::vector<ChannelPtr> channels = cChannelManager::Get().GetCurrent();
+                          for (std::vector<ChannelPtr>::const_iterator it = channels.begin(); it != channels.end(); ++it) {
                             ChannelPtr Channel = (*it);
                                int Source = cSource::FromData(cSource::stTerr);
                                if (!Channel->GroupSep() && Channel->Source() == Source && Channel->Nid() == ts.getOriginalNetworkId() && Channel->Tid() == ts.getTransportStreamId()) {

@@ -178,10 +178,7 @@ public:
 
   void AddTransponders(cScanList* list) const;
 
-  // XXX refactor NIT
-  std::vector<ChannelPtr>::const_iterator Iterator(void) const { return m_channels.begin(); }
-  bool HasNext(const std::vector<ChannelPtr>::const_iterator& it) const { return it != m_channels.end(); }
-  void Next(std::vector<ChannelPtr>::const_iterator& it) const { ++it; }
+  std::vector<ChannelPtr> GetCurrent(void) const { return m_channels; }
 
 private:
   typedef std::vector<ChannelPtr>      ChannelVector;

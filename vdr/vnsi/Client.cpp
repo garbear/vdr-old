@@ -928,9 +928,8 @@ bool cVNSIClient::processCHANNELS_GetChannels() /* OPCODE 63 */
 
   bool radio = m_req->extract_U32();
 
-  //XXX Channels.Lock(false);
-
-  for (std::vector<ChannelPtr>::const_iterator it = cChannelManager::Get().Iterator(); cChannelManager::Get().HasNext(it); cChannelManager::Get().Next(it))
+  std::vector<ChannelPtr> channels = cChannelManager::Get().GetCurrent();
+  for (std::vector<ChannelPtr>::const_iterator it = channels.begin(); it != channels.end(); ++it)
   {
     ChannelPtr channel = *it;
     if (radio != IsRadio(channel.get()))
@@ -947,8 +946,6 @@ bool cVNSIClient::processCHANNELS_GetChannels() /* OPCODE 63 */
     m_resp->add_U32(channel->Ca());
     m_resp->add_U32(channel->Vtype());
   }
-
-  //XXXChannels.Unlock();
 
   m_resp->finalise();
   m_socket.write(m_resp->getPtr(), m_resp->getLen());
@@ -1022,9 +1019,8 @@ bool cVNSIClient::processCHANNELS_GetGroupMembers()
   bool automatic = m_channelgroups[radio][groupname].automatic;
   std::string name;
 
-//  XXX Channels.Lock(false);
-
-  for (std::vector<ChannelPtr>::const_iterator it = cChannelManager::Get().Iterator(); cChannelManager::Get().HasNext(it); cChannelManager::Get().Next(it))
+  std::vector<ChannelPtr> channels = cChannelManager::Get().GetCurrent();
+  for (std::vector<ChannelPtr>::const_iterator it = channels.begin(); it != channels.end(); ++it)
   {
     ChannelPtr channel = *it;
 
@@ -1064,7 +1060,8 @@ void cVNSIClient::CreateChannelGroups(bool automatic)
 {
   std::string groupname;
 
-  for (std::vector<ChannelPtr>::const_iterator it = cChannelManager::Get().Iterator(); cChannelManager::Get().HasNext(it); cChannelManager::Get().Next(it))
+  std::vector<ChannelPtr> channels = cChannelManager::Get().GetCurrent();
+  for (std::vector<ChannelPtr>::const_iterator it = channels.begin(); it != channels.end(); ++it)
   {
     ChannelPtr channel = *it;
     bool isRadio = IsRadio(channel.get());

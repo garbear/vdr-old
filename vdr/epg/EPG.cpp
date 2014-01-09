@@ -1356,7 +1356,8 @@ cSchedules::Read(FILE *f)
     if (result)
     {
       // Initialize the channels' schedule pointers, so that the first WhatsOn menu will come up faster:
-      for (std::vector<ChannelPtr>::const_iterator it = cChannelManager::Get().Iterator(); cChannelManager::Get().HasNext(it); cChannelManager::Get().Next(it))
+      std::vector<ChannelPtr> channels = cChannelManager::Get().GetCurrent();
+      for (std::vector<ChannelPtr>::const_iterator it = channels.begin(); it != channels.end(); ++it)
       {
         ChannelPtr Channel = (*it);
         s->GetSchedule(Channel.get());
