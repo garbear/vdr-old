@@ -41,7 +41,6 @@
 #include "video/Streamer.h"
 #include "Server.h"
 #include "video/RecPlayer.h"
-//#include "vnsiosd.h"
 #include "net/RequestPacket.h"
 #include "net/ResponsePacket.h"
 //#include "wirbelscanservice.h" /// copied from modified wirbelscan plugin
@@ -78,7 +77,6 @@ cVNSIClient::cVNSIClient(int fd, unsigned int id, const char *ClientAdr)
   m_resp                    = NULL;
   m_processSCAN_Response    = NULL;
   m_processSCAN_Socket      = NULL;
-//  m_Osd                     = NULL;
 
   m_socket.SetHandle(fd);
 
@@ -167,13 +165,6 @@ void* cVNSIClient::Process(void)
   /* If thread is ended due to closed connection delete a
      possible running stream here */
   StopChannelStreaming();
-
-//  // Shutdown OSD
-//  if (m_Osd)
-//  {
-//    delete m_Osd;
-//    m_Osd = NULL;
-//  }
 
   return NULL;
 }
@@ -1989,36 +1980,18 @@ void cVNSIClient::processSCAN_SetStatus(int status)
 
 bool cVNSIClient::processOSD_Connect() /* OPCODE 160 */
 {
-//  XXX
-//  m_Osd = new cVnsiOsdProvider(&m_socket);
-//  int osdWidth, osdHeight;
-//  double aspect;
-//  cDeviceManager::Get().PrimaryDevice()->GetOsdSize(osdWidth, osdHeight, aspect);
-//  m_resp->add_U32(osdWidth);
-//  m_resp->add_U32(osdHeight);
-//  m_resp->finalise();
-//  m_socket.write(m_resp->getPtr(), m_resp->getLen());
-//
-//  m_Osd = new cVnsiOsdProvider(&m_socket);
+  cResponsePacket *resp = new cResponsePacket();
+  m_resp->add_U32(VNSI_RET_NOTSUPPORTED);
+  m_socket.write(m_resp->getPtr(), m_resp->getLen());
   return false;
 }
 
 bool cVNSIClient::processOSD_Disconnect() /* OPCODE 161 */
 {
-//  if (m_Osd)
-//  {
-//    delete m_Osd;
-//    m_Osd = NULL;
-//  }
   return true;
 }
 
 bool cVNSIClient::processOSD_Hitkey() /* OPCODE 162 */
 {
-//  if (m_Osd)
-//  {
-//    unsigned int key = m_req->extract_U32();
-//    cVnsiOsdProvider::SendKey(key);
-//  }
   return true;
 }
