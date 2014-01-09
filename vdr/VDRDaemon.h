@@ -26,6 +26,8 @@
 #include "platform/threads/mutex.h"
 #include "platform/threads/threads.h"
 
+class cVNSIServer;
+
 class cVDRDaemon : protected PLATFORM::CThread, public ISignalReceiver
 {
 public:
@@ -79,4 +81,5 @@ private:
   PLATFORM::CEvent m_exitEvent;
   PLATFORM::CEvent m_sleepEvent;
   int              m_exitCode;
+  cVNSIServer*     m_server;
 };

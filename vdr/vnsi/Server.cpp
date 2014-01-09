@@ -47,8 +47,6 @@
 #include "Client.h"
 #include "settings/Settings.h"
 
-unsigned int cVNSIServer::m_IdCnt = 0;
-
 class cAllowedHosts : public cSVDRPhosts
 {
 public:
@@ -74,15 +72,17 @@ public:
 cVNSIServer::cVNSIServer(int listenPort)
 {
   m_ServerPort  = listenPort;
+  m_IdCnt       = 0;
 
-  if(!cSettings::Get().m_ConfigDirectory.empty())
+  std::string strConfigDirectory = cSettings::Get().m_ConfigDirectory;
+  if(!strConfigDirectory.empty())
   {
-    m_AllowedHostsFile = *cString::sprintf("%s/" ALLOWED_HOSTS_FILE, cSettings::Get().m_ConfigDirectory.c_str());
+    m_AllowedHostsFile = *cString::sprintf("%s/" ALLOWED_HOSTS_FILE, strConfigDirectory.c_str());
   }
   else
   {
     esyslog("cVNSIServer: missing ConfigDirectory!");
-    m_AllowedHostsFile = *cString::sprintf("/video/" ALLOWED_HOSTS_FILE);
+    m_AllowedHostsFile = "/video/" ALLOWED_HOSTS_FILE;
   }
 
   m_ServerFD = socket(AF_INET, SOCK_STREAM, 0);

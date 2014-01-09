@@ -33,8 +33,11 @@ class cVNSIClient;
 
 class cVNSIServer : public PLATFORM::CThread
 {
-protected:
+public:
+  cVNSIServer(int listenPort);
+  virtual ~cVNSIServer(void);
 
+protected:
   typedef std::list<cVNSIClient*> ClientList;
 
   void* Process(void);
@@ -44,12 +47,7 @@ protected:
   int           m_ServerFD;
   std::string   m_AllowedHostsFile;
   ClientList    m_clients;
-
-  static unsigned int m_IdCnt;
-
-public:
-  cVNSIServer(int listenPort);
-  virtual ~cVNSIServer();
+  unsigned int  m_IdCnt;
 };
 
 #endif // VNSI_SERVER_H

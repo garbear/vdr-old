@@ -22,13 +22,16 @@
 #include "VDRDaemon.h"
 #include "devices/linux/DVBDevice.h"
 #include "filesystem/Directory.h"
+#include "vnsi/Server.h"
+#include "settings/Settings.h"
 
 #include <signal.h> // or #include <bits/signum.h>
 
 using namespace PLATFORM;
 
 cVDRDaemon::cVDRDaemon()
- : m_exitCode(0)
+ : m_exitCode(0),
+   m_server(NULL)
 {
 }
 
@@ -36,6 +39,8 @@ cVDRDaemon::~cVDRDaemon()
 {
   Stop();
   WaitForShutdown();
+  delete m_server;
+  m_server = NULL;
 }
 
 bool cVDRDaemon::Init()
@@ -62,6 +67,7 @@ bool cVDRDaemon::Init()
 //  cDvbDevice::Initialize();
 //  cDvbDevice::BondDevices(Setup.DeviceBondings);
 
+  m_server = new cVNSIServer(cSettings::Get().m_ListenPort);
   return CreateThread(true);
 }
 
