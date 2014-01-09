@@ -8,6 +8,7 @@ ADD_SUBDIRECTORY(lib/gtest)
 enable_testing()
 
 ADD_SUBDIRECTORY(lib/libsi)
+ADD_SUBDIRECTORY(lib/libhts)
 
 SET(IS_ANDROID $ENV{ANDROID})
 
@@ -18,6 +19,7 @@ include_directories(${CMAKE_SOURCE_DIR}/vdr)
 include_directories(${CMAKE_SOURCE_DIR}/lib)
 include_directories(${gtest_SOURCE_DIR}/include)
 include_directories(${CMAKE_SOURCE_DIR}/lib/libsi)
+include_directories(${CMAKE_SOURCE_DIR}/lib/libhts)
 
 CHECK_LIBRARY_EXISTS(rt clock_gettime "time.h" HAVE_RT)
 CHECK_LIBRARY_EXISTS(pthread pthread_create "pthread.h" HAVE_PTHREAD)
@@ -55,6 +57,8 @@ endif()
 list(APPEND LIBS tinyxml)
 
 list(APPEND LIBS libsi)
+
+list(APPEND LIBS libhts)
 
 add_definitions(-DTARGET_LINUX -DTARGET_POSIX)
 
