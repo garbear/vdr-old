@@ -140,6 +140,14 @@ cSettings::cSettings()
   m_VideoDirectory = DEFAULTVIDEODIR;
   m_StartedAsRoot = false;
   m_HasStdin = (tcgetpgrp(STDIN_FILENO) == getpid() || getppid() != (pid_t)1) && tcgetattr(STDIN_FILENO, &m_savedTm) == 0;
+
+  m_ListenPort              = LISTEN_PORT;
+  m_StreamTimeout           = 10;
+  m_PmtTimeout              = 5;
+  m_TimeshiftMode           = 0;
+  m_TimeshiftBufferSize     = 5;
+  m_TimeshiftBufferFileSize = 6;
+  m_TimeshiftBufferDir[0]   = '\0';
 }
 
 cSettings::~cSettings()

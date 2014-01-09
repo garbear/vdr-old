@@ -19,10 +19,10 @@
  */
 
 
-#include "../ServerConfig.h"
 #include "Demuxer.h"
-#include "VideoBuffer.h"
 
+#include "VideoBuffer.h"
+#include "Config.h"
 #include "channels/ChannelManager.h"
 #include <libsi/si.h>
 

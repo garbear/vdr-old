@@ -19,7 +19,6 @@
  *
  */
 
-#include "vnsi/ServerConfig.h"
 #include "VideoInput.h"
 #include "VideoBuffer.h"
 
@@ -32,6 +31,7 @@
 #include "channels/ChannelManager.h"
 #include "devices/Device.h"
 #include "devices/Receiver.h"
+#include "settings/Settings.h"
 #include <libsi/section.h>
 #include <libsi/descriptor.h>
 
@@ -531,7 +531,7 @@ void* cVideoInput::Process()
 
   while (!IsStopped())
   {
-    if (starttime.Elapsed() > (unsigned int)VNSIServerConfig.PmtTimeout*1000)
+    if (starttime.Elapsed() > (unsigned int)cSettings::Get().m_PmtTimeout*1000)
     {
       isyslog("VideoInput: no pat/pmt within timeout, falling back to channel pids");
       m_Receiver->m_PmtChannel = *m_Channel;

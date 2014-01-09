@@ -35,8 +35,6 @@
 #include "recordings/Recording.h"
 #include "utils/Tools.h"
 
-#include "vnsi/ServerConfig.h"
-
 #include <vector>
 
 class cSegment

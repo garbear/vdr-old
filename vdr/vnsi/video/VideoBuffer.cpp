@@ -19,13 +19,13 @@
  */
 
 #include "VideoBuffer.h"
-#include "vnsi/ServerConfig.h"
 #include "RecPlayer.h"
 
 #include "utils/Ringbuffer.h"
 #include "devices/Remux.h"
 #include "filesystem/Videodir.h"
 #include "recordings/Recording.h"
+#include "settings/Settings.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -216,7 +216,7 @@ cVideoBufferRAM::~cVideoBufferRAM()
 
 bool cVideoBufferRAM::Init()
 {
-  m_BufferSize = (off_t)VNSIServerConfig.TimeshiftBufferSize*100*1000*1000;
+  m_BufferSize = (off_t)cSettings::Get().m_TimeshiftBufferSize*100*1000*1000;
   isyslog("allocated timeshift buffer with size: %ld", m_BufferSize);
   m_Buffer = (uint8_t*)malloc(m_BufferSize + m_Margin);
   m_BufferPtr = m_Buffer + m_Margin;
@@ -374,15 +374,15 @@ bool cVideoBufferFile::Init()
   if (!m_ReadCache)
     return false;
 
-  m_BufferSize = (off_t)VNSIServerConfig.TimeshiftBufferFileSize*1000*1000*1000;
+  m_BufferSize = (off_t)cSettings::Get().m_TimeshiftBufferFileSize*1000*1000*1000;
 
   struct stat sb;
-  if ((*VNSIServerConfig.TimeshiftBufferDir) && stat(VNSIServerConfig.TimeshiftBufferDir, &sb) == 0 && S_ISDIR(sb.st_mode))
+  if ((*cSettings::Get().m_TimeshiftBufferDir) && stat(cSettings::Get().m_TimeshiftBufferDir, &sb) == 0 && S_ISDIR(sb.st_mode))
   {
-    if (VNSIServerConfig.TimeshiftBufferDir[strlen(VNSIServerConfig.TimeshiftBufferDir)-1] == '/')
-      m_Filename = cString::sprintf("%sTimeshift-%d.vnsi", VNSIServerConfig.TimeshiftBufferDir, m_ClientID);
+    if (cSettings::Get().m_TimeshiftBufferDir[strlen(cSettings::Get().m_TimeshiftBufferDir)-1] == '/')
+      m_Filename = cString::sprintf("%sTimeshift-%d.vnsi", cSettings::Get().m_TimeshiftBufferDir, m_ClientID);
     else
-      m_Filename = cString::sprintf("%s/Timeshift-%d.vnsi", VNSIServerConfig.TimeshiftBufferDir, m_ClientID);
+      m_Filename = cString::sprintf("%s/Timeshift-%d.vnsi", cSettings::Get().m_TimeshiftBufferDir, m_ClientID);
   }
   else
     m_Filename = cString::sprintf("%s/Timeshift-%d.vnsi", VideoDirectory, m_ClientID);
@@ -502,6 +502,7 @@ int cVideoBufferFile::ReadBytes(uint8_t *buf, off_t pos, unsigned int size)
     }
     return p;
   }
+  return -1;
 }
 
 int cVideoBufferFile::ReadBlock(uint8_t **buf, unsigned int size)
@@ -833,13 +834,13 @@ cVideoBuffer::~cVideoBuffer()
 cVideoBuffer* cVideoBuffer::Create(int clientID, uint8_t timeshift)
 {
   // no time shift
-  if (VNSIServerConfig.TimeshiftMode == 0 || timeshift == 0)
+  if (cSettings::Get().m_TimeshiftMode == 0 || timeshift == 0)
   {
     cVideoBufferSimple *buffer = new cVideoBufferSimple();
     return buffer;
   }
   // buffer in ram
-  else if (VNSIServerConfig.TimeshiftMode == 1)
+  else if (cSettings::Get().m_TimeshiftMode == 1)
   {
     cVideoBufferRAM *buffer = new cVideoBufferRAM();
     if (!buffer->Init())
@@ -851,7 +852,7 @@ cVideoBuffer* cVideoBuffer::Create(int clientID, uint8_t timeshift)
       return buffer;
   }
   // buffer in file
-  else if (VNSIServerConfig.TimeshiftMode == 2)
+  else if (cSettings::Get().m_TimeshiftMode == 2)
   {
     cVideoBufferFile *buffer = new cVideoBufferFile(clientID);
     if (!buffer->Init())

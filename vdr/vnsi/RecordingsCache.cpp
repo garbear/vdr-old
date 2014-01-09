@@ -20,7 +20,6 @@
  *
  */
 
-#include "ServerConfig.h"
 #include "RecordingsCache.h"
 #include "utils/CRC32.h"
 

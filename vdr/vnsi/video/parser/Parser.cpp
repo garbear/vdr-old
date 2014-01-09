@@ -20,9 +20,9 @@
 
 #include <stdlib.h>
 #include <assert.h>
+#include "Config.h"
 #include "devices/Remux.h"
 #include "channels/ChannelManager.h"
-#include "vnsi/ServerConfig.h"
 #include "Parser.h"
 #include "ParserAAC.h"
 #include "ParserAC3.h"

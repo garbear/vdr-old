@@ -34,7 +34,7 @@
 #include "devices/Device.h"
 
 //#include "vnsi.h"
-#include "ServerConfig.h"
+#include "settings/Settings.h"
 #include "net/VNSICommand.h"
 #include "RecordingsCache.h"
 #include "Client.h"
@@ -653,13 +653,13 @@ bool cVNSIClient::process_GetSetup() /* OPCODE 8 */
 {
   char* name = m_req->extract_String();
   if (!strcasecmp(name, CONFNAME_PMTTIMEOUT))
-    m_resp->add_U32(VNSIServerConfig.PmtTimeout);
+    m_resp->add_U32(cSettings::Get().m_PmtTimeout);
   else if (!strcasecmp(name, CONFNAME_TIMESHIFT))
-    m_resp->add_U32(VNSIServerConfig.TimeshiftMode);
+    m_resp->add_U32(cSettings::Get().m_TimeshiftMode);
   else if (!strcasecmp(name, CONFNAME_TIMESHIFTBUFFERSIZE))
-    m_resp->add_U32(VNSIServerConfig.TimeshiftBufferSize);
+    m_resp->add_U32(cSettings::Get().m_TimeshiftBufferSize);
   else if (!strcasecmp(name, CONFNAME_TIMESHIFTBUFFERFILESIZE))
-    m_resp->add_U32(VNSIServerConfig.TimeshiftBufferFileSize);
+    m_resp->add_U32(cSettings::Get().m_TimeshiftBufferFileSize);
 
   m_resp->finalise();
   m_socket.write(m_resp->getPtr(), m_resp->getLen());
@@ -708,7 +708,7 @@ bool cVNSIClient::processChannelStream_Open() /* OPCODE 20 */
   uint32_t timeout = m_req->extract_U32();
 
   if(timeout == 0)
-    timeout = VNSIServerConfig.stream_timeout;
+    timeout = cSettings::Get().m_StreamTimeout;
 
   if (m_isStreaming)
     StopChannelStreaming();
@@ -954,11 +954,7 @@ bool cVNSIClient::processCHANNELS_GetChannels() /* OPCODE 63 */
     m_resp->add_U32(channel->Hash());
     m_resp->add_U32(0); // groupindex unused
     m_resp->add_U32(channel->Ca());
-#if APIVERSNUM >= 10701
     m_resp->add_U32(channel->Vtype());
-#else
-    m_resp->add_U32(2);
-#endif
   }
 
   //XXXChannels.Unlock();
@@ -1431,11 +1427,7 @@ bool cVNSIClient::processRECORDINGS_GetList() /* OPCODE 102 */
 
   for (cRecording *recording = Recordings.First(); recording; recording = Recordings.Next(recording))
   {
-//#if APIVERSNUM >= 10705
     const cEvent *event = recording->Info()->GetEvent();
-//#else
-//    const cEvent *event = NULL;
-//#endif
 
     time_t recordingStart    = 0;
     int    recordingDuration = 0;
@@ -1454,11 +1446,7 @@ bool cVNSIClient::processRECORDINGS_GetList() /* OPCODE 102 */
 //      }
 //      else
 //      {
-//#if APIVERSNUM >= 10727
         recordingStart = recording->Start();
-//#else
-//        recordingStart = recording->start;
-//#endif
 //      }
     }
     dsyslog("GRI: RC: recordingStart=%lu recordingDuration=%i", recordingStart, recordingDuration);
@@ -1470,18 +1458,10 @@ bool cVNSIClient::processRECORDINGS_GetList() /* OPCODE 102 */
     m_resp->add_U32(recordingDuration);
 
     // priority
-#if APIVERSNUM >= 10727
     m_resp->add_U32(recording->Priority());
-#else
-    m_resp->add_U32(recording->priority);
-#endif
 
     // lifetime
-#if APIVERSNUM >= 10727
     m_resp->add_U32(recording->Lifetime());
-#else
-    m_resp->add_U32(recording->lifetime);
-#endif
 
     // channel_name
     m_resp->add_String(recording->Info()->ChannelName() ? m_toUTF8.Convert(recording->Info()->ChannelName()) : "");
@@ -1702,16 +1682,8 @@ bool cVNSIClient::processEPG_GetForChannel() /* OPCODE 120 */
     thisEventDescription  = event->Description();
     thisEventTime         = event->StartTime();
     thisEventDuration     = event->Duration();
-#if defined(USE_PARENTALRATING) || defined(PARENTALRATINGCONTENTVERSNUM)
-    thisEventContent      = event->Contents();
-    thisEventRating       = 0;
-#elif APIVERSNUM >= 10711
     thisEventContent      = event->Contents();
     thisEventRating       = event->ParentalRating();
-#else
-    thisEventContent      = 0;
-    thisEventRating       = 0;
-#endif
 
     //in the past filter
     if ((thisEventTime + thisEventDuration) < (uint32_t)time(NULL)) continue;

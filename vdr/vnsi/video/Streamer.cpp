@@ -29,7 +29,6 @@
 
 #include "channels/ChannelManager.h"
 
-#include "vnsi/ServerConfig.h"
 #include "Streamer.h"
 #include "utils/XSocket.h"
 #include "vnsi/net/VNSICommand.h"
@@ -38,6 +37,7 @@
 #include "devices/DeviceManager.h"
 #include "recordings/Timers.h"
 #include "recordings/Recording.h"
+#include "settings/Settings.h"
 
 #include "thread.h"
 
@@ -62,7 +62,7 @@ cLiveStreamer::cLiveStreamer(int clientID, uint8_t timeshift, uint32_t timeout)
   memset(&m_FrontendInfo, 0, sizeof(m_FrontendInfo));
 
   if(m_scanTimeout == 0)
-    m_scanTimeout = VNSIServerConfig.stream_timeout;
+    m_scanTimeout = cSettings::Get().m_StreamTimeout;
 }
 
 cLiveStreamer::~cLiveStreamer()

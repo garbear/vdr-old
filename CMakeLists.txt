@@ -182,7 +182,6 @@ set(VDR_SRCS
 	vdr/vnsi/RecordingsCache.cpp
 	vdr/vnsi/Client.cpp
 	vdr/vnsi/Server.cpp
-	vdr/vnsi/ServerConfig.cpp
 	thread.cpp
 )
 

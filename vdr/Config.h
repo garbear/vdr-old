@@ -56,6 +56,13 @@
 #define MaxSkinName 16
 #define MaxThemeName 16
 
+// Error flags
+#define ERROR_PES_GENERAL   0x01
+#define ERROR_PES_SCRAMBLE  0x02
+#define ERROR_PES_STARTCODE 0x04
+#define ERROR_DEMUX_NODATA  0x10
+
+
 // Basically VDR works according to the DVB standard, but there are countries/providers
 // that use other standards, which in some details deviate from the DVB standard.
 // This makes it necessary to handle things differently in some areas, depending on

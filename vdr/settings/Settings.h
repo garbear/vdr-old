@@ -21,6 +21,8 @@
 
 #include <termios.h>
 #include <string>
+#include <stdint.h>
+#include <limits.h>
 
 #define DEFAULTEPGDATAFILENAME "epg.data"
 
@@ -29,6 +31,14 @@
 #define DEFAULTRESDIR   "/usr/local/share/vdr"
 #define VIDEODIR        "/srv/vdr/video" // used in videodir.cpp
 #define MAXDEVICES 64
+
+// default settings
+#define ALLOWED_HOSTS_FILE  "allowed_hosts.conf"
+#define FRONTEND_DEVICE     "/dev/dvb/adapter%d/frontend%d"
+
+#define LISTEN_PORT       34890
+#define LISTEN_PORT_S    "34890"
+#define DISCOVERY_PORT    34890
 
 class cPluginManager;
 
@@ -61,6 +71,16 @@ public:
   bool           m_StartedAsRoot;
   bool           m_HasStdin;
   struct termios m_savedTm;
+
+  // Remote server settings
+  uint16_t       m_ListenPort;         // Port of remote server
+  uint16_t       m_StreamTimeout;      // timeout in seconds for stream data
+
+  int            m_PmtTimeout;
+  int            m_TimeshiftMode;
+  int            m_TimeshiftBufferSize;
+  int            m_TimeshiftBufferFileSize;
+  char           m_TimeshiftBufferDir[PATH_MAX];
 
 private:
   cSettings();

@@ -45,7 +45,7 @@
 
 #include "Server.h"
 #include "Client.h"
-#include "ServerConfig.h"
+#include "settings/Settings.h"
 
 unsigned int cVNSIServer::m_IdCnt = 0;
 
@@ -57,7 +57,7 @@ public:
     if (!Load(AllowedHostsFile, true, true))
     {
       esyslog("Invalid or missing '%s'. falling back to 'svdrphosts.conf'.", *AllowedHostsFile);
-      cString Base = cString::sprintf("%s/../svdrphosts.conf", *VNSIServerConfig.ConfigDirectory);
+      cString Base = cString::sprintf("%s/../svdrphosts.conf", cSettings::Get().m_ConfigDirectory.c_str());
       if (!Load(Base, true, true))
       {
         esyslog("Invalid or missing %s. Adding 127.0.0.1 to list of allowed hosts.", *Base);
@@ -71,13 +71,13 @@ public:
   }
 };
 
-cVNSIServer::cVNSIServer(int listenPort)/* : cThread("VDR VNSI Server")*/
+cVNSIServer::cVNSIServer(int listenPort)
 {
   m_ServerPort  = listenPort;
 
-  if(*VNSIServerConfig.ConfigDirectory)
+  if(!cSettings::Get().m_ConfigDirectory.empty())
   {
-    m_AllowedHostsFile = cString::sprintf("%s/" ALLOWED_HOSTS_FILE, *VNSIServerConfig.ConfigDirectory);
+    m_AllowedHostsFile = cString::sprintf("%s/" ALLOWED_HOSTS_FILE, cSettings::Get().m_ConfigDirectory.c_str());
   }
   else
   {
@@ -113,7 +113,7 @@ cVNSIServer::cVNSIServer(int listenPort)/* : cThread("VDR VNSI Server")*/
   CreateThread();
 
   isyslog("VNSI Server started");
-  isyslog("Channel streaming timeout: %i seconds", VNSIServerConfig.stream_timeout);
+  isyslog("Channel streaming timeout: %i seconds", cSettings::Get().m_StreamTimeout);
   return;
 }
 
@@ -203,12 +203,12 @@ void* cVNSIServer::Process(void)
   // delete old timeshift file
   cString cmd;
   struct stat sb;
-  if ((*VNSIServerConfig.TimeshiftBufferDir) && stat(VNSIServerConfig.TimeshiftBufferDir, &sb) == 0 && S_ISDIR(sb.st_mode))
+  if ((*cSettings::Get().m_TimeshiftBufferDir) && stat(cSettings::Get().m_TimeshiftBufferDir, &sb) == 0 && S_ISDIR(sb.st_mode))
   {
-    if (VNSIServerConfig.TimeshiftBufferDir[strlen(VNSIServerConfig.TimeshiftBufferDir)-1] == '/')
-      cmd = cString::sprintf("rm -f %s*.vnsi", VNSIServerConfig.TimeshiftBufferDir);
+    if (cSettings::Get().m_TimeshiftBufferDir[strlen(cSettings::Get().m_TimeshiftBufferDir)-1] == '/')
+      cmd = cString::sprintf("rm -f %s*.vnsi", cSettings::Get().m_TimeshiftBufferDir);
     else
-      cmd = cString::sprintf("rm -f %s/*.vnsi", VNSIServerConfig.TimeshiftBufferDir);
+      cmd = cString::sprintf("rm -f %s/*.vnsi", cSettings::Get().m_TimeshiftBufferDir);
   }
   else
   {
