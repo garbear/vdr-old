@@ -33,6 +33,7 @@ using namespace std;
 int SysLogLevel = 3;
 
 #define MAXSYSLOGBUF 256
+#define LOG_STDOUT (1)
 
 #ifdef ANDROID
 #include "android_getline.h"
@@ -49,7 +50,12 @@ void syslog_with_tid(int priority, const char *format, ...)
   char fmt[MAXSYSLOGBUF];
   snprintf(fmt, sizeof(fmt), "[%d] %s", cThread::ThreadId(), format);
   va_start(ap, format);
+#if LOG_STDOUT
+  vprintf(fmt, ap);
+  printf("\n");
+#else
   vsyslog(priority, fmt, ap);
+#endif
   va_end(ap);
 }
 
