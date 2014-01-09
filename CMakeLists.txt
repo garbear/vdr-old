@@ -160,20 +160,29 @@ set(VDR_SRCS
 	vdr/utils/url/UrlOptions.cpp
 	vdr/utils/url/URLUtils.cpp
 	vdr/utils/Shutdown.cpp
+	vdr/utils/XSocket.cpp
 	vdr/Player.cpp
-	vdr/vnsi/parser/Bitstream.cpp
-	vdr/vnsi/parser/Parser.cpp
-	vdr/vnsi/parser/ParserAAC.cpp
-	vdr/vnsi/parser/ParserAC3.cpp
-	vdr/vnsi/parser/ParserDTS.cpp
-	vdr/vnsi/parser/ParserH264.cpp
-	vdr/vnsi/parser/ParserMPEGAudio.cpp
-	vdr/vnsi/parser/ParserMPEGVideo.cpp
-	vdr/vnsi/parser/ParserSubtitle.cpp
-	vdr/vnsi/parser/ParserTeletext.cpp
-	vdr/vnsi/VNSIServerConfig.cpp
-	vdr/vnsi/RequestPacket.cpp
-	vdr/vnsi/ResponsePacket.cpp
+	vdr/vnsi/net/RequestPacket.cpp
+	vdr/vnsi/net/ResponsePacket.cpp
+	vdr/vnsi/video/Demuxer.cpp
+	vdr/vnsi/video/RecPlayer.cpp
+	vdr/vnsi/video/Streamer.cpp
+	vdr/vnsi/video/VideoBuffer.cpp
+	vdr/vnsi/video/VideoInput.cpp
+	vdr/vnsi/video/parser/Bitstream.cpp
+	vdr/vnsi/video/parser/Parser.cpp
+	vdr/vnsi/video/parser/ParserAAC.cpp
+	vdr/vnsi/video/parser/ParserAC3.cpp
+	vdr/vnsi/video/parser/ParserDTS.cpp
+	vdr/vnsi/video/parser/ParserH264.cpp
+	vdr/vnsi/video/parser/ParserMPEGAudio.cpp
+	vdr/vnsi/video/parser/ParserMPEGVideo.cpp
+	vdr/vnsi/video/parser/ParserSubtitle.cpp
+	vdr/vnsi/video/parser/ParserTeletext.cpp
+	vdr/vnsi/RecordingsCache.cpp
+	vdr/vnsi/Client.cpp
+	vdr/vnsi/Server.cpp
+	vdr/vnsi/ServerConfig.cpp
 	thread.cpp
 )
 
