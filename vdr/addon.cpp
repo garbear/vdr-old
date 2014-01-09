@@ -66,11 +66,12 @@ ADDON_STATUS ADDON_Create(void* hdl, void* props)
     return status;
   }
 
-  m_CurStatus     = ADDON_STATUS_OK;
   g_strUserPath   = cprops->strUserPath;
   g_strClientPath = cprops->strClientPath;
 
   ADDON_ReadSettings();
+  m_CurStatus     = vdr.Init() ? ADDON_STATUS_UNKNOWN : ADDON_STATUS_OK;
+
   return m_CurStatus;
 }
 
