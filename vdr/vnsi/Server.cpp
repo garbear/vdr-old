@@ -112,7 +112,7 @@ cVNSIServer::cVNSIServer(int listenPort)
 
   CreateThread();
 
-  isyslog("VNSI Server started");
+  isyslog("VNSI Server started on port %d", m_ServerPort);
   isyslog("Channel streaming timeout: %i seconds", cSettings::Get().m_StreamTimeout);
   return;
 }
