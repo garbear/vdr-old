@@ -147,6 +147,7 @@ cSettings::cSettings()
   m_TimeshiftMode           = 0;
   m_TimeshiftBufferSize     = 5;
   m_TimeshiftBufferFileSize = 6;
+  m_ConfigDirectory         = DEFAULTCONFDIR;
 }
 
 cSettings::~cSettings()

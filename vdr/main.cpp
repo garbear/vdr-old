@@ -21,6 +21,7 @@
 
 #include "SignalHandler.h"
 #include "VDRDaemon.h"
+#include "settings/Settings.h"
 
 #include <signal.h>
 #include <unistd.h>
@@ -28,6 +29,9 @@
 int main(int argc, char *argv[])
 {
   cVDRDaemon vdr;
+
+  if (!cSettings::Get().LoadFromCmdLine(argc, argv))
+    return -2;
 
   if (vdr.Init())
   {
