@@ -203,12 +203,13 @@ void* cVNSIServer::Process(void)
   // delete old timeshift file
   cString cmd;
   struct stat sb;
-  if ((*cSettings::Get().m_TimeshiftBufferDir) && stat(cSettings::Get().m_TimeshiftBufferDir, &sb) == 0 && S_ISDIR(sb.st_mode))
+  std::string strTimeshiftBufferDir = cSettings::Get().m_TimeshiftBufferDir;
+  if (!strTimeshiftBufferDir.empty() && stat(strTimeshiftBufferDir.c_str(), &sb) == 0 && S_ISDIR(sb.st_mode))
   {
-    if (cSettings::Get().m_TimeshiftBufferDir[strlen(cSettings::Get().m_TimeshiftBufferDir)-1] == '/')
-      cmd = cString::sprintf("rm -f %s*.vnsi", cSettings::Get().m_TimeshiftBufferDir);
+    if (strTimeshiftBufferDir.at(strTimeshiftBufferDir.length() - 1) == '/')
+      cmd = cString::sprintf("rm -f %s*.vnsi", strTimeshiftBufferDir.c_str());
     else
-      cmd = cString::sprintf("rm -f %s/*.vnsi", cSettings::Get().m_TimeshiftBufferDir);
+      cmd = cString::sprintf("rm -f %s/*.vnsi", strTimeshiftBufferDir.c_str());
   }
   else
   {

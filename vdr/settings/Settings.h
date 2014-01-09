@@ -80,7 +80,7 @@ public:
   int            m_TimeshiftMode;
   int            m_TimeshiftBufferSize;
   int            m_TimeshiftBufferFileSize;
-  char           m_TimeshiftBufferDir[PATH_MAX];
+  std::string    m_TimeshiftBufferDir;
 
 private:
   cSettings();

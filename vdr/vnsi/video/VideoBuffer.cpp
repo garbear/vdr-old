@@ -377,12 +377,13 @@ bool cVideoBufferFile::Init()
   m_BufferSize = (off_t)cSettings::Get().m_TimeshiftBufferFileSize*1000*1000*1000;
 
   struct stat sb;
-  if ((*cSettings::Get().m_TimeshiftBufferDir) && stat(cSettings::Get().m_TimeshiftBufferDir, &sb) == 0 && S_ISDIR(sb.st_mode))
+  std::string strTimeshiftBufferDir = cSettings::Get().m_TimeshiftBufferDir;
+  if (!strTimeshiftBufferDir.empty() && stat(strTimeshiftBufferDir.c_str(), &sb) == 0 && S_ISDIR(sb.st_mode))
   {
-    if (cSettings::Get().m_TimeshiftBufferDir[strlen(cSettings::Get().m_TimeshiftBufferDir)-1] == '/')
-      m_Filename = cString::sprintf("%sTimeshift-%d.vnsi", cSettings::Get().m_TimeshiftBufferDir, m_ClientID);
+    if (strTimeshiftBufferDir.at(strTimeshiftBufferDir.length() - 1) == '/')
+      m_Filename = cString::sprintf("%sTimeshift-%d.vnsi", strTimeshiftBufferDir.c_str(), m_ClientID);
     else
-      m_Filename = cString::sprintf("%s/Timeshift-%d.vnsi", cSettings::Get().m_TimeshiftBufferDir, m_ClientID);
+      m_Filename = cString::sprintf("%s/Timeshift-%d.vnsi", strTimeshiftBufferDir.c_str(), m_ClientID);
   }
   else
     m_Filename = cString::sprintf("%s/Timeshift-%d.vnsi", VideoDirectory, m_ClientID);

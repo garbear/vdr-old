@@ -147,7 +147,6 @@ cSettings::cSettings()
   m_TimeshiftMode           = 0;
   m_TimeshiftBufferSize     = 5;
   m_TimeshiftBufferFileSize = 6;
-  m_TimeshiftBufferDir[0]   = '\0';
 }
 
 cSettings::~cSettings()
