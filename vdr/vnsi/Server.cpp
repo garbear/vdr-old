@@ -52,15 +52,15 @@ unsigned int cVNSIServer::m_IdCnt = 0;
 class cAllowedHosts : public cSVDRPhosts
 {
 public:
-  cAllowedHosts(const cString& AllowedHostsFile)
+  cAllowedHosts(const std::string& AllowedHostsFile)
   {
-    if (!Load(AllowedHostsFile, true, true))
+    if (!Load(AllowedHostsFile.c_str(), true, true))
     {
-      esyslog("Invalid or missing '%s'. falling back to 'svdrphosts.conf'.", *AllowedHostsFile);
-      cString Base = cString::sprintf("%s/../svdrphosts.conf", cSettings::Get().m_ConfigDirectory.c_str());
-      if (!Load(Base, true, true))
+      esyslog("Invalid or missing '%s'. falling back to 'svdrphosts.conf'.", AllowedHostsFile.c_str());
+      std::string Base = *cString::sprintf("%s/../svdrphosts.conf", cSettings::Get().m_ConfigDirectory.c_str());
+      if (!Load(Base.c_str(), true, true))
       {
-        esyslog("Invalid or missing %s. Adding 127.0.0.1 to list of allowed hosts.", *Base);
+        esyslog("Invalid or missing %s. Adding 127.0.0.1 to list of allowed hosts.", Base.c_str());
         cSVDRPhost *localhost = new cSVDRPhost;
         if (localhost->Parse("127.0.0.1"))
           Add(localhost);
@@ -77,12 +77,12 @@ cVNSIServer::cVNSIServer(int listenPort)
 
   if(!cSettings::Get().m_ConfigDirectory.empty())
   {
-    m_AllowedHostsFile = cString::sprintf("%s/" ALLOWED_HOSTS_FILE, cSettings::Get().m_ConfigDirectory.c_str());
+    m_AllowedHostsFile = *cString::sprintf("%s/" ALLOWED_HOSTS_FILE, cSettings::Get().m_ConfigDirectory.c_str());
   }
   else
   {
     esyslog("cVNSIServer: missing ConfigDirectory!");
-    m_AllowedHostsFile = cString::sprintf("/video/" ALLOWED_HOSTS_FILE);
+    m_AllowedHostsFile = *cString::sprintf("/video/" ALLOWED_HOSTS_FILE);
   }
 
   m_ServerFD = socket(AF_INET, SOCK_STREAM, 0);
@@ -145,7 +145,7 @@ void cVNSIServer::NewClientConnected(int fd)
   cAllowedHosts AllowedHosts(m_AllowedHostsFile);
   if (!AllowedHosts.Acceptable(sin.sin_addr.s_addr))
   {
-    esyslog("Address not allowed to connect (%s)", *m_AllowedHostsFile);
+    esyslog("Address not allowed to connect (%s)", m_AllowedHostsFile.c_str());
     close(fd);
     return;
   }
@@ -201,21 +201,21 @@ void* cVNSIServer::Process(void)
   time_t epgUpdate = cSchedules::Modified();
 
   // delete old timeshift file
-  cString cmd;
+  std::string cmd;
   struct stat sb;
   std::string strTimeshiftBufferDir = cSettings::Get().m_TimeshiftBufferDir;
   if (!strTimeshiftBufferDir.empty() && stat(strTimeshiftBufferDir.c_str(), &sb) == 0 && S_ISDIR(sb.st_mode))
   {
     if (strTimeshiftBufferDir.at(strTimeshiftBufferDir.length() - 1) == '/')
-      cmd = cString::sprintf("rm -f %s*.vnsi", strTimeshiftBufferDir.c_str());
+      cmd = *cString::sprintf("rm -f %s*.vnsi", strTimeshiftBufferDir.c_str());
     else
-      cmd = cString::sprintf("rm -f %s/*.vnsi", strTimeshiftBufferDir.c_str());
+      cmd = *cString::sprintf("rm -f %s/*.vnsi", strTimeshiftBufferDir.c_str());
   }
   else
   {
-    cmd = cString::sprintf("rm -f %s/*.vnsi", VideoDirectory);
+    cmd = *cString::sprintf("rm -f %s/*.vnsi", VideoDirectory);
   }
-  int ret = system(cmd);
+  int ret = system(cmd.c_str());
 
   while (!IsStopped())
   {

@@ -42,7 +42,7 @@ protected:
 
   int           m_ServerPort;
   int           m_ServerFD;
-  cString       m_AllowedHostsFile;
+  std::string   m_AllowedHostsFile;
   ClientList    m_clients;
 
   static unsigned int m_IdCnt;
