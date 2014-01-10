@@ -15,8 +15,6 @@
 #include "devices/subsystems/DeviceVideoFormatSubsystem.h"
 #include "recordings/Recording.h"
 
-#include "osdbase.h"
-
 class cDevice;
 
 class cPlayer {
@@ -83,6 +81,22 @@ public:
        // Sets the current subtitle track to the given value.
        // This is just a virtual hook for players that need to do special things
        // in order to switch subtitle tracks.
+  };
+
+class cOsdObject { ///XXX
+  friend class cOsdMenu;
+private:
+  bool isMenu;
+  bool needsFastResponse;
+protected:
+  void SetNeedsFastResponse(bool NeedsFastResponse) { needsFastResponse = NeedsFastResponse; }
+public:
+  cOsdObject(bool FastResponse = false) { isMenu = false; needsFastResponse = FastResponse; }
+  virtual ~cOsdObject() {}
+  virtual bool NeedsFastResponse(void) { return needsFastResponse; }
+  bool IsMenu(void) const { return isMenu; }
+  virtual void Show(void) { /* XXX */ }
+// virtual eOSState ProcessKey(eKeys Key) { return osUnknown; }
   };
 
 class cControl : public cOsdObject {

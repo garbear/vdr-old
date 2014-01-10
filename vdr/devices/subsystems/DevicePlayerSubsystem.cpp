@@ -24,7 +24,6 @@
 #include "DeviceSPUSubsystem.h"
 #include "DeviceTrackSubsystem.h"
 #include "DeviceVideoFormatSubsystem.h"
-#include "osd.h"
 #include "Player.h"
 #include "devices/Transfer.h"
 

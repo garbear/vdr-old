@@ -11,9 +11,6 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include "devices/Device.h"
-//#include "interface.h"
-//#include "menu.h"
-#include "plugin.h"
 #include "recordings/Recording.h"
 
 #include "vdr/utils/UTF8Utils.h"
