@@ -405,6 +405,7 @@ void CSpecialProtocol::LogPaths()
 // private routines, to ensure we only set/get an appropriate path
 void CSpecialProtocol::SetPath(const string &key, const string &path)
 {
+  isyslog("path '%s' mapped to '%s", key.c_str(), path.c_str());
   m_pathMap[key] = path;
 }
 
