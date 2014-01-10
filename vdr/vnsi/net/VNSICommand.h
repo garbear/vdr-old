@@ -25,7 +25,7 @@
  */
 
 /** Current VNSI Protocol Version number */
-#define VNSI_PROTOCOLVERSION 4
+#define VNSI_PROTOCOLVERSION 5
 
 //XXX
 #define VNSI_SERVER_VERSION "TEST"

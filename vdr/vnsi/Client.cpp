@@ -1731,9 +1731,9 @@ bool cVNSIClient::processSCAN_ScanSupported() /* OPCODE 140 */
             it returns true if supported */
 //XXX  cPlugin *p = cPluginManager::GetPlugin("wirbelscan");
 //  if (p && p->Service("WirbelScanService-StopScan-v1.0", NULL))
-    m_resp->add_U32(VNSI_RET_OK);
+//    m_resp->add_U32(VNSI_RET_OK);
 //  else
-//    m_resp->add_U32(VNSI_RET_NOTSUPPORTED);
+    m_resp->add_U32(VNSI_RET_NOTSUPPORTED);
 
   m_resp->finalise();
   m_socket.write(m_resp->getPtr(), m_resp->getLen());

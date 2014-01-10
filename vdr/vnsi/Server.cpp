@@ -54,17 +54,12 @@ public:
   {
     if (!Load(AllowedHostsFile.c_str(), true, true))
     {
-      esyslog("Invalid or missing '%s'. falling back to 'svdrphosts.conf'.", AllowedHostsFile.c_str());
-      std::string Base = *cString::sprintf("%s/../svdrphosts.conf", cSettings::Get().m_ConfigDirectory.c_str());
-      if (!Load(Base.c_str(), true, true))
-      {
-        esyslog("Invalid or missing %s. Adding 127.0.0.1 to list of allowed hosts.", Base.c_str());
-        cSVDRPhost *localhost = new cSVDRPhost;
-        if (localhost->Parse("127.0.0.1"))
-          Add(localhost);
-        else
-          delete localhost;
-      }
+      esyslog("Invalid or missing %s. Adding 127.0.0.1 to list of allowed hosts.", AllowedHostsFile.c_str());
+      cSVDRPhost *localhost = new cSVDRPhost;
+      if (localhost->Parse("127.0.0.1"))
+        Add(localhost);
+      else
+        delete localhost;
     }
   }
 };
