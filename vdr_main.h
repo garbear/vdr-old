@@ -13,7 +13,7 @@
 #include "vdr/SignalHandler.h"
 
 class cEpgDataReader;
-class cOsdObject;
+//class cOsdObject;
 class cSkin;
 class cPluginManager;
 

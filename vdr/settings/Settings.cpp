@@ -21,12 +21,9 @@
 #include "Settings.h"
 #include "filesystem/Directory.h"
 #include "Config.h"
-//#include "cutter.h"
 #include "devices/Device.h"
-//#include "../../plugin.h"
 #include "recordings/Recording.h"
 #include "utils/Shutdown.h"
-#include "svdrp.h"
 #include "utils/Tools.h"
 
 #include <getopt.h>
