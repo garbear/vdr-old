@@ -21,7 +21,7 @@ class cSpuDecoder {
     typedef enum { eSpuNormal, eSpuLetterBox, eSpuPanAndScan } eScaleMode;
   public:
     //    cSpuDecoder();
-    virtual ~cSpuDecoder();
+    virtual ~cSpuDecoder() {}
 
     virtual int setTime(uint32_t pts) = 0;
 
