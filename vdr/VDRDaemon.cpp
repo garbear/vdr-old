@@ -24,6 +24,7 @@
 #include "filesystem/Directory.h"
 #include "vnsi/Server.h"
 #include "settings/Settings.h"
+#include "filesystem/SpecialProtocol.h"
 
 #include <signal.h> // or #include <bits/signum.h>
 
@@ -45,8 +46,11 @@ cVDRDaemon::~cVDRDaemon()
 
 bool cVDRDaemon::Init()
 {
+  if (!CSpecialProtocol::SetFileBasePath())
+    return false;
+
   // Create directories
-//  cDirectory::Create("special://home/system/");
+  CDirectory::Create("special://home/system/");
 
   // TODO: Implement protocols special:// (handled like XBMC)
 

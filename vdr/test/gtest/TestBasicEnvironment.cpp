@@ -48,7 +48,7 @@ void TestBasicEnvironment::SetUp()
    */
   //g_advancedSettings.Initialize(); // TODO
 
-  if (!CVDRTestUtils::Instance().SetReferenceFileBasePath())
+  if (!CSpecialProtocol::SetFileBasePath())
     SetUpError();
   CVDRTestUtils::Instance().setTestFileFactoryWriteInputFile(
     VDR_REF_FILE_PATH("vdr/filesystem/test/reffile.txt")

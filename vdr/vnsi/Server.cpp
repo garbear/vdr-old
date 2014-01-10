@@ -106,10 +106,6 @@ cVNSIServer::cVNSIServer(int listenPort)
   listen(m_ServerFD, 10);
 
   CreateThread();
-
-  isyslog("VNSI Server started on port %d", m_ServerPort);
-  isyslog("Channel streaming timeout: %i seconds", cSettings::Get().m_StreamTimeout);
-  return;
 }
 
 cVNSIServer::~cVNSIServer()
@@ -211,6 +207,9 @@ void* cVNSIServer::Process(void)
     cmd = *cString::sprintf("rm -f %s/*.vnsi", VideoDirectory);
   }
   int ret = system(cmd.c_str());
+
+  isyslog("VNSI Server started on port %d", m_ServerPort);
+  isyslog("Channel streaming timeout: %i seconds", cSettings::Get().m_StreamTimeout);
 
   while (!IsStopped())
   {

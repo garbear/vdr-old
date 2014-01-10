@@ -26,6 +26,7 @@
 #include "devices/subsystems/DeviceChannelSubsystem.h"
 #include "dvb/EITScan.h"
 //#include "utils/I18N.h"
+#include "filesystem/File.h"
 #include "utils/StringUtils.h"
 #include "utils/XBMCTinyXML.h"
 #include "utils/UTF8Utils.h"
@@ -162,61 +163,60 @@ bool cChannelManager::Load(const std::string &file)
   return !m_channels.empty();
 }
 
-bool cChannelManager::LoadConf(const string &file)
+bool cChannelManager::LoadConf(const string& strFilename)
 {
   Clear();
 
   bool bAllowComments = false;
-  if (!file.empty())
+  if (!strFilename.empty())
     bAllowComments = true;
 
   bool result = true;
-
-  if (!file.empty() && access(file.c_str(), F_OK) == 0)
+  CFile file;
+  if (!strFilename.empty() && file.Open(strFilename))
   {
-    isyslog("loading %s", file.c_str());
-    FILE *f = fopen(file.c_str(), "r");
-    if (f)
+    isyslog("loading %s", strFilename.c_str());
+
+    char* tmp;
+    string strLine;
+    int iLineNum = 0;
+    result = true;
+
+    while (file.ReadLine(strLine))
     {
-      char *s;
-      int line = 0;
-      cReadLine ReadLine;
-      result = true;
-      while ((s = ReadLine.Read(f)) != NULL)
+      ++iLineNum;
+      tmp = strdup(strLine.c_str());
+      if (bAllowComments)
       {
-        line++;
-        if (bAllowComments)
+        char *p = strchr(tmp, '#');
+        if (p)
+          *p = 0;
+      }
+      stripspace(tmp);
+      if (!isempty(tmp))
+      {
+        ChannelPtr l = ChannelPtr(new cChannel);
+        if (l->DeserialiseConf(tmp))
+          AddChannel(l);
+        else
         {
-          char *p = strchr(s, '#');
-          if (p)
-            *p = 0;
-        }
-        stripspace(s);
-        if (!isempty(s))
-        {
-          ChannelPtr l = ChannelPtr(new cChannel);
-          if (l->DeserialiseConf(s))
-            AddChannel(l);
-          else
-          {
-            //esyslog("ERROR: error in %s, line %d", m_fileName.c_str(), line);
-            result = false;
-          }
+          esyslog("ERROR: error in %s, line %d", strFilename.c_str(), iLineNum);
+          result = false;
         }
       }
-      fclose(f);
+
+      free(tmp);
     }
-    else
-    {
-      //LOG_ERROR_STR(m_fileName.c_str());
-      result = false;
-    }
+
+    file.Close();
+  }
+  else
+  {
+    result = false;
   }
 
-  /*
   if (!result)
-    fprintf(stderr, "vdr: error while reading '%s'\n", m_fileName.c_str());
-  */
+    esyslog("vdr: error while reading '%s'", strFilename.c_str());
 
   if (!result)
     return false;

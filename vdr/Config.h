@@ -62,6 +62,16 @@
 #define ERROR_PES_STARTCODE 0x04
 #define ERROR_DEMUX_NODATA  0x10
 
+// TODO: Define these in a better place
+#ifndef INSTALL_PATH
+#define INSTALL_PATH    "/usr/share/vdr"
+#endif
+
+#ifndef BIN_INSTALL_PATH
+#define BIN_INSTALL_PATH "/usr/lib/vdr"
+#endif
+
+#define VDR_HOME_ENV_VARIABLE  "VDR_HOME"
 
 // Basically VDR works according to the DVB standard, but there are countries/providers
 // that use other standards, which in some details deviate from the DVB standard.

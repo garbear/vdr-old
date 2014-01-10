@@ -24,17 +24,6 @@
 #include <string>
 #include <vector>
 
-// TODO: Define these in a better place
-#ifndef INSTALL_PATH
-#define INSTALL_PATH    "/usr/share/vdr"
-#endif
-
-#ifndef BIN_INSTALL_PATH
-#define BIN_INSTALL_PATH "/usr/lib/vdr"
-#endif
-
-#define VDR_HOME_ENV_VARIABLE  "VDR_HOME"
-
 class CFile;
 
 class CVDRTestUtils
@@ -47,9 +36,6 @@ public:
    * with vdr-test residing in the source tree.
    */
   std::string ReferenceFilePath(std::string const& path);
-
-  /* Function to set the reference file base path. */
-  bool SetReferenceFileBasePath();
 
   /* Function used in creating a temporary file. It accepts a parameter
    * 'suffix' to append to the end of the tempfile path. The temporary
@@ -103,10 +89,6 @@ private:
   CVDRTestUtils();
   CVDRTestUtils(CVDRTestUtils const&);
   void operator=(CVDRTestUtils const&);
-
-  // TODO: Move these somewhere more appropriate
-  static std::string GetHomePath(const std::string strEnvVariable = VDR_HOME_ENV_VARIABLE);
-  static std::string GetExecutablePath();
 
   std::vector<std::string> TestFileFactoryReadUrls;
   std::vector<std::string> TestFileFactoryWriteUrls;

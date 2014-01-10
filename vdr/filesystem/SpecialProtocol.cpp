@@ -35,11 +35,182 @@
 //#include <dirent.h>
 //#endif
 
+#include <limits.h>
 #include <assert.h>
 
 using namespace std;
 
 map<string, string> CSpecialProtocol::m_pathMap;
+
+std::string CSpecialProtocol::GetExecutablePath()
+{
+  std::string strExecutablePath;
+
+#ifdef TARGET_WINDOWS
+
+  static const size_t bufSize = MAX_PATH * 2;
+  wchar_t* buf = new wchar_t[bufSize];
+  buf[0] = 0;
+  ::GetModuleFileNameW(0, buf, bufSize);
+  buf[bufSize-1] = 0;
+  g_charsetConverter.wToUTF8(buf, strExecutablePath);
+  delete[] buf;
+
+#elif defined(TARGET_DARWIN)
+
+  char     given_path[2*MAXPATHLEN];
+  uint32_t path_size =2*MAXPATHLEN;
+
+  GetDarwinExecutablePath(given_path, &path_size);
+  strExecutablePath = given_path;
+
+#elif defined(TARGET_FREEBSD)
+
+  char buf[PATH_MAX];
+  size_t buflen;
+  int mib[4];
+
+  mib[0] = CTL_KERN;
+  mib[1] = KERN_PROC;
+  mib[2] = KERN_PROC_PATHNAME;
+  mib[3] = getpid();
+
+  buflen = sizeof(buf) - 1;
+  if (sysctl(mib, 4, buf, &buflen, NULL, 0) < 0)
+    strExecutablePath.clear(); // TODO: This seems wrong
+  else
+    strExecutablePath = buf;
+
+#else
+
+  /* Get our PID and build the name of the link in /proc */
+  pid_t pid = getpid();
+  char linkname[64]; /* /proc/<pid>/exe */
+  snprintf(linkname, sizeof(linkname), "/proc/%i/exe", pid);
+
+  /* Now read the symbolic link */
+  char buf[PATH_MAX + 1];
+  buf[0] = 0;
+
+  int ret = readlink(linkname, buf, sizeof(buf) - 1);
+  if (ret != -1)
+    buf[ret] = 0;
+
+  strExecutablePath = buf;
+
+#endif
+
+  return strExecutablePath;
+}
+
+std::string CSpecialProtocol::GetHomePath(const std::string strEnvVariable /* = VDR_HOME_ENV_VARIABLE */)
+{
+  //std::string strPath = CEnvironment::getenv(strEnvVariable); // TODO
+  std::string strPath;
+
+  // TODO
+  /*
+#ifdef TARGET_WINDOWS
+  if (strPath.find("..") != std::string::npos)
+  {
+    //expand potential relative path to full path
+    CStdStringW strPathW;
+    g_charsetConverter.utf8ToW(strPath, strPathW, false);
+    CWIN32Util::AddExtraLongPathPrefix(strPathW);
+    const unsigned int bufSize = GetFullPathNameW(strPathW, 0, NULL, NULL);
+    if (bufSize != 0)
+    {
+      wchar_t * buf = new wchar_t[bufSize];
+      if (GetFullPathNameW(strPathW, bufSize, buf, NULL) <= bufSize-1)
+      {
+        std::wstring expandedPathW(buf);
+        CWIN32Util::RemoveExtraLongPathPrefix(expandedPathW);
+        g_charsetConverter.wToUTF8(expandedPathW, strPath);
+      }
+
+      delete [] buf;
+    }
+  }
+#endif
+  */
+
+  if (strPath.empty())
+  {
+    // TODO
+    /*
+#if defined(TARGET_DARWIN)
+    int      result = -1;
+    char     given_path[2*MAXPATHLEN];
+    uint32_t path_size =2*MAXPATHLEN;
+
+    result = GetDarwinExecutablePath(given_path, &path_size);
+    if (result == 0)
+    {
+      // Move backwards to last /.
+      for (int n=strlen(given_path)-1; given_path[n] != '/'; n--)
+        given_path[n] = '\0';
+
+      #if defined(TARGET_DARWIN_IOS)
+        strcat(given_path, "/VDRData/VDRHome/");
+      #else
+        // Assume local path inside application bundle.
+        strcat(given_path, "../Resources/VDR/");
+      #endif
+
+      // Convert to real path.
+      char real_path[2*MAXPATHLEN];
+      if (realpath(given_path, real_path) != NULL)
+        return real_path;
+    }
+#endif
+    */
+
+    std::string strHomePath = GetExecutablePath();
+    size_t last_sep = strHomePath.find_last_of(PATH_SEPARATOR_CHAR);
+    if (last_sep != std::string::npos)
+      strPath = strHomePath.substr(0, last_sep);
+    else
+      strPath = strHomePath;
+  }
+
+#if defined(TARGET_POSIX) && !defined(TARGET_DARWIN)
+  /* Change strPath accordingly when target is VDR_HOME and when INSTALL_PATH
+   * and BIN_INSTALL_PATH differ
+   */
+  std::string installPath = INSTALL_PATH;
+  std::string binInstallPath = BIN_INSTALL_PATH;
+  if (!strEnvVariable.compare("VDR_HOME") && installPath.compare(binInstallPath))
+  {
+    int pos = strPath.length() - binInstallPath.length();
+    std::string tmp = strPath;
+    tmp.erase(0, pos);
+    if (!tmp.compare(binInstallPath))
+    {
+      strPath.erase(pos, strPath.length());
+      strPath.append(installPath);
+    }
+  }
+#endif
+
+  return strPath;
+}
+
+bool CSpecialProtocol::SetFileBasePath()
+{
+  std::string vdrPath = GetHomePath();
+  if (vdrPath.empty())
+  {
+    esyslog("Failed to find the base path");
+    return false;
+  }
+
+  /* Set vdr path */
+  SetVDRPath(vdrPath);
+  SetHomePath(vdrPath); // TODO
+  SetXBMCHomePath(vdrPath); // TODO
+
+  return true;
+}
 
 void CSpecialProtocol::SetVDRPath(const string &dir)
 {

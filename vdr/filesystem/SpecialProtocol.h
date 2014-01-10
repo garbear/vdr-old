@@ -22,6 +22,7 @@
 #pragma once
 
 #include "utils/url/URL.h"
+#include "Config.h"
 
 #include <map>
 #include <string>
@@ -52,6 +53,7 @@ class CURL;
 class CSpecialProtocol
 {
 public:
+  static bool SetFileBasePath();
   static void SetVDRPath(const std::string &path);
   static void SetHomePath(const std::string &path);
   static void SetTempPath(const std::string &path);
@@ -66,6 +68,9 @@ public:
   static std::string TranslatePathConvertCase(const std::string& path);
 
 private:
+  static std::string GetExecutablePath();
+  static std::string GetHomePath(const std::string strEnvVariable = VDR_HOME_ENV_VARIABLE);
+
   static void SetPath(const std::string &key, const std::string &path);
   static std::string GetPath(const std::string &key);
 
