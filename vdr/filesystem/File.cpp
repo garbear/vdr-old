@@ -34,8 +34,6 @@
 
 using namespace std;
 
-#define TARGET_XBMC 0 // TODO
-
 #ifndef SAFE_DELETE
 #define SAFE_DELETE(p)  do { delete (p); (p) = NULL; } while (0)
 #endif
