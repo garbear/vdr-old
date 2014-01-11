@@ -213,7 +213,7 @@ bool cDvbDevice::QueryDeliverySystems()
   {
     vector<string> vecDeliverySystemNames;
     for (vector<uint8_t>::const_iterator it = m_deliverySystems.begin() + 1; it != m_deliverySystems.end(); ++it)
-      vecDeliverySystemNames.push_back(StringUtils::Format("%d", *it));
+      vecDeliverySystemNames.push_back(DeliverySystemNames[*it]);
     string deliverySystem = StringUtils::Join(vecDeliverySystemNames, ",");
 
     vector<string> vecModulations = GetModulationsFromCaps(m_frontendInfo.caps);
