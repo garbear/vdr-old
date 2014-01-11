@@ -171,6 +171,10 @@ std::string CSpecialProtocol::GetHomePath(const std::string strEnvVariable /* = 
       strPath = strHomePath.substr(0, last_sep);
     else
       strPath = strHomePath;
+
+    // CMake uses a build directory
+    if (StringUtils::CompareNoCase(URLUtils::GetFileName(strPath), "build") == 0)
+      strPath = URLUtils::GetDirectory(strPath);
   }
 
 #if defined(TARGET_POSIX) && !defined(TARGET_DARWIN)
