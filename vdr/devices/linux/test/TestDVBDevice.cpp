@@ -21,59 +21,55 @@
  */
 
 #include "devices/linux/DVBDevice.h"
-
 #include "gtest/gtest.h"
 
 #include <vector>
 
 using namespace std;
 
-DeviceVector g_devices;
+// Hauppauge WinTV-HVR 950Q hybrid TV stick
+#define WINTVHVR950Q "Auvitek AU8522 QAM/8VSB Frontend"
 
-cDvbDevice *GetDevice()
+TEST(DvbDevice, Initialize)
 {
-  g_devices = cDvbDevice::InitialiseDevices();
-  if (!g_devices.empty())
+  DeviceVector devices = cDvbDevice::InitialiseDevices();
+  ASSERT_FALSE(devices.empty());
+  for (DeviceVector::iterator it = devices.begin(); it != devices.end(); ++it)
   {
-    cDvbDevice* firstDevice = dynamic_cast<cDvbDevice*>(g_devices[0].get());
-    return firstDevice;
+    cDvbDevice *device = dynamic_cast<cDvbDevice*>(it->get());
+    if (!device)
+      continue;
+
+    EXPECT_EQ(0, device->Frontend());
+    EXPECT_EQ(0, device->Adapter());
+
+    EXPECT_STRNE("", device->DeviceName().c_str());
+    EXPECT_STRNE("", device->DeviceType().c_str());
+
+    if (device->DeviceName() == WINTVHVR950Q)
+    {
+      EXPECT_STREQ("ATSC", device->DeviceType().c_str());
+    }
   }
-  return NULL;
 }
 
-TEST(DVBDevice, Exists)
+TEST(DvbDevice, GetSubsystemId)
 {
-  EXPECT_TRUE(cDvbDevice::Exists(0, 0));
-}
+  DeviceVector devices = cDvbDevice::InitialiseDevices();
+  ASSERT_FALSE(devices.empty());
+  for (DeviceVector::iterator it = devices.begin(); it != devices.end(); ++it)
+  {
+    cDvbDevice *device = dynamic_cast<cDvbDevice*>(it->get());
+    if (!device)
+      continue;
 
-TEST(DVBDevice, Initialize)
-{
-  cDvbDevice *device = GetDevice();
-  ASSERT_TRUE(device);
-
-  EXPECT_EQ(0, device->Frontend());
-  EXPECT_EQ(0, device->Adapter());
-
-  EXPECT_GT(device->m_deliverySystems.size(), 0);
-  EXPECT_GT(device->m_numModulations, 0);
-
-  g_devices.clear();
-}
-
-TEST(DVBDevice, GetSubsystemId)
-{
-  cDvbDevice *device = GetDevice();
-  ASSERT_TRUE(device);
-
-  EXPECT_EQ(0, device->GetSubsystemId());
-  g_devices.clear();
-}
-
-TEST(DVBDevice, GetDvbApiVersion)
-{
-  cDvbDevice *device = GetDevice();
-  ASSERT_TRUE(device);
-
-  EXPECT_NE(0, device->GetDvbApiVersion());
-  g_devices.clear();
+    if (device->DeviceName() == WINTVHVR950Q)
+    {
+      EXPECT_EQ(0, device->GetSubsystemId());
+    }
+    else
+    {
+      EXPECT_NE(0, device->GetSubsystemId()); // TODO
+    }
+  }
 }

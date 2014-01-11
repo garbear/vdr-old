@@ -22,6 +22,8 @@
 
 #include "devices/subsystems/DeviceChannelSubsystem.h"
 
+#include <linux/dvb/frontend.h>
+
 class cChannel;
 class cDvbTuner;
 
@@ -31,8 +33,11 @@ public:
   cDvbChannelSubsystem(cDevice *device);
   virtual ~cDvbChannelSubsystem();
 
+  cDvbTuner* GetTuner() const { return m_dvbTuner; }
+  void SetTuner(cDvbTuner* tuner) { assert(m_dvbTuner == NULL); m_dvbTuner = tuner; } // TODO: Remove assert
+
   // Not inherited from cDeviceChannelSubsystem
-  virtual bool ProvidesDeliverySystem(int deliverySystem) const;
+  virtual bool ProvidesDeliverySystem(fe_delivery_system deliverySystem) const;
   virtual bool ProvidesSource(int source) const;
   virtual bool ProvidesTransponder(const cChannel &channel) const;
   virtual bool ProvidesChannel(const cChannel &channel, int priority = IDLEPRIORITY, bool *pNeedsDetachReceivers = NULL) const;
@@ -52,7 +57,6 @@ public:
 protected:
   virtual bool SetChannelDevice(const cChannel &channel, bool bLiveView);
 
-//private: // TODO
-public:
+private:
   cDvbTuner *m_dvbTuner;
 };

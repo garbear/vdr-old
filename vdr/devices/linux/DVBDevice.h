@@ -73,14 +73,6 @@ public:
    */
   unsigned int GetSubsystemId() const;
 
-  /*!
-   * \brief Get the version of the DVB driver actually in use
-   * \return The DVB API version. Compare to DVBAPIVERSION in DVBLegacy.h
-   */
-  unsigned int GetDvbApiVersion();
-
-  static bool Exists(unsigned int adapter, unsigned int frontend);
-
   virtual bool Ready();
 
   virtual std::string DeviceType() const;
@@ -136,10 +128,19 @@ public:
   cDvbReceiverSubsystem        *DvbReceiver() const;
   cDvbSectionFilterSubsystem   *DvbSectionFilter() const;
 
+  // TODO: Move to cDvbTransponderParams
+  static std::vector<std::string> GetModulationsFromCaps(fe_caps_t caps);
+
+  // TODO
+  static const char* DeliverySystemNames[];
+
 protected:
 public: // TODO
   static std::string DvbName(const char *name, unsigned int adapter, unsigned int frontend);
   int DvbOpen(const char *name, int mode) const;
+
+protected:
+  static bool Exists(unsigned int adapter, unsigned int frontend);
 
 private:
   /*!
@@ -149,29 +150,15 @@ private:
    */
   static cSubsystems CreateSubsystems(cDvbDevice* device);
 
-  bool QueryDeliverySystems();
-
-  // TODO: Move to cDvbTransponderParams
-  static std::vector<std::string> GetModulationsFromCaps(fe_caps_t caps);
-
   cSubsystems          m_subsystems;
   unsigned int         m_adapter;
   unsigned int         m_frontend;
-public: // TODO
-  dvb_frontend_info    m_frontendInfo;
-  std::vector<uint8_t> m_deliverySystems;
-  //std::vector<std::string> m_modulations;
-  unsigned int         m_numModulations;
   //int                  m_fd_dvr; // (Moved to DVBReceiverSubsystem.h)
 private:
-  int                  m_fd_frontend;
   int                  m_fd_ca;
 public: // TODO
   cDvbDevice*          m_bondedDevice;
   mutable bool         m_bNeedsDetachBondedReceivers;
-
-private:
-  static int           m_dvbApiVersion;
 
 public: // TODO
   static PLATFORM::CMutex m_bondMutex;

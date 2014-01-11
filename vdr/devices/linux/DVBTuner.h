@@ -36,12 +36,26 @@ class cScr;
 class cDvbTuner : public PLATFORM::CThread
 {
 public:
-  cDvbTuner(cDvbDevice *device, int fd_frontend);
+  cDvbTuner(cDvbDevice *device);
   virtual ~cDvbTuner();
 
-  int FrontendType() const { return m_frontendType; }
+  bool IsValid() const { return !m_deliverySystems.empty(); }
+
+  unsigned int Adapter() const; // Alias for device->Adapter()
+  unsigned int Frontend() const; // Alias for device->Frontend()
+
+  const std::string &Name() const { return m_strName; }
+  fe_delivery_system FrontendType() const { return m_frontendType; }
+
   const cChannel &GetTransponder() const { return m_channel; }
-  uint32_t SubsystemId() const { return m_subsystemId; }
+  bool HasDeliverySystem(fe_delivery_system deliverySystem) const;
+  bool HasCapability(fe_caps_t capability) const { return m_frontendInfo.caps & capability; }
+
+  /*!
+   * \brief Get the version of the DVB driver actually in use
+   * \return The DVB API version. Compare to DVBAPIVERSION in DVBLegacy.h
+   */
+  uint32_t GetDvbApiVersion() const;
 
   bool Bond(cDvbTuner *tuner);
   void UnBond();
@@ -54,9 +68,13 @@ public:
   int GetSignalStrength() const;
   int GetSignalQuality() const;
 
-  static int GetRequiredDeliverySystem(const cChannel &channel, const cDvbTransponderParams *dtp);
+  static fe_delivery_system GetRequiredDeliverySystem(const cChannel &channel, const cDvbTransponderParams *dtp);
+
+  int IoControl(unsigned long int request, void* param) const;
 
 private:
+  std::vector<fe_delivery_system> GetDeliverySystems() const;
+
   virtual void *Process();
 
   bool SetFrontendType(const cChannel *Channel);
@@ -80,27 +98,35 @@ private:
     tsLocked
   };
 
-  int                        m_frontendType;
-  cDvbDevice* const          m_device;
-  int                        m_fd_frontend;
-  const unsigned int         m_adapter;
-  const unsigned int         m_frontend;
-  const uint32_t             m_subsystemId;
-  int                        m_tuneTimeout;
-  int                        m_lockTimeout;
-  time_t                     m_lastTimeoutReport;
-  cChannel                   m_channel;
-  const cDiseqc*             m_lastDiseqc;
-  const cScr*                m_scr;
-  bool                       m_bLnbPowerTurnedOn;
-  eTunerStatus               m_tunerStatus;
-  PLATFORM::CMutex           m_mutex;
-  PLATFORM::CCondition<bool> m_locked;
-  PLATFORM::CCondition<bool> m_newSet;
-  cDvbTuner*                 m_bondedTuner;
-  bool                       m_bBondedMaster;
-  bool                       m_bLocked;
-  bool                       m_bNewSet;
 
-  static PLATFORM::CMutex    m_bondMutex;
+  cDvbDevice* const           m_device;
+
+  std::string                 m_strName;
+  fe_delivery_system          m_frontendType;
+  dvb_frontend_info           m_frontendInfo;
+  int                         m_fileDescriptor;
+
+
+public: // TODO
+  std::vector<fe_delivery_system> m_deliverySystems;
+  //std::vector<std::string>    m_modulations;
+  unsigned int                m_numModulations;
+private:
+  int                         m_tuneTimeout;
+  int                         m_lockTimeout;
+  time_t                      m_lastTimeoutReport;
+  cChannel                    m_channel;
+  const cDiseqc*              m_lastDiseqc;
+  const cScr*                 m_scr;
+  bool                        m_bLnbPowerTurnedOn;
+  eTunerStatus                m_tunerStatus;
+  PLATFORM::CMutex            m_mutex;
+  PLATFORM::CCondition<bool>  m_locked;
+  PLATFORM::CCondition<bool>  m_newSet;
+  cDvbTuner*                  m_bondedTuner;
+  bool                        m_bBondedMaster;
+  bool                        m_bLocked;
+  bool                        m_bNewSet;
+
+  static PLATFORM::CMutex     m_bondMutex;
 };
