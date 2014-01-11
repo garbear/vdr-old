@@ -103,7 +103,7 @@ cDvbDevice::cDvbDevice(unsigned int adapter, unsigned int frontend)
 
   // We only check the devices that must be present - the others will be checked before accessing them://XXX
   if (QueryDeliverySystems())
-    DvbChannel()->m_dvbTuner = new cDvbTuner(this, m_fd_frontend, m_adapter, m_frontend);
+    DvbChannel()->m_dvbTuner = new cDvbTuner(this, m_fd_frontend);
 
   SectionFilter()->StartSectionHandler();
 }
