@@ -56,12 +56,12 @@ using namespace PLATFORM;
 
 CMutex cDvbTuner::m_bondMutex;
 
-cDvbTuner::cDvbTuner(cDvbDevice *device, int fd_frontend, unsigned int adapter, unsigned int frontend)
+cDvbTuner::cDvbTuner(cDvbDevice *device, int fd_frontend)
  : m_frontendType(SYS_UNDEFINED),
    m_device(device),
    m_fd_frontend(fd_frontend),
-   m_adapter(adapter),
-   m_frontend(frontend),
+   m_adapter(device->Adapter()),
+   m_frontend(device->Frontend()),
    m_subsystemId(device->GetSubsystemId()),
    m_tuneTimeout(0),
    m_lockTimeout(0),
@@ -100,11 +100,13 @@ void *cDvbTuner::Process()
   cTimeMs Timer;
   bool LostLock = false;
   fe_status_t Status = (fe_status_t)0;
-  while (!IsStopped()) // TODO: This should be !IsStopped() when converted to the new PLATFORM::CThread
+
+  while (!IsStopped())
   {
     fe_status_t NewStatus;
     if (GetFrontendStatus(NewStatus))
       Status = NewStatus;
+
     CLockObject lock(m_mutex);
     int WaitTime = 1000;
     m_bNewSet = false;
@@ -167,6 +169,7 @@ void *cDvbTuner::Process()
     }
     m_newSet.Wait(m_mutex, m_bNewSet, WaitTime);
   }
+  return NULL;
 }
 
 bool cDvbTuner::Bond(cDvbTuner *tuner)
@@ -343,13 +346,11 @@ bool cDvbTuner::GetFrontendStatus(fe_status_t &Status) const
 {
   ClearEventQueue();
 
-  while (1)
+  do
   {
     if (ioctl(m_fd_frontend, FE_READ_STATUS, &Status) != -1)
       return true;
-    if (errno != EINTR)
-      break;
-  }
+  } while (errno == EINTR);
 
   return false;
 }
@@ -359,10 +360,8 @@ int cDvbTuner::GetSignalStrength() const
   ClearEventQueue();
   uint16_t Signal;
 
-  while (1)
+  while (ioctl(m_fd_frontend, FE_READ_SIGNAL_STRENGTH, &Signal) == -1)
   {
-    if (ioctl(m_fd_frontend, FE_READ_SIGNAL_STRENGTH, &Signal) != -1)
-      break;
     if (errno != EINTR)
       return -1;
   }

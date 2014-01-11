@@ -36,7 +36,7 @@ class cScr;
 class cDvbTuner : public PLATFORM::CThread
 {
 public:
-  cDvbTuner(cDvbDevice *device, int fd_frontend, unsigned int adapter, unsigned int frontend);
+  cDvbTuner(cDvbDevice *device, int fd_frontend);
   virtual ~cDvbTuner();
 
   int FrontendType() const { return m_frontendType; }
@@ -83,9 +83,9 @@ private:
   int                        m_frontendType;
   cDvbDevice* const          m_device;
   int                        m_fd_frontend;
-  unsigned int               m_adapter;
-  unsigned int               m_frontend;
-  uint32_t                   m_subsystemId;
+  const unsigned int         m_adapter;
+  const unsigned int         m_frontend;
+  const uint32_t             m_subsystemId;
   int                        m_tuneTimeout;
   int                        m_lockTimeout;
   time_t                     m_lastTimeoutReport;

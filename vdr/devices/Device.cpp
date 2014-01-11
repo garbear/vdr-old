@@ -101,9 +101,6 @@ cDevice::cDevice(const cSubsystems &subsystems, unsigned int index)
   //m_number = cDeviceManager::Get().AddDevice(this);
 }
 
-// TODO: Remove the following comment unless we switch cSubsystems to use shared_ptrs
-// Destructor can't appear in class declaration because subsystem classes (needed
-// by shared_ptr's destructor) aren't defined
 cDevice::~cDevice()
 {
   m_subsystems.Free(); // TODO: Remove me if we switch cSubsystems to use shared_ptrs
