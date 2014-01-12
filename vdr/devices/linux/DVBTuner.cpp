@@ -485,7 +485,7 @@ void cDvbTuner::ClearEventQueue() const
   if (Poller.Poll(TUNER_POLL_TIMEOUT))
   {
     dvb_frontend_event Event;
-    while (ioctl(m_fileDescriptor, FE_GET_EVENT, &Event) == 0)
+    while (IoControl(FE_GET_EVENT, &Event) == 0)
       ; // just to clear the event queue - we'll read the actual status below
   }
 }
@@ -496,7 +496,7 @@ bool cDvbTuner::GetFrontendStatus(fe_status_t &Status) const
 
   do
   {
-    if (ioctl(m_fileDescriptor, FE_READ_STATUS, &Status) != -1)
+    if (IoControl(FE_READ_STATUS, &Status) != -1)
       return true;
   } while (errno == EINTR);
 
@@ -508,7 +508,7 @@ int cDvbTuner::GetSignalStrength() const
   ClearEventQueue();
   uint16_t Signal;
 
-  while (ioctl(m_fileDescriptor, FE_READ_SIGNAL_STRENGTH, &Signal) == -1)
+  while (IoControl(FE_READ_SIGNAL_STRENGTH, &Signal) == -1)
   {
     if (errno != EINTR)
       return -1;
@@ -565,7 +565,7 @@ int cDvbTuner::GetSignalQuality() const
     uint16_t Snr;
     while (1)
     {
-      if (ioctl(m_fileDescriptor, FE_READ_SNR, &Snr) != -1)
+      if (IoControl(FE_READ_SNR, &Snr) != -1)
         break;
       if (errno != EINTR)
       {
@@ -584,7 +584,7 @@ int cDvbTuner::GetSignalQuality() const
     uint32_t Ber;
     while (1)
     {
-      if (ioctl(m_fileDescriptor, FE_READ_BER, &Ber) != -1)
+      if (IoControl(FE_READ_BER, &Ber) != -1)
         break;
       if (errno != EINTR)
       {
@@ -603,7 +603,7 @@ int cDvbTuner::GetSignalQuality() const
     uint32_t Unc;
     while (1)
     {
-      if (ioctl(m_fileDescriptor, FE_READ_UNCORRECTED_BLOCKS, &Unc) != -1)
+      if (IoControl(FE_READ_UNCORRECTED_BLOCKS, &Unc) != -1)
         break;
       if (errno != EINTR)
       {
@@ -708,7 +708,7 @@ void cDvbTuner::ExecuteDiseqc(const cDiseqc *Diseqc, unsigned int *Frequency)
     case cDiseqc::daVoltage18: CHECK(ioctl(m_fileDescriptor, FE_SET_VOLTAGE, SEC_VOLTAGE_18)); break;
     case cDiseqc::daMiniA:     CHECK(ioctl(m_fileDescriptor, FE_DISEQC_SEND_BURST, SEC_MINI_A)); break;
     case cDiseqc::daMiniB:     CHECK(ioctl(m_fileDescriptor, FE_DISEQC_SEND_BURST, SEC_MINI_B)); break;
-    case cDiseqc::daCodes:     CHECK(ioctl(m_fileDescriptor, FE_DISEQC_SEND_MASTER_CMD, &cmd)); break;
+    case cDiseqc::daCodes:     CHECK(IoControl(FE_DISEQC_SEND_MASTER_CMD, &cmd)); break;
     default:
       esyslog("ERROR: unknown diseqc command %d", da);
       break;
@@ -735,7 +735,7 @@ bool cDvbTuner::SetFrontend()
   memset(&CmdSeq, 0, sizeof(CmdSeq));
   CmdSeq.props = frontend;
   SETCMD(DTV_CLEAR, 0);
-  if (ioctl(m_fileDescriptor, FE_SET_PROPERTY, &CmdSeq) < 0)
+  if (IoControl(FE_SET_PROPERTY, &CmdSeq) < 0)
   {
     esyslog("ERROR: frontend %d/%d: %m", Adapter(), Frontend());
     return false;
@@ -879,7 +879,7 @@ bool cDvbTuner::SetFrontend()
 
   SETCMD(DTV_TUNE, 0);
 
-  if (ioctl(m_fileDescriptor, FE_SET_PROPERTY, &CmdSeq) < 0)
+  if (IoControl(FE_SET_PROPERTY, &CmdSeq) < 0)
   {
     esyslog("ERROR: frontend %d/%d: %m", Adapter(), Frontend());
     return false;
