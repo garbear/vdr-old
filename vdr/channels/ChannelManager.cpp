@@ -165,61 +165,48 @@ bool cChannelManager::Load(const std::string &file)
 
 bool cChannelManager::LoadConf(const string& strFilename)
 {
+  if (strFilename.empty())
+    return false;
+
   Clear();
 
-  bool bAllowComments = false;
-  if (!strFilename.empty())
-    bAllowComments = true;
-
-  bool result = true;
   CFile file;
-  if (!strFilename.empty() && file.Open(strFilename))
+  if (file.Open(strFilename))
   {
-    isyslog("loading %s", strFilename.c_str());
-
-    char* tmp;
     string strLine;
-    int iLineNum = 0;
-    result = true;
+    unsigned int line = 0; // For error logging
 
     while (file.ReadLine(strLine))
     {
-      ++iLineNum;
-      tmp = strdup(strLine.c_str());
-      if (bAllowComments)
+      // Strip comments and spaces
+      size_t comment_pos = strLine.find('#');
+      strLine = strLine.substr(0, comment_pos);
+      StringUtils::Trim(strLine);
+
+      if (strLine.empty())
+        continue;
+
+      ChannelPtr l = ChannelPtr(new cChannel);
+      if (l->DeserialiseConf(strLine))
       {
-        char *p = strchr(tmp, '#');
-        if (p)
-          *p = 0;
+        AddChannel(l);
       }
-      stripspace(tmp);
-      if (!isempty(tmp))
+      else
       {
-        ChannelPtr l = ChannelPtr(new cChannel);
-        if (l->DeserialiseConf(tmp))
-          AddChannel(l);
-        else
-        {
-          esyslog("ERROR: error in %s, line %d", strFilename.c_str(), iLineNum);
-          result = false;
-        }
+        esyslog("Error loading config file %s, line %d", strFilename.c_str(), line);
       }
 
-      free(tmp);
+      line++;
     }
-
-    file.Close();
   }
-  else
+
+  if (m_channels.empty())
   {
-    result = false;
+    esyslog("No channels loaded from %s", strFilename.c_str());
+    return false;
   }
 
-  if (!result)
-    esyslog("vdr: error while reading '%s'", strFilename.c_str());
-
-  if (!result)
-    return false;
+  isyslog("Loaded channels from %s, tracking %lu total channels", strFilename.c_str(), m_channels.size());
 
   ReNumber();
   return true;

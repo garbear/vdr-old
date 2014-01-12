@@ -88,12 +88,8 @@ int64_t CHDFile::Read(void *lpBuf, uint64_t uiBufSize)
 bool CHDFile::ReadLine(string &strLine)
 {
   if (m_file.is_open() && (m_mode & ios::in))
-  {
-    //if (m_file.openmode & ios::binary)
-    //  return false; // Shouldn't happen
-    m_file >> strLine;
-    return !strLine.empty();
-  }
+    return std::getline(m_file, strLine);
+
   return false;
 }
 
