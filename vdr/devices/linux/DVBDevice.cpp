@@ -101,7 +101,10 @@ cDvbDevice::cDvbDevice(unsigned int adapter, unsigned int frontend)
   if (tuner && tuner->IsValid())
     DvbChannel()->SetTuner(tuner);
   else
+  {
+    isyslog("Could not open tuner. Continuing without.");
     delete tuner;
+  }
 
   SectionFilter()->StartSectionHandler();
 }
@@ -419,8 +422,15 @@ string cDvbDevice::DvbName(const char *name, unsigned int adapter, unsigned int 
 int cDvbDevice::DvbOpen(const char *name, int mode) const
 {
   string dvbName = DvbName(name, m_adapter, m_frontend);
-  isyslog("DVB: Opening %s", dvbName.c_str());
-  return open(dvbName.c_str(), mode);
+
+  int fd = open(dvbName.c_str(), mode);
+
+  if (fd >= 0)
+    isyslog("DVB: Opening %s", dvbName.c_str());
+  else
+    esyslog("DVB: Failed to open %s (%s)", dvbName.c_str(), strerror(errno));
+
+  return fd;
 }
 
 cDvbChannelSubsystem *cDvbDevice::DvbChannel() const
