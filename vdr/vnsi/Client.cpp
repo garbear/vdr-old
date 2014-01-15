@@ -911,7 +911,11 @@ bool cVNSIClient::processCHANNELS_ChannelsCount() /* OPCODE 61 */
 
 bool cVNSIClient::processCHANNELS_GetChannels() /* OPCODE 63 */
 {
-  if (m_req->getDataLength() != 4) return false;
+  if (m_req->getDataLength() != 4)
+  {
+    esyslog("Invalid data length received: %u != 4", m_req->getDataLength());
+    return false;
+  }
 
   bool radio = m_req->extract_U32();
 
