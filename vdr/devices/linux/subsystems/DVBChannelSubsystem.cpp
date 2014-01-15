@@ -77,7 +77,7 @@ bool cDvbChannelSubsystem::ProvidesTransponder(const cChannel &channel) const
 
   // requires modulation system which frontend doesn't provide - return false in these cases
   if (!ProvidesDeliverySystem(cDvbTuner::GetRequiredDeliverySystem(channel, &dtp))) return false;
-  if (dtp.StreamId()   != 0        && !m_dvbTuner->HasCapability(FE_CAN_MULTISTREAM)) return false;
+  if (dtp.StreamId()   != 0        && !m_dvbTuner->HasCapability((fe_caps)FE_CAN_MULTISTREAM)) return false;
   if (dtp.Modulation() == QPSK     && !m_dvbTuner->HasCapability(FE_CAN_QPSK))        return false;
   if (dtp.Modulation() == QAM_16   && !m_dvbTuner->HasCapability(FE_CAN_QAM_16))      return false;
   if (dtp.Modulation() == QAM_32   && !m_dvbTuner->HasCapability(FE_CAN_QAM_32))      return false;
