@@ -142,7 +142,7 @@ void* cVNSIClient::Process(void)
         data = NULL;
       }
 
-      dsyslog("Received chan=%u, ser=%u, op=%u, edl=%u", channelID, requestID, opcode, dataLength);
+      dsyslog("Received channel='%s' (%u), ser=%u, opcode='%s' (%u), edl=%u", ChannelToString(channelID), channelID, requestID, OpcodeToString(opcode), opcode, dataLength);
 
       if (!m_loggedIn && (opcode != VNSI_LOGIN))
       {
@@ -545,19 +545,6 @@ bool cVNSIClient::processRequest(cRequestPacket* req)
 
     case VNSI_SCAN_STOP:
       result = processSCAN_Stop();
-      break;
-
-    /** OPCODE 160 - 179: VNSI network functions for OSD */
-    case VNSI_OSD_CONNECT:
-      result = processOSD_Connect();
-      break;
-
-    case VNSI_OSD_DISCONNECT:
-      result = processOSD_Disconnect();
-      break;
-
-    case VNSI_OSD_HITKEY:
-      result = processOSD_Hitkey();
       break;
   }
 
@@ -1975,20 +1962,106 @@ void cVNSIClient::processSCAN_SetStatus(int status)
 //  delete resp;
 }
 
-bool cVNSIClient::processOSD_Connect() /* OPCODE 160 */
+const char* cVNSIClient::OpcodeToString(uint8_t opcode)
 {
-  cResponsePacket *resp = new cResponsePacket();
-  m_resp->add_U32(VNSI_RET_NOTSUPPORTED);
-  m_socket.write(m_resp->getPtr(), m_resp->getLen());
-  return false;
+  switch (opcode)
+  {
+  case VNSI_LOGIN:
+    return "login";
+  case VNSI_GETTIME:
+    return "get time";
+  case VNSI_ENABLESTATUSINTERFACE:
+    return "enable status interface";
+  case VNSI_PING:
+    return "ping";
+  case VNSI_GETSETUP:
+    return "get setup";
+  case VNSI_STORESETUP:
+    return "store setup";
+  case VNSI_CHANNELSTREAM_OPEN:
+    return "channel stream open";
+  case VNSI_CHANNELSTREAM_CLOSE:
+    return "channel stream close";
+  case VNSI_CHANNELSTREAM_SEEK:
+    return "channel stream seek";
+  case VNSI_RECSTREAM_OPEN:
+    return "rec stream open";
+  case VNSI_RECSTREAM_CLOSE:
+    return "rec stream close";
+  case VNSI_RECSTREAM_GETBLOCK:
+    return "rec stream get block";
+  case VNSI_RECSTREAM_POSTOFRAME:
+    return "rec stream position to frame";
+  case VNSI_RECSTREAM_FRAMETOPOS:
+    return "rec stream frame to position";
+  case VNSI_RECSTREAM_GETIFRAME:
+    return "rec stream get iframe";
+  case VNSI_CHANNELS_GETCOUNT:
+    return "channels get count";
+  case VNSI_CHANNELS_GETCHANNELS:
+    return "channels get channels";
+  case VNSI_CHANNELGROUP_GETCOUNT:
+    return "channel group get count";
+  case VNSI_CHANNELGROUP_LIST:
+    return "channel group list";
+  case VNSI_CHANNELGROUP_MEMBERS:
+    return "channel group members";
+  case VNSI_TIMER_GETCOUNT:
+    return "timer get count";
+  case VNSI_TIMER_GET:
+    return "timer get";
+  case VNSI_TIMER_GETLIST:
+    return "timer get list";
+  case VNSI_TIMER_ADD:
+    return "timer add";
+  case VNSI_TIMER_DELETE:
+    return "timer delete";
+  case VNSI_TIMER_UPDATE:
+    return "timer update";
+  case VNSI_RECORDINGS_DISKSIZE:
+    return "recordings disk size";
+  case VNSI_RECORDINGS_GETCOUNT:
+    return "recordings get count";
+  case VNSI_RECORDINGS_GETLIST:
+    return "recordings get list";
+  case VNSI_RECORDINGS_RENAME:
+    return "recordings rename";
+  case VNSI_RECORDINGS_DELETE:
+    return "recordings delete";
+  case VNSI_EPG_GETFORCHANNEL:
+    return "epg get for channel";
+  case VNSI_SCAN_SUPPORTED:
+    return "scan supported";
+  case VNSI_SCAN_GETCOUNTRIES:
+    return "scan get countries";
+  case VNSI_SCAN_GETSATELLITES:
+    return "scan get satellites";
+  case VNSI_SCAN_START:
+    return "scan start";
+  case VNSI_SCAN_STOP:
+    return "scan stop";
+  default:
+    return "<unknown>";
+  }
 }
 
-bool cVNSIClient::processOSD_Disconnect() /* OPCODE 161 */
+const char* cVNSIClient::ChannelToString(uint8_t channel)
 {
-  return true;
-}
-
-bool cVNSIClient::processOSD_Hitkey() /* OPCODE 162 */
-{
-  return true;
+  switch (channel)
+  {
+  case VNSI_CHANNEL_REQUEST_RESPONSE:
+    return "request response";
+  case VNSI_CHANNEL_STREAM:
+    return "stream";
+  case VNSI_CHANNEL_KEEPALIVE:
+    return "keep alive";
+  case VNSI_CHANNEL_NETLOG:
+    return "netlog";
+  case VNSI_CHANNEL_STATUS:
+    return "status";
+  case VNSI_CHANNEL_SCAN:
+    return "channel scan";
+  default:
+    return "<unknown>";
+  }
 }

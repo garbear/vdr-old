@@ -170,9 +170,8 @@ private:
   static cResponsePacket *m_processSCAN_Response;
   static cxSocket *m_processSCAN_Socket;
 
-  bool processOSD_Connect();
-  bool processOSD_Disconnect();
-  bool processOSD_Hitkey();
+  const char* OpcodeToString(uint8_t opcode);
+  const char* ChannelToString(uint8_t channel);
 };
 
 #endif // VNSI_CLIENT_H

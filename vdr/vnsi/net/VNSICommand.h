@@ -37,7 +37,6 @@
 #define VNSI_CHANNEL_NETLOG           4
 #define VNSI_CHANNEL_STATUS           5
 #define VNSI_CHANNEL_SCAN             6
-#define VNSI_CHANNEL_OSD              7
 
 /** Response packets operation codes */
 
@@ -100,11 +99,6 @@
 #define VNSI_SCAN_START            143
 #define VNSI_SCAN_STOP             144
 
-/* OPCODE 160 - 179: VNSI network functions for channel scanning */
-#define VNSI_OSD_CONNECT           160
-#define VNSI_OSD_DISCONNECT        161
-#define VNSI_OSD_HITKEY            162
-
 /** Stream packet types (server -> client) */
 #define VNSI_STREAM_CHANGE       1
 #define VNSI_STREAM_STATUS       2
@@ -122,14 +116,6 @@
 #define VNSI_SCANNER_NEWCHANNEL  5
 #define VNSI_SCANNER_FINISHED    6
 #define VNSI_SCANNER_STATUS      7
-
-/** OSD packet types (server -> client) */
-#define VNSI_OSD_MOVEWINDOW      1
-#define VNSI_OSD_CLEAR           2
-#define VNSI_OSD_OPEN            3
-#define VNSI_OSD_CLOSE           4
-#define VNSI_OSD_SETPALETTE      5
-#define VNSI_OSD_SETBLOCK        6
 
 /** Status packet types (server -> client) */
 #define VNSI_STATUS_TIMERCHANGE      1
