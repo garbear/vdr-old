@@ -261,17 +261,14 @@ void cVNSIClient::EpgChange()
     if (!VNSIChannelFilter.PassFilter(*channel.get()))
       continue;
 
-    isyslog("Trigger EPG update for channel %s", channel->Name().c_str());
-
     uint32_t channelId = schedule->ChannelID().Hash();
     it = m_epgUpdate.find(channelId);
-    if (it == m_epgUpdate.end())
+    if (it != m_epgUpdate.end() && it->second >= lastEvent->StartTime())
     {
       continue;
     }
 
-    if (it->second >= lastEvent->StartTime())
-      continue;
+    isyslog("Trigger EPG update for channel %s, id: %d", channel->Name().c_str(), channelId);
 
     cResponsePacket *resp = new cResponsePacket();
     if (!resp->initStatus(VNSI_STATUS_EPGCHANGE))
