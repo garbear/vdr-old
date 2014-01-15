@@ -106,6 +106,7 @@ private:
   int priority;
   int lifetime;
   time_t deleted;
+  int64_t m_hash;
 public:
   cRecording(cTimer *Timer, const cEvent *Event);
   cRecording(const char *FileName);
@@ -117,6 +118,7 @@ public:
   virtual int Compare(const cListObject &ListObject) const;
   const char *Name(void) const { return name; }
   const char *FileName(void) const;
+  uint32_t UID(void);
   const char *Title(char Delimiter = ' ', bool NewIndicator = false, int Level = -1) const;
   const cRecordingInfo *Info(void) const { return info; }
   const char *PrefixFileName(char Prefix);
@@ -192,6 +194,7 @@ public:
   void ClearSortNames(void);
   cRecording *GetByName(const char *FileName);
   void AddByName(const char *FileName, bool TriggerUpdate = true);
+  cRecording* FindByUID(uint32_t uid);
   void DelByName(const char *FileName);
   void UpdateByName(const char *FileName);
   int TotalFileSizeMB(void);

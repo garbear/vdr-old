@@ -184,7 +184,6 @@ set(VDR_SRCS
 	vdr/vnsi/video/parser/ParserSubtitle.cpp
 	vdr/vnsi/video/parser/ParserTeletext.cpp
 	vdr/vnsi/ChannelFilter.cpp
-	vdr/vnsi/RecordingsCache.cpp
 	vdr/vnsi/Client.cpp
 	vdr/vnsi/Server.cpp
 	thread.cpp

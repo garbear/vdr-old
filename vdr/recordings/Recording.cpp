@@ -27,6 +27,7 @@
 #include "utils/Tools.h"
 #include "filesystem/Videodir.h"
 #include "filesystem/ReadDir.h"
+#include "utils/CRC32.h"
 
 #include "vdr/filesystem/Directory.h"
 #include "vdr/utils/UTF8Utils.h"
@@ -34,6 +35,7 @@
 #include <algorithm>
 
 using namespace PLATFORM;
+using namespace VDR;
 
 #ifndef PRId64
 #define PRId64       "I64d"
@@ -751,6 +753,7 @@ cRecording::cRecording(cTimer *Timer, const cEvent *Event)
   framesPerSecond = DEFAULTFRAMESPERSECOND;
   numFrames = -1;
   deleted = 0;
+  m_hash = -1;
   // set up the actual name:
   const char *Title = Event ? Event->Title() : NULL;
   const char *Subtitle = Event ? Event->ShortText() : NULL;
@@ -808,6 +811,7 @@ cRecording::cRecording(const char *FileName)
   deleted = 0;
   titleBuffer = NULL;
   sortBufferName = sortBufferTime = NULL;
+  m_hash = -1;
   FileName = fileName = strdup(FileName);
   if (*(fileName + strlen(fileName) - 1) == '/')
      *(fileName + strlen(fileName) - 1) = 0;
@@ -1009,6 +1013,14 @@ const char *cRecording::FileName(void) const
      free(Name);
      }
   return fileName;
+}
+
+uint32_t cRecording::UID(void)
+{
+  /** stored so the id doesn't change when the filename changes */
+  if (m_hash < 0)
+    m_hash = (int64_t)CCRC32::CRC32(FileName());
+  return (uint32_t)m_hash;
 }
 
 const char *cRecording::Title(char Delimiter, bool NewIndicator, int Level) const
@@ -1373,6 +1385,18 @@ void cRecordings::AddByName(const char *FileName, bool TriggerUpdate)
      if (TriggerUpdate)
         TouchUpdate();
      }
+}
+
+cRecording* cRecordings::FindByUID(uint32_t uid)
+{
+  //XXX use a lookup table here, and protect member access
+  for (cRecording *recording = First(); recording; recording = Next(recording))
+  {
+    if (recording->UID() == uid)
+      return recording;
+  }
+
+  return NULL;
 }
 
 void cRecordings::DelByName(const char *FileName)

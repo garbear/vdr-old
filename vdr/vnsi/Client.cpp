@@ -769,7 +769,7 @@ bool cVNSIClient::processRecStream_Open() /* OPCODE 40 */
   cRecording *recording = NULL;
 
   uint32_t uid = m_req->extract_U32();
-  recording = cRecordingsCache::GetInstance().Lookup(uid);
+  recording = Recordings.FindByUID(uid);
 
   if (recording && m_RecPlayer == NULL)
   {
@@ -1643,8 +1643,7 @@ bool cVNSIClient::processRECORDINGS_GetList() /* OPCODE 102 */
     m_resp->add_String((isempty(directory)) ? "" : m_toUTF8.Convert(directory));
 
     // filename / uid of recording
-    uint32_t uid = cRecordingsCache::GetInstance().Register(recording);
-    m_resp->add_U32(uid);
+    m_resp->add_U32(recording->UID());
 
     free(fullname);
   }
@@ -1658,7 +1657,7 @@ bool cVNSIClient::processRECORDINGS_Rename() /* OPCODE 103 */
 {
   uint32_t    uid          = m_req->extract_U32();
   char*       newtitle     = m_req->extract_String();
-  cRecording* recording    = cRecordingsCache::GetInstance().Lookup(uid);
+  cRecording* recording    = Recordings.FindByUID(uid);
   int         r            = VNSI_RET_DATAINVALID;
 
   if(recording != NULL) {
@@ -1701,7 +1700,7 @@ bool cVNSIClient::processRECORDINGS_Delete() /* OPCODE 104 */
   cRecording* recording = NULL;
 
   uint32_t uid = m_req->extract_U32();
-  recording = cRecordingsCache::GetInstance().Lookup(uid);
+  recording = Recordings.FindByUID(uid);
 
   if (recording)
   {
@@ -1747,7 +1746,7 @@ bool cVNSIClient::processRECORDINGS_GetEdl() /* OPCODE 105 */
   cRecording* recording = NULL;
 
   uint32_t uid = m_req->extract_U32();
-  recording = cRecordingsCache::GetInstance().Lookup(uid);
+  recording = Recordings.FindByUID(uid);
 
   if (recording)
   {
