@@ -180,6 +180,7 @@ public:
 
   std::vector<ChannelPtr> GetCurrent(void) const;
 
+  PLATFORM::CMutex* Mutex(void) { return &m_mutex; };
 private:
   typedef std::vector<ChannelPtr>      ChannelVector;
   typedef std::map<int, ChannelVector> ChannelSidMap;

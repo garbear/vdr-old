@@ -976,7 +976,7 @@ bool cVNSIClient::processCHANNELS_GroupsCount()
 {
   uint32_t type = m_req->extract_U32();
 
-//  XXX Channels.Lock(false);
+  CLockObject lock(*cChannelManager::Get().Mutex());
 
   m_channelgroups[0].clear();
   m_channelgroups[1].clear();
@@ -993,8 +993,6 @@ bool cVNSIClient::processCHANNELS_GroupsCount()
       CreateChannelGroups(true);
       break;
   }
-
-//  Channels.Unlock();
 
   uint32_t count = m_channelgroups[0].size() + m_channelgroups[1].size();
 
@@ -1783,7 +1781,7 @@ bool cVNSIClient::processEPG_GetForChannel() /* OPCODE 120 */
   uint32_t startTime      = m_req->extract_U32();
   uint32_t duration       = m_req->extract_U32();
 
-//  XXX Channels.Lock(false);
+  CLockObject lock(*cChannelManager::Get().Mutex());
 
   ChannelPtr channel = cChannelManager::Get().GetByChannelUID(channelUID);
   if(channel)
@@ -1796,7 +1794,6 @@ bool cVNSIClient::processEPG_GetForChannel() /* OPCODE 120 */
     m_resp->add_U32(0);
     m_resp->finalise();
     m_socket.write(m_resp->getPtr(), m_resp->getLen());
-//    Channels.Unlock();
 
     esyslog("written 0 because channel = NULL");
     return true;
@@ -1810,7 +1807,6 @@ bool cVNSIClient::processEPG_GetForChannel() /* OPCODE 120 */
     m_resp->add_U32(0);
     m_resp->finalise();
     m_socket.write(m_resp->getPtr(), m_resp->getLen());
-//    Channels.Unlock();
 
     dsyslog("written 0 because Schedule!s! = NULL");
     return true;
@@ -1822,7 +1818,6 @@ bool cVNSIClient::processEPG_GetForChannel() /* OPCODE 120 */
     m_resp->add_U32(0);
     m_resp->finalise();
     m_socket.write(m_resp->getPtr(), m_resp->getLen());
-//    Channels.Unlock();
 
     dsyslog("written 0 because Schedule = NULL");
     return true;
@@ -1876,7 +1871,6 @@ bool cVNSIClient::processEPG_GetForChannel() /* OPCODE 120 */
     atLeastOneEvent = true;
   }
 
-//  Channels.Unlock();
   dsyslog("Got all event data");
 
   if (!atLeastOneEvent)
