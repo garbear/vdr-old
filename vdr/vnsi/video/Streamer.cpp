@@ -164,6 +164,7 @@ void* cLiveStreamer::Process(void)
 {
   int ret;
   sStreamPacket pkt;
+  memset(&pkt, 0, sizeof(sStreamPacket));
   bool requestStreamChange = false;
   cTimeMs last_info(1000);
   cTimeMs bufferStatsTimer(1000);
@@ -182,6 +183,11 @@ void* cLiveStreamer::Process(void)
         if (pkt.streamChange || requestStreamChange)
           sendStreamChange();
         requestStreamChange = false;
+        if (pkt.reftime)
+        {
+          sendRefTime(&pkt);
+          pkt.reftime = 0;
+        }
         sendStreamPacket(&pkt);
       }
 
@@ -601,13 +607,32 @@ void cLiveStreamer::sendBufferStatus()
     delete resp;
     return;
   }
-  int32_t start, current, end;
+  uint32_t start, end;
   bool timeshift;
-  m_Demuxer.BufferStatus(timeshift, start, current, end);
+  m_Demuxer.BufferStatus(timeshift, start, end);
   resp->add_U8(timeshift);
-  resp->add_S32(start);
-  resp->add_S32(current);
-  resp->add_S32(end);
+  resp->add_U32(start);
+  resp->add_U32(end);
+  resp->finaliseStream();
+  m_Socket->write(resp->getPtr(), resp->getLen());
+  delete resp;
+}
+
+void cLiveStreamer::sendRefTime(sStreamPacket *pkt)
+{
+  if(pkt == NULL)
+    return;
+
+  cResponsePacket *resp = new cResponsePacket();
+  if (!resp->initStream(VNSI_STREAM_REFTIME, 0, 0, 0, 0, 0))
+  {
+    esyslog("stream response packet init fail");
+    delete resp;
+    return;
+  }
+
+  resp->add_U32(pkt->reftime);
+  resp->add_U64(pkt->pts);
   resp->finaliseStream();
   m_Socket->write(resp->getPtr(), resp->getLen());
   delete resp;

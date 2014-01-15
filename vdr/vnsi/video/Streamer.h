@@ -58,6 +58,7 @@ private:
   void sendSignalInfo();
   void sendStreamStatus();
   void sendBufferStatus();
+  void sendRefTime(sStreamPacket *pkt);
 
   int               m_ClientID;
   ChannelPtr        m_Channel;                      /*!> Channel to stream */
