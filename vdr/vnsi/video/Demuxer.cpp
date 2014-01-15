@@ -106,11 +106,7 @@ int cVNSIDemuxer::Read(sStreamPacket *packet)
   {
     m_PatPmtParser.ParsePat(buf, TS_SIZE);
   }
-#if APIVERSNUM >= 10733
   else if (m_PatPmtParser.IsPmtPid(ts_pid))
-#else
-  else if (ts_pid == m_PatPmtParser.PmtPid())
-#endif
   {
     int patVersion, pmtVersion;
     m_PatPmtParser.ParsePmt(buf, TS_SIZE);
@@ -463,9 +459,7 @@ bool cVNSIDemuxer::EnsureParsers()
     {
       stream = new cTSStream(stDVBSUB, it->pID, &m_PtsWrap);
       stream->SetLanguage(it->language);
-#if APIVERSNUM >= 10709
       stream->SetSubtitlingDescriptor(it->subtitlingType, it->compositionPageId, it->ancillaryPageId);
-#endif
     }
     else if (it->type == stTELETEXT)
     {
@@ -490,11 +484,9 @@ void cVNSIDemuxer::SetChannelStreams(const cChannel *channel)
   if (channel->Vpid())
   {
     newStream.pID = channel->Vpid();
-#if APIVERSNUM >= 10701
     if (channel->Vtype() == 0x1B)
       newStream.type = stH264;
     else
-#endif
       newStream.type = stMPEG2VIDEO;
 
     AddStreamInfo(newStream);
@@ -508,10 +500,8 @@ void cVNSIDemuxer::SetChannelStreams(const cChannel *channel)
     {
       newStream.pID = *DPids;
       newStream.type = stAC3;
-#if APIVERSNUM >= 10715
       if (channel->Dtype(index) == SI::EnhancedAC3DescriptorTag)
         newStream.type = stEAC3;
-#endif
       newStream.SetLanguage(channel->Dlang(index));
       AddStreamInfo(newStream);
     }
@@ -526,12 +516,10 @@ void cVNSIDemuxer::SetChannelStreams(const cChannel *channel)
     {
       newStream.pID = *APids;
       newStream.type = stMPEG2AUDIO;
-#if APIVERSNUM >= 10715
       if (channel->Atype(index) == 0x0F)
         newStream.type = stAACADTS;
       else if (channel->Atype(index) == 0x11)
         newStream.type = stAACLATM;
-#endif
       newStream.SetLanguage(channel->Alang(index));
       AddStreamInfo(newStream);
     }
@@ -549,11 +537,9 @@ void cVNSIDemuxer::SetChannelStreams(const cChannel *channel)
         newStream.pID = *SPids;
         newStream.type = stDVBSUB;
         newStream.SetLanguage(channel->Slang(index));
-#if APIVERSNUM >= 10709
         newStream.subtitlingType = channel->SubtitlingType(index);
         newStream.compositionPageId = channel->CompositionPageId(index);
         newStream.ancillaryPageId = channel->AncillaryPageId(index);
-#endif
         AddStreamInfo(newStream);
       }
       index++;
