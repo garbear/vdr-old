@@ -46,6 +46,7 @@
 #include "Server.h"
 #include "Client.h"
 #include "settings/Settings.h"
+#include "ChannelFilter.h"
 
 class cAllowedHosts : public cSVDRPhosts
 {
@@ -79,6 +80,9 @@ cVNSIServer::cVNSIServer(int listenPort)
     esyslog("cVNSIServer: missing ConfigDirectory!");
     m_AllowedHostsFile = "/video/" ALLOWED_HOSTS_FILE;
   }
+
+  VNSIChannelFilter.Load();
+  VNSIChannelFilter.SortChannels();
 
   m_ServerFD = socket(AF_INET, SOCK_STREAM, 0);
   if(m_ServerFD == -1)
