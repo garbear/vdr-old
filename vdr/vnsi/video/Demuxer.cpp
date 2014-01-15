@@ -127,7 +127,7 @@ int cVNSIDemuxer::Read(sStreamPacket *packet)
       }
     }
   }
-  else if (stream = FindStream(ts_pid))
+  else if ((stream = FindStream(ts_pid)))
   {
     int error = stream->ProcessTSPacket(buf, packet, m_WaitIFrame);
     if (error == 0)
@@ -615,10 +615,10 @@ bool cVNSIDemuxer::GetTimeAtPos(off_t *pos, int64_t *time)
 
   m_VideoBuffer->SetPos(*pos);
   ResetParsers();
-  while (len = m_VideoBuffer->Read(&buf, TS_SIZE, m_endTime, m_wrapTime) == TS_SIZE)
+  while ((len = m_VideoBuffer->Read(&buf, TS_SIZE, m_endTime, m_wrapTime)) == TS_SIZE)
   {
     ts_pid = TsPid(buf);
-    if (stream = FindStream(ts_pid))
+    if ((stream = FindStream(ts_pid)))
     {
       // only consider video or audio streams
       if ((stream->Content() == scVIDEO || stream->Content() == scAUDIO) &&
