@@ -486,6 +486,7 @@ bool cVNSIDemuxer::EnsureParsers()
 void cVNSIDemuxer::SetChannelStreams(const cChannel *channel)
 {
   sStreamInfo newStream;
+  int index = 0;
   if (channel->Vpid())
   {
     newStream.pID = channel->Vpid();
@@ -500,9 +501,9 @@ void cVNSIDemuxer::SetChannelStreams(const cChannel *channel)
   }
 
   const int *DPids = channel->Dpids();
+  index = 0;
   for ( ; *DPids; DPids++)
   {
-    int index = 0;
     if (!FindStream(*DPids))
     {
       newStream.pID = *DPids;
@@ -518,9 +519,9 @@ void cVNSIDemuxer::SetChannelStreams(const cChannel *channel)
   }
 
   const int *APids = channel->Apids();
+  index = 0;
   for ( ; *APids; APids++)
   {
-    int index = 0;
     if (!FindStream(*APids))
     {
       newStream.pID = *APids;
@@ -540,7 +541,7 @@ void cVNSIDemuxer::SetChannelStreams(const cChannel *channel)
   const int *SPids = channel->Spids();
   if (SPids)
   {
-    int index = 0;
+    index = 0;
     for ( ; *SPids; SPids++)
     {
       if (!FindStream(*SPids))
