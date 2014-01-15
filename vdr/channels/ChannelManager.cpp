@@ -37,6 +37,7 @@
 
 using namespace std;
 using namespace VDR;
+using namespace PLATFORM;
 
 /*
 string ChannelString(const ChannelPtr &channel, int number)
@@ -75,6 +76,7 @@ cChannelManager &cChannelManager::Get()
 
 void cChannelManager::Clear(void)
 {
+  CLockObject lock(m_mutex);
   m_channels.clear();
   m_channelSids.clear();
 }
@@ -87,6 +89,8 @@ void cChannelManager::Notify(const Observable &obs, const ObservableMessage msg)
 void cChannelManager::AddChannel(ChannelPtr channel)
 {
   assert(channel.get());
+
+  CLockObject lock(m_mutex);
 
   // Avoid adding two of the same channel objects to the vector
   for (ChannelVector::iterator itChannel = m_channels.begin(); itChannel != m_channels.end(); ++itChannel)
@@ -104,6 +108,7 @@ void cChannelManager::RemoveChannel(ChannelPtr channel)
   assert(channel.get());
 
   channel->UnregisterObserver(this);
+  CLockObject lock(m_mutex);
   for (ChannelVector::iterator itChannel = m_channels.begin(); itChannel != m_channels.end(); ++itChannel)
   {
     if (channel == *itChannel)
@@ -120,6 +125,7 @@ void cChannelManager::RemoveChannel(ChannelPtr channel)
 
 bool cChannelManager::Load(const std::string &file)
 {
+  CLockObject lock(m_mutex);
   Clear();
 
   CXBMCTinyXML xmlDoc;
@@ -168,6 +174,7 @@ bool cChannelManager::LoadConf(const string& strFilename)
   if (strFilename.empty())
     return false;
 
+  CLockObject lock(m_mutex);
   Clear();
 
   CFile file;
@@ -223,6 +230,7 @@ bool cChannelManager::Save(const string &file)
   if (root == NULL)
     return false;
 
+  CLockObject lock(m_mutex);
   for (ChannelVector::const_iterator itChannel = m_channels.begin(); itChannel != m_channels.end(); ++itChannel)
   {
     const ChannelPtr &channel = *itChannel;
@@ -250,6 +258,7 @@ bool cChannelManager::SaveConf(const string &file)
   cSafeFile f(file.c_str());
   if (f.Open())
   {
+    CLockObject lock(m_mutex);
     for (ChannelVector::const_iterator itChannel = m_channels.begin(); itChannel != m_channels.end(); ++itChannel)
     {
       const ChannelPtr &channel = *itChannel;
@@ -270,6 +279,7 @@ bool cChannelManager::SaveConf(const string &file)
 ChannelPtr cChannelManager::GetByNumber(int number, int skipGap /* = 0 */)
 {
   ChannelPtr previous;
+  CLockObject lock(m_mutex);
   for (ChannelVector::iterator itChannel = m_channels.begin(); itChannel != m_channels.end(); ++itChannel)
   {
     ChannelPtr &channel = *itChannel;
@@ -366,6 +376,7 @@ ChannelPtr cChannelManager::GetByTransponderID(tChannelID channelID)
   int source = channelID.Source();
   int nid = channelID.Nid();
   int tid = channelID.Tid();
+  CLockObject lock(m_mutex);
   for (ChannelVector::iterator itChannel = m_channels.begin(); itChannel != m_channels.end(); ++itChannel)
   {
     ChannelPtr &channel = *itChannel;
@@ -377,6 +388,7 @@ ChannelPtr cChannelManager::GetByTransponderID(tChannelID channelID)
 
 int cChannelManager::GetNextGroup(unsigned int index) const
 {
+  CLockObject lock(m_mutex);
   for (unsigned int i = index + 1; i < m_channels.size(); i++)
   {
     const ChannelPtr &channel = m_channels[i];
@@ -391,6 +403,7 @@ int cChannelManager::GetPrevGroup(unsigned int index) const
   if (index == 0)
     return -1;
 
+  CLockObject lock(m_mutex);
   for (int i = index - 1; i >= 0; i--)
   {
     const ChannelPtr &channel = m_channels[i];
@@ -402,6 +415,7 @@ int cChannelManager::GetPrevGroup(unsigned int index) const
 
 int cChannelManager::GetNextNormal(unsigned int index) const
 {
+  CLockObject lock(m_mutex);
   for (unsigned int i = index + 1; i < m_channels.size(); i++)
   {
     const ChannelPtr &channel = m_channels[i];
@@ -416,6 +430,7 @@ int cChannelManager::GetPrevNormal(unsigned int index) const
   if (index == 0)
     return -1;
 
+  CLockObject lock(m_mutex);
   for (int i = index - 1; i >= 0; i--)
   {
     const ChannelPtr &channel = m_channels[i];
@@ -427,6 +442,7 @@ int cChannelManager::GetPrevNormal(unsigned int index) const
 
 void cChannelManager::ReNumber()
 {
+  CLockObject lock(m_mutex);
   m_channelSids.clear();
   m_maxNumber = 0;
 
@@ -450,6 +466,7 @@ bool cChannelManager::HasUniqueChannelID(const ChannelPtr &newChannel, const Cha
   assert(newChannel.get());
 
   tChannelID newChannelID = newChannel->GetChannelID();
+  CLockObject lock(m_mutex);
   for (ChannelVector::const_iterator itChannel = m_channels.begin(); itChannel != m_channels.end(); ++itChannel)
   {
     const ChannelPtr &channel = *itChannel;
@@ -467,6 +484,7 @@ bool cChannelManager::SwitchTo(int number)
 
 unsigned int cChannelManager::MaxChannelNameLength()
 {
+  CLockObject lock(m_mutex);
   if (!m_maxChannelNameLength)
   {
     for (ChannelVector::const_iterator itChannel = m_channels.begin(); itChannel != m_channels.end(); ++itChannel)
@@ -481,6 +499,7 @@ unsigned int cChannelManager::MaxChannelNameLength()
 
 unsigned int cChannelManager::MaxShortChannelNameLength()
 {
+  CLockObject lock(m_mutex);
   if (!m_maxShortChannelNameLength)
   {
     for (ChannelVector::const_iterator itChannel = m_channels.begin(); itChannel != m_channels.end(); ++itChannel)
@@ -539,6 +558,7 @@ ChannelPtr cChannelManager::GetByChannelUID(uint32_t channelUID) const
   ChannelPtr channel;
 
   // maybe we need to use a lookup table
+  CLockObject lock(m_mutex);
   for (ChannelVector::const_iterator it = m_channels.begin(); it != m_channels.end(); ++it)
   {
     channel = (*it);
@@ -549,4 +569,10 @@ ChannelPtr cChannelManager::GetByChannelUID(uint32_t channelUID) const
   }
 
   return result;
+}
+
+vector<ChannelPtr> cChannelManager::GetCurrent(void) const
+{
+  PLATFORM::CLockObject lock(m_mutex);
+  return m_channels;
 }

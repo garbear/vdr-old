@@ -178,11 +178,12 @@ public:
 
   void AddTransponders(cScanList* list) const;
 
-  std::vector<ChannelPtr> GetCurrent(void) const { return m_channels; }
+  std::vector<ChannelPtr> GetCurrent(void) const;
 
 private:
   typedef std::vector<ChannelPtr>      ChannelVector;
   typedef std::map<int, ChannelVector> ChannelSidMap;
+  PLATFORM::CMutex m_mutex;
 
   ChannelVector m_channels;
   ChannelSidMap m_channelSids; // Index channels by SID for fast lookups in GetBy*() methods
