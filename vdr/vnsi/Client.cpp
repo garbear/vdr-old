@@ -36,7 +36,6 @@
 //#include "vnsi.h"
 #include "settings/Settings.h"
 #include "net/VNSICommand.h"
-#include "RecordingsCache.h"
 #include "Client.h"
 #include "video/Streamer.h"
 #include "Server.h"
