@@ -178,10 +178,6 @@ void* cVNSIServer::Process(void)
   fd_set fds;
   struct timeval tv;
 
-  // initial time for channels change
-  struct timespec channelsUpdate;
-  channelsUpdate.tv_sec = 0;
-  channelsUpdate.tv_nsec = 0;
   cTimeMs chanTimer(0);
 
   // get initial state of the recordings
@@ -248,27 +244,14 @@ void* cVNSIServer::Process(void)
       // trigger clients to reload the modified channel list
       if(m_clients.size() > 0 && chanTimer.TimedOut())
       {
-//        struct stat s;
-//        if(stat(Channels.FileName(), &s) != -1) //XXX
-//        {
-//#ifdef ANDROID
-//          if (s.st_mtime != channelsUpdate.tv_sec)
-//#else
-//          struct timespec time = s.st_mtim;
-//          if ((time.tv_sec != channelsUpdate.tv_sec) &&
-//              (time.tv_nsec != channelsUpdate.tv_nsec))
-//#endif
-//          {
-//            isyslog("Requesting clients to reload channel list");
-//            for (ClientList::iterator i = m_clients.begin(); i != m_clients.end(); i++)
-//              (*i)->ChannelChange();
-//#ifdef ANDROID
-//            channelsUpdate.tv_sec = s.st_mtime;
-//#else
-//            channelsUpdate = time;
-//#endif
-//          }
-//        }
+        int modified = cChannelManager::Get().Modified();
+        if (modified)
+        {
+          cChannelManager::Get().SetModified((modified == CHANNELSMOD_USER) ? true : false);
+          isyslog("Requesting clients to reload channel list");
+          for (ClientList::iterator i = m_clients.begin(); i != m_clients.end(); i++)
+            (*i)->ChannelChange();
+        }
         chanTimer.Set(5000);
       }
 
