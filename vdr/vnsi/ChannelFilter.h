@@ -41,10 +41,10 @@ public:
   void Load();
   void StoreWhitelist(bool radio);
   void StoreBlacklist(bool radio);
-  bool IsWhitelist(const cChannel &channel);
-  bool PassFilter(const cChannel &channel);
+  bool IsWhitelist(const ChannelPtr channel);
+  bool PassFilter(const ChannelPtr channel);
   void SortChannels();
-  static bool IsRadio(const cChannel* channel);
+  static bool IsRadio(const ChannelPtr channel);
   std::vector<cVNSIProvider> m_providersVideo;
   std::vector<cVNSIProvider> m_providersRadio;
   std::vector<int> m_channelsVideo;

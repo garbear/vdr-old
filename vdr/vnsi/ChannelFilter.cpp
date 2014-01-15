@@ -50,7 +50,7 @@ bool cVNSIProvider::operator==(const cVNSIProvider &rhs)
 }
 
 
-bool cVNSIChannelFilter::IsRadio(const cChannel* channel)
+bool cVNSIChannelFilter::IsRadio(const ChannelPtr channel)
 {
   bool isRadio = false;
 
@@ -239,14 +239,14 @@ void cVNSIChannelFilter::StoreBlacklist(bool radio)
   SortChannels();
 }
 
-bool cVNSIChannelFilter::IsWhitelist(const cChannel &channel)
+bool cVNSIChannelFilter::IsWhitelist(const ChannelPtr channel)
 {
   cVNSIProvider provider;
   std::vector<cVNSIProvider>::iterator p_it;
   std::vector<cVNSIProvider> *providers;
-  provider.m_name = channel.Provider();
+  provider.m_name = channel->Provider();
 
-  if (IsRadio(&channel))
+  if (IsRadio(channel))
     providers = &m_providersRadio;
   else
     providers = &m_providersVideo;
@@ -254,7 +254,7 @@ bool cVNSIChannelFilter::IsWhitelist(const cChannel &channel)
   if(providers->empty())
     return true;
 
-  if (channel.Ca(0) == 0)
+  if (channel->Ca(0) == 0)
   {
     provider.m_caid = 0;
     p_it = std::find(providers->begin(), providers->end(), provider);
@@ -266,7 +266,7 @@ bool cVNSIChannelFilter::IsWhitelist(const cChannel &channel)
 
   int caid;
   int idx = 0;
-  while((caid = channel.Ca(idx)) != 0)
+  while((caid = channel->Ca(idx)) != 0)
   {
     provider.m_caid = caid;
     p_it = std::find(providers->begin(), providers->end(), provider);
@@ -278,26 +278,26 @@ bool cVNSIChannelFilter::IsWhitelist(const cChannel &channel)
   return false;
 }
 
-bool cVNSIChannelFilter::PassFilter(const cChannel &channel)
+bool cVNSIChannelFilter::PassFilter(const ChannelPtr channel)
 {
   CLockObject lock(m_Mutex);
 
-  if(channel.GroupSep())
+  if(channel->GroupSep())
     return true;
 
   if (!IsWhitelist(channel))
     return false;
 
   std::vector<int>::iterator it;
-  if (IsRadio(&channel))
+  if (IsRadio(channel))
   {
-    it = std::find(m_channelsRadio.begin(), m_channelsRadio.end(), channel.Hash());
+    it = std::find(m_channelsRadio.begin(), m_channelsRadio.end(), channel->Hash());
     if(it!=m_channelsRadio.end())
       return false;
   }
   else
   {
-    it = std::find(m_channelsVideo.begin(), m_channelsVideo.end(), channel.Hash());
+    it = std::find(m_channelsVideo.begin(), m_channelsVideo.end(), channel->Hash());
     if(it!=m_channelsVideo.end())
       return false;
   }
@@ -313,14 +313,14 @@ void cVNSIChannelFilter::SortChannels()
 
   for (std::vector<ChannelPtr>::iterator it = channels.begin(); it != channels.end(); ++it)
   {
-    if(!PassFilter(**it))
+    if(!PassFilter(*it))
     {
       std::vector<ChannelPtr>::iterator it2 = it;
       if (it2 != channels.end())
         ++it2;
       for (; it2 != channels.end(); ++it2)
       {
-        if(PassFilter(**it2))
+        if(PassFilter(*it2))
         {
 //          TODO cChannelManager::Get().Move(**it2, **it);
           it = it2;

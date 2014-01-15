@@ -255,10 +255,10 @@ void cVNSIClient::EpgChange()
       continue;
 
     const ChannelPtr channel = cChannelManager::Get().GetByChannelID(schedule->ChannelID());
-    if (!channel.get())
+    if (channel == cChannel::EmptyChannel)
       continue;
 
-    if (!VNSIChannelFilter.PassFilter(*channel.get()))
+    if (!VNSIChannelFilter.PassFilter(channel))
       continue;
 
     uint32_t channelId = schedule->ChannelID().Hash();
@@ -940,7 +940,7 @@ bool cVNSIClient::processCHANNELS_GetChannels() /* OPCODE 63 */
   for (std::vector<ChannelPtr>::const_iterator it = channels.begin(); it != channels.end(); ++it)
   {
     ChannelPtr channel = *it;
-    if (radio != cVNSIChannelFilter::IsRadio(channel.get()))
+    if (radio != cVNSIChannelFilter::IsRadio(channel))
       continue;
 
     // skip invalid channels
@@ -948,7 +948,7 @@ bool cVNSIClient::processCHANNELS_GetChannels() /* OPCODE 63 */
       continue;
 
     // check filter
-    if (filter && !VNSIChannelFilter.PassFilter(*channel.get()))
+    if (filter && !VNSIChannelFilter.PassFilter(channel))
       continue;
 
     m_resp->add_U32(channel->Number());
@@ -1058,11 +1058,11 @@ bool cVNSIClient::processCHANNELS_GetGroupMembers()
     if(name.empty())
       continue;
 
-    if(cVNSIChannelFilter::IsRadio(channel.get()) != radio)
+    if(cVNSIChannelFilter::IsRadio(channel) != radio)
       continue;
 
     // check filter
-    if (filter && !VNSIChannelFilter.PassFilter(*channel.get()))
+    if (filter && !VNSIChannelFilter.PassFilter(channel))
       continue;
 
     if(name == groupname)
@@ -1213,7 +1213,7 @@ void cVNSIClient::CreateChannelGroups(bool automatic)
   for (std::vector<ChannelPtr>::const_iterator it = channels.begin(); it != channels.end(); ++it)
   {
     ChannelPtr channel = *it;
-    bool isRadio = cVNSIChannelFilter::IsRadio(channel.get());
+    bool isRadio = cVNSIChannelFilter::IsRadio(channel);
 
     if(automatic && !channel->GroupSep())
       groupname = channel->Provider();
