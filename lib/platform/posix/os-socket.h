@@ -2,7 +2,7 @@
 /*
  * This file is part of the libCEC(R) library.
  *
- * libCEC(R) is Copyright (C) 2011-2012 Pulse-Eight Limited.  All rights reserved.
+ * libCEC(R) is Copyright (C) 2011-2013 Pulse-Eight Limited.  All rights reserved.
  * libCEC(R) is an original work, containing original code.
  *
  * libCEC(R) is a trademark of Pulse-Eight Limited.
@@ -36,6 +36,7 @@
 #include "../util/timeutils.h"
 #include <stdio.h>
 #include <fcntl.h>
+#include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
@@ -163,6 +164,20 @@ namespace PLATFORM
     }
 
     return iBytesRead;
+  }
+
+  inline int SocketIoctl(socket_t socket, int *iError, int request, void* data)
+  {
+    if (socket == INVALID_SOCKET_VALUE)
+    {
+      *iError = EINVAL;
+      return -1;
+    }
+
+    int iReturn = ioctl(socket, request, data);
+    if (iReturn < 0)
+      *iError = errno;
+    return iReturn;
   }
   //@}
 

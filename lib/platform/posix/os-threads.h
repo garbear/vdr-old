@@ -2,7 +2,7 @@
 /*
  * This file is part of the libCEC(R) library.
  *
- * libCEC(R) is Copyright (C) 2011-2012 Pulse-Eight Limited.  All rights reserved.
+ * libCEC(R) is Copyright (C) 2011-2013 Pulse-Eight Limited.  All rights reserved.
  * libCEC(R) is an original work, containing original code.
  *
  * libCEC(R) is a trademark of Pulse-Eight Limited.
@@ -70,9 +70,10 @@ namespace PLATFORM
   }
 
   typedef pthread_t thread_t;
+  #define INVALID_THREAD_VALUE 0
 
   #define ThreadsCreate(thread, func, arg)         (pthread_create(&thread, NULL, (void *(*) (void *))func, (void *)arg) == 0)
-  #define ThreadsWait(thread, retval)              (pthread_join(thread, retval) == 0)
+  #define ThreadsWait(thread, retval)              (thread ? pthread_join(thread, retval) == 0 : true)
 
   typedef pthread_mutex_t mutex_t;
   #define MutexCreate(mutex)                       pthread_mutex_init(&mutex, GetRecursiveMutexAttribute());

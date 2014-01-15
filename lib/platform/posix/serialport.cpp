@@ -1,7 +1,7 @@
 /*
  * This file is part of the libCEC(R) library.
  *
- * libCEC(R) is Copyright (C) 2011-2012 Pulse-Eight Limited.  All rights reserved.
+ * libCEC(R) is Copyright (C) 2011-2013 Pulse-Eight Limited.  All rights reserved.
  * libCEC(R) is an original work, containing original code.
  *
  * libCEC(R) is a trademark of Pulse-Eight Limited.
@@ -30,12 +30,12 @@
  *     http://www.pulse-eight.net/
  */
 
-#include "../os.h"
+#include "env.h"
 #include <stdio.h>
 #include <fcntl.h>
-#include "../sockets/serialport.h"
-#include "../util/baudrate.h"
-#include "../posix/os-socket.h"
+#include "lib/platform/sockets/serialport.h"
+#include "lib/platform/util/baudrate.h"
+#include "lib/platform/posix/os-socket.h"
 
 #if defined(__APPLE__) || defined(__FreeBSD__)
 #ifndef XCASE
@@ -47,20 +47,41 @@
 #ifndef IUCLC
 #define IUCLC	0
 #endif
+#else
+#ifdef HAVE_LOCKDEV
+#include <lockdev.h>
 #endif
+#endif
+
 using namespace std;
 using namespace PLATFORM;
+
+inline bool RemoveLock(const char *strDeviceName)
+{
+  #if !defined(__APPLE__) && !defined(__FreeBSD__) && defined(HAVE_LOCKDEV)
+  return dev_unlock(strDeviceName, 0) == 0;
+  #else
+  (void)strDeviceName; // silence unused warning
+  return true;
+  #endif
+}
 
 void CSerialSocket::Close(void)
 {
   if (IsOpen())
+  {
     SocketClose(m_socket);
+    RemoveLock(m_strName.c_str());
+  }
 }
 
 void CSerialSocket::Shutdown(void)
 {
   if (IsOpen())
+  {
     SocketClose(m_socket);
+    RemoveLock(m_strName.c_str());
+  }
 }
 
 ssize_t CSerialSocket::Write(void* data, size_t len)
@@ -76,34 +97,50 @@ ssize_t CSerialSocket::Read(void* data, size_t len, uint64_t iTimeoutMs /* = 0 *
 //setting all this stuff up is a pain in the ass
 bool CSerialSocket::Open(uint64_t iTimeoutMs /* = 0 */)
 {
-  iTimeoutMs = 0;
+  iTimeoutMs = 0; if (!iTimeoutMs){} // silence unused warning
   if (IsOpen())
+  {
+    m_iError = EINVAL;
     return false;
+  }
 
   if (m_iDatabits != SERIAL_DATA_BITS_FIVE && m_iDatabits != SERIAL_DATA_BITS_SIX &&
       m_iDatabits != SERIAL_DATA_BITS_SEVEN && m_iDatabits != SERIAL_DATA_BITS_EIGHT)
   {
     m_strError = "Databits has to be between 5 and 8";
+    m_iError = EINVAL;
     return false;
   }
 
   if (m_iStopbits != SERIAL_STOP_BITS_ONE && m_iStopbits != SERIAL_STOP_BITS_TWO)
   {
     m_strError = "Stopbits has to be 1 or 2";
+    m_iError = EINVAL;
     return false;
   }
 
   if (m_iParity != SERIAL_PARITY_NONE && m_iParity != SERIAL_PARITY_EVEN && m_iParity != SERIAL_PARITY_ODD)
   {
     m_strError = "Parity has to be none, even or odd";
+    m_iError = EINVAL;
     return false;
   }
+
+  #if !defined(__APPLE__) && !defined(__FreeBSD__) && defined(HAVE_LOCKDEV)
+  if (dev_lock(m_strName.c_str()) != 0)
+  {
+    m_strError = "Couldn't lock the serial port";
+    m_iError = EBUSY;
+    return false;
+  }
+  #endif
 
   m_socket = open(m_strName.c_str(), O_RDWR | O_NOCTTY | O_NDELAY);
 
   if (m_socket == INVALID_SERIAL_SOCKET_VALUE)
   {
     m_strError = strerror(errno);
+    RemoveLock(m_strName.c_str());
     return false;
   }
 
@@ -150,6 +187,7 @@ bool CSerialSocket::Open(uint64_t iTimeoutMs /* = 0 */)
   if (tcsetattr(m_socket, TCSANOW, &m_options) != 0)
   {
     m_strError = strerror(errno);
+    RemoveLock(m_strName.c_str());
     return false;
   }
   

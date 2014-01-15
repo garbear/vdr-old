@@ -1,7 +1,7 @@
 /*
  * This file is part of the libCEC(R) library.
  *
- * libCEC(R) is Copyright (C) 2011-2012 Pulse-Eight Limited.  All rights reserved.
+ * libCEC(R) is Copyright (C) 2011-2013 Pulse-Eight Limited.  All rights reserved.
  * libCEC(R) is an original work, containing original code.
  *
  * libCEC(R) is a trademark of Pulse-Eight Limited.
@@ -48,28 +48,25 @@ void FormatWindowsError(int iErrorCode, CStdString &strMessage)
   }
 }
 
-bool SetTimeouts(serial_socket_t socket, int* iError, bool bBlocking)
+bool CSerialSocket::SetTimeouts(serial_socket_t socket, int* iError, DWORD iTimeoutMs)
 {
   if (socket == INVALID_HANDLE_VALUE)
 	  return false;
 
-  COMMTIMEOUTS cto;
-  if (!GetCommTimeouts(socket, &cto))
-  {
-    *iError = GetLastError();
-    return false;
-  }
+  if (iTimeoutMs == m_iCurrentReadTimeout)
+    return true;
 
-  if (bBlocking)
+  COMMTIMEOUTS cto;
+  if (iTimeoutMs == 0)
   {
-    cto.ReadIntervalTimeout         = 0;
+    cto.ReadIntervalTimeout         = MAXDWORD;
     cto.ReadTotalTimeoutConstant    = 0;
     cto.ReadTotalTimeoutMultiplier  = 0;
   }
   else
   {
-    cto.ReadIntervalTimeout         = MAXDWORD;
-    cto.ReadTotalTimeoutConstant    = 0;
+    cto.ReadIntervalTimeout         = 0;
+    cto.ReadTotalTimeoutConstant    = iTimeoutMs;
     cto.ReadTotalTimeoutMultiplier  = 0;
   }
 
@@ -77,6 +74,10 @@ bool SetTimeouts(serial_socket_t socket, int* iError, bool bBlocking)
   {
     *iError = GetLastError();
     return false;
+  }
+  else
+  {
+    m_iCurrentReadTimeout = iTimeoutMs;
   }
 
   return true;
@@ -98,12 +99,28 @@ void CSerialSocket::Shutdown(void)
 
 ssize_t CSerialSocket::Write(void* data, size_t len)
 {
-  return IsOpen() ? SerialSocketWrite(m_socket, &m_iError, data, len) : -1;
+  if (IsOpen())
+  {
+    ssize_t iReturn = SerialSocketWrite(m_socket, &m_iError, data, len);
+    if (iReturn != (ssize_t)len)
+    {
+      m_strError = "unable to write to the serial port";
+      FormatWindowsError(GetLastError(), m_strError);
+    }
+    return iReturn;
+  }
+  return -1;
 }
 
 ssize_t CSerialSocket::Read(void* data, size_t len, uint64_t iTimeoutMs /* = 0 */)
 {
-  return IsOpen() ? SerialSocketRead(m_socket, &m_iError, data, len, iTimeoutMs) : -1;
+  DWORD dwTimeoutMs((DWORD)iTimeoutMs);
+  if (iTimeoutMs != (uint64_t)iTimeoutMs)
+    dwTimeoutMs = MAXDWORD;
+
+  return IsOpen() && SetTimeouts(m_socket, &m_iError, dwTimeoutMs) ?
+    SerialSocketRead(m_socket, &m_iError, data, len, iTimeoutMs) :
+    -1;
 }
 
 bool CSerialSocket::Open(uint64_t iTimeoutMs /* = 0 */)
@@ -112,7 +129,7 @@ bool CSerialSocket::Open(uint64_t iTimeoutMs /* = 0 */)
   if (IsOpen())
     return false;
 
-  CStdString strComPath = "\\\\.\\" + m_strName;
+  std::string strComPath = "\\\\.\\" + m_strName;
   CLockObject lock(m_mutex);
   m_socket = CreateFile(strComPath.c_str(), GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
   if (m_socket == INVALID_HANDLE_VALUE)
@@ -153,7 +170,7 @@ bool CSerialSocket::Open(uint64_t iTimeoutMs /* = 0 */)
     return false;
   }
 
-  if (!SetTimeouts(m_socket, &m_iError, false))
+  if (!SetTimeouts(m_socket, &m_iError, 0))
   {
     m_strError = "unable to set timeouts";
     FormatWindowsError(GetLastError(), m_strError);
@@ -161,6 +178,7 @@ bool CSerialSocket::Open(uint64_t iTimeoutMs /* = 0 */)
     return false;
   }
 
+  m_strError.clear();
   m_bIsOpen = true;
   return m_bIsOpen;
 }

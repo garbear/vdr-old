@@ -2,7 +2,7 @@
 /*
  * This file is part of the libCEC(R) library.
  *
- * libCEC(R) is Copyright (C) 2011-2012 Pulse-Eight Limited.  All rights reserved.
+ * libCEC(R) is Copyright (C) 2011-2013 Pulse-Eight Limited.  All rights reserved.
  * libCEC(R) is an original work, containing original code.
  *
  * libCEC(R) is a trademark of Pulse-Eight Limited.
@@ -31,15 +31,15 @@
  *     http://www.pulse-eight.net/
  */
 
-#include "../os.h"
+#include "lib/platform/os.h"
 
 #if defined(__WINDOWS__)
-#include "../windows/os-threads.h"
+#include "lib/platform/windows/os-threads.h"
 #else
-#include "../posix/os-threads.h"
+#include "lib/platform/posix/os-threads.h"
 #endif
 
-#include "../util/timeutils.h"
+#include "lib/platform/util/timeutils.h"
 
 namespace PLATFORM
 {
@@ -51,7 +51,7 @@ namespace PLATFORM
 
   private:
     inline PreventCopy(const PreventCopy &c) { *this = c; }
-    inline PreventCopy &operator=(const PreventCopy &c){ *this = c; return *this; }
+    inline PreventCopy &operator=(const PreventCopy & UNUSED(c)){ return *this; }
   };
 
   template <typename _Predicate>
@@ -74,7 +74,7 @@ namespace PLATFORM
       MutexDelete(m_mutex);
     }
 
-    inline bool TryLock(void)
+    inline bool TryLock(void) const
     {
       if (MutexTryLock(m_mutex))
       {
@@ -84,14 +84,17 @@ namespace PLATFORM
       return false;
     }
 
-    inline bool Lock(void)
+    inline bool Lock(void) const
     {
-      MutexLock(m_mutex);
-      ++m_iLockCount;
-      return true;
+      if (MutexLock(m_mutex))
+      {
+        ++m_iLockCount;
+        return true;
+      }
+      return false;
     }
 
-    inline void Unlock(void)
+    inline void Unlock(void) const
     {
       if (Lock())
       {
@@ -106,7 +109,7 @@ namespace PLATFORM
       }
     }
 
-    inline bool Clear(void)
+    inline bool Clear(void) const
     {
       bool bReturn(false);
       if (TryLock())
@@ -120,14 +123,14 @@ namespace PLATFORM
     }
 
   private:
-    mutex_t               m_mutex;
-    volatile unsigned int m_iLockCount;
+    mutable mutex_t      m_mutex;
+    mutable unsigned int m_iLockCount;
   };
 
   class CLockObject : public PreventCopy
   {
   public:
-    inline CLockObject(CMutex &mutex, bool bClearOnExit = false) :
+    inline CLockObject(const CMutex &mutex, bool bClearOnExit = false) :
       m_mutex(mutex),
       m_bClearOnExit(bClearOnExit)
     {
@@ -171,8 +174,8 @@ namespace PLATFORM
     }
 
   private:
-    CMutex &m_mutex;
-    bool    m_bClearOnExit;
+    const CMutex& m_mutex;
+    bool          m_bClearOnExit;
   };
 
   class CTryLockObject : public PreventCopy
