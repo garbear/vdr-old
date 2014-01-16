@@ -30,6 +30,7 @@
 #include "recordings/Recording.h"
 #include "channels/ChannelManager.h"
 #include "channels/ChannelGroup.h"
+#include "channels/ChannelFilter.h"
 #include "filesystem/Videodir.h"
 #include "recordings/Timers.h"
 #include "devices/Device.h"
@@ -43,7 +44,6 @@
 #include "video/RecPlayer.h"
 #include "net/RequestPacket.h"
 #include "net/ResponsePacket.h"
-#include "ChannelFilter.h"
 //#include "wirbelscanservice.h" /// copied from modified wirbelscan plugin
                                /// must be hold up to date with wirbelscan
 
@@ -938,7 +938,7 @@ bool cVNSIClient::processCHANNELS_GetChannels() /* OPCODE 63 */
   for (std::vector<ChannelPtr>::const_iterator it = channels.begin(); it != channels.end(); ++it)
   {
     ChannelPtr channel = *it;
-    if (radio != cVNSIChannelFilter::IsRadio(channel))
+    if (radio != CChannelFilter::IsRadio(channel))
       continue;
 
     // skip invalid channels
@@ -1053,7 +1053,7 @@ bool cVNSIClient::processCHANNELS_GetGroupMembers()
     if(name.empty())
       continue;
 
-    if(cVNSIChannelFilter::IsRadio(channel) != radio)
+    if(CChannelFilter::IsRadio(channel) != radio)
       continue;
 
     // check filter
@@ -1100,7 +1100,7 @@ bool cVNSIClient::processCHANNELS_GetCaids()
 bool cVNSIClient::processCHANNELS_GetWhitelist()
 {
   bool radio = m_req->extract_U8();
-  std::vector<cVNSIProvider> *providers;
+  std::vector<CChannelProvider> *providers;
 
   if(radio)
     providers = &VNSIChannelFilter.m_providersRadio;
@@ -1145,8 +1145,8 @@ bool cVNSIClient::processCHANNELS_GetBlacklist()
 bool cVNSIClient::processCHANNELS_SetWhitelist()
 {
   bool radio = m_req->extract_U8();
-  cVNSIProvider provider;
-  std::vector<cVNSIProvider> *providers;
+  CChannelProvider provider;
+  std::vector<CChannelProvider> *providers;
 
   if(radio)
     providers = &VNSIChannelFilter.m_providersRadio;
@@ -1175,7 +1175,7 @@ bool cVNSIClient::processCHANNELS_SetWhitelist()
 bool cVNSIClient::processCHANNELS_SetBlacklist()
 {
   bool radio = m_req->extract_U8();
-  cVNSIProvider provider;
+  CChannelProvider provider;
   std::vector<int> *channels;
 
   if(radio)

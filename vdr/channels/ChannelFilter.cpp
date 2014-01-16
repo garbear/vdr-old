@@ -29,18 +29,18 @@
 
 using namespace PLATFORM;
 
-cVNSIProvider::cVNSIProvider()
+CChannelProvider::CChannelProvider()
   :m_name(""), m_caid(0)
 {
 
 }
 
-cVNSIProvider::cVNSIProvider(std::string name, int caid)
+CChannelProvider::CChannelProvider(std::string name, int caid)
   :m_name(name), m_caid(caid)
 {
 };
 
-bool cVNSIProvider::operator==(const cVNSIProvider &rhs)
+bool CChannelProvider::operator==(const CChannelProvider &rhs)
 {
   if (rhs.m_caid != m_caid)
     return false;
@@ -50,7 +50,7 @@ bool cVNSIProvider::operator==(const cVNSIProvider &rhs)
 }
 
 
-bool cVNSIChannelFilter::IsRadio(const ChannelPtr channel)
+bool CChannelFilter::IsRadio(const ChannelPtr channel)
 {
   bool isRadio = false;
 
@@ -64,15 +64,15 @@ bool cVNSIChannelFilter::IsRadio(const ChannelPtr channel)
   return isRadio;
 }
 
-void cVNSIChannelFilter::Load()
+void CChannelFilter::Load()
 {
   CLockObject lock(m_Mutex);
 
   cString filename;
   std::string line;
   std::ifstream rfile;
-  cVNSIProvider provider;
-  std::vector<cVNSIProvider>::iterator p_it;
+  CChannelProvider provider;
+  std::vector<CChannelProvider>::iterator p_it;
 
   filename = cString::sprintf("%s/videowhitelist.vnsi", cSettings::Get().m_ConfigDirectory.c_str());
   m_providersVideo.clear();
@@ -161,15 +161,15 @@ void cVNSIChannelFilter::Load()
   }
 }
 
-void cVNSIChannelFilter::StoreWhitelist(bool radio)
+void CChannelFilter::StoreWhitelist(bool radio)
 {
   CLockObject lock(m_Mutex);
 
   cString filename;
   std::ofstream wfile;
-  cVNSIProvider provider;
-  std::vector<cVNSIProvider>::iterator p_it;
-  std::vector<cVNSIProvider> *whitelist;
+  CChannelProvider provider;
+  std::vector<CChannelProvider>::iterator p_it;
+  std::vector<CChannelProvider> *whitelist;
 
   if (radio)
   {
@@ -201,13 +201,13 @@ void cVNSIChannelFilter::StoreWhitelist(bool radio)
   SortChannels();
 }
 
-void cVNSIChannelFilter::StoreBlacklist(bool radio)
+void CChannelFilter::StoreBlacklist(bool radio)
 {
   CLockObject lock(m_Mutex);
 
   cString filename;
   std::ofstream wfile;
-  cVNSIProvider provider;
+  CChannelProvider provider;
   std::vector<int>::iterator it;
   std::vector<int> *blacklist;
 
@@ -239,11 +239,11 @@ void cVNSIChannelFilter::StoreBlacklist(bool radio)
   SortChannels();
 }
 
-bool cVNSIChannelFilter::IsWhitelist(const ChannelPtr channel)
+bool CChannelFilter::IsWhitelist(const ChannelPtr channel)
 {
-  cVNSIProvider provider;
-  std::vector<cVNSIProvider>::iterator p_it;
-  std::vector<cVNSIProvider> *providers;
+  CChannelProvider provider;
+  std::vector<CChannelProvider>::iterator p_it;
+  std::vector<CChannelProvider> *providers;
   provider.m_name = channel->Provider();
 
   if (IsRadio(channel))
@@ -278,7 +278,7 @@ bool cVNSIChannelFilter::IsWhitelist(const ChannelPtr channel)
   return false;
 }
 
-bool cVNSIChannelFilter::PassFilter(const ChannelPtr channel)
+bool CChannelFilter::PassFilter(const ChannelPtr channel)
 {
   CLockObject lock(m_Mutex);
 
@@ -305,7 +305,7 @@ bool cVNSIChannelFilter::PassFilter(const ChannelPtr channel)
   return true;
 }
 
-void cVNSIChannelFilter::SortChannels()
+void CChannelFilter::SortChannels()
 {
   cChannelManager::Get().IncBeingEdited();
 //  XXX Channels.Lock(true);
@@ -335,4 +335,4 @@ void cVNSIChannelFilter::SortChannels()
   cChannelManager::Get().DecBeingEdited();
 }
 
-cVNSIChannelFilter VNSIChannelFilter;
+CChannelFilter VNSIChannelFilter;

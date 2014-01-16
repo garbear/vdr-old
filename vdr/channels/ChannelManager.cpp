@@ -22,6 +22,7 @@
 #include "ChannelManager.h"
 #include "ChannelDefinitions.h"
 #include "ChannelGroup.h"
+#include "ChannelFilter.h"
 #include "devices/Device.h"
 #include "devices/DeviceManager.h"
 #include "devices/subsystems/DeviceChannelSubsystem.h"
@@ -32,7 +33,6 @@
 #include "utils/XBMCTinyXML.h"
 #include "utils/UTF8Utils.h"
 #include "utils/CRC32.h"
-#include "vnsi/ChannelFilter.h" //XXX
 
 #include <algorithm>
 #include <assert.h>
@@ -590,7 +590,7 @@ void cChannelManager::CreateChannelGroups(bool automatic)
   for (std::vector<ChannelPtr>::const_iterator it = m_channels.begin(); it != m_channels.end(); ++it)
   {
     ChannelPtr channel = *it;
-    bool isRadio = cVNSIChannelFilter::IsRadio(channel);
+    bool isRadio = CChannelFilter::IsRadio(channel);
 
     if(automatic && !channel->GroupSep())
       groupname = channel->Provider();

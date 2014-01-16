@@ -25,17 +25,17 @@
 #include "lib/platform/threads/mutex.h"
 #include "channels/ChannelManager.h"
 
-class cVNSIProvider
+class CChannelProvider
 {
 public:
-  cVNSIProvider();
-  cVNSIProvider(std::string name, int caid);
-  bool operator==(const cVNSIProvider &rhs);
+  CChannelProvider();
+  CChannelProvider(std::string name, int caid);
+  bool operator==(const CChannelProvider &rhs);
   std::string m_name;
   int m_caid;
 };
 
-class cVNSIChannelFilter
+class CChannelFilter
 {
 public:
   void Load();
@@ -45,11 +45,11 @@ public:
   bool PassFilter(const ChannelPtr channel);
   void SortChannels();
   static bool IsRadio(const ChannelPtr channel);
-  std::vector<cVNSIProvider> m_providersVideo;
-  std::vector<cVNSIProvider> m_providersRadio;
+  std::vector<CChannelProvider> m_providersVideo;
+  std::vector<CChannelProvider> m_providersRadio;
   std::vector<int> m_channelsVideo;
   std::vector<int> m_channelsRadio;
   PLATFORM::CMutex m_Mutex;
 };
 
-extern cVNSIChannelFilter VNSIChannelFilter;
+extern CChannelFilter VNSIChannelFilter;

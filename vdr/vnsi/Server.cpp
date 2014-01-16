@@ -46,7 +46,7 @@
 #include "Server.h"
 #include "Client.h"
 #include "settings/Settings.h"
-#include "ChannelFilter.h"
+#include "channels/ChannelFilter.h"
 
 class cAllowedHosts : public cSVDRPhosts
 {
