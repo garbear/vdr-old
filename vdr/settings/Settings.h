@@ -50,20 +50,14 @@ public:
 
   bool LoadFromCmdLine(int argc, char *argv[]);
 
-  std::string    m_AudioCommand;
   std::string    m_CacheDirectory;
   std::string    m_ConfigDirectory;
   bool           m_DaemonMode;
   std::string    m_EpgDataFileName;
   bool           m_DisplayHelp;
   int            m_SysLogTarget;
-//  cPluginManager* m_pluginManager;
   std::string    m_LocaleDirectory;
-  bool           m_MuteAudio;
-  bool           m_UseKbd;
-  int            m_SVDRPport;
   std::string    m_ResourceDirectory;
-  std::string    m_Terminal;
   std::string    m_VdrUser;
   bool           m_UserDump;
   bool           m_DisplayVersion;

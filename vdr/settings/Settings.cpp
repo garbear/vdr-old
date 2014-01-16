@@ -25,6 +25,8 @@
 #include "recordings/Recording.h"
 #include "utils/Shutdown.h"
 #include "utils/Tools.h"
+#include "devices/DeviceManager.h"
+#include "recordings/RecordingCutter.h"
 
 #include <getopt.h>
 #include <grp.h>
@@ -45,14 +47,12 @@
 #define PLUGINDIR   "/usr/local/lib/vdr"
 #define LOCDIR      "/usr/local/share/locale"
 
-#define DEFAULTSVDRPPORT   6419
 #define DEFAULTVIDEODIR    VIDEODIR
 #define DEFAULTPLUGINDIR   PLUGINDIR
 #define DEFAULTLOCDIR      LOCDIR
 
 // for easier orientation, this is column 80|
 #define MSG_HELP "Usage: vdr [OPTIONS]\n\n" \
-                 "  -a CMD,   --audio=CMD    send Dolby Digital audio to stdin of command CMD\n" \
                  "            --cachedir=DIR save cache files in DIR (default: %s)\n" \
                  "  -c DIR,   --config=DIR   read config files from DIR (default: %s)\n" \
                  "  -d,       --daemon       run in daemon mode\n" \
@@ -94,17 +94,12 @@
                  "            --localedir=DIR search for locale files in DIR (default is\n" \
                  "                           %s)\n" \
                  "  -m,       --mute         mute audio of the primary DVB device at startup\n" \
-                 "            --no-kbd       don't use the keyboard as an input device\n" \
-                 "  -p PORT,  --port=PORT    use PORT for SVDRP (default: %d)\n" \
-                 "                           0 turns off SVDRP\n" \
-                 "  -P OPT,   --plugin=OPT   load a plugin defined by the given options\n" \
                  "  -r CMD,   --record=CMD   call CMD before and after a recording, and after\n" \
                  "                           a recording has been edited or deleted\n" \
                  "            --resdir=DIR   read resource files from DIR (default: %s)\n" \
                  "  -s CMD,   --shutdown=CMD call CMD to shutdown the computer\n" \
                  "            --split        split edited files at the editing marks (only\n" \
                  "                           useful in conjunction with --edit)\n" \
-                 "  -t TTY,   --terminal=TTY controlling tty\n" \
                  "  -u USER,  --user=USER    run as user USER; only applicable if started as\n" \
                  "                           root\n" \
                  "            --userdump     allow coredumps if -u is given (debugging)\n" \
@@ -120,15 +115,7 @@ cSettings::cSettings()
   m_EpgDataFileName = DEFAULTEPGDATAFILENAME;
   m_DisplayHelp = false;
   m_SysLogTarget = LOG_USER;
-//  m_pluginManager = new cPluginManager(DEFAULTPLUGINDIR);
   m_LocaleDirectory = DEFAULTLOCDIR;
-  m_MuteAudio = false;
-#if defined(REMOTE_KBD)
-  m_UseKbd = true;
-#else
-  m_UseKbd = false;
-#endif
-  m_SVDRPport = DEFAULTSVDRPPORT;
 #if defined(VDR_USER)
   m_VdrUser = VDR_USER;
 #endif
@@ -151,14 +138,12 @@ cSettings::~cSettings()
 {
   if (m_HasStdin)
     tcsetattr(STDIN_FILENO, TCSANOW, &m_savedTm);
-//  delete m_pluginManager;
 }
 
 bool cSettings::LoadFromCmdLine(int argc, char *argv[])
 {
   static struct option long_options[] =
     {
-      { "audio",     required_argument, NULL, 'a' },
       { "cachedir",  required_argument, NULL, 'c' | 0x100 },
       { "config",    required_argument, NULL, 'c' },
       { "daemon",    no_argument,       NULL, 'd' },
@@ -172,13 +157,9 @@ bool cSettings::LoadFromCmdLine(int argc, char *argv[])
       { "help",      no_argument,       NULL, 'h' },
       { "instance",  required_argument, NULL, 'i' },
       { "lib",       required_argument, NULL, 'L' },
-      { "lirc",      optional_argument, NULL, 'l' | 0x100 },
       { "localedir", required_argument, NULL, 'l' | 0x200 },
       { "log",       required_argument, NULL, 'l' },
       { "mute",      no_argument,       NULL, 'm' },
-      { "no-kbd",    no_argument,       NULL, 'n' | 0x100 },
-      { "plugin",    required_argument, NULL, 'P' },
-      { "port",      required_argument, NULL, 'p' },
       { "record",    required_argument, NULL, 'r' },
       { "resdir",    required_argument, NULL, 'r' | 0x100 },
       { "shutdown",  required_argument, NULL, 's' },
@@ -193,15 +174,11 @@ bool cSettings::LoadFromCmdLine(int argc, char *argv[])
     };
 
   int c;
-  while ((c = getopt_long(argc, argv, "a:c:dD:e:E:g:hi:l:L:mp:P:r:s:t:u:v:Vw:",
+  while ((c = getopt_long(argc, argv, "c:dD:e:E:g:hi:L:m:o:r:s:t:u:v:Vw:",
       long_options, NULL)) != -1)
   {
     switch (c)
       {
-    // audio
-    case 'a':
-      m_AudioCommand = optarg;
-      break;
     // cachedir
     case 'c' | 0x100:
       m_CacheDirectory = optarg;
@@ -214,19 +191,19 @@ bool cSettings::LoadFromCmdLine(int argc, char *argv[])
     case 'd':
       m_DaemonMode = true;
       break;
-//    // device
-//    case 'D':
-//      if (is_number(optarg))
-//      {
-//        int n = atoi(optarg);
-//        if (0 <= n && n < MAXDEVICES)
-//        {
-//          cDevice::SetUseDevice(n);
-//          break;
-//        }
-//      }
-//      fprintf(stderr, "vdr: invalid DVB device number: %s\n", optarg);
-//      return false;
+    // device
+    case 'D':
+      if (is_number(optarg))
+      {
+        int n = atoi(optarg);
+        if (0 <= n && n < MAXDEVICES)
+        {
+          cDeviceManager::Get().SetUseDevice(n);
+          break;
+        }
+      }
+      fprintf(stderr, "vdr: invalid DVB device number: %s\n", optarg);
+      return false;
     // dirnames
     case 'd' | 0x100:
       {
@@ -286,8 +263,8 @@ bool cSettings::LoadFromCmdLine(int argc, char *argv[])
       }
       break;
     // edit
-//    case 'e' | 0x100:
-//      return CutRecording(optarg);
+    case 'e' | 0x100:
+      return CutRecording(optarg);
     // epgfile
     case 'E':
       m_EpgDataFileName = (*optarg != '-' ? optarg : "");
@@ -303,10 +280,6 @@ bool cSettings::LoadFromCmdLine(int argc, char *argv[])
     // genindex
     case 'g' | 0x100:
       return GenerateIndex(optarg);
-      // grab
-//    case 'g':
-//XXX      cSVDRP::SetGrabImageDir(*optarg != '-' ? optarg : NULL);
-      break;
     // help
     case 'h':
       m_DisplayHelp = true;
@@ -354,16 +327,6 @@ bool cSettings::LoadFromCmdLine(int argc, char *argv[])
         fprintf(stderr, "vdr: invalid log level: %s\n", optarg);
         return false;
       }
-    // lib
-    case 'L':
-//      if (access(optarg, R_OK | X_OK) == 0)
-//        m_pluginManager->SetDirectory(optarg);
-//      else
-//      {
-//        fprintf(stderr, "vdr: can't access plugin directory: %s\n", optarg);
-//        return false;
-//      }
-      break;
     // localedir
     case 'l' | 0x200:
       if (access(optarg, R_OK | X_OK) == 0)
@@ -374,28 +337,6 @@ bool cSettings::LoadFromCmdLine(int argc, char *argv[])
         return false;
       }
       break;
-    // mute
-    case 'm':
-      m_MuteAudio = true;
-      break;
-    // no-kbd
-    case 'n' | 0x100:
-      m_UseKbd = false;
-      break;
-    // plugin
-    case 'p':
-      if (is_number(optarg))
-        m_SVDRPport = atoi(optarg);
-      else
-      {
-        fprintf(stderr, "vdr: invalid port number: %s\n", optarg);
-        return false;
-      }
-      break;
-    // port
-//    case 'P':
-//      m_pluginManager->AddPlugin(optarg);
-//      break;
     // record
     case 'r':
       cRecordingUserCommand::SetCommand(optarg);
@@ -411,15 +352,6 @@ bool cSettings::LoadFromCmdLine(int argc, char *argv[])
     // split
     case 's' | 0x100:
       Setup.SplitEditedFiles = 1;
-      break;
-    // terminal
-    case 't':
-      m_Terminal = optarg;
-      if (access(m_Terminal.c_str(), R_OK | W_OK) < 0)
-      {
-        fprintf(stderr, "vdr: can't access terminal: %s\n", m_Terminal.c_str());
-        return false;
-      }
       break;
     // user
     case 'u':
@@ -454,10 +386,6 @@ bool cSettings::LoadFromCmdLine(int argc, char *argv[])
   // Help and version info:
   if (m_DisplayHelp || m_DisplayVersion)
   {
-//     if (!m_pluginManager->HasPlugins())
-//       m_pluginManager->AddPlugin("*"); // adds all available plugins
-//     m_pluginManager->LoadPlugins();
-
      if (m_DisplayHelp)
      {
         printf(MSG_HELP,
@@ -470,7 +398,6 @@ bool cSettings::LoadFromCmdLine(int argc, char *argv[])
                DEFAULTPLUGINDIR,
                LIRC_DEVICE,
                DEFAULTLOCDIR,
-               DEFAULTSVDRPPORT,
                DEFAULTRESDIR,
                DEFAULTVIDEODIR
                );
@@ -478,27 +405,7 @@ bool cSettings::LoadFromCmdLine(int argc, char *argv[])
 
     if (m_DisplayVersion)
       printf("vdr (%s/%s) - The Video Disk Recorder\n", VDRVERSION, APIVERSION);
-//    if (m_pluginManager->HasPlugins())
-//    {
-//      if (m_DisplayHelp)
-//        printf("Plugins: vdr -P\"name [OPTIONS]\"\n\n");
-//      for (int i = 0;; i++)
-//      {
-//        cPlugin *p = m_pluginManager->GetPlugin(i);
-//        if (p)
-//        {
-//          const char *help = p->CommandLineHelp();
-//          printf("%s (%s) - %s\n", p->Name(), p->Version(), p->Description());
-//          if (m_DisplayHelp && help)
-//          {
-//            printf("\n");
-//            puts(help);
-//          }
-//        }
-//        else
-//          break;
-//      }
-//    }
+
     return false; // TODO: main() should return 0 instead of 2
   }
 
@@ -542,17 +449,6 @@ bool cSettings::LoadFromCmdLine(int argc, char *argv[])
     }
     dsyslog("running as daemon (tid=%d)", cThread::ThreadId());
   }
-#ifndef ANDROID
-  else if (!m_Terminal.empty())
-  {
-    // Claim new controlling terminal
-    stdin = freopen(m_Terminal.c_str(), "r", stdin);
-    stdout = freopen(m_Terminal.c_str(), "w", stdout);
-    stderr = freopen(m_Terminal.c_str(), "w", stderr);
-    m_HasStdin = true;
-    tcgetattr(STDIN_FILENO, &m_savedTm);
-  }
-#endif
 
   isyslog("VDR version %s started", VDRVERSION);
 
