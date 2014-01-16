@@ -68,8 +68,8 @@ bool cVDRDaemon::Init()
   if (!cChannelManager::Get().LoadConf("special://home/system/channels.conf"))
     cChannelManager::Get().LoadConf("special://vdr/system/channels.conf");
 
-//  cDvbDevice::Initialize();
-//  cDvbDevice::BondDevices(Setup.DeviceBondings);
+  cDvbDevice::InitialiseDevices();
+  cDvbDevice::BondDevices(Setup.DeviceBondings);
 
   m_server = new cVNSIServer(cSettings::Get().m_ListenPort);
   return CreateThread(true);
