@@ -162,6 +162,8 @@ public:
     if (file.Open(fileName))
     {
       std::string strLine;
+      dsyslog("opened %s", fileName);
+      result = true;
       unsigned int line = 0; // For error logging
       while (file.ReadLine(strLine))
       {
