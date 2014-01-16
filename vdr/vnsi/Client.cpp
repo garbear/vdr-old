@@ -63,6 +63,8 @@ cVNSIClient::cVNSIClient(int fd, unsigned int id, const char *ClientAdr)
   m_resp                    = NULL;
   m_processSCAN_Response    = NULL;
   m_processSCAN_Socket      = NULL;
+  m_loggedIn                = false;
+  m_protocolVersion         = 0;
 
   m_socket.SetHandle(fd);
 
