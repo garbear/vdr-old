@@ -27,6 +27,7 @@
 #include "platform/threads/threads.h"
 
 class cVNSIServer;
+class cEpgDataReader;
 
 class cVDRDaemon : protected PLATFORM::CThread, public ISignalReceiver
 {
@@ -82,4 +83,5 @@ private:
   PLATFORM::CEvent m_sleepEvent;
   int              m_exitCode;
   cVNSIServer*     m_server;
+  cEpgDataReader*  m_EpgDataReader;
 };

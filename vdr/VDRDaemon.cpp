@@ -20,21 +20,30 @@
  */
 
 #include "VDRDaemon.h"
+
+#include "devices/DeviceManager.h"
 #include "devices/linux/DVBDevice.h"
-#include "filesystem/Directory.h"
-#include "vnsi/Server.h"
-#include "settings/Settings.h"
-#include "filesystem/SpecialProtocol.h"
 #include "dvb/DiSEqC.h"
+#include "epg/EPG.h"
+#include "filesystem/Directory.h"
+#include "filesystem/SpecialProtocol.h"
+#include "recordings/Recording.h"
 #include "recordings/Timers.h"
+#include "settings/Settings.h"
+#include "utils/Shutdown.h"
+#include "vnsi/Server.h"
 
 #include <signal.h> // or #include <bits/signum.h>
+
+#define MANUALSTART          600 // seconds the next timer must be in the future to assume manual start
+#define DEVICEREADYTIMEOUT    30 // seconds to wait until all devices are ready
 
 using namespace PLATFORM;
 
 cVDRDaemon::cVDRDaemon()
  : m_exitCode(0),
-   m_server(NULL)
+   m_server(NULL),
+   m_EpgDataReader(NULL)
 {
 }
 
@@ -44,6 +53,8 @@ cVDRDaemon::~cVDRDaemon()
   WaitForShutdown();
   delete m_server;
   m_server = NULL;
+  delete m_EpgDataReader;
+  m_EpgDataReader = NULL;
 }
 
 bool cVDRDaemon::Init()
@@ -97,10 +108,53 @@ bool cVDRDaemon::Init()
   if (!Folders.Load("special://home/system/folders.conf"))
     Folders.Load("special://vdr/system/folders.conf");
 
+  // Recordings:
+  Recordings.Update();
+  DeletedRecordings.Update();
+
+  // EPG data:
+  if (!cSettings::Get().m_EpgDataFileName.empty())
+  {
+    std::string EpgDirectory;
+    if (CDirectory::CanWrite(cSettings::Get().m_EpgDataFileName))
+    {
+      EpgDirectory = cSettings::Get().m_EpgDataFileName;
+      cSettings::Get().m_EpgDataFileName = DEFAULTEPGDATAFILENAME;
+    }
+    else if (cSettings::Get().m_EpgDataFileName.at(0) != '/' && strcmp(".", cSettings::Get().m_EpgDataFileName.c_str()))
+    {
+      EpgDirectory = cSettings::Get().m_CacheDirectory;
+    }
+
+    if (!EpgDirectory.empty())
+    {
+      std::string EpgFile = EpgDirectory;
+      if (strcmp(EpgFile.substr(EpgFile.length() - 1, 1).c_str(), "/"))
+        EpgFile.append("/");
+      EpgFile.append(cSettings::Get().m_EpgDataFileName.c_str());
+      cSchedules::SetEpgDataFileName(EpgFile.c_str());
+    }
+    else
+    {
+      cSchedules::SetEpgDataFileName(cSettings::Get().m_EpgDataFileName.c_str());
+    }
+
+    m_EpgDataReader = new cEpgDataReader;
+    m_EpgDataReader->Start();
+  }
+
   cDvbDevice::InitialiseDevices();
   cDvbDevice::BondDevices(Setup.DeviceBondings);
 
   m_server = new cVNSIServer(cSettings::Get().m_ListenPort);
+
+  // Check for timers in automatic start time window:
+  ShutdownHandler.CheckManualStart(MANUALSTART);
+
+  // Channel:
+  if (!cDeviceManager::Get().WaitForAllDevicesReady(DEVICEREADYTIMEOUT))
+    dsyslog("some devices are not ready after %d seconds", DEVICEREADYTIMEOUT);
+
   return CreateThread(true);
 }
 
