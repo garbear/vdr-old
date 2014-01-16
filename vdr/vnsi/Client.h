@@ -105,8 +105,6 @@ private:
     std::string name;
   } ChannelGroup;
 
-  std::map<std::string, ChannelGroup> m_channelgroups[2];
-
   bool process_Login();
   bool process_GetTime();
   bool process_EnableStatusInterface();
@@ -135,8 +133,6 @@ private:
   bool processCHANNELS_GetBlacklist();
   bool processCHANNELS_SetWhitelist();
   bool processCHANNELS_SetBlacklist();
-
-  void CreateChannelGroups(bool automatic);
 
   bool processTIMER_GetCount();
   bool processTIMER_Get();

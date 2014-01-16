@@ -36,6 +36,7 @@
 #include <signal.h> // or #include <bits/signum.h>
 
 #define MANUALSTART          600 // seconds the next timer must be in the future to assume manual start
+#define CHANNELSAVEDELTA     600 // seconds before saving channels.conf after automatic modifications
 #define DEVICEREADYTIMEOUT    30 // seconds to wait until all devices are ready
 
 using namespace PLATFORM;

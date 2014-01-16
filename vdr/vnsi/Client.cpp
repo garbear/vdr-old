@@ -29,6 +29,7 @@
 
 #include "recordings/Recording.h"
 #include "channels/ChannelManager.h"
+#include "channels/ChannelGroup.h"
 #include "filesystem/Videodir.h"
 #include "recordings/Timers.h"
 #include "devices/Device.h"
@@ -973,25 +974,23 @@ bool cVNSIClient::processCHANNELS_GroupsCount()
 {
   uint32_t type = m_req->extract_U32();
 
-  CLockObject lock(*cChannelManager::Get().Mutex());
-
-  m_channelgroups[0].clear();
-  m_channelgroups[1].clear();
+  CChannelGroups::Get(true).Clear();
+  CChannelGroups::Get(false).Clear();
 
   switch(type)
   {
     // get groups defined in channels.conf
     default:
     case 0:
-      CreateChannelGroups(false);
+      cChannelManager::Get().CreateChannelGroups(false);
       break;
     // automatically create groups
     case 1:
-      CreateChannelGroups(true);
+      cChannelManager::Get().CreateChannelGroups(true);
       break;
   }
 
-  uint32_t count = m_channelgroups[0].size() + m_channelgroups[1].size();
+  uint32_t count = CChannelGroups::Get(true).Size() + CChannelGroups::Get(false).Size();
 
   m_resp->add_U32(count);
   m_resp->finalise();
@@ -1002,12 +1001,11 @@ bool cVNSIClient::processCHANNELS_GroupsCount()
 bool cVNSIClient::processCHANNELS_GroupList()
 {
   uint32_t radio = m_req->extract_U8();
-  std::map<std::string, ChannelGroup>::iterator i;
-
-  for(i = m_channelgroups[radio].begin(); i != m_channelgroups[radio].end(); i++)
+  std::vector<std::string> names = CChannelGroups::Get(radio).GroupNames();
+  for(std::vector<std::string>::iterator i = names.begin(); i != names.end(); i++)
   {
-    m_resp->add_String(i->second.name.c_str());
-    m_resp->add_U8(i->second.radio);
+    m_resp->add_String(i->c_str());
+    m_resp->add_U8(radio);
   }
 
   m_resp->finalise();
@@ -1023,7 +1021,8 @@ bool cVNSIClient::processCHANNELS_GetGroupMembers()
   int index = 0;
 
   // unknown group
-  if(m_channelgroups[radio].find(groupname) == m_channelgroups[radio].end())
+  const CChannelGroup* group = CChannelGroups::Get(radio).GetGroup(groupname);
+  if(!group)
   {
     delete[] groupname;
     m_resp->finalise();
@@ -1031,9 +1030,10 @@ bool cVNSIClient::processCHANNELS_GetGroupMembers()
     return true;
   }
 
-  bool automatic = m_channelgroups[radio][groupname].automatic;
+  bool automatic = group->Automatic();
   std::string name;
 
+  //XXX
   std::vector<ChannelPtr> channels = cChannelManager::Get().GetCurrent();
   for (std::vector<ChannelPtr>::const_iterator it = channels.begin(); it != channels.end(); ++it)
   {
@@ -1198,35 +1198,6 @@ bool cVNSIClient::processCHANNELS_SetBlacklist()
   m_resp->finalise();
   m_socket.write(m_resp->getPtr(), m_resp->getLen());
   return true;
-}
-
-void cVNSIClient::CreateChannelGroups(bool automatic)
-{
-  std::string groupname;
-
-  std::vector<ChannelPtr> channels = cChannelManager::Get().GetCurrent();
-  for (std::vector<ChannelPtr>::const_iterator it = channels.begin(); it != channels.end(); ++it)
-  {
-    ChannelPtr channel = *it;
-    bool isRadio = cVNSIChannelFilter::IsRadio(channel);
-
-    if(automatic && !channel->GroupSep())
-      groupname = channel->Provider();
-    else if(!automatic && channel->GroupSep())
-      groupname = channel->Name();
-
-    if(groupname.empty())
-      continue;
-
-    if(m_channelgroups[isRadio].find(groupname) == m_channelgroups[isRadio].end())
-    {
-      ChannelGroup group;
-      group.name = groupname;
-      group.radio = isRadio;
-      group.automatic = automatic;
-      m_channelgroups[isRadio][groupname] = group;
-    }
-  }
 }
 
 /** OPCODE 80 - 99: VNSI network functions for timer access */

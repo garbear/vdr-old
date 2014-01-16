@@ -179,6 +179,7 @@ public:
   void AddTransponders(cScanList* list) const;
 
   std::vector<ChannelPtr> GetCurrent(void) const;
+  void CreateChannelGroups(bool automatic);
 
   PLATFORM::CMutex* Mutex(void) { return &m_mutex; };
 private:

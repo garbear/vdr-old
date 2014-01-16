@@ -21,6 +21,7 @@
 
 #include "ChannelManager.h"
 #include "ChannelDefinitions.h"
+#include "ChannelGroup.h"
 #include "devices/Device.h"
 #include "devices/DeviceManager.h"
 #include "devices/subsystems/DeviceChannelSubsystem.h"
@@ -31,6 +32,7 @@
 #include "utils/XBMCTinyXML.h"
 #include "utils/UTF8Utils.h"
 #include "utils/CRC32.h"
+#include "vnsi/ChannelFilter.h" //XXX
 
 #include <algorithm>
 #include <assert.h>
@@ -578,4 +580,30 @@ vector<ChannelPtr> cChannelManager::GetCurrent(void) const
 {
   PLATFORM::CLockObject lock(m_mutex);
   return m_channels;
+}
+
+void cChannelManager::CreateChannelGroups(bool automatic)
+{
+  std::string groupname;
+
+  CLockObject lock(m_mutex);
+  for (std::vector<ChannelPtr>::const_iterator it = m_channels.begin(); it != m_channels.end(); ++it)
+  {
+    ChannelPtr channel = *it;
+    bool isRadio = cVNSIChannelFilter::IsRadio(channel);
+
+    if(automatic && !channel->GroupSep())
+      groupname = channel->Provider();
+    else if(!automatic && channel->GroupSep())
+      groupname = channel->Name();
+
+    if(groupname.empty())
+      continue;
+
+    if (!CChannelGroups::Get(isRadio).HasGroup(groupname))
+    {
+      CChannelGroup group(isRadio, groupname, automatic);
+      CChannelGroups::Get(isRadio).AddGroup(group);
+    }
+  }
 }
