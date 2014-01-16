@@ -93,6 +93,8 @@ set(VDR_SRCS
 	vdr/SignalHandler.cpp
 	vdr/VDRDaemon.cpp
 	vdr/channels/Channel.cpp
+	vdr/channels/ChannelFilter.cpp
+	vdr/channels/ChannelGroup.cpp
 	vdr/channels/ChannelID.cpp
 	vdr/channels/ChannelManager.cpp
 	vdr/devices/commoninterface/CI.cpp
@@ -183,7 +185,6 @@ set(VDR_SRCS
 	vdr/vnsi/video/parser/ParserMPEGVideo.cpp
 	vdr/vnsi/video/parser/ParserSubtitle.cpp
 	vdr/vnsi/video/parser/ParserTeletext.cpp
-	vdr/vnsi/ChannelFilter.cpp
 	vdr/vnsi/Client.cpp
 	vdr/vnsi/Server.cpp
 	thread.cpp
