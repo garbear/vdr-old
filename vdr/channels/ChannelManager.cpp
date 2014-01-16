@@ -180,6 +180,7 @@ bool cChannelManager::LoadConf(const string& strFilename)
   CFile file;
   if (file.Open(strFilename))
   {
+    m_strFilename = strFilename;
     string strLine;
     unsigned int line = 0; // For error logging
 
@@ -219,7 +220,7 @@ bool cChannelManager::LoadConf(const string& strFilename)
   return true;
 }
 
-bool cChannelManager::Save(const string &file)
+bool cChannelManager::Save(const string &file /* = ""*/)
 {
   CXBMCTinyXML xmlDoc;
   TiXmlDeclaration *decl = new TiXmlDeclaration("1.0", "", "");
@@ -248,14 +249,16 @@ bool cChannelManager::Save(const string &file)
     }
   }
 
-  return xmlDoc.SaveFile(file);
+  return xmlDoc.SaveFile(file.empty() ? m_strFilename : file);
 }
 
-bool cChannelManager::SaveConf(const string &file)
+bool cChannelManager::SaveConf(const string &file /* = "" */)
 {
+  std::string strFile = file.empty() ? m_strFilename : file;
+
   bool result = true;
   //cChannel* l = First();
-  cSafeFile f(file.c_str());
+  cSafeFile f(strFile.c_str());
   if (f.Open())
   {
     CLockObject lock(m_mutex);

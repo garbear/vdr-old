@@ -56,8 +56,8 @@ public:
 
   bool Load(const std::string &file);
   bool LoadConf(const std::string &file);
-  bool Save(const std::string &file);
-  bool SaveConf(const std::string &file);
+  bool Save(const std::string &file = "");
+  bool SaveConf(const std::string &file = "");
 
   /*!
    * \brief Find a channel by its number
@@ -196,4 +196,5 @@ private:
   eLastModifiedType m_modified;
 
   int           m_beingEdited;
+  std::string   m_strFilename;
 };
