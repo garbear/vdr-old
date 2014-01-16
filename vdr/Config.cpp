@@ -335,28 +335,34 @@ int cSetupLine::Compare(const cListObject &ListObject) const
   return result;
 }
 
-bool cSetupLine::Parse(char *s)
+bool cSetupLine::Parse(const char *line)
 {
+  char* s = strdup(line); //XXX
   char *p = strchr(s, '=');
-  if (p) {
-     *p = 0;
-     char *Name  = compactspace(s);
-     char *Value = compactspace(p + 1);
-     if (*Name) { // value may be an empty string
-        p = strchr(Name, '.');
-        if (p) {
-           *p = 0;
-           char *Plugin = compactspace(Name);
-           Name = compactspace(p + 1);
-           if (!(*Plugin && *Name))
-              return false;
-           plugin = strdup(Plugin);
-           }
-        name = strdup(Name);
-        value = strdup(Value);
-        return true;
-        }
-     }
+  if (p)
+  {
+    *p = 0;
+    char *Name = compactspace(s);
+    char *Value = compactspace(p + 1);
+    if (*Name)
+    { // value may be an empty string
+      p = strchr(Name, '.');
+      if (p)
+      {
+        *p = 0;
+        char *Plugin = compactspace(Name);
+        Name = compactspace(p + 1);
+        if (!(*Plugin && *Name))
+          return false;
+        plugin = strdup(Plugin);
+      }
+      name = strdup(Name);
+      value = strdup(Value);
+      free(s);
+      return true;
+    }
+  }
+  free(s);
   return false;
 }
 

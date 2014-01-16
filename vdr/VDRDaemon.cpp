@@ -65,6 +65,9 @@ bool cVDRDaemon::Init()
   //
   // - special://*** (everything else) - routed through VFS api calls
 
+  if (!Setup.Load("special://home/system/setup.conf"))
+    Setup.Load("special://vdr/system/setup.conf");
+
   if (!cChannelManager::Get().LoadConf("special://home/system/channels.conf"))
     cChannelManager::Get().LoadConf("special://vdr/system/channels.conf");
 

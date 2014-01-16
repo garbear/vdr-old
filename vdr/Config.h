@@ -16,7 +16,10 @@
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+#include <string>
+#include "utils/StringUtils.h"
 #include "utils/I18N.h"
+#include "filesystem/File.h"
 //#include "font.h"
 #include "utils/Tools.h"
 
@@ -126,56 +129,80 @@ private:
     cList<T>::Clear();
   }
 public:
-  cConfig(void) { fileName = NULL; }
-  virtual ~cConfig() { free(fileName); }
-  const char *FileName(void) { return fileName; }
+  cConfig(void)
+  {
+    fileName = NULL;
+    allowComments = true;
+  }
+
+  virtual ~cConfig()
+  {
+    free(fileName);
+  }
+
+  const char *FileName(void)
+  {
+    return fileName;
+  }
+
   bool Load(const char *FileName = NULL, bool AllowComments = false, bool MustExist = false)
   {
-    cConfig<T>::Clear();
-    if (FileName) {
-       free(fileName);
-       fileName = strdup(FileName);
-       allowComments = AllowComments;
-       }
     bool result = !MustExist;
-    if (fileName && access(fileName, F_OK) == 0) {
-       isyslog("loading %s", fileName);
-       FILE *f = fopen(fileName, "r");
-       if (f) {
-          char *s;
-          int line = 0;
-          cReadLine ReadLine;
-          result = true;
-          while ((s = ReadLine.Read(f)) != NULL) {
-                line++;
-                if (allowComments) {
-                   char *p = strchr(s, '#');
-                   if (p)
-                      *p = 0;
-                   }
-                stripspace(s);
-                if (!isempty(s)) {
-                   T *l = new T;
-                   if (l->Parse(s))
-                      this->Add(l);
-                   else {
-                      esyslog("ERROR: error in %s, line %d", fileName, line);
-                      delete l;
-                      result = false;
-                      }
-                   }
-                }
-          fclose(f);
-          }
-       else {
-          LOG_ERROR_STR(fileName);
+    cConfig<T>::Clear();
+
+    if (FileName)
+    {
+      free(fileName);
+      fileName = strdup(FileName);
+      allowComments = AllowComments;
+    }
+
+    isyslog("loading %s", fileName);
+    CFile file;
+    if (file.Open(fileName))
+    {
+      std::string strLine;
+      unsigned int line = 0; // For error logging
+      while (file.ReadLine(strLine))
+      {
+        // Strip comments and spaces
+        if (allowComments)
+        {
+          size_t comment_pos = strLine.find('#');
+          strLine = strLine.substr(0, comment_pos);
+        }
+
+        StringUtils::Trim(strLine);
+
+        if (strLine.empty())
+          continue;
+
+        T *l = new T;
+        if (l->Parse(strLine.c_str()))
+        {
+          this->Add(l);
+        }
+        else
+        {
+          esyslog("ERROR: error in %s, line %d", fileName, line);
+          delete l;
           result = false;
-          }
-       }
+        }
+
+        line++;
+      }
+    }
+    else
+    {
+      LOG_ERROR_STR(fileName);
+      result = false;
+    }
+
     if (!result)
        fprintf(stderr, "vdr: error while reading '%s'\n", fileName);
     return result;
   }
+
   bool Save(void)
   {
     bool result = true;
@@ -250,7 +277,7 @@ public:
   const char *Plugin(void) { return plugin; }
   const char *Name(void) { return name; }
   const char *Value(void) { return value; }
-  bool Parse(char *s);
+  bool Parse(const char *s);
   bool Save(FILE *f);
   };
 
