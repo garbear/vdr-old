@@ -1748,15 +1748,13 @@ bool cVNSIClient::processEPG_GetForChannel() /* OPCODE 120 */
   uint32_t startTime      = m_req->extract_U32();
   uint32_t duration       = m_req->extract_U32();
 
-  CLockObject lock(*cChannelManager::Get().Mutex());
-
   ChannelPtr channel = cChannelManager::Get().GetByChannelUID(channelUID);
-  if(channel)
+  if(channel != cChannel::EmptyChannel)
   {
     dsyslog("get schedule called for channel '%s'", (const char*)channel->Name().c_str());
   }
 
-  if (!channel)
+  if (channel == cChannel::EmptyChannel)
   {
     m_resp->add_U32(0);
     m_resp->finalise();

@@ -181,7 +181,6 @@ public:
   std::vector<ChannelPtr> GetCurrent(void) const;
   void CreateChannelGroups(bool automatic);
 
-  PLATFORM::CMutex* Mutex(void) { return &m_mutex; };
 private:
   typedef std::vector<ChannelPtr>      ChannelVector;
   typedef std::map<int, ChannelVector> ChannelSidMap;
