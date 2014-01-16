@@ -271,42 +271,6 @@ unsigned int cDeviceManager::CountTransponders(const cChannel &channel) const
   return count;
 }
 
-bool cDeviceManager::SwitchChannel(bool bIncrease)
-{
-  bool result = false;
-  int offset = bIncrease ? 1 : -1;
-
-  // prevents old channel from being shown too long if GetDevice() takes longer
-  cControl::Shutdown();
-
-  int n = CurrentChannel() + offset;
-  int first = n;
-  ChannelPtr channel = cChannelManager::Get().GetByNumber(n, offset);
-  while (channel)
-  {
-    // try only channels which are currently available
-    if (GetDevice(*channel, LIVEPRIORITY, true, true))
-      break;
-    n = channel->Number() + offset;
-    channel = cChannelManager::Get().GetByNumber(n, offset);
-  }
-
-  if (channel)
-  {
-    int d = n - first;
-    if (abs(d) == 1)
-      dsyslog("skipped channel %d", first);
-    else if (d)
-      dsyslog("skipped channels %d..%d", first, n - sgn(d));
-    if (m_primaryDevice->Channel()->SwitchChannel(*channel, true))
-      result = true;
-  }
-//  else if (n != first)
-//    Skins.Message(mtError, tr("Channel not available!"));
-
-  return result;
-}
-
 void cDeviceManager::SetCurrentChannel(const cChannel &channel)
 {
   m_currentChannel = channel.Number();

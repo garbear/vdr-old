@@ -175,13 +175,6 @@ public:
   unsigned int CountTransponders(const cChannel &channel) const;
 
   /*!
-   * \brief Switches the primary device to the next available channel in the
-   *        given direction
-   * \param bIncrease True to increase the channel, false to decrease
-   */
-  bool SwitchChannel(bool bIncrease);
-
-  /*!
    * \brief Returns the number of the current channel on the primary device
    */
   unsigned int CurrentChannel() { return m_primaryDevice ? m_currentChannel : 0; }
