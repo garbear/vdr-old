@@ -25,6 +25,8 @@
 #include "vnsi/Server.h"
 #include "settings/Settings.h"
 #include "filesystem/SpecialProtocol.h"
+#include "dvb/DiSEqC.h"
+#include "recordings/Timers.h"
 
 #include <signal.h> // or #include <bits/signum.h>
 
@@ -68,8 +70,32 @@ bool cVDRDaemon::Init()
   if (!Setup.Load("special://home/system/setup.conf"))
     Setup.Load("special://vdr/system/setup.conf");
 
+//  if (!Sources.Load("special://home/system/sources.conf"))
+//    Sources.Load("special://vdr/system/sources.conf");
+
+  if (!Diseqcs.Load("special://home/system/diseqc.conf"))
+    Diseqcs.Load("special://vdr/system/diseqc.conf");
+
+  if (!Scrs.Load("special://home/system/scr.conf"))
+    Scrs.Load("special://vdr/system/scr.conf");
+
   if (!cChannelManager::Get().LoadConf("special://home/system/channels.conf"))
     cChannelManager::Get().LoadConf("special://vdr/system/channels.conf");
+
+  if (!Timers.Load("special://home/system/timers.conf"))
+    Timers.Load("special://vdr/system/timers.conf");
+
+  if (!Commands.Load("special://home/system/commands.conf"))
+    Commands.Load("special://vdr/system/commands.conf");
+
+  if (!RecordingCommands.Load("special://home/system/reccmds.conf"))
+    RecordingCommands.Load("special://vdr/system/reccmds.conf");
+
+  if (!SVDRPhosts.Load("special://home/system/svdrphosts.conf"))
+    SVDRPhosts.Load("special://vdr/system/svdrphosts.conf");
+
+  if (!Folders.Load("special://home/system/folders.conf"))
+    Folders.Load("special://vdr/system/folders.conf");
 
   cDvbDevice::InitialiseDevices();
   cDvbDevice::BondDevices(Setup.DeviceBondings);
