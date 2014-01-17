@@ -32,7 +32,7 @@ using namespace std;
 // Hauppauge WinTV-HVR 950Q hybrid TV stick
 #define WINTVHVR950Q "Auvitek AU8522 QAM/8VSB Frontend"
 
-TEST(DvbDevice, cDvbTuner)
+TEST(DvbTuner, cDvbTuner)
 {
   DeviceVector devices = cDvbDevice::FindDevices();
   ASSERT_FALSE(devices.empty());
