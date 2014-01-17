@@ -325,10 +325,7 @@ void cNitFilter::Process(u_short Pid, u_char Tid, const u_char *Data, int Length
                            cChannel *Channel = new cChannel;
                            Channel->SetId(ts.getOriginalNetworkId(), ts.getTransportStreamId(), 0, 0);
                            if (Channel->SetTransponderData(Source, Frequencies[n], 0, dtp.Serialize('T')))
-                           {
                               EITScanner.AddTransponder(Channel);
-                              Channel->NotifyObservers(ObservableMessageChannelChanged);
-                           }
                            else
                               delete Channel;
                            }
