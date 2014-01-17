@@ -37,6 +37,7 @@ enum ePlayMode
 
 class cRect;
 class cPlayer;
+class cPoller;
 
 class cDevicePlayerSubsystem : protected cDeviceSubsystem
 {

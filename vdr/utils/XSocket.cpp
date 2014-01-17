@@ -46,6 +46,7 @@
 
 #include "Tools.h"
 #include "XSocket.h"
+#include "filesystem/Poller.h"
 
 using namespace PLATFORM;
 

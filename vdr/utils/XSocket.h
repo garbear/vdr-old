@@ -27,11 +27,14 @@
 #ifndef VNSI_CXSOCKET_H
 #define VNSI_CXSOCKET_H
 
-#include <inttypes.h>
-#include <sys/types.h>
-#include <sys/socket.h>
 #include "lib/platform/threads/mutex.h"
-#include "utils/Tools.h"
+//#include "utils/Tools.h"
+
+#include <inttypes.h>
+#include <stddef.h>
+#include <stdio.h>
+
+class cPoller;
 
 class cxSocket
 {

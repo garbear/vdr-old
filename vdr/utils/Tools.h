@@ -220,17 +220,6 @@ public:
   char *Read(FILE *f);
   };
 
-class cPoller {
-private:
-  enum { MaxPollFiles = 16 };
-  pollfd pfd[MaxPollFiles];
-  int numFileHandles;
-public:
-  cPoller(int FileHandle = -1, bool Out = false);
-  bool Add(int FileHandle, bool Out);
-  bool Poll(int TimeoutMs = 0);
-  };
-
 class cVDRFile {
 private:
   static bool files[];

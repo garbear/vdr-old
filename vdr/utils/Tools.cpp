@@ -8,6 +8,14 @@
  */
 
 #include "Tools.h"
+#include "I18N.h"
+#include "filesystem/Directory.h"
+#include "filesystem/Poller.h"
+#include "filesystem/ReadDir.h"
+#include "thread.h"
+#include "utils/UTF8Utils.h"
+
+#include <algorithm>
 #include <ctype.h>
 #include <dirent.h>
 #include <errno.h>
@@ -19,14 +27,6 @@
 #include <unistd.h>
 #include <utime.h>
 #include <string.h>
-#include "I18N.h"
-#include "thread.h"
-
-#include "vdr/filesystem/Directory.h"
-#include "vdr/filesystem/ReadDir.h"
-#include "vdr/utils/UTF8Utils.h"
-
-#include <algorithm>
 
 using namespace std;
 
@@ -810,43 +810,6 @@ char *cReadLine::Read(FILE *f)
      return buffer;
      }
   return NULL;
-}
-
-// --- cPoller ---------------------------------------------------------------
-
-cPoller::cPoller(int FileHandle, bool Out)
-{
-  numFileHandles = 0;
-  Add(FileHandle, Out);
-}
-
-bool cPoller::Add(int FileHandle, bool Out)
-{
-  if (FileHandle >= 0) {
-     for (int i = 0; i < numFileHandles; i++) {
-         if (pfd[i].fd == FileHandle && pfd[i].events == (Out ? POLLOUT : POLLIN))
-            return true;
-         }
-     if (numFileHandles < MaxPollFiles) {
-        pfd[numFileHandles].fd = FileHandle;
-        pfd[numFileHandles].events = Out ? POLLOUT : POLLIN;
-        pfd[numFileHandles].revents = 0;
-        numFileHandles++;
-        return true;
-        }
-     esyslog("ERROR: too many file handles in cPoller");
-     }
-  return false;
-}
-
-bool cPoller::Poll(int TimeoutMs)
-{
-  if (numFileHandles) {
-     if (poll(pfd, numFileHandles, TimeoutMs) != 0)
-        return true; // returns true even in case of an error, to let the caller
-                     // access the file and thus see the error code
-     }
-  return false;
 }
 
 bool GetSubDirectories(const string &strDirectory, vector<string> &vecFileNames)

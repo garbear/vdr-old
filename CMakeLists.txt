@@ -136,6 +136,7 @@ set(VDR_SRCS
 	vdr/filesystem/DirectoryFetchJob.cpp
 	vdr/filesystem/File.cpp
 	vdr/filesystem/IDirectory.cpp
+	vdr/filesystem/Poller.cpp
 	vdr/filesystem/ReadDir.cpp
 	vdr/filesystem/SpecialProtocol.cpp
 	vdr/filesystem/Videodir.cpp

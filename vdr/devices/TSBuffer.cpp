@@ -21,7 +21,7 @@
  */
 
 #include "TSBuffer.h"
-
+#include "filesystem/Poller.h"
 #include "utils/Ringbuffer.h"
 
 // Copied from Remux.h (TODO)
