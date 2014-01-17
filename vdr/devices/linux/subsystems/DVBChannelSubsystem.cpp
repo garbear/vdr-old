@@ -37,19 +37,13 @@
 using namespace std;
 
 cDvbChannelSubsystem::cDvbChannelSubsystem(cDevice *device)
- : cDeviceChannelSubsystem(device),
-   m_dvbTuner(NULL)
+ : cDeviceChannelSubsystem(device)
 {
-}
-
-cDvbChannelSubsystem::~cDvbChannelSubsystem()
-{
-  delete m_dvbTuner;
 }
 
 bool cDvbChannelSubsystem::ProvidesDeliverySystem(fe_delivery_system deliverySystem) const
 {
-  return GetDevice<cDvbDevice>()->DvbChannel()->GetTuner()->HasDeliverySystem(deliverySystem);
+  return GetDevice<cDvbDevice>()->m_dvbTuner.HasDeliverySystem(deliverySystem);
 }
 
 bool cDvbChannelSubsystem::ProvidesSource(int source) const
@@ -77,18 +71,18 @@ bool cDvbChannelSubsystem::ProvidesTransponder(const cChannel &channel) const
 
   // requires modulation system which frontend doesn't provide - return false in these cases
   if (!ProvidesDeliverySystem(cDvbTuner::GetRequiredDeliverySystem(channel, &dtp))) return false;
-  if (dtp.StreamId()   != 0        && !m_dvbTuner->HasCapability((fe_caps)FE_CAN_MULTISTREAM)) return false;
-  if (dtp.Modulation() == QPSK     && !m_dvbTuner->HasCapability(FE_CAN_QPSK))        return false;
-  if (dtp.Modulation() == QAM_16   && !m_dvbTuner->HasCapability(FE_CAN_QAM_16))      return false;
-  if (dtp.Modulation() == QAM_32   && !m_dvbTuner->HasCapability(FE_CAN_QAM_32))      return false;
-  if (dtp.Modulation() == QAM_64   && !m_dvbTuner->HasCapability(FE_CAN_QAM_64))      return false;
-  if (dtp.Modulation() == QAM_128  && !m_dvbTuner->HasCapability(FE_CAN_QAM_128))     return false;
-  if (dtp.Modulation() == QAM_256  && !m_dvbTuner->HasCapability(FE_CAN_QAM_256))     return false;
-  if (dtp.Modulation() == QAM_AUTO && !m_dvbTuner->HasCapability(FE_CAN_QAM_AUTO))    return false;
-  if (dtp.Modulation() == VSB_8    && !m_dvbTuner->HasCapability(FE_CAN_8VSB))        return false;
-  if (dtp.Modulation() == VSB_16   && !m_dvbTuner->HasCapability(FE_CAN_16VSB))       return false;
+  if (dtp.StreamId()   != 0        && !GetDevice<cDvbDevice>()->m_dvbTuner.HasCapability((fe_caps)FE_CAN_MULTISTREAM)) return false;
+  if (dtp.Modulation() == QPSK     && !GetDevice<cDvbDevice>()->m_dvbTuner.HasCapability(FE_CAN_QPSK))        return false;
+  if (dtp.Modulation() == QAM_16   && !GetDevice<cDvbDevice>()->m_dvbTuner.HasCapability(FE_CAN_QAM_16))      return false;
+  if (dtp.Modulation() == QAM_32   && !GetDevice<cDvbDevice>()->m_dvbTuner.HasCapability(FE_CAN_QAM_32))      return false;
+  if (dtp.Modulation() == QAM_64   && !GetDevice<cDvbDevice>()->m_dvbTuner.HasCapability(FE_CAN_QAM_64))      return false;
+  if (dtp.Modulation() == QAM_128  && !GetDevice<cDvbDevice>()->m_dvbTuner.HasCapability(FE_CAN_QAM_128))     return false;
+  if (dtp.Modulation() == QAM_256  && !GetDevice<cDvbDevice>()->m_dvbTuner.HasCapability(FE_CAN_QAM_256))     return false;
+  if (dtp.Modulation() == QAM_AUTO && !GetDevice<cDvbDevice>()->m_dvbTuner.HasCapability(FE_CAN_QAM_AUTO))    return false;
+  if (dtp.Modulation() == VSB_8    && !GetDevice<cDvbDevice>()->m_dvbTuner.HasCapability(FE_CAN_8VSB))        return false;
+  if (dtp.Modulation() == VSB_16   && !GetDevice<cDvbDevice>()->m_dvbTuner.HasCapability(FE_CAN_16VSB))       return false;
   // "turbo fec" is a non standard FEC used by North American broadcasters - this is a best guess to determine this condition
-  if (dtp.Modulation() == PSK_8    && !m_dvbTuner->HasCapability(FE_CAN_TURBO_FEC) && dtp.System() == SYS_DVBS) return false;
+  if (dtp.Modulation() == PSK_8    && !GetDevice<cDvbDevice>()->m_dvbTuner.HasCapability(FE_CAN_TURBO_FEC) && dtp.System() == SYS_DVBS) return false;
 
   if (!cSource::IsSat(channel.Source()) ||
       (!Setup.DiSEqC || Diseqcs.Get(Device()->CardIndex() + 1, channel.Source(), channel.Frequency(), dtp.Polarization(), NULL)))
@@ -103,14 +97,14 @@ bool cDvbChannelSubsystem::ProvidesChannel(const cChannel &channel, int priority
   bool needsDetachReceivers = false;
   GetDevice<cDvbDevice>()->m_bNeedsDetachBondedReceivers = false;
 
-  if (m_dvbTuner && ProvidesTransponder(channel))
+  if (GetDevice<cDvbDevice>()->m_dvbTuner.IsOpen() && ProvidesTransponder(channel))
   {
     result = hasPriority;
     if (priority > IDLEPRIORITY)
     {
       if (Receiver()->Receiving())
       {
-        if (m_dvbTuner->IsTunedTo(channel))
+        if (GetDevice<cDvbDevice>()->m_dvbTuner.IsTunedTo(channel))
         {
           if ((channel.Vpid() && !PID()->HasPid(channel.Vpid())) ||
               (channel.Apid(0) && !PID()->HasPid(channel.Apid(0))) ||
@@ -161,39 +155,39 @@ bool cDvbChannelSubsystem::ProvidesChannel(const cChannel &channel, int priority
 
 bool cDvbChannelSubsystem::ProvidesEIT() const
 {
-  return m_dvbTuner != NULL;
+  return GetDevice<cDvbDevice>()->m_dvbTuner.IsOpen();
 }
 
 unsigned int cDvbChannelSubsystem::NumProvidedSystems() const
 {
-  return m_dvbTuner->m_deliverySystems.size() + m_dvbTuner->m_numModulations;
+  return GetDevice<cDvbDevice>()->m_dvbTuner.m_deliverySystems.size() + GetDevice<cDvbDevice>()->m_dvbTuner.m_numModulations;
 }
 
 int cDvbChannelSubsystem::SignalStrength() const
 {
-  if (m_dvbTuner)
-    return m_dvbTuner->GetSignalStrength();
+  if (GetDevice<cDvbDevice>()->m_dvbTuner.IsOpen())
+    return GetDevice<cDvbDevice>()->m_dvbTuner.GetSignalStrength();
   return -1;
 }
 
 int cDvbChannelSubsystem::SignalQuality() const
 {
-  if (m_dvbTuner)
-    return m_dvbTuner->GetSignalQuality();
+  if (GetDevice<cDvbDevice>()->m_dvbTuner.IsOpen())
+    return GetDevice<cDvbDevice>()->m_dvbTuner.GetSignalQuality();
   return -1;
 }
 
 const cChannel *cDvbChannelSubsystem::GetCurrentlyTunedTransponder() const
 {
-  if (m_dvbTuner)
-    return &m_dvbTuner->GetTransponder();
+  if (GetDevice<cDvbDevice>()->m_dvbTuner.IsOpen())
+    return &GetDevice<cDvbDevice>()->m_dvbTuner.GetTransponder();
   return NULL;
 }
 
 bool cDvbChannelSubsystem::IsTunedToTransponder(const cChannel &channel) const
 {
-  if (m_dvbTuner)
-    return m_dvbTuner->IsTunedTo(channel);
+  if (GetDevice<cDvbDevice>()->m_dvbTuner.IsOpen())
+    return GetDevice<cDvbDevice>()->m_dvbTuner.IsTunedTo(channel);
   return false;
 }
 
@@ -204,14 +198,14 @@ bool cDvbChannelSubsystem::MaySwitchTransponder(const cChannel &channel) const
 
 bool cDvbChannelSubsystem::HasLock(unsigned int timeoutMs) const
 {
-  if (m_dvbTuner)
-    return m_dvbTuner->Locked(timeoutMs);
+  if (GetDevice<cDvbDevice>()->m_dvbTuner.IsOpen())
+    return GetDevice<cDvbDevice>()->m_dvbTuner.Locked(timeoutMs);
   return false;
 }
 
 bool cDvbChannelSubsystem::SetChannelDevice(const cChannel &channel)
 {
-  if (m_dvbTuner)
-    m_dvbTuner->SetChannel(channel);
+  if (GetDevice<cDvbDevice>()->m_dvbTuner.IsOpen())
+    GetDevice<cDvbDevice>()->m_dvbTuner.SetChannel(channel);
   return true;
 }

@@ -37,9 +37,16 @@ class cDvbTuner : public PLATFORM::CThread
 {
 public:
   cDvbTuner(cDvbDevice *device);
-  virtual ~cDvbTuner();
+  virtual ~cDvbTuner() { Close(); }
 
-  bool IsValid() const { return !m_deliverySystems.empty(); }
+  /*!
+   * \brief Open the tuner and query basic info
+   * \return If true, the tuner is ready to be used and m_deliverySystems is
+   *         guaranteed to be non-empty
+   */
+  bool Open();
+  bool IsOpen() const { return !m_deliverySystems.empty(); } // TODO: need boolean m_bOpen
+  void Close();
 
   unsigned int Adapter() const; // Alias for device->Adapter()
   unsigned int Frontend() const; // Alias for device->Frontend()
@@ -55,7 +62,8 @@ public:
    * \brief Get the version of the DVB driver actually in use
    * \return The DVB API version. Compare to DVBAPIVERSION in DVBLegacy.h
    */
-  uint32_t GetDvbApiVersion() const;
+  uint32_t GetDvbApiVersion() const { return m_dvbApiVersion; }
+  bool QueryDvbApiVersion();
 
   bool Bond(cDvbTuner *tuner);
   void UnBond();
@@ -105,7 +113,7 @@ private:
   fe_delivery_system          m_frontendType;
   dvb_frontend_info           m_frontendInfo;
   int                         m_fileDescriptor;
-
+  uint32_t                    m_dvbApiVersion;
 
 public: // TODO
   std::vector<fe_delivery_system> m_deliverySystems;

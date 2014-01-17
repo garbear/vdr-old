@@ -42,73 +42,74 @@ TEST(DvbTuner, cDvbTuner)
     if (!device)
       continue;
 
-    cDvbTuner *tuner = device->DvbChannel()->GetTuner();
-    ASSERT_TRUE(tuner);
-    ASSERT_TRUE(tuner->IsValid());
-    EXPECT_EQ(device->Adapter(), tuner->Adapter());
-    EXPECT_EQ(device->Frontend(), tuner->Frontend());
-    EXPECT_STRNE("", tuner->Name().c_str());
+    ASSERT_TRUE(device->Initialise());
 
-    if (tuner->Name() == WINTVHVR950Q)
+    cDvbTuner& tuner = device->m_dvbTuner;
+    ASSERT_TRUE(tuner.IsOpen());
+    EXPECT_EQ(device->Adapter(), tuner.Adapter());
+    EXPECT_EQ(device->Frontend(), tuner.Frontend());
+    EXPECT_STRNE("", tuner.Name().c_str());
+
+    if (tuner.Name() == WINTVHVR950Q)
     {
-      EXPECT_EQ(SYS_UNDEFINED, tuner->FrontendType());
+      EXPECT_EQ(SYS_UNDEFINED, tuner.FrontendType());
 
-      EXPECT_FALSE(tuner->HasDeliverySystem(SYS_UNDEFINED));
-      EXPECT_FALSE(tuner->HasDeliverySystem(SYS_DVBC_ANNEX_A));
-      EXPECT_TRUE(tuner->HasDeliverySystem(SYS_DVBC_ANNEX_B));
-      EXPECT_FALSE(tuner->HasDeliverySystem(SYS_DVBT));
-      EXPECT_FALSE(tuner->HasDeliverySystem(SYS_DSS));
-      EXPECT_FALSE(tuner->HasDeliverySystem(SYS_DVBS));
-      EXPECT_FALSE(tuner->HasDeliverySystem(SYS_DVBS2));
-      EXPECT_FALSE(tuner->HasDeliverySystem(SYS_DVBH));
-      EXPECT_FALSE(tuner->HasDeliverySystem(SYS_ISDBT));
-      EXPECT_FALSE(tuner->HasDeliverySystem(SYS_ISDBS));
-      EXPECT_FALSE(tuner->HasDeliverySystem(SYS_ISDBC));
-      EXPECT_TRUE(tuner->HasDeliverySystem(SYS_ATSC));
-      EXPECT_FALSE(tuner->HasDeliverySystem(SYS_ATSCMH));
-      EXPECT_FALSE(tuner->HasDeliverySystem(SYS_DTMB));
-      EXPECT_FALSE(tuner->HasDeliverySystem(SYS_CMMB));
-      EXPECT_FALSE(tuner->HasDeliverySystem(SYS_DAB));
-      EXPECT_FALSE(tuner->HasDeliverySystem(SYS_DVBT2));
-      EXPECT_FALSE(tuner->HasDeliverySystem(SYS_TURBO));
-      EXPECT_FALSE(tuner->HasDeliverySystem(SYS_DVBC_ANNEX_C));
+      EXPECT_FALSE(tuner.HasDeliverySystem(SYS_UNDEFINED));
+      EXPECT_FALSE(tuner.HasDeliverySystem(SYS_DVBC_ANNEX_A));
+      EXPECT_TRUE(tuner.HasDeliverySystem(SYS_DVBC_ANNEX_B));
+      EXPECT_FALSE(tuner.HasDeliverySystem(SYS_DVBT));
+      EXPECT_FALSE(tuner.HasDeliverySystem(SYS_DSS));
+      EXPECT_FALSE(tuner.HasDeliverySystem(SYS_DVBS));
+      EXPECT_FALSE(tuner.HasDeliverySystem(SYS_DVBS2));
+      EXPECT_FALSE(tuner.HasDeliverySystem(SYS_DVBH));
+      EXPECT_FALSE(tuner.HasDeliverySystem(SYS_ISDBT));
+      EXPECT_FALSE(tuner.HasDeliverySystem(SYS_ISDBS));
+      EXPECT_FALSE(tuner.HasDeliverySystem(SYS_ISDBC));
+      EXPECT_TRUE(tuner.HasDeliverySystem(SYS_ATSC));
+      EXPECT_FALSE(tuner.HasDeliverySystem(SYS_ATSCMH));
+      EXPECT_FALSE(tuner.HasDeliverySystem(SYS_DTMB));
+      EXPECT_FALSE(tuner.HasDeliverySystem(SYS_CMMB));
+      EXPECT_FALSE(tuner.HasDeliverySystem(SYS_DAB));
+      EXPECT_FALSE(tuner.HasDeliverySystem(SYS_DVBT2));
+      EXPECT_FALSE(tuner.HasDeliverySystem(SYS_TURBO));
+      EXPECT_FALSE(tuner.HasDeliverySystem(SYS_DVBC_ANNEX_C));
 
-      EXPECT_FALSE(tuner->HasCapability(FE_IS_STUPID));
-      EXPECT_TRUE(tuner->HasCapability(FE_CAN_INVERSION_AUTO));
-      EXPECT_FALSE(tuner->HasCapability(FE_CAN_FEC_1_2));
-      EXPECT_FALSE(tuner->HasCapability(FE_CAN_FEC_2_3));
-      EXPECT_FALSE(tuner->HasCapability(FE_CAN_FEC_3_4));
-      EXPECT_FALSE(tuner->HasCapability(FE_CAN_FEC_4_5));
-      EXPECT_FALSE(tuner->HasCapability(FE_CAN_FEC_5_6));
-      EXPECT_FALSE(tuner->HasCapability(FE_CAN_FEC_6_7));
-      EXPECT_FALSE(tuner->HasCapability(FE_CAN_FEC_7_8));
-      EXPECT_FALSE(tuner->HasCapability(FE_CAN_FEC_8_9));
-      EXPECT_FALSE(tuner->HasCapability(FE_CAN_FEC_AUTO));
-      EXPECT_FALSE(tuner->HasCapability(FE_CAN_QPSK));
-      EXPECT_FALSE(tuner->HasCapability(FE_CAN_QAM_16));
-      EXPECT_FALSE(tuner->HasCapability(FE_CAN_QAM_32));
-      EXPECT_TRUE(tuner->HasCapability(FE_CAN_QAM_64));
-      EXPECT_FALSE(tuner->HasCapability(FE_CAN_QAM_128));
-      EXPECT_TRUE(tuner->HasCapability(FE_CAN_QAM_256));
-      EXPECT_FALSE(tuner->HasCapability(FE_CAN_QAM_AUTO));
-      EXPECT_FALSE(tuner->HasCapability(FE_CAN_TRANSMISSION_MODE_AUTO));
-      EXPECT_FALSE(tuner->HasCapability(FE_CAN_BANDWIDTH_AUTO));
-      EXPECT_FALSE(tuner->HasCapability(FE_CAN_GUARD_INTERVAL_AUTO));
-      EXPECT_FALSE(tuner->HasCapability(FE_CAN_HIERARCHY_AUTO));
-      EXPECT_TRUE(tuner->HasCapability(FE_CAN_8VSB));
-      EXPECT_FALSE(tuner->HasCapability(FE_CAN_16VSB));
-      EXPECT_FALSE(tuner->HasCapability(FE_CAN_MULTISTREAM));
-      EXPECT_FALSE(tuner->HasCapability(FE_CAN_TURBO_FEC));
-      EXPECT_FALSE(tuner->HasCapability(FE_CAN_2G_MODULATION));
-      EXPECT_FALSE(tuner->HasCapability(FE_NEEDS_BENDING));
-      EXPECT_FALSE(tuner->HasCapability(FE_CAN_RECOVER));
-      EXPECT_FALSE(tuner->HasCapability(FE_CAN_MUTE_TS));
+      EXPECT_FALSE(tuner.HasCapability(FE_IS_STUPID));
+      EXPECT_TRUE(tuner.HasCapability(FE_CAN_INVERSION_AUTO));
+      EXPECT_FALSE(tuner.HasCapability(FE_CAN_FEC_1_2));
+      EXPECT_FALSE(tuner.HasCapability(FE_CAN_FEC_2_3));
+      EXPECT_FALSE(tuner.HasCapability(FE_CAN_FEC_3_4));
+      EXPECT_FALSE(tuner.HasCapability(FE_CAN_FEC_4_5));
+      EXPECT_FALSE(tuner.HasCapability(FE_CAN_FEC_5_6));
+      EXPECT_FALSE(tuner.HasCapability(FE_CAN_FEC_6_7));
+      EXPECT_FALSE(tuner.HasCapability(FE_CAN_FEC_7_8));
+      EXPECT_FALSE(tuner.HasCapability(FE_CAN_FEC_8_9));
+      EXPECT_FALSE(tuner.HasCapability(FE_CAN_FEC_AUTO));
+      EXPECT_FALSE(tuner.HasCapability(FE_CAN_QPSK));
+      EXPECT_FALSE(tuner.HasCapability(FE_CAN_QAM_16));
+      EXPECT_FALSE(tuner.HasCapability(FE_CAN_QAM_32));
+      EXPECT_TRUE(tuner.HasCapability(FE_CAN_QAM_64));
+      EXPECT_FALSE(tuner.HasCapability(FE_CAN_QAM_128));
+      EXPECT_TRUE(tuner.HasCapability(FE_CAN_QAM_256));
+      EXPECT_FALSE(tuner.HasCapability(FE_CAN_QAM_AUTO));
+      EXPECT_FALSE(tuner.HasCapability(FE_CAN_TRANSMISSION_MODE_AUTO));
+      EXPECT_FALSE(tuner.HasCapability(FE_CAN_BANDWIDTH_AUTO));
+      EXPECT_FALSE(tuner.HasCapability(FE_CAN_GUARD_INTERVAL_AUTO));
+      EXPECT_FALSE(tuner.HasCapability(FE_CAN_HIERARCHY_AUTO));
+      EXPECT_TRUE(tuner.HasCapability(FE_CAN_8VSB));
+      EXPECT_FALSE(tuner.HasCapability(FE_CAN_16VSB));
+      EXPECT_FALSE(tuner.HasCapability(FE_CAN_MULTISTREAM));
+      EXPECT_FALSE(tuner.HasCapability(FE_CAN_TURBO_FEC));
+      EXPECT_FALSE(tuner.HasCapability(FE_CAN_2G_MODULATION));
+      EXPECT_FALSE(tuner.HasCapability(FE_NEEDS_BENDING));
+      EXPECT_FALSE(tuner.HasCapability(FE_CAN_RECOVER));
+      EXPECT_FALSE(tuner.HasCapability(FE_CAN_MUTE_TS));
 
-      EXPECT_EQ(0x0509, tuner->GetDvbApiVersion());
+      EXPECT_EQ(0x0509, tuner.GetDvbApiVersion());
     }
     else
     {
-      EXPECT_NE(SYS_UNDEFINED, tuner->FrontendType());
+      EXPECT_NE(SYS_UNDEFINED, tuner.FrontendType());
     }
   }
 }

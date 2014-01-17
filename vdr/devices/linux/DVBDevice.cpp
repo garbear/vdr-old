@@ -60,6 +60,8 @@ using namespace VDR; // for shared_ptr
 
 #define MAXFRONTENDCMDS 16
 
+#define INVALID_FD  -1
+
 CMutex cDvbDevice::m_bondMutex;
 
 const char* cDvbDevice::DeliverySystemNames[] =
@@ -89,6 +91,8 @@ cDvbDevice::cDvbDevice(unsigned int adapter, unsigned int frontend)
  : cDevice(CreateSubsystems(this)),
    m_adapter(adapter),
    m_frontend(frontend),
+   m_dvbTuner(this),
+   m_fd_ca(INVALID_FD),
    m_bondedDevice(NULL),
    m_bNeedsDetachBondedReceivers(false)
 {
@@ -183,8 +187,7 @@ DeviceVector cDvbDevice::FindDevices()
         if (frontend == INVALID)
           continue;
 
-        shared_ptr<cDvbDevice> device = shared_ptr<cDvbDevice>(new cDvbDevice(adapter, frontend));
-        devices.push_back(static_pointer_cast<cDevice>(device));
+        devices.push_back(DevicePtr(new cDvbDevice(adapter, frontend)));
       }
     }
   }
@@ -266,18 +269,19 @@ bool cDvbDevice::Ready()
 
 string cDvbDevice::DeviceName() const
 {
-  cDvbTuner* tuner = DvbChannel()->GetTuner();
-  return tuner ? tuner->Name() : DvbName(DEV_DVB_FRONTEND, m_adapter, m_frontend);
+  return m_dvbTuner.IsOpen() ? m_dvbTuner.Name() : DvbName(DEV_DVB_FRONTEND, m_adapter, m_frontend);
 }
 
 string cDvbDevice::DeviceType() const
 {
-  if (DvbChannel()->GetTuner())
+  if (m_dvbTuner.IsOpen())
   {
-    if (DvbChannel()->GetTuner()->FrontendType() != SYS_UNDEFINED)
-      return DeliverySystemNames[DvbChannel()->GetTuner()->FrontendType()];
-    if (!DvbChannel()->GetTuner()->m_deliverySystems.empty())
-      return DeliverySystemNames[DvbChannel()->GetTuner()->m_deliverySystems[0]]; // to have some reasonable default
+    if (m_dvbTuner.FrontendType() != SYS_UNDEFINED)
+      return DeliverySystemNames[m_dvbTuner.FrontendType()];
+
+    // IsOpen() implies that m_deliverySystems is not empty
+    assert(!m_dvbTuner.m_deliverySystems.empty());
+    return DeliverySystemNames[m_dvbTuner.m_deliverySystems[0]]; // To have some reasonable default
   }
   return "";
 }
@@ -293,8 +297,7 @@ bool cDvbDevice::Bond(cDvbDevice *device)
       if ((DvbChannel()->ProvidesDeliverySystem(SYS_DVBS) || DvbChannel()->ProvidesDeliverySystem(SYS_DVBS2)) &&
           (device->DvbChannel()->ProvidesDeliverySystem(SYS_DVBS) || device->DvbChannel()->ProvidesDeliverySystem(SYS_DVBS2)))
       {
-        if (DvbChannel()->GetTuner() && device->DvbChannel()->GetTuner() &&
-            DvbChannel()->GetTuner()->Bond(device->DvbChannel()->GetTuner()))
+        if (m_dvbTuner.IsOpen() && device->m_dvbTuner.IsOpen() && m_dvbTuner.Bond(&device->m_dvbTuner))
         {
           m_bondedDevice = device->m_bondedDevice ? device->m_bondedDevice : device;
           device->m_bondedDevice = this;
@@ -319,8 +322,8 @@ void cDvbDevice::UnBond()
   CLockObject lock(m_bondMutex);
   if (cDvbDevice *d = m_bondedDevice)
   {
-    if (DvbChannel()->GetTuner())
-      DvbChannel()->GetTuner()->UnBond();
+    if (m_dvbTuner.IsOpen())
+      m_dvbTuner.UnBond();
     dsyslog("device %d unbonded from device %d", CardIndex() + 1, m_bondedDevice->CardIndex() + 1);
 
     while (d->m_bondedDevice != this)
@@ -337,7 +340,7 @@ bool cDvbDevice::BondingOk(const cChannel &channel, bool bConsiderOccupied) cons
 {
   CLockObject lock(m_bondMutex);
   if (m_bondedDevice)
-    return DvbChannel()->GetTuner() && DvbChannel()->GetTuner()->BondingOk(channel, bConsiderOccupied);
+    return m_dvbTuner.IsOpen() && m_dvbTuner.BondingOk(channel, bConsiderOccupied);
   return true;
 }
 
@@ -459,16 +462,13 @@ cDvbSectionFilterSubsystem *cDvbDevice::DvbSectionFilter() const
 
 bool cDvbDevice::Initialise(void)
 {
-  cDvbTuner *tuner = new cDvbTuner(this);
-  if (tuner && tuner->IsValid())
+  if (m_dvbTuner.Open())
   {
     dsyslog("tuner '%s' opened", DeviceName().c_str());
-    DvbChannel()->SetTuner(tuner);
   }
   else
   {
     isyslog("could not open tuner '%s'", DvbName(DEV_DVB_FRONTEND, m_adapter, m_frontend).c_str());
-    delete tuner;
     return false;
   }
 

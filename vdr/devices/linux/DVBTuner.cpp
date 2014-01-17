@@ -54,13 +54,16 @@ using namespace PLATFORM;
     } \
   } while (0)
 
+#define INVALID_FD  -1
+
 CMutex cDvbTuner::m_bondMutex;
 
 cDvbTuner::cDvbTuner(cDvbDevice *device)
  : m_device(device),
    m_frontendType(SYS_UNDEFINED),
    m_frontendInfo(),
-   m_fileDescriptor(-1),
+   m_fileDescriptor(INVALID_FD),
+   m_dvbApiVersion(0),
    m_numModulations(0),
    m_tuneTimeout(0),
    m_lockTimeout(0),
@@ -74,40 +77,60 @@ cDvbTuner::cDvbTuner(cDvbDevice *device)
    m_bLocked(false),
    m_bNewSet(false)
 {
-  m_fileDescriptor = device->DvbOpen(DEV_DVB_FRONTEND, O_RDWR | O_NONBLOCK);
+}
 
-  if (m_fileDescriptor >= 0 && GetDvbApiVersion() != 0)
+bool cDvbTuner::Open()
+{
+  try
   {
-    if (IoControl(FE_GET_INFO, &m_frontendInfo) != -1 && m_frontendInfo.name != NULL)
+    m_fileDescriptor = m_device->DvbOpen(DEV_DVB_FRONTEND, O_RDWR | O_NONBLOCK);
+
+    if (m_fileDescriptor == INVALID_FD)
     {
-      m_strName = m_frontendInfo.name;
-      m_deliverySystems = GetDeliverySystems();
+      // TODO: If error is "Device or resource busy", kill the owner process
+      if (errno == EBUSY)
+        throw "DVB tuner: Frontend is held by another process (try `lsof +D /dev/dvb`)";
 
-      if (!m_deliverySystems.empty()) // Same check as IsValid()
-      {
-        vector<string> vecDeliverySystemNames;
-        for (vector<fe_delivery_system>::const_iterator it = m_deliverySystems.begin() + 1; it != m_deliverySystems.end(); ++it)
-          vecDeliverySystemNames.push_back(m_device->DeliverySystemNames[*it]);
-        string deliverySystem = StringUtils::Join(vecDeliverySystemNames, ",");
-
-        vector<string> vecModulations = m_device->GetModulationsFromCaps(m_frontendInfo.caps);
-        string modulations = StringUtils::Join(vecModulations, ",");
-        if (modulations.empty())
-          modulations = "unknown modulations";
-
-        //m_modulations = vecModulations;
-        m_numModulations = vecModulations.size();
-        isyslog("frontend %d/%d provides %s with %s (\"%s\")", Adapter(), Frontend(), deliverySystem.c_str(), modulations.c_str(), m_frontendInfo.name);
-
-        //SetDescription("tuner on frontend %d/%d", Adapter(), Frontend());
-        CreateThread();
-      }
-      else
-        esyslog("DVB tuner: No delivery systems");
+      throw "DVB tuner: Can't open frontend";
     }
-    else
-      esyslog("DVB tuner: Can't get frontend info");
+
+    if (!QueryDvbApiVersion())
+      throw "DVB tuner: Can't get DVB API version";
+
+    if (IoControl(FE_GET_INFO, &m_frontendInfo) == -1 || m_frontendInfo.name == NULL)
+      throw "DVB tuner: Can't get frontend info";
+
+    m_deliverySystems = GetDeliverySystems();
+
+    if (m_deliverySystems.empty())
+      throw "DVB tuner: No delivery systems";
+
+    m_strName = m_frontendInfo.name;
+
+    vector<string> vecDeliverySystemNames;
+    for (vector<fe_delivery_system>::const_iterator it = m_deliverySystems.begin() + 1; it != m_deliverySystems.end(); ++it)
+      vecDeliverySystemNames.push_back(m_device->DeliverySystemNames[*it]);
+    string deliverySystem = StringUtils::Join(vecDeliverySystemNames, ",");
+
+    vector<string> vecModulations = m_device->GetModulationsFromCaps(m_frontendInfo.caps);
+    string modulations = StringUtils::Join(vecModulations, ",");
+    if (modulations.empty())
+      modulations = "unknown modulations";
+
+    //m_modulations = vecModulations;
+    m_numModulations = vecModulations.size();
+    isyslog("frontend %d/%d provides %s with %s (\"%s\")", Adapter(), Frontend(), deliverySystem.c_str(), modulations.c_str(), m_frontendInfo.name);
+
+    //SetDescription("tuner on frontend %d/%d", Adapter(), Frontend());
+    CreateThread();
   }
+  catch (const char* errorMsg)
+  {
+    esyslog(errorMsg);
+    return false;
+  }
+
+  return true;
 }
 
 vector<fe_delivery_system> cDvbTuner::GetDeliverySystems() const
@@ -174,10 +197,13 @@ vector<fe_delivery_system> cDvbTuner::GetDeliverySystems() const
   return deliverySystems;
 }
 
-cDvbTuner::~cDvbTuner()
+void cDvbTuner::Close()
 {
   if (m_fileDescriptor >= 0)
+  {
     close(m_fileDescriptor);
+    m_fileDescriptor = INVALID_FD;
+  }
 
   m_tunerStatus = tsIdle;
   m_newSet.Broadcast();
@@ -191,6 +217,8 @@ cDvbTuner::~cDvbTuner()
     ExecuteDiseqc(m_lastDiseqc, &frequency);
   }
   */
+
+  m_deliverySystems.clear();
 }
 
 unsigned int cDvbTuner::Adapter() const
@@ -208,39 +236,37 @@ bool cDvbTuner::HasDeliverySystem(fe_delivery_system deliverySystem) const
   return std::find(m_deliverySystems.begin(), m_deliverySystems.end(), deliverySystem) != m_deliverySystems.end();
 }
 
-uint32_t cDvbTuner::GetDvbApiVersion() const
+bool cDvbTuner::QueryDvbApiVersion()
 {
-  static uint32_t dvbApiVersion = 0x00000000;
+  m_dvbApiVersion = 0x00000000;
 
-  // Only attempt once
-  static unsigned int attempts = 0;
-  if (attempts++ == 0)
+  dtv_property frontend[1] = { };
+  dtv_properties cmdSeq = { };
+
+  memset(&frontend, 0, sizeof(frontend));
+  memset(&cmdSeq, 0, sizeof(cmdSeq));
+
+  cmdSeq.props = frontend;
+  frontend[cmdSeq.num].cmd = DTV_API_VERSION;
+  frontend[cmdSeq.num].u.data = 0;
+  if (cmdSeq.num++ > MAXFRONTENDCMDS)
   {
-    dtv_property frontend[1] = { };
-    dtv_properties cmdSeq = { };
-
-    memset(&frontend, 0, sizeof(frontend));
-    memset(&cmdSeq, 0, sizeof(cmdSeq));
-
-    cmdSeq.props = frontend;
-    frontend[cmdSeq.num].cmd = DTV_API_VERSION;
-    frontend[cmdSeq.num].u.data = 0;
-    if (cmdSeq.num++ > MAXFRONTENDCMDS)
-    {
-      // Too many tuning commands on frontend
-      return 0;
-    }
-
-    if (IoControl(FE_GET_PROPERTY, &cmdSeq) == 0 && frontend[0].u.data != 0)
-    {
-      dvbApiVersion = frontend[0].u.data;
-      isyslog("Detected DVB API version %08x", dvbApiVersion);
-    }
-    else
-      esyslog("Can't get DVB API version");
+    // Too many tuning commands on frontend
+    return false;
   }
 
-  return dvbApiVersion;
+  if (IoControl(FE_GET_PROPERTY, &cmdSeq) == 0 && frontend[0].u.data != 0)
+  {
+    m_dvbApiVersion = frontend[0].u.data;
+    isyslog("Detected DVB API version %08x", m_dvbApiVersion);
+  }
+  else
+  {
+    esyslog("Can't get DVB API version");
+    return false;
+  }
+
+  return true;
 }
 
 void *cDvbTuner::Process()

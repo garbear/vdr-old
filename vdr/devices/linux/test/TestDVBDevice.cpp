@@ -40,6 +40,8 @@ TEST(DvbDevice, Initialize)
     if (!device)
       continue;
 
+    ASSERT_TRUE(device->Initialise());
+
     EXPECT_EQ(0, device->Frontend());
     EXPECT_EQ(0, device->Adapter());
 
@@ -62,6 +64,8 @@ TEST(DvbDevice, GetSubsystemId)
     cDvbDevice *device = dynamic_cast<cDvbDevice*>(it->get());
     if (!device)
       continue;
+
+    ASSERT_TRUE(device->Initialise());
 
     if (device->DeviceName() == WINTVHVR950Q)
     {

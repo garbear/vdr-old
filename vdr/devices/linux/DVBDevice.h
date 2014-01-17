@@ -22,6 +22,7 @@
 
 #include "devices/Device.h"
 #include "DVBLegacy.h"
+#include "DVBTuner.h"
 #include "sources/linux/DVBSourceParams.h"
 #include "platform/threads/threads.h"
 #include "utils/Observer.h"
@@ -155,12 +156,15 @@ private:
    */
   static cSubsystems CreateSubsystems(cDvbDevice* device);
 
-  cSubsystems          m_subsystems;
   unsigned int         m_adapter;
   unsigned int         m_frontend;
-  //int                  m_fd_dvr; // (Moved to DVBReceiverSubsystem.h)
+
+public://TODO
+  cDvbTuner            m_dvbTuner;
 private:
+  //int                  m_fd_dvr; // (Moved to DVBReceiverSubsystem.h)
   int                  m_fd_ca;
+
 public: // TODO
   cDvbDevice*          m_bondedDevice;
   mutable bool         m_bNeedsDetachBondedReceivers;

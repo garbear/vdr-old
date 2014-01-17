@@ -31,10 +31,7 @@ class cDvbChannelSubsystem : public cDeviceChannelSubsystem
 {
 public:
   cDvbChannelSubsystem(cDevice *device);
-  virtual ~cDvbChannelSubsystem();
-
-  cDvbTuner* GetTuner() const { return m_dvbTuner; }
-  void SetTuner(cDvbTuner* tuner) { assert(m_dvbTuner == NULL); m_dvbTuner = tuner; } // TODO: Remove assert
+  virtual ~cDvbChannelSubsystem() { }
 
   // Not inherited from cDeviceChannelSubsystem
   virtual bool ProvidesDeliverySystem(fe_delivery_system deliverySystem) const;
@@ -56,7 +53,4 @@ public:
 
 protected:
   virtual bool SetChannelDevice(const cChannel &channel);
-
-private:
-  cDvbTuner *m_dvbTuner;
 };
