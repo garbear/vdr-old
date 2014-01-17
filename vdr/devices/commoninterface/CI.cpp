@@ -1596,7 +1596,7 @@ cCamSlot::~cCamSlot()
   DeleteAllConnections();
 }
 
-bool cCamSlot::Assign(cDevice *Device, bool Query)
+bool cCamSlot::Assign(DevicePtr Device, bool Query)
 {
   CLockObject lock(mutex);
   if (ciAdapter) {
@@ -1610,7 +1610,7 @@ bool cCamSlot::Assign(cDevice *Device, bool Query)
               ciAdapter->m_assignedDevice = Device;
               if (Device) {
                  Device->CommonInterface()->SetCamSlot(this);
-                 dsyslog("CAM %d: assigned to device %d", slotNumber, Device->DeviceNumber() + 1);
+                 dsyslog("CAM %d: assigned to device %d", slotNumber, Device->CardIndex());
                  }
               else
                  dsyslog("CAM %d: unassigned", slotNumber);
@@ -1624,15 +1624,16 @@ bool cCamSlot::Assign(cDevice *Device, bool Query)
   return false;
 }
 
-cDevice *cCamSlot::Device(void)
+DevicePtr cCamSlot::Device(void)
 {
   CLockObject lock(mutex);
-  if (ciAdapter) {
-     cDevice *d = ciAdapter->m_assignedDevice;
-     if (d && d->CommonInterface()->CamSlot() == this)
-        return d;
-     }
-  return NULL;
+  if (ciAdapter)
+  {
+    DevicePtr d = ciAdapter->m_assignedDevice;
+    if (d != cDevice::EmptyDevice && d->CommonInterface()->CamSlot() == this)
+      return d;
+  }
+  return cDevice::EmptyDevice;
 }
 
 void cCamSlot::NewConnection(void)
@@ -1863,8 +1864,8 @@ const int *cCamSlot::GetCaSystemIds(void)
 
 int cCamSlot::Priority(void)
 {
-  cDevice *d = Device();
-  return d ? d->Receiver()->Priority() : IDLEPRIORITY;
+  DevicePtr d = Device();
+  return d != cDevice::EmptyDevice ? d->Receiver()->Priority() : IDLEPRIORITY;
 }
 
 bool cCamSlot::ProvidesCa(const int *CaSystemIds)

@@ -86,27 +86,12 @@ const char* cDvbDevice::DeliverySystemNames[] =
 };
 
 cDvbDevice::cDvbDevice(unsigned int adapter, unsigned int frontend)
- : cDevice(CreateSubsystems(this), 0 /* ??? */),
+ : cDevice(CreateSubsystems(this)),
    m_adapter(adapter),
    m_frontend(frontend),
    m_bondedDevice(NULL),
    m_bNeedsDetachBondedReceivers(false)
 {
-  // Common Interface:
-  m_fd_ca = DvbOpen(DEV_DVB_CA, O_RDWR);
-  if (m_fd_ca >= 0)
-    DvbCommonInterface()->m_ciAdapter = cDvbCiAdapter::CreateCiAdapter(this, m_fd_ca);
-
-  cDvbTuner *tuner = new cDvbTuner(this);
-  if (tuner && tuner->IsValid())
-    DvbChannel()->SetTuner(tuner);
-  else
-  {
-    isyslog("Could not open tuner. Continuing without.");
-    delete tuner;
-  }
-
-  SectionFilter()->StartSectionHandler();
 }
 
 cSubsystems cDvbDevice::CreateSubsystems(cDvbDevice* device)
@@ -153,7 +138,7 @@ vector<string> cDvbDevice::GetModulationsFromCaps(fe_caps_t caps)
   return modulations;
 }
 
-DeviceVector cDvbDevice::InitialiseDevices()
+DeviceVector cDvbDevice::FindDevices()
 {
   //gSourceParams['A'] = cDvbSourceParams('A', "ATSC");
   //gSourceParams['C'] = cDvbSourceParams('C', "DVB-C");
@@ -199,8 +184,7 @@ DeviceVector cDvbDevice::InitialiseDevices()
           continue;
 
         shared_ptr<cDvbDevice> device = shared_ptr<cDvbDevice>(new cDvbDevice(adapter, frontend));
-        if (device->DvbChannel()->GetTuner() && device->DvbChannel()->GetTuner()->IsValid())
-          devices.push_back(static_pointer_cast<cDevice>(device));
+        devices.push_back(static_pointer_cast<cDevice>(device));
       }
     }
   }
@@ -271,14 +255,19 @@ unsigned int cDvbDevice::GetSubsystemId() const
 
 bool cDvbDevice::Ready()
 {
-  if (DvbCommonInterface()->m_ciAdapter)
-    return DvbCommonInterface()->m_ciAdapter->Ready();
-  return true;
+  if (Initialised())
+  {
+    if (DvbCommonInterface()->m_ciAdapter)
+      return DvbCommonInterface()->m_ciAdapter->Ready();
+    return true;
+  }
+  return false;
 }
 
 string cDvbDevice::DeviceName() const
 {
-  return DvbChannel()->GetTuner()->Name();
+  cDvbTuner* tuner = DvbChannel()->GetTuner();
+  return tuner ? tuner->Name() : DvbName(DEV_DVB_FRONTEND, m_adapter, m_frontend);
 }
 
 string cDvbDevice::DeviceType() const
@@ -364,13 +353,13 @@ bool cDvbDevice::BondDevices(const char *bondings)
       if (d >= 0)
       {
         int ErrorDevice = 0;
-        if (cDevice *Device1 = cDeviceManager::Get().GetDevice(i))
+        if (DevicePtr Device1 = cDeviceManager::Get().GetDevice(i))
         {
-          if (cDevice *Device2 = cDeviceManager::Get().GetDevice(d))
+          if (DevicePtr Device2 = cDeviceManager::Get().GetDevice(d))
           {
-            if (cDvbDevice *DvbDevice1 = dynamic_cast<cDvbDevice *>(Device1))
+            if (cDvbDevice *DvbDevice1 = dynamic_cast<cDvbDevice *>(Device1.get()))
             {
-              if (cDvbDevice *DvbDevice2 = dynamic_cast<cDvbDevice *>(Device2))
+              if (cDvbDevice *DvbDevice2 = dynamic_cast<cDvbDevice *>(Device2.get()))
               {
                 if (!DvbDevice1->Bond(DvbDevice2))
                   return false; // Bond() has already logged the error
@@ -408,7 +397,7 @@ void cDvbDevice::UnBondDevices()
 {
   for (int i = 0; i < cDeviceManager::Get().NumDevices(); i++)
   {
-    cDvbDevice *device = dynamic_cast<cDvbDevice*>(cDeviceManager::Get().GetDevice(i));
+    cDvbDevice *device = dynamic_cast<cDvbDevice*>(cDeviceManager::Get().GetDevice(i).get());
     if (device)
       device->UnBond();
   }
@@ -466,4 +455,46 @@ cDvbSectionFilterSubsystem *cDvbDevice::DvbSectionFilter() const
   cDvbSectionFilterSubsystem *sectionFilter = dynamic_cast<cDvbSectionFilterSubsystem*>(SectionFilter());
   assert(sectionFilter);
   return sectionFilter;
+}
+
+bool cDvbDevice::Initialise(void)
+{
+  cDvbTuner *tuner = new cDvbTuner(this);
+  if (tuner && tuner->IsValid())
+  {
+    dsyslog("tuner '%s' opened", DeviceName().c_str());
+    DvbChannel()->SetTuner(tuner);
+  }
+  else
+  {
+    isyslog("could not open tuner '%s'", DvbName(DEV_DVB_FRONTEND, m_adapter, m_frontend).c_str());
+    delete tuner;
+    return false;
+  }
+
+  // Common Interface:
+  m_fd_ca = DvbOpen(DEV_DVB_CA, O_RDWR);
+  if (m_fd_ca >= 0)
+    DvbCommonInterface()->m_ciAdapter = cDvbCiAdapter::CreateCiAdapter(this, m_fd_ca);
+
+  SectionFilter()->StartSectionHandler();
+
+  if (cDevice::Initialise())
+  {
+    if (!Ready())
+    {
+      dsyslog("tuner '%s' is waiting for the CA slot to initialise", DeviceName().c_str());
+      return false;
+    }
+
+    return true;
+  }
+
+  esyslog("failed to initialise device '%s'", DeviceName().c_str());
+  return false;
+}
+
+void cDvbDevice::Notify(const Observable &obs, const ObservableMessage msg)
+{
+  //XXX implement "CA ready"
 }

@@ -20,6 +20,7 @@
  */
 
 #include "DeviceManager.h"
+#include "devices/linux/DVBDevice.h"
 #include "devices/commoninterface/CI.h"
 #include "devices/subsystems/DeviceChannelSubsystem.h"
 #include "devices/subsystems/DeviceCommonInterfaceSubsystem.h"
@@ -32,9 +33,12 @@
 #include <assert.h>
 
 using namespace std;
+using namespace PLATFORM;
 
 cDeviceManager::cDeviceManager()
- : m_primaryDevice(NULL),
+ : m_devicesReady(0),
+   m_bAllDevicesReady(false),
+   m_primaryDevice(cDevice::EmptyDevice),
    m_nextCardIndex(0),
    m_useDevice(0)
 {
@@ -48,27 +52,57 @@ cDeviceManager &cDeviceManager::Get()
 
 cDeviceManager::~cDeviceManager()
 {
-  for (vector<cDevice*>::iterator deviceIt = m_devices.begin(); deviceIt != m_devices.end(); ++deviceIt)
+  for (vector<DevicePtr>::iterator deviceIt = m_devices.begin(); deviceIt != m_devices.end(); ++deviceIt)
   {
     if (m_primaryDevice == *deviceIt)
-      m_primaryDevice = NULL;
-    delete *deviceIt;
+      m_primaryDevice = cDevice::EmptyDevice;
   }
   for (vector<cDeviceHook*>::iterator deviceHookIt = m_deviceHooks.begin(); deviceHookIt != m_deviceHooks.end(); ++deviceHookIt)
     delete *deviceHookIt;
 }
 
-unsigned int cDeviceManager::AddDevice(cDevice *device)
+size_t cDeviceManager::Initialise(void)
 {
-  assert(device);
+  dsyslog("initialising DVB devices");
+
+  DeviceVector devices = cDvbDevice::FindDevices();
+  cDvbDevice::BondDevices(Setup.DeviceBondings);
+  dsyslog("%u DVB devices found", devices.size());
+
+  for (DeviceVector::iterator it = devices.begin(); it != devices.end(); ++it)
+  {
+    cDvbDevice* device = dynamic_cast<cDvbDevice*>(it->get());
+    if (!device)
+      continue;
+
+    AddDevice(*it);
+    if ((*it)->Initialise())
+    {
+      CLockObject lock(m_mutex);
+      ++m_devicesReady;
+    }
+  }
+
+  CLockObject lock(m_mutex);
+  return m_devices.size();
+}
+
+size_t cDeviceManager::AddDevice(DevicePtr device)
+{
+  device->AssertValid();
+
+  CLockObject lock(m_mutex);
+  device->SetCardIndex(m_devices.size());
   m_devices.push_back(device);
   if (!m_primaryDevice)
     m_primaryDevice = device;
+  dsyslog("registered device #%u: %s", m_devices.size(), device->DeviceName().c_str());
   return m_devices.size(); // Remember, our devices' numbers are 1-indexed
 }
 
 void cDeviceManager::SetPrimaryDevice(unsigned int index)
 {
+  CLockObject lock(m_mutex);
   assert(0 != index && index <= m_devices.size());
   index--; // TODO: Why is this 1-based???
 
@@ -97,45 +131,24 @@ bool cDeviceManager::DeviceHooksProvidesTransponder(const cDevice &device, const
 
 bool cDeviceManager::WaitForAllDevicesReady(unsigned int timeout /* = 0 */)
 {
-  // TODO: Wait on a condition variable
-  time_t start = time(NULL);
-  while (time(NULL) - start < timeout)
-  {
-    bool ready = true;
-    for (vector<cDevice*>::iterator deviceIt = m_devices.begin(); deviceIt != m_devices.end(); ++deviceIt)
-    {
-      if (!(*deviceIt)->Ready())
-      {
-        ready = false;
-        cCondWait::SleepMs(100);
-      }
-    }
-    if (ready)
-      return true;
-  }
-  return false;
+  CLockObject lock(m_mutex);
+  return m_devicesReadyCondition.Wait(m_mutex, m_bAllDevicesReady, timeout * 1000);
 }
 
-cDevice *cDeviceManager::ActualDevice()
+DevicePtr cDeviceManager::GetDevice(unsigned int index)
 {
-  cDevice *d = cTransferControl::ReceiverDevice();
-  if (!d)
-    d = PrimaryDevice();
-  return d;
+  CLockObject lock(m_mutex);
+  return (index < m_devices.size()) ? m_devices[index] : cDevice::EmptyDevice;
 }
 
-cDevice *cDeviceManager::GetDevice(unsigned int index)
-{
-  return (index < m_devices.size()) ? m_devices[index] : NULL;
-}
-
-cDevice *cDeviceManager::GetDevice(const cChannel &channel, int priority, bool bLiveView, bool bQuery /* = false */)
+DevicePtr cDeviceManager::GetDevice(const cChannel &channel, int priority, bool bLiveView, bool bQuery /* = false */)
 {
   // Collect the current priorities of all CAM slots that can decrypt the channel:
   int NumCamSlots = CamSlots.Count();
   int SlotPriority[NumCamSlots];
   int NumUsableSlots = 0;
   bool InternalCamNeeded = false;
+  CLockObject lock(m_mutex);
   if (channel.Ca() >= CA_ENCRYPTED_MIN)
   {
     for (cCamSlot *CamSlot = CamSlots.First(); CamSlot; CamSlot = CamSlots.Next(CamSlot))
@@ -158,16 +171,20 @@ cDevice *cDeviceManager::GetDevice(const cChannel &channel, int priority, bool b
   }
 
   bool NeedsDetachReceivers = false;
-  cDevice *d = NULL;
+  DevicePtr d = cDevice::EmptyDevice;
   cCamSlot *s = NULL;
 
   uint32_t Impact = 0xFFFFFFFF; // we're looking for a device with the least impact
   for (int j = 0; j < NumCamSlots || !NumUsableSlots; j++)
   {
     if (NumUsableSlots && SlotPriority[j] > MAXPRIORITY)
+    {
       continue; // there is no CAM available in this slot
+    }
+    dsyslog("checking %u devices", m_devices.size());
     for (int i = 0; i < m_devices.size(); i++)
     {
+      m_devices[i]->AssertValid();
       if (channel.Ca() && channel.Ca() <= CA_DVB_MAX && channel.Ca() != m_devices[i]->CardIndex() + 1)
         continue; // a specific card was requested, but not this one
       bool HasInternalCam = m_devices[i]->CommonInterface()->HasInternalCam();
@@ -188,10 +205,8 @@ cDevice *cDeviceManager::GetDevice(const cChannel &channel, int priority, bool b
         // difference, because it results in the most significant bit of the result.
         uint32_t imp = 0;
         imp <<= 1; imp |= bLiveView ? !m_devices[i]->IsPrimaryDevice() || ndr : 0;                                  // prefer the primary device for live viewing if we don't need to detach existing receivers
-        imp <<= 1; imp |= (!m_devices[i]->Receiver()->Receiving() && (m_devices[i] != cTransferControl::ReceiverDevice() || m_devices[i]->IsPrimaryDevice())) || ndr; // use receiving devices if we don't need to detach existing receivers, but avoid primary device in local transfer mode
         imp <<= 1; imp |= m_devices[i]->Receiver()->Receiving();                                                               // avoid devices that are receiving
-        imp <<= 4; imp |= GetClippedNumProvidedSystems(4, m_devices[i]) - 1;                                       // avoid cards which support multiple delivery systems
-        imp <<= 1; imp |= m_devices[i] == cTransferControl::ReceiverDevice();                                      // avoid the Transfer Mode receiver device
+        imp <<= 4; imp |= GetClippedNumProvidedSystems(4, *m_devices[i]) - 1;                                       // avoid cards which support multiple delivery systems
         imp <<= 8; imp |= m_devices[i]->Receiver()->Priority() - IDLEPRIORITY;                                                 // use the device with the lowest priority (- IDLEPRIORITY to assure that values -100..99 can be used)
         imp <<= 8; imp |= ((NumUsableSlots && !HasInternalCam) ? SlotPriority[j] : IDLEPRIORITY) - IDLEPRIORITY;// use the CAM slot with the lowest priority (- IDLEPRIORITY to assure that values -100..99 can be used)
         imp <<= 1; imp |= ndr;                                                                                  // avoid devices if we need to detach existing receivers
@@ -224,45 +239,44 @@ cDevice *cDeviceManager::GetDevice(const cChannel &channel, int priority, bool b
         if (s->Device())
           s->Device()->Receiver()->DetachAllReceivers();
         if (d->CommonInterface()->CamSlot())
-          d->CommonInterface()->CamSlot()->Assign(NULL);
+          d->CommonInterface()->CamSlot()->Assign(cDevice::EmptyDevice);
         s->Assign(d);
       }
     }
     else if (d->CommonInterface()->CamSlot() && !d->CommonInterface()->CamSlot()->IsDecrypting())
-      d->CommonInterface()->CamSlot()->Assign(NULL);
+      d->CommonInterface()->CamSlot()->Assign(cDevice::EmptyDevice);
   }
   return d;
 }
 
-cDevice *cDeviceManager::GetDeviceForTransponder(const cChannel &channel, int priority)
+DevicePtr cDeviceManager::GetDeviceForTransponder(const cChannel &channel, int priority)
 {
-  cDevice *Device = NULL;
-  for (int i = 0; i < NumDevices(); i++)
+  DevicePtr Device = cDevice::EmptyDevice;
+  for (std::vector<DevicePtr>::const_iterator it = m_devices.begin(); it != m_devices.end(); ++it)
   {
-    if (cDevice *d = GetDevice(i))
-    {
-      if (d->Channel()->IsTunedToTransponder(channel))
-        return d; // if any device is tuned to the transponder, we're done
+    if ((*it)->Channel()->IsTunedToTransponder(channel))
+      return (*it); // if any device is tuned to the transponder, we're done
 
-      if (d->Channel()->ProvidesTransponder(channel))
+    if ((*it)->Channel()->ProvidesTransponder(channel))
+    {
+      if ((*it)->Channel()->MaySwitchTransponder(channel))
+        Device = (*it); // this device may switch to the transponder without disturbing any receiver or live view
+      else if (!(*it)->Channel()->Occupied() && (*it)->Channel()->MaySwitchTransponder(channel)) // MaySwitchTransponder() implicitly calls Occupied()
       {
-        if (d->Channel()->MaySwitchTransponder(channel))
-          Device = d; // this device may switch to the transponder without disturbing any receiver or live view
-        else if (!d->Channel()->Occupied() && d->Channel()->MaySwitchTransponder(channel)) // MaySwitchTransponder() implicitly calls Occupied()
-        {
-          if (d->Receiver()->Priority() < priority && (!Device || d->Receiver()->Priority() < Device->Receiver()->Priority()))
-            Device = d; // use this one only if no other with less impact can be found
-        }
+        if ((*it)->Receiver()->Priority() < priority && (!Device || (*it)->Receiver()->Priority() < Device->Receiver()->Priority()))
+          Device = (*it); // use this one only if no other with less impact can be found
       }
     }
   }
+
   return Device;
 }
 
-unsigned int cDeviceManager::CountTransponders(const cChannel &channel) const
+size_t cDeviceManager::CountTransponders(const cChannel &channel) const
 {
-  unsigned int count = 0;
-  for (vector<cDevice*>::const_iterator it = m_devices.begin(); it != m_devices.end(); ++it)
+  size_t count = 0;
+  CLockObject lock(m_mutex);
+  for (vector<DevicePtr>::const_iterator it = m_devices.begin(); it != m_devices.end(); ++it)
   {
     if ((*it)->Channel()->ProvidesTransponder(channel))
       count++;
@@ -272,27 +286,53 @@ unsigned int cDeviceManager::CountTransponders(const cChannel &channel) const
 
 void cDeviceManager::Shutdown(void)
 {
+  CLockObject lock(m_mutex);
   m_deviceHooks.clear();
   for (int i = 0; i < NumDevices(); i++)
-  {
-    delete m_devices[i];
-    m_devices[i] = NULL;
-  }
+    m_devices[i] = cDevice::EmptyDevice;
 }
 
-int cDeviceManager::GetClippedNumProvidedSystems(int availableBits, cDevice *device)
+int cDeviceManager::GetClippedNumProvidedSystems(int availableBits, const cDevice& device)
 {
   int MaxNumProvidedSystems = (1 << availableBits) - 1;
-  int NumProvidedSystems = device->Channel()->NumProvidedSystems();
+  int NumProvidedSystems = device.Channel()->NumProvidedSystems();
   if (NumProvidedSystems > MaxNumProvidedSystems)
   {
-    esyslog("ERROR: device %d supports %d modulation systems but cDevice::GetDevice() currently only supports %d delivery systems which should be fixed", device->CardIndex() + 1, NumProvidedSystems, MaxNumProvidedSystems);
+    esyslog("ERROR: device %d supports %d modulation systems but cDevice::GetDevice() currently only supports %d delivery systems which should be fixed", device.CardIndex() + 1, NumProvidedSystems, MaxNumProvidedSystems);
     NumProvidedSystems = MaxNumProvidedSystems;
   }
   else if (NumProvidedSystems <= 0)
   {
-    esyslog("ERROR: device %d reported an invalid number (%d) of supported delivery systems - assuming 1", device->CardIndex() + 1, NumProvidedSystems);
+    esyslog("ERROR: device %d reported an invalid number (%d) of supported delivery systems - assuming 1", device.CardIndex() + 1, NumProvidedSystems);
     NumProvidedSystems = 1;
   }
   return NumProvidedSystems;
+}
+
+void cDeviceManager::Notify(const Observable &obs, const ObservableMessage msg)
+{
+  CLockObject lock(m_mutex);
+  switch (msg)
+  {
+  case ObservableMessageDeviceReady:
+    if (m_devicesReady < m_devices.size())
+      ++m_devicesReady;
+    break;
+  case ObservableMessageDeviceNotReady:
+    if (m_devicesReady > 0)
+      --m_devicesReady;
+    break;
+  default:
+    break;
+  }
+
+  m_bAllDevicesReady = m_devicesReady == m_devices.size(); //XXX
+  if (m_bAllDevicesReady)
+    m_devicesReadyCondition.Broadcast();
+}
+
+size_t cDeviceManager::NumDevices()
+{
+  CLockObject lock(m_mutex);
+  return m_devices.size();
 }

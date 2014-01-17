@@ -24,6 +24,7 @@
 #include "DVBLegacy.h"
 #include "sources/linux/DVBSourceParams.h"
 #include "platform/threads/threads.h"
+#include "utils/Observer.h"
 
 #include <linux/dvb/frontend.h>
 #include <stdint.h>
@@ -53,7 +54,7 @@ class cDvbSectionFilterSubsystem;
 
 /// The cDvbDevice implements a DVB device which can be accessed through the Linux DVB driver API.
 
-class cDvbDevice : public cDevice
+class cDvbDevice : public cDevice, public Observable, public Observer
 {
 public:
   cDvbDevice(unsigned int adapter, unsigned int frontend);
@@ -63,7 +64,7 @@ public:
    * \brief Initialises the DVB devices
    * \return A vector of initialised devices
    */
-  static DeviceVector InitialiseDevices();
+  static DeviceVector FindDevices();
 
   unsigned int Adapter() const { return m_adapter; }
   unsigned int Frontend() const { return m_frontend; }
@@ -133,6 +134,10 @@ public:
 
   // TODO
   static const char* DeliverySystemNames[];
+
+  bool HasCam(void) const { return m_fd_ca > 0; }
+  bool Initialise(void);
+  void Notify(const Observable &obs, const ObservableMessage msg);
 
 protected:
 public: // TODO

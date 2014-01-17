@@ -117,18 +117,18 @@ void cControl::Launch(cControl *Control)
   delete c;
 }
 
-void cControl::Attach(void)
-{
-  CLockObject lock(mutex);
-  if (control && !control->attached && control->player && !control->player->IsAttached()) {
-     if (cDeviceManager::Get().PrimaryDevice()->Player()->AttachPlayer(control->player))
-        control->attached = true;
-     else {
-       esyslog(tr("Channel locked (recording)!"));
-        Shutdown();
-        }
-     }
-}
+//void cControl::Attach(void)
+//{
+//  CLockObject lock(mutex);
+//  if (control && !control->attached && control->player && !control->player->IsAttached()) {
+//     if (cDeviceManager::Get().PrimaryDevice()->Player()->AttachPlayer(control->player))
+//        control->attached = true;
+//     else {
+//       esyslog(tr("Channel locked (recording)!"));
+//        Shutdown();
+//        }
+//     }
+//}
 
 void cControl::Shutdown(void)
 {

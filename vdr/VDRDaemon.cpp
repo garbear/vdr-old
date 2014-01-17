@@ -22,7 +22,6 @@
 #include "VDRDaemon.h"
 
 #include "devices/DeviceManager.h"
-#include "devices/linux/DVBDevice.h"
 #include "dvb/DiSEqC.h"
 #include "epg/EPG.h"
 #include "filesystem/Directory.h"
@@ -144,8 +143,7 @@ bool cVDRDaemon::Init()
     m_EpgDataReader->Start();
   }
 
-  cDvbDevice::InitialiseDevices();
-  cDvbDevice::BondDevices(Setup.DeviceBondings);
+  cDeviceManager::Get().Initialise();
 
   m_server = new cVNSIServer(cSettings::Get().m_ListenPort);
 

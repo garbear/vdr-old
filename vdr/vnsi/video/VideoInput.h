@@ -22,11 +22,11 @@
 
 #include "lib/platform/threads/threads.h"
 #include "channels/Channel.h"
+#include "devices/Device.h"
 
 class cLivePatFilter;
 class cLiveReceiver;
 class cVideoBuffer;
-class cDevice;
 
 class cVideoInput : public PLATFORM::CThread
 {
@@ -44,7 +44,7 @@ protected:
   cChannel *PmtChannel();
   void Receive(uchar *data, int length);
   void Attach(bool on);
-  cDevice          *m_Device;
+  DevicePtr         m_Device;
   cLivePatFilter   *m_PatFilter;
   cLiveReceiver    *m_Receiver;
   cLiveReceiver    *m_Receiver0;

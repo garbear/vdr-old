@@ -58,6 +58,7 @@ cLiveStreamer::cLiveStreamer(int clientID, uint8_t timeshift, uint32_t timeout)
   m_IFrameSeen      = false;
   m_VideoBuffer     = NULL;
   m_Timeshift       = timeshift;
+  m_Device          = cDevice::EmptyDevice;
 
   memset(&m_FrontendInfo, 0, sizeof(m_FrontendInfo));
 
@@ -81,8 +82,11 @@ bool cLiveStreamer::Open(int serial)
 
   m_Device = cDeviceManager::Get().GetDevice(*m_Channel.get(), m_Priority, true, true);
 
-  if (!m_Device)
+  if (m_Device == cDevice::EmptyDevice)
+  {
+    esyslog("cannot start streaming on channel '%s': no device found", m_Channel->Name().c_str());
     return false;
+  }
 
   bool recording = false;
   if (0) // test harness
@@ -233,7 +237,7 @@ bool cLiveStreamer::StreamChannel(ChannelPtr channel, int priority, cxSocket *So
 {
   if (channel == cChannel::EmptyChannel)
   {
-    esyslog("Starting streaming of channel without valid channel");
+    esyslog("cannot start streaming without a valid channel");
     return false;
   }
 
@@ -540,13 +544,13 @@ void cLiveStreamer::sendSignalInfo()
       switch (m_Channel->Source() & cSource::st_Mask)
       {
         case cSource::stSat:
-          resp->add_String(*cString::sprintf("DVB-S%s #%d - %s", (m_FrontendInfo.caps & 0x10000000) ? "2" : "",  cDeviceManager::Get().ActualDevice()->CardIndex(), m_FrontendInfo.name));
+          resp->add_String(*cString::sprintf("DVB-S%s #%d - %s", (m_FrontendInfo.caps & 0x10000000) ? "2" : "",  m_Device->CardIndex(), m_FrontendInfo.name));
           break;
         case cSource::stCable:
-          resp->add_String(*cString::sprintf("DVB-C #%d - %s", cDeviceManager::Get().ActualDevice()->CardIndex(), m_FrontendInfo.name));
+          resp->add_String(*cString::sprintf("DVB-C #%d - %s", m_Device->CardIndex(), m_FrontendInfo.name));
           break;
         case cSource::stTerr:
-          resp->add_String(*cString::sprintf("DVB-T #%d - %s", cDeviceManager::Get().ActualDevice()->CardIndex(), m_FrontendInfo.name));
+          resp->add_String(*cString::sprintf("DVB-T #%d - %s", m_Device->CardIndex(), m_FrontendInfo.name));
           break;
       }
       resp->add_String(*cString::sprintf("%s:%s:%s:%s:%s", (status & FE_HAS_LOCK) ? "LOCKED" : "-", (status & FE_HAS_SIGNAL) ? "SIGNAL" : "-", (status & FE_HAS_CARRIER) ? "CARRIER" : "-", (status & FE_HAS_VITERBI) ? "VITERBI" : "-", (status & FE_HAS_SYNC) ? "SYNC" : "-"));

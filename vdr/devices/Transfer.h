@@ -29,13 +29,12 @@ class cDevice;
 
 class cTransferControl : public cControl {
 private:
-  cTransfer *transfer;
-  static cDevice *receiverDevice;
+  cTransfer* m_transfer;
+  cDevice*   m_device;
 public:
   cTransferControl(cDevice *ReceiverDevice, const cChannel *Channel);
   ~cTransferControl();
   virtual void Hide(void) {}
-  static cDevice *ReceiverDevice(void) { return receiverDevice; }
   };
 
 #endif //__TRANSFER_H

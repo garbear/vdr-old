@@ -29,6 +29,10 @@ typedef enum
 {
   ObservableMessageNone,
   ObservableMessageChannelChanged,
+  ObservableMessageDeviceReady,
+  ObservableMessageDeviceNotReady,
+  ObservableMessageCAMReady,
+  ObservableMessageCAMNotReady,
 } ObservableMessage;
 
 class Observer

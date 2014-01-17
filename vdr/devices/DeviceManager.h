@@ -21,12 +21,13 @@
 #pragma once
 
 #include "Device.h"
+#include "utils/Observer.h"
 
 #include <vector>
 
 class cChannel;
 
-class cDeviceManager
+class cDeviceManager : public Observer
 {
 private:
   cDeviceManager();
@@ -38,20 +39,26 @@ public:
   ~cDeviceManager();
 
   /*!
+   * Detect devices and initialise them
+   * @return The total number of devices known to this class
+   */
+  size_t Initialise(void);
+
+  /*!
    * \brief Have cDeviceManager track a new device
    * \return The new device number (starting at 1)
    */
-  unsigned int AddDevice(cDevice *device);
+  size_t AddDevice(DevicePtr device);
 
   /*!
    * \brief Returns the total number of devices
    */
-  int NumDevices() { return m_devices.size(); }
+  size_t NumDevices();
 
   /*!
    * \brief Returns the primary device
    */
-  cDevice *PrimaryDevice() { return m_primaryDevice; }
+  DevicePtr PrimaryDevice() { return m_primaryDevice; }
 
   /*!
    * \brief Sets the primary device to 'n'
@@ -127,17 +134,11 @@ public:
   bool UseDevice(unsigned int n) { return m_useDevice == 0 || (m_useDevice & (1 << n)) != 0; }
 
   /*!
-   * \brief Returns the actual receiving device in case of Transfer Mode, or the
-   *        primary device otherwise
-   */
-  cDevice *ActualDevice();
-
-  /*!
    * \brief Gets the device with the given Index
    * \param index Must be in the range 0..numDevices-1
    * \return A pointer to the device, or NULL if the index was invalid
    */
-  cDevice *GetDevice(unsigned int index);
+  DevicePtr GetDevice(unsigned int index);
 
   /*!
    * \brief Returns a device that is able to receive the given Channel at the
@@ -159,7 +160,7 @@ public:
    * receivers because the channel can't be decrypted, this device/CAM
    * combination will be skipped in the next call to GetDevice().
    */
-  cDevice *GetDevice(const cChannel &channel, int priority, bool bLiveView, bool bQuery = false);
+  DevicePtr GetDevice(const cChannel &channel, int priority, bool bLiveView, bool bQuery = false);
 
   /*!
    * \brief Returns a device that is not currently "occupied" and can be tuned
@@ -167,23 +168,29 @@ public:
    *        receiver at priorities higher or equal to Priority
    * \return The device, or NULL if no such device is currently available
    */
-  cDevice *GetDeviceForTransponder(const cChannel &channel, int priority);
+  DevicePtr GetDeviceForTransponder(const cChannel &channel, int priority);
 
   /*!
    * \brief Get the number of transponders that provide the specified channel.
    */
-  unsigned int CountTransponders(const cChannel &channel) const;
+  size_t CountTransponders(const cChannel &channel) const;
 
   /*!
    * \brief Closes down all devices. Must be called at the end of the program.
    */
   void Shutdown();
 
-private:
-  static int GetClippedNumProvidedSystems(int availableBits, cDevice *device);
+  void Notify(const Observable &obs, const ObservableMessage msg);
 
-  std::vector<cDevice*>      m_devices;
-  cDevice                   *m_primaryDevice;
+private:
+  static int GetClippedNumProvidedSystems(int availableBits, const cDevice& device);
+
+  PLATFORM::CMutex           m_mutex;
+  std::vector<DevicePtr>     m_devices;
+  size_t                     m_devicesReady;
+  bool                       m_bAllDevicesReady; //XXX make CCondition support other things than bools...
+  PLATFORM::CCondition<bool> m_devicesReadyCondition;
+  DevicePtr                  m_primaryDevice; //XXX remove this
   std::vector<cDeviceHook*>  m_deviceHooks;
 
   unsigned int m_nextCardIndex; // Card index to give to the next new device

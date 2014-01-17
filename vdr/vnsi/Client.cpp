@@ -162,6 +162,8 @@ bool cVNSIClient::StartChannelStreaming(ChannelPtr channel, int32_t priority, ui
 {
   m_Streamer    = new cLiveStreamer(m_Id, timeshift, timeout);
   m_isStreaming = m_Streamer->StreamChannel(channel, priority, &m_socket, m_resp);
+  if (!m_isStreaming)
+    delete m_Streamer;
   return m_isStreaming;
 }
 

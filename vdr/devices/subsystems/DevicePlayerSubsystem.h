@@ -212,7 +212,7 @@ public:
   /*!
    * \brief Returns true if we are currently in Transfer Mode
    */
-  bool Transferring() const;
+//  bool Transferring() const;
 
   /*!
    * \brief Stops the current replay session (if any)
@@ -222,7 +222,7 @@ public:
   /*!
    * \brief Attaches the given player to this device
    */
-  bool AttachPlayer(cPlayer *player);
+//  bool AttachPlayer(cPlayer *player);
 
   /*!
    * \brief Detaches the given player from this device

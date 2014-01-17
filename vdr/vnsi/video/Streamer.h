@@ -62,7 +62,7 @@ private:
 
   int               m_ClientID;
   ChannelPtr        m_Channel;                      /*!> Channel to stream */
-  cDevice          *m_Device;
+  DevicePtr         m_Device;
   cxSocket         *m_Socket;                       /*!> The socket class to communicate with client */
   int               m_Frontend;                     /*!> File descriptor to access used receiving device  */
   dvb_frontend_info m_FrontendInfo;                 /*!> DVB Information about the receiving device (DVB only) */

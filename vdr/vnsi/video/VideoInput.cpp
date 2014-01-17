@@ -388,13 +388,15 @@ void cLivePatFilter::Process(u_short Pid, u_char Tid, const u_char *Data, int Le
 
 cVideoInput::cVideoInput()
 {
-  m_Device = NULL;;
-  m_PatFilter = NULL;
-  m_Receiver = NULL;;
-  m_Channel = cChannel::EmptyChannel;
+  m_PatFilter   = NULL;
+  m_Receiver    = NULL;
+  m_Receiver0   = NULL;
+  m_Channel     = cChannel::EmptyChannel;
   m_VideoBuffer = NULL;
-  m_Priority = 0;
-  m_PmtChange = false;
+  m_Priority    = 0;
+  m_PmtChange   = false;
+  m_Device      = cDevice::EmptyDevice;
+  m_SeenPmt     = false;
 }
 
 cVideoInput::~cVideoInput()
@@ -409,9 +411,9 @@ bool cVideoInput::Open(ChannelPtr channel, int priority, cVideoBuffer *videoBuff
   m_Priority = priority;
   m_Device = cDeviceManager::Get().GetDevice(*m_Channel, m_Priority, true);
 
-  if (m_Device != NULL)
+  if (m_Device)
   {
-    dsyslog("Successfully found following device: %p (%d) for receiving", m_Device, m_Device ? m_Device->CardIndex() + 1 : 0);
+    dsyslog("Successfully found following device: %p (%d) for receiving", m_Device.get(), m_Device ? m_Device->CardIndex() + 1 : 0);
 
     if (m_Device->Channel()->SwitchChannel(*m_Channel))
     {

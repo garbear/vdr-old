@@ -25,6 +25,7 @@
 #include "thread.h"
 #include "utils/Tools.h"
 #include "platform/threads/threads.h"
+#include "devices/Device.h"
 
 #include <stdint.h>
 #include <stdio.h>
@@ -146,7 +147,7 @@ protected:
    *        to the Device, but doesn't actually assign itself to it
    * \return True if the adapter can be assigned to the Device
    */
-  virtual bool Assign(cDevice *Device, bool Query = false) = 0;
+  virtual bool Assign(DevicePtr Device, bool Query = false) = 0;
 
 private:
   /*!
@@ -154,7 +155,7 @@ private:
    */
   void AddCamSlot(cCamSlot *camSlot);
 
-  cDevice  *m_assignedDevice;
+  DevicePtr m_assignedDevice;
   cCamSlot *m_camSlots[MAX_CAM_SLOTS_PER_ADAPTER];
 };
 
@@ -195,7 +196,7 @@ public:
        ///< The CiAdapter will take care of deleting the CAM slot,
        ///< so the caller must not delete it!
   virtual ~cCamSlot();
-  bool Assign(cDevice *Device, bool Query = false);
+  bool Assign(DevicePtr Device, bool Query = false);
        ///< Assigns this CAM slot to the given Device, if this is possible.
        ///< If Query is 'true', the CI adapter of this slot only checks whether
        ///< it can be assigned to the Device, but doesn't actually assign itself to it.
@@ -204,7 +205,7 @@ public:
        ///< device it was previously assigned to. The value of Query
        ///< is ignored in that case, and this function always returns
        ///< 'true'.
-  cDevice *Device(void);
+  DevicePtr Device(void);
        ///< Returns the device this CAM slot is currently assigned to.
   int SlotIndex(void) { return slotIndex; }
        ///< Returns the index of this CAM slot within its CI adapter.

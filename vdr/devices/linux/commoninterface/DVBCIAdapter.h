@@ -37,7 +37,7 @@ protected:
 
   virtual bool Reset(int Slot);
   virtual eModuleStatus ModuleStatus(int Slot);
-  virtual bool Assign(cDevice *Device, bool Query = false);
+  virtual bool Assign(DevicePtr Device, bool Query = false);
 
 private:
   cDevice *m_device;

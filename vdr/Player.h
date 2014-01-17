@@ -128,7 +128,7 @@ public:
   bool GetIndex(int &Current, int &Total, bool SnapToIFrame = false) { return player->GetIndex(Current, Total, SnapToIFrame); }
   bool GetReplayMode(bool &Play, bool &Forward, int &Speed) { return player->GetReplayMode(Play, Forward, Speed); }
   static void Launch(cControl *Control);
-  static void Attach(void);
+//  static void Attach(void);
   static void Shutdown(void);
   static cControl *Control(bool Hidden = false);
          ///< Returns the current replay control (if any) in case it is currently

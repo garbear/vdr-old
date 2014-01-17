@@ -140,17 +140,17 @@ void cEITScanner::Process(void)
               }
            bool AnyDeviceSwitched = false;
            for (int i = 0; i < cDeviceManager::Get().NumDevices(); i++) {
-               cDevice *Device = cDeviceManager::Get().GetDevice(i);
-               if (Device && Device->Channel()->ProvidesEIT()) {
+               DevicePtr Device = cDeviceManager::Get().GetDevice(i);
+               if (Device != cDevice::EmptyDevice && Device->Channel()->ProvidesEIT()) {
                   for (cScanData *ScanData = scanList->First(); ScanData; ScanData = scanList->Next(ScanData)) {
                       const cChannel *Channel = ScanData->GetChannel();
                       if (Channel) {
-                         if (!Channel->Ca() || Channel->Ca() == Device->DeviceNumber() + 1 || Channel->Ca() >= CA_ENCRYPTED_MIN) {
+                         if (!Channel->Ca() || Channel->Ca() == Device->CardIndex() || Channel->Ca() >= CA_ENCRYPTED_MIN) {
                             if (Device->Channel()->ProvidesTransponder(*Channel)) {
                                if (Device->Receiver()->Priority() < 0) {
                                   bool MaySwitchTransponder = Device->Channel()->MaySwitchTransponder(*Channel);
                                   if (MaySwitchTransponder || Device->Channel()->ProvidesTransponderExclusively(*Channel) && now - lastActivity > Setup.EPGScanTimeout * 3600) {
-                                     dsyslog("EIT scan: device %d  source  %-8s tp %5d", Device->DeviceNumber() + 1, cSource::ToString(Channel->Source()).c_str(), Channel->Transponder());
+                                     dsyslog("EIT scan: device %d  source  %-8s tp %5d", Device->CardIndex(), cSource::ToString(Channel->Source()).c_str(), Channel->Transponder());
                                      Device->Channel()->SwitchChannel(*Channel);
                                      scanList->Del(ScanData);
                                      AnyDeviceSwitched = true;

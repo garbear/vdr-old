@@ -267,10 +267,10 @@ int cDevicePlayerSubsystem::PlayTs(const vector<uchar> &data, bool bVideoOnly /*
   return Played;
 }
 
-bool cDevicePlayerSubsystem::Transferring() const
-{
-  return cTransferControl::ReceiverDevice() != NULL;
-}
+//bool cDevicePlayerSubsystem::Transferring() const
+//{
+//  return cTransferControl::ReceiverDevice() != NULL;
+//}
 
 void cDevicePlayerSubsystem::StopReplay()
 {
@@ -282,23 +282,23 @@ void cDevicePlayerSubsystem::StopReplay()
   }
 }
 
-bool cDevicePlayerSubsystem::AttachPlayer(cPlayer *player)
-{
-  if (CanReplay())
-  {
-    if (m_player)
-      Detach(m_player);
-    m_patPmtParser.Reset();
-    m_player = player;
-    if (!Transferring())
-      Track()->ClrAvailableTracks(false, true);
-    SetPlayMode(m_player->playMode);
-    m_player->device = Device();
-    m_player->Activate(true);
-    return true;
-  }
-  return false;
-}
+//bool cDevicePlayerSubsystem::AttachPlayer(cPlayer *player)
+//{
+//  if (CanReplay())
+//  {
+//    if (m_player)
+//      Detach(m_player);
+//    m_patPmtParser.Reset();
+//    m_player = player;
+//    if (!Transferring())
+//      Track()->ClrAvailableTracks(false, true);
+//    SetPlayMode(m_player->playMode);
+//    m_player->device = Device();
+//    m_player->Activate(true);
+//    return true;
+//  }
+//  return false;
+//}
 
 void cDevicePlayerSubsystem::Detach(cPlayer *player)
 {

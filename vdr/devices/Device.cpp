@@ -49,6 +49,8 @@ using namespace std;
   } while (0)
 #endif
 
+DevicePtr cDevice::EmptyDevice;
+
 // --- cSubsystems -----------------------------------------------------------
 void cSubsystems::Free() const
 {
@@ -87,9 +89,10 @@ cDeviceHook::cDeviceHook()
 
 // --- cDevice ---------------------------------------------------------------
 
-cDevice::cDevice(const cSubsystems &subsystems, unsigned int index)
+cDevice::cDevice(const cSubsystems &subsystems)
  : m_subsystems(subsystems),
-   m_cardIndex(index)
+   m_bInitialised(false),
+   m_cardIndex(0)
 {
   m_subsystems.AssertValid();
 
@@ -106,9 +109,15 @@ cDevice::~cDevice()
   m_subsystems.Free(); // TODO: Remove me if we switch cSubsystems to use shared_ptrs
 }
 
+bool cDevice::Initialise(void)
+{
+  m_bInitialised = true;
+  return m_bInitialised;
+}
+
 bool cDevice::IsPrimaryDevice() const
 {
-  return cDeviceManager::Get().PrimaryDevice() == this && HasDecoder();
+  return cDeviceManager::Get().PrimaryDevice().get() == this && HasDecoder();
 }
 
 void cDevice::MakePrimaryDevice(bool bOn)

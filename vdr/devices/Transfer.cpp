@@ -58,17 +58,14 @@ void cTransfer::Receive(uchar *Data, int Length)
 
 // --- cTransferControl ------------------------------------------------------
 
-cDevice *cTransferControl::receiverDevice = NULL;
-
 cTransferControl::cTransferControl(cDevice *ReceiverDevice, const cChannel *Channel)
-:cControl(transfer = new cTransfer(Channel), true)
+:cControl(m_transfer = new cTransfer(Channel), true),
+ m_device(ReceiverDevice)
 {
-  receiverDevice = ReceiverDevice;
-  ReceiverDevice->Receiver()->AttachReceiver(transfer);
+  ReceiverDevice->Receiver()->AttachReceiver(m_transfer);
 }
 
 cTransferControl::~cTransferControl()
 {
-  receiverDevice = NULL;
-  delete transfer;
+  delete m_transfer;
 }

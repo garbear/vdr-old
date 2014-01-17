@@ -32,7 +32,7 @@ using namespace std;
 
 TEST(DvbDevice, Initialize)
 {
-  DeviceVector devices = cDvbDevice::InitialiseDevices();
+  DeviceVector devices = cDvbDevice::FindDevices();
   ASSERT_FALSE(devices.empty());
   for (DeviceVector::iterator it = devices.begin(); it != devices.end(); ++it)
   {
@@ -55,7 +55,7 @@ TEST(DvbDevice, Initialize)
 
 TEST(DvbDevice, GetSubsystemId)
 {
-  DeviceVector devices = cDvbDevice::InitialiseDevices();
+  DeviceVector devices = cDvbDevice::FindDevices();
   ASSERT_FALSE(devices.empty());
   for (DeviceVector::iterator it = devices.begin(); it != devices.end(); ++it)
   {

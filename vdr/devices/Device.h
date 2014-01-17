@@ -108,7 +108,7 @@ protected:
    * \param subsystems
    * \param index
    */
-  cDevice(const cSubsystems &subsystems, unsigned int index);
+  cDevice(const cSubsystems &subsystems);
 
 public:
   virtual ~cDevice();
@@ -120,11 +120,6 @@ public:
    * \return The card index in the range 0..MAXDEVICES-1
    */
   int CardIndex() const { return m_cardIndex; }
-
-  /*!
-   * \brief Returns the number of this device (starting at 1)
-   */
-  unsigned int DeviceNumber() const { return m_number; }
 
   /*!
    * \brief Returns a string identifying the type of this device (like "DVB-S")
@@ -151,6 +146,17 @@ public:
    */
   virtual bool AvoidRecording() const { return false; }
 
+  /*!
+   * Initialise the device
+   * @return True when initialised, false otherwise.
+   */
+  virtual bool Initialise(void);
+
+  /*!
+   * @return True when initialised, false otherwise
+   */
+  virtual bool Initialised(void) { return m_bInitialised; }
+
 protected:
   /*!
    * \brief Returns true if this device is ready
@@ -173,6 +179,7 @@ public: // TODO
 public: // TODO
   virtual void MakePrimaryDevice(bool bOn);
 
+  void AssertValid(void) { m_subsystems.AssertValid(); }
 
 public:
   cDeviceChannelSubsystem         *Channel()         const { return m_subsystems.Channel; }
@@ -186,11 +193,18 @@ public:
   cDeviceTrackSubsystem           *Track()           const { return m_subsystems.Track; }
   cDeviceVideoFormatSubsystem     *VideoFormat()     const { return m_subsystems.VideoFormat; }
 
+  void SetCardIndex(size_t index)
+  {
+    m_cardIndex = index;
+  }
+
+  static DevicePtr EmptyDevice;
+
 private:
   virtual void *Process();
 
   const cSubsystems m_subsystems;
 
-  unsigned int m_number; // Strictly positive
-  unsigned int m_cardIndex;
+  bool   m_bInitialised;
+  size_t m_cardIndex;
 };
