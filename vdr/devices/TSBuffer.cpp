@@ -35,11 +35,10 @@ cTSBuffer::cTSBuffer(int file, unsigned int size, int cardIndex)
 {
   //SetDescription("TS buffer on device %d", cardIndex);
 
-  /* TODO
   m_ringBuffer = new cRingBufferLinear(size, TS_SIZE, true, "TS");
   m_ringBuffer->SetTimeouts(100, 100);
   m_ringBuffer->SetIoThrottle();
-  */
+
   CreateThread();
 }
 
@@ -60,7 +59,7 @@ void *cTSBuffer::Process()
       if (firstRead || Poller.Poll(100))
       {
         firstRead = false;
-        int r = 0;//int r = m_ringBuffer->Read(m_file); // TODO
+        int r = m_ringBuffer->Read(m_file);
         if (r < 0 && FATALERRNO)
         {
           if (errno == EOVERFLOW)
@@ -82,10 +81,10 @@ uint8_t *cTSBuffer::Get()
   int Count = 0;
   if (m_bDelivered)
   {
-    //m_ringBuffer->Del(TS_SIZE); // TODO
+    m_ringBuffer->Del(TS_SIZE);
     m_bDelivered = false;
   }
-  uint8_t *p = NULL;//uint8_t *p = m_ringBuffer->Get(Count); // TODO
+  uint8_t *p = m_ringBuffer->Get(Count);
   if (p && Count >= TS_SIZE)
   {
     if (*p != TS_SYNC_BYTE)
@@ -98,8 +97,8 @@ uint8_t *cTSBuffer::Get()
           break;
         }
       }
-      //m_ringBuffer->Del(Count); // TODO
-      //esyslog("ERROR: skipped %d bytes to sync on TS packet on device %d", Count, m_cardIndex);
+      m_ringBuffer->Del(Count);
+      esyslog("ERROR: skipped %d bytes to sync on TS packet on device %d", Count, m_cardIndex);
       return NULL;
     }
     m_bDelivered = true;
