@@ -77,9 +77,12 @@ const CChannelGroup* CChannelGroups::GetGroup(const std::string& strName) const
 
 CChannelGroup& CChannelGroup::operator=(const CChannelGroup& other)
 {
-  m_bAutomatic = other.m_bAutomatic;
-  m_bRadio     = other.m_bRadio;
-  m_strName    = other.m_strName;
+  if (this != &other)
+  {
+    m_bAutomatic = other.m_bAutomatic;
+    m_bRadio     = other.m_bRadio;
+    m_strName    = other.m_strName;
+  }
 
   return *this;
 }
