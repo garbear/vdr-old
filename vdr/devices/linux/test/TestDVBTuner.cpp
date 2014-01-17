@@ -20,6 +20,7 @@
  *
  */
 
+#include "DVBDeviceNames.h"
 #include "devices/linux/DVBDevice.h"
 #include "devices/linux/DVBTuner.h"
 #include "devices/linux/subsystems/DVBChannelSubsystem.h"
@@ -28,9 +29,6 @@
 #include <vector>
 
 using namespace std;
-
-// Hauppauge WinTV-HVR 950Q hybrid TV stick
-#define WINTVHVR950Q "Auvitek AU8522 QAM/8VSB Frontend"
 
 TEST(DvbTuner, cDvbTuner)
 {

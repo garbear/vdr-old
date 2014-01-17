@@ -20,15 +20,13 @@
  *
  */
 
+#include "DVBDeviceNames.h"
 #include "devices/linux/DVBDevice.h"
 #include "gtest/gtest.h"
 
 #include <vector>
 
 using namespace std;
-
-// Hauppauge WinTV-HVR 950Q hybrid TV stick
-#define WINTVHVR950Q "Auvitek AU8522 QAM/8VSB Frontend"
 
 TEST(DvbDevice, Initialize)
 {
