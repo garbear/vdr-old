@@ -175,18 +175,6 @@ public:
   unsigned int CountTransponders(const cChannel &channel) const;
 
   /*!
-   * \brief Returns the number of the current channel on the primary device
-   */
-  unsigned int CurrentChannel() { return m_primaryDevice ? m_currentChannel : 0; }
-
-  /*!
-   * \brief Sets the number of the current channel on the primary device,
-   *        without actually switching to it. This can be used to correct the
-   *        current channel number while replaying.
-   */
-  void SetCurrentChannel(const cChannel &channel);
-
-  /*!
    * \brief Closes down all devices. Must be called at the end of the program.
    */
   void Shutdown();
@@ -198,7 +186,6 @@ private:
   cDevice                   *m_primaryDevice;
   std::vector<cDeviceHook*>  m_deviceHooks;
 
-  unsigned int m_currentChannel;
   unsigned int m_nextCardIndex; // Card index to give to the next new device
   unsigned int m_useDevice; // Stupid device-use flags
 };

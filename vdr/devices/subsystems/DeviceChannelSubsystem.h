@@ -129,12 +129,7 @@ public:
    * \brief Switches the device to the given Channel, initiating transfer mode
    *        if necessary.
    */
-  bool SwitchChannel(const cChannel &channel, bool bLiveView);
-
-  /*!
-   * \brief Forces the device into transfermode for the current channel
-   */
-  void ForceTransferMode();
+  bool SwitchChannel(const cChannel &channel);
 
   /*!
    * \brief Returns the number of seconds this device is still occupied for
@@ -170,13 +165,13 @@ protected:
   /*!
    * \brief Sets the device to the given channel (actual physical setup)
    */
-  virtual bool SetChannelDevice(const cChannel &channel, bool bLiveView) { return false; }
+  virtual bool SetChannelDevice(const cChannel &channel) { return false; }
 
 private:
   /*!
    * \brief Sets the device to the given channel (general setup)
    */
-  eSetChannelResult SetChannel(const cChannel &Channel, bool bLiveView);
+  eSetChannelResult SetChannel(const cChannel &Channel);
 
   time_t     m_occupiedTimeout;
 };

@@ -72,16 +72,11 @@ bool cDeviceChannelSubsystem::MaySwitchTransponder(const cChannel &channel) cons
   return false;
 }
 
-bool cDeviceChannelSubsystem::SwitchChannel(const cChannel &channel, bool bLiveView)
+bool cDeviceChannelSubsystem::SwitchChannel(const cChannel &channel)
 {
-  if (bLiveView)
-  {
-    //isyslog("switching to channel %d", channel.Number());
-    cControl::Shutdown(); // prevents old channel from being shown too long if cDeviceManager::GetDevice() takes longer // TODO
-  }
   for (int i = 3; i--; )
   {
-    switch (SetChannel(channel, bLiveView))
+    switch (SetChannel(channel))
     {
     case scrOk:
       return true;
@@ -102,16 +97,6 @@ bool cDeviceChannelSubsystem::SwitchChannel(const cChannel &channel, bool bLiveV
   return false;
 }
 
-void cDeviceChannelSubsystem::ForceTransferMode()
-{
-  if (!cTransferControl::ReceiverDevice())
-  {
-    ChannelPtr channel = cChannelManager::Get().GetByNumber(cDeviceManager::Get().CurrentChannel());
-    if (channel)
-      SetChannelDevice(*channel, false); // this implicitly starts Transfer Mode
-  }
-}
-
 unsigned int cDeviceChannelSubsystem::Occupied() const
 {
   int seconds = m_occupiedTimeout - time(NULL);
@@ -128,16 +113,11 @@ bool cDeviceChannelSubsystem::HasProgramme() const
   return Player()->Replaying() || PID()->m_pidHandles[ptAudio].pid || PID()->m_pidHandles[ptVideo].pid;
 }
 
-eSetChannelResult cDeviceChannelSubsystem::SetChannel(const cChannel &channel, bool bLiveView)
+eSetChannelResult cDeviceChannelSubsystem::SetChannel(const cChannel &channel)
 {
-  cStatus::MsgChannelSwitch(Device(), 0, bLiveView);
+  cStatus::MsgChannelSwitch(Device(), 0);
 
-  if (bLiveView)
-  {
-    Player()->StopReplay();
-  }
-
-  cDevice *device = (bLiveView && Device()->IsPrimaryDevice()) ? cDeviceManager::Get().GetDevice(channel, LIVEPRIORITY, true) : Device();
+  cDevice *device = Device();
 
   bool NeedsTransferMode = (device != Device());
 
@@ -150,7 +130,7 @@ eSetChannelResult cDeviceChannelSubsystem::SetChannel(const cChannel &channel, b
   {
     if (device && Player()->CanReplay())
     {
-      if (device->Channel()->SetChannel(channel, false) == scrOk) // calling SetChannel() directly, not SwitchChannel()!
+      if (device->Channel()->SetChannel(channel) == scrOk) // calling SetChannel() directly, not SwitchChannel()!
         cControl::Launch(new cTransferControl(device, &channel));
       else
         Result = scrNoTransfer;
@@ -174,7 +154,7 @@ eSetChannelResult cDeviceChannelSubsystem::SetChannel(const cChannel &channel, b
     if (CommonInterface()->m_camSlot)
       CommonInterface()->m_camSlot->AddChannel(&channel);
 
-    if (SetChannelDevice(channel, bLiveView))
+    if (SetChannelDevice(channel))
     {
       // Start section handling:
       if (SectionFilter()->m_sectionHandler)
@@ -193,27 +173,7 @@ eSetChannelResult cDeviceChannelSubsystem::SetChannel(const cChannel &channel, b
   }
 
   if (Result == scrOk)
-  {
-    if (bLiveView && Device()->IsPrimaryDevice())
-    {
-      cDeviceManager::Get().SetCurrentChannel(channel);
-      // Set the available audio tracks:
-      Track()->ClrAvailableTracks();
-      for (int i = 0; i < MAXAPIDS; i++)
-        Track()->SetAvailableTrack(ttAudio, i, channel.Apid(i), channel.Alang(i));
-      if (Setup.UseDolbyDigital)
-      {
-        for (int i = 0; i < MAXDPIDS; i++)
-          Track()->SetAvailableTrack(ttDolby, i, channel.Dpid(i), channel.Dlang(i));
-      }
-      for (int i = 0; i < MAXSPIDS; i++)
-        Track()->SetAvailableTrack(ttSubtitle, i, channel.Spid(i), channel.Slang(i));
-      if (!NeedsTransferMode)
-        Track()->EnsureAudioTrack(true);
-      Track()->EnsureSubtitleTrack();
-    }
-    cStatus::MsgChannelSwitch(Device(), channel.Number(), bLiveView); // only report status if channel switch successful
-  }
+    cStatus::MsgChannelSwitch(Device(), channel.Number()); // only report status if channel switch successful
 
   return Result;
 }

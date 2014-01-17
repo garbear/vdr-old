@@ -29,10 +29,10 @@ void cStatus::MsgTimerChange(const cTimer *Timer, eTimerChange Change)
       sm->TimerChange(Timer, Change);
 }
 
-void cStatus::MsgChannelSwitch(const cDevice *Device, int ChannelNumber, bool LiveView)
+void cStatus::MsgChannelSwitch(const cDevice *Device, int ChannelNumber)
 {
   for (cStatus *sm = statusMonitors.First(); sm; sm = statusMonitors.Next(sm))
-      sm->ChannelSwitch(Device, ChannelNumber, LiveView);
+      sm->ChannelSwitch(Device, ChannelNumber);
 }
 
 void cStatus::MsgRecording(const cDevice *Device, const char *Name, const char *FileName, bool On)

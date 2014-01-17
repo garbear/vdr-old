@@ -35,7 +35,6 @@ using namespace std;
 
 cDeviceManager::cDeviceManager()
  : m_primaryDevice(NULL),
-   m_currentChannel(1),
    m_nextCardIndex(0),
    m_useDevice(0)
 {
@@ -269,11 +268,6 @@ unsigned int cDeviceManager::CountTransponders(const cChannel &channel) const
       count++;
   }
   return count;
-}
-
-void cDeviceManager::SetCurrentChannel(const cChannel &channel)
-{
-  m_currentChannel = channel.Number();
 }
 
 void cDeviceManager::Shutdown(void)

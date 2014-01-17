@@ -53,7 +53,7 @@ private:
 public:
   cEITScanner(void);
   ~cEITScanner();
-  bool Active(void) { return currentChannel || lastActivity == 0; }
+  bool Active(void) { return lastActivity == 0; }
   void AddTransponder(cChannel *Channel);
   void ForceScan(void);
   void Activity(void);

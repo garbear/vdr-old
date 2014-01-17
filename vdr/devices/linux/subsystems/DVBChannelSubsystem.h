@@ -55,7 +55,7 @@ public:
   virtual bool HasLock(unsigned int timeoutMs = 0) const;
 
 protected:
-  virtual bool SetChannelDevice(const cChannel &channel, bool bLiveView);
+  virtual bool SetChannelDevice(const cChannel &channel);
 
 private:
   cDvbTuner *m_dvbTuner;

@@ -209,7 +209,7 @@ bool cDvbChannelSubsystem::HasLock(unsigned int timeoutMs) const
   return false;
 }
 
-bool cDvbChannelSubsystem::SetChannelDevice(const cChannel &channel, bool bLiveView)
+bool cDvbChannelSubsystem::SetChannelDevice(const cChannel &channel)
 {
   if (m_dvbTuner)
     m_dvbTuner->SetChannel(channel);

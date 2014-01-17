@@ -30,7 +30,7 @@ protected:
                // been added or will be deleted, respectively. In case of tcMod,
                // Timer is NULL; this indicates that some timer has been changed.
                // Note that tcAdd and tcDel are always also followed by a tcMod.
-  virtual void ChannelSwitch(const cDevice *Device, int ChannelNumber, bool LiveView) {}
+  virtual void ChannelSwitch(const cDevice *Device, int ChannelNumber) {}
                // Indicates a channel switch on the given DVB device.
                // If ChannelNumber is 0, this is before the channel is being switched,
                // otherwise ChannelNumber is the number of the channel that has been switched to.
@@ -86,7 +86,7 @@ public:
   virtual ~cStatus();
   // These functions are called whenever the related status information changes:
   static void MsgTimerChange(const cTimer *Timer, eTimerChange Change);
-  static void MsgChannelSwitch(const cDevice *Device, int ChannelNumber, bool LiveView);
+  static void MsgChannelSwitch(const cDevice *Device, int ChannelNumber);
   static void MsgRecording(const cDevice *Device, const char *Name, const char *FileName, bool On);
   static void MsgReplaying(const cControl *Control, const char *Name, const char *FileName, bool On);
   static void MsgSetVolume(int Volume, bool Absolute);

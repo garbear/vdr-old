@@ -40,7 +40,7 @@ cTimer::cTimer(bool Instant, bool Pause, ChannelPtr Channel)
   event = NULL;
   if (Instant)
      SetFlags(tfActive | tfInstant);
-  channel = Channel ? Channel : cChannelManager::Get().GetByNumber(cDeviceManager::Get().CurrentChannel());
+  channel = Channel ? Channel : cChannelManager::Get().GetByNumber(1 /* XXX */);
   time_t t = time(NULL);
   struct tm tm_r;
   struct tm *now = localtime_r(&t, &tm_r);

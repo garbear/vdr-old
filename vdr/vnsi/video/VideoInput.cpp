@@ -413,7 +413,7 @@ bool cVideoInput::Open(ChannelPtr channel, int priority, cVideoBuffer *videoBuff
   {
     dsyslog("Successfully found following device: %p (%d) for receiving", m_Device, m_Device ? m_Device->CardIndex() + 1 : 0);
 
-    if (m_Device->Channel()->SwitchChannel(*m_Channel, false))
+    if (m_Device->Channel()->SwitchChannel(*m_Channel))
     {
       dsyslog("Creating new live Receiver");
       m_SeenPmt = false;
