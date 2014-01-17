@@ -133,7 +133,7 @@ public:
   /*!
    * @return True when initialised, false otherwise
    */
-  virtual bool Initialised(void) { return m_bInitialised; }
+  virtual bool Initialised(void) const { return m_bInitialised; }
 
 protected:
   /*!
