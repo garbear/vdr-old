@@ -127,7 +127,7 @@ bool cDvbTuner::Open()
   }
   catch (const char* errorMsg)
   {
-    esyslog(errorMsg);
+    esyslog("%s", errorMsg);
     return false;
   }
 
