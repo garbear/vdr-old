@@ -421,9 +421,6 @@ void CSpecialProtocol::LogPaths()
   isyslog("special://" VDR_ROOT "/ is mapped to: %s", GetPath(VDR_ROOT).c_str());
   isyslog("special://" HOME_ROOT "/ is mapped to: %s", GetPath(HOME_ROOT).c_str());
   isyslog("special://" PROFILE_ROOT "/ is mapped to: %s", GetPath(PROFILE_ROOT).c_str());
-  isyslog("special://" TEMP_ROOT "/ is mapped to: %s", GetPath(TEMP_ROOT).c_str());
-  isyslog("special://" XBMCHOME_ROOT "/ is mapped to: %s", GetPath(XBMCHOME_ROOT).c_str());
-  isyslog("special://" XBMCTEMP_ROOT "/ is mapped to: %s", GetPath(XBMCTEMP_ROOT).c_str());
 }
 
 // private routines, to ensure we only set/get an appropriate path
