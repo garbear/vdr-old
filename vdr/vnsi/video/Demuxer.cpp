@@ -24,6 +24,7 @@
 #include "VideoBuffer.h"
 #include "Config.h"
 #include "channels/ChannelManager.h"
+#include "Streamer.h"
 #include <libsi/si.h>
 
 using namespace PLATFORM;
@@ -92,10 +93,10 @@ int cVNSIDemuxer::Read(sStreamPacket *packet)
   // read TS Packet from buffer
   len = m_VideoBuffer->Read(&buf, TS_SIZE, m_endTime, m_wrapTime);
   // eof
-  if (len == -2)
-    return -2;
+  if (len == VIDEOBUFFER_EOF)
+    return VIDEOBUFFER_EOF;
   else if (len != TS_SIZE)
-    return -1;
+    return VIDEOBUFFER_NO_DATA;
 
   m_Error &= ~ERROR_DEMUX_NODATA;
 

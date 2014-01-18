@@ -24,6 +24,9 @@
 #include <stdlib.h>
 #include "utils/Tools.h"
 
+#define VIDEOBUFFER_NO_DATA (-1)
+#define VIDEOBUFFER_EOF     (-2)
+
 class cRecording;
 
 class cVideoBuffer

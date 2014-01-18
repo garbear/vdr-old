@@ -39,6 +39,8 @@
 #include "Demuxer.h"
 #include "VideoInput.h"
 
+#define STREAMER_NO_FRONTEND_FOUND (-2)
+
 class cxSocket;
 class cChannel;
 class cTSParser;

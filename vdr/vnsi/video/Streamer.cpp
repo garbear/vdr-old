@@ -209,7 +209,7 @@ void* cLiveStreamer::Process(void)
         bufferStatsTimer.Set(1000);
       }
     }
-    else if (ret == -1)
+    else if (ret == VIDEOBUFFER_NO_DATA)
     {
       // no data
       usleep(10000);
@@ -220,7 +220,7 @@ void* cLiveStreamer::Process(void)
         m_SignalLost = true;
       }
     }
-    else if (ret == -2)
+    else if (ret == VIDEOBUFFER_EOF)
     {
       if (!Open(m_Demuxer.GetSerial()))
       {
@@ -423,9 +423,9 @@ void cLiveStreamer::sendStreamChange()
 
 void cLiveStreamer::sendSignalInfo()
 {
-  /* If no frontend is found m_Frontend is set to -2, in this case
+  /* If no frontend is found m_Frontend is set to STREAMER_NO_FRONTEND_FOUND, in this case
      return a empty signalinfo package */
-  if (m_Frontend == -2)
+  if (m_Frontend == STREAMER_NO_FRONTEND_FOUND)
   {
     cResponsePacket *resp = new cResponsePacket();
     if (!resp->initStream(VNSI_STREAM_SIGNALINFO, 0, 0, 0, 0, 0))
@@ -470,7 +470,7 @@ void cLiveStreamer::sendSignalInfo()
         }
       }
       if (m_Frontend < 0)
-        m_Frontend = -2;
+        m_Frontend = STREAMER_NO_FRONTEND_FOUND;
     }
 
     if (m_Frontend >= 0)
@@ -506,7 +506,7 @@ void cLiveStreamer::sendSignalInfo()
         {
           esyslog("cannot read frontend info.");
           close(m_Frontend);
-          m_Frontend = -2;
+          m_Frontend = STREAMER_NO_FRONTEND_FOUND;
           memset(&m_FrontendInfo, 0, sizeof(m_FrontendInfo));
           return;
         }

@@ -518,7 +518,7 @@ int cVideoBufferFile::ReadBytes(uint8_t *buf, off_t pos, unsigned int size)
     }
     return p;
   }
-  return -1;
+  return VIDEOBUFFER_NO_DATA;
 }
 
 int cVideoBufferFile::ReadBlock(uint8_t **buf, unsigned int size, time_t &endTime, time_t &wrapTime)
@@ -933,7 +933,7 @@ int cVideoBuffer::Read(uint8_t **buf, unsigned int size, time_t &endTime, time_t
     if (m_CheckEof && m_Timer.TimedOut())
     {
       isyslog("Recoding - end of file");
-      return -2;
+      return VIDEOBUFFER_EOF;
     }
     else if (!m_CheckEof)
     {
