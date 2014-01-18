@@ -192,6 +192,8 @@ void cVDRDaemon::OnSignal(int signum)
 
 void cVDRDaemon::Cleanup()
 {
+  cDeviceManager::Get().Shutdown();
+
   cChannelManager::Get().Clear();
 }
 
