@@ -13,7 +13,8 @@
 #include "devices/Device.h"
 #include "devices/subsystems/DeviceSectionFilterSubsystem.h"
 #include "devices/subsystems/DeviceChannelSubsystem.h"
-#include "thread.h"
+
+using namespace PLATFORM;
 
 // --- cFilterHandle----------------------------------------------------------
 
@@ -42,7 +43,6 @@ public:
 // --- cSectionHandler -------------------------------------------------------
 
 cSectionHandler::cSectionHandler(cDevice *Device)
-:cThread("section handler", true)
 {
   shp = new cSectionHandlerPrivate;
   device = Device;
@@ -50,15 +50,15 @@ cSectionHandler::cSectionHandler(cDevice *Device)
   on = false;
   waitForLock = false;
   lastIncompleteSection = 0;
-  Start();
+  CreateThread();
 }
 
 cSectionHandler::~cSectionHandler()
 {
-  Cancel(3);
+  StopThread(3000);
   cFilter *fi;
   while ((fi = filters.First()) != NULL)
-        Detach(fi);
+    Detach(fi);
   delete shp;
 }
 
@@ -79,7 +79,8 @@ const cChannel *cSectionHandler::Channel(void)
 
 void cSectionHandler::Add(const cFilterData *FilterData)
 {
-  Lock();
+  CLockObject lock(m_mutex);
+
   statusCount++;
   cFilterHandle *fh;
   for (fh = filterHandles.First(); fh; fh = filterHandles.Next(fh)) {
@@ -96,12 +97,12 @@ void cSectionHandler::Add(const cFilterData *FilterData)
      }
   if (fh)
      fh->used++;
-  Unlock();
 }
 
 void cSectionHandler::Del(const cFilterData *FilterData)
 {
-  Lock();
+  CLockObject lock(m_mutex);
+
   statusCount++;
   cFilterHandle *fh;
   for (fh = filterHandles.First(); fh; fh = filterHandles.Next(fh)) {
@@ -113,40 +114,38 @@ void cSectionHandler::Del(const cFilterData *FilterData)
             }
          }
       }
-  Unlock();
 }
 
 void cSectionHandler::Attach(cFilter *Filter)
 {
-  Lock();
+  CLockObject lock(m_mutex);
+
   statusCount++;
   filters.Add(Filter);
   Filter->sectionHandler = this;
   if (on)
      Filter->SetStatus(true);
-  Unlock();
 }
 
 void cSectionHandler::Detach(cFilter *Filter)
 {
-  Lock();
+  CLockObject lock(m_mutex);
+
   statusCount++;
   Filter->SetStatus(false);
   Filter->sectionHandler = NULL;
   filters.Del(Filter, false);
-  Unlock();
 }
 
 void cSectionHandler::SetChannel(const cChannel *Channel)
 {
-  Lock();
+  CLockObject lock(m_mutex);
   shp->channel = Channel ? *Channel : cChannel();
-  Unlock();
 }
 
 void cSectionHandler::SetStatus(bool On)
 {
-  Lock();
+  CLockObject lock(m_mutex);
   if (on != On) {
      if (!On || device->Channel()->HasLock()) {
         statusCount++;
@@ -161,14 +160,14 @@ void cSectionHandler::SetStatus(bool On)
      else
         waitForLock = On;
      }
-  Unlock();
 }
 
-void cSectionHandler::Action(void)
+void* cSectionHandler::Process(void)
 {
-  while (Running()) {
+  while (!IsStopped())
+  {
+    CLockObject lock(m_mutex);
 
-        Lock();
         if (waitForLock)
            SetStatus(true);
         int NumFilters = filterHandles.Count();
@@ -180,7 +179,7 @@ void cSectionHandler::Action(void)
             pfd[i].revents = 0;
             }
         int oldStatusCount = statusCount;
-        Unlock();
+        lock.Unlock();
 
         if (poll(pfd, NumFilters, 1000) > 0) {
            bool DeviceHasLock = device->Channel()->HasLock();
@@ -189,7 +188,7 @@ void cSectionHandler::Action(void)
            for (int i = 0; i < NumFilters; i++) {
                if (pfd[i].revents & POLLIN) {
                   cFilterHandle *fh = NULL;
-                  LOCK_THREAD;
+                  lock.Lock();
                   if (statusCount != oldStatusCount)
                      break;
                   for (fh = filterHandles.First(); fh; fh = filterHandles.Next(fh)) {
@@ -223,4 +222,6 @@ void cSectionHandler::Action(void)
                }
            }
         }
+
+  return NULL;
 }

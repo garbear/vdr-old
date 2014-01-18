@@ -14,25 +14,29 @@
 #include "Filter.h"
 #include "thread.h"
 #include "utils/Tools.h"
+#include "platform/threads/threads.h"
 
 class cDevice;
 class cChannel;
 class cFilterHandle;
 class cSectionHandlerPrivate;
 
-class cSectionHandler : public cThread {
+class cSectionHandler : public PLATFORM::CThread
+{
   friend class cFilter;
 private:
-  cSectionHandlerPrivate *shp;
-  cDevice *device;
-  int statusCount;
-  bool on, waitForLock;
-  time_t lastIncompleteSection;
-  cList<cFilter> filters;
-  cList<cFilterHandle> filterHandles;
+  cSectionHandlerPrivate* shp;
+  cDevice*                device;
+  int                     statusCount;
+  bool                    on, waitForLock;
+  time_t                  lastIncompleteSection;
+  cList<cFilter>          filters;
+  cList<cFilterHandle>    filterHandles;
+  PLATFORM::CMutex        m_mutex;
+
   void Add(const cFilterData *FilterData);
   void Del(const cFilterData *FilterData);
-  virtual void Action(void);
+  virtual void* Process(void);
 public:
   cSectionHandler(cDevice *Device);
   virtual ~cSectionHandler();
