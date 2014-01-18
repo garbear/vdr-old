@@ -84,6 +84,7 @@ size_t cDeviceManager::Initialise(void)
   }
 
   CLockObject lock(m_mutex);
+  m_bAllDevicesReady = m_devices.size() == m_devicesReady;
   return m_devices.size();
 }
 
