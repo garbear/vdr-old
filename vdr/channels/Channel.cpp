@@ -1155,7 +1155,7 @@ bool cChannel::SetTransponderData(int source, int frequency, int srate, const st
 
     if (Number() && !bQuiet)
     {
-      dsyslog("changing transponder data of channel %d from %s to %s", Number(), oldTransponderData.c_str(), TransponderDataToString().c_str());
+      dsyslog("changing transponder data of channel %s (%d) from %s to %s", Name().c_str(), Number(), oldTransponderData.c_str(), TransponderDataToString().c_str());
       m_modification |= CHANNELMOD_TRANSP;
       SetChanged();
     }
