@@ -306,16 +306,13 @@ ChannelPtr cChannelManager::GetByServiceID(int serviceID, int source, int transp
   assert(source);
   assert(transponder);
 
-  ChannelSidMap::const_iterator it = m_channelSids.find(serviceID);
-  if (it != m_channelSids.end())
+  CLockObject lock(m_mutex);
+  for (ChannelVector::const_iterator itChannel = m_channels.begin(); itChannel != m_channels.end(); ++itChannel)
   {
-    const ChannelVector &channelVec = it->second;
-    for (ChannelVector::const_iterator itChannel = channelVec.begin(); itChannel != channelVec.end(); ++itChannel)
-    {
-      if ((*itChannel)->Sid() == serviceID && (*itChannel)->Source() == source && ISTRANSPONDER((*itChannel)->Transponder(), transponder))
-        return (*itChannel);
-    }
+    if ((*itChannel)->Sid() == serviceID && (*itChannel)->Source() == source && ISTRANSPONDER((*itChannel)->Transponder(), transponder))
+      return (*itChannel);
   }
+
   return cChannel::EmptyChannel;
 }
 

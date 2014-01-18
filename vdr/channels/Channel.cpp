@@ -1132,8 +1132,6 @@ bool cChannel::SetTransponderData(int source, int frequency, int srate, const st
     return false;
   }
 
-  dsyslog("updating transponder data of channel '%s': source=%d, freq=%d, srate=%d, params=%s", source, frequency, srate, strParameters.c_str());
-
   // Workarounds for broadcaster stupidity:
   // Some providers broadcast the transponder frequency of their channels with two different
   // values (like 12551 and 12552), so we need to allow for a little tolerance here
@@ -1157,7 +1155,7 @@ bool cChannel::SetTransponderData(int source, int frequency, int srate, const st
 
     if (Number() && !bQuiet)
     {
-      //dsyslog("changing transponder data of channel %d from %s to %s", Number(), oldTransponderData.c_str(), TransponderDataToString().c_str());
+      dsyslog("changing transponder data of channel %d from %s to %s", Number(), oldTransponderData.c_str(), TransponderDataToString().c_str());
       m_modification |= CHANNELMOD_TRANSP;
       SetChanged();
     }
