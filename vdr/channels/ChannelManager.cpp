@@ -300,7 +300,7 @@ ChannelPtr cChannelManager::GetByNumber(int number, int skipGap /* = 0 */)
   return cChannel::EmptyChannel;
 }
 
-ChannelPtr cChannelManager::GetByServiceID(unsigned short serviceID, int source, int transponder)
+ChannelPtr cChannelManager::GetByServiceID(int serviceID, int source, int transponder)
 {
   assert(serviceID);
   assert(source);

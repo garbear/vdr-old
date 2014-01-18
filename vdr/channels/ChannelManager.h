@@ -75,7 +75,7 @@ public:
    * \param transponder A compatible transponder (see ISTRANSPONDER())
    * \return The channel, or empty pointer if the channel isn't found
    */
-  ChannelPtr GetByServiceID(unsigned short serviceID, int source, int transponder);
+  ChannelPtr GetByServiceID(int serviceID, int source, int transponder);
 
   /*!
    * \brief Find a channel by its channel ID
