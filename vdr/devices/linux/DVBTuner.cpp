@@ -201,6 +201,7 @@ void cDvbTuner::Close()
 {
   if (m_fileDescriptor >= 0)
   {
+    dsyslog("DVB tuner: Closing frontend");
     close(m_fileDescriptor);
     m_fileDescriptor = INVALID_FD;
   }

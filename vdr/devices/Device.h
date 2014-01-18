@@ -59,30 +59,8 @@ struct cSubsystems
 };
 
 class cDevice;
-class cDvbSubtitleConverter;
-class cChannel;
-
-class cDeviceHook// : public cListObject
-{
-public:
-  /*!
-   * \brief Creates a new device hook object
-   *
-   * Do not delete this object - it will be automatically deleted when the
-   * program ends. YOU MUST PUT THE FOLLOWING COMMENT BEFORE ALL UNASSIGNED
-   * 'new cDeviceHook()' STATEMENTS LIKE SO:
-   *
-   * // Unassigned: ownership is assumed by persistent list
-   * new cDeviceHook();
-   */
-  cDeviceHook();
-  virtual ~cDeviceHook() { }
-
-  /*!
-   * \brief Returns true if the given Device can provide the given Channel's transponder
-   */
-  virtual bool DeviceProvidesTransponder(const cDevice &device, const cChannel &channel) const { return true; }
-};
+//class cDvbSubtitleConverter;
+//class cChannel;
 
 /// The cDevice class is the base from which actual devices can be derived.
 

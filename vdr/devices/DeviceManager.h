@@ -74,10 +74,6 @@ public:
    */
   void AdvanceCardIndex(unsigned int steps) { m_nextCardIndex += steps; }
 
-  void AddHook(cDeviceHook *hook);
-
-  bool DeviceHooksProvidesTransponder(const cDevice &device, const cChannel &channel) const;
-
 
 
 
@@ -186,12 +182,11 @@ private:
   static int GetClippedNumProvidedSystems(int availableBits, const cDevice& device);
 
   PLATFORM::CMutex           m_mutex;
-  std::vector<DevicePtr>     m_devices;
+  DeviceVector               m_devices;
   size_t                     m_devicesReady;
   bool                       m_bAllDevicesReady; //XXX make CCondition support other things than bools...
   PLATFORM::CCondition<bool> m_devicesReadyCondition;
   DevicePtr                  m_primaryDevice; //XXX remove this
-  std::vector<cDeviceHook*>  m_deviceHooks;
 
   unsigned int m_nextCardIndex; // Card index to give to the next new device
   unsigned int m_useDevice; // Stupid device-use flags

@@ -52,13 +52,6 @@ cDeviceManager &cDeviceManager::Get()
 
 cDeviceManager::~cDeviceManager()
 {
-  for (vector<DevicePtr>::iterator deviceIt = m_devices.begin(); deviceIt != m_devices.end(); ++deviceIt)
-  {
-    if (m_primaryDevice == *deviceIt)
-      m_primaryDevice = cDevice::EmptyDevice;
-  }
-  for (vector<cDeviceHook*>::iterator deviceHookIt = m_deviceHooks.begin(); deviceHookIt != m_deviceHooks.end(); ++deviceHookIt)
-    delete *deviceHookIt;
 }
 
 size_t cDeviceManager::Initialise(void)
@@ -112,22 +105,6 @@ void cDeviceManager::SetPrimaryDevice(unsigned int index)
   m_primaryDevice = m_devices[index];
   m_primaryDevice->MakePrimaryDevice(true);
   m_primaryDevice->VideoFormat()->SetVideoFormat(Setup.VideoFormat);
-}
-
-void cDeviceManager::AddHook(cDeviceHook *hook)
-{
-  assert(hook);
-  m_deviceHooks.push_back(hook);
-}
-
-bool cDeviceManager::DeviceHooksProvidesTransponder(const cDevice &device, const cChannel &channel) const
-{
-  for (vector<cDeviceHook*>::const_iterator deviceHookIt = m_deviceHooks.begin(); deviceHookIt != m_deviceHooks.end(); ++deviceHookIt)
-  {
-    if (!(*deviceHookIt)->DeviceProvidesTransponder(device, channel))
-      return false;
-  }
-  return true;
 }
 
 bool cDeviceManager::WaitForAllDevicesReady(unsigned int timeout /* = 0 */)
@@ -288,9 +265,8 @@ size_t cDeviceManager::CountTransponders(const cChannel &channel) const
 void cDeviceManager::Shutdown(void)
 {
   CLockObject lock(m_mutex);
-  m_deviceHooks.clear();
-  for (int i = 0; i < NumDevices(); i++)
-    m_devices[i] = cDevice::EmptyDevice;
+  m_devices.clear();
+  m_primaryDevice = cDevice::EmptyDevice;
 }
 
 int cDeviceManager::GetClippedNumProvidedSystems(int availableBits, const cDevice& device)

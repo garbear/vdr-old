@@ -80,13 +80,6 @@ void cSubsystems::AssertValid() const
   assert(VideoFormat);
 }
 
-// --- cDeviceHook -----------------------------------------------------------
-
-cDeviceHook::cDeviceHook()
-{
-  cDeviceManager::Get().AddHook(this);
-}
-
 // --- cDevice ---------------------------------------------------------------
 
 cDevice::cDevice(const cSubsystems &subsystems)

@@ -86,7 +86,7 @@ bool cDvbChannelSubsystem::ProvidesTransponder(const cChannel &channel) const
 
   if (!cSource::IsSat(channel.Source()) ||
       (!Setup.DiSEqC || Diseqcs.Get(Device()->CardIndex() + 1, channel.Source(), channel.Frequency(), dtp.Polarization(), NULL)))
-    return cDeviceManager::Get().DeviceHooksProvidesTransponder(*Device(), channel);
+    return true; // TODO: Previous this checked to see if any devices provided a transponder for the channel
   return false;
 }
 
