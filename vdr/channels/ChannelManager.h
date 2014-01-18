@@ -139,11 +139,6 @@ public:
   bool HasUniqueChannelID(const ChannelPtr &newChannel, const ChannelPtr &oldChannel = ChannelPtr()) const;
 
   /*!
-   * \brief ??? (TODO)
-   */
-  bool SwitchTo(int number);
-
-  /*!
    * \brief Return the number of the highest channel (I think - TODO)
    */
   unsigned int MaxNumber() const { return m_maxNumber; }

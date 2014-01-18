@@ -176,16 +176,14 @@ void cNitFilter::Process(u_short Pid, u_char Tid, const u_char *Data, int Length
                         }
                     if (!found || forceTransponderUpdate) {
                        for (int n = 0; n < NumFrequencies; n++) {
-                           cChannel *Channel = new cChannel;
+                           ChannelPtr Channel = ChannelPtr(new cChannel);
                            Channel->SetId(ts.getOriginalNetworkId(), ts.getTransportStreamId(), 0, 0);
                            if (Channel->SetTransponderData(Source, Frequencies[n], SymbolRate, dtp.Serialize('S')))
                            {
                               EITScanner.AddTransponder(Channel);
                               Channel->NotifyObservers(ObservableMessageChannelChanged);
                            }
-                           else
-                              delete Channel;
-                           }
+                         }
                        }
                     }
                  }
@@ -254,16 +252,14 @@ void cNitFilter::Process(u_short Pid, u_char Tid, const u_char *Data, int Length
                         }
                     if (!found || forceTransponderUpdate) {
                         for (int n = 0; n < NumFrequencies; n++) {
-                           cChannel *Channel = new cChannel;
+                          ChannelPtr Channel = ChannelPtr(new cChannel);
                            Channel->SetId(ts.getOriginalNetworkId(), ts.getTransportStreamId(), 0, 0);
                            if (Channel->SetTransponderData(Source, Frequencies[n], SymbolRate, dtp.Serialize('C')))
                            {
                               EITScanner.AddTransponder(Channel);
                               Channel->NotifyObservers(ObservableMessageChannelChanged);
                            }
-                           else
-                              delete Channel;
-                           }
+                         }
                        }
                     }
                  }
@@ -322,13 +318,11 @@ void cNitFilter::Process(u_short Pid, u_char Tid, const u_char *Data, int Length
                         }
                     if (!found || forceTransponderUpdate) {
                        for (int n = 0; n < NumFrequencies; n++) {
-                           cChannel *Channel = new cChannel;
+                         ChannelPtr Channel = ChannelPtr(new cChannel);
                            Channel->SetId(ts.getOriginalNetworkId(), ts.getTransportStreamId(), 0, 0);
                            if (Channel->SetTransponderData(Source, Frequencies[n], 0, dtp.Serialize('T')))
                               EITScanner.AddTransponder(Channel);
-                           else
-                              delete Channel;
-                           }
+                         }
                         }
                     }
                  }

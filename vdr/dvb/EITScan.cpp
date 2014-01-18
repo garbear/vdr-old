@@ -15,16 +15,25 @@
 #include "devices/subsystems/DeviceChannelSubsystem.h"
 #include "devices/subsystems/DeviceReceiverSubsystem.h"
 
+class cTransponderList
+{
+public:
+  void AddTransponder(ChannelPtr Channel);
+  void AddTranspondersToScanList(cScanList& scanlist) const;
+
+private:
+  std::vector<ChannelPtr> m_channels;
+};
+
 // --- cScanData -------------------------------------------------------------
 
-cScanData::cScanData(const cChannel* channel)
+cScanData::cScanData(ChannelPtr channel)
 {
-  m_channel = new cChannel(*channel);
+  m_channel = channel;
 }
 
 cScanData::~cScanData(void)
 {
-  delete m_channel;
 }
 
 int cScanData::Source(void) const
@@ -50,7 +59,8 @@ int cScanData::Compare(const cListObject &ListObject) const
 
 void cScanList::AddTransponders(const cTransponderList& Channels)
 {
-  //TODO convert to std::vector
+  Channels.AddTranspondersToScanList(*this);
+  Sort();
 }
 
 void cScanList::AddTransponders(const cChannelManager& channels)
@@ -59,33 +69,38 @@ void cScanList::AddTransponders(const cChannelManager& channels)
   Sort();
 }
 
-void cScanList::AddTransponder(const cChannel *Channel)
+void cScanList::AddTransponder(ChannelPtr Channel)
 {
-  if (Channel->Source() && Channel->Transponder()) {
-     for (cScanData *sd = First(); sd; sd = Next(sd)) {
-         if (sd->Source() == Channel->Source() && ISTRANSPONDER(sd->Transponder(), Channel->Transponder()))
-            return;
-         }
-     Add(new cScanData(Channel));
-     }
+  if (Channel->Source() && Channel->Transponder())
+  {
+    for (cScanData *sd = First(); sd; sd = Next(sd))
+    {
+      if (sd->Source() == Channel->Source() && ISTRANSPONDER(sd->Transponder(), Channel->Transponder()))
+        return;
+    }
+    Add(new cScanData(Channel));
+  }
 }
 
 // --- cTransponderList ------------------------------------------------------
 
-class cTransponderList : public cList<cChannel> {
-public:
-  void AddTransponder(cChannel *Channel);
-  };
-
-void cTransponderList::AddTransponder(cChannel *Channel)
+void cTransponderList::AddTransponder(ChannelPtr Channel)
 {
-  for (cChannel *ch = First(); ch; ch = Next(ch)) {
-      if (ch->Source() == Channel->Source() && ch->Transponder() == Channel->Transponder()) {
-         delete Channel;
-         return;
-         }
-      }
-  Add(Channel);
+  for (std::vector<ChannelPtr>::iterator it = m_channels.begin(); it != m_channels.end(); ++it)
+  {
+    if ((*it)->Source() == Channel->Source() &&
+        (*it)->Transponder() == Channel->Transponder())
+    {
+      return;
+    }
+  }
+  m_channels.push_back(Channel);
+}
+
+void cTransponderList::AddTranspondersToScanList(cScanList& scanlist) const
+{
+  for (std::vector<ChannelPtr>::const_iterator it = m_channels.begin(); it != m_channels.end(); ++it)
+    scanlist.AddTransponder(*it);
 }
 
 // --- cEITScanner -----------------------------------------------------------
@@ -95,8 +110,8 @@ cEITScanner EITScanner;
 cEITScanner::cEITScanner(void)
 {
   lastScan = lastActivity = time(NULL);
-  scanList = NULL;
-  transponderList = NULL;
+  scanList                = NULL;
+  transponderList         = NULL;
 }
 
 cEITScanner::~cEITScanner()
@@ -105,10 +120,10 @@ cEITScanner::~cEITScanner()
   delete transponderList;
 }
 
-void cEITScanner::AddTransponder(cChannel *Channel)
+void cEITScanner::AddTransponder(ChannelPtr Channel)
 {
   if (!transponderList)
-     transponderList = new cTransponderList;
+    transponderList = new cTransponderList;
   transponderList->AddTransponder(Channel);
 }
 
@@ -143,7 +158,7 @@ void cEITScanner::Process(void)
                DevicePtr Device = cDeviceManager::Get().GetDevice(i);
                if (Device != cDevice::EmptyDevice && Device->Channel()->ProvidesEIT()) {
                   for (cScanData *ScanData = scanList->First(); ScanData; ScanData = scanList->Next(ScanData)) {
-                      const cChannel *Channel = ScanData->GetChannel();
+                      ChannelPtr Channel = ScanData->GetChannel();
                       if (Channel) {
                          if (!Channel->Ca() || Channel->Ca() == Device->CardIndex() || Channel->Ca() >= CA_ENCRYPTED_MIN) {
                             if (Device->Channel()->ProvidesTransponder(*Channel)) {

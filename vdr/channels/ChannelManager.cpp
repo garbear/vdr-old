@@ -481,12 +481,6 @@ bool cChannelManager::HasUniqueChannelID(const ChannelPtr &newChannel, const Cha
   return true;
 }
 
-bool cChannelManager::SwitchTo(int number)
-{
-  ChannelPtr channel = GetByNumber(number);
-  return channel.get() ;//&& cDeviceManager::Get().PrimaryDevice()->Channel()->SwitchChannel(*channel, true);
-}
-
 unsigned int cChannelManager::MaxChannelNameLength()
 {
   CLockObject lock(m_mutex);
@@ -551,10 +545,8 @@ ChannelPtr cChannelManager::NewChannel(const cChannel& transponder, const string
 
 void cChannelManager::AddTransponders(cScanList* list) const
 {
-  /*
   for (std::vector<ChannelPtr>::const_iterator it = m_channels.begin(); it != m_channels.end(); it++)
-    list->AddTransponder(it->get());
-  */
+    list->AddTransponder(*it);
 }
 
 ChannelPtr cChannelManager::GetByChannelUID(uint32_t channelUID) const

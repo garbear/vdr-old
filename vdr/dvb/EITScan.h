@@ -13,22 +13,22 @@
 #include <time.h>
 #include "Config.h"
 #include "devices/Device.h"
+#include "channels/Channel.h"
 
-class cChannel;
 class cChannelManager;
 class cTransponderList;
 
 class cScanData : public cListObject {
 private:
-  cChannel* m_channel;
+  ChannelPtr m_channel;
 public:
-  cScanData(const cChannel* channel);
+  cScanData(ChannelPtr channel);
   virtual ~cScanData(void);
 
   virtual int Compare(const cListObject &ListObject) const;
   int Source(void) const;
   int Transponder(void) const;
-  const cChannel *GetChannel(void) const { return m_channel; }
+  ChannelPtr GetChannel(void) const { return m_channel; }
 };
 
 class cScanList : public cList<cScanData>
@@ -36,7 +36,7 @@ class cScanList : public cList<cScanData>
 public:
   void AddTransponders(const cChannelManager& Channels);
   void AddTransponders(const cTransponderList& Channels);
-  void AddTransponder(const cChannel *Channel);
+  void AddTransponder(ChannelPtr Channel);
 };
 
 class cTransponderList;
@@ -47,14 +47,13 @@ private:
          ScanTimeout = 20
        };
   time_t lastScan, lastActivity;
-  int currentChannel;
   cScanList *scanList;
   cTransponderList *transponderList;
 public:
   cEITScanner(void);
   ~cEITScanner();
   bool Active(void) { return lastActivity == 0; }
-  void AddTransponder(cChannel *Channel);
+  void AddTransponder(ChannelPtr Channel);
   void ForceScan(void);
   void Activity(void);
   void Process(void);
