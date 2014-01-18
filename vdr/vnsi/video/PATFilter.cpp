@@ -51,7 +51,7 @@ void cLivePatFilter::Process(u_short Pid, u_char Tid, const u_char *Data, int Le
       {
         if (!assoc.isNITPid())
         {
-          ChannelPtr Channel = cChannelManager::Get().GetByServiceID(Source(), Transponder(), assoc.getServiceId());
+          ChannelPtr Channel = cChannelManager::Get().GetByServiceID(assoc.getServiceId(), Source(), Transponder());
           if (Channel && (Channel == m_Channel))
           {
             int prevPmtPid = m_pmtPid;
