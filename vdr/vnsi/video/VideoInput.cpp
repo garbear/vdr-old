@@ -23,6 +23,7 @@
 #include "VideoBuffer.h"
 
 #include "PATFilter.h"
+#include "LiveReceiver.h"
 #include "devices/DeviceManager.h"
 #include "devices/subsystems/DeviceChannelSubsystem.h"
 #include "devices/subsystems/DeviceReceiverSubsystem.h"
@@ -32,46 +33,6 @@
 #include "devices/Device.h"
 #include "devices/Receiver.h"
 #include "settings/Settings.h"
-
-// --- cLiveReceiver -------------------------------------------------
-
-class cLiveReceiver: public cReceiver
-{
-public:
-  cLiveReceiver(cVideoInput *VideoInput, ChannelPtr Channel, int Priority);
-  virtual ~cLiveReceiver();
-  cChannel m_PmtChannel;
-
-protected:
-  virtual void Activate(bool On);
-  virtual void Receive(uchar *Data, int Length);
-
-  cVideoInput *m_VideoInput;
-};
-
-cLiveReceiver::cLiveReceiver(cVideoInput *VideoInput, ChannelPtr Channel, int Priority)
- : cReceiver(Channel.get(), Priority)//XXX
- , m_VideoInput(VideoInput)
-{
-  SetPids(Channel.get());
-}
-
-cLiveReceiver::~cLiveReceiver()
-{
-
-}
-
-//void cLiveReceiver
-void cLiveReceiver::Receive(uchar *Data, int Length)
-{
-  m_VideoInput->Receive(Data, Length);
-}
-
-inline void cLiveReceiver::Activate(bool On)
-{
-  m_VideoInput->Attach(On);
-  dsyslog("activate live receiver: %d", On);
-}
 
 cVideoInput::cVideoInput()
 {
@@ -193,7 +154,7 @@ void cVideoInput::PmtChange(int pidChange)
   }
 }
 
-inline void cVideoInput::Receive(uchar *data, int length)
+void cVideoInput::Receive(uchar *data, int length)
 {
   if (m_PmtChange)
   {
@@ -208,7 +169,7 @@ inline void cVideoInput::Receive(uchar *data, int length)
   m_VideoBuffer->Put(data, length);
 }
 
-inline void cVideoInput::Attach(bool on)
+void cVideoInput::Attach(bool on)
 {
   m_VideoBuffer->AttachInput(on);
 }

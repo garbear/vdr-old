@@ -172,6 +172,8 @@ set(VDR_SRCS
 	vdr/vnsi/net/RequestPacket.cpp
 	vdr/vnsi/net/ResponsePacket.cpp
 	vdr/vnsi/video/Demuxer.cpp
+	vdr/vnsi/video/LiveReceiver.cpp
+	vdr/vnsi/video/PATFilter.cpp
 	vdr/vnsi/video/RecPlayer.cpp
 	vdr/vnsi/video/Streamer.cpp
 	vdr/vnsi/video/VideoBuffer.cpp
@@ -185,7 +187,6 @@ set(VDR_SRCS
 	vdr/vnsi/video/parser/ParserMPEGAudio.cpp
 	vdr/vnsi/video/parser/ParserMPEGVideo.cpp
 	vdr/vnsi/video/parser/ParserSubtitle.cpp
-	vdr/vnsi/video/PATFilter.cpp
 	vdr/vnsi/video/parser/ParserTeletext.cpp
 	vdr/vnsi/Client.cpp
 	vdr/vnsi/Server.cpp
