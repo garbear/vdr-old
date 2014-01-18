@@ -63,21 +63,10 @@ bool cVDRDaemon::Init()
   if (!CSpecialProtocol::SetFileBasePath())
     return false;
 
+  CSpecialProtocol::LogPaths();
+
   // Create directories
   CDirectory::Create("special://home/system/");
-
-  // TODO: Implement protocols special:// (handled like XBMC)
-
-  // Directories:
-  // - special://home - Main writable directory, use FHS as a linux app (in which case it maps to e.g. ~/.vdr)
-  //                    or special://profile/addon_data/addon.id as an xbmc add-on (note: this is routed through
-  //                    XBMC's VFS api)
-  //
-  // - special://xbmchome - Routed through XBMC's VFS api as special://home
-  //
-  // - special://vdr - URI of source directory (special://vdr/system is repo's /system folder)
-  //
-  // - special://*** (everything else) - routed through VFS api calls
 
   if (!Setup.Load("special://home/system/setup.conf"))
     Setup.Load("special://vdr/system/setup.conf");

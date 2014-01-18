@@ -35,15 +35,17 @@ protected:
   {
     vdr = CSpecialProtocol::TranslatePath("special://vdr");
     home = CSpecialProtocol::TranslatePath("special://home");
+    profile = CSpecialProtocol::TranslatePath("special://profile");
     temp = CSpecialProtocol::TranslatePath("special://temp");
-    xbmchome = CSpecialProtocol::TranslatePath("special://xbmchome");
-    xbmctemp = CSpecialProtocol::TranslatePath("special://xbmctemp");
+    xbmchome = CSpecialProtocol::TranslatePath("special://xbmc-home");
+    xbmctemp = CSpecialProtocol::TranslatePath("special://xbmc-temp");
   }
 
   ~TestSpecialProtocol()
   {
     CSpecialProtocol::SetVDRPath(vdr);
     CSpecialProtocol::SetHomePath(home);
+    CSpecialProtocol::SetProfilePath(profile);
     CSpecialProtocol::SetTempPath(temp);
     CSpecialProtocol::SetXBMCHomePath(xbmchome);
     CSpecialProtocol::SetXBMCTempPath(xbmctemp);
@@ -52,6 +54,7 @@ protected:
 private:
   string vdr;
   string home;
+  string profile;
   string temp;
   string xbmchome;
   string xbmctemp;
@@ -82,6 +85,15 @@ TEST_F(TestSpecialProtocol, SetHomePath)
   EXPECT_STREQ(ref, CSpecialProtocol::TranslatePath(path).c_str());
 }
 
+TEST_F(TestSpecialProtocol, SetProfilePath)
+{
+  const char *path = "special://profile";
+  const char *ref = "/path/to/profile/";
+
+  CSpecialProtocol::SetProfilePath(ref);
+  EXPECT_STREQ(ref, CSpecialProtocol::TranslatePath(path).c_str());
+}
+
 TEST_F(TestSpecialProtocol, SetTempPath)
 {
   const char *path = "special://temp";
@@ -93,8 +105,8 @@ TEST_F(TestSpecialProtocol, SetTempPath)
 
 TEST_F(TestSpecialProtocol, SetXBMCHomePath)
 {
-  const char *path = "special://xbmchome";
-  const char *ref = "/path/to/xbmchome/";
+  const char *path = "special://xbmc-home";
+  const char *ref = "/path/to/xbmc-home/";
 
   CSpecialProtocol::SetXBMCHomePath(ref);
   EXPECT_STREQ(ref, CSpecialProtocol::TranslatePath(path).c_str());
@@ -102,8 +114,8 @@ TEST_F(TestSpecialProtocol, SetXBMCHomePath)
 
 TEST_F(TestSpecialProtocol, SetXBMCTempPath)
 {
-  const char *path = "special://xbmctemp";
-  const char *ref = "/path/to/xbmctemp/";
+  const char *path = "special://xbmc-temp";
+  const char *ref = "/path/to/xbmc-temp/";
 
   CSpecialProtocol::SetXBMCTempPath(ref);
   EXPECT_STREQ(ref, CSpecialProtocol::TranslatePath(path).c_str());

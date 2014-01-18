@@ -40,6 +40,15 @@
 
 using namespace std;
 
+#define VDR_ROOT        "vdr"
+#define HOME_ROOT       "home"
+#define PROFILE_ROOT    "profile"
+#define TEMP_ROOT       "temp"
+#define XBMCHOME_ROOT   "xbmc-home"
+#define XBMCTEMP_ROOT   "xbmc-temp"
+
+#define ADDON_PROFILE   "special://profile/addon_data/service.vdr/"
+
 map<string, string> CSpecialProtocol::m_pathMap;
 
 std::string CSpecialProtocol::GetExecutablePath()
@@ -210,35 +219,49 @@ bool CSpecialProtocol::SetFileBasePath()
 
   /* Set vdr path */
   SetVDRPath(vdrPath);
+
+#ifdef TARGET_XBMC
+  SetHomePath(ADDON_PROFILE);
+  SetProfilePath(ADDON_PROFILE);
+#else
   SetHomePath(vdrPath); // TODO
-  SetXBMCHomePath(vdrPath); // TODO
+  SetProfilePath(vdrPath); // TODO
+#endif
+
+  SetXBMCHomePath("special://home");
+  SetXBMCTempPath("special://temp");
 
   return true;
 }
 
 void CSpecialProtocol::SetVDRPath(const string &dir)
 {
-  SetPath("vdr", dir);
+  SetPath(VDR_ROOT, dir);
 }
 
 void CSpecialProtocol::SetHomePath(const string &dir)
 {
-  SetPath("home", dir);
+  SetPath(HOME_ROOT, dir);
+}
+
+void CSpecialProtocol::SetProfilePath(const string &dir)
+{
+  SetPath(PROFILE_ROOT, dir);
 }
 
 void CSpecialProtocol::SetTempPath(const string &dir)
 {
-  SetPath("temp", dir);
+  SetPath(TEMP_ROOT, dir);
 }
 
 void CSpecialProtocol::SetXBMCHomePath(const string &dir)
 {
-  SetPath("xbmchome", dir);
+  SetPath(XBMCHOME_ROOT, dir);
 }
 
 void CSpecialProtocol::SetXBMCTempPath(const string &dir)
 {
-  SetPath("xbmctemp", dir);
+  SetPath(XBMCTEMP_ROOT, dir);
 }
 
 bool CSpecialProtocol::ComparePath(const string &path1, const string &path2)
@@ -307,11 +330,12 @@ string CSpecialProtocol::TranslatePath(const CURL &url)
   //
 
   // From here on, we have our "real" special paths
-  /*else*/ if (RootDir == "vdr" || // TODO: this used to be an "else if"
-           RootDir == "home" ||
-           RootDir == "temp" ||
-           RootDir == "xbmchome" ||
-           RootDir == "xbmctemp")
+  /*else*/ if (RootDir == VDR_ROOT || // TODO: this used to be an "else if"
+           RootDir == HOME_ROOT ||
+           RootDir == TEMP_ROOT ||
+           RootDir == PROFILE_ROOT ||
+           RootDir == XBMCHOME_ROOT ||
+           RootDir == XBMCTEMP_ROOT)
   {
     string basePath = GetPath(RootDir);
     if (!basePath.empty())
@@ -394,22 +418,17 @@ string CSpecialProtocol::TranslatePathConvertCase(const string& path)
 
 void CSpecialProtocol::LogPaths()
 {
-  /* TODO
-  CLog::Log(LOGNOTICE, "special://xbmc/ is mapped to: %s", GetPath("xbmc").c_str());
-  CLog::Log(LOGNOTICE, "special://xbmcbin/ is mapped to: %s", GetPath("xbmcbin").c_str());
-  CLog::Log(LOGNOTICE, "special://masterprofile/ is mapped to: %s", GetPath("masterprofile").c_str());
-  CLog::Log(LOGNOTICE, "special://home/ is mapped to: %s", GetPath("home").c_str());
-  CLog::Log(LOGNOTICE, "special://temp/ is mapped to: %s", GetPath("temp").c_str());
-  //CLog::Log(LOGNOTICE, "special://userhome/ is mapped to: %s", GetPath("userhome").c_str());
-  if (!CUtil::GetFrameworksPath().empty())
-    CLog::Log(LOGNOTICE, "special://frameworks/ is mapped to: %s", GetPath("frameworks").c_str());
-  */
+  isyslog("special://" VDR_ROOT "/ is mapped to: %s", GetPath(VDR_ROOT).c_str());
+  isyslog("special://" HOME_ROOT "/ is mapped to: %s", GetPath(HOME_ROOT).c_str());
+  isyslog("special://" PROFILE_ROOT "/ is mapped to: %s", GetPath(PROFILE_ROOT).c_str());
+  isyslog("special://" TEMP_ROOT "/ is mapped to: %s", GetPath(TEMP_ROOT).c_str());
+  isyslog("special://" XBMCHOME_ROOT "/ is mapped to: %s", GetPath(XBMCHOME_ROOT).c_str());
+  isyslog("special://" XBMCTEMP_ROOT "/ is mapped to: %s", GetPath(XBMCTEMP_ROOT).c_str());
 }
 
 // private routines, to ensure we only set/get an appropriate path
 void CSpecialProtocol::SetPath(const string &key, const string &path)
 {
-  isyslog("path '%s' mapped to '%s", key.c_str(), path.c_str());
   m_pathMap[key] = path;
 }
 

@@ -37,6 +37,7 @@
  *                            Linux: ~/.vdr/
  *                            OS X:  ~/Library/Application Support/VDR/
  *                            Win32: ~/Application Data/VDR/
+ * special://profile/     - the user profile data directory
  * special://temp/        - the temporary directory
  *                            Linux: ~/tmp/vdr<username>
  *                            OS X:  ~/
@@ -46,8 +47,8 @@
  * XBMC via its VFS api. To allow access to paths eclipsed by the above, the
  * following can be used:
  *
- * special://home-xbmc/    - the folder that XBMC maps to special://home/
- * special://temp-xbmc/    - the folder that XBMC maps to special://temp/
+ * special://xbmc-home/    - the folder that XBMC maps to special://home/
+ * special://xbmc-temp/    - the folder that XBMC maps to special://temp/
  */
 class CURL;
 class CSpecialProtocol
@@ -56,6 +57,7 @@ public:
   static bool SetFileBasePath();
   static void SetVDRPath(const std::string &path);
   static void SetHomePath(const std::string &path);
+  static void SetProfilePath(const std::string &path);
   static void SetTempPath(const std::string &path);
   static void SetXBMCHomePath(const std::string &path);
   static void SetXBMCTempPath(const std::string &path);
