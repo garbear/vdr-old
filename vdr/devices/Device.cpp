@@ -156,6 +156,7 @@ void *cDevice::Process()
           Lock();
           for (int i = 0; i < MAXRECEIVERS; i++)
           {
+//            dsyslog("received packet: pid=%d scrambled=%d check receiver %p", Pid, b[3] & TS_SCRAMBLING_CONTROL?1:0, Receiver()->m_receivers[i]);
             if (Receiver()->m_receivers[i] && Receiver()->m_receivers[i]->WantsPid(Pid))
             {
               if (DetachReceivers)

@@ -15,7 +15,7 @@
 
 cReceiver::cReceiver(const cChannel *Channel, int Priority)
 {
-  device = NULL;
+  m_device = NULL;
   priority = constrain(Priority, MINPRIORITY, MAXPRIORITY);
   numPids = 0;
   SetPids(Channel);
@@ -23,7 +23,7 @@ cReceiver::cReceiver(const cChannel *Channel, int Priority)
 
 cReceiver::~cReceiver()
 {
-  if (device)
+  if (m_device)
   {
     const char *msg =
         "ERROR: cReceiver has not been detached yet! This is a design fault and VDR will segfault now!";
@@ -40,7 +40,7 @@ bool cReceiver::AddPid(int Pid)
     if (numPids < MAXRECEIVEPIDS)
     {
       pids[numPids++] = Pid;
-      esyslog("adding PID %d to receiver", Pid);
+      esyslog("adding PID %d to receiver '%s' (%p)", Pid, m_device ? m_device->DeviceName().c_str() : "<nil>", this);
     }
     else
     {
@@ -98,6 +98,21 @@ bool cReceiver::WantsPid(int Pid)
 
 void cReceiver::Detach(void)
 {
-  if (device)
-    device->Receiver()->Detach(this);
+  if (m_device)
+    m_device->Receiver()->Detach(this);
+}
+
+bool cReceiver::DeviceAttached(cDevice* device) const
+{
+  return m_device == device;
+}
+
+void cReceiver::AttachDevice(cDevice* device)
+{
+  m_device = device;
+}
+
+void cReceiver::DetachDevice(void)
+{
+  m_device = NULL;
 }

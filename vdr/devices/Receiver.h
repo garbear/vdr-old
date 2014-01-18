@@ -20,10 +20,8 @@ class cDevice;
 class cReceiver {
   friend class cDevice;
 private:
-public: // TODO
-  cDevice *device;
-private:
   tChannelID channelID;
+  cDevice*   m_device;
 public: // TODO
   int priority;
   int pids[MAXRECEIVEPIDS];
@@ -32,6 +30,10 @@ public: // TODO
 protected:
   void Detach(void);
 public: // TODO
+  bool DeviceAttached(cDevice* device) const;
+  void AttachDevice(cDevice* device);
+  void DetachDevice(void);
+
   virtual void Activate(bool On) {}
                ///< This function is called just before the cReceiver gets attached to
                ///< (On == true) and right after it gets detached from (On == false) a cDevice. It can be used
@@ -72,8 +74,8 @@ public:
                ///< through ChannelID(). The ChannelID is necessary to allow the device
                ///< that will be used for this receiver to detect and store whether the
                ///< channel can be decrypted in case this is an encrypted channel.
-  tChannelID ChannelID(void) { return channelID; }
-  bool IsAttached(void) { return device != NULL; }
+  tChannelID ChannelID(void) const { return channelID; }
+  bool IsAttached(void) const { return m_device != NULL; }
                ///< Returns true if this receiver is (still) attached to a device.
                ///< A receiver may be automatically detached from its device in
                ///< case the device is needed otherwise, so code that uses a cReceiver

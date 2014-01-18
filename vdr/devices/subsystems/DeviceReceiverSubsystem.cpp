@@ -78,7 +78,7 @@ bool cDeviceReceiverSubsystem::AttachReceiver(cReceiver *receiver)
 {
   if (!receiver)
     return false;
-  if (receiver->device == Device())
+  if (receiver->DeviceAttached(Device()))
     return true;
 #if WAIT_FOR_TUNER_LOCK
 #define TUNER_LOCK_TIMEOUT 5000 // ms
@@ -104,7 +104,7 @@ bool cDeviceReceiverSubsystem::AttachReceiver(cReceiver *receiver)
       }
       receiver->Activate(true);
       Device()->Lock();
-      receiver->device = Device();
+      receiver->AttachDevice(Device());
       m_receivers[i] = receiver;
       Device()->Unlock();
       if (CommonInterface()->m_camSlot)
@@ -122,7 +122,7 @@ bool cDeviceReceiverSubsystem::AttachReceiver(cReceiver *receiver)
 
 void cDeviceReceiverSubsystem::Detach(cReceiver *receiver)
 {
-  if (!receiver || receiver->device != Device())
+  if (!receiver || receiver->DeviceAttached(Device()))
     return;
   bool receiversLeft = false;
   PLATFORM::CLockObject lock(m_mutexReceiver);
@@ -132,7 +132,7 @@ void cDeviceReceiverSubsystem::Detach(cReceiver *receiver)
     {
       Device()->Lock();
       m_receivers[i] = NULL;
-      receiver->device = NULL;
+      receiver->DetachDevice();
       Device()->Unlock();
       receiver->Activate(false);
       for (int n = 0; n < receiver->numPids; n++)
