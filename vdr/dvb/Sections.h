@@ -25,13 +25,13 @@ class cSectionHandler : public PLATFORM::CThread
 {
   friend class cFilter;
 private:
-  cSectionHandlerPrivate* shp;
-  cDevice*                device;
-  int                     statusCount;
-  bool                    on, waitForLock;
-  time_t                  lastIncompleteSection;
-  cList<cFilter>          filters;
-  cList<cFilterHandle>    filterHandles;
+  cSectionHandlerPrivate* m_shp;
+  cDevice*                m_device;
+  int                     m_iStatusCount;
+  bool                    m_bOn, m_bWaitForLock;
+  time_t                  m_lastIncompleteSection;
+  cList<cFilter>          m_filters;
+  cList<cFilterHandle>    m_filterHandles;
   PLATFORM::CMutex        m_mutex;
 
   void Add(const cFilterData *FilterData);

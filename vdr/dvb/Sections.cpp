@@ -35,21 +35,22 @@ cFilterHandle::cFilterHandle(const cFilterData &FilterData)
 
 // --- cSectionHandlerPrivate ------------------------------------------------
 
-class cSectionHandlerPrivate {
+class cSectionHandlerPrivate
+{
 public:
   cChannel channel;
-  };
+};
 
 // --- cSectionHandler -------------------------------------------------------
 
 cSectionHandler::cSectionHandler(cDevice *Device)
 {
-  shp = new cSectionHandlerPrivate;
-  device = Device;
-  statusCount = 0;
-  on = false;
-  waitForLock = false;
-  lastIncompleteSection = 0;
+  m_shp = new cSectionHandlerPrivate;
+  m_device = Device;
+  m_iStatusCount = 0;
+  m_bOn = false;
+  m_bWaitForLock = false;
+  m_lastIncompleteSection = 0;
   CreateThread();
 }
 
@@ -57,171 +58,196 @@ cSectionHandler::~cSectionHandler()
 {
   StopThread(3000);
   cFilter *fi;
-  while ((fi = filters.First()) != NULL)
+  while ((fi = m_filters.First()) != NULL)
     Detach(fi);
-  delete shp;
+  delete m_shp;
 }
 
 int cSectionHandler::Source(void)
 {
-  return shp->channel.Source();
+  return m_shp->channel.Source();
 }
 
 int cSectionHandler::Transponder(void)
 {
-  return shp->channel.Transponder();
+  return m_shp->channel.Transponder();
 }
 
 const cChannel *cSectionHandler::Channel(void)
 {
-  return &shp->channel;
+  return &m_shp->channel;
 }
 
-void cSectionHandler::Add(const cFilterData *FilterData)
+void
+cSectionHandler::Add(const cFilterData *FilterData)
 {
   CLockObject lock(m_mutex);
 
-  statusCount++;
+  m_iStatusCount++;
   cFilterHandle *fh;
-  for (fh = filterHandles.First(); fh; fh = filterHandles.Next(fh)) {
-      if (fh->filterData.Is(FilterData->pid, FilterData->tid, FilterData->mask))
-         break;
-      }
-  if (!fh) {
-     int handle = device->SectionFilter()->OpenFilter(FilterData->pid, FilterData->tid, FilterData->mask);
-     if (handle >= 0) {
-        fh = new cFilterHandle(*FilterData);
-        fh->handle = handle;
-        filterHandles.Add(fh);
-        }
-     }
+  for (fh = m_filterHandles.First(); fh; fh = m_filterHandles.Next(fh))
+  {
+    if (fh->filterData.Is(FilterData->pid, FilterData->tid, FilterData->mask))
+      break;
+  }
+  if (!fh)
+  {
+    int handle = m_device->SectionFilter()->OpenFilter(FilterData->pid, FilterData->tid, FilterData->mask);
+    if (handle >= 0)
+    {
+      fh = new cFilterHandle(*FilterData);
+      fh->handle = handle;
+      m_filterHandles.Add(fh);
+    }
+  }
   if (fh)
-     fh->used++;
+    fh->used++;
 }
 
-void cSectionHandler::Del(const cFilterData *FilterData)
+void
+cSectionHandler::Del(const cFilterData *FilterData)
 {
   CLockObject lock(m_mutex);
 
-  statusCount++;
+  m_iStatusCount++;
   cFilterHandle *fh;
-  for (fh = filterHandles.First(); fh; fh = filterHandles.Next(fh)) {
-      if (fh->filterData.Is(FilterData->pid, FilterData->tid, FilterData->mask)) {
-         if (--fh->used <= 0) {
-            device->SectionFilter()->CloseFilter(fh->handle);
-            filterHandles.Del(fh);
-            break;
-            }
-         }
+  for (fh = m_filterHandles.First(); fh; fh = m_filterHandles.Next(fh))
+  {
+    if (fh->filterData.Is(FilterData->pid, FilterData->tid, FilterData->mask))
+    {
+      if (--fh->used <= 0)
+      {
+        m_device->SectionFilter()->CloseFilter(fh->handle);
+        m_filterHandles.Del(fh);
+        break;
       }
+    }
+  }
 }
 
-void cSectionHandler::Attach(cFilter *Filter)
+void
+cSectionHandler::Attach(cFilter *Filter)
 {
   CLockObject lock(m_mutex);
 
-  statusCount++;
-  filters.Add(Filter);
+  m_iStatusCount++;
+  m_filters.Add(Filter);
   Filter->sectionHandler = this;
-  if (on)
-     Filter->SetStatus(true);
+  if (m_bOn)
+    Filter->SetStatus(true);
 }
 
 void cSectionHandler::Detach(cFilter *Filter)
 {
   CLockObject lock(m_mutex);
 
-  statusCount++;
+  m_iStatusCount++;
   Filter->SetStatus(false);
   Filter->sectionHandler = NULL;
-  filters.Del(Filter, false);
+  m_filters.Del(Filter, false);
 }
 
 void cSectionHandler::SetChannel(const cChannel *Channel)
 {
   CLockObject lock(m_mutex);
-  shp->channel = Channel ? *Channel : cChannel();
+  m_shp->channel = Channel ? *Channel : cChannel();
 }
 
-void cSectionHandler::SetStatus(bool On)
+void
+cSectionHandler::SetStatus(bool On)
 {
   CLockObject lock(m_mutex);
-  if (on != On) {
-     if (!On || device->Channel()->HasLock()) {
-        statusCount++;
-        for (cFilter *fi = filters.First(); fi; fi = filters.Next(fi)) {
-            fi->SetStatus(false);
-            if (On)
-               fi->SetStatus(true);
-            }
-        on = On;
-        waitForLock = false;
-        }
-     else
-        waitForLock = On;
-     }
+  if (m_bOn != On)
+  {
+    if (!On || m_device->Channel()->HasLock())
+    {
+      m_iStatusCount++;
+      for (cFilter *fi = m_filters.First(); fi; fi = m_filters.Next(fi))
+      {
+        fi->SetStatus(false);
+        if (On)
+          fi->SetStatus(true);
+      }
+      m_bOn = On;
+      m_bWaitForLock = false;
+    }
+    else
+      m_bWaitForLock = On;
+  }
 }
 
-void* cSectionHandler::Process(void)
+void*
+cSectionHandler::Process(void)
 {
   while (!IsStopped())
   {
     CLockObject lock(m_mutex);
 
-        if (waitForLock)
-           SetStatus(true);
-        int NumFilters = filterHandles.Count();
-        pollfd pfd[NumFilters];
-        for (cFilterHandle *fh = filterHandles.First(); fh; fh = filterHandles.Next(fh)) {
-            int i = fh->Index();
-            pfd[i].fd = fh->handle;
-            pfd[i].events = POLLIN;
-            pfd[i].revents = 0;
-            }
-        int oldStatusCount = statusCount;
-        lock.Unlock();
+    if (m_bWaitForLock)
+      SetStatus(true);
+    int NumFilters = m_filterHandles.Count();
+    pollfd pfd[NumFilters];
+    for (cFilterHandle *fh = m_filterHandles.First(); fh; fh = m_filterHandles.Next(fh))
+    {
+      int i = fh->Index();
+      pfd[i].fd = fh->handle;
+      pfd[i].events = POLLIN;
+      pfd[i].revents = 0;
+    }
+    int oldStatusCount = m_iStatusCount;
+    lock.Unlock();
 
-        if (poll(pfd, NumFilters, 1000) > 0) {
-           bool DeviceHasLock = device->Channel()->HasLock();
-           if (!DeviceHasLock)
-              cCondWait::SleepMs(100);
-           for (int i = 0; i < NumFilters; i++) {
-               if (pfd[i].revents & POLLIN) {
-                  cFilterHandle *fh = NULL;
-                  lock.Lock();
-                  if (statusCount != oldStatusCount)
-                     break;
-                  for (fh = filterHandles.First(); fh; fh = filterHandles.Next(fh)) {
-                      if (pfd[i].fd == fh->handle)
-                         break;
-                      }
-                  if (fh) {
-                     // Read section data:
-                     unsigned char buf[4096]; // max. allowed size for any EIT section
-                     int r = device->SectionFilter()->ReadFilter(fh->handle, buf, sizeof(buf));
-                     if (!DeviceHasLock)
-                        continue; // we do the read anyway, to flush any data that might have come from a different transponder
-                     if (r > 3) { // minimum number of bytes necessary to get section length
-                        int len = (((buf[1] & 0x0F) << 8) | (buf[2] & 0xFF)) + 3;
-                        if (len == r) {
-                           // Distribute data to all attached filters:
-                           int pid = fh->filterData.pid;
-                           int tid = buf[0];
-                           for (cFilter *fi = filters.First(); fi; fi = filters.Next(fi)) {
-                               if (fi->Matches(pid, tid))
-                                  fi->Process(pid, tid, buf, len);
-                               }
-                           }
-                        else if (time(NULL) - lastIncompleteSection > 10) { // log them only every 10 seconds
-                           dsyslog("read incomplete section - len = %d, r = %d", len, r);
-                           lastIncompleteSection = time(NULL);
-                           }
-                        }
-                     }
-                  }
-               }
-           }
+    if (poll(pfd, NumFilters, 1000) > 0)
+    {
+      bool DeviceHasLock = m_device->Channel()->HasLock();
+      if (!DeviceHasLock)
+        cCondWait::SleepMs(100);
+      for (int i = 0; i < NumFilters; i++)
+      {
+        if (pfd[i].revents & POLLIN)
+        {
+          cFilterHandle *fh = NULL;
+          lock.Lock();
+          if (m_iStatusCount != oldStatusCount)
+            break;
+          for (fh = m_filterHandles.First(); fh; fh = m_filterHandles.Next(fh))
+          {
+            if (pfd[i].fd == fh->handle)
+              break;
+          }
+          if (fh)
+          {
+            // Read section data:
+            unsigned char buf[4096]; // max. allowed size for any EIT section
+            int r = m_device->SectionFilter()->ReadFilter(fh->handle, buf,
+                sizeof(buf));
+            if (!DeviceHasLock)
+              continue; // we do the read anyway, to flush any data that might have come from a different transponder
+            if (r > 3)
+            { // minimum number of bytes necessary to get section length
+              int len = (((buf[1] & 0x0F) << 8) | (buf[2] & 0xFF)) + 3;
+              if (len == r)
+              {
+                // Distribute data to all attached filters:
+                int pid = fh->filterData.pid;
+                int tid = buf[0];
+                for (cFilter *fi = m_filters.First(); fi; fi = m_filters.Next(fi))
+                {
+                  if (fi->Matches(pid, tid))
+                    fi->Process(pid, tid, buf, len);
+                }
+              }
+              else if (time(NULL) - m_lastIncompleteSection > 10)
+              { // log them only every 10 seconds
+                dsyslog("read incomplete section - len = %d, r = %d", len, r);
+                m_lastIncompleteSection = time(NULL);
+              }
+            }
+          }
         }
+      }
+    }
+  }
 
   return NULL;
 }
