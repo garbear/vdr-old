@@ -81,8 +81,9 @@ cVNSIServer::cVNSIServer(int listenPort)
     m_AllowedHostsFile = "/video/" ALLOWED_HOSTS_FILE;
   }
 
-  VNSIChannelFilter.Load();
-  VNSIChannelFilter.SortChannels();
+  //XXX disabled for now
+//  VNSIChannelFilter.Load();
+//  VNSIChannelFilter.SortChannels();
 
   m_ServerFD = socket(AF_INET, SOCK_STREAM, 0);
   if(m_ServerFD == -1)
