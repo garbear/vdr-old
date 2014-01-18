@@ -90,8 +90,7 @@ void cLivePatFilter::Process(u_short Pid, u_char Tid, const u_char *Data, int Le
     }
     m_pmtVersion = pmt.getVersionNumber();
 
-    ChannelPtr Channel = cChannelManager::Get().GetByServiceID(Source(),
-        Transponder(), pmt.getServiceId());
+    ChannelPtr Channel = cChannelManager::Get().GetByServiceID(pmt.getServiceId(), Source(), Transponder());
     if (Channel)
     {
       // Scan the stream-specific loop:
