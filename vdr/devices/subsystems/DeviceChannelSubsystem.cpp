@@ -87,6 +87,7 @@ bool cDeviceChannelSubsystem::SwitchChannel(const cChannel &channel)
       esyslog(tr("Can't start Transfer Mode!"));
       return false;
     case scrFailed:
+      esyslog("Tuning failed");
       break; // loop will retry
     default:
       esyslog("ERROR: invalid return value from SetChannel");

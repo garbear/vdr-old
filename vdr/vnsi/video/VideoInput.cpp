@@ -413,15 +413,15 @@ bool cVideoInput::Open(ChannelPtr channel, int priority, cVideoBuffer *videoBuff
 
   if (m_Device)
   {
-    dsyslog("Successfully found following device: %p (%d) for receiving", m_Device.get(), m_Device ? m_Device->CardIndex() + 1 : 0);
+    dsyslog("Successfully found following device: %s (%d) for receiving", m_Device->DeviceName().c_str(), m_Device->CardIndex());
 
     if (m_Device->Channel()->SwitchChannel(*m_Channel))
     {
       dsyslog("Creating new live Receiver");
-      m_SeenPmt = false;
+      m_SeenPmt   = false;
       m_PatFilter = new cLivePatFilter(this, m_Channel);
       m_Receiver0 = new cLiveReceiver(this, m_Channel, m_Priority);
-      m_Receiver = new cLiveReceiver(this, m_Channel, m_Priority);
+      m_Receiver  = new cLiveReceiver(this, m_Channel, m_Priority);
       m_Device->Receiver()->AttachReceiver(m_Receiver0);
       m_Device->SectionFilter()->AttachFilter(m_PatFilter);
       CreateThread();
