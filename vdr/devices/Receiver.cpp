@@ -36,6 +36,11 @@ cReceiver::~cReceiver()
 
 bool cReceiver::AddPid(int Pid)
 {
+  for (int i = 0; i < m_numPids; i++)
+  {
+    if (m_pids[i] == Pid)
+      return true;
+  }
   if (Pid && !WantsPid(Pid))
   {
     if (m_numPids < MAXRECEIVEPIDS)
@@ -73,6 +78,7 @@ bool cReceiver::AddPids(int Pid1, int Pid2, int Pid3, int Pid4, int Pid5, int Pi
 bool cReceiver::SetPids(const cChannel *Channel)
 {
   m_numPids = 0;
+  assert(Channel);
   dsyslog("reset PIDs for channel '%s'", Channel ? Channel->Name().c_str() : "<nil>");
   if (Channel)
   {
@@ -120,6 +126,7 @@ void cReceiver::AttachDevice(cDevice* device)
 
 void cReceiver::DetachDevice(void)
 {
+  dsyslog("detaching device '%s' to receiver '%p'", m_device ? m_device->DeviceName().c_str() : "<nil>", this);
   m_device = NULL;
 }
 
