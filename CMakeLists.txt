@@ -185,6 +185,7 @@ set(VDR_SRCS
 	vdr/vnsi/video/parser/ParserMPEGAudio.cpp
 	vdr/vnsi/video/parser/ParserMPEGVideo.cpp
 	vdr/vnsi/video/parser/ParserSubtitle.cpp
+	vdr/vnsi/video/PATFilter.cpp
 	vdr/vnsi/video/parser/ParserTeletext.cpp
 	vdr/vnsi/Client.cpp
 	vdr/vnsi/Server.cpp
