@@ -300,21 +300,20 @@ ChannelPtr cChannelManager::GetByNumber(int number, int skipGap /* = 0 */)
   return cChannel::EmptyChannel;
 }
 
-ChannelPtr cChannelManager::GetByServiceID(int serviceID, int source, int transponder)
+ChannelPtr cChannelManager::GetByServiceID(int serviceID, int source, int transponder) const
 {
   assert(serviceID);
   assert(source);
   assert(transponder);
 
-  ChannelSidMap::iterator it = m_channelSids.find(serviceID);
+  ChannelSidMap::const_iterator it = m_channelSids.find(serviceID);
   if (it != m_channelSids.end())
   {
-    ChannelVector &channelVec = it->second;
-    for (ChannelVector::iterator itChannel = channelVec.begin(); itChannel != channelVec.end(); ++itChannel)
+    const ChannelVector &channelVec = it->second;
+    for (ChannelVector::const_iterator itChannel = channelVec.begin(); itChannel != channelVec.end(); ++itChannel)
     {
-      ChannelPtr &channel = *itChannel;
-      if (channel->Sid() == serviceID && channel->Source() == source && ISTRANSPONDER(channel->Transponder(), transponder))
-        return channel;
+      if ((*itChannel)->Sid() == serviceID && (*itChannel)->Source() == source && ISTRANSPONDER((*itChannel)->Transponder(), transponder))
+        return (*itChannel);
     }
   }
   return cChannel::EmptyChannel;
