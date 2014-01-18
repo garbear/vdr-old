@@ -9,6 +9,7 @@
 
 #include "Device.h"
 #include "devices/subsystems/DeviceReceiverSubsystem.h"
+#include "devices/subsystems/DevicePIDSubsystem.h"
 #include "Receiver.h"
 #include <stdio.h>
 #include "utils/Tools.h"
@@ -16,8 +17,8 @@
 cReceiver::cReceiver(const cChannel *Channel, int Priority)
 {
   m_device = NULL;
-  priority = constrain(Priority, MINPRIORITY, MAXPRIORITY);
-  numPids = 0;
+  m_priority = constrain(Priority, MINPRIORITY, MAXPRIORITY);
+  m_numPids = 0;
   SetPids(Channel);
 }
 
@@ -37,9 +38,9 @@ bool cReceiver::AddPid(int Pid)
 {
   if (Pid && !WantsPid(Pid))
   {
-    if (numPids < MAXRECEIVEPIDS)
+    if (m_numPids < MAXRECEIVEPIDS)
     {
-      pids[numPids++] = Pid;
+      m_pids[m_numPids++] = Pid;
       esyslog("adding PID %d to receiver '%s' (%p)", Pid, m_device ? m_device->DeviceName().c_str() : "<nil>", this);
     }
     else
@@ -71,7 +72,8 @@ bool cReceiver::AddPids(int Pid1, int Pid2, int Pid3, int Pid4, int Pid5, int Pi
 
 bool cReceiver::SetPids(const cChannel *Channel)
 {
-  numPids = 0;
+  m_numPids = 0;
+  dsyslog("reset PIDs for channel '%s'", Channel ? Channel->Name().c_str() : "<nil>");
   if (Channel)
   {
     channelID = Channel->GetChannelID();
@@ -87,9 +89,9 @@ bool cReceiver::WantsPid(int Pid)
 {
   if (Pid)
   {
-    for (int i = 0; i < numPids; i++)
+    for (int i = 0; i < m_numPids; i++)
     {
-      if (pids[i] == Pid)
+      if (m_pids[i] == Pid)
         return true;
     }
   }
@@ -99,7 +101,10 @@ bool cReceiver::WantsPid(int Pid)
 void cReceiver::Detach(void)
 {
   if (m_device)
+  {
+    dsyslog("detaching receiver");
     m_device->Receiver()->Detach(this);
+  }
 }
 
 bool cReceiver::DeviceAttached(cDevice* device) const
@@ -109,10 +114,36 @@ bool cReceiver::DeviceAttached(cDevice* device) const
 
 void cReceiver::AttachDevice(cDevice* device)
 {
+  dsyslog("attaching device '%s' to receiver '%p'", device ? device->DeviceName().c_str() : "<nil>", this);
   m_device = device;
 }
 
 void cReceiver::DetachDevice(void)
 {
   m_device = NULL;
+}
+
+bool cReceiver::AddToPIDSubsystem(cDevicePIDSubsystem* pidSys)
+{
+  assert(pidSys);
+
+  for (size_t n = 0; n < m_numPids; n++)
+  {
+    if (!pidSys->AddPid(m_pids[n]))
+    {
+      for ( ; n-- > 0; )
+        pidSys->DelPid(m_pids[n]);
+      return false;
+    }
+  }
+
+  return true;
+}
+
+void cReceiver::RemoveFromPIDSubsystem(cDevicePIDSubsystem* pidSys)
+{
+  assert(pidSys);
+
+  for (int n = 0; n < m_numPids; n++)
+    pidSys->DelPid(m_pids[n]);
 }

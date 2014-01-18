@@ -16,20 +16,25 @@
 #define MAXRECEIVEPIDS  64 // the maximum number of PIDs per receiver
 
 class cDevice;
+class cDevicePIDSubsystem;
 
 class cReceiver {
   friend class cDevice;
 private:
   tChannelID channelID;
   cDevice*   m_device;
-public: // TODO
-  int priority;
-  int pids[MAXRECEIVEPIDS];
-  int numPids;
-  bool WantsPid(int Pid);
+  size_t     m_numPids;
+  int        m_pids[MAXRECEIVEPIDS];
+  int        m_priority;
+
 protected:
   void Detach(void);
+
 public: // TODO
+  bool WantsPid(int Pid);
+  int Priority(void) const { return m_priority; }
+  bool AddToPIDSubsystem(cDevicePIDSubsystem* pidSys);
+  void RemoveFromPIDSubsystem(cDevicePIDSubsystem* pidSys);
   bool DeviceAttached(cDevice* device) const;
   void AttachDevice(cDevice* device);
   void DetachDevice(void);

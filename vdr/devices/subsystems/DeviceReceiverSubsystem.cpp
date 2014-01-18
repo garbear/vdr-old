@@ -58,7 +58,7 @@ int cDeviceReceiverSubsystem::Priority()
   for (int i = 0; i < MAXRECEIVERS; i++)
   {
     if (m_receivers[i])
-      priority = std::max(m_receivers[i]->priority, priority);
+      priority = std::max(m_receivers[i]->Priority(), priority);
   }
   return priority;
 }
@@ -93,15 +93,8 @@ bool cDeviceReceiverSubsystem::AttachReceiver(cReceiver *receiver)
   {
     if (!m_receivers[i])
     {
-      for (int n = 0; n < receiver->numPids; n++)
-      {
-        if (!PID()->AddPid(receiver->pids[n]))
-        {
-          for ( ; n-- > 0; )
-            PID()->DelPid(receiver->pids[n]);
-          return false;
-        }
-      }
+      if (!receiver->AddToPIDSubsystem(PID()))
+        return false;
       receiver->Activate(true);
       Device()->Lock();
       receiver->AttachDevice(Device());
@@ -135,8 +128,7 @@ void cDeviceReceiverSubsystem::Detach(cReceiver *receiver)
       receiver->DetachDevice();
       Device()->Unlock();
       receiver->Activate(false);
-      for (int n = 0; n < receiver->numPids; n++)
-        PID()->DelPid(receiver->pids[n]);
+      receiver->RemoveFromPIDSubsystem(PID());
     }
     else if (m_receivers[i])
       receiversLeft = true;
