@@ -136,7 +136,7 @@ public:
    * \param oldChannel Skip comparing channel IDs with this channel
    * \return true if no other channels (excluding oldChannel) have the same channel ID
    */
-  bool HasUniqueChannelID(const ChannelPtr &newChannel, const ChannelPtr &oldChannel = ChannelPtr()) const;
+  bool HasUniqueChannelID(const ChannelPtr &newChannel, const ChannelPtr &oldChannel = cChannel::EmptyChannel) const;
 
   /*!
    * \brief Return the number of the highest channel (I think - TODO)

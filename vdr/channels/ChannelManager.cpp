@@ -297,7 +297,7 @@ ChannelPtr cChannelManager::GetByNumber(int number, int skipGap /* = 0 */)
       previous = channel;
     }
   }
-  return ChannelPtr();
+  return cChannel::EmptyChannel;
 }
 
 ChannelPtr cChannelManager::GetByServiceID(unsigned short serviceID, int source, int transponder)
@@ -313,7 +313,7 @@ ChannelPtr cChannelManager::GetByServiceID(unsigned short serviceID, int source,
         return channel;
     }
   }
-  return ChannelPtr();
+  return cChannel::EmptyChannel;
 }
 
 ChannelPtr cChannelManager::GetByChannelID(const tChannelID &channelID, bool bTryWithoutRid /* = false */, bool bTryWithoutPolarization /* = false */)
@@ -357,7 +357,7 @@ ChannelPtr cChannelManager::GetByChannelID(const tChannelID &channelID, bool bTr
       }
     }
   }
-  return ChannelPtr();
+  return cChannel::EmptyChannel;
 }
 
 ChannelPtr cChannelManager::GetByChannelID(int nid, int tid, int sid)
@@ -373,7 +373,7 @@ ChannelPtr cChannelManager::GetByChannelID(int nid, int tid, int sid)
         return channel;
     }
   }
-  return ChannelPtr();
+  return cChannel::EmptyChannel;
 }
 
 ChannelPtr cChannelManager::GetByTransponderID(tChannelID channelID)
@@ -388,7 +388,7 @@ ChannelPtr cChannelManager::GetByTransponderID(tChannelID channelID)
     if (channel->Nid() == nid && channel->Tid() == tid && channel->Source() == source)
       return channel;
   }
-  return ChannelPtr();
+  return cChannel::EmptyChannel;
 }
 
 int cChannelManager::GetNextGroup(unsigned int index) const
@@ -466,7 +466,7 @@ void cChannelManager::ReNumber()
   }
 }
 
-bool cChannelManager::HasUniqueChannelID(const ChannelPtr &newChannel, const ChannelPtr &oldChannel /* = ChannelPtr() */) const
+bool cChannelManager::HasUniqueChannelID(const ChannelPtr &newChannel, const ChannelPtr &oldChannel /* = cChannel::EmptyChannel */) const
 {
   assert(newChannel.get());
 
