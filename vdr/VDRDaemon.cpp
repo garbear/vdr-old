@@ -66,7 +66,9 @@ bool cVDRDaemon::Init()
   CSpecialProtocol::LogPaths();
 
   // Create directories
+  CDirectory::Create("special://home/epg/");
   CDirectory::Create("special://home/system/");
+  CDirectory::Create("special://home/video/");
 
   if (!Setup.Load("special://home/system/setup.conf"))
     Setup.Load("special://vdr/system/setup.conf");
@@ -103,35 +105,10 @@ bool cVDRDaemon::Init()
   DeletedRecordings.Update();
 
   // EPG data:
-  if (!cSettings::Get().m_EpgDataFileName.empty())
-  {
-    std::string EpgDirectory;
-    if (CDirectory::CanWrite(cSettings::Get().m_EpgDataFileName))
-    {
-      EpgDirectory = cSettings::Get().m_EpgDataFileName;
-      cSettings::Get().m_EpgDataFileName = DEFAULTEPGDATAFILENAME;
-    }
-    else if (cSettings::Get().m_EpgDataFileName.at(0) != '/' && strcmp(".", cSettings::Get().m_EpgDataFileName.c_str()))
-    {
-      EpgDirectory = cSettings::Get().m_CacheDirectory;
-    }
+  cSchedules::SetEpgDataFileName("special://home/epg/epg.data");
 
-    if (!EpgDirectory.empty())
-    {
-      std::string EpgFile = EpgDirectory;
-      if (strcmp(EpgFile.substr(EpgFile.length() - 1, 1).c_str(), "/"))
-        EpgFile.append("/");
-      EpgFile.append(cSettings::Get().m_EpgDataFileName.c_str());
-      cSchedules::SetEpgDataFileName(EpgFile.c_str());
-    }
-    else
-    {
-      cSchedules::SetEpgDataFileName(cSettings::Get().m_EpgDataFileName.c_str());
-    }
-
-    m_EpgDataReader = new cEpgDataReader;
-    m_EpgDataReader->Start();
-  }
+  m_EpgDataReader = new cEpgDataReader;
+  m_EpgDataReader->Start();
 
   cDeviceManager::Get().Initialise();
 

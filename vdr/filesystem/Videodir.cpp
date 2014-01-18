@@ -26,7 +26,7 @@
 
 using namespace std;
 
-const char *VideoDirectory = VIDEODIR;
+const char *VideoDirectory = "special://home/video"; // TODO
 
 void SetVideoDirectory(const char *Directory)
 {

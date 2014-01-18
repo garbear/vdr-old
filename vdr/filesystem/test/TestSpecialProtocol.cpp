@@ -35,7 +35,6 @@ protected:
   {
     vdr = CSpecialProtocol::TranslatePath("special://vdr");
     home = CSpecialProtocol::TranslatePath("special://home");
-    profile = CSpecialProtocol::TranslatePath("special://profile");
     temp = CSpecialProtocol::TranslatePath("special://temp");
     xbmchome = CSpecialProtocol::TranslatePath("special://xbmc-home");
     xbmctemp = CSpecialProtocol::TranslatePath("special://xbmc-temp");
@@ -45,7 +44,6 @@ protected:
   {
     CSpecialProtocol::SetVDRPath(vdr);
     CSpecialProtocol::SetHomePath(home);
-    CSpecialProtocol::SetProfilePath(profile);
     CSpecialProtocol::SetTempPath(temp);
     CSpecialProtocol::SetXBMCHomePath(xbmchome);
     CSpecialProtocol::SetXBMCTempPath(xbmctemp);
@@ -54,7 +52,6 @@ protected:
 private:
   string vdr;
   string home;
-  string profile;
   string temp;
   string xbmchome;
   string xbmctemp;
@@ -82,15 +79,6 @@ TEST_F(TestSpecialProtocol, SetHomePath)
   const char *ref = "/path/to/home/";
 
   CSpecialProtocol::SetHomePath(ref);
-  EXPECT_STREQ(ref, CSpecialProtocol::TranslatePath(path).c_str());
-}
-
-TEST_F(TestSpecialProtocol, SetProfilePath)
-{
-  const char *path = "special://profile";
-  const char *ref = "/path/to/profile/";
-
-  CSpecialProtocol::SetProfilePath(ref);
   EXPECT_STREQ(ref, CSpecialProtocol::TranslatePath(path).c_str());
 }
 
@@ -136,11 +124,10 @@ TEST_F(TestSpecialProtocol, ComparePath)
   EXPECT_FALSE(CSpecialProtocol::ComparePath(path_vdr, path_home));
 }
 
-/*
 TEST_F(TestSpecialProtocol, LogPaths)
 {
+  CSpecialProtocol::LogPaths();
 }
-*/
 
 TEST_F(TestSpecialProtocol, TranslatePath)
 {

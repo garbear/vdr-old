@@ -37,7 +37,7 @@
  *                            Linux: ~/.vdr/
  *                            OS X:  ~/Library/Application Support/VDR/
  *                            Win32: ~/Application Data/VDR/
- * special://profile/     - the user profile data directory
+ *                            XBMC add-on: special://profile/addon_data/service.vdr/
  * special://temp/        - the temporary directory
  *                            Linux: ~/tmp/vdr<username>
  *                            OS X:  ~/
@@ -57,7 +57,6 @@ public:
   static bool SetFileBasePath();
   static void SetVDRPath(const std::string &path);
   static void SetHomePath(const std::string &path);
-  static void SetProfilePath(const std::string &path);
   static void SetTempPath(const std::string &path);
   static void SetXBMCHomePath(const std::string &path);
   static void SetXBMCTempPath(const std::string &path);

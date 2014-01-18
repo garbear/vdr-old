@@ -41,16 +41,6 @@
 #include <sys/syslog.h>
 #include <unistd.h>
 
-#define LIRC_DEVICE "/var/run/lirc/lircd"
-#define CACHEDIR    "/var/cache/vdr"
-#define RESDIR      "/usr/local/share/vdr"
-#define PLUGINDIR   "/usr/local/lib/vdr"
-#define LOCDIR      "/usr/local/share/locale"
-
-#define DEFAULTVIDEODIR    VIDEODIR
-#define DEFAULTPLUGINDIR   PLUGINDIR
-#define DEFAULTLOCDIR      LOCDIR
-
 // for easier orientation, this is column 80|
 #define MSG_HELP "Usage: vdr [OPTIONS]\n\n" \
                  "            --cachedir=DIR save cache files in DIR (default: %s)\n" \
@@ -69,11 +59,6 @@
                  "                           empty (as in \",,1\" to only set ENC), the defaults\n" \
                  "                           apply\n" \
                  "            --edit=REC     cut recording REC and exit\n" \
-                 "  -E FILE,  --epgfile=FILE write the EPG data into the given FILE (default is\n" \
-                 "                           '%s' in the cache directory)\n" \
-                 "                           '-E-' disables this\n" \
-                 "                           if FILE is a directory, the default EPG file will be\n" \
-                 "                           created in that directory\n" \
                  "            --filesize=SIZE limit video files to SIZE bytes (default is %dM)\n" \
                  "                           only useful in conjunction with --edit\n" \
                  "            --genindex=REC generate index for recording REC and exit\n" \
@@ -112,16 +97,13 @@
 cSettings::cSettings()
 {
   m_DaemonMode = false;
-  m_EpgDataFileName = DEFAULTEPGDATAFILENAME;
   m_DisplayHelp = false;
   m_SysLogTarget = LOG_USER;
-  m_LocaleDirectory = DEFAULTLOCDIR;
 #if defined(VDR_USER)
   m_VdrUser = VDR_USER;
 #endif
   m_UserDump = false;
   m_DisplayVersion = false;
-  m_VideoDirectory = DEFAULTVIDEODIR;
   m_StartedAsRoot = false;
   m_HasStdin = (tcgetpgrp(STDIN_FILENO) == getpid() || getppid() != (pid_t)1) && tcgetattr(STDIN_FILENO, &m_savedTm) == 0;
 
@@ -131,7 +113,11 @@ cSettings::cSettings()
   m_TimeshiftMode           = 0;
   m_TimeshiftBufferSize     = 5;
   m_TimeshiftBufferFileSize = 6;
-  m_ConfigDirectory         = DEFAULTCONFDIR;
+
+  // TODO: Load these paths from settings (assuming they are even used)
+  m_LocaleDirectory = "/usr/local/share/locale";
+  m_VideoDirectory = "special://home/video";
+  m_ConfigDirectory = "special://home/system";
 }
 
 cSettings::~cSettings()
@@ -150,7 +136,6 @@ bool cSettings::LoadFromCmdLine(int argc, char *argv[])
       { "device",    required_argument, NULL, 'D' },
       { "dirnames",  required_argument, NULL, 'd' | 0x100 },
       { "edit",      required_argument, NULL, 'e' | 0x100 },
-      { "epgfile",   required_argument, NULL, 'E' },
       { "filesize",  required_argument, NULL, 'f' | 0x100 },
       { "genindex",  required_argument, NULL, 'g' | 0x100 },
       { "grab",      required_argument, NULL, 'g' },
@@ -174,7 +159,7 @@ bool cSettings::LoadFromCmdLine(int argc, char *argv[])
     };
 
   int c;
-  while ((c = getopt_long(argc, argv, "c:dD:e:E:g:hi:L:m:o:r:s:t:u:v:Vw:",
+  while ((c = getopt_long(argc, argv, "c:dD:e:g:hi:L:m:o:r:s:t:u:v:Vw:",
       long_options, NULL)) != -1)
   {
     switch (c)
@@ -265,10 +250,6 @@ bool cSettings::LoadFromCmdLine(int argc, char *argv[])
     // edit
     case 'e' | 0x100:
       return CutRecording(optarg);
-    // epgfile
-    case 'E':
-      m_EpgDataFileName = (*optarg != '-' ? optarg : "");
-      break;
     // filesize
     case 'f' | 0x100:
       Setup.MaxVideoFileSize = StrToNum(optarg) / MEGABYTE(1);
@@ -389,17 +370,16 @@ bool cSettings::LoadFromCmdLine(int argc, char *argv[])
      if (m_DisplayHelp)
      {
         printf(MSG_HELP,
-               DEFAULTCACHEDIR,
-               DEFAULTCONFDIR,
+               "DEFAULTCACHEDIR",
+               "DEFAULTCONFDIR",
                PATH_MAX - 1,
                NAME_MAX,
-               DEFAULTEPGDATAFILENAME,
                MAXVIDEOFILESIZEDEFAULT,
-               DEFAULTPLUGINDIR,
-               LIRC_DEVICE,
-               DEFAULTLOCDIR,
-               DEFAULTRESDIR,
-               DEFAULTVIDEODIR
+               "DEFAULTPLUGINDIR",
+               "LIRC_DEVICE",
+               "DEFAULTLOCDIR",
+               "DEFAULTRESDIR",
+               "DEFAULTVIDEODIR"
                );
      }
 
@@ -429,13 +409,6 @@ bool cSettings::LoadFromCmdLine(int argc, char *argv[])
         return false;
     }
     isyslog("switched to user '%s'", m_VdrUser.c_str());
-  }
-
-  // Check the video directory:
-  if (!CDirectory::CanWrite(m_VideoDirectory))
-  {
-    fprintf(stderr, "vdr: can't access video directory %s\n", m_VideoDirectory.c_str());
-    return false;
   }
 
   // Daemon mode:

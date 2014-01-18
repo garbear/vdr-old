@@ -42,7 +42,6 @@ using namespace std;
 
 #define VDR_ROOT        "vdr"
 #define HOME_ROOT       "home"
-#define PROFILE_ROOT    "profile"
 #define TEMP_ROOT       "temp"
 #define XBMCHOME_ROOT   "xbmc-home"
 #define XBMCTEMP_ROOT   "xbmc-temp"
@@ -210,7 +209,7 @@ std::string CSpecialProtocol::GetHomePath(const std::string strEnvVariable /* = 
 
 bool CSpecialProtocol::SetFileBasePath()
 {
-  std::string vdrPath = GetHomePath();
+  string vdrPath = GetHomePath();
   if (vdrPath.empty())
   {
     esyslog("Failed to find the base path");
@@ -222,11 +221,17 @@ bool CSpecialProtocol::SetFileBasePath()
 
 #ifdef TARGET_XBMC
   SetHomePath(ADDON_PROFILE);
-  SetProfilePath(ADDON_PROFILE);
 #else
   SetHomePath(vdrPath); // TODO
-  SetProfilePath(vdrPath); // TODO
 #endif
+
+  string tempPath = "special://temp"; // TODO: GetTempPath()
+  if (tempPath.empty())
+  {
+    esyslog("Failed to determine the temp path");
+    return false;
+  }
+  //SetTempPath(tempPath);
 
   SetXBMCHomePath("special://home");
   SetXBMCTempPath("special://temp");
@@ -242,11 +247,6 @@ void CSpecialProtocol::SetVDRPath(const string &dir)
 void CSpecialProtocol::SetHomePath(const string &dir)
 {
   SetPath(HOME_ROOT, dir);
-}
-
-void CSpecialProtocol::SetProfilePath(const string &dir)
-{
-  SetPath(PROFILE_ROOT, dir);
 }
 
 void CSpecialProtocol::SetTempPath(const string &dir)
@@ -333,7 +333,6 @@ string CSpecialProtocol::TranslatePath(const CURL &url)
   /*else*/ if (RootDir == VDR_ROOT || // TODO: this used to be an "else if"
            RootDir == HOME_ROOT ||
            RootDir == TEMP_ROOT ||
-           RootDir == PROFILE_ROOT ||
            RootDir == XBMCHOME_ROOT ||
            RootDir == XBMCTEMP_ROOT)
   {
@@ -420,7 +419,9 @@ void CSpecialProtocol::LogPaths()
 {
   isyslog("special://" VDR_ROOT "/ is mapped to: %s", GetPath(VDR_ROOT).c_str());
   isyslog("special://" HOME_ROOT "/ is mapped to: %s", GetPath(HOME_ROOT).c_str());
-  isyslog("special://" PROFILE_ROOT "/ is mapped to: %s", GetPath(PROFILE_ROOT).c_str());
+  isyslog("special://" TEMP_ROOT "/ is mapped to: %s", GetPath(TEMP_ROOT).c_str());
+  isyslog("special://" XBMCHOME_ROOT "/ is mapped to: %s", GetPath(XBMCHOME_ROOT).c_str());
+  isyslog("special://" XBMCTEMP_ROOT "/ is mapped to: %s", GetPath(XBMCTEMP_ROOT).c_str());
 }
 
 // private routines, to ensure we only set/get an appropriate path

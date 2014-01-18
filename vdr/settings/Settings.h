@@ -24,12 +24,6 @@
 #include <stdint.h>
 #include <limits.h>
 
-#define DEFAULTEPGDATAFILENAME "epg.data"
-
-#define DEFAULTCONFDIR  "/var/lib/vdr"
-#define DEFAULTCACHEDIR "/var/cache/vdr"
-#define DEFAULTRESDIR   "/usr/local/share/vdr"
-#define VIDEODIR        "/srv/vdr/video" // used in videodir.cpp
 #define MAXDEVICES 64
 
 // default settings
@@ -53,7 +47,6 @@ public:
   std::string    m_CacheDirectory;
   std::string    m_ConfigDirectory;
   bool           m_DaemonMode;
-  std::string    m_EpgDataFileName;
   bool           m_DisplayHelp;
   int            m_SysLogTarget;
   std::string    m_LocaleDirectory;
