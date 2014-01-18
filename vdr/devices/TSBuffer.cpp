@@ -33,8 +33,6 @@ cTSBuffer::cTSBuffer(int file, unsigned int size, int cardIndex)
    m_cardIndex(cardIndex),
    m_bDelivered(false)
 {
-  //SetDescription("TS buffer on device %d", cardIndex);
-
   m_ringBuffer = new cRingBufferLinear(size, TS_SIZE, true, "TS");
   m_ringBuffer->SetTimeouts(100, 100);
   m_ringBuffer->SetIoThrottle();
@@ -50,6 +48,8 @@ cTSBuffer::~cTSBuffer()
 
 void *cTSBuffer::Process()
 {
+  dsyslog("created TS buffer on device %d", m_cardIndex);
+
   if (m_ringBuffer)
   {
     bool firstRead = true;

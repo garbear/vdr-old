@@ -23,35 +23,44 @@ cReceiver::cReceiver(const cChannel *Channel, int Priority)
 
 cReceiver::~cReceiver()
 {
-  if (device) {
-     const char *msg = "ERROR: cReceiver has not been detached yet! This is a design fault and VDR will segfault now!";
-     esyslog("%s", msg);
-     fprintf(stderr, "%s\n", msg);
-     *(char *)0 = 0; // cause a segfault
-     }
+  if (device)
+  {
+    const char *msg =
+        "ERROR: cReceiver has not been detached yet! This is a design fault and VDR will segfault now!";
+    esyslog("%s", msg);
+    fprintf(stderr, "%s\n", msg);
+    *(char *) 0 = 0; // XXX dafuq... cause a segfault
+  }
 }
 
 bool cReceiver::AddPid(int Pid)
 {
-  if (Pid) {
-     if (numPids < MAXRECEIVEPIDS)
-        pids[numPids++] = Pid;
-     else {
-        dsyslog("too many PIDs in cReceiver (Pid = %d)", Pid);
-        return false;
-        }
-     }
+  if (Pid && !WantsPid(Pid))
+  {
+    if (numPids < MAXRECEIVEPIDS)
+    {
+      pids[numPids++] = Pid;
+      esyslog("adding PID %d to receiver", Pid);
+    }
+    else
+    {
+      esyslog("too many PIDs in cReceiver (Pid = %d)", Pid);
+      return false;
+    }
+  }
   return true;
 }
 
 bool cReceiver::AddPids(const int *Pids)
 {
-  if (Pids) {
-     while (*Pids) {
-           if (!AddPid(*Pids++))
-              return false;
-           }
-     }
+  if (Pids)
+  {
+    while (*Pids)
+    {
+      if (!AddPid(*Pids++))
+        return false;
+    }
+  }
   return true;
 }
 
@@ -63,25 +72,27 @@ bool cReceiver::AddPids(int Pid1, int Pid2, int Pid3, int Pid4, int Pid5, int Pi
 bool cReceiver::SetPids(const cChannel *Channel)
 {
   numPids = 0;
-  if (Channel) {
-     channelID = Channel->GetChannelID();
-     return AddPid(Channel->Vpid()) &&
-            (Channel->Ppid() == Channel->Vpid() || AddPid(Channel->Ppid())) &&
-            AddPids(Channel->Apids()) &&
-            AddPids(Channel->Dpids()) &&
-            AddPids(Channel->Spids());
-     }
+  if (Channel)
+  {
+    channelID = Channel->GetChannelID();
+    return AddPid(Channel->Vpid())
+        && (Channel->Ppid() == Channel->Vpid() || AddPid(Channel->Ppid()))
+        && AddPids(Channel->Apids()) && AddPids(Channel->Dpids())
+        && AddPids(Channel->Spids());
+  }
   return true;
 }
 
 bool cReceiver::WantsPid(int Pid)
 {
-  if (Pid) {
-     for (int i = 0; i < numPids; i++) {
-         if (pids[i] == Pid)
-            return true;
-         }
-     }
+  if (Pid)
+  {
+    for (int i = 0; i < numPids; i++)
+    {
+      if (pids[i] == Pid)
+        return true;
+    }
+  }
   return false;
 }
 

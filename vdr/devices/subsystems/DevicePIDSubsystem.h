@@ -87,7 +87,7 @@ public: // TODO
   virtual bool SetPid(cPidHandle &handle, int type, bool bOn) { return false; }
 
 private:
-  static void PrintPIDs(const char *s);
+  void PrintPIDs(const char *s);
 
 public: // TODO
   cPidHandle m_pidHandles[MAXPIDHANDLES];
