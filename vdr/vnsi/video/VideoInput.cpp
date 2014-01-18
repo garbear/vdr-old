@@ -55,7 +55,7 @@ cLiveReceiver::cLiveReceiver(cVideoInput *VideoInput, ChannelPtr Channel, int Pr
  : cReceiver(Channel.get(), Priority)//XXX
  , m_VideoInput(VideoInput)
 {
-  SetPids(NULL);
+  SetPids(Channel.get());
 }
 
 cLiveReceiver::~cLiveReceiver()
