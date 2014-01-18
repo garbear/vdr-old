@@ -302,6 +302,10 @@ ChannelPtr cChannelManager::GetByNumber(int number, int skipGap /* = 0 */)
 
 ChannelPtr cChannelManager::GetByServiceID(unsigned short serviceID, int source, int transponder)
 {
+  assert(serviceID);
+  assert(source);
+  assert(transponder);
+
   ChannelSidMap::iterator it = m_channelSids.find(serviceID);
   if (it != m_channelSids.end())
   {
@@ -530,7 +534,7 @@ void cChannelManager::SetModified(bool bByUser /* = false */)
 
 ChannelPtr cChannelManager::NewChannel(const cChannel& transponder, const string& name, const string& shortName, const string& provider, int nid, int tid, int sid, int rid /* = 0 */)
 {
-  //dsyslog("creating new channel '%s,%s;%s' on %s transponder %d with id %d-%d-%d-%d", name.c_str(), shortName.c_str(), provider.c_str(), cSource::ToString(transponder.Source()).c_str(), transponder.Transponder(), nid, tid, sid, rid);
+  dsyslog("creating new channel '%s,%s;%s' on %s transponder %d with id %d-%d-%d-%d", name.c_str(), shortName.c_str(), provider.c_str(), cSource::ToString(transponder.Source()).c_str(), transponder.Transponder(), nid, tid, sid, rid);
   ChannelPtr newChannel = ChannelPtr(new cChannel);
   if (newChannel)
   {
