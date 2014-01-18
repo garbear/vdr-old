@@ -106,6 +106,7 @@ private:
     tsLocked
   };
 
+  void SetTunerStatus(eTunerStatus status);
 
   cDvbDevice* const           m_device;
 

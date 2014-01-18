@@ -207,7 +207,7 @@ void cDvbTuner::Close()
     m_fileDescriptor = INVALID_FD;
   }
 
-  m_tunerStatus = tsIdle;
+  SetTunerStatus(tsIdle);
   m_newSet.Broadcast();
   m_locked.Broadcast();
   StopThread(3000);
@@ -271,6 +271,36 @@ bool cDvbTuner::QueryDvbApiVersion()
   return true;
 }
 
+void cDvbTuner::SetTunerStatus(eTunerStatus status)
+{
+  if (m_tunerStatus != status)
+  {
+    m_tunerStatus = status;
+    const char* strStatus;
+
+    switch (m_tunerStatus)
+    {
+    case tsIdle:
+      strStatus = "idle";
+      break;
+    case tsSet:
+      strStatus = "set frequency";
+      break;
+    case tsTuned:
+      strStatus = "tuned";
+      break;
+    case tsLocked:
+      strStatus = "locked";
+      break;
+    default:
+      strStatus = "unknown";
+      break;
+    }
+
+    dsyslog("tuner status of device '%s' changed to '%s'", Name().c_str(), strStatus);
+  }
+}
+
 void *cDvbTuner::Process()
 {
   cTimeMs Timer;
@@ -292,13 +322,13 @@ void *cDvbTuner::Process()
     case tsIdle:
       break;
     case tsSet:
-      m_tunerStatus = SetFrontend() ? tsTuned : tsIdle;
+      SetTunerStatus(SetFrontend() ? tsTuned : tsIdle);
       Timer.Set(m_tuneTimeout + (m_scr ? rand() % SCR_RANDOM_TIMEOUT : 0));
       continue;
     case tsTuned:
       if (Timer.TimedOut())
       {
-        m_tunerStatus = tsSet;
+        SetTunerStatus(tsSet);
         m_lastDiseqc = NULL;
         if (time(NULL) - m_lastTimeoutReport > 60) // let's not get too many of these
         {
@@ -312,7 +342,7 @@ void *cDvbTuner::Process()
     case tsLocked:
       if (Status & FE_REINIT)
       {
-        m_tunerStatus = tsSet;
+        SetTunerStatus(tsSet);
         m_lastDiseqc = NULL;
         isyslog("frontend %d/%d was reinitialized", Adapter(), Frontend());
         m_lastTimeoutReport = 0;
@@ -325,7 +355,7 @@ void *cDvbTuner::Process()
           isyslog("frontend %d/%d regained lock on channel %d, tp %d", Adapter(), Frontend(), m_channel.Number(), m_channel.Transponder());
           LostLock = false;
         }
-        m_tunerStatus = tsLocked;
+        SetTunerStatus(tsLocked);
         m_bLocked = m_tunerStatus >= tsLocked;
         m_locked.Broadcast();
         m_lastTimeoutReport = 0;
@@ -334,7 +364,7 @@ void *cDvbTuner::Process()
       {
         LostLock = true;
         isyslog("frontend %d/%d lost lock on channel %d, tp %d", Adapter(), Frontend(), m_channel.Number(), m_channel.Transponder());
-        m_tunerStatus = tsTuned;
+        SetTunerStatus(tsTuned);
         Timer.Set(m_lockTimeout);
         m_lastTimeoutReport = 0;
         continue;
@@ -476,7 +506,7 @@ void cDvbTuner::SetChannel(const cChannel &channel)
   }
   CLockObject lock(m_mutex);
   if (!IsTunedTo(channel))
-    m_tunerStatus = tsSet;
+    SetTunerStatus(tsSet);
   m_channel = channel;
   m_lastTimeoutReport = 0;
   m_bNewSet = true;
@@ -489,7 +519,7 @@ void cDvbTuner::SetChannel(const cChannel &channel)
 void cDvbTuner::ClearChannel()
 {
   CLockObject lock(m_mutex);
-  m_tunerStatus = tsIdle;
+  SetTunerStatus(tsIdle);
   ResetToneAndVoltage();
 
 //  if (m_bondedTuner && m_device->IsPrimaryDevice())
