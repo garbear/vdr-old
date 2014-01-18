@@ -48,6 +48,8 @@ using namespace std;
 
 #define ADDON_PROFILE   "special://profile/addon_data/service.vdr/"
 
+#define TEMP_DIR_BASE   "vdrtempdir" // Base name for temp directory
+
 map<string, string> CSpecialProtocol::m_pathMap;
 
 std::string CSpecialProtocol::GetExecutablePath()
@@ -207,6 +209,39 @@ std::string CSpecialProtocol::GetHomePath(const std::string strEnvVariable /* = 
   return strPath;
 }
 
+string CSpecialProtocol::GetTemporaryPath()
+{
+  static string tempPath;
+  if (!tempPath.empty())
+    return tempPath;
+
+#ifdef TARGET_WINDOWS
+
+  TCHAR lpTempPathBuffer[MAX_PATH];
+  if (GetTempPath(MAX_PATH, lpTempPathBuffer))
+  {
+    string vdrTempPath = lpTempPathBuffer;
+    if (GetTempFileName(vdrTempPath.c_str(), TEMP_DIR_BASE, 0, lpTempPathBuffer))
+    {
+      DeleteFile(lpTempPathBuffer);
+      if (CreateDirectory(lpTempPathBuffer, NULL))
+        tempPath = lpTempPathBuffer;
+    }
+  }
+
+#else
+
+  char buf[MAX_PATH];
+  strcpy(buf, "/tmp/" TEMP_DIR_BASE "XXXXXX");
+  char* tmp = mkdtemp(buf);
+  if (tmp != NULL)
+    tempPath = tmp;
+
+#endif
+
+  return tempPath;
+}
+
 bool CSpecialProtocol::SetFileBasePath()
 {
   string vdrPath = GetHomePath();
@@ -225,13 +260,13 @@ bool CSpecialProtocol::SetFileBasePath()
   SetHomePath(vdrPath); // TODO
 #endif
 
-  string tempPath = "special://temp"; // TODO: GetTempPath()
+  string tempPath = GetTemporaryPath();
   if (tempPath.empty())
   {
     esyslog("Failed to determine the temp path");
     return false;
   }
-  //SetTempPath(tempPath);
+  SetTempPath(tempPath);
 
   SetXBMCHomePath("special://home");
   SetXBMCTempPath("special://temp");

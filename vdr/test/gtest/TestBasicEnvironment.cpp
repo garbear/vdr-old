@@ -40,9 +40,6 @@ using namespace std;
 
 void TestBasicEnvironment::SetUp()
 {
-  char *tmp;
-  CFile *f;
-
   /* NOTE: The below is done to fix memleak warning about unitialized variable
    * in vdrutil::GlobalsSingleton<CAdvancedSettings>::getInstance().
    */
@@ -68,34 +65,6 @@ void TestBasicEnvironment::SetUp()
   //g_powerManager.Initialize(); // TODO
   //CSettings::Get().Initialize(); // TODO
 
-  /* Create a temporary directory and set it to be used throughout the
-   * test suite run.
-   */
-#ifdef TARGET_WINDOWS
-
-  TCHAR lpTempPathBuffer[MAX_PATH];
-  if (!GetTempPath(MAX_PATH, lpTempPathBuffer))
-    SetUpError();
-  string vdrTempPath = lpTempPathBuffer;
-  if (!GetTempFileName(vdrTempPath.c_str(), "vdrtempdir", 0, lpTempPathBuffer))
-    SetUpError();
-  DeleteFile(lpTempPathBuffer);
-  if (!CreateDirectory(lpTempPathBuffer, NULL))
-    SetUpError();
-  CSpecialProtocol::SetTempPath(lpTempPathBuffer);
-
-#else
-
-  char buf[MAX_PATH];
-  strcpy(buf, "/tmp/vdrtempdirXXXXXX");
-
-  if ((tmp = mkdtemp(buf)) == NULL)
-    SetUpError();
-  CSpecialProtocol::SetTempPath(tmp);
-  CSpecialProtocol::SetXBMCTempPath(tmp); // TODO
-
-#endif
-
   /* Create and delete a tempfile to initialize the VFS (really to initialize
    * CLibcdio). This is done so that the initialization of the VFS does not
    * affect the performance results of the test cases.
@@ -103,7 +72,7 @@ void TestBasicEnvironment::SetUp()
   /* TODO: Make the initialization of the VFS here optional so it can be
    * testable in a test case.
    */
-  f = VDR_CREATETEMPFILE("");
+  CFile* f = VDR_CREATETEMPFILE("");
   if (!f || !VDR_DELETETEMPFILE(f))
   {
     TearDown();

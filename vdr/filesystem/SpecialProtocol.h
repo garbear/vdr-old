@@ -71,6 +71,7 @@ public:
 private:
   static std::string GetExecutablePath();
   static std::string GetHomePath(const std::string strEnvVariable = VDR_HOME_ENV_VARIABLE);
+  static std::string GetTemporaryPath();
 
   static void SetPath(const std::string &key, const std::string &path);
   static std::string GetPath(const std::string &key);
