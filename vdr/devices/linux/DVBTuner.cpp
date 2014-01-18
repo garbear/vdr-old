@@ -482,8 +482,8 @@ void cDvbTuner::SetChannel(const cChannel &channel)
   m_bNewSet = true;
   m_newSet.Broadcast();
 
-  if (m_bondedTuner && m_device->IsPrimaryDevice())
-    cDeviceManager::Get().PrimaryDevice()->PID()->DelLivePids(); // 'device' is const, so we must do it this way
+//  if (m_bondedTuner && m_device->IsPrimaryDevice())
+//    cDeviceManager::Get().PrimaryDevice()->PID()->DelLivePids(); // 'device' is const, so we must do it this way
 }
 
 void cDvbTuner::ClearChannel()
@@ -492,8 +492,8 @@ void cDvbTuner::ClearChannel()
   m_tunerStatus = tsIdle;
   ResetToneAndVoltage();
 
-  if (m_bondedTuner && m_device->IsPrimaryDevice())
-    cDeviceManager::Get().PrimaryDevice()->PID()->DelLivePids(); // 'device' is const, so we must do it this way
+//  if (m_bondedTuner && m_device->IsPrimaryDevice())
+//    cDeviceManager::Get().PrimaryDevice()->PID()->DelLivePids(); // 'device' is const, so we must do it this way
 }
 
 bool cDvbTuner::Locked(int timeoutMs)

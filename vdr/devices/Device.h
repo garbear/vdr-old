@@ -91,8 +91,6 @@ protected:
 public:
   virtual ~cDevice();
 
-  bool IsPrimaryDevice() const;
-
   /*!
    * \brief Returns the card index of this device
    * \return The card index in the range 0..MAXDEVICES-1

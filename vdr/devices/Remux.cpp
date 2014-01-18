@@ -565,9 +565,8 @@ uchar *cPatPmtGenerator::GetPmt(int &Index)
 
 // --- cPatPmtParser ---------------------------------------------------------
 
-cPatPmtParser::cPatPmtParser(bool UpdatePrimaryDevice)
+cPatPmtParser::cPatPmtParser(void)
 {
-  updatePrimaryDevice = UpdatePrimaryDevice;
   Reset();
 }
 
@@ -659,8 +658,6 @@ void cPatPmtParser::ParsePmt(const uchar *Data, int Length)
      dbgpatpmt("     pcr = %d\n", Pmt.getPCRPid());
      if (pmtVersion == Pmt.getVersionNumber())
         return;
-     if (updatePrimaryDevice)
-       cDeviceManager::Get().PrimaryDevice()->Track()->ClrAvailableTracks(false, true);
      int NumApids = 0;
      int NumDpids = 0;
      int NumSpids = 0;
@@ -716,8 +713,6 @@ void cPatPmtParser::ParsePmt(const uchar *Data, int Length)
                                }
                              delete d;
                              }
-                         if (updatePrimaryDevice)
-                           cDeviceManager::Get().PrimaryDevice()->Track()->SetAvailableTrack(ttAudio, NumApids, apids[NumApids], alangs[NumApids]);
                          NumApids++;
                          apids[NumApids] = 0;
                          }
@@ -763,8 +758,6 @@ void cPatPmtParser::ParsePmt(const uchar *Data, int Length)
                                               break;
                                            }
                                         }
-                                    if (updatePrimaryDevice)
-                                      cDeviceManager::Get().PrimaryDevice()->Track()->SetAvailableTrack(ttSubtitle, NumSpids, spids[NumSpids], slangs[NumSpids]);
                                     NumSpids++;
                                     spids[NumSpids] = 0;
                                     }
@@ -784,8 +777,6 @@ void cPatPmtParser::ParsePmt(const uchar *Data, int Length)
                             dpids[NumDpids] = dpid;
                             dtypes[NumDpids] = dtype;
                             strn0cpy(dlangs[NumDpids], lang, sizeof(dlangs[NumDpids]));
-                            if (updatePrimaryDevice && Setup.UseDolbyDigital)
-                              cDeviceManager::Get().PrimaryDevice()->Track()->SetAvailableTrack(ttDolby, NumDpids, dpid, lang);
                             NumDpids++;
                             dpids[NumDpids] = 0;
                             }
@@ -813,8 +804,6 @@ void cPatPmtParser::ParsePmt(const uchar *Data, int Length)
                          dpids[NumDpids] = stream.getPid();
                          dtypes[NumDpids] = SI::AC3DescriptorTag;
                          strn0cpy(dlangs[NumDpids], lang, sizeof(dlangs[NumDpids]));
-                         if (updatePrimaryDevice && Setup.UseDolbyDigital)
-                           cDeviceManager::Get().PrimaryDevice()->Track()->SetAvailableTrack(ttDolby, NumDpids, stream.getPid(), lang);
                          NumDpids++;
                          dpids[NumDpids] = 0;
                          }
@@ -824,10 +813,6 @@ void cPatPmtParser::ParsePmt(const uchar *Data, int Length)
              break;
            }
          dbgpatpmt("\n");
-         if (updatePrimaryDevice) {
-           cDeviceManager::Get().PrimaryDevice()->Track()->EnsureAudioTrack(true);
-           cDeviceManager::Get().PrimaryDevice()->Track()->EnsureSubtitleTrack();
-            }
          }
      pmtVersion = Pmt.getVersionNumber();
      }

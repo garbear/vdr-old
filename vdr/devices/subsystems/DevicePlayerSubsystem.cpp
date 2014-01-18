@@ -45,7 +45,6 @@ using namespace std;
 cDevicePlayerSubsystem::cDevicePlayerSubsystem(cDevice *device)
  : cDeviceSubsystem(device),
    m_player(NULL),
-   m_patPmtParser(true),
    m_bIsPlayingVideo(false)
 {
 }
@@ -272,15 +271,15 @@ int cDevicePlayerSubsystem::PlayTs(const vector<uchar> &data, bool bVideoOnly /*
 //  return cTransferControl::ReceiverDevice() != NULL;
 //}
 
-void cDevicePlayerSubsystem::StopReplay()
-{
-  if (m_player)
-  {
-    Detach(m_player);
-    if (Device()->IsPrimaryDevice())
-      cControl::Shutdown();
-  }
-}
+//void cDevicePlayerSubsystem::StopReplay()
+//{
+//  if (m_player)
+//  {
+//    Detach(m_player);
+//    if (Device()->IsPrimaryDevice())
+//      cControl::Shutdown();
+//  }
+//}
 
 //bool cDevicePlayerSubsystem::AttachPlayer(cPlayer *player)
 //{

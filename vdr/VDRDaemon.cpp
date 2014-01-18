@@ -31,6 +31,7 @@
 #include "settings/Settings.h"
 #include "utils/Shutdown.h"
 #include "vnsi/Server.h"
+#include "dvb/EITScan.h"
 
 #include <signal.h> // or #include <bits/signum.h>
 
@@ -167,6 +168,8 @@ void *cVDRDaemon::Process()
 {
   while (!IsStopped())
   {
+    EITScanner.Process();
+
     m_sleepEvent.Wait(100);
   }
   Cleanup();

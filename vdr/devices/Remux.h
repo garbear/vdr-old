@@ -352,11 +352,10 @@ private:
   uchar subtitlingTypes[MAXSPIDS];
   uint16_t compositionPageIds[MAXSPIDS];
   uint16_t ancillaryPageIds[MAXSPIDS];
-  bool updatePrimaryDevice;
 protected:
   int SectionLength(const uchar *Data, int Length) { return (Length >= 3) ? ((int(Data[1]) & 0x0F) << 8)| Data[2] : 0; }
 public:
-  cPatPmtParser(bool UpdatePrimaryDevice = false);
+  cPatPmtParser(void);
   void Reset(void);
        ///< Resets the parser. This function must be called whenever a new
        ///< stream is parsed.

@@ -56,17 +56,6 @@ public:
   size_t NumDevices();
 
   /*!
-   * \brief Returns the primary device
-   */
-  DevicePtr PrimaryDevice() { return m_primaryDevice; }
-
-  /*!
-   * \brief Sets the primary device to 'n'
-   * \param n Must be in the range 1..NumDevices()
-   */
-  void SetPrimaryDevice(unsigned int index);
-
-  /*!
    * \brief Skip the specified number of steps in the card indexing
    *
    * E.g. after calling AdvanceCardIndex(2), the next device might get a card
@@ -186,7 +175,6 @@ private:
   size_t                     m_devicesReady;
   bool                       m_bAllDevicesReady; //XXX make CCondition support other things than bools...
   PLATFORM::CCondition<bool> m_devicesReadyCondition;
-  DevicePtr                  m_primaryDevice; //XXX remove this
 
   unsigned int m_nextCardIndex; // Card index to give to the next new device
   unsigned int m_useDevice; // Stupid device-use flags

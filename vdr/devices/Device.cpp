@@ -108,11 +108,6 @@ bool cDevice::Initialise(void)
   return m_bInitialised;
 }
 
-bool cDevice::IsPrimaryDevice() const
-{
-  return cDeviceManager::Get().PrimaryDevice().get() == this && HasDecoder();
-}
-
 void cDevice::MakePrimaryDevice(bool bOn)
 {
   // XXX do we need this?

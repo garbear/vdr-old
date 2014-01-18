@@ -50,8 +50,8 @@ cDeviceReceiverSubsystem::cDeviceReceiverSubsystem(cDevice *device)
 int cDeviceReceiverSubsystem::Priority()
 {
   int priority = IDLEPRIORITY;
-  if (Device()->IsPrimaryDevice() && !Player()->Replaying() && Channel()->HasProgramme())
-    priority = TRANSFERPRIORITY; // we use the same value here, no matter whether it's actual Transfer Mode or real live viewing
+//  if (Device()->IsPrimaryDevice() && !Player()->Replaying() && Channel()->HasProgramme())
+//    priority = TRANSFERPRIORITY; // we use the same value here, no matter whether it's actual Transfer Mode or real live viewing
 
   PLATFORM::CLockObject lock(m_mutexReceiver);
 

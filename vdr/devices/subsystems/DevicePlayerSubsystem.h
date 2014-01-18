@@ -218,7 +218,7 @@ public:
   /*!
    * \brief Stops the current replay session (if any)
    */
-  void StopReplay();
+//  void StopReplay();
 
   /*!
    * \brief Attaches the given player to this device

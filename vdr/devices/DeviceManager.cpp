@@ -38,7 +38,6 @@ using namespace PLATFORM;
 cDeviceManager::cDeviceManager()
  : m_devicesReady(0),
    m_bAllDevicesReady(false),
-   m_primaryDevice(cDevice::EmptyDevice),
    m_nextCardIndex(0),
    m_useDevice(0)
 {
@@ -88,23 +87,8 @@ size_t cDeviceManager::AddDevice(DevicePtr device)
   CLockObject lock(m_mutex);
   device->SetCardIndex(m_devices.size());
   m_devices.push_back(device);
-  if (!m_primaryDevice)
-    m_primaryDevice = device;
   dsyslog("registered device #%u: %s", m_devices.size(), device->DeviceName().c_str());
   return m_devices.size(); // Remember, our devices' numbers are 1-indexed
-}
-
-void cDeviceManager::SetPrimaryDevice(unsigned int index)
-{
-  CLockObject lock(m_mutex);
-  assert(0 != index && index <= m_devices.size());
-  index--; // TODO: Why is this 1-based???
-
-  if (m_primaryDevice)
-    m_primaryDevice->MakePrimaryDevice(false);
-  m_primaryDevice = m_devices[index];
-  m_primaryDevice->MakePrimaryDevice(true);
-  m_primaryDevice->VideoFormat()->SetVideoFormat(Setup.VideoFormat);
 }
 
 bool cDeviceManager::WaitForAllDevicesReady(unsigned int timeout /* = 0 */)
@@ -182,7 +166,7 @@ DevicePtr cDeviceManager::GetDevice(const cChannel &channel, int priority, bool 
         // to their individual severity, where the one listed first will make the most
         // difference, because it results in the most significant bit of the result.
         uint32_t imp = 0;
-        imp <<= 1; imp |= bLiveView ? !m_devices[i]->IsPrimaryDevice() || ndr : 0;                                  // prefer the primary device for live viewing if we don't need to detach existing receivers
+        imp <<= 1; imp |= bLiveView ? ndr : 0;                                  // prefer the primary device for live viewing if we don't need to detach existing receivers
         imp <<= 1; imp |= m_devices[i]->Receiver()->Receiving();                                                               // avoid devices that are receiving
         imp <<= 4; imp |= GetClippedNumProvidedSystems(4, *m_devices[i]) - 1;                                       // avoid cards which support multiple delivery systems
         imp <<= 8; imp |= m_devices[i]->Receiver()->Priority() - IDLEPRIORITY;                                                 // use the device with the lowest priority (- IDLEPRIORITY to assure that values -100..99 can be used)
@@ -191,7 +175,6 @@ DevicePtr cDeviceManager::GetDevice(const cChannel &channel, int priority, bool 
         imp <<= 1; imp |= (NumUsableSlots || InternalCamNeeded) ? 0 : m_devices[i]->CommonInterface()->HasCi();                       // avoid cards with Common Interface for FTA channels
         imp <<= 1; imp |= m_devices[i]->AvoidRecording();                                                          // avoid SD full featured cards
         imp <<= 1; imp |= (NumUsableSlots && !HasInternalCam) ? !ChannelCamRelations.CamDecrypt(channel.GetChannelID(), j + 1) : 0; // prefer CAMs that are known to decrypt this channel
-        imp <<= 1; imp |= m_devices[i]->IsPrimaryDevice();                                                         // avoid the primary device
         if (imp < Impact)
         {
           // This device has less impact than any previous one, so we take it.
@@ -266,7 +249,6 @@ void cDeviceManager::Shutdown(void)
 {
   CLockObject lock(m_mutex);
   m_devices.clear();
-  m_primaryDevice = cDevice::EmptyDevice;
 }
 
 int cDeviceManager::GetClippedNumProvidedSystems(int availableBits, const cDevice& device)
