@@ -249,6 +249,7 @@ void *cDvbTuner::Process()
   bool LostLock = false;
   fe_status_t Status = (fe_status_t)0;
 
+  dsyslog("tuner thread started for tuner '%s'", Name().c_str());
   while (!IsStopped())
   {
     fe_status_t NewStatus;
@@ -317,6 +318,8 @@ void *cDvbTuner::Process()
     }
     m_newSet.Wait(m_mutex, m_bNewSet, WaitTime);
   }
+
+  dsyslog("tuner thread exiting for tuner '%s'", Name().c_str());
   return NULL;
 }
 
@@ -749,6 +752,7 @@ bool cDvbTuner::SetFrontend()
   if (m_frontendType == SYS_UNDEFINED)
     return false;
 
+  dsyslog("tuner '%s' tuning to frequency %u", Name().c_str(), m_channel.Frequency());
   SETCMD(DTV_DELIVERY_SYSTEM, m_frontendType);
   if (m_frontendType == SYS_DVBS || m_frontendType == SYS_DVBS2)
   {
