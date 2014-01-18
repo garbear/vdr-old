@@ -14,6 +14,7 @@
 #include "filesystem/ReadDir.h"
 #include "thread.h"
 #include "utils/UTF8Utils.h"
+#include "platform/threads/threads.h"
 
 #include <algorithm>
 #include <ctype.h>
@@ -51,6 +52,8 @@ void syslog_with_tid(int priority, const char *format, ...)
   snprintf(fmt, sizeof(fmt), "[%d] %s", cThread::ThreadId(), format);
   va_start(ap, format);
 #if LOG_STDOUT
+  static PLATFORM::CMutex g_logMutex;
+  PLATFORM::CLockObject lock(g_logMutex);
   vprintf(fmt, ap);
   printf("\n");
 #else
