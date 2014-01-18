@@ -647,12 +647,12 @@ bool cChannel::DeserialiseConf(const string &str)
       fields++;
       if ((pos = strcopy.find(':')) != string::npos)
       {
-        m_channelData.frequency = StringUtils::IntVal(strcopy.substr(0, pos));
+        m_channelData.frequency = StringUtils::IntVal(strcopy.substr(0, pos)) * 1000; //XXX
         strcopy = strcopy.substr(pos + 1);
       }
       else
       {
-        m_channelData.frequency = StringUtils::IntVal(strcopy);
+        m_channelData.frequency = StringUtils::IntVal(strcopy) * 1000; //XXX
         strcopy.clear();
       }
     }
@@ -1131,6 +1131,10 @@ bool cChannel::SetTransponderData(int source, int frequency, int srate, const st
     //esyslog("ERROR: parameter string '%s' contains ':'", strParameters.c_str());
     return false;
   }
+
+  // XXX
+  if (frequency == m_channelData.frequency * 1000)
+    frequency /= 1000;
 
   // Workarounds for broadcaster stupidity:
   // Some providers broadcast the transponder frequency of their channels with two different
