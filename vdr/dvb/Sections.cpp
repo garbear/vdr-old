@@ -162,6 +162,7 @@ cSectionHandler::SetStatus(bool On)
     if (!On || m_device->Channel()->HasLock())
     {
       m_iStatusCount++;
+      dsyslog("locked to channel - update filter status to '%s'", On ? "on" : "off");
       for (cFilter *fi = m_filters.First(); fi; fi = m_filters.Next(fi))
       {
         fi->SetStatus(false);
@@ -172,7 +173,10 @@ cSectionHandler::SetStatus(bool On)
       m_bWaitForLock = false;
     }
     else
+    {
+      dsyslog("waiting for channel lock...");
       m_bWaitForLock = On;
+    }
   }
 }
 
