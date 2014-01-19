@@ -193,7 +193,8 @@ bool cDvbChannelSubsystem::IsTunedToTransponder(const cChannel &channel) const
 
 bool cDvbChannelSubsystem::MaySwitchTransponder(const cChannel &channel) const
 {
-  return GetDevice<cDvbDevice>()->BondingOk(channel, true) && Channel()->MaySwitchTransponder(channel);
+  cDeviceChannelSubsystem* chanSubsys = static_cast<cDeviceChannelSubsystem*>(Channel());
+  return GetDevice<cDvbDevice>()->BondingOk(channel, true) && chanSubsys->MaySwitchTransponder(channel);
 }
 
 bool cDvbChannelSubsystem::HasLock(unsigned int timeoutMs) const
