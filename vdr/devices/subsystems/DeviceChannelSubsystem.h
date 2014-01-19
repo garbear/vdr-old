@@ -21,6 +21,7 @@
 #pragma once
 
 #include "devices/DeviceSubsystem.h"
+#include "channels/Channel.h"
 #include "Config.h" // For IDLEPRIORITY
 
 enum eSetChannelResult
@@ -129,7 +130,7 @@ public:
    * \brief Switches the device to the given Channel, initiating transfer mode
    *        if necessary.
    */
-  bool SwitchChannel(const cChannel &channel);
+  bool SwitchChannel(ChannelPtr channel);
 
   /*!
    * \brief Returns the number of seconds this device is still occupied for
@@ -171,7 +172,7 @@ private:
   /*!
    * \brief Sets the device to the given channel (general setup)
    */
-  eSetChannelResult SetChannel(const cChannel &Channel);
+  eSetChannelResult SetChannel(ChannelPtr Channel);
 
   time_t     m_occupiedTimeout;
 };

@@ -205,7 +205,7 @@ cEITScanner::Process(void)
                             Device->CardIndex(),
                             cSource::ToString(Channel->Source()).c_str(),
                             Channel->Transponder());
-                        Device->Channel()->SwitchChannel(*Channel);
+                        Device->Channel()->SwitchChannel(Channel);
                         scanList->Del(ScanData);
                         AnyDeviceSwitched = true;
                         break;

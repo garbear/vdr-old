@@ -21,7 +21,7 @@ protected:
   virtual void Activate(bool On);
   virtual void Receive(uchar *Data, int Length);
 public:
-  cTransfer(const cChannel *Channel);
+  cTransfer(ChannelPtr Channel);
   virtual ~cTransfer();
   };
 
@@ -32,7 +32,7 @@ private:
   cTransfer* m_transfer;
   cDevice*   m_device;
 public:
-  cTransferControl(cDevice *ReceiverDevice, const cChannel *Channel);
+  cTransferControl(cDevice *ReceiverDevice, ChannelPtr Channel);
   ~cTransferControl();
   virtual void Hide(void) {}
   };

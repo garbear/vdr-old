@@ -12,7 +12,7 @@
 
 // --- cTransfer -------------------------------------------------------------
 
-cTransfer::cTransfer(const cChannel *Channel)
+cTransfer::cTransfer(ChannelPtr Channel)
 :cReceiver(Channel, TRANSFERPRIORITY)
 {
   patPmtGenerator.SetChannel(Channel);
@@ -58,7 +58,7 @@ void cTransfer::Receive(uchar *Data, int Length)
 
 // --- cTransferControl ------------------------------------------------------
 
-cTransferControl::cTransferControl(cDevice *ReceiverDevice, const cChannel *Channel)
+cTransferControl::cTransferControl(cDevice *ReceiverDevice, ChannelPtr Channel)
 :cControl(m_transfer = new cTransfer(Channel), true),
  m_device(ReceiverDevice)
 {

@@ -41,7 +41,7 @@ public:
 protected:
   virtual void* Process(void);
   void PmtChange(int pidChange);
-  cChannel *PmtChannel();
+  ChannelPtr PmtChannel();
   void Receive(uchar *data, int length);
   void Attach(bool on);
   DevicePtr         m_Device;

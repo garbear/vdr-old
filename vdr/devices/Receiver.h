@@ -53,7 +53,7 @@ protected:
                ///< will be delivered only ONCE, so the cReceiver must make sure that
                ///< it will be able to buffer the data if necessary.
 public:
-  cReceiver(const cChannel *Channel = NULL, int Priority = MINPRIORITY);
+  cReceiver(ChannelPtr Channel = cChannel::EmptyChannel, int Priority = MINPRIORITY);
                ///< Creates a new receiver for the given Channel with the given Priority.
                ///< If Channel is not NULL, its pids are set by a call to SetPids().
                ///< Otherwise pids can be added to the receiver by separate calls to the AddPid[s]
@@ -70,7 +70,7 @@ public:
                ///< receiver.
   bool AddPids(int Pid1, int Pid2, int Pid3 = 0, int Pid4 = 0, int Pid5 = 0, int Pid6 = 0, int Pid7 = 0, int Pid8 = 0, int Pid9 = 0);
                ///< Adds the given Pids to the list of PIDs of this receiver.
-  bool SetPids(const cChannel *Channel);
+  bool SetPids(const cChannel& Channel);
                ///< Sets the PIDs of this receiver to those of the given Channel,
                ///< replacing any previously stored PIDs. If Channel is NULL, all
                ///< PIDs will be cleared. Parameters in the Setup may control whether

@@ -34,7 +34,7 @@ protected:
   virtual void Receive(uchar *Data, int Length);
   virtual void* Process(void);
 public:
-  cRecorder(const char *FileName, const cChannel *Channel, int Priority);
+  cRecorder(const char *FileName, ChannelPtr Channel, int Priority);
                // Creates a new recorder for the given Channel and
                // the given Priority that will record into the file FileName.
   virtual ~cRecorder();

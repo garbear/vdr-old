@@ -14,12 +14,13 @@
 #include <stdio.h>
 #include "utils/Tools.h"
 
-cReceiver::cReceiver(const cChannel *Channel, int Priority)
+cReceiver::cReceiver(ChannelPtr Channel /* = cChannel::EmptyChannel */, int Priority)
 {
   m_device = NULL;
   m_priority = constrain(Priority, MINPRIORITY, MAXPRIORITY);
   m_numPids = 0;
-  SetPids(Channel);
+  if (Channel)
+    SetPids(*Channel);
 }
 
 cReceiver::~cReceiver()
@@ -75,20 +76,15 @@ bool cReceiver::AddPids(int Pid1, int Pid2, int Pid3, int Pid4, int Pid5, int Pi
   return AddPid(Pid1) && AddPid(Pid2) && AddPid(Pid3) && AddPid(Pid4) && AddPid(Pid5) && AddPid(Pid6) && AddPid(Pid7) && AddPid(Pid8) && AddPid(Pid9);
 }
 
-bool cReceiver::SetPids(const cChannel *Channel)
+bool cReceiver::SetPids(const cChannel& Channel)
 {
   m_numPids = 0;
-  assert(Channel);
-  dsyslog("reset PIDs for channel '%s'", Channel ? Channel->Name().c_str() : "<nil>");
-  if (Channel)
-  {
-    channelID = Channel->GetChannelID();
-    return AddPid(Channel->Vpid())
-        && (Channel->Ppid() == Channel->Vpid() || AddPid(Channel->Ppid()))
-        && AddPids(Channel->Apids()) && AddPids(Channel->Dpids())
-        && AddPids(Channel->Spids());
-  }
-  return true;
+  dsyslog("reset PIDs for channel '%s'", Channel.Name().c_str());
+  channelID = Channel.GetChannelID();
+  return AddPid(Channel.Vpid())
+      && (Channel.Ppid() == Channel.Vpid() || AddPid(Channel.Ppid()))
+      && AddPids(Channel.Apids()) && AddPids(Channel.Dpids())
+      && AddPids(Channel.Spids());
 }
 
 bool cReceiver::WantsPid(int Pid)

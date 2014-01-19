@@ -13,6 +13,7 @@
 #include <time.h>
 #include "Filter.h"
 #include "thread.h"
+#include "channels/Channel.h"
 #include "utils/Tools.h"
 #include "platform/threads/threads.h"
 
@@ -42,10 +43,10 @@ public:
   virtual ~cSectionHandler();
   int Source(void);
   int Transponder(void);
-  const cChannel *Channel(void);
+  ChannelPtr Channel(void);
   void Attach(cFilter *Filter);
   void Detach(cFilter *Filter);
-  void SetChannel(const cChannel *Channel);
+  void SetChannel(ChannelPtr Channel);
   void SetStatus(bool On);
   };
 

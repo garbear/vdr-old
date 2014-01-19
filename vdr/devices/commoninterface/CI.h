@@ -251,7 +251,7 @@ public:
        ///< Sets the given Pid (which has previously been added through a
        ///< call to AddPid()) to Active. A later call to StartDecrypting() will
        ///< send the full list of currently active CA_PMT entries to the CAM.
-  void AddChannel(const cChannel *Channel);
+  void AddChannel(const cChannel& Channel);
        ///< Adds all PIDs if the given Channel to the current list of PIDs.
        ///< If the source or transponder of the channel are different than
        ///< what was given in a previous call to AddChannel(), any previously

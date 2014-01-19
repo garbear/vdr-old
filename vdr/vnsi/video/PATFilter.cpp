@@ -372,7 +372,7 @@ void cLivePatFilter::Process(u_short Pid, u_char Tid, const u_char *Data, int Le
           }
       }
       dsyslog("Pat/Pmt Filter received pmt change");
-      cChannel *pmtChannel = m_VideoInput->PmtChannel();
+      ChannelPtr pmtChannel = m_VideoInput->PmtChannel();
       pmtChannel->Modification();
       pmtChannel->SetPids(Vpid, Ppid, Vtype, Apids, Atypes, ALangs, Dpids,
           Dtypes, DLangs, Spids, SLangs, Tpid);

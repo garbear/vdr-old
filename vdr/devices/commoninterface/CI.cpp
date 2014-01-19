@@ -1922,22 +1922,23 @@ void cCamSlot::SetPid(int Pid, bool Active)
 #define STREAM_TYPE_AUDIO    0x04
 #define STREAM_TYPE_PRIVATE  0x06
 
-void cCamSlot::AddChannel(const cChannel *Channel)
+void cCamSlot::AddChannel(const cChannel& Channel)
 {
   CLockObject lock(mutex);
-  if (source != Channel->Source() || transponder != Channel->Transponder())
-     StopDecrypting();
-  source = Channel->Source();
-  transponder = Channel->Transponder();
-  if (Channel->Ca() >= CA_ENCRYPTED_MIN) {
-     AddPid(Channel->Sid(), Channel->Vpid(), STREAM_TYPE_VIDEO);
-     for (const int *Apid = Channel->Apids(); *Apid; Apid++)
-         AddPid(Channel->Sid(), *Apid, STREAM_TYPE_AUDIO);
-     for (const int *Dpid = Channel->Dpids(); *Dpid; Dpid++)
-         AddPid(Channel->Sid(), *Dpid, STREAM_TYPE_PRIVATE);
-     for (const int *Spid = Channel->Spids(); *Spid; Spid++)
-         AddPid(Channel->Sid(), *Spid, STREAM_TYPE_PRIVATE);
-     }
+  if (source != Channel.Source() || transponder != Channel.Transponder())
+    StopDecrypting();
+  source = Channel.Source();
+  transponder = Channel.Transponder();
+  if (Channel.Ca() >= CA_ENCRYPTED_MIN)
+  {
+    AddPid(Channel.Sid(), Channel.Vpid(), STREAM_TYPE_VIDEO);
+    for (const int *Apid = Channel.Apids(); *Apid; Apid++)
+      AddPid(Channel.Sid(), *Apid, STREAM_TYPE_AUDIO);
+    for (const int *Dpid = Channel.Dpids(); *Dpid; Dpid++)
+      AddPid(Channel.Sid(), *Dpid, STREAM_TYPE_PRIVATE);
+    for (const int *Spid = Channel.Spids(); *Spid; Spid++)
+      AddPid(Channel.Sid(), *Spid, STREAM_TYPE_PRIVATE);
+  }
 }
 
 #define QUERY_REPLY_WAIT  100 // ms to wait between checks for a reply

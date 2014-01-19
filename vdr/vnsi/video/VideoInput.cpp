@@ -63,7 +63,7 @@ bool cVideoInput::Open(ChannelPtr channel, int priority, cVideoBuffer *videoBuff
   {
     dsyslog("Successfully found following device: %s (%d) for receiving", m_Device->DeviceName().c_str(), m_Device->CardIndex());
 
-    if (m_Device->Channel()->SwitchChannel(*m_Channel))
+    if (m_Device->Channel()->SwitchChannel(m_Channel))
     {
       dsyslog("Creating new live Receiver");
       m_SeenPmt   = false;
@@ -135,9 +135,9 @@ void cVideoInput::Close()
   }
 }
 
-cChannel *cVideoInput::PmtChannel()
+ChannelPtr cVideoInput::PmtChannel()
 {
-  return &m_Receiver->m_PmtChannel;
+  return m_Receiver->m_PmtChannel;
 }
 
 void cVideoInput::PmtChange(int pidChange)
@@ -146,8 +146,9 @@ void cVideoInput::PmtChange(int pidChange)
   {
     isyslog("Video Input - new pmt, attaching receiver");
     m_Device->Receiver()->Detach(m_Receiver);
-    m_Receiver->SetPids(&m_Receiver->m_PmtChannel);
-    m_Receiver->AddPid(m_Receiver->m_PmtChannel.Tpid());
+    if (m_Receiver->m_PmtChannel)
+      m_Receiver->SetPids(*m_Receiver->m_PmtChannel);
+    m_Receiver->AddPid(m_Receiver->m_PmtChannel->Tpid());
     m_PmtChange = true;
     m_Device->Receiver()->AttachReceiver(m_Receiver);
     m_SeenPmt = true;
@@ -159,7 +160,7 @@ void cVideoInput::Receive(uchar *data, int length)
   if (m_PmtChange)
   {
      // generate pat/pmt so we can configure parsers later
-     cPatPmtGenerator patPmtGenerator(&m_Receiver->m_PmtChannel);
+     cPatPmtGenerator patPmtGenerator(m_Receiver->m_PmtChannel);
      m_VideoBuffer->Put(patPmtGenerator.GetPat(), TS_SIZE);
      int Index = 0;
      while (uchar *pmt = patPmtGenerator.GetPmt(Index))
@@ -183,7 +184,7 @@ void* cVideoInput::Process()
     if (starttime.Elapsed() > (unsigned int)cSettings::Get().m_PmtTimeout*1000)
     {
       isyslog("VideoInput: no pat/pmt within timeout, falling back to channel pids");
-      m_Receiver->m_PmtChannel = *m_Channel;
+      m_Receiver->m_PmtChannel = m_Channel;
       PmtChange(true);
     }
     if (m_SeenPmt)

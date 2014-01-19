@@ -96,9 +96,9 @@ int cFilter::Transponder(void)
   return sectionHandler ? sectionHandler->Transponder() : 0;
 }
 
-const cChannel *cFilter::Channel(void)
+ChannelPtr cFilter::Channel(void)
 {
-  return sectionHandler ? sectionHandler->Channel() : NULL;
+  return sectionHandler ? sectionHandler->Channel() : cChannel::EmptyChannel;
 }
 
 void cFilter::SetStatus(bool On)

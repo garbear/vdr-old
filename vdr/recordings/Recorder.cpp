@@ -24,7 +24,7 @@ using namespace PLATFORM;
 
 // --- cRecorder -------------------------------------------------------------
 
-cRecorder::cRecorder(const char *FileName, const cChannel *Channel, int Priority)
+cRecorder::cRecorder(const char *FileName, ChannelPtr Channel, int Priority)
 :cReceiver(Channel, Priority), CThread()
 {
   recordingName = strdup(FileName);

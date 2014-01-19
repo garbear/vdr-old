@@ -72,7 +72,7 @@ bool cDeviceChannelSubsystem::MaySwitchTransponder(const cChannel &channel) cons
   return false;
 }
 
-bool cDeviceChannelSubsystem::SwitchChannel(const cChannel &channel)
+bool cDeviceChannelSubsystem::SwitchChannel(ChannelPtr channel)
 {
   for (int i = 3; i--; )
   {
@@ -114,7 +114,7 @@ bool cDeviceChannelSubsystem::HasProgramme() const
   return Player()->Replaying() || PID()->m_pidHandles[ptAudio].pid || PID()->m_pidHandles[ptVideo].pid;
 }
 
-eSetChannelResult cDeviceChannelSubsystem::SetChannel(const cChannel &channel)
+eSetChannelResult cDeviceChannelSubsystem::SetChannel(ChannelPtr channel)
 {
   cStatus::MsgChannelSwitch(Device(), 0);
 
@@ -132,7 +132,7 @@ eSetChannelResult cDeviceChannelSubsystem::SetChannel(const cChannel &channel)
     if (device && Player()->CanReplay())
     {
       if (device->Channel()->SetChannel(channel) == scrOk) // calling SetChannel() directly, not SwitchChannel()!
-        cControl::Launch(new cTransferControl(device, &channel));
+        cControl::Launch(new cTransferControl(device, channel));
       else
         Result = scrNoTransfer;
     }
@@ -147,20 +147,20 @@ eSetChannelResult cDeviceChannelSubsystem::SetChannel(const cChannel &channel)
     if (SectionFilter()->m_sectionHandler)
     {
       SectionFilter()->m_sectionHandler->SetStatus(false);
-      SectionFilter()->m_sectionHandler->SetChannel(NULL);
+      SectionFilter()->m_sectionHandler->SetChannel(cChannel::EmptyChannel);
     }
 
     // Tell the camSlot about the channel switch and add all PIDs of this
     // channel to it, for possible later decryption:
     if (CommonInterface()->m_camSlot)
-      CommonInterface()->m_camSlot->AddChannel(&channel);
+      CommonInterface()->m_camSlot->AddChannel(*channel);
 
-    if (SetChannelDevice(channel))
+    if (SetChannelDevice(*channel))
     {
       // Start section handling:
       if (SectionFilter()->m_sectionHandler)
       {
-        SectionFilter()->m_sectionHandler->SetChannel(&channel);
+        SectionFilter()->m_sectionHandler->SetChannel(channel);
         SectionFilter()->m_sectionHandler->SetStatus(true);
       }
 
@@ -174,7 +174,7 @@ eSetChannelResult cDeviceChannelSubsystem::SetChannel(const cChannel &channel)
   }
 
   if (Result == scrOk)
-    cStatus::MsgChannelSwitch(Device(), channel.Number()); // only report status if channel switch successful
+    cStatus::MsgChannelSwitch(Device(), channel->Number()); // only report status if channel switch successful
 
   return Result;
 }

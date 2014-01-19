@@ -23,10 +23,10 @@
 #include "VideoInput.h"
 
 cLiveReceiver::cLiveReceiver(cVideoInput *VideoInput, ChannelPtr Channel, int Priority)
- : cReceiver(Channel.get(), Priority)//XXX
+ : cReceiver(Channel, Priority)//XXX
  , m_VideoInput(VideoInput)
 {
-  SetPids(Channel.get());
+  SetPids(*Channel);
 }
 
 cLiveReceiver::~cLiveReceiver()

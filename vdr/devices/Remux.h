@@ -296,16 +296,16 @@ protected:
   int MakeSubtitlingDescriptor(uchar *Target, const char *Language, uchar SubtitlingType, uint16_t CompositionPageId, uint16_t AncillaryPageId);
   int MakeLanguageDescriptor(uchar *Target, const char *Language);
   int MakeCRC(uchar *Target, const uchar *Data, int Length);
-  void GeneratePmtPid(const cChannel *Channel);
+  void GeneratePmtPid(ChannelPtr Channel);
        ///< Generates a PMT pid that doesn't collide with any of the actual
        ///< pids of the Channel.
   void GeneratePat(void);
        ///< Generates a PAT section for later use with GetPat().
-  void GeneratePmt(const cChannel *Channel);
+  void GeneratePmt(ChannelPtr Channel);
        ///< Generates a PMT section for the given Channel, for later use
        ///< with GetPmt().
 public:
-  cPatPmtGenerator(const cChannel *Channel = NULL);
+  cPatPmtGenerator(ChannelPtr Channel = cChannel::EmptyChannel);
   void SetVersions(int PatVersion, int PmtVersion);
        ///< Sets the version numbers for the generated PAT and PMT, in case
        ///< this generator is used to, e.g.,  continue a previously interrupted
@@ -315,7 +315,7 @@ public:
        ///< higher bits will automatically be cleared.
        ///< SetVersions() needs to be called before SetChannel() in order to
        ///< have an effect from the very start.
-  void SetChannel(const cChannel *Channel);
+  void SetChannel(ChannelPtr Channel);
        ///< Sets the Channel for which the PAT/PMT shall be generated.
   uchar *GetPat(void);
        ///< Returns a pointer to the PAT section, which consists of exactly

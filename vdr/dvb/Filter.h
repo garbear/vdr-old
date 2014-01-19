@@ -11,6 +11,7 @@
 #define __FILTER_H
 
 #include <sys/types.h>
+#include "channels/Channel.h"
 #include "utils/Tools.h"
 
 class cSectionSyncer {
@@ -70,7 +71,7 @@ protected:
        ///< Returns the source of the data delivered to this filter.
   int Transponder(void);
        ///< Returns the transponder of the data delivered to this filter.
-  const cChannel *Channel(void);
+  ChannelPtr Channel(void);
        ///< Returns the channel of the data delivered to this filter.
   bool Matches(u_short Pid, u_char Tid);
        ///< Indicates whether this filter wants to receive data from the given Pid/Tid.

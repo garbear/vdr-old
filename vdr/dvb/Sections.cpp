@@ -38,7 +38,7 @@ cFilterHandle::cFilterHandle(const cFilterData &FilterData)
 class cSectionHandlerPrivate
 {
 public:
-  cChannel channel;
+  ChannelPtr channel;
 };
 
 // --- cSectionHandler -------------------------------------------------------
@@ -65,17 +65,17 @@ cSectionHandler::~cSectionHandler()
 
 int cSectionHandler::Source(void)
 {
-  return m_shp->channel.Source();
+  return m_shp->channel->Source();
 }
 
 int cSectionHandler::Transponder(void)
 {
-  return m_shp->channel.Transponder();
+  return m_shp->channel->Transponder();
 }
 
-const cChannel *cSectionHandler::Channel(void)
+ChannelPtr cSectionHandler::Channel(void)
 {
-  return &m_shp->channel;
+  return m_shp->channel;
 }
 
 void
@@ -147,10 +147,10 @@ void cSectionHandler::Detach(cFilter *Filter)
   m_filters.Del(Filter, false);
 }
 
-void cSectionHandler::SetChannel(const cChannel *Channel)
+void cSectionHandler::SetChannel(ChannelPtr Channel)
 {
   CLockObject lock(m_mutex);
-  m_shp->channel = Channel ? *Channel : cChannel();
+  m_shp->channel = Channel;
 }
 
 void

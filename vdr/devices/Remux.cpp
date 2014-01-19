@@ -315,7 +315,7 @@ bool cTsPayload::Find(uint32_t Code)
 
 // --- cPatPmtGenerator ------------------------------------------------------
 
-cPatPmtGenerator::cPatPmtGenerator(const cChannel *Channel)
+cPatPmtGenerator::cPatPmtGenerator(ChannelPtr Channel /* = cChannel::EmptyChannel */)
 {
   numPmtPackets = 0;
   patCounter = pmtCounter = 0;
@@ -420,7 +420,7 @@ int cPatPmtGenerator::MakeCRC(uchar *Target, const uchar *Data, int Length)
 #define P_PMT_PID 0x0084 // pseudo PMT pid
 #define MAXPID    0x2000 // the maximum possible number of pids
 
-void cPatPmtGenerator::GeneratePmtPid(const cChannel *Channel)
+void cPatPmtGenerator::GeneratePmtPid(ChannelPtr Channel)
 {
   bool Used[MAXPID] = { false };
 #define SETPID(p) { if ((p) >= 0 && (p) < MAXPID) Used[p] = true; }
@@ -464,7 +464,7 @@ void cPatPmtGenerator::GeneratePat(void)
   IncVersion(patVersion);
 }
 
-void cPatPmtGenerator::GeneratePmt(const cChannel *Channel)
+void cPatPmtGenerator::GeneratePmt(ChannelPtr Channel)
 {
   // generate the complete PMT section:
   uchar buf[MAX_SECTION_SIZE];
@@ -539,13 +539,14 @@ void cPatPmtGenerator::SetVersions(int PatVersion, int PmtVersion)
   pmtVersion = PmtVersion & 0x1F;
 }
 
-void cPatPmtGenerator::SetChannel(const cChannel *Channel)
+void cPatPmtGenerator::SetChannel(ChannelPtr Channel)
 {
-  if (Channel) {
-     GeneratePmtPid(Channel);
-     GeneratePat();
-     GeneratePmt(Channel);
-     }
+  if (Channel)
+  {
+    GeneratePmtPid(Channel);
+    GeneratePat();
+    GeneratePmt(Channel);
+   }
 }
 
 uchar *cPatPmtGenerator::GetPat(void)

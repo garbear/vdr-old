@@ -30,7 +30,7 @@ class cLiveReceiver: public cReceiver
 public:
   cLiveReceiver(cVideoInput *VideoInput, ChannelPtr Channel, int Priority);
   virtual ~cLiveReceiver();
-  cChannel m_PmtChannel;
+  ChannelPtr m_PmtChannel;
 
 protected:
   virtual void Activate(bool On);
