@@ -27,6 +27,7 @@
 #include "devices/subsystems/DeviceReceiverSubsystem.h"
 
 #include "Config.h"
+#include "dvb/CADescriptorHandler.h"
 #include "dvb/PAT.h"
 #include "utils/Tools.h"
 
@@ -623,7 +624,7 @@ cCiCaPmt::cCiCaPmt(uint8_t CmdId, int Source, int Transponder, int ProgramNumber
      }
   caSystemIds[i] = 0;
   uint8_t caDescriptors[512];
-  int caDescriptorsLength = GetCaDescriptors(source, transponder, programNumber, caSystemIds, sizeof(caDescriptors), caDescriptors, 0);
+  int caDescriptorsLength = cCaDescriptorHandler::Get().GetCaDescriptors(source, transponder, programNumber, caSystemIds, sizeof(caDescriptors), caDescriptors, 0);
   length = 0;
   capmt[length++] = CPLM_ONLY;
   capmt[length++] = (ProgramNumber >> 8) & 0xFF;
@@ -644,7 +645,7 @@ void cCiCaPmt::AddPid(int Pid, uint8_t StreamType)
 {
   if (Pid) {
      uint8_t caDescriptors[512];
-     int caDescriptorsLength = GetCaDescriptors(source, transponder, programNumber, caSystemIds, sizeof(caDescriptors), caDescriptors, Pid);
+     int caDescriptorsLength = cCaDescriptorHandler::Get().GetCaDescriptors(source, transponder, programNumber, caSystemIds, sizeof(caDescriptors), caDescriptors, Pid);
      //XXX buffer overflow check???
      capmt[length++] = StreamType;
      capmt[length++] = (Pid >> 8) & 0xFF;

@@ -8,8 +8,7 @@
  */
 
 #include "PAT.h"
-#include "CADescriptor.h"
-#include "CADescriptors.h"
+#include "CADescriptorHandler.h"
 #include <malloc.h>
 #include "channels/ChannelManager.h"
 #include "libsi/section.h"
@@ -22,57 +21,6 @@
 #define PMT_SCAN_TIMEOUT  10 // seconds
 
 using namespace std;
-
-// --- cCaDescriptorHandler --------------------------------------------------
-
-class cCaDescriptorHandler : public cList<cCaDescriptors> {
-private:
-  PLATFORM::CMutex mutex;
-public:
-  int AddCaDescriptors(const CaDescriptorsPtr& CaDescriptors);
-      // Returns 0 if this is an already known descriptor,
-      // 1 if it is an all new descriptor with actual contents,
-      // and 2 if an existing descriptor was changed.
-  int GetCaDescriptors(int Source, int Transponder, int ServiceId, const int *CaSystemIds, int BufSize, uchar *Data, int EsPid);
-
-private:
-  CaDescriptorsVector m_caDescriptors;
-  };
-
-int cCaDescriptorHandler::AddCaDescriptors(const CaDescriptorsPtr& CaDescriptors)
-{
-  PLATFORM::CLockObject lock(mutex);
-  for (CaDescriptorsVector::iterator itCaDes = m_caDescriptors.begin(); itCaDes != m_caDescriptors.end(); ++itCaDes)
-  {
-      if ((*itCaDes)->Is(*CaDescriptors)) {
-         if (**itCaDes == *CaDescriptors) {
-            return 0;
-            }
-         m_caDescriptors.erase(itCaDes);
-         m_caDescriptors.push_back(CaDescriptors);
-         return 2;
-         }
-      }
-  m_caDescriptors.push_back(CaDescriptors);
-  return CaDescriptors->Empty() ? 0 : 1;
-}
-
-int cCaDescriptorHandler::GetCaDescriptors(int Source, int Transponder, int ServiceId, const int *CaSystemIds, int BufSize, uchar *Data, int EsPid)
-{
-  PLATFORM::CLockObject lock(mutex);
-  for (CaDescriptorsVector::const_iterator itCa = m_caDescriptors.begin(); itCa != m_caDescriptors.end(); ++itCa) {
-      if ((*itCa)->Is(Source, Transponder, ServiceId))
-         return (*itCa)->GetCaDescriptors(CaSystemIds, BufSize, Data, EsPid);
-      }
-  return 0;
-}
-
-cCaDescriptorHandler CaDescriptorHandler;
-
-int GetCaDescriptors(int Source, int Transponder, int ServiceId, const int *CaSystemIds, int BufSize, uchar *Data, int EsPid)
-{
-  return CaDescriptorHandler.GetCaDescriptors(Source, Transponder, ServiceId, CaSystemIds, BufSize, Data, EsPid);
-}
 
 // --- cPatFilter ------------------------------------------------------------
 
@@ -398,7 +346,7 @@ void cPatFilter::Process(u_short Pid, u_char Tid, const u_char *Data, int Length
            Channel->SetCaIds(CaDescriptors->CaIds().data());
            Channel->SetSubtitlingDescriptors(SubtitlingTypes, CompositionPageIds, AncillaryPageIds);
            }
-        Channel->SetCaDescriptors(CaDescriptorHandler.AddCaDescriptors(CaDescriptors));
+        Channel->SetCaDescriptors(cCaDescriptorHandler::Get().AddCaDescriptors(CaDescriptors));
         Channel->NotifyObservers(ObservableMessageChannelChanged);
         }
      lastPmtScan = 0; // this triggers the next scan
