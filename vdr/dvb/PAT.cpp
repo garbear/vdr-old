@@ -8,6 +8,7 @@
  */
 
 #include "PAT.h"
+#include "CADescriptor.h"
 #include <malloc.h>
 #include "channels/ChannelManager.h"
 #include "libsi/section.h"
@@ -19,49 +20,7 @@
 
 #define PMT_SCAN_TIMEOUT  10 // seconds
 
-// --- cCaDescriptor ---------------------------------------------------------
-
-class cCaDescriptor : public cListObject {
-private:
-  int caSystem;
-  int esPid;
-  int length;
-  uchar *data;
-public:
-  cCaDescriptor(int CaSystem, int CaPid, int EsPid, int Length, const uchar *Data);
-  virtual ~cCaDescriptor();
-  bool operator== (const cCaDescriptor &arg) const;
-  int CaSystem(void) { return caSystem; }
-  int EsPid(void) { return esPid; }
-  int Length(void) const { return length; }
-  const uchar *Data(void) const { return data; }
-  };
-
-cCaDescriptor::cCaDescriptor(int CaSystem, int CaPid, int EsPid, int Length, const uchar *Data)
-{
-  caSystem = CaSystem;
-  esPid = EsPid;
-  length = Length + 6;
-  data = MALLOC(uchar, length);
-  data[0] = SI::CaDescriptorTag;
-  data[1] = length - 2;
-  data[2] = (caSystem >> 8) & 0xFF;
-  data[3] =  caSystem       & 0xFF;
-  data[4] = ((CaPid   >> 8) & 0x1F) | 0xE0;
-  data[5] =   CaPid         & 0xFF;
-  if (Length)
-     memcpy(&data[6], Data, Length);
-}
-
-cCaDescriptor::~cCaDescriptor()
-{
-  free(data);
-}
-
-bool cCaDescriptor::operator== (const cCaDescriptor &arg) const
-{
-  return esPid == arg.esPid && length == arg.length && memcmp(data, arg.data, length) == 0;
-}
+using namespace std;
 
 // --- cCaDescriptors --------------------------------------------------------
 
@@ -72,14 +31,14 @@ private:
   int serviceId;
   int numCaIds;
   int caIds[MAXCAIDS + 1];
-  cList<cCaDescriptor> caDescriptors;
+  std::vector<cCaDescriptor> caDescriptors;
   void AddCaId(int CaId);
 public:
   cCaDescriptors(int Source, int Transponder, int ServiceId);
   bool operator== (const cCaDescriptors &arg) const;
   bool Is(int Source, int Transponder, int ServiceId);
   bool Is(cCaDescriptors * CaDescriptors);
-  bool Empty(void) { return caDescriptors.Count() == 0; }
+  bool Empty(void) { return caDescriptors.size() == 0; }
   void AddCaDescriptor(SI::CaDescriptor *d, int EsPid);
   int GetCaDescriptors(const int *CaSystemIds, int BufSize, uchar *Data, int EsPid);
   const int *CaIds(void) { return caIds; }
@@ -94,17 +53,9 @@ cCaDescriptors::cCaDescriptors(int Source, int Transponder, int ServiceId)
   caIds[0] = 0;
 }
 
-bool cCaDescriptors::operator== (const cCaDescriptors &arg) const
+bool cCaDescriptors::operator==(const cCaDescriptors &arg) const
 {
-  cCaDescriptor *ca1 = caDescriptors.First();
-  cCaDescriptor *ca2 = arg.caDescriptors.First();
-  while (ca1 && ca2) {
-        if (!(*ca1 == *ca2))
-           return false;
-        ca1 = caDescriptors.Next(ca1);
-        ca2 = arg.caDescriptors.Next(ca2);
-        }
-  return !ca1 && !ca2;
+  return caDescriptors == arg.caDescriptors;
 }
 
 bool cCaDescriptors::Is(int Source, int Transponder, int ServiceId)
@@ -131,15 +82,19 @@ void cCaDescriptors::AddCaId(int CaId)
 
 void cCaDescriptors::AddCaDescriptor(SI::CaDescriptor *d, int EsPid)
 {
+  // TODO: Use std::find
   cCaDescriptor *nca = new cCaDescriptor(d->getCaType(), d->getCaPid(), EsPid, d->privateData.getLength(), d->privateData.getData());
-  for (cCaDescriptor *ca = caDescriptors.First(); ca; ca = caDescriptors.Next(ca)) {
-      if (*ca == *nca) {
-         delete nca;
-         return;
-         }
-      }
+  for (vector<cCaDescriptor>::const_iterator it = caDescriptors.begin(); it != caDescriptors.end(); ++it)
+  {
+    if (*it == *nca)
+    {
+      delete nca;
+      return;
+    }
+  }
+
   AddCaId(nca->CaSystem());
-  caDescriptors.Add(nca);
+  caDescriptors.push_back(*nca);
 //#define DEBUG_CA_DESCRIPTORS 1
 #ifdef DEBUG_CA_DESCRIPTORS
   char buffer[1024];
@@ -162,14 +117,15 @@ int cCaDescriptors::GetCaDescriptors(const int *CaSystemIds, int BufSize, uchar 
      return 0;
   if (BufSize > 0 && Data) {
      int length = 0;
-     for (cCaDescriptor *d = caDescriptors.First(); d; d = caDescriptors.Next(d)) {
-         if (EsPid < 0 || d->EsPid() == EsPid) {
+     for (vector<cCaDescriptor>::const_iterator it = caDescriptors.begin(); it != caDescriptors.end(); ++it)
+     {
+         if (EsPid < 0 || it->EsPid() == EsPid) {
             const int *caids = CaSystemIds;
             do {
-               if (d->CaSystem() == *caids) {
-                  if (length + d->Length() <= BufSize) {
-                     memcpy(Data + length, d->Data(), d->Length());
-                     length += d->Length();
+               if (it->CaSystem() == *caids) {
+                  if (length + it->Data().size() <= BufSize) {
+                     memcpy(Data + length, it->Data().data(), it->Data().size());
+                     length += it->Data().size();
                      }
                   else
                      return -1;
