@@ -11,9 +11,9 @@
 #define __RECEIVER_H
 
 #include "channels/ChannelManager.h"
+#include "platform/threads/mutex.h"
 #include "Config.h"
-
-#define MAXRECEIVEPIDS  64 // the maximum number of PIDs per receiver
+#include <set>
 
 class cDevice;
 class cDevicePIDSubsystem;
@@ -21,11 +21,11 @@ class cDevicePIDSubsystem;
 class cReceiver {
   friend class cDevice;
 private:
-  tChannelID channelID;
-  cDevice*   m_device;
-  size_t     m_numPids;
-  int        m_pids[MAXRECEIVEPIDS];
-  int        m_priority;
+  PLATFORM::CMutex m_mutex;
+  tChannelID       m_channelID;
+  cDevice*         m_device;
+  std::set<int>    m_pids;
+  int              m_priority;
 
 protected:
   void Detach(void);
@@ -33,8 +33,8 @@ protected:
 public: // TODO
   bool WantsPid(int Pid);
   int Priority(void) const { return m_priority; }
-  bool AddToPIDSubsystem(cDevicePIDSubsystem* pidSys);
-  void RemoveFromPIDSubsystem(cDevicePIDSubsystem* pidSys);
+  bool AddToPIDSubsystem(cDevicePIDSubsystem* pidSys) const;
+  void RemoveFromPIDSubsystem(cDevicePIDSubsystem* pidSys) const;
   bool DeviceAttached(cDevice* device) const;
   void AttachDevice(cDevice* device);
   void DetachDevice(void);
@@ -65,11 +65,11 @@ public:
   virtual ~cReceiver();
   bool AddPid(int Pid);
                ///< Adds the given Pid to the list of PIDs of this receiver.
+  bool AddPids(std::set<int> pids);
+  bool UpdatePids(std::set<int> pids);
   bool AddPids(const int *Pids);
                ///< Adds the given zero terminated list of Pids to the list of PIDs of this
                ///< receiver.
-  bool AddPids(int Pid1, int Pid2, int Pid3 = 0, int Pid4 = 0, int Pid5 = 0, int Pid6 = 0, int Pid7 = 0, int Pid8 = 0, int Pid9 = 0);
-               ///< Adds the given Pids to the list of PIDs of this receiver.
   bool SetPids(const cChannel& Channel);
                ///< Sets the PIDs of this receiver to those of the given Channel,
                ///< replacing any previously stored PIDs. If Channel is NULL, all
@@ -79,8 +79,8 @@ public:
                ///< through ChannelID(). The ChannelID is necessary to allow the device
                ///< that will be used for this receiver to detect and store whether the
                ///< channel can be decrypted in case this is an encrypted channel.
-  tChannelID ChannelID(void) const { return channelID; }
-  bool IsAttached(void) const { return m_device != NULL; }
+  tChannelID ChannelID(void) const;
+  bool IsAttached(void) const;
                ///< Returns true if this receiver is (still) attached to a device.
                ///< A receiver may be automatically detached from its device in
                ///< case the device is needed otherwise, so code that uses a cReceiver
