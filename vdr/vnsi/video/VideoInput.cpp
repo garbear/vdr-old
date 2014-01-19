@@ -147,6 +147,7 @@ void cVideoInput::PmtChange(int pidChange)
     isyslog("Video Input - new pmt, attaching receiver");
     assert(m_Receiver->m_PmtChannel.get());
     m_Receiver->SetPids(*m_Receiver->m_PmtChannel);
+    m_Device->Receiver()->AttachReceiver(m_Receiver);
     m_PmtChange = true;
     m_SeenPmt = true;
   }
