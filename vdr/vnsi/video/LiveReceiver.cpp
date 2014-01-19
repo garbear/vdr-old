@@ -27,6 +27,7 @@ cLiveReceiver::cLiveReceiver(cVideoInput *VideoInput, ChannelPtr Channel, int Pr
  , m_VideoInput(VideoInput)
 {
   SetPids(*Channel);
+  m_PmtChannel = Channel;
 }
 
 cLiveReceiver::~cLiveReceiver()
