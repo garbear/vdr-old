@@ -117,7 +117,6 @@ bool cDevicePIDSubsystem::AddPid(int pid, ePidType pidType /* = ptOther */, int 
       m_pidHandles[n].streamType = StreamType;
       m_pidHandles[n].used = 1;
       PrintPIDs("C");
-      /*
       if (!SetPid(m_pidHandles[n], n, true))
       {
         esyslog("ERROR: can't set PID %d on device %d", pid, Device()->CardIndex() + 1);
@@ -128,7 +127,6 @@ bool cDevicePIDSubsystem::AddPid(int pid, ePidType pidType /* = ptOther */, int 
       }
       if (CommonInterface()->m_camSlot)
         CommonInterface()->m_camSlot->SetPid(pid, true);
-      */
     }
   }
   return true;
