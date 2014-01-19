@@ -74,11 +74,8 @@ class cDevice : public PLATFORM::CThread
 {
   // TODO
 public:
-  void Lock() { /*return cThread::Lock();*/ }
-  void Unlock() { /*return cThread::Unlock();*/ }
-
-  //friend class cDeviceHook;
-  //friend class cDeviceSubtitle;
+  void Lock() { m_threadMutex.Lock(); }
+  void Unlock() { m_threadMutex.Unlock(); }
 
 protected:
   /*!
