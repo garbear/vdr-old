@@ -9,6 +9,7 @@
 
 #include "PAT.h"
 #include "CADescriptor.h"
+#include "CADescriptors.h"
 #include <malloc.h>
 #include "channels/ChannelManager.h"
 #include "libsi/section.h"
@@ -22,159 +23,46 @@
 
 using namespace std;
 
-// --- cCaDescriptors --------------------------------------------------------
-
-class cCaDescriptors : public cListObject {
-private:
-  int source;
-  int transponder;
-  int serviceId;
-  int numCaIds;
-  int caIds[MAXCAIDS + 1];
-  std::vector<cCaDescriptor> caDescriptors;
-  void AddCaId(int CaId);
-public:
-  cCaDescriptors(int Source, int Transponder, int ServiceId);
-  bool operator== (const cCaDescriptors &arg) const;
-  bool Is(int Source, int Transponder, int ServiceId);
-  bool Is(cCaDescriptors * CaDescriptors);
-  bool Empty(void) { return caDescriptors.size() == 0; }
-  void AddCaDescriptor(SI::CaDescriptor *d, int EsPid);
-  int GetCaDescriptors(const int *CaSystemIds, int BufSize, uchar *Data, int EsPid);
-  const int *CaIds(void) { return caIds; }
-  };
-
-cCaDescriptors::cCaDescriptors(int Source, int Transponder, int ServiceId)
-{
-  source = Source;
-  transponder = Transponder;
-  serviceId = ServiceId;
-  numCaIds = 0;
-  caIds[0] = 0;
-}
-
-bool cCaDescriptors::operator==(const cCaDescriptors &arg) const
-{
-  return caDescriptors == arg.caDescriptors;
-}
-
-bool cCaDescriptors::Is(int Source, int Transponder, int ServiceId)
-{
-  return source == Source && transponder == Transponder && serviceId == ServiceId;
-}
-
-bool cCaDescriptors::Is(cCaDescriptors *CaDescriptors)
-{
-  return Is(CaDescriptors->source, CaDescriptors->transponder, CaDescriptors->serviceId);
-}
-
-void cCaDescriptors::AddCaId(int CaId)
-{
-  if (numCaIds < MAXCAIDS) {
-     for (int i = 0; i < numCaIds; i++) {
-         if (caIds[i] == CaId)
-            return;
-         }
-     caIds[numCaIds++] = CaId;
-     caIds[numCaIds] = 0;
-     }
-}
-
-void cCaDescriptors::AddCaDescriptor(SI::CaDescriptor *d, int EsPid)
-{
-  // TODO: Use std::find
-  cCaDescriptor *nca = new cCaDescriptor(d->getCaType(), d->getCaPid(), EsPid, d->privateData.getLength(), d->privateData.getData());
-  for (vector<cCaDescriptor>::const_iterator it = caDescriptors.begin(); it != caDescriptors.end(); ++it)
-  {
-    if (*it == *nca)
-    {
-      delete nca;
-      return;
-    }
-  }
-
-  AddCaId(nca->CaSystem());
-  caDescriptors.push_back(*nca);
-//#define DEBUG_CA_DESCRIPTORS 1
-#ifdef DEBUG_CA_DESCRIPTORS
-  char buffer[1024];
-  char *q = buffer;
-  q += sprintf(q, "CAM: %04X %5d %5d %04X %04X -", source, transponder, serviceId, d->getCaType(), EsPid);
-  for (int i = 0; i < nca->Length(); i++)
-      q += sprintf(q, " %02X", nca->Data()[i]);
-  dsyslog("%s", buffer);
-#endif
-}
-
-// EsPid is to select the "type" of CaDescriptor to be returned
-// >0 - CaDescriptor for the particular esPid
-// =0 - common CaDescriptor
-// <0 - all CaDescriptors regardless of type (old default)
-
-int cCaDescriptors::GetCaDescriptors(const int *CaSystemIds, int BufSize, uchar *Data, int EsPid)
-{
-  if (!CaSystemIds || !*CaSystemIds)
-     return 0;
-  if (BufSize > 0 && Data) {
-     int length = 0;
-     for (vector<cCaDescriptor>::const_iterator it = caDescriptors.begin(); it != caDescriptors.end(); ++it)
-     {
-         if (EsPid < 0 || it->EsPid() == EsPid) {
-            const int *caids = CaSystemIds;
-            do {
-               if (it->CaSystem() == *caids) {
-                  if (length + it->Data().size() <= BufSize) {
-                     memcpy(Data + length, it->Data().data(), it->Data().size());
-                     length += it->Data().size();
-                     }
-                  else
-                     return -1;
-                  }
-               } while (*++caids);
-            }
-         }
-     return length;
-     }
-  return -1;
-}
-
 // --- cCaDescriptorHandler --------------------------------------------------
 
 class cCaDescriptorHandler : public cList<cCaDescriptors> {
 private:
   PLATFORM::CMutex mutex;
 public:
-  int AddCaDescriptors(cCaDescriptors *CaDescriptors);
+  int AddCaDescriptors(const CaDescriptorsPtr& CaDescriptors);
       // Returns 0 if this is an already known descriptor,
       // 1 if it is an all new descriptor with actual contents,
       // and 2 if an existing descriptor was changed.
   int GetCaDescriptors(int Source, int Transponder, int ServiceId, const int *CaSystemIds, int BufSize, uchar *Data, int EsPid);
+
+private:
+  CaDescriptorsVector m_caDescriptors;
   };
 
-int cCaDescriptorHandler::AddCaDescriptors(cCaDescriptors *CaDescriptors)
+int cCaDescriptorHandler::AddCaDescriptors(const CaDescriptorsPtr& CaDescriptors)
 {
   PLATFORM::CLockObject lock(mutex);
-  for (cCaDescriptors *ca = First(); ca; ca = Next(ca)) {
-      if (ca->Is(CaDescriptors)) {
-         if (*ca == *CaDescriptors) {
-            delete CaDescriptors;
+  for (CaDescriptorsVector::iterator itCaDes = m_caDescriptors.begin(); itCaDes != m_caDescriptors.end(); ++itCaDes)
+  {
+      if ((*itCaDes)->Is(*CaDescriptors)) {
+         if (**itCaDes == *CaDescriptors) {
             return 0;
             }
-         Del(ca);
-         Add(CaDescriptors);
+         m_caDescriptors.erase(itCaDes);
+         m_caDescriptors.push_back(CaDescriptors);
          return 2;
          }
       }
-  Add(CaDescriptors);
+  m_caDescriptors.push_back(CaDescriptors);
   return CaDescriptors->Empty() ? 0 : 1;
 }
 
 int cCaDescriptorHandler::GetCaDescriptors(int Source, int Transponder, int ServiceId, const int *CaSystemIds, int BufSize, uchar *Data, int EsPid)
 {
   PLATFORM::CLockObject lock(mutex);
-  for (cCaDescriptors *ca = First(); ca; ca = Next(ca)) {
-      if (ca->Is(Source, Transponder, ServiceId))
-         return ca->GetCaDescriptors(CaSystemIds, BufSize, Data, EsPid);
+  for (CaDescriptorsVector::const_iterator itCa = m_caDescriptors.begin(); itCa != m_caDescriptors.end(); ++itCa) {
+      if ((*itCa)->Is(Source, Transponder, ServiceId))
+         return (*itCa)->GetCaDescriptors(CaSystemIds, BufSize, Data, EsPid);
       }
   return 0;
 }
@@ -280,7 +168,7 @@ void cPatFilter::Process(u_short Pid, u_char Tid, const u_char *Data, int Length
      ChannelPtr Channel = cChannelManager::Get().GetByServiceID(Source(), Transponder(), pmt.getServiceId());
      if (Channel) {
         SI::CaDescriptor *d;
-        cCaDescriptors *CaDescriptors = new cCaDescriptors(Channel->Source(), Channel->Transponder(), Channel->Sid());
+        CaDescriptorsPtr CaDescriptors = CaDescriptorsPtr(new cCaDescriptors(Channel->Source(), Channel->Transponder(), Channel->Sid()));
         // Scan the common loop:
         for (SI::Loop::Iterator it; (d = (SI::CaDescriptor*)pmt.commonDescriptors.getNext(it, SI::CaDescriptorTag)); ) {
             CaDescriptors->AddCaDescriptor(d, 0);
@@ -507,7 +395,7 @@ void cPatFilter::Process(u_short Pid, u_char Tid, const u_char *Data, int Length
             }
         if (Setup.UpdateChannels >= 2) {
            Channel->SetPids(Vpid, Ppid, Vtype, Apids, Atypes, ALangs, Dpids, Dtypes, DLangs, Spids, SLangs, Tpid);
-           Channel->SetCaIds(CaDescriptors->CaIds());
+           Channel->SetCaIds(CaDescriptors->CaIds().data());
            Channel->SetSubtitlingDescriptors(SubtitlingTypes, CompositionPageIds, AncillaryPageIds);
            }
         Channel->SetCaDescriptors(CaDescriptorHandler.AddCaDescriptors(CaDescriptors));
