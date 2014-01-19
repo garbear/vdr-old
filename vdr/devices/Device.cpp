@@ -154,20 +154,21 @@ void *cDevice::Process()
 
           // Distribute the packet to all attached receivers:
           Lock();
-          for (int i = 0; i < MAXRECEIVERS; i++)
+          cDeviceReceiverSubsystem* receiver = Receiver();
+          for (std::list<cReceiver*>::iterator it = receiver->m_receivers.begin(); it != receiver->m_receivers.end(); ++it)
           {
 //            dsyslog("received packet: pid=%d scrambled=%d check receiver %p", Pid, b[3] & TS_SCRAMBLING_CONTROL?1:0, Receiver()->m_receivers[i]);
-            if (Receiver()->m_receivers[i] && Receiver()->m_receivers[i]->WantsPid(Pid))
+            if ((*it)->WantsPid(Pid))
             {
               if (DetachReceivers)
               {
-                ChannelCamRelations.SetChecked(Receiver()->m_receivers[i]->ChannelID(), CamSlotNumber);
-                Receiver()->Detach(Receiver()->m_receivers[i]);
+                ChannelCamRelations.SetChecked((*it)->ChannelID(), CamSlotNumber);
+                Receiver()->Detach((*it));
               }
               else
-                Receiver()->m_receivers[i]->Receive(b, TS_SIZE);
+                (*it)->Receive(b, TS_SIZE);
               if (DescramblingOk)
-                ChannelCamRelations.SetDecrypt(Receiver()->m_receivers[i]->ChannelID(), CamSlotNumber);
+                ChannelCamRelations.SetDecrypt((*it)->ChannelID(), CamSlotNumber);
             }
           }
           Unlock();

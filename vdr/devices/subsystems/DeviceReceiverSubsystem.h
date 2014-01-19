@@ -25,8 +25,6 @@
 #include "utils/Tools.h"
 #include "platform/threads/threads.h"
 
-#define MAXRECEIVERS       16 // the maximum number of receivers per device
-
 class cReceiver;
 
 class cDeviceReceiverSubsystem : protected cDeviceSubsystem
@@ -41,12 +39,12 @@ public:
    * \return Value in the range -MAXPRIORITY..MAXPRIORITY, or IDLEPRIORITY if no
    *         receiver is currently active
    */
-  int Priority();
+  int Priority(void) const;
 
   /*!
    * \brief Returns true if we are currently receiving
    */
-  bool Receiving();
+  bool Receiving(void) const;
 
   /*!
    * \brief Attaches the given receiver to this device
@@ -95,5 +93,5 @@ public:
 private:
   PLATFORM::CMutex  m_mutexReceiver;
 public: // TODO
-  cReceiver      *m_receivers[MAXRECEIVERS];
+  std::list<cReceiver*> m_receivers;
 };

@@ -33,53 +33,40 @@
 
 using namespace std;
 
-#ifndef ARRAY_SIZE
-#define ARRAY_SIZE(x)  (sizeof(x) / sizeof(x[0]))
-#endif
-
 // activate the following line if you need it - actually the driver should be fixed!
 #define WAIT_FOR_TUNER_LOCK 0
 
 cDeviceReceiverSubsystem::cDeviceReceiverSubsystem(cDevice *device)
  : cDeviceSubsystem(device)
 {
-  for (int i = 0; i < ARRAY_SIZE(m_receivers); i++)
-    m_receivers[i] = NULL;
 }
 
-int cDeviceReceiverSubsystem::Priority()
+int cDeviceReceiverSubsystem::Priority(void) const
 {
   int priority = IDLEPRIORITY;
-//  if (Device()->IsPrimaryDevice() && !Player()->Replaying() && Channel()->HasProgramme())
-//    priority = TRANSFERPRIORITY; // we use the same value here, no matter whether it's actual Transfer Mode or real live viewing
 
   PLATFORM::CLockObject lock(m_mutexReceiver);
+  for (std::list<cReceiver*>::const_iterator it = m_receivers.begin(); it != m_receivers.end(); ++it)
+    priority = std::max((*it)->Priority(), priority);
 
-  for (int i = 0; i < MAXRECEIVERS; i++)
-  {
-    if (m_receivers[i])
-      priority = std::max(m_receivers[i]->Priority(), priority);
-  }
   return priority;
 }
 
-bool cDeviceReceiverSubsystem::Receiving()
+bool cDeviceReceiverSubsystem::Receiving(void) const
 {
   PLATFORM::CLockObject lock(m_mutexReceiver);
-  for (int i = 0; i < ARRAY_SIZE(m_receivers); i++)
-  {
-    if (m_receivers[i])
-      return true;
-  }
-  return false;
+  return !m_receivers.empty();
 }
 
 bool cDeviceReceiverSubsystem::AttachReceiver(cReceiver *receiver)
 {
-  if (!receiver)
-    return false;
+  assert(receiver);
+
   if (receiver->DeviceAttached(Device()))
+  {
+    dsyslog("receiver %p is already attached to %p", receiver, this);
     return true;
+  }
 #if WAIT_FOR_TUNER_LOCK
 #define TUNER_LOCK_TIMEOUT 5000 // ms
   if (!Channel()->HasLock(TUNER_LOCK_TIMEOUT))
@@ -89,54 +76,59 @@ bool cDeviceReceiverSubsystem::AttachReceiver(cReceiver *receiver)
   }
 #endif
   PLATFORM::CLockObject lock(m_mutexReceiver);
-  for (int i = 0; i < ARRAY_SIZE(m_receivers); i++)
+
+  if (!receiver->AddToPIDSubsystem(PID()))
   {
-    if (!m_receivers[i])
-    {
-      if (!receiver->AddToPIDSubsystem(PID()))
-        return false;
-      receiver->Activate(true);
-      Device()->Lock();
-      receiver->AttachDevice(Device());
-      m_receivers[i] = receiver;
-      Device()->Unlock();
-      if (CommonInterface()->m_camSlot)
-      {
-        CommonInterface()->m_camSlot->StartDecrypting();
-        CommonInterface()->m_startScrambleDetection = time(NULL);
-      }
-      Device()->CreateThread();
-      return true;
-    }
+    dsyslog("receiver %p cannot be added to the pid subsys", receiver);
+    return false;
   }
-  esyslog("ERROR: no free receiver slot!");
-  return false;
+
+  receiver->Activate(true);
+  Device()->Lock();
+  receiver->AttachDevice(Device());
+  m_receivers.push_back(receiver);
+  Device()->Unlock();
+
+  if (CommonInterface()->m_camSlot)
+  {
+    CommonInterface()->m_camSlot->StartDecrypting();
+    CommonInterface()->m_startScrambleDetection = time(NULL);
+  }
+
+  Device()->CreateThread();
+  dsyslog("receiver %p attached to %p", receiver, this);
+  return true;
 }
 
 void cDeviceReceiverSubsystem::Detach(cReceiver *receiver)
 {
-  if (!receiver || receiver->DeviceAttached(Device()))
-    return;
-  bool receiversLeft = false;
-  PLATFORM::CLockObject lock(m_mutexReceiver);
-  for (int i = 0; i < ARRAY_SIZE(m_receivers); i++)
+  assert(receiver);
+
+  if (receiver->DeviceAttached(Device()))
   {
-    if (m_receivers[i] == receiver)
+    dsyslog("receiver %p is not attached to %p", receiver, this);
+    return;
+  }
+
+  PLATFORM::CLockObject lock(m_mutexReceiver);
+  for (std::list<cReceiver*>::iterator it = m_receivers.begin(); it != m_receivers.end(); ++it)
+  {
+    if (*it == receiver)
     {
       Device()->Lock();
-      m_receivers[i] = NULL;
       receiver->DetachDevice();
       Device()->Unlock();
       receiver->Activate(false);
       receiver->RemoveFromPIDSubsystem(PID());
+      m_receivers.erase(it);
+      break;
     }
-    else if (m_receivers[i])
-      receiversLeft = true;
   }
   if (CommonInterface()->m_camSlot)
     CommonInterface()->m_camSlot->StartDecrypting();
-  if (!receiversLeft)
-    Device()->StopThread();
+  if (m_receivers.empty())
+    Device()->StopThread(0);
+  dsyslog("receiver %p detached from %p", receiver, this);
 }
 
 void cDeviceReceiverSubsystem::DetachAll(int pid)
@@ -144,11 +136,14 @@ void cDeviceReceiverSubsystem::DetachAll(int pid)
   if (pid)
   {
     PLATFORM::CLockObject lock(m_mutexReceiver);
-    for (int i = 0; i < ARRAY_SIZE(m_receivers); i++)
+    for (std::list<cReceiver*>::iterator it = m_receivers.begin(); it != m_receivers.end(); ++it)
     {
-      cReceiver *receiver = m_receivers[i];
-      if (receiver && receiver->WantsPid(pid))
-        Detach(receiver);
+      if ((*it)->WantsPid(pid))
+      {
+        Detach(*it);
+        //XXX
+        it = m_receivers.begin();
+      }
     }
   }
 }
@@ -156,6 +151,6 @@ void cDeviceReceiverSubsystem::DetachAll(int pid)
 void cDeviceReceiverSubsystem::DetachAllReceivers()
 {
   PLATFORM::CLockObject lock(m_mutexReceiver);
-  for (int i = 0; i < ARRAY_SIZE(m_receivers); i++)
-    Detach(m_receivers[i]);
+  for (std::list<cReceiver*>::iterator it = m_receivers.begin(); it != m_receivers.end(); it = m_receivers.begin())
+    Detach(*it);
 }
