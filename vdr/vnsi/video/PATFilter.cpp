@@ -373,13 +373,20 @@ void cLivePatFilter::Process(u_short Pid, u_char Tid, const u_char *Data, int Le
       }
       dsyslog("Pat/Pmt Filter received pmt change");
       ChannelPtr pmtChannel = m_VideoInput->PmtChannel();
-      pmtChannel->Modification();
-      pmtChannel->SetPids(Vpid, Ppid, Vtype, Apids, Atypes, ALangs, Dpids,
-          Dtypes, DLangs, Spids, SLangs, Tpid);
-      pmtChannel->SetSubtitlingDescriptors(SubtitlingTypes, CompositionPageIds,
-          AncillaryPageIds);
-      m_VideoInput->PmtChange(pmtChannel->Modification(CHANNELMOD_PIDS));
-      pmtChannel->NotifyObservers(ObservableMessageChannelChanged);
+      if (pmtChannel)
+      {
+        pmtChannel->Modification();
+        pmtChannel->SetPids(Vpid, Ppid, Vtype, Apids, Atypes, ALangs, Dpids,
+            Dtypes, DLangs, Spids, SLangs, Tpid);
+        pmtChannel->SetSubtitlingDescriptors(SubtitlingTypes, CompositionPageIds,
+            AncillaryPageIds);
+        m_VideoInput->PmtChange(pmtChannel->Modification(CHANNELMOD_PIDS));
+        pmtChannel->NotifyObservers(ObservableMessageChannelChanged);
+      }
+      else
+      {
+        esyslog("received pmt change but no pmt channel is set");
+      }
     }
   }
 }
