@@ -179,7 +179,7 @@ void cReceiver::DetachDevice(void)
 {
   CLockObject lock(m_mutex);
 
-  dsyslog("detaching device '%s' to receiver '%p'", m_device ? m_device->DeviceName().c_str() : "<nil>", this);
+  dsyslog("detaching device '%s' from receiver '%p'", m_device ? m_device->DeviceName().c_str() : "<nil>", this);
   m_device = NULL;
 }
 
