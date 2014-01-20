@@ -217,7 +217,6 @@ int cDevicePlayerSubsystem::PlayTs(const vector<uchar> &data, bool bVideoOnly /*
         int PayloadOffset = TsPayloadOffset(vecData.data());
         if (PayloadOffset < TS_SIZE)
         {
-          /*
           if (Pid == PATPID)
             m_patPmtParser.ParsePat(vecData.data(), vecData.size());
           else if (m_patPmtParser.IsPmtPid(Pid))
@@ -247,7 +246,6 @@ int cDevicePlayerSubsystem::PlayTs(const vector<uchar> &data, bool bVideoOnly /*
             if (!bVideoOnly || HasIBPTrickSpeed())
               PlayTsSubtitle(vecData);
           }
-          */
         }
       }
       else if (Pid == m_patPmtParser.Ppid())
