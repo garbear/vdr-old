@@ -44,7 +44,7 @@ bool cReceiver::AddPid(int Pid)
   set<int>::const_iterator it = m_pids.find(Pid);
   if (it == m_pids.end())
   {
-    esyslog("adding PID %d to receiver '%s' (%p)", Pid, m_device ? m_device->DeviceName().c_str() : "<nil>", this);
+    dsyslog("adding PID %d", Pid);
     m_pids.insert(Pid);
   }
 
@@ -69,7 +69,7 @@ bool cReceiver::UpdatePids(set<int> pids)
   {
     if (pids.find(*it) == pids.end())
     {
-      esyslog("removing PID %d from receiver '%s' (%p)", *it, m_device ? m_device->DeviceName().c_str() : "<nil>", this);
+      dsyslog("removing PID %d", *it);
       m_pids.erase(it);
       it = m_pids.begin();
     }
