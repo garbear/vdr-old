@@ -42,5 +42,5 @@ void cLiveReceiver::Receive(uchar *Data, int Length)
 void cLiveReceiver::Activate(bool On)
 {
   m_VideoInput->Attach(On);
-  dsyslog("activate live receiver: %d", On);
+  dsyslog("%s live receiver", On ? "activate" : "deactivate");
 }
