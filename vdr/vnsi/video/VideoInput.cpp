@@ -38,6 +38,16 @@ using namespace PLATFORM;
 
 cVideoInput::cVideoInput()
 {
+  ResetMembers();
+}
+
+cVideoInput::~cVideoInput()
+{
+  Close();
+}
+
+void cVideoInput::ResetMembers(void)
+{
   m_PatFilter   = NULL;
   m_Receiver    = NULL;
   m_Receiver0   = NULL;
@@ -49,23 +59,19 @@ cVideoInput::cVideoInput()
   m_SeenPmt     = false;
 }
 
-cVideoInput::~cVideoInput()
-{
-  Close();
-}
-
 bool cVideoInput::Open(ChannelPtr channel, int priority, cVideoBuffer *videoBuffer)
 {
   CLockObject lock(m_mutex);
 
-  m_VideoBuffer = videoBuffer;
-  m_Channel = channel;
-  m_Priority = priority;
-  m_Device = cDeviceManager::Get().GetDevice(*m_Channel, m_Priority, true);
-
+  m_Device = cDeviceManager::Get().GetDevice(*channel, priority, true);
   if (m_Device)
   {
-    dsyslog("Successfully found following device: %s (%d) for receiving", m_Device->DeviceName().c_str(), m_Device->CardIndex());
+    dsyslog("found device: '%s' (%d) for channel '%s'", m_Device->DeviceName().c_str(), m_Device->CardIndex(), channel->Name().c_str());
+
+    m_VideoBuffer = videoBuffer;
+    m_Priority    = priority;
+    m_Channel     = channel;
+    m_Channel->RegisterObserver(this);
 
     if (m_Device->Channel()->SwitchChannel(m_Channel))
     {
@@ -90,6 +96,9 @@ void cVideoInput::Close()
   CLockObject lock(m_mutex);
   if (m_Device)
   {
+    if (m_Channel)
+      m_Channel->UnregisterObserver(this);
+
     if (m_Receiver)
     {
       dsyslog("Detaching Live Receiver");
@@ -137,27 +146,29 @@ void cVideoInput::Close()
       dsyslog("Deleting Live Filter");
       DELETENULL(m_PatFilter);
     }
+
+    ResetMembers();
   }
 }
 
-ChannelPtr cVideoInput::PmtChannel()
+void cVideoInput::Notify(const Observable &obs, const ObservableMessage msg)
 {
+  if (msg == ObservableMessageChannelPMTChanged)
+    PmtChange();
+}
+
+void cVideoInput::PmtChange(void)
+{
+  isyslog("Video Input - new pmt, attaching receiver");
+
   CLockObject lock(m_mutex);
-  return m_Receiver->m_PmtChannel;
-}
+  assert(m_Receiver->m_PmtChannel.get());
 
-void cVideoInput::PmtChange(int pidChange)
-{
-  if (pidChange)
-  {
-    isyslog("Video Input - new pmt, attaching receiver");
-    CLockObject lock(m_mutex);
-    assert(m_Receiver->m_PmtChannel.get());
-    m_Receiver->SetPids(*m_Receiver->m_PmtChannel);
-    m_Device->Receiver()->AttachReceiver(m_Receiver);
-    m_PmtChange = true;
-    m_SeenPmt = true;
-  }
+  m_Receiver->SetPids(*m_Receiver->m_PmtChannel);
+  m_Device->Receiver()->AttachReceiver(m_Receiver);
+  m_PmtChange = true;
+  m_SeenPmt   = true;
+  m_pmtCondition.Signal();
 }
 
 void cVideoInput::Receive(uchar *data, int length)
@@ -184,23 +195,16 @@ void cVideoInput::Attach(bool on)
 
 void* cVideoInput::Process()
 {
-  cTimeMs starttime;
-
-  while (!IsStopped())
+  CLockObject lock(m_mutex);
+  if (!m_pmtCondition.Wait(m_mutex, m_SeenPmt, (unsigned int)cSettings::Get().m_PmtTimeout*1000))
   {
+    if (!IsStopped())
     {
-      CLockObject lock(m_mutex);
-      if (starttime.Elapsed() > (unsigned int)cSettings::Get().m_PmtTimeout*1000)
-      {
-        isyslog("VideoInput: no pat/pmt within timeout, falling back to channel pids");
-        m_Receiver->m_PmtChannel = m_Channel;
-        PmtChange(true);
-      }
-      if (m_SeenPmt)
-        break;
+      isyslog("VideoInput: no pat/pmt within timeout, falling back to channel pids");
+      m_Receiver->m_PmtChannel = m_Channel;
+      PmtChange();
     }
-
-    usleep(1000);
   }
+
   return NULL;
 }

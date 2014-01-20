@@ -372,16 +372,15 @@ void cLivePatFilter::Process(u_short Pid, u_char Tid, const u_char *Data, int Le
           }
       }
       dsyslog("Pat/Pmt Filter received pmt change");
-      ChannelPtr pmtChannel = m_VideoInput->PmtChannel();
-      if (pmtChannel)
+      if (m_Channel)
       {
-        pmtChannel->Modification();
-        pmtChannel->SetPids(Vpid, Ppid, Vtype, Apids, Atypes, ALangs, Dpids,
+        m_Channel->Modification();
+        m_Channel->SetPids(Vpid, Ppid, Vtype, Apids, Atypes, ALangs, Dpids,
             Dtypes, DLangs, Spids, SLangs, Tpid);
-        pmtChannel->SetSubtitlingDescriptors(SubtitlingTypes, CompositionPageIds,
+        m_Channel->SetSubtitlingDescriptors(SubtitlingTypes, CompositionPageIds,
             AncillaryPageIds);
-        m_VideoInput->PmtChange(pmtChannel->Modification(CHANNELMOD_PIDS));
-        pmtChannel->NotifyObservers(ObservableMessageChannelChanged);
+        if (m_Channel->Modification(CHANNELMOD_PIDS))
+          m_Channel->NotifyObservers(ObservableMessageChannelPMTChanged);
       }
       else
       {

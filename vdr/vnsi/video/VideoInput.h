@@ -23,12 +23,13 @@
 #include "lib/platform/threads/threads.h"
 #include "channels/Channel.h"
 #include "devices/Device.h"
+#include "utils/Observer.h"
 
 class cLivePatFilter;
 class cLiveReceiver;
 class cVideoBuffer;
 
-class cVideoInput : public PLATFORM::CThread
+class cVideoInput : public PLATFORM::CThread, public Observer
 {
 friend class cLivePatFilter;
 friend class cLiveReceiver;
@@ -38,20 +39,23 @@ public:
   bool Open(ChannelPtr channel, int priority, cVideoBuffer *videoBuffer);
   void Close();
 
+  void Notify(const Observable &obs, const ObservableMessage msg);
+
 protected:
+  void ResetMembers(void);
   virtual void* Process(void);
-  void PmtChange(int pidChange);
-  ChannelPtr PmtChannel();
+  void PmtChange(void);
   void Receive(uchar *data, int length);
   void Attach(bool on);
-  DevicePtr         m_Device;
-  cLivePatFilter   *m_PatFilter;
-  cLiveReceiver    *m_Receiver;
-  cLiveReceiver    *m_Receiver0;
-  ChannelPtr        m_Channel;
-  cVideoBuffer     *m_VideoBuffer;
-  PLATFORM::CMutex  m_mutex;
-  int               m_Priority;
-  bool              m_PmtChange;
-  bool              m_SeenPmt;
+  DevicePtr                  m_Device;
+  cLivePatFilter*            m_PatFilter;
+  cLiveReceiver*             m_Receiver;
+  cLiveReceiver*             m_Receiver0;
+  ChannelPtr                 m_Channel;
+  cVideoBuffer*              m_VideoBuffer;
+  PLATFORM::CMutex           m_mutex;
+  PLATFORM::CCondition<bool> m_pmtCondition;
+  int                        m_Priority;
+  bool                       m_PmtChange;
+  bool                       m_SeenPmt;
 };
