@@ -39,6 +39,7 @@ int main(int argc, char *argv[])
     CSignalHandler::Get().SetSignalReceiver(SIGINT, &vdr);
     CSignalHandler::Get().SetSignalReceiver(SIGKILL, &vdr);
     CSignalHandler::Get().SetSignalReceiver(SIGTERM, &vdr);
+    CSignalHandler::Get().IgnoreSignal(SIGPIPE);
 
     vdr.WaitForShutdown();
   }
