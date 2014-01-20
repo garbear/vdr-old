@@ -50,7 +50,6 @@ void cVideoInput::ResetMembers(void)
 {
   m_PatFilter   = NULL;
   m_Receiver    = NULL;
-  m_Receiver0   = NULL;
   m_Channel     = cChannel::EmptyChannel;
   m_VideoBuffer = NULL;
   m_Priority    = 0;
@@ -78,9 +77,8 @@ bool cVideoInput::Open(ChannelPtr channel, int priority, cVideoBuffer *videoBuff
       dsyslog("Creating new live Receiver");
       m_SeenPmt   = false;
       m_PatFilter = new cLivePatFilter(this, m_Channel);
-      m_Receiver0 = new cLiveReceiver(this, m_Channel, m_Priority);
       m_Receiver  = new cLiveReceiver(this, m_Channel, m_Priority);
-      m_Device->Receiver()->AttachReceiver(m_Receiver0);
+      m_Device->Receiver()->AttachReceiver(m_Receiver);
       m_Device->SectionFilter()->AttachFilter(m_PatFilter);
       CreateThread();
       return true;
@@ -109,16 +107,6 @@ void cVideoInput::Close()
       dsyslog("No live receiver present");
     }
 
-    if (m_Receiver0)
-    {
-      dsyslog("Detaching Live Receiver0");
-      m_Device->Receiver()->Detach(m_Receiver0);
-    }
-    else
-    {
-      dsyslog("No live receiver present");
-    }
-
     if (m_PatFilter)
     {
       dsyslog("Detaching Live Filter");
@@ -133,12 +121,6 @@ void cVideoInput::Close()
     {
       dsyslog("Deleting Live Receiver");
       DELETENULL(m_Receiver);
-    }
-
-    if (m_Receiver0)
-    {
-      dsyslog("Deleting Live Receiver0");
-      DELETENULL(m_Receiver0);
     }
 
     if (m_PatFilter)
@@ -164,6 +146,7 @@ void cVideoInput::PmtChange(void)
   CLockObject lock(m_mutex);
   assert(m_Receiver->m_PmtChannel.get());
 
+  m_Device->Receiver()->Detach(m_Receiver);
   m_Receiver->SetPids(*m_Receiver->m_PmtChannel);
   m_Device->Receiver()->AttachReceiver(m_Receiver);
   m_PmtChange = true;

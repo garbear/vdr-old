@@ -50,7 +50,6 @@ protected:
   DevicePtr                  m_Device;
   cLivePatFilter*            m_PatFilter;
   cLiveReceiver*             m_Receiver;
-  cLiveReceiver*             m_Receiver0;
   ChannelPtr                 m_Channel;
   cVideoBuffer*              m_VideoBuffer;
   PLATFORM::CMutex           m_mutex;
