@@ -76,7 +76,7 @@ void *cTSBuffer::Process()
   return NULL;
 }
 
-uint8_t *cTSBuffer::Get()
+uchar* cTSBuffer::Get()
 {
   int Count = 0;
   if (m_bDelivered)
@@ -84,7 +84,7 @@ uint8_t *cTSBuffer::Get()
     m_ringBuffer->Del(TS_SIZE);
     m_bDelivered = false;
   }
-  uint8_t *p = m_ringBuffer->Get(Count);
+  uchar *p = m_ringBuffer->Get(Count);
   if (p && Count >= TS_SIZE)
   {
     if (*p != TS_SYNC_BYTE)

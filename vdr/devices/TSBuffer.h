@@ -22,6 +22,7 @@
 #pragma once
 
 #include "platform/threads/threads.h"
+#include "utils/Tools.h"
 
 #include <stdint.h>
 
@@ -41,7 +42,7 @@ public:
   cTSBuffer(int file, unsigned int size, int cardIndex);
   virtual ~cTSBuffer();
 
-  uint8_t *Get();
+  uchar* Get();
 
 private:
   virtual void *Process();
