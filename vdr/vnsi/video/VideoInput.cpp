@@ -34,6 +34,8 @@
 #include "devices/Receiver.h"
 #include "settings/Settings.h"
 
+using namespace PLATFORM;
+
 cVideoInput::cVideoInput()
 {
   m_PatFilter   = NULL;
@@ -54,6 +56,8 @@ cVideoInput::~cVideoInput()
 
 bool cVideoInput::Open(ChannelPtr channel, int priority, cVideoBuffer *videoBuffer)
 {
+  CLockObject lock(m_mutex);
+
   m_VideoBuffer = videoBuffer;
   m_Channel = channel;
   m_Priority = priority;
@@ -83,6 +87,7 @@ void cVideoInput::Close()
 {
   StopThread(5000);
 
+  CLockObject lock(m_mutex);
   if (m_Device)
   {
     if (m_Receiver)
@@ -137,6 +142,7 @@ void cVideoInput::Close()
 
 ChannelPtr cVideoInput::PmtChannel()
 {
+  CLockObject lock(m_mutex);
   return m_Receiver->m_PmtChannel;
 }
 
@@ -145,6 +151,7 @@ void cVideoInput::PmtChange(int pidChange)
   if (pidChange)
   {
     isyslog("Video Input - new pmt, attaching receiver");
+    CLockObject lock(m_mutex);
     assert(m_Receiver->m_PmtChannel.get());
     m_Receiver->SetPids(*m_Receiver->m_PmtChannel);
     m_Device->Receiver()->AttachReceiver(m_Receiver);
@@ -155,6 +162,7 @@ void cVideoInput::PmtChange(int pidChange)
 
 void cVideoInput::Receive(uchar *data, int length)
 {
+  CLockObject lock(m_mutex);
   if (m_PmtChange)
   {
      // generate pat/pmt so we can configure parsers later
@@ -170,6 +178,7 @@ void cVideoInput::Receive(uchar *data, int length)
 
 void cVideoInput::Attach(bool on)
 {
+  CLockObject lock(m_mutex);
   m_VideoBuffer->AttachInput(on);
 }
 
@@ -179,14 +188,17 @@ void* cVideoInput::Process()
 
   while (!IsStopped())
   {
-    if (starttime.Elapsed() > (unsigned int)cSettings::Get().m_PmtTimeout*1000)
     {
-      isyslog("VideoInput: no pat/pmt within timeout, falling back to channel pids");
-      m_Receiver->m_PmtChannel = m_Channel;
-      PmtChange(true);
+      CLockObject lock(m_mutex);
+      if (starttime.Elapsed() > (unsigned int)cSettings::Get().m_PmtTimeout*1000)
+      {
+        isyslog("VideoInput: no pat/pmt within timeout, falling back to channel pids");
+        m_Receiver->m_PmtChannel = m_Channel;
+        PmtChange(true);
+      }
+      if (m_SeenPmt)
+        break;
     }
-    if (m_SeenPmt)
-      break;
 
     usleep(1000);
   }

@@ -50,6 +50,7 @@ protected:
   cLiveReceiver    *m_Receiver0;
   ChannelPtr        m_Channel;
   cVideoBuffer     *m_VideoBuffer;
+  PLATFORM::CMutex  m_mutex;
   int               m_Priority;
   bool              m_PmtChange;
   bool              m_SeenPmt;
