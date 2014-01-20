@@ -38,6 +38,12 @@ void CSignalHandler::SetSignalReceiver(int signum, ISignalReceiver *callback)
     m_callbacks[signum] = callback;
 }
 
+void CSignalHandler::IgnoreSignal(int signum)
+{
+  ResetSignalReceiver(signum);
+  signal(signum, SIG_IGN);
+}
+
 void CSignalHandler::ResetSignalReceiver(int signum)
 {
   std::map<int, ISignalReceiver*>::iterator it = m_callbacks.find(signum);

@@ -69,6 +69,12 @@ public:
   void ResetSignalReceiver(int signum);
 
   /*!
+   * Ignore the signal when thrown
+   * @param signum The signal to ignore
+   */
+  void IgnoreSignal(int signum);
+
+  /*!
    * \brief Uninstall all signal handers and reset the signal callback classes
    */
   void ResetSignalReceivers();
