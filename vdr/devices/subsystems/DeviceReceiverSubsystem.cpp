@@ -104,7 +104,7 @@ void cDeviceReceiverSubsystem::Detach(cReceiver *receiver)
 {
   assert(receiver);
 
-  if (receiver->DeviceAttached(Device()))
+  if (!receiver->DeviceAttached(Device()))
   {
     dsyslog("receiver %p is not attached to %p", receiver, this);
     return;
@@ -135,6 +135,7 @@ void cDeviceReceiverSubsystem::DetachAll(int pid)
 {
   if (pid)
   {
+    dsyslog("detaching all receivers for pid %d from %p", pid, this);
     PLATFORM::CLockObject lock(m_mutexReceiver);
     for (std::list<cReceiver*>::iterator it = m_receivers.begin(); it != m_receivers.end(); ++it)
     {

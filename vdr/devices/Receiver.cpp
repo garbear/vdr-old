@@ -69,7 +69,7 @@ bool cReceiver::UpdatePids(set<int> pids)
   {
     if (pids.find(*it) == pids.end())
     {
-      esyslog("removing PID %d to receiver '%s' (%p)", *it, m_device ? m_device->DeviceName().c_str() : "<nil>", this);
+      esyslog("removing PID %d from receiver '%s' (%p)", *it, m_device ? m_device->DeviceName().c_str() : "<nil>", this);
       m_pids.erase(it);
       it = m_pids.begin();
     }
