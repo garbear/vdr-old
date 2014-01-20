@@ -58,6 +58,7 @@ cxSocket::~cxSocket()
 }
 
 void cxSocket::close() {
+  CLockObject lock(m_MutexWrite);
   if(m_fd >= 0) { 
     ::close(m_fd);
     m_fd=-1; 
@@ -66,6 +67,7 @@ void cxSocket::close() {
 
 void cxSocket::Shutdown()
 {
+  CLockObject lock(m_MutexWrite);
   if(m_fd >= 0)
   {
     ::shutdown(m_fd, SHUT_RD);
@@ -155,6 +157,7 @@ ssize_t cxSocket::read(void *buffer, size_t size, int timeout_ms)
     else if (p == 0)
     {
       isyslog("cxSocket::read: eof, connection closed");
+      close();
       return 0;
     }
 
@@ -167,6 +170,7 @@ ssize_t cxSocket::read(void *buffer, size_t size, int timeout_ms)
 }
 
 void cxSocket::SetHandle(int h) {
+  CLockObject lock(m_MutexWrite);
   if(h != m_fd) {
     close();
     m_fd = h;
