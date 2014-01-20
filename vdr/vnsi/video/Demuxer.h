@@ -27,7 +27,6 @@
 
 struct sStreamPacket;
 class cTSStream;
-class cChannel;
 class cVideoBuffer;
 
 struct sStreamInfo
@@ -56,7 +55,7 @@ public:
   int Read(sStreamPacket *packet);
   cTSStream *GetFirstStream();
   cTSStream *GetNextStream();
-  void Open(const cChannel &channel, cVideoBuffer *videoBuffer);
+  void Open(ChannelPtr channel, cVideoBuffer *videoBuffer);
   void Close();
   bool SeekTime(int64_t time);
   uint32_t GetSerial() { return m_MuxPacketSerial; }
@@ -67,15 +66,15 @@ public:
 protected:
   bool EnsureParsers();
   void ResetParsers();
-  void SetChannelStreams(const cChannel *channel);
-  void SetChannelPids(cChannel *channel, cPatPmtParser *patPmtParser);
+  void UpdateStreamsFromChannel(void);
+  void UpdateChannelPIDsFromPMT(void);
   cTSStream *FindStream(int Pid);
   void AddStreamInfo(sStreamInfo &stream);
   bool GetTimeAtPos(off_t *pos, int64_t *time);
   std::list<cTSStream*> m_Streams;
   std::list<cTSStream*>::iterator m_StreamsIterator;
   std::list<sStreamInfo> m_StreamInfos;
-  cChannel m_CurrentChannel;
+  ChannelPtr m_CurrentChannel;
   cPatPmtParser m_PatPmtParser;
   int m_OldPmtVersion;
   bool m_WaitIFrame;

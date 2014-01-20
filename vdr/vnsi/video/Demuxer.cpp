@@ -29,48 +29,57 @@
 
 using namespace PLATFORM;
 
-cVNSIDemuxer::cVNSIDemuxer()
+cVNSIDemuxer::cVNSIDemuxer() :
+    m_OldPmtVersion(-1),
+    m_WaitIFrame(true),
+    m_FirstFramePTS(0),
+    m_VideoBuffer(NULL),
+    m_MuxPacketSerial(0),
+    m_Error(0),
+    m_SetRefTime(true),
+    m_refTime(0),
+    m_endTime(0),
+    m_wrapTime(0)
 {
-  m_OldPmtVersion = -1;
+  memset(&m_PtsWrap, 0, sizeof(sPtsWrap));
 }
 
 cVNSIDemuxer::~cVNSIDemuxer()
 {
-
 }
 
-void cVNSIDemuxer::Open(const cChannel &channel, cVideoBuffer *videoBuffer)
+void cVNSIDemuxer::Open(ChannelPtr channel, cVideoBuffer *videoBuffer)
 {
+  assert(channel.get());
+  assert(videoBuffer);
+
   CLockObject lock(m_Mutex);
 
-  m_CurrentChannel = channel;
-  m_VideoBuffer = videoBuffer;
-  m_OldPmtVersion = -1;
-
-  if (m_CurrentChannel.Vpid())
-    m_WaitIFrame = true;
-  else
-    m_WaitIFrame = false;
-
-  m_FirstFramePTS = 0;
-
-  m_PtsWrap.m_Wrap = false;
-  m_PtsWrap.m_NoOfWraps = 0;
-  m_PtsWrap.m_ConfirmCount = 0;
-  m_MuxPacketSerial = 0;
-  m_Error = ERROR_DEMUX_NODATA;
-  m_SetRefTime = true;
+  Close();
+  m_CurrentChannel  = channel;
+  m_VideoBuffer     = videoBuffer;
 }
 
 void cVNSIDemuxer::Close()
 {
   CLockObject lock(m_Mutex);
 
+  m_CurrentChannel  = cChannel::EmptyChannel;
+  m_VideoBuffer     = NULL;
+  m_OldPmtVersion   = -1;
+  m_WaitIFrame      = m_CurrentChannel ? m_CurrentChannel->Vpid() != 0 : true;
+  m_FirstFramePTS   = 0;
+  m_MuxPacketSerial = 0;
+  m_Error           = ERROR_DEMUX_NODATA;
+  m_SetRefTime      = true;
+  memset(&m_PtsWrap, 0, sizeof(sPtsWrap));
+
   for (std::list<cTSStream*>::iterator it = m_Streams.begin(); it != m_Streams.end(); ++it)
   {
     dsyslog("Deleting stream parser for pid=%i and type=%i", (*it)->GetPID(), (*it)->Type());
     delete (*it);
   }
+
   m_Streams.clear();
   m_StreamInfos.clear();
 }
@@ -81,17 +90,17 @@ int cVNSIDemuxer::Read(sStreamPacket *packet)
   int len;
   cTSStream *stream;
 
+  assert(packet);
+  assert(m_VideoBuffer);
+
   CLockObject lock(m_Mutex);
 
   // clear packet
-  if (!packet)
-    return -1;
-  packet->data = NULL;
-  packet->streamChange = false;
-  packet->pmtChange = false;
+  memset(packet, 0, sizeof(sStreamPacket));
 
   // read TS Packet from buffer
   len = m_VideoBuffer->Read(&buf, TS_SIZE, m_endTime, m_wrapTime);
+
   // eof
   if (len == VIDEOBUFFER_EOF)
     return VIDEOBUFFER_EOF;
@@ -113,13 +122,15 @@ int cVNSIDemuxer::Read(sStreamPacket *packet)
     m_PatPmtParser.ParsePmt(buf, TS_SIZE);
     if (m_PatPmtParser.GetVersions(patVersion, pmtVersion))
     {
+      // PMT version changed
       if (pmtVersion != m_OldPmtVersion)
       {
-        cChannel pmtChannel(m_CurrentChannel);
-        SetChannelPids(&pmtChannel, &m_PatPmtParser);
-        SetChannelStreams(&pmtChannel);
+        UpdateChannelPIDsFromPMT();
+        UpdateStreamsFromChannel();
         m_PatPmtParser.Reset();
         m_OldPmtVersion = pmtVersion;
+
+        // (re)create stream parsers
         if (EnsureParsers())
         {
           packet->pmtChange = true;
@@ -130,6 +141,7 @@ int cVNSIDemuxer::Read(sStreamPacket *packet)
   }
   else if ((stream = FindStream(ts_pid)))
   {
+    // pass to demux
     int error = stream->ProcessTSPacket(buf, packet, m_WaitIFrame);
     if (error == 0)
     {
@@ -478,14 +490,14 @@ bool cVNSIDemuxer::EnsureParsers()
   return streamChange;
 }
 
-void cVNSIDemuxer::SetChannelStreams(const cChannel *channel)
+void cVNSIDemuxer::UpdateStreamsFromChannel(void)
 {
   sStreamInfo newStream;
   int index = 0;
-  if (channel->Vpid())
+  if (m_CurrentChannel->Vpid())
   {
-    newStream.pID = channel->Vpid();
-    if (channel->Vtype() == 0x1B)
+    newStream.pID = m_CurrentChannel->Vpid();
+    if (m_CurrentChannel->Vtype() == 0x1B)
       newStream.type = stH264;
     else
       newStream.type = stMPEG2VIDEO;
@@ -493,7 +505,7 @@ void cVNSIDemuxer::SetChannelStreams(const cChannel *channel)
     AddStreamInfo(newStream);
   }
 
-  const int *DPids = channel->Dpids();
+  const int *DPids = m_CurrentChannel->Dpids();
   index = 0;
   for ( ; *DPids; DPids++)
   {
@@ -501,15 +513,15 @@ void cVNSIDemuxer::SetChannelStreams(const cChannel *channel)
     {
       newStream.pID = *DPids;
       newStream.type = stAC3;
-      if (channel->Dtype(index) == SI::EnhancedAC3DescriptorTag)
+      if (m_CurrentChannel->Dtype(index) == SI::EnhancedAC3DescriptorTag)
         newStream.type = stEAC3;
-      newStream.SetLanguage(channel->Dlang(index));
+      newStream.SetLanguage(m_CurrentChannel->Dlang(index));
       AddStreamInfo(newStream);
     }
     index++;
   }
 
-  const int *APids = channel->Apids();
+  const int *APids = m_CurrentChannel->Apids();
   index = 0;
   for ( ; *APids; APids++)
   {
@@ -517,17 +529,17 @@ void cVNSIDemuxer::SetChannelStreams(const cChannel *channel)
     {
       newStream.pID = *APids;
       newStream.type = stMPEG2AUDIO;
-      if (channel->Atype(index) == 0x0F)
+      if (m_CurrentChannel->Atype(index) == 0x0F)
         newStream.type = stAACADTS;
-      else if (channel->Atype(index) == 0x11)
+      else if (m_CurrentChannel->Atype(index) == 0x11)
         newStream.type = stAACLATM;
-      newStream.SetLanguage(channel->Alang(index));
+      newStream.SetLanguage(m_CurrentChannel->Alang(index));
       AddStreamInfo(newStream);
     }
     index++;
   }
 
-  const int *SPids = channel->Spids();
+  const int *SPids = m_CurrentChannel->Spids();
   if (SPids)
   {
     index = 0;
@@ -537,25 +549,25 @@ void cVNSIDemuxer::SetChannelStreams(const cChannel *channel)
       {
         newStream.pID = *SPids;
         newStream.type = stDVBSUB;
-        newStream.SetLanguage(channel->Slang(index));
-        newStream.subtitlingType = channel->SubtitlingType(index);
-        newStream.compositionPageId = channel->CompositionPageId(index);
-        newStream.ancillaryPageId = channel->AncillaryPageId(index);
+        newStream.SetLanguage(m_CurrentChannel->Slang(index));
+        newStream.subtitlingType = m_CurrentChannel->SubtitlingType(index);
+        newStream.compositionPageId = m_CurrentChannel->CompositionPageId(index);
+        newStream.ancillaryPageId = m_CurrentChannel->AncillaryPageId(index);
         AddStreamInfo(newStream);
       }
       index++;
     }
   }
 
-  if (channel->Tpid())
+  if (m_CurrentChannel->Tpid())
   {
-    newStream.pID = channel->Tpid();
+    newStream.pID = m_CurrentChannel->Tpid();
     newStream.type = stTELETEXT;
     AddStreamInfo(newStream);
   }
 }
 
-void cVNSIDemuxer::SetChannelPids(cChannel *channel, cPatPmtParser *patPmtParser)
+void cVNSIDemuxer::UpdateChannelPIDsFromPMT(void)
 {
   int Apids[MAXAPIDS + 1] = { 0 };
   int Atypes[MAXAPIDS + 1] = { 0 };
@@ -567,40 +579,40 @@ void cVNSIDemuxer::SetChannelPids(cChannel *channel, cPatPmtParser *patPmtParser
   char SLangs[MAXSPIDS][MAXLANGCODE2] = { "" };
   int index = 0;
 
-  const int *aPids = patPmtParser->Apids();
+  const int *aPids = m_PatPmtParser.Apids();
   index = 0;
   for ( ; *aPids; aPids++)
   {
-    Apids[index] = patPmtParser->Apid(index);
-    Atypes[index] = patPmtParser->Atype(index);
-    strn0cpy(ALangs[index], patPmtParser->Alang(index), MAXLANGCODE2);
+    Apids[index] = m_PatPmtParser.Apid(index);
+    Atypes[index] = m_PatPmtParser.Atype(index);
+    strn0cpy(ALangs[index], m_PatPmtParser.Alang(index), MAXLANGCODE2);
     index++;
   }
 
-  const int *dPids = patPmtParser->Dpids();
+  const int *dPids = m_PatPmtParser.Dpids();
   index = 0;
   for ( ; *dPids; dPids++)
   {
-    Dpids[index] = patPmtParser->Dpid(index);
-    Dtypes[index] = patPmtParser->Dtype(index);
-    strn0cpy(DLangs[index], patPmtParser->Dlang(index), MAXLANGCODE2);
+    Dpids[index] = m_PatPmtParser.Dpid(index);
+    Dtypes[index] = m_PatPmtParser.Dtype(index);
+    strn0cpy(DLangs[index], m_PatPmtParser.Dlang(index), MAXLANGCODE2);
     index++;
   }
 
-  const int *sPids = patPmtParser->Spids();
+  const int *sPids = m_PatPmtParser.Spids();
   index = 0;
   for ( ; *sPids; sPids++)
   {
-    Spids[index] = patPmtParser->Spid(index);
-    strn0cpy(SLangs[index], patPmtParser->Slang(index), MAXLANGCODE2);
+    Spids[index] = m_PatPmtParser.Spid(index);
+    strn0cpy(SLangs[index], m_PatPmtParser.Slang(index), MAXLANGCODE2);
     index++;
   }
 
-  int Vpid = patPmtParser->Vpid();
-  int Ppid = patPmtParser->Ppid();
-  int VType = patPmtParser->Vtype();
-  int Tpid = m_CurrentChannel.Tpid();
-  channel->SetPids(Vpid, Ppid, VType,
+  int Vpid = m_PatPmtParser.Vpid();
+  int Ppid = m_PatPmtParser.Ppid();
+  int VType = m_PatPmtParser.Vtype();
+  int Tpid = m_CurrentChannel->Tpid();
+  m_CurrentChannel->SetPids(Vpid, Ppid, VType,
                    Apids, Atypes, ALangs,
                    Dpids, Dtypes, DLangs,
                    Spids, SLangs,

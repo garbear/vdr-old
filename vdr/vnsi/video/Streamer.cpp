@@ -139,7 +139,7 @@ bool cLiveStreamer::Open(int serial)
     }
   }
 
-  m_Demuxer.Open(*m_Channel.get(), m_VideoBuffer);
+  m_Demuxer.Open(m_Channel, m_VideoBuffer);
   if (serial >= 0)
     m_Demuxer.SetSerial(serial);
 
