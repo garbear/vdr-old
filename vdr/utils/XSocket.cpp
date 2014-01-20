@@ -61,7 +61,11 @@ void cxSocket::close() {
   CLockObject lock(m_MutexWrite);
   if(m_fd >= 0) { 
     ::close(m_fd);
-    m_fd=-1; 
+    m_fd=-1;
+    delete m_pollerRead;
+    m_pollerRead = NULL;
+    delete m_pollerWrite;
+    m_pollerWrite = NULL;
   }
 }
 
@@ -173,10 +177,9 @@ void cxSocket::SetHandle(int h) {
   CLockObject lock(m_MutexWrite);
   if(h != m_fd) {
     close();
-    m_fd = h;
-    delete m_pollerRead;
-    delete m_pollerWrite;
-    m_pollerRead = new cPoller(m_fd);
+
+    m_fd          = h;
+    m_pollerRead  = new cPoller(m_fd);
     m_pollerWrite = new cPoller(m_fd, true);
   }
 }
