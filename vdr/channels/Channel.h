@@ -262,4 +262,5 @@ private:
   //cLinkChannels           *m_linkChannels;
   cLinkChannels            m_linkChannels;
   cChannel                *m_refChannel;
+  uint32_t                 m_channelHash;
 };

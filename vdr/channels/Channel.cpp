@@ -124,7 +124,8 @@ cChannel::cChannel()
    m_modification(CHANNELMOD_NONE),
    m_schedule(NULL),
    //m_linkChannels(NULL), // TODO
-   m_refChannel(NULL)
+   m_refChannel(NULL),
+   m_channelHash(0)
 {
 }
 
@@ -581,6 +582,7 @@ bool cChannel::Deserialise(const TiXmlNode *node, bool bSeparator /* = false */)
       m_channelData.rid = StringUtils::IntVal(rid);
   }
 
+  m_channelHash = GetChannelID().Hash();
   return true;
 }
 
@@ -1041,6 +1043,9 @@ bool cChannel::DeserialiseConf(const string &str)
       return false;
   }
 
+  if (ok)
+    m_channelHash = GetChannelID().Hash();
+
   return ok;
 }
 
@@ -1456,5 +1461,5 @@ string cChannel::TransponderDataToString() const
 
 uint32_t cChannel::Hash(void) const
 {
-  return GetChannelID().Hash();
+  return m_channelHash ? m_channelHash : GetChannelID().Hash();
 }

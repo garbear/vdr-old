@@ -562,7 +562,7 @@ ChannelPtr cChannelManager::GetByChannelUID(uint32_t channelUID) const
   for (ChannelVector::const_iterator it = m_channels.begin(); it != m_channels.end(); ++it)
   {
     channel = (*it);
-    if(channelUID == CCRC32::CRC32(channel->GetChannelID().Serialize())) {
+    if(channelUID == channel->Hash()) {
       result = channel;
       break;
     }
