@@ -47,6 +47,7 @@ protected:
   void PmtChange(void);
   void Receive(uchar *data, int length);
   void Attach(bool on);
+  void CancelPMTThread(void);
   DevicePtr                  m_Device;
   cLivePatFilter*            m_PatFilter;
   cLiveReceiver*             m_Receiver;

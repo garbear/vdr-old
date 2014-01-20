@@ -48,8 +48,8 @@ cVideoInput::~cVideoInput()
 
 void cVideoInput::ResetMembers(void)
 {
-  m_PatFilter   = NULL;
-  m_Receiver    = NULL;
+  DELETENULL(m_PatFilter);
+  DELETENULL(m_Receiver);
   m_Channel     = cChannel::EmptyChannel;
   m_VideoBuffer = NULL;
   m_Priority    = 0;
@@ -87,50 +87,67 @@ bool cVideoInput::Open(ChannelPtr channel, int priority, cVideoBuffer *videoBuff
   return false;
 }
 
+void cVideoInput::CancelPMTThread(void)
+{
+  StopThread(-1);
+  {
+    CLockObject lock(m_mutex);
+    m_SeenPmt = true;
+    m_pmtCondition.Broadcast();
+  }
+  StopThread(0);
+}
+
 void cVideoInput::Close()
 {
-  StopThread(5000);
+  CancelPMTThread();
 
-  CLockObject lock(m_mutex);
-  if (m_Device)
+  DevicePtr device;
+  cLiveReceiver* receiver;
+  cLivePatFilter* patFilter;
   {
+    CLockObject lock(m_mutex);
+    device   = m_Device;
+    m_Device = cDevice::EmptyDevice;
+
+    receiver   = m_Receiver;
+    m_Receiver = NULL;
+
+    patFilter   = m_PatFilter;
+    m_PatFilter = NULL;
+
     if (m_Channel)
       m_Channel->UnregisterObserver(this);
+    m_Channel = cChannel::EmptyChannel;
+  }
 
-    if (m_Receiver)
+  if (device)
+  {
+    if (receiver)
     {
       dsyslog("Detaching Live Receiver");
-      m_Device->Receiver()->Detach(m_Receiver);
+      device->Receiver()->Detach(receiver);
     }
     else
     {
       dsyslog("No live receiver present");
     }
 
-    if (m_PatFilter)
+    if (patFilter)
     {
       dsyslog("Detaching Live Filter");
-      m_Device->SectionFilter()->Detach(m_PatFilter);
+      device->SectionFilter()->Detach(patFilter);
     }
     else
     {
       dsyslog("No live filter present");
     }
 
-    if (m_Receiver)
-    {
-      dsyslog("Deleting Live Receiver");
-      DELETENULL(m_Receiver);
-    }
-
-    if (m_PatFilter)
-    {
-      dsyslog("Deleting Live Filter");
-      DELETENULL(m_PatFilter);
-    }
-
-    ResetMembers();
+    delete receiver;
+    delete patFilter;
   }
+
+  ResetMembers();
 }
 
 void cVideoInput::Notify(const Observable &obs, const ObservableMessage msg)
@@ -157,6 +174,9 @@ void cVideoInput::PmtChange(void)
 void cVideoInput::Receive(uchar *data, int length)
 {
   CLockObject lock(m_mutex);
+  if (!m_Device)
+    return;
+
   if (m_PmtChange)
   {
      // generate pat/pmt so we can configure parsers later

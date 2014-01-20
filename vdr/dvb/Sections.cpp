@@ -185,21 +185,28 @@ cSectionHandler::Process(void)
 {
   while (!IsStopped())
   {
-    CLockObject lock(m_mutex);
+    int NumFilters;
+    int oldStatusCount;
 
-    if (m_bWaitForLock)
-      SetStatus(true);
-    int NumFilters = m_filterHandles.Count();
-    pollfd pfd[NumFilters];
-    for (cFilterHandle *fh = m_filterHandles.First(); fh; fh = m_filterHandles.Next(fh))
     {
-      int i = fh->Index();
-      pfd[i].fd = fh->handle;
-      pfd[i].events = POLLIN;
-      pfd[i].revents = 0;
+      CLockObject lock(m_mutex);
+      if (m_bWaitForLock)
+        SetStatus(true);
+      NumFilters = m_filterHandles.Count();
     }
-    int oldStatusCount = m_iStatusCount;
-    lock.Unlock();
+
+    pollfd pfd[NumFilters];
+    {
+      CLockObject lock(m_mutex);
+      for (cFilterHandle *fh = m_filterHandles.First(); fh; fh = m_filterHandles.Next(fh))
+      {
+        int i = fh->Index();
+        pfd[i].fd = fh->handle;
+        pfd[i].events = POLLIN;
+        pfd[i].revents = 0;
+      }
+      oldStatusCount = m_iStatusCount;
+    }
 
     if (poll(pfd, NumFilters, 1000) > 0)
     {
@@ -211,7 +218,7 @@ cSectionHandler::Process(void)
         if (pfd[i].revents & POLLIN)
         {
           cFilterHandle *fh = NULL;
-          lock.Lock();
+          CLockObject lock(m_mutex);
           if (m_iStatusCount != oldStatusCount)
             break;
           for (fh = m_filterHandles.First(); fh; fh = m_filterHandles.Next(fh))
