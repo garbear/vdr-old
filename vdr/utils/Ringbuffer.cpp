@@ -27,7 +27,6 @@ cRingBuffer::cRingBuffer(int Size, bool Statistics)
 {
   size = Size;
   statistics = Statistics;
-  getThreadTid = 0;
   maxFill = 0;
   lastPercent = 0;
   putTimeout = getTimeout = 0;
@@ -50,7 +49,7 @@ void cRingBuffer::UpdatePercentage(int Fill)
   int percent = Fill * 100 / (Size() - 1) / PERCENTAGEDELTA * PERCENTAGEDELTA; // clamp down to nearest quantum
   if (percent != lastPercent) {
      if (percent >= PERCENTAGETHRESHOLD && percent > lastPercent || percent < PERCENTAGETHRESHOLD && lastPercent >= PERCENTAGETHRESHOLD) {
-        dsyslog("buffer usage: %d%% (tid=%d)", percent, getThreadTid);
+        dsyslog("buffer usage: %d%%", percent);
         lastPercent = percent;
         }
      }
@@ -65,13 +64,13 @@ void cRingBuffer::UpdatePercentage(int Fill)
 void cRingBuffer::WaitForPut(void)
 {
   if (putTimeout)
-     readyForPut.Wait(putTimeout);
+     readyForPut.Wait((uint32_t)putTimeout);
 }
 
 void cRingBuffer::WaitForGet(void)
 {
   if (getTimeout)
-     readyForGet.Wait(getTimeout);
+     readyForGet.Wait((uint32_t)getTimeout);
 }
 
 void cRingBuffer::EnablePut(void)
@@ -95,7 +94,7 @@ void cRingBuffer::SetTimeouts(int PutTimeout, int GetTimeout)
 void cRingBuffer::SetIoThrottle(void)
 {
   if (!ioThrottle)
-     ioThrottle = new cIoThrottle;
+     ioThrottle = new PLATFORM::cIoThrottle;
 }
 
 void cRingBuffer::ReportOverflow(int Bytes)
@@ -345,8 +344,6 @@ int cRingBufferLinear::Put(const uchar *Data, int Count)
 uchar *cRingBufferLinear::Get(int &Count)
 {
   int Head = head;
-  if (getThreadTid <= 0)
-     getThreadTid = cThread::ThreadId();
   int rest = Size() - tail;
   if (rest < margin && Head < tail) {
      int t = margin - rest;

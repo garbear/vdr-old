@@ -108,7 +108,7 @@ void cRemoveDeletedRecordingsThread::Action(void)
      bool deleted = false;
      cThreadLock DeletedRecordingsLock(&DeletedRecordings);
      for (cRecording *r = DeletedRecordings.First(); r; ) {
-         if (cIoThrottle::Engaged())
+         if (PLATFORM::cIoThrottle::Engaged())
             return;
          if (r->Deleted() && time(NULL) - r->Deleted() > DELETEDLIFETIME) {
             cRecording *next = DeletedRecordings.Next(r);

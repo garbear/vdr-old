@@ -413,48 +413,6 @@ bool cThreadLock::Lock(cThread *Thread)
   return false;
 }
 
-// --- cIoThrottle -----------------------------------------------------------
-
-cMutex cIoThrottle::mutex;
-int cIoThrottle::count = 0;
-
-cIoThrottle::cIoThrottle(void)
-{
-  active = false;
-}
-
-cIoThrottle::~cIoThrottle()
-{
-  Release();
-}
-
-void cIoThrottle::Activate(void)
-{
-  if (!active) {
-     mutex.Lock();
-     count++;
-     active = true;
-     dsyslog("i/o throttle activated, count = %d (tid=%d)", count, cThread::ThreadId());
-     mutex.Unlock();
-     }
-}
-
-void cIoThrottle::Release(void)
-{
-  if (active) {
-     mutex.Lock();
-     count--;
-     active = false;
-     dsyslog("i/o throttle released, count = %d (tid=%d)", count, cThread::ThreadId());
-     mutex.Unlock();
-     }
-}
-
-bool cIoThrottle::Engaged(void)
-{
-  return count > 0;
-}
-
 // --- cPipe -----------------------------------------------------------------
 
 // cPipe::Open() and cPipe::Close() are based on code originally received from

@@ -9,6 +9,7 @@ enable_testing()
 
 ADD_SUBDIRECTORY(lib/libsi)
 ADD_SUBDIRECTORY(lib/libhts)
+ADD_SUBDIRECTORY(lib/platform)
 
 SET(IS_ANDROID $ENV{ANDROID})
 
@@ -59,6 +60,8 @@ list(APPEND LIBS tinyxml)
 list(APPEND LIBS libsi)
 
 list(APPEND LIBS libhts)
+
+list(APPEND LIBS libplatform)
 
 add_definitions(-DTARGET_LINUX -DTARGET_POSIX)
 

@@ -10,21 +10,21 @@
 #ifndef __RINGBUFFER_H
 #define __RINGBUFFER_H
 
-#include "thread.h"
+#include "platform/threads/mutex.h"
+#include "platform/threads/throttle.h"
 #include "Tools.h"
 
 class cRingBuffer {
 private:
-  cCondWait readyForPut, readyForGet;
+  PLATFORM::CEvent readyForPut, readyForGet;
   int putTimeout;
   int getTimeout;
   int size;
   time_t lastOverflowReport;
   int overflowCount;
   int overflowBytes;
-  cIoThrottle *ioThrottle;
+  PLATFORM::cIoThrottle *ioThrottle;
 protected:
-  tThreadId getThreadTid;
   int maxFill;//XXX
   int lastPercent;
   bool statistics;//XXX
@@ -128,7 +128,7 @@ public:
 
 class cRingBufferFrame : public cRingBuffer {
 private:
-  cMutex mutex;
+  PLATFORM::CMutex mutex;
   cFrame *head;
   int currentFill;
   void Delete(cFrame *Frame);

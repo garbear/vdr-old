@@ -13,6 +13,7 @@
 #include "devices/Remux.h"
 #include "filesystem/Videodir.h"
 #include "filesystem/Directory.h"
+#include "platform/threads/throttle.h"
 
 using namespace PLATFORM;
 
@@ -317,7 +318,7 @@ cCuttingThread::~cCuttingThread()
 
 bool cCuttingThread::Throttled(void)
 {
-  if (cIoThrottle::Engaged()) {
+  if (PLATFORM::cIoThrottle::Engaged()) {
      if (!suspensionLogged) {
         dsyslog("suspending cutter thread");
         suspensionLogged = true;
