@@ -383,4 +383,11 @@ public:
   T *Get(unsigned int Id) const { return (T *)cHashBase::Get(Id); }
 };
 
+// SystemExec() implements a 'system()' call that closes all unnecessary file
+// descriptors in the child process.
+// With Detached=true, calls command in background and in a separate session,
+// with stdin connected to /dev/null.
+
+int SystemExec(const char *Command, bool Detached = false);
+
 #endif //__TOOLS_H

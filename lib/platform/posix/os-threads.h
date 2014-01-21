@@ -82,6 +82,28 @@ namespace PLATFORM
   #define MutexTryLock(mutex)                      (pthread_mutex_trylock(&mutex) == 0)
   #define MutexUnlock(mutex)                       pthread_mutex_unlock(&mutex)
 
+  typedef pthread_rwlock_t rwlock_t;
+
+  #ifndef ANDROID
+  #define RwLockSetKind(attr, prefer_writer) pthread_rwlockattr_setkind_np(&attr, prefer_writer ? PTHREAD_RWLOCK_PREFER_WRITER_NP : PTHREAD_RWLOCK_PREFER_READER_NP);
+  #else
+  #define RwLockSetKind(attr, prefer_writer)
+  #endif
+  #define RwLockCreate(lock, prefer_writer) do { \
+    pthread_rwlockattr_t attr; \
+    pthread_rwlockattr_init(&attr); \
+    RwLockSetKind(attr, prefer_writer); \
+    pthread_rwlock_init(&lock, &attr); \
+  } while(0)
+  #define RwLockDestroy(lock) pthread_rwlock_destroy(&lock)
+  #define RwLockTimedWriteLock(lock, abstime) pthread_rwlock_timedwrlock(&lock, &abstime)
+  #define RwLockWriteLock(lock) pthread_rwlock_wrlock(&lock)
+  #define RwLockTimedReadLock(lock, abstime) pthread_rwlock_timedrdlock(&lock, &abstime)
+  #define RwLockReadLock(lock) pthread_rwlock_rdlock(&lock)
+  #define RwLockUnlock(lock) pthread_rwlock_unlock(&lock)
+
+  #define GetThreadId() syscall(__NR_gettid)
+
   class CConditionImpl
   {
   public:

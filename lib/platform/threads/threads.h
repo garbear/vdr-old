@@ -143,6 +143,11 @@ namespace PLATFORM
       return m_bStop ? false : m_threadCondition.Wait(m_threadMutex, m_bStopped, iTimeout);
     }
 
+    static long int ThreadId(void)
+    {
+      return GetThreadId();
+    }
+
     virtual void *Process(void) = 0;
 
   protected:

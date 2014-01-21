@@ -48,6 +48,9 @@
 #include <stdint.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <linux/unistd.h>
+#include <sys/syscall.h>
+#include <unistd.h>
 
 #define LIBTYPE
 #define DECLSPEC

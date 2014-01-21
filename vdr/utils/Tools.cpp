@@ -1500,3 +1500,52 @@ cList<cHashObject> *cHashBase::GetList(unsigned int Id) const
 {
   return hashTable[hashfn(Id)];
 }
+
+int SystemExec(const char *Command, bool Detached)
+{
+  pid_t pid;
+
+  if ((pid = fork()) < 0)
+  { // fork failed
+    LOG_ERROR;
+    return -1;
+  }
+
+  if (pid > 0)
+  { // parent process
+    int status = 0;
+    if (waitpid(pid, &status, 0) < 0)
+    {
+      LOG_ERROR;
+      return -1;
+    }
+    return status;
+  }
+  else
+  { // child process
+    if (Detached)
+    {
+      // Fork again and let first child die - grandchild stays alive without parent
+      if (fork() > 0)
+        _exit(0);
+      // Start a new session
+      pid_t sid = setsid();
+      if (sid < 0)
+        LOG_ERROR;
+      // close STDIN and re-open as /dev/null
+      int devnull = open("/dev/null", O_RDONLY);
+      if (devnull < 0 || dup2(devnull, 0) < 0)
+        LOG_ERROR;
+    }
+    int MaxPossibleFileDescriptors = getdtablesize();
+    for (int i = STDERR_FILENO + 1; i < MaxPossibleFileDescriptors; i++)
+      close(i); //close all dup'ed filedescriptors
+    if (execl("/bin/sh", "sh", "-c", Command, NULL) == -1)
+    {
+      LOG_ERROR_STR(Command);
+      _exit(-1);
+    }
+    _exit(0);
+  }
+  return 0;
+}

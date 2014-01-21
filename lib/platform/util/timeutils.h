@@ -96,6 +96,26 @@ namespace PLATFORM
   #endif
   }
 
+  inline bool GetAbsTime(struct timespec *Abstime, int MillisecondsFromNow)
+  {
+    //TODO from vdr
+    struct timeval now;
+    if (gettimeofday(&now, NULL) == 0)
+    { // get current time
+      now.tv_sec += MillisecondsFromNow / 1000; // add full seconds
+      now.tv_usec += (MillisecondsFromNow % 1000) * 1000; // add microseconds
+      if (now.tv_usec >= 1000000)
+      { // take care of an overflow
+        now.tv_sec++;
+        now.tv_usec -= 1000000;
+      }
+      Abstime->tv_sec = now.tv_sec; // seconds
+      Abstime->tv_nsec = now.tv_usec * 1000; // nano seconds
+      return true;
+    }
+    return false;
+  }
+
   template <class T>
   inline T GetTimeSec()
   {

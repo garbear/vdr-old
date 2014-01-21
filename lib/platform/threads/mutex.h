@@ -127,6 +127,48 @@ namespace PLATFORM
     mutable unsigned int m_iLockCount;
   };
 
+  //TODO from vdr
+  class CReadWriteLock
+  {
+  public:
+    inline CReadWriteLock(bool PreferWriter = false)
+    {
+      RwLockCreate(m_rwlock, PreferWriter);
+    }
+    virtual ~CReadWriteLock(void)
+    {
+      RwLockDestroy(m_rwlock);
+    }
+
+    inline bool Lock(bool Write, int TimeoutMs = 0)
+    {
+      int Result = 0;
+      struct timespec abstime;
+      if (TimeoutMs)
+      {
+        if (!GetAbsTime(&abstime, TimeoutMs))
+          TimeoutMs = 0;
+      }
+      if (Write)
+        Result = TimeoutMs ?
+                RwLockTimedWriteLock(m_rwlock, abstime) :
+                RwLockWriteLock(m_rwlock);
+      else
+        Result = TimeoutMs ?
+                RwLockTimedReadLock(m_rwlock, abstime) :
+                RwLockReadLock(m_rwlock);
+      return Result == 0;
+    }
+
+    inline void Unlock(void)
+    {
+      RwLockUnlock(m_rwlock);
+    }
+
+  private:
+    rwlock_t m_rwlock;
+};
+
   class CLockObject : public PreventCopy
   {
   public:

@@ -218,10 +218,10 @@ public:
   const cSchedule *GetSchedule(const cChannel *Channel, bool AddIfMissing = false) const;
   };
 
-class cEpgDataReader : public cThread {
+class cEpgDataReader : public PLATFORM::CThread {
 public:
   cEpgDataReader(void);
-  virtual void Action(void);
+  virtual void* Process(void);
   };
 
 void ReportEpgBugFixStats(bool Force = false);

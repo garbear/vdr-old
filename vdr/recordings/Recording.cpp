@@ -1701,29 +1701,28 @@ void cRecordingUserCommand::InvokeCommand(const char *State, const char *Recordi
 
 #define IFG_BUFFER_SIZE KILOBYTE(100)
 
-class cIndexFileGenerator : public cThread {
+class cIndexFileGenerator : public PLATFORM::CThread {
 private:
   cString recordingName;
 protected:
-  virtual void Action(void);
+  virtual void* Process(void);
 public:
   cIndexFileGenerator(const char *RecordingName);
   ~cIndexFileGenerator();
   };
 
 cIndexFileGenerator::cIndexFileGenerator(const char *RecordingName)
-:cThread("index file generator")
-,recordingName(RecordingName)
+:recordingName(RecordingName)
 {
-  Start();
+  CreateThread();
 }
 
 cIndexFileGenerator::~cIndexFileGenerator()
 {
-  Cancel(3);
+  StopThread(3000);
 }
 
-void cIndexFileGenerator::Action(void)
+void* cIndexFileGenerator::Process(void)
 {
   bool IndexFileComplete = false;
   bool IndexFileWritten = false;
@@ -1738,7 +1737,7 @@ void cIndexFileGenerator::Action(void)
   off_t FileSize = 0;
   off_t FrameOffset = -1;
   isyslog(tr("Regenerating index file"));
-  while (Running()) {
+  while (!IsStopped()) {
         // Rewind input file:
         if (Rewind) {
            ReplayFile = FileName.SetOffset(1);
@@ -1824,13 +1823,15 @@ void cIndexFileGenerator::Action(void)
               }
            }
         isyslog(tr("Index file regeneration complete"));
-        return;
+        return NULL;
         }
      else
        esyslog(tr("Index file regeneration failed!"));
      }
   // Delete the index file if the recording has not been processed entirely:
   IndexFile.Delete();
+
+  return NULL;
 }
 
 // --- cIndexFile ------------------------------------------------------------
@@ -2203,7 +2204,7 @@ bool GenerateIndex(const char *FileName)
            cString IndexFileName = AddDirectory(FileName, INDEXFILESUFFIX);
            unlink(IndexFileName);
            cIndexFileGenerator *IndexFileGenerator = new cIndexFileGenerator(FileName);
-           while (IndexFileGenerator->Active())
+           while (IndexFileGenerator->IsRunning())
              CEvent::Sleep(INDEXFILECHECKINTERVAL);
            if (access(IndexFileName, R_OK) == 0)
               return true;

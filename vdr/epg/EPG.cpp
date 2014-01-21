@@ -1184,12 +1184,12 @@ bool cSchedule::Read(FILE *f, cSchedules *Schedules)
 
 // --- cEpgDataWriter --------------------------------------------------------
 
-class cEpgDataWriter : public cThread {
+class cEpgDataWriter : public PLATFORM::CThread {
 private:
   PLATFORM::CMutex mutex;
   bool dump;
 protected:
-  virtual void Action(void);
+  virtual void* Process(void);
 public:
   cEpgDataWriter(void);
   void SetDump(bool Dump) { dump = Dump; }
@@ -1197,14 +1197,14 @@ public:
   };
 
 cEpgDataWriter::cEpgDataWriter(void)
-:cThread("epg data writer", true)
 {
   dump = false;
 }
 
-void cEpgDataWriter::Action(void)
+void* cEpgDataWriter::Process(void)
 {
   Perform();
+  return NULL;
 }
 
 void cEpgDataWriter::Perform(void)
@@ -1271,8 +1271,8 @@ void cSchedules::Cleanup(bool Force)
   if (now - lastDump > EPGDATAWRITEDELTA) {
      if (Force)
         EpgDataWriter.Perform();
-     else if (!EpgDataWriter.Active())
-        EpgDataWriter.Start();
+     else if (!EpgDataWriter.IsRunning())
+        EpgDataWriter.CreateThread();
      lastDump = now;
      }
 }
@@ -1407,13 +1407,13 @@ const cSchedule *cSchedules::GetSchedule(const cChannel *channel, bool bAddIfMis
 // --- cEpgDataReader --------------------------------------------------------
 
 cEpgDataReader::cEpgDataReader(void)
-:cThread("epg data reader")
 {
 }
 
-void cEpgDataReader::Action(void)
+void* cEpgDataReader::Process(void)
 {
   cSchedules::Read();
+  return NULL;
 }
 
 // --- cEpgHandler -----------------------------------------------------------
