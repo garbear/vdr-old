@@ -361,32 +361,6 @@ void cThread::SetMainThreadId(void)
      esyslog("ERROR: attempt to set main thread id to %d while it already is %d", ThreadId(), mainThreadId);
 }
 
-// --- cMutexLock ------------------------------------------------------------
-
-cMutexLock::cMutexLock(cMutex *Mutex)
-{
-  mutex = NULL;
-  locked = false;
-  Lock(Mutex);
-}
-
-cMutexLock::~cMutexLock()
-{
-  if (mutex && locked)
-     mutex->Unlock();
-}
-
-bool cMutexLock::Lock(cMutex *Mutex)
-{
-  if (Mutex && !mutex) {
-     mutex = Mutex;
-     Mutex->Lock();
-     locked = true;
-     return true;
-     }
-  return false;
-}
-
 // --- cThreadLock -----------------------------------------------------------
 
 cThreadLock::cThreadLock(cThread *Thread)

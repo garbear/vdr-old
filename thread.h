@@ -126,22 +126,6 @@ public:
   static void SetMainThreadId(void);
   };
 
-// cMutexLock can be used to easily set a lock on mutex and make absolutely
-// sure that it will be unlocked when the block will be left. Several locks can
-// be stacked, so a function that makes many calls to another function which uses
-// cMutexLock may itself use a cMutexLock to make one longer lock instead of many
-// short ones.
-
-class cMutexLock {
-private:
-  cMutex *mutex;
-  bool locked;
-public:
-  cMutexLock(cMutex *Mutex = NULL);
-  ~cMutexLock();
-  bool Lock(cMutex *Mutex);
-  };
-
 // cThreadLock can be used to easily set a lock in a thread and make absolutely
 // sure that it will be unlocked when the block will be left. Several locks can
 // be stacked, so a function that makes many calls to another function which uses

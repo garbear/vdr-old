@@ -26,10 +26,13 @@
 #include "filesystem/Videodir.h"
 #include "recordings/Recording.h"
 #include "settings/Settings.h"
+#include "platform/threads/mutex.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+
+using namespace PLATFORM;
 
 class cVideoBufferSimple : public cVideoBuffer
 {
@@ -124,7 +127,7 @@ protected:
   bool m_BufferFull;
   unsigned int m_Margin;
   unsigned int m_BytesConsumed;
-  cMutex m_Mutex;
+  CMutex m_Mutex;
 };
 
 cVideoBufferTimeshift::cVideoBufferTimeshift()
@@ -167,7 +170,7 @@ off_t cVideoBufferTimeshift::GetPosCur()
 
 void cVideoBufferTimeshift::GetPositions(off_t *cur, off_t *min, off_t *max)
 {
-  cMutexLock lock(&m_Mutex);
+  CLockObject lock(m_Mutex);
 
   *cur = GetPosCur();
   *min = GetPosMin();
@@ -177,7 +180,7 @@ void cVideoBufferTimeshift::GetPositions(off_t *cur, off_t *min, off_t *max)
 
 off_t cVideoBufferTimeshift::Available()
 {
-  cMutexLock lock(&m_Mutex);
+  CLockObject lock(m_Mutex);
 
   off_t ret;
   if (m_ReadPtr <= m_WritePtr)
@@ -230,7 +233,7 @@ bool cVideoBufferRAM::Init()
 
 void cVideoBufferRAM::SetPos(off_t pos)
 {
-  cMutexLock lock(&m_Mutex);
+  CLockObject lock(m_Mutex);
 
   m_ReadPtr = pos;
   if (m_ReadPtr >= m_BufferSize)
@@ -252,13 +255,13 @@ void cVideoBufferRAM::Put(uint8_t *buf, unsigned int size)
     memcpy(m_BufferPtr+m_WritePtr, buf, bytes);
     size -= bytes;
     buf += bytes;
-    cMutexLock lock(&m_Mutex);
+    CLockObject lock(m_Mutex);
     m_WritePtr = 0;
   }
 
   memcpy(m_BufferPtr+m_WritePtr, buf, size);
 
-  cMutexLock lock(&m_Mutex);
+  CLockObject lock(m_Mutex);
 
   m_WritePtr += size;
   if (!m_BufferFull)
@@ -278,7 +281,7 @@ int cVideoBufferRAM::ReadBlock(uint8_t **buf, unsigned int size, time_t &endTime
   // move read pointer
   if (m_BytesConsumed)
   {
-    cMutexLock lock(&m_Mutex);
+    CLockObject lock(m_Mutex);
     m_ReadPtr += m_BytesConsumed;
     if (m_ReadPtr >= m_BufferSize)
       m_ReadPtr -= m_BufferSize;
@@ -425,7 +428,7 @@ bool cVideoBufferFile::Init()
 
 void cVideoBufferFile::SetPos(off_t pos)
 {
-  cMutexLock lock(&m_Mutex);
+  CLockObject lock(m_Mutex);
 
   m_ReadPtr = pos;
   if (m_ReadPtr >= m_BufferSize)
@@ -471,7 +474,7 @@ void cVideoBufferFile::Put(uint8_t *buf, unsigned int size)
       buf += p;
       ptr += p;
     }
-    cMutexLock lock(&m_Mutex);
+    CLockObject lock(m_Mutex);
     m_WritePtr = 0;
   }
 
@@ -491,7 +494,7 @@ void cVideoBufferFile::Put(uint8_t *buf, unsigned int size)
     ptr += p;
   }
 
-  cMutexLock lock(&m_Mutex);
+  CLockObject lock(m_Mutex);
 
   m_WritePtr += size;
   if (!m_BufferFull)
@@ -526,7 +529,7 @@ int cVideoBufferFile::ReadBlock(uint8_t **buf, unsigned int size, time_t &endTim
   // move read pointer
   if (m_BytesConsumed)
   {
-    cMutexLock lock(&m_Mutex);
+    CLockObject lock(m_Mutex);
     m_ReadPtr += m_BytesConsumed;
     if (m_ReadPtr >= m_BufferSize)
       m_ReadPtr -= m_BufferSize;
