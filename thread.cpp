@@ -361,32 +361,6 @@ void cThread::SetMainThreadId(void)
      esyslog("ERROR: attempt to set main thread id to %d while it already is %d", ThreadId(), mainThreadId);
 }
 
-// --- cThreadLock -----------------------------------------------------------
-
-cThreadLock::cThreadLock(cThread *Thread)
-{
-  thread = NULL;
-  locked = false;
-  Lock(Thread);
-}
-
-cThreadLock::~cThreadLock()
-{
-  if (thread && locked)
-     thread->Unlock();
-}
-
-bool cThreadLock::Lock(cThread *Thread)
-{
-  if (Thread && !thread) {
-     thread = Thread;
-     Thread->Lock();
-     locked = true;
-     return true;
-     }
-  return false;
-}
-
 // --- cPipe -----------------------------------------------------------------
 
 // cPipe::Open() and cPipe::Close() are based on code originally received from

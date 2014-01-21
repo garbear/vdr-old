@@ -159,7 +159,7 @@ public:
        ///< Returns false in case of error
   };
 
-class cRecordings : public cList<cRecording>, public cThread {
+class cRecordings : public cList<cRecording>, public PLATFORM::CThread {
 private:
   static char *updateFileName;
   bool deleted;
@@ -169,7 +169,7 @@ private:
   void Refresh(bool Foreground = false);
   void ScanVideoDir(const char *DirName, bool Foreground = false, int LinkLevel = 0);
 protected:
-  void Action(void);
+  void* Process(void);
 public:
   cRecordings(bool Deleted = false);
   virtual ~cRecordings();

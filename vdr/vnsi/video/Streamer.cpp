@@ -106,7 +106,7 @@ bool cLiveStreamer::Open(int serial)
         cRecording matchRec(timer, timer->Event());
         cRecording *rec;
         {
-          cThreadLock RecordingsLock(&Recordings); //XXX
+          PLATFORM::CThreadLock RecordingsLock(&Recordings);
           rec = Recordings.GetByName(matchRec.FileName());
           if (!rec)
           {

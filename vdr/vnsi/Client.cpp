@@ -1531,7 +1531,7 @@ bool cVNSIClient::processRECORDINGS_GetCount() /* OPCODE 101 */
 bool cVNSIClient::processRECORDINGS_GetList() /* OPCODE 102 */
 {
   CLockObject lock(m_timerLock);
-  cThreadLock RecordingsLock(&Recordings);
+  CThreadLock RecordingsLock(&Recordings);
 
   for (cRecording *recording = Recordings.First(); recording; recording = Recordings.Next(recording))
   {

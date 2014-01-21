@@ -126,24 +126,6 @@ public:
   static void SetMainThreadId(void);
   };
 
-// cThreadLock can be used to easily set a lock in a thread and make absolutely
-// sure that it will be unlocked when the block will be left. Several locks can
-// be stacked, so a function that makes many calls to another function which uses
-// cThreadLock may itself use a cThreadLock to make one longer lock instead of many
-// short ones.
-
-class cThreadLock {
-private:
-  cThread *thread;
-  bool locked;
-public:
-  cThreadLock(cThread *Thread = NULL);
-  ~cThreadLock();
-  bool Lock(cThread *Thread);
-  };
-
-#define LOCK_THREAD cThreadLock ThreadLock(this)
-
 // cPipe implements a pipe that closes all unnecessary file descriptors in
 // the child process.
 

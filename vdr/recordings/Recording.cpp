@@ -88,28 +88,27 @@ cRecordings DeletedRecordings(true);
 
 // --- cRemoveDeletedRecordingsThread ----------------------------------------
 
-class cRemoveDeletedRecordingsThread : public cThread {
+class cRemoveDeletedRecordingsThread : public CThread {
 protected:
-  virtual void Action(void);
+  virtual void* Process(void);
 public:
   cRemoveDeletedRecordingsThread(void);
   };
 
 cRemoveDeletedRecordingsThread::cRemoveDeletedRecordingsThread(void)
-:cThread("remove deleted recordings", true)
 {
 }
 
-void cRemoveDeletedRecordingsThread::Action(void)
+void* cRemoveDeletedRecordingsThread::Process(void)
 {
   // Make sure only one instance of VDR does this:
   cLockFile LockFile(VideoDirectory);
   if (LockFile.Lock()) {
      bool deleted = false;
-     cThreadLock DeletedRecordingsLock(&DeletedRecordings);
+     CThreadLock DeletedRecordingsLock(&DeletedRecordings);
      for (cRecording *r = DeletedRecordings.First(); r; ) {
          if (PLATFORM::cIoThrottle::Engaged())
-            return;
+            return NULL;
          if (r->Deleted() && time(NULL) - r->Deleted() > DELETEDLIFETIME) {
             cRecording *next = DeletedRecordings.Next(r);
             r->Remove();
@@ -125,6 +124,7 @@ void cRemoveDeletedRecordingsThread::Action(void)
         RemoveEmptyVideoDirectories(IgnoreFiles);
         }
      }
+  return NULL;
 }
 
 static cRemoveDeletedRecordingsThread RemoveDeletedRecordingsThread;
@@ -135,11 +135,11 @@ void RemoveDeletedRecordings(void)
 {
   static time_t LastRemoveCheck = 0;
   if (time(NULL) - LastRemoveCheck > REMOVECHECKDELTA) {
-     if (!RemoveDeletedRecordingsThread.Active()) {
-        cThreadLock DeletedRecordingsLock(&DeletedRecordings);
+     if (!RemoveDeletedRecordingsThread.IsRunning()) {
+        CThreadLock DeletedRecordingsLock(&DeletedRecordings);
         for (cRecording *r = DeletedRecordings.First(); r; r = DeletedRecordings.Next(r)) {
             if (r->Deleted() && time(NULL) - r->Deleted() > DELETEDLIFETIME) {
-               RemoveDeletedRecordingsThread.Start();
+               RemoveDeletedRecordingsThread.CreateThread();
                break;
                }
             }
@@ -165,7 +165,7 @@ void AssertFreeDiskSpace(int Priority, bool Force)
            return;
         // Remove the oldest file that has been "deleted":
         isyslog("low disk space while recording, trying to remove a deleted recording...");
-        cThreadLock DeletedRecordingsLock(&DeletedRecordings);
+        CThreadLock DeletedRecordingsLock(&DeletedRecordings);
         if (DeletedRecordings.Count()) {
            cRecording *r = DeletedRecordings.First();
            cRecording *r0 = NULL;
@@ -193,7 +193,7 @@ void AssertFreeDiskSpace(int Priority, bool Force)
         // No "deleted" files to remove, so let's see if we can delete a recording:
         if (Priority > 0) {
            isyslog("...no deleted recording found, trying to delete an old recording...");
-           cThreadLock RecordingsLock(&Recordings);
+           CThreadLock RecordingsLock(&Recordings);
            if (Recordings.Count()) {
               cRecording *r = Recordings.First();
               cRecording *r0 = NULL;
@@ -1253,7 +1253,6 @@ cRecordings Recordings;
 char *cRecordings::updateFileName = NULL;
 
 cRecordings::cRecordings(bool Deleted)
-:cThread("video directory scanner")
 {
   deleted = Deleted;
   lastUpdate = 0;
@@ -1262,12 +1261,13 @@ cRecordings::cRecordings(bool Deleted)
 
 cRecordings::~cRecordings()
 {
-  Cancel(3);
+  StopThread(3000);
 }
 
-void cRecordings::Action(void)
+void* cRecordings::Process(void)
 {
   Refresh();
+  return NULL;
 }
 
 const char *cRecordings::UpdateFileName(void)
@@ -1280,10 +1280,11 @@ const char *cRecordings::UpdateFileName(void)
 void cRecordings::Refresh(bool Foreground)
 {
   lastUpdate = time(NULL); // doing this first to make sure we don't miss anything
-  Lock();
-  Clear();
-  ChangeState();
-  Unlock();
+  {
+    CThreadLock lock(this);
+    Clear();
+    ChangeState();
+  }
   ScanVideoDir(VideoDirectory, Foreground);
 }
 
@@ -1291,7 +1292,7 @@ void cRecordings::ScanVideoDir(const char *DirName, bool Foreground, int LinkLev
 {
   cReadDir d(DirName);
   struct dirent *e;
-  while ((Foreground || Running()) && (e = d.Next()) != NULL) {
+  while ((Foreground || !IsStopped()) && (e = d.Next()) != NULL) {
         cString buffer = AddDirectory(DirName, e->d_name);
         struct stat st;
         if (lstat(buffer, &st) == 0) {
@@ -1313,10 +1314,9 @@ void cRecordings::ScanVideoDir(const char *DirName, bool Foreground, int LinkLev
                     r->FileSizeMB(); // initializes the fileSizeMB member
                     if (deleted)
                        r->deleted = time(NULL);
-                    Lock();
+                    CThreadLock lock(this);
                     Add(r);
                     ChangeState();
-                    Unlock();
                     }
                  else
                     delete r;
@@ -1359,7 +1359,7 @@ bool cRecordings::Update(bool Wait)
      return Count() > 0;
      }
   else
-     Start();
+     CreateThread();
   return false;
 }
 
@@ -1404,7 +1404,7 @@ void cRecordings::DelByName(const char *FileName)
   LOCK_THREAD;
   cRecording *recording = GetByName(FileName);
   if (recording) {
-     cThreadLock DeletedRecordingsLock(&DeletedRecordings);
+     CThreadLock DeletedRecordingsLock(&DeletedRecordings);
      Del(recording, false);
      char *ext = strrchr(recording->fileName, '.');
      if (ext) {
