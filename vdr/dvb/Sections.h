@@ -12,7 +12,6 @@
 
 #include <time.h>
 #include "Filter.h"
-#include "thread.h"
 #include "channels/Channel.h"
 #include "utils/Tools.h"
 #include "platform/threads/threads.h"

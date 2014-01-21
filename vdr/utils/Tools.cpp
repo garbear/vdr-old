@@ -12,7 +12,6 @@
 #include "filesystem/Directory.h"
 #include "filesystem/Poller.h"
 #include "filesystem/ReadDir.h"
-#include "thread.h"
 #include "utils/UTF8Utils.h"
 #include "platform/threads/threads.h"
 
@@ -28,6 +27,7 @@
 #include <unistd.h>
 #include <utime.h>
 #include <string.h>
+#include <wait.h>
 
 using namespace std;
 
@@ -49,7 +49,7 @@ void syslog_with_tid(int priority, const char *format, ...)
 {
   va_list ap;
   char fmt[MAXSYSLOGBUF];
-  snprintf(fmt, sizeof(fmt), "[%d] %s", cThread::ThreadId(), format);
+  snprintf(fmt, sizeof(fmt), "[%ld] %s", PLATFORM::CThread::ThreadId(), format);
   va_start(ap, format);
 #if LOG_STDOUT
   static PLATFORM::CMutex g_logMutex;

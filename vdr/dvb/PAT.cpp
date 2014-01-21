@@ -15,7 +15,6 @@
 #include "libsi/descriptor.h"
 #include "utils/I18N.h"
 #include "Config.h"
-#include "thread.h"
 #include "platform/threads/threads.h"
 
 #define PMT_SCAN_TIMEOUT  10 // seconds

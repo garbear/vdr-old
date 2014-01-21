@@ -13,7 +13,6 @@
 #include <time.h>
 #include "channels/ChannelManager.h"
 #include "Config.h"
-#include "thread.h"
 #include "Timers.h"
 #include "epg/EPG.h"
 #include "utils/Tools.h"

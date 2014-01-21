@@ -21,7 +21,6 @@
 #pragma once
 
 #include "devices/DeviceSubsystem.h"
-#include "thread.h"
 #include "utils/Tools.h"
 #include "platform/threads/threads.h"
 

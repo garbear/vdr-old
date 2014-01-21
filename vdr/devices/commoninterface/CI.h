@@ -22,7 +22,6 @@
 #pragma once
 
 #include "channels/ChannelID.h"
-#include "thread.h"
 #include "utils/Tools.h"
 #include "platform/threads/threads.h"
 #include "devices/Device.h"

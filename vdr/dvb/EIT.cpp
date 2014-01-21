@@ -375,13 +375,13 @@ cEIT::cEIT(cSchedules *Schedules, int Source, u_char Tid, const u_char *Data, bo
 
 class cTDT : public SI::TDT {
 private:
-  static cMutex mutex;
+  static PLATFORM::CMutex mutex;
   static time_t lastAdj;
 public:
   cTDT(const u_char *Data);
   };
 
-cMutex cTDT::mutex;
+PLATFORM::CMutex cTDT::mutex;
 time_t cTDT::lastAdj = 0;
 
 cTDT::cTDT(const u_char *Data)

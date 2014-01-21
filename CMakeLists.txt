@@ -196,7 +196,6 @@ set(VDR_SRCS
 	vdr/vnsi/video/parser/ParserTeletext.cpp
 	vdr/vnsi/Client.cpp
 	vdr/vnsi/Server.cpp
-	thread.cpp
 )
 
 set(VDR_TEST_SRCS

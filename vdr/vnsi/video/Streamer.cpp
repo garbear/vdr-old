@@ -39,8 +39,6 @@
 #include "recordings/Recording.h"
 #include "settings/Settings.h"
 
-#include "thread.h"
-
 
 // --- cLiveStreamer -------------------------------------------------
 

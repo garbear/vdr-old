@@ -15,7 +15,6 @@
 
 #include "channels/Channel.h"
 #include "libsi/section.h"
-#include "thread.h"
 #include "utils/Tools.h"
 
 #define MAXEPGBUGFIXLEVEL 3
@@ -195,7 +194,7 @@ class cSchedules : public cList<cSchedule> {
   friend class cSchedule;
   friend class cSchedulesLock;
 private:
-  cRwLock rwlock;
+  PLATFORM::CReadWriteLock rwlock;
   static cSchedules schedules;
   static char *epgDataFileName;
   static time_t lastDump;

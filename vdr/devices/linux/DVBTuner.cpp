@@ -748,7 +748,7 @@ void cDvbTuner::ExecuteDiseqc(const cDiseqc *Diseqc, unsigned int *Frequency)
     m_bLnbPowerTurnedOn = true;
   }
 
-  static cMutex Mutex;
+  static PLATFORM::CMutex Mutex;
 
   if (Diseqc->IsScr())
     Mutex.Lock();

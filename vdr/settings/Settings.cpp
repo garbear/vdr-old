@@ -420,7 +420,7 @@ bool cSettings::LoadFromCmdLine(int argc, char *argv[])
       esyslog("ERROR: %m");
       return false;
     }
-    dsyslog("running as daemon (tid=%d)", cThread::ThreadId());
+    dsyslog("running as daemon");
   }
 
   isyslog("VDR version %s started", VDRVERSION);
