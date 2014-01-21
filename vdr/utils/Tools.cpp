@@ -1248,7 +1248,7 @@ bool cLockFile::Lock(int WaitSeconds)
               break;
               }
            if (WaitSeconds)
-              cCondWait::SleepMs(1000);
+             PLATFORM::CEvent::Sleep(1000);
            }
         } while (f < 0 && time(NULL) < Timeout);
      }

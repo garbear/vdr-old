@@ -610,7 +610,7 @@ void* cCuttingThread::Process(void)
      while (BeginMark && !IsStopped()) {
            // Suspend cutting if we have severe throughput problems:
            if (Throttled()) {
-              cCondWait::SleepMs(100);
+             CEvent::Sleep(100);
               continue;
               }
            // Determine the actual begin and end marks, skipping any marks at the same position:
@@ -756,7 +756,7 @@ bool CutRecording(const char *FileName)
            if (Marks.GetNumSequences()) {
               if (cCutter::Start(FileName)) {
                  while (cCutter::Active())
-                       cCondWait::SleepMs(CUTTINGCHECKINTERVAL);
+                   CEvent::Sleep(CUTTINGCHECKINTERVAL);
                  return true;
                  }
               else

@@ -1881,7 +1881,7 @@ cIndexFile::cIndexFile(const char *FileName, bool Record, bool IsPesRecording, b
         // Wait until the index file contains at least two frames:
         time_t tmax = time(NULL) + MAXWAITFORINDEXFILE;
         while (time(NULL) < tmax && FileSize(fileName) < off_t(2 * sizeof(tIndexTs)))
-              cCondWait::SleepMs(INDEXFILETESTINTERVAL);
+          CEvent::Sleep(INDEXFILETESTINTERVAL);
         }
      int delta = 0;
      if (!Record && access(fileName, R_OK) != 0) {
@@ -1892,7 +1892,7 @@ cIndexFile::cIndexFile(const char *FileName, bool Record, bool IsPesRecording, b
            // Wait until the index file exists:
            time_t tmax = time(NULL) + MAXWAITFORINDEXFILE;
            do {
-              cCondWait::SleepMs(INDEXFILECHECKINTERVAL); // start with a sleep, to give it a head start
+             CEvent::Sleep(INDEXFILECHECKINTERVAL); // start with a sleep, to give it a head start
               } while (access(fileName, R_OK) != 0 && time(NULL) < tmax);
            }
         }
@@ -2204,7 +2204,7 @@ bool GenerateIndex(const char *FileName)
            unlink(IndexFileName);
            cIndexFileGenerator *IndexFileGenerator = new cIndexFileGenerator(FileName);
            while (IndexFileGenerator->Active())
-                 cCondWait::SleepMs(INDEXFILECHECKINTERVAL);
+             CEvent::Sleep(INDEXFILECHECKINTERVAL);
            if (access(IndexFileName, R_OK) == 0)
               return true;
            else

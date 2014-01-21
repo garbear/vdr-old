@@ -212,7 +212,7 @@ cSectionHandler::Process(void)
     {
       bool DeviceHasLock = m_device->Channel()->HasLock();
       if (!DeviceHasLock)
-        cCondWait::SleepMs(100);
+        CEvent::Sleep(100);
       for (int i = 0; i < NumFilters; i++)
       {
         if (pfd[i].revents & POLLIN)

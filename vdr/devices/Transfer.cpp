@@ -9,6 +9,7 @@
 
 #include "Transfer.h"
 #include "subsystems/DeviceReceiverSubsystem.h"
+#include "platform/threads/mutex.h"
 
 // --- cTransfer -------------------------------------------------------------
 
@@ -49,7 +50,7 @@ void cTransfer::Receive(uchar *Data, int Length)
      for (int i = 0; i < MAXRETRIES; i++) {
          if (PlayTs(Data, Length) > 0)
             return;
-         cCondWait::SleepMs(RETRYWAIT);
+         PLATFORM::CEvent::Sleep(RETRYWAIT);
          }
      DeviceClear();
      esyslog("ERROR: TS packet not accepted in Transfer Mode");
