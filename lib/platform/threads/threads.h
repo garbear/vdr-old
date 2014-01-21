@@ -35,8 +35,11 @@
 
 namespace PLATFORM
 {
+  class CThreadLock;
+
   class CThread
   {
+    friend class CThreadLock;
   public:
     CThread(void) :
         m_bStop(false),
@@ -153,4 +156,52 @@ namespace PLATFORM
     CCondition<bool> m_threadCondition;
     thread_t         m_thread;
   };
+
+  class CThreadLock : public PreventCopy
+  {
+  public:
+    inline CThreadLock(const CThread* thread) :
+      m_mutex(thread->m_threadMutex)
+    {
+      m_mutex.Lock();
+    }
+
+    inline ~CThreadLock(void)
+    {
+      Unlock();
+    }
+
+    inline bool TryLock(void)
+    {
+      return m_mutex.TryLock();
+    }
+
+    inline void Unlock(void)
+    {
+      m_mutex.Unlock();
+    }
+
+    inline bool Clear(void)
+    {
+      return m_mutex.Clear();
+    }
+
+    inline bool Lock(void)
+    {
+      return m_mutex.Lock();
+    }
+
+    /*!
+     * \brief Return true if the provided CMutex is held by this CLockObject
+     */
+    inline bool HoldsMutex(const CMutex &mutex)
+    {
+      return &m_mutex == &mutex;
+    }
+
+  private:
+    const CMutex& m_mutex;
+  };
+
+#define LOCK_THREAD PLATFORM::CThreadLock ThreadLock(this)
 };
