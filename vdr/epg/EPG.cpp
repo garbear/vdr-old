@@ -1432,12 +1432,13 @@ cEpgHandler::~cEpgHandler()
 
 cEpgHandlers EpgHandlers;
 
-bool cEpgHandlers::IgnoreChannel(const cChannel *Channel)
+bool cEpgHandlers::IgnoreChannel(const cChannel& Channel)
 {
-  for (cEpgHandler *eh = First(); eh; eh = Next(eh)) {
-      if (eh->IgnoreChannel(Channel))
-         return true;
-      }
+  for (cEpgHandler *eh = First(); eh; eh = Next(eh))
+  {
+    if (eh->IgnoreChannel(Channel))
+      return true;
+  }
   return false;
 }
 

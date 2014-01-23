@@ -237,7 +237,7 @@ public:
           ///< will take place.
           ///< EPG handlers will be deleted automatically at the end of the program.
   virtual ~cEpgHandler();
-  virtual bool IgnoreChannel(const cChannel *Channel) { return false; }
+  virtual bool IgnoreChannel(const cChannel& Channel) { return false; }
           ///< Before any EIT data for the given Channel is processed, the EPG handlers
           ///< are asked whether this Channel shall be completely ignored. If any of
           ///< the EPG handlers returns true in this function, no EIT data at all will
@@ -281,7 +281,7 @@ public:
 
 class cEpgHandlers : public cList<cEpgHandler> {
 public:
-  bool IgnoreChannel(const cChannel *Channel);
+  bool IgnoreChannel(const cChannel& Channel);
   bool HandleEitEvent(cSchedule *Schedule, const SI::EIT::Event *EitEvent, uchar TableID, uchar Version);
   bool HandledExternally(const cChannel *Channel);
   bool IsUpdate(tEventID EventID, time_t StartTime, uchar TableID, uchar Version);
