@@ -1359,7 +1359,7 @@ bool cRecordings::Update(bool Wait)
      return Count() > 0;
      }
   else
-     CreateThread();
+     CreateThread(false);
   return false;
 }
 

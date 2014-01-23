@@ -108,7 +108,7 @@ bool cVDRDaemon::Init()
   cSchedules::SetEpgDataFileName("special://home/epg/epg.data");
 
   m_EpgDataReader = new cEpgDataReader;
-  m_EpgDataReader->CreateThread();
+  m_EpgDataReader->CreateThread(false);
 
   cDeviceManager::Get().Initialise();
 
