@@ -202,6 +202,6 @@ void cEITScanner::Process(void)
       delete m_scanList;
       m_scanList = NULL;
     }
-    m_nextScan.Init(Setup.EPGScanTimeout * 60 * 1000);
+    m_nextScan.Init(ScanTimeout * 1000);
   }
 }

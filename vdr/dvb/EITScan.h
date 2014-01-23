@@ -45,7 +45,6 @@ class cEITScanner {
 private:
   enum
   {
-    ActivityTimeout = 60,
     ScanTimeout = 20
    };
 
