@@ -40,6 +40,10 @@
 #define UNUSED(x) x
 #endif
 
+#ifndef SAFE_DELETE
+#define SAFE_DELETE(x) do { delete x; x = NULL; } while(x)
+#endif
+
 #if (defined(_WIN32) || defined(_WIN64))
 #include "windows/os-types.h"
 #else
