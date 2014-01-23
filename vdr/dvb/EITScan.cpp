@@ -118,115 +118,90 @@ cTransponderList::AddTranspondersToScanList(cScanList& scanlist) const
 
 cEITScanner EITScanner;
 
-cEITScanner::cEITScanner(void)
+cEITScanner::cEITScanner(void) :
+    m_nextScan(0),
+    m_scanList(NULL),
+    m_transponderList(NULL)
 {
-  lastScan = lastActivity = time(NULL);
-  scanList = NULL;
-  transponderList = NULL;
 }
 
 cEITScanner::~cEITScanner()
 {
-  delete scanList;
-  delete transponderList;
+  delete m_scanList;
+  delete m_transponderList;
 }
 
-void
-cEITScanner::AddTransponder(ChannelPtr Channel)
+void cEITScanner::AddTransponder(ChannelPtr Channel)
 {
-  if (!transponderList)
-    transponderList = new cTransponderList;
-  transponderList->AddTransponder(Channel);
+  if (!m_transponderList)
+    m_transponderList = new cTransponderList;
+  m_transponderList->AddTransponder(Channel);
 }
 
-void
-cEITScanner::ForceScan(void)
+void cEITScanner::ForceScan(void)
 {
-  lastActivity = 0;
+  m_nextScan.Init(0);
 }
 
-void
-cEITScanner::Activity(void)
+void cEITScanner::CreateScanList(void)
 {
-  lastActivity = time(NULL);
+  m_scanList = new cScanList;
+  if (m_transponderList)
+  {
+    m_scanList->AddTransponders(*m_transponderList);
+    delete m_transponderList;
+    m_transponderList = NULL;
+  }
+  m_scanList->AddTransponders(cChannelManager::Get());
 }
 
-void
-cEITScanner::Process(void)
+bool cEITScanner::ScanDevice(DevicePtr device)
 {
-  if (Setup.EPGScanTimeout || !lastActivity)
-  { // !lastActivity means a scan was forced
-    time_t now = time(NULL);
-    if (now - lastScan > ScanTimeout && now - lastActivity > ActivityTimeout)
+  assert(device);
+  bool bSwitched(false);
+
+  for (cScanData *ScanData = m_scanList->First(); ScanData; ScanData = m_scanList->Next(ScanData))
+  {
+    ChannelPtr Channel = ScanData->GetChannel();
+    if (Channel &&
+        /** not encrypted or able to decrypt */
+        (!Channel->Ca() || Channel->Ca() == device->CardIndex() || Channel->Ca() >= CA_ENCRYPTED_MIN) &&
+        /** provided by this device */
+        device->Channel()->ProvidesTransponder(*Channel) &&
+        /** XXX priority? */
+        device->Receiver()->Priority() < 0 &&
+        /** allowed to switch */
+        (device->Channel()->MaySwitchTransponder(*Channel) || device->Channel()->ProvidesTransponderExclusively(*Channel)))
     {
-//        XXX if (cChannelManager::Get().Lock(false, 10)) {
-      if (1)
-      {
-        if (!scanList)
-        {
-          scanList = new cScanList;
-          if (transponderList)
-          {
-            scanList->AddTransponders(*transponderList);
-            delete transponderList;
-            transponderList = NULL;
-          }
-          scanList->AddTransponders(cChannelManager::Get());
-        }
-        bool AnyDeviceSwitched = false;
-        for (int i = 0; i < cDeviceManager::Get().NumDevices(); i++)
-        {
-          DevicePtr Device = cDeviceManager::Get().GetDevice(i);
-          if (Device != cDevice::EmptyDevice
-              && Device->Channel()->ProvidesEIT())
-          {
-            for (cScanData *ScanData = scanList->First(); ScanData; ScanData =
-                scanList->Next(ScanData))
-            {
-              ChannelPtr Channel = ScanData->GetChannel();
-              if (Channel)
-              {
-                if (!Channel->Ca() || Channel->Ca() == Device->CardIndex()
-                    || Channel->Ca() >= CA_ENCRYPTED_MIN)
-                {
-                  if (Device->Channel()->ProvidesTransponder(*Channel))
-                  {
-                    if (Device->Receiver()->Priority() < 0)
-                    {
-                      bool MaySwitchTransponder =
-                          Device->Channel()->MaySwitchTransponder(*Channel);
-                      if (MaySwitchTransponder
-                          || Device->Channel()->ProvidesTransponderExclusively(
-                              *Channel)
-                              && now - lastActivity
-                                  > Setup.EPGScanTimeout * 3600)
-                      {
-                        dsyslog("EIT scan: device %d  source  %-8s tp %5d",
-                            Device->CardIndex(),
-                            cSource::ToString(Channel->Source()).c_str(),
-                            Channel->Transponder());
-                        Device->Channel()->SwitchChannel(Channel);
-                        scanList->Del(ScanData);
-                        AnyDeviceSwitched = true;
-                        break;
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-        if (!scanList->Count() || !AnyDeviceSwitched)
-        {
-          delete scanList;
-          scanList = NULL;
-          if (lastActivity == 0) // this was a triggered scan
-            Activity();
-        }
-//           XXX Channels.Unlock();
-      }
-      lastScan = time(NULL);
+      dsyslog("EIT scan: device %d  source  %-8s tp %5d", device->CardIndex(), cSource::ToString(Channel->Source()).c_str(), Channel->Transponder());
+      device->Channel()->SwitchChannel(Channel);
+      m_scanList->Del(ScanData);
+      bSwitched = true;
+      break;
     }
+  }
+
+  return bSwitched;
+}
+
+void cEITScanner::Process(void)
+{
+  if (!m_nextScan.TimeLeft())
+  {
+    CreateScanList();
+    bool AnyDeviceSwitched = false;
+
+    for (DeviceVector::const_iterator it = cDeviceManager::Get().Iterator(); cDeviceManager::Get().IteratorHasNext(it); cDeviceManager::Get().IteratorNext(it))
+    {
+      if (*it && (*it)->Channel() && (*it)->Channel()->ProvidesEIT())
+        AnyDeviceSwitched |= ScanDevice(*it);
+    }
+
+    if (!m_scanList->Count() || !AnyDeviceSwitched)
+    {
+      delete m_scanList;
+      m_scanList = NULL;
+    }
+    m_nextScan.Init(Setup.EPGScanTimeout * 60 * 1000);
   }
 }

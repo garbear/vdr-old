@@ -43,19 +43,23 @@ class cTransponderList;
 
 class cEITScanner {
 private:
-  enum { ActivityTimeout = 60,
-         ScanTimeout = 20
-       };
-  time_t lastScan, lastActivity;
-  cScanList *scanList;
-  cTransponderList *transponderList;
+  enum
+  {
+    ActivityTimeout = 60,
+    ScanTimeout = 20
+   };
+
+  PLATFORM::CTimeout m_nextScan;
+  cScanList*         m_scanList;
+  cTransponderList*  m_transponderList;
+
+  void CreateScanList(void);
+  bool ScanDevice(DevicePtr device);
 public:
   cEITScanner(void);
   ~cEITScanner();
-  bool Active(void) { return lastActivity == 0; }
   void AddTransponder(ChannelPtr Channel);
   void ForceScan(void);
-  void Activity(void);
   void Process(void);
   };
 
