@@ -397,10 +397,10 @@ bool cEIT::HandleEitEvent(SI::EIT::Event *EitEvent)
       else
         EpgHandlers.SetDescription(m_pEvent, NULL);
     }
-    delete m_DishExtendedEventDescriptor;
-    delete m_DishShortEventDescriptor;
-    delete m_ExtendedEventDescriptors;
-    delete m_ShortEventDescriptor;
+    SAFE_DELETE(m_DishExtendedEventDescriptor);
+    SAFE_DELETE(m_DishShortEventDescriptor);
+    SAFE_DELETE(m_ExtendedEventDescriptors);
+    SAFE_DELETE(m_ShortEventDescriptor);
 
     EpgHandlers.SetComponents(m_pEvent, m_Components);
 
@@ -410,7 +410,7 @@ bool cEIT::HandleEitEvent(SI::EIT::Event *EitEvent)
     m_bModified = true;
     EpgHandlers.HandleEvent(m_pEvent);
     if (m_bHandledExternally)
-      delete m_pEvent;
+      SAFE_DELETE(m_pEvent);
   }
 
   return true;
