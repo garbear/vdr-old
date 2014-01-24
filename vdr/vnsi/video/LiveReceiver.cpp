@@ -29,10 +29,7 @@ cLiveReceiver::cLiveReceiver(DevicePtr device, cVideoInput *VideoInput, ChannelP
   m_VideoInput(VideoInput)
 {
   if (Channel)
-  {
     SetPids(*Channel);
-    m_PmtChannel = Channel;
-  }
 }
 
 cLiveReceiver::~cLiveReceiver()
@@ -50,10 +47,4 @@ void cLiveReceiver::Activate(bool On)
 {
   m_VideoInput->Attach(On);
   dsyslog("%s live receiver", On ? "activate" : "deactivate");
-}
-
-void cLiveReceiver::SetPMTPids(void)
-{
-  if (m_PmtChannel)
-    SetPids(*m_PmtChannel);
 }

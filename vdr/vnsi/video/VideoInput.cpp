@@ -52,6 +52,8 @@ void cVideoInput::ResetMembers(void)
 {
   DELETENULL(m_PatFilter);
   DELETENULL(m_Receiver);
+  if (m_Channel)
+    m_Channel->UnregisterObserver(this);
   m_Channel     = cChannel::EmptyChannel;
   m_VideoBuffer = NULL;
   m_Priority    = 0;
@@ -95,7 +97,7 @@ void cVideoInput::CancelPMTThread(void)
   {
     CLockObject lock(m_mutex);
     m_SeenPmt = true;
-    m_pmtCondition.Broadcast();
+    m_pmtCondition.Signal();
   }
   StopThread(0);
 }
@@ -160,10 +162,10 @@ void cVideoInput::Notify(const Observable &obs, const ObservableMessage msg)
 
 void cVideoInput::PmtChange(void)
 {
-  isyslog("Video Input - new pmt, attaching receiver");
+  isyslog("VideoInput - new pmt, attaching receiver");
 
   if (m_Receiver)
-    m_Receiver->SetPMTPids();
+    m_Receiver->SetPids(*m_Channel);
 
   CLockObject lock(m_mutex);
   m_PmtChange = true;
@@ -180,7 +182,7 @@ void cVideoInput::Receive(uchar *data, int length)
   if (m_PmtChange)
   {
      // generate pat/pmt so we can configure parsers later
-     cPatPmtGenerator patPmtGenerator(m_Receiver->m_PmtChannel);
+     cPatPmtGenerator patPmtGenerator(m_Channel);
      m_VideoBuffer->Put(patPmtGenerator.GetPat(), TS_SIZE);
      int Index = 0;
      while (uchar *pmt = patPmtGenerator.GetPmt(Index))
@@ -204,7 +206,6 @@ void* cVideoInput::Process()
     if (!IsStopped())
     {
       isyslog("VideoInput: no pat/pmt within timeout, falling back to channel pids");
-      m_Receiver->m_PmtChannel = m_Channel;
       PmtChange();
     }
   }

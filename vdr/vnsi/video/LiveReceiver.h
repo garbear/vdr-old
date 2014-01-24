@@ -31,9 +31,7 @@ class cLiveReceiver: public cReceiver
 public:
   cLiveReceiver(DevicePtr device, cVideoInput *VideoInput, ChannelPtr Channel, int Priority);
   virtual ~cLiveReceiver();
-  ChannelPtr m_PmtChannel;
 
-  void SetPMTPids(void);
 protected:
   virtual void Activate(bool On);
   virtual void Receive(uchar *Data, int Length);
