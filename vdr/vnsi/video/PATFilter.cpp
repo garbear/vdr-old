@@ -379,6 +379,7 @@ void cLivePatFilter::Process(u_short Pid, u_char Tid, const u_char *Data, int Le
             Dtypes, DLangs, Spids, SLangs, Tpid);
         m_Channel->SetSubtitlingDescriptors(SubtitlingTypes, CompositionPageIds,
             AncillaryPageIds);
+        m_Channel->NotifyObservers(ObservableMessageChannelHasPMT);
         if (m_Channel->Modification(CHANNELMOD_PIDS))
           m_Channel->NotifyObservers(ObservableMessageChannelPMTChanged);
       }

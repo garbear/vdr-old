@@ -30,6 +30,7 @@ typedef enum
   ObservableMessageNone,
   ObservableMessageChannelChanged,
   ObservableMessageChannelPMTChanged,
+  ObservableMessageChannelHasPMT,
   ObservableMessageDeviceReady,
   ObservableMessageDeviceNotReady,
   ObservableMessageCAMReady,

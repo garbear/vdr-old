@@ -156,7 +156,7 @@ void cVideoInput::Close()
 
 void cVideoInput::Notify(const Observable &obs, const ObservableMessage msg)
 {
-  if (msg == ObservableMessageChannelPMTChanged)
+  if (msg == ObservableMessageChannelHasPMT)
     PmtChange();
 }
 
