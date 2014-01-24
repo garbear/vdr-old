@@ -21,17 +21,24 @@
 
 #include "LiveReceiver.h"
 #include "VideoInput.h"
+#include "devices/subsystems/DeviceReceiverSubsystem.h"
 
-cLiveReceiver::cLiveReceiver(cVideoInput *VideoInput, ChannelPtr Channel, int Priority)
- : cReceiver(Channel, Priority)//XXX
- , m_VideoInput(VideoInput)
+cLiveReceiver::cLiveReceiver(DevicePtr device, cVideoInput *VideoInput, ChannelPtr Channel, int Priority) :
+  cReceiver(Channel, Priority),
+  m_device(device),
+  m_VideoInput(VideoInput)
 {
-  SetPids(*Channel);
-  m_PmtChannel = Channel;
+  if (Channel)
+  {
+    SetPids(*Channel);
+    m_PmtChannel = Channel;
+  }
 }
 
 cLiveReceiver::~cLiveReceiver()
 {
+  if (m_device)
+    m_device->Receiver()->Detach(this);
 }
 
 void cLiveReceiver::Receive(uchar *Data, int Length)
@@ -43,4 +50,10 @@ void cLiveReceiver::Activate(bool On)
 {
   m_VideoInput->Attach(On);
   dsyslog("%s live receiver", On ? "activate" : "deactivate");
+}
+
+void cLiveReceiver::SetPMTPids(void)
+{
+  if (m_PmtChannel)
+    SetPids(*m_PmtChannel);
 }

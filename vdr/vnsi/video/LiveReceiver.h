@@ -20,6 +20,7 @@
  *
  */
 
+#include "devices/Device.h"
 #include "devices/Receiver.h"
 #include "channels/Channel.h"
 
@@ -28,13 +29,15 @@ class cVideoInput;
 class cLiveReceiver: public cReceiver
 {
 public:
-  cLiveReceiver(cVideoInput *VideoInput, ChannelPtr Channel, int Priority);
+  cLiveReceiver(DevicePtr device, cVideoInput *VideoInput, ChannelPtr Channel, int Priority);
   virtual ~cLiveReceiver();
   ChannelPtr m_PmtChannel;
 
+  void SetPMTPids(void);
 protected:
   virtual void Activate(bool On);
   virtual void Receive(uchar *Data, int Length);
 
+  DevicePtr    m_device;
   cVideoInput *m_VideoInput;
 };
