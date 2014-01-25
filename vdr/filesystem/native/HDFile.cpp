@@ -213,7 +213,11 @@ bool CHDFile::Delete(const string &url)
 
 bool CHDFile::Rename(const string &url, const string &urlnew)
 {
-  return false;
+#ifdef TARGET_WINDOWS
+  //TODO
+#else
+  return rename(url.c_str(), urlnew.c_str()) == 0;
+#endif
 }
 
 bool CHDFile::SetHidden(const string &url, bool hidden)
