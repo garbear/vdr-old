@@ -75,8 +75,9 @@ TEST(Channel, Channel)
   TiXmlElement channelElement(CHANNEL_XML_ELM_CHANNEL);
   {
     cChannel channel;
+    // TODO: frequency should maybe be written as 177000000?
     EXPECT_TRUE(channel.DeserialiseConf("KABC-DT;(null):177000:M10:A:0:49=2:0;52=eng@106,53=esl@106:0:0:1:0:0:0\n"));
-    EXPECT_EQ(channel.Frequency(), 177000);
+    EXPECT_EQ(channel.Frequency(), 177000000);
     EXPECT_EQ(channel.Source(), 1090519040);
     EXPECT_EQ(channel.Srate(), 0);
     EXPECT_EQ(channel.Vpid(), 49);
@@ -123,7 +124,7 @@ TEST(Channel, Channel)
     EXPECT_STREQ(shortName, "");
 
     const char *frequency = channelElement.Attribute(CHANNEL_XML_ATTR_FREQUENCY);
-    EXPECT_EQ(StringUtils::IntVal(frequency), 177000);
+    EXPECT_EQ(StringUtils::IntVal(frequency), 177000000);
 
     const char *parameters = channelElement.Attribute(CHANNEL_XML_ATTR_PARAMETERS);
     EXPECT_STREQ(parameters, "M10");
@@ -209,7 +210,7 @@ TEST(Channel, Channel)
   {
     cChannel channel;
     EXPECT_TRUE(channel.Deserialise(&channelElement));
-    EXPECT_EQ(channel.Frequency(), 177000);
+    EXPECT_EQ(channel.Frequency(), 177000000);
     EXPECT_EQ(channel.Source(), 1090519040);
     EXPECT_EQ(channel.Srate(), 0);
     EXPECT_EQ(channel.Vpid(), 49);
@@ -250,7 +251,7 @@ TEST(Channel, Channel)
   {
     cChannel channel;
     EXPECT_TRUE(channel.DeserialiseConf("RedZone;(null):617000:M10:A:0:647=27:648=eng@15:0:1863:88:0:0:0\n"));
-    EXPECT_EQ(channel.Frequency(), 617000);
+    EXPECT_EQ(channel.Frequency(), 617000000);
     EXPECT_EQ(channel.Source(), 1090519040);
     EXPECT_EQ(channel.Srate(), 0);
     EXPECT_EQ(channel.Vpid(), 647);
@@ -298,7 +299,7 @@ TEST(Channel, Channel)
   {
     cChannel channel;
     EXPECT_TRUE(channel.Deserialise(&channelElement2));
-    EXPECT_EQ(channel.Frequency(), 617000);
+    EXPECT_EQ(channel.Frequency(), 617000000);
     EXPECT_EQ(channel.Source(), 1090519040);
     EXPECT_EQ(channel.Srate(), 0);
     EXPECT_EQ(channel.Vpid(), 647);

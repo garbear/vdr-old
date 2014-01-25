@@ -405,7 +405,7 @@ bool cChannel::SerialiseConf(std::string &str) const
     *q = 0;
 
     buffer = StringUtils::Format("%s:%d:%s:%s:%d:%s:%s:%s:%s:%d:%d:%d:%d\n",
-        FullName, m_channelData.frequency, m_parameters.c_str(), cSource::ToString(m_channelData.source).c_str(), m_channelData.srate,
+        FullName, m_channelData.frequency / 1000 /* XXX */, m_parameters.c_str(), cSource::ToString(m_channelData.source).c_str(), m_channelData.srate,
         vpidbuf, apidbuf, tpidbuf, caidbuf, m_channelData.sid, m_channelData.nid, m_channelData.tid, m_channelData.rid);
   }
 
