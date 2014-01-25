@@ -18,37 +18,41 @@
 class cChannelManager;
 class cTransponderList;
 
-class cScanData : public cListObject {
+class cScanData
+{
 private:
   ChannelPtr m_channel;
+  bool       m_bScanned;
 public:
   cScanData(ChannelPtr channel);
   virtual ~cScanData(void);
 
-  virtual int Compare(const cListObject &ListObject) const;
   int Source(void) const;
   int Transponder(void) const;
   ChannelPtr GetChannel(void) const { return m_channel; }
+  void SetScanned(void) { m_bScanned = true; }
+  bool Scanned(void) const { return m_bScanned; }
 };
 
-class cScanList : public cList<cScanData>
+class cScanList
 {
 public:
   void AddTransponders(const cChannelManager& Channels);
   void AddTransponders(const cTransponderList& Channels);
   void AddTransponder(ChannelPtr Channel);
+
+  cScanData* Next(void);
+  size_t UnscannedTransponders(void) const;
+private:
+  std::vector<cScanData> m_list;
 };
 
 class cTransponderList;
 
 class cEITScanner {
 private:
-  enum
-  {
-    ScanTimeout = 20
-   };
-
-  PLATFORM::CTimeout m_nextScan;
+  PLATFORM::CTimeout m_nextTransponderScan;
+  PLATFORM::CTimeout m_nextFullScan;
   cScanList*         m_scanList;
   cTransponderList*  m_transponderList;
 

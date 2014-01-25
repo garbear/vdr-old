@@ -1133,7 +1133,7 @@ bool cChannel::SetTransponderData(int source, int frequency, int srate, const st
 {
   if (strParameters.find(':') != string::npos)
   {
-    //esyslog("ERROR: parameter string '%s' contains ':'", strParameters.c_str());
+    esyslog("ERROR: parameter string '%s' contains ':'", strParameters.c_str());
     return false;
   }
 
@@ -1166,10 +1166,13 @@ bool cChannel::SetTransponderData(int source, int frequency, int srate, const st
     {
       dsyslog("changing transponder data of channel %s (%d) from %s to %s", Name().c_str(), Number(), oldTransponderData.c_str(), TransponderDataToString().c_str());
       m_modification |= CHANNELMOD_TRANSP;
-      SetChanged();
     }
+
+    SetChanged();
+    return true;
   }
-  return true;
+
+  return false;
 }
 
 void cChannel::SetId(int nid, int tid, int sid, int rid /* = 0 */)

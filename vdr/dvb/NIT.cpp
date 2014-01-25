@@ -250,10 +250,8 @@ cNitFilter::Process(u_short Pid, u_char Tid, const u_char *Data, int Length)
               for (int n = 0; n < NumFrequencies; n++)
               {
                 ChannelPtr Channel = ChannelPtr(new cChannel);
-                Channel->SetId(ts.getOriginalNetworkId(),
-                    ts.getTransportStreamId(), 0, 0);
-                if (Channel->SetTransponderData(Source, Frequencies[n],
-                    SymbolRate, dtp.Serialize('S')))
+                Channel->SetId(ts.getOriginalNetworkId(), ts.getTransportStreamId(), 0, 0);
+                if (Channel->SetTransponderData(Source, Frequencies[n], SymbolRate, dtp.Serialize('S')))
                 {
                   EITScanner.AddTransponder(Channel);
                   Channel->NotifyObservers(ObservableMessageChannelChanged);

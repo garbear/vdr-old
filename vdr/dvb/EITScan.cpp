@@ -15,6 +15,8 @@
 #include "devices/subsystems/DeviceChannelSubsystem.h"
 #include "devices/subsystems/DeviceReceiverSubsystem.h"
 
+#define SCAN_TRANSPONDER_TIMEOUT_MS (20 * 1000)
+
 class cTransponderList
 {
 public:
@@ -30,6 +32,7 @@ private:
 cScanData::cScanData(ChannelPtr channel)
 {
   m_channel = channel;
+  m_bScanned = false;
 }
 
 cScanData::~cScanData(void)
@@ -48,30 +51,18 @@ cScanData::Transponder(void) const
   return m_channel->Transponder();
 }
 
-int
-cScanData::Compare(const cListObject &ListObject) const
-{
-  const cScanData *sd = (const cScanData *) &ListObject;
-  int r = Source() - sd->Source();
-  if (r == 0)
-    r = Transponder() - sd->Transponder();
-  return r;
-}
-
 // --- cScanList -------------------------------------------------------------
 
 void
 cScanList::AddTransponders(const cTransponderList& Channels)
 {
   Channels.AddTranspondersToScanList(*this);
-  Sort();
 }
 
 void
 cScanList::AddTransponders(const cChannelManager& channels)
 {
   channels.AddTransponders(this);
-  Sort();
 }
 
 void
@@ -79,14 +70,37 @@ cScanList::AddTransponder(ChannelPtr Channel)
 {
   if (Channel->Source() && Channel->Transponder())
   {
-    for (cScanData *sd = First(); sd; sd = Next(sd))
+    for (std::vector<cScanData>::const_iterator it = m_list.begin(); it != m_list.end(); ++it)
     {
-      if (sd->Source() == Channel->Source()
-          && ISTRANSPONDER(sd->Transponder(), Channel->Transponder()))
+      if ((*it).Source() == Channel->Source() &&
+          ISTRANSPONDER((*it).Transponder(), Channel->Transponder()))
         return;
     }
-    Add(new cScanData(Channel));
+    m_list.push_back(cScanData(Channel));
   }
+}
+
+cScanData* cScanList::Next(void)
+{
+  for (std::vector<cScanData>::iterator it = m_list.begin(); it != m_list.end(); ++it)
+  {
+    if (!(*it).Scanned())
+      return &(*it);
+  }
+
+  return NULL;
+}
+
+size_t cScanList::UnscannedTransponders(void) const
+{
+  size_t cnt(0);
+  for (std::vector<cScanData>::const_iterator it = m_list.begin(); it != m_list.end(); ++it)
+  {
+    if (!(*it).Scanned())
+      ++cnt;
+  }
+
+  return cnt;
 }
 
 // --- cTransponderList ------------------------------------------------------
@@ -94,14 +108,10 @@ cScanList::AddTransponder(ChannelPtr Channel)
 void
 cTransponderList::AddTransponder(ChannelPtr Channel)
 {
-  for (std::vector<ChannelPtr>::iterator it = m_channels.begin();
-      it != m_channels.end(); ++it)
+  for (std::vector<ChannelPtr>::iterator it = m_channels.begin(); it != m_channels.end(); ++it)
   {
-    if ((*it)->Source() == Channel->Source()
-        && (*it)->Transponder() == Channel->Transponder())
-    {
+    if ((*it)->Source() == Channel->Source() && (*it)->Transponder() == Channel->Transponder())
       return;
-    }
   }
   m_channels.push_back(Channel);
 }
@@ -109,8 +119,7 @@ cTransponderList::AddTransponder(ChannelPtr Channel)
 void
 cTransponderList::AddTranspondersToScanList(cScanList& scanlist) const
 {
-  for (std::vector<ChannelPtr>::const_iterator it = m_channels.begin();
-      it != m_channels.end(); ++it)
+  for (std::vector<ChannelPtr>::const_iterator it = m_channels.begin(); it != m_channels.end(); ++it)
     scanlist.AddTransponder(*it);
 }
 
@@ -119,7 +128,8 @@ cTransponderList::AddTranspondersToScanList(cScanList& scanlist) const
 cEITScanner EITScanner;
 
 cEITScanner::cEITScanner(void) :
-    m_nextScan(0),
+    m_nextTransponderScan(0),
+    m_nextFullScan(0),
     m_scanList(NULL),
     m_transponderList(NULL)
 {
@@ -140,19 +150,23 @@ void cEITScanner::AddTransponder(ChannelPtr Channel)
 
 void cEITScanner::ForceScan(void)
 {
-  m_nextScan.Init(0);
+  m_nextTransponderScan.Init(0);
+  m_nextFullScan.Init(0);
 }
 
 void cEITScanner::CreateScanList(void)
 {
-  m_scanList = new cScanList;
-  if (m_transponderList)
+  if (!m_scanList)
   {
-    m_scanList->AddTransponders(*m_transponderList);
-    delete m_transponderList;
-    m_transponderList = NULL;
+    m_scanList = new cScanList;
+    if (m_transponderList)
+    {
+      m_scanList->AddTransponders(*m_transponderList);
+      delete m_transponderList;
+      m_transponderList = NULL;
+    }
+    m_scanList->AddTransponders(cChannelManager::Get());
   }
-  m_scanList->AddTransponders(cChannelManager::Get());
 }
 
 bool cEITScanner::ScanDevice(DevicePtr device)
@@ -160,7 +174,8 @@ bool cEITScanner::ScanDevice(DevicePtr device)
   assert(device);
   bool bSwitched(false);
 
-  for (cScanData *ScanData = m_scanList->First(); ScanData; ScanData = m_scanList->Next(ScanData))
+  cScanData* ScanData = m_scanList->Next();
+  if (ScanData)
   {
     ChannelPtr Channel = ScanData->GetChannel();
     if (Channel &&
@@ -175,9 +190,8 @@ bool cEITScanner::ScanDevice(DevicePtr device)
     {
       dsyslog("EIT scan: device %d  source  %-8s tp %5d", device->CardIndex(), cSource::ToString(Channel->Source()).c_str(), Channel->Transponder());
       device->Channel()->SwitchChannel(Channel);
-      m_scanList->Del(ScanData);
+      ScanData->SetScanned();
       bSwitched = true;
-      break;
     }
   }
 
@@ -186,7 +200,7 @@ bool cEITScanner::ScanDevice(DevicePtr device)
 
 void cEITScanner::Process(void)
 {
-  if (!m_nextScan.TimeLeft())
+  if (!m_nextTransponderScan.TimeLeft() && !m_nextFullScan.TimeLeft())
   {
     CreateScanList();
     bool AnyDeviceSwitched = false;
@@ -197,11 +211,13 @@ void cEITScanner::Process(void)
         AnyDeviceSwitched |= ScanDevice(*it);
     }
 
-    if (!m_scanList->Count() || !AnyDeviceSwitched)
+    if (!m_scanList->UnscannedTransponders() || !AnyDeviceSwitched)
     {
       delete m_scanList;
       m_scanList = NULL;
+      m_nextFullScan.Init(Setup.EPGScanTimeout * 1000 * 60);
+      dsyslog("EIT scan finished");
     }
-    m_nextScan.Init(ScanTimeout * 1000);
+    m_nextTransponderScan.Init(SCAN_TRANSPONDER_TIMEOUT_MS);
   }
 }
