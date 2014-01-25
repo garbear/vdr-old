@@ -77,10 +77,17 @@ private:
   /*!
    * \brief Perform all clean-up tasks that should be executed upon finish
    */
-  void Cleanup();
+  void DeInit();
 
-  PLATFORM::CEvent m_exitEvent;
+  /*!
+   * Two events are used for thread synchronisation: a sleep event and an exit
+   * event. The sleep event allows VDR to awaken from its event loop immediately
+   * when stopped via Stop(). The exit event is triggered when the event loop
+   * terminates, which allows users to block until WaitForShutdown() returns.
+   */
   PLATFORM::CEvent m_sleepEvent;
+  PLATFORM::CEvent m_exitEvent;
+
   int              m_exitCode;
   cVNSIServer*     m_server;
   cEpgDataReader*  m_EpgDataReader;

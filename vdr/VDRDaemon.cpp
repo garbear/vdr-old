@@ -52,10 +52,6 @@ cVDRDaemon::~cVDRDaemon()
 {
   Stop();
   WaitForShutdown();
-  delete m_server;
-  m_server = NULL;
-  delete m_EpgDataReader;
-  m_EpgDataReader = NULL;
 }
 
 bool cVDRDaemon::Init()
@@ -138,7 +134,7 @@ void *cVDRDaemon::Process()
 
     m_sleepEvent.Wait(100);
   }
-  Cleanup();
+  DeInit();
   m_exitEvent.Broadcast();
   return NULL;
 }
@@ -159,11 +155,14 @@ void cVDRDaemon::OnSignal(int signum)
   }
 }
 
-void cVDRDaemon::Cleanup()
+void cVDRDaemon::DeInit()
 {
   cDeviceManager::Get().Shutdown();
 
   cChannelManager::Get().Clear();
+
+  SAFE_DELETE(m_server);
+  SAFE_DELETE(m_EpgDataReader);
 }
 
 bool cVDRDaemon::WaitForShutdown(uint32_t iTimeout /* = 0 */)
