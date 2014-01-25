@@ -74,6 +74,7 @@ public:
 
 class cChannel;
 class TiXmlNode;
+class CFile;
 
 class cLinkChannel : public cListObject
 {
@@ -153,7 +154,7 @@ public:
   bool SerialiseConf(std::string &str) const;
   bool Deserialise(const TiXmlNode *node, bool bSeparator = false);
   bool DeserialiseConf(const std::string &str);
-  bool SaveConf(FILE *f) const;
+  bool SaveConf(CFile& file) const;
 
   /*!
    * \brief Returns the actual frequency, as given in 'channels.conf'

@@ -257,26 +257,44 @@ bool cChannelManager::Save(const string &file /* = ""*/)
 bool cChannelManager::SaveConf(const string &file /* = "" */)
 {
   std::string strFile = file.empty() ? m_strFilename : file;
+  std::string strTempFile = strFile + ".tmp";
 
-  bool result = true;
-  //cChannel* l = First();
-  cSafeFile f(strFile.c_str());
-  if (f.Open())
+  bool result(true);
+  CFile f;
+  if (f.OpenForWrite(strTempFile, true))
   {
-    CLockObject lock(m_mutex);
-    for (ChannelVector::const_iterator itChannel = m_channels.begin(); itChannel != m_channels.end(); ++itChannel)
+    isyslog("saving channel configuration to '%s'", strFile.c_str());
+
     {
-      const ChannelPtr &channel = *itChannel;
-      if (!channel->SaveConf(f))
+      CLockObject lock(m_mutex);
+      for (ChannelVector::const_iterator itChannel = m_channels.begin(); itChannel != m_channels.end(); ++itChannel)
       {
-        result = false;
-        break;
+        if (!(*itChannel)->SaveConf(f))
+        {
+          esyslog("failed to save channel '%s'", (*itChannel)->Name().c_str());
+          result = false;
+          break;
+        }
       }
     }
+
     f.Close();
+
+    if (!result)
+    {
+      f.Delete(strTempFile);
+    }
+    else
+    {
+      f.Delete(strFile);
+      f.Rename(strTempFile, strFile);
+    }
   }
   else
+  {
+    esyslog("failed to save the channel configuration: '%s' could not be opened", strTempFile.c_str());
     result = false;
+  }
 
   return result;
 }

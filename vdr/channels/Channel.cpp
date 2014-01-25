@@ -24,6 +24,7 @@
 #include "utils/StringUtils.h"
 #include "utils/Tools.h"
 #include "utils/CRC32.h"
+#include "filesystem/File.h"
 //#include "utils/UTF8Utils.h"
 //#include "epg.h"
 //#include "timers.h"
@@ -1049,11 +1050,12 @@ bool cChannel::DeserialiseConf(const string &str)
   return ok;
 }
 
-bool cChannel::SaveConf(FILE *f) const
+bool cChannel::SaveConf(CFile& file) const
 {
   string serialisedChannel;
   SerialiseConf(serialisedChannel);
-  return fprintf(f, "%s", serialisedChannel.c_str()) > 0;
+  size_t size = serialisedChannel.length();
+  return file.Write(serialisedChannel.c_str(), size) == size;
 }
 
 int cChannel::Transponder() const
