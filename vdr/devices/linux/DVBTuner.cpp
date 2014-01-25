@@ -127,6 +127,7 @@ bool cDvbTuner::Open()
     return false;
   }
 
+  dsyslog("DVB tuner: '%s' opened", m_device->DeviceName().c_str());
   return true;
 }
 

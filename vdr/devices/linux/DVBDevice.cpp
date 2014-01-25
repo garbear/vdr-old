@@ -466,11 +466,7 @@ cDvbSectionFilterSubsystem *cDvbDevice::DvbSectionFilter() const
 
 bool cDvbDevice::Initialise(void)
 {
-  if (m_dvbTuner.Open())
-  {
-    dsyslog("tuner '%s' opened", DeviceName().c_str());
-  }
-  else
+  if (!m_dvbTuner.Open())
   {
     isyslog("could not open tuner '%s'", DvbName(DEV_DVB_FRONTEND, m_adapter, m_frontend).c_str());
     return false;
