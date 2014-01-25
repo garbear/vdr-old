@@ -43,6 +43,7 @@ public:
 
   cScanData* Next(void);
   size_t UnscannedTransponders(void) const;
+  size_t TotalTransponders(void) const;
 private:
   std::vector<cScanData> m_list;
 };

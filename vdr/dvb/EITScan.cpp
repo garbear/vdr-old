@@ -91,6 +91,11 @@ cScanData* cScanList::Next(void)
   return NULL;
 }
 
+size_t cScanList::TotalTransponders(void) const
+{
+  return m_list.size();
+}
+
 size_t cScanList::UnscannedTransponders(void) const
 {
   size_t cnt(0);
@@ -211,13 +216,16 @@ void cEITScanner::Process(void)
         AnyDeviceSwitched |= ScanDevice(*it);
     }
 
-    if (!m_scanList->UnscannedTransponders() || !AnyDeviceSwitched)
+    if (!AnyDeviceSwitched && m_scanList->TotalTransponders() > 0)
     {
       delete m_scanList;
       m_scanList = NULL;
       m_nextFullScan.Init(Setup.EPGScanTimeout * 1000 * 60);
-      dsyslog("EIT scan finished");
+      dsyslog("EIT scan finished, next scan in %d minutes", Setup.EPGScanTimeout);
+
+      cChannelManager::Get().SaveConf();
     }
+
     m_nextTransponderScan.Init(SCAN_TRANSPONDER_TIMEOUT_MS);
   }
 }
