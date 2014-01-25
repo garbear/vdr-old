@@ -108,11 +108,6 @@ bool cDvbTuner::Open()
 
     m_strName = m_frontendInfo.name;
 
-    vector<string> vecDeliverySystemNames;
-    for (vector<fe_delivery_system>::const_iterator it = m_deliverySystems.begin() + 1; it != m_deliverySystems.end(); ++it)
-      vecDeliverySystemNames.push_back(m_device->DeliverySystemNames[*it]);
-    string deliverySystem = StringUtils::Join(vecDeliverySystemNames, ",");
-
     vector<string> vecModulations = m_device->GetModulationsFromCaps(m_frontendInfo.caps);
     string modulations = StringUtils::Join(vecModulations, ",");
     if (modulations.empty())
@@ -120,7 +115,8 @@ bool cDvbTuner::Open()
 
     //m_modulations = vecModulations;
     m_numModulations = vecModulations.size();
-    isyslog("frontend %d/%d provides %s with %s (\"%s\")", Adapter(), Frontend(), deliverySystem.c_str(), modulations.c_str(), m_frontendInfo.name);
+    isyslog("frontend %d/%d provides %s with %s (\"%s\")", Adapter(), Frontend(),
+        cDvbDevice::TranslateDeliverySystems(m_deliverySystems).c_str(), modulations.c_str(), m_frontendInfo.name);
 
     //SetDescription("tuner on frontend %d/%d", Adapter(), Frontend());
     CreateThread();

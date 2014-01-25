@@ -24,6 +24,8 @@
 #include "devices/linux/DVBDevice.h"
 #include "gtest/gtest.h"
 
+#include <linux/dvb/frontend.h>
+#include <string>
 #include <vector>
 
 using namespace std;
@@ -74,4 +76,26 @@ TEST(DvbDevice, GetSubsystemId)
       EXPECT_NE(0, device->GetSubsystemId()); // TODO
     }
   }
+}
+
+TEST(DvbDevice, TranslateDeliverySystems)
+{
+  vector<fe_delivery_system> deliverySystems;
+  EXPECT_STREQ("", cDvbDevice::TranslateDeliverySystems(deliverySystems).c_str());
+
+  deliverySystems.push_back(SYS_UNDEFINED);
+  EXPECT_STREQ("", cDvbDevice::TranslateDeliverySystems(deliverySystems).c_str());
+  deliverySystems.clear();
+
+  deliverySystems.push_back((fe_delivery_system)99);
+  deliverySystems.push_back((fe_delivery_system)-1);
+  deliverySystems.push_back((fe_delivery_system)0x7f);
+  deliverySystems.push_back((fe_delivery_system)(SYS_TURBO + 2));
+  EXPECT_STREQ("", cDvbDevice::TranslateDeliverySystems(deliverySystems).c_str());
+  deliverySystems.clear();
+
+  deliverySystems.push_back(SYS_DVBC_ANNEX_A);
+  deliverySystems.push_back(SYS_TURBO);
+  deliverySystems.push_back(SYS_ATSC);
+  EXPECT_STREQ("DVB-C,TURBO,ATSC", cDvbDevice::TranslateDeliverySystems(deliverySystems).c_str());
 }

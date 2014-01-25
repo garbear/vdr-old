@@ -62,6 +62,10 @@ using namespace VDR; // for shared_ptr
 
 #define INVALID_FD  -1
 
+#ifndef ARRAY_SIZE
+#define ARRAY_SIZE(x)  (sizeof(x) / sizeof((x)[0]))
+#endif
+
 CMutex cDvbDevice::m_bondMutex;
 
 const char* cDvbDevice::DeliverySystemNames[] =
@@ -84,7 +88,7 @@ const char* cDvbDevice::DeliverySystemNames[] =
   "DAB",
   "DVB-T2",
   "TURBO",
-  NULL
+  "DVB-C",
 };
 
 cDvbDevice::cDvbDevice(unsigned int adapter, unsigned int frontend)
@@ -497,4 +501,16 @@ bool cDvbDevice::Initialise(void)
 void cDvbDevice::Notify(const Observable &obs, const ObservableMessage msg)
 {
   //XXX implement "CA ready"
+}
+
+string cDvbDevice::TranslateDeliverySystems(const vector<fe_delivery_system>& deliverySystems)
+{
+  vector<string> vecDeliverySystemNames;
+  for (vector<fe_delivery_system>::const_iterator it = deliverySystems.begin(); it != deliverySystems.end(); ++it)
+  {
+    fe_delivery_system ds = *it;
+    if (1 <= ds && ds < ARRAY_SIZE(DeliverySystemNames))
+      vecDeliverySystemNames.push_back(DeliverySystemNames[ds]);
+  }
+  return StringUtils::Join(vecDeliverySystemNames, ",");
 }

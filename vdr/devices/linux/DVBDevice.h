@@ -62,8 +62,10 @@ public:
   virtual ~cDvbDevice();
 
   /*!
-   * \brief Initialises the DVB devices
-   * \return A vector of initialised devices
+   * \brief Discover DVB devices on the system. This scans for frontends of the
+   *        format /dev/dvb/adapterN/frontendM.
+   * \return A vector of uninitialised devices instantiated from the discovered
+   *         frontend nodes.
    */
   static DeviceVector FindDevices();
 
@@ -133,12 +135,15 @@ public:
   // TODO: Move to cDvbTransponderParams
   static std::vector<std::string> GetModulationsFromCaps(fe_caps_t caps);
 
-  // TODO
-  static const char* DeliverySystemNames[];
-
   bool HasCam(void) const { return m_fd_ca > 0; }
   bool Initialise(void);
   void Notify(const Observable &obs, const ObservableMessage msg);
+
+  /*!
+   * \brief Translate a vector of delivery system enums into a comma-separated string
+   * \return Comma-separated list of delivery systems, e.g. "ATSC,DVB-C"
+   */
+  static std::string TranslateDeliverySystems(const std::vector<fe_delivery_system>& deliverySystems);
 
 protected:
 public: // TODO
@@ -155,6 +160,9 @@ private:
    * \return A fully-allocated cSubsystems struct. Must be freed by calling cSubsystems::Free()
    */
   static cSubsystems CreateSubsystems(cDvbDevice* device);
+
+  // Delivery systems translation table
+  static const char*   DeliverySystemNames[];
 
   unsigned int         m_adapter;
   unsigned int         m_frontend;
