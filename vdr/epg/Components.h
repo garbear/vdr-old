@@ -17,6 +17,8 @@ struct tComponent
 
 class cComponents
 {
+#define COMPONENT_ADD_NEW (-1)
+
 public:
   cComponents(void) {}
   virtual ~cComponents(void) {}

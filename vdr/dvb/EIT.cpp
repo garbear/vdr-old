@@ -271,7 +271,7 @@ void cEIT::ParseSIDescriptor(SI::Descriptor* d)
         if (!m_Components)
           m_Components = new cComponents;
         char buffer[Utf8BufSize(256)];
-        m_Components->SetComponent(m_Components->NumComponents(), Stream, Type, I18nNormalizeLanguageCode(cd->languageCode), cd->description.getText(buffer, sizeof(buffer)));
+        m_Components->SetComponent(COMPONENT_ADD_NEW, Stream, Type, I18nNormalizeLanguageCode(cd->languageCode), cd->description.getText(buffer, sizeof(buffer)));
       }
     }
     break;

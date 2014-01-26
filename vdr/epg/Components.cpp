@@ -72,14 +72,19 @@ int cComponents::NumComponents(void) const
 
 tComponent* cComponents::Component(int Index, bool bCreate /* = false */)
 {
-  std::map<int, tComponent>::iterator it = m_components.find(Index);
-  if (it != m_components.end())
-    return &it->second;
+  if (Index >= 0)
+  {
+    std::map<int, tComponent>::iterator it = m_components.find(Index);
+    if (it != m_components.end())
+      return &it->second;
+  }
 
   if (bCreate)
   {
     tComponent component;
     memset(&component, 0, sizeof(tComponent));
+    if (Index < 0)
+      Index = m_components.size();
     m_components.insert(std::make_pair(Index, component));
     return &m_components[Index];
   }

@@ -357,7 +357,7 @@ cRecordingInfo::cRecordingInfo(const cChannel *Channel, const cEvent *Event)
          if (*s) {
             tComponent *Component = Components->GetComponent(i, 2, 3);
             if (!Component)
-               Components->SetComponent(Components->NumComponents(), 2, 3, s, NULL);
+               Components->SetComponent(COMPONENT_ADD_NEW, 2, 3, s, NULL);
             else if (strlen(s) > strlen(Component->language))
                strn0cpy(Component->language, s, sizeof(Component->language));
             }
@@ -372,7 +372,7 @@ cRecordingInfo::cRecordingInfo(const cChannel *Channel, const cEvent *Event)
             if (!Component)
                Component = Components->GetComponent(i, 2, 5); // fallback "Dolby" component according to the "Premiere pseudo standard"
             if (!Component)
-               Components->SetComponent(Components->NumComponents(), 2, 5, s, NULL);
+               Components->SetComponent(COMPONENT_ADD_NEW, 2, 5, s, NULL);
             else if (strlen(s) > strlen(Component->language))
                strn0cpy(Component->language, s, sizeof(Component->language));
             }
@@ -383,7 +383,7 @@ cRecordingInfo::cRecordingInfo(const cChannel *Channel, const cEvent *Event)
          if (*s) {
             tComponent *Component = Components->GetComponent(i, 3, 3);
             if (!Component)
-               Components->SetComponent(Components->NumComponents(), 3, 3, s, NULL);
+               Components->SetComponent(COMPONENT_ADD_NEW, 3, 3, s, NULL);
             else if (strlen(s) > strlen(Component->language))
                strn0cpy(Component->language, s, sizeof(Component->language));
             }

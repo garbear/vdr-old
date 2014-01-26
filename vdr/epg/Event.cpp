@@ -551,7 +551,7 @@ bool cEvent::Parse(char *s)
   case 'X':
     if (!components)
       components = new cComponents;
-    components->SetComponent(components->NumComponents(), t);
+    components->SetComponent(COMPONENT_ADD_NEW, t);
     break;
   case 'V':
     SetVps(atoi(t));
@@ -1000,6 +1000,9 @@ void cEvent::FixEpgBugs(void)
 
   Final:
 
+  // XXX is this just gui code that can't handle this?
+
+#if 0
   // VDR can't usefully handle newline characters in the title, shortText or component description of EPG
   // data, so let's always convert them to blanks (independent of the setting of EPGBugfixLevel):
   strreplace(title, '\n', ' ');
@@ -1017,4 +1020,7 @@ void cEvent::FixEpgBugs(void)
   StripControlCharacters(title);
   StripControlCharacters(shortText);
   StripControlCharacters(description);
+#else
+  (void)0;
+#endif
 }
