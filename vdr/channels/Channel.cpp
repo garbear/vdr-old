@@ -201,7 +201,7 @@ bool cChannel::SerialiseChannel(TiXmlNode *node) const
   channelElement->SetAttribute(CHANNEL_XML_ATTR_NAME,       m_name);
   channelElement->SetAttribute(CHANNEL_XML_ATTR_SHORTNAME,  m_shortName);
   channelElement->SetAttribute(CHANNEL_XML_ATTR_PROVIDER,   m_provider);
-  channelElement->SetAttribute(CHANNEL_XML_ATTR_FREQUENCY,  m_channelData.frequency);
+  channelElement->SetAttribute(CHANNEL_XML_ATTR_FREQUENCY,  m_channelData.iFrequencyKHz);
   channelElement->SetAttribute(CHANNEL_XML_ATTR_PARAMETERS, m_parameters);
   channelElement->SetAttribute(CHANNEL_XML_ATTR_SOURCE,     cSource::ToString(m_channelData.source));
   channelElement->SetAttribute(CHANNEL_XML_ATTR_SRATE,      m_channelData.srate);
@@ -406,7 +406,7 @@ bool cChannel::SerialiseConf(std::string &str) const
     *q = 0;
 
     buffer = StringUtils::Format("%s:%d:%s:%s:%d:%s:%s:%s:%s:%d:%d:%d:%d\n",
-        FullName, m_channelData.frequency / 1000 /* XXX */, m_parameters.c_str(), cSource::ToString(m_channelData.source).c_str(), m_channelData.srate,
+        FullName, m_channelData.iFrequencyKHz, m_parameters.c_str(), cSource::ToString(m_channelData.source).c_str(), m_channelData.srate,
         vpidbuf, apidbuf, tpidbuf, caidbuf, m_channelData.sid, m_channelData.nid, m_channelData.tid, m_channelData.rid);
   }
 
@@ -451,7 +451,7 @@ bool cChannel::Deserialise(const TiXmlNode *node, bool bSeparator /* = false */)
 
     const char *frequency = elem->Attribute(CHANNEL_XML_ATTR_FREQUENCY);
     if (frequency != NULL)
-      m_channelData.frequency = StringUtils::IntVal(frequency);
+      m_channelData.iFrequencyKHz = StringUtils::IntVal(frequency);
 
     const char *parameters = elem->Attribute(CHANNEL_XML_ATTR_PARAMETERS);
     if (parameters != NULL)
@@ -650,12 +650,12 @@ bool cChannel::DeserialiseConf(const string &str)
       fields++;
       if ((pos = strcopy.find(':')) != string::npos)
       {
-        m_channelData.frequency = StringUtils::IntVal(strcopy.substr(0, pos)) * 1000; //XXX
+        m_channelData.iFrequencyKHz = StringUtils::IntVal(strcopy.substr(0, pos));
         strcopy = strcopy.substr(pos + 1);
       }
       else
       {
-        m_channelData.frequency = StringUtils::IntVal(strcopy) * 1000; //XXX
+        m_channelData.iFrequencyKHz = StringUtils::IntVal(strcopy);
         strcopy.clear();
       }
     }
@@ -1060,8 +1060,8 @@ bool cChannel::SaveConf(CFile& file) const
 
 int cChannel::Transponder() const
 {
-  int transponderFreq = m_channelData.frequency;
-  while (transponderFreq > 20000)
+  int transponderFreq = m_channelData.iFrequencyKHz;
+  while (transponderFreq > 20000) // XXX
     transponderFreq /= 1000;
 
   if (IsSat())
@@ -1124,14 +1124,14 @@ int cChannel::Modification(int mask /* = CHANNELMOD_ALL */)
 
 void cChannel::CopyTransponderData(const cChannel &channel)
 {
-  m_channelData.frequency = channel.m_channelData.frequency;
+  m_channelData.iFrequencyKHz = channel.m_channelData.iFrequencyKHz;
   m_channelData.source    = channel.m_channelData.source;
   m_channelData.srate     = channel.m_channelData.srate;
   m_parameters            = channel.m_parameters;
   SetChanged();
 }
 
-bool cChannel::SetTransponderData(int source, int frequency, int srate, const string &strParameters, bool bQuiet /* = false */)
+bool cChannel::SetTransponderData(int source, int iFrequencyHz, int srate, const string &strParameters, bool bQuiet /* = false */)
 {
   if (strParameters.find(':') != string::npos)
   {
@@ -1139,27 +1139,23 @@ bool cChannel::SetTransponderData(int source, int frequency, int srate, const st
     return false;
   }
 
-  // XXX
-  if (frequency == m_channelData.frequency * 1000)
-    frequency /= 1000;
-
   // Workarounds for broadcaster stupidity:
   // Some providers broadcast the transponder frequency of their channels with two different
-  // values (like 12551 and 12552), so we need to allow for a little tolerance here
-  if (abs(m_channelData.frequency - frequency) <= 1)
-    frequency = m_channelData.frequency;
+  // values (like 12551000 and 12552000), so we need to allow for a little tolerance here
+  if (abs(FrequencyHz() - iFrequencyHz) <= 1000)
+    iFrequencyHz = FrequencyHz();
   // Sometimes the transponder frequency is set to 0, which is just wrong
-  if (frequency == 0)
+  if (iFrequencyHz == 0)
     return false;
   // Sometimes the symbol rate is off by one
   if (abs(m_channelData.srate - srate) <= 1)
     srate = m_channelData.srate;
 
-  if (m_channelData.source != source || m_channelData.frequency != frequency || m_channelData.srate != srate || m_parameters != strParameters)
+  if (m_channelData.source != source || FrequencyHz() != iFrequencyHz || m_channelData.srate != srate || m_parameters != strParameters)
   {
     string oldTransponderData = TransponderDataToString();
     m_channelData.source = source;
-    m_channelData.frequency = frequency;
+    SetFrequencyHz(iFrequencyHz);
     m_channelData.srate = srate;
     m_parameters = strParameters;
     m_schedule = NULL;
@@ -1460,8 +1456,8 @@ void cChannel::SetLinkChannels(cLinkChannels *linkChannels)
 string cChannel::TransponderDataToString() const
 {
   if (cSource::IsTerr(m_channelData.source))
-    return StringUtils::Format("%d:%s:%s", m_channelData.frequency, m_parameters.c_str(), cSource::ToString(m_channelData.source).c_str());
-  return StringUtils::Format("%d:%s:%s:%d", m_channelData.frequency, m_parameters.c_str(), cSource::ToString(m_channelData.source).c_str(), m_channelData.srate);
+    return StringUtils::Format("%d:%s:%s", m_channelData.iFrequencyKHz, m_parameters.c_str(), cSource::ToString(m_channelData.source).c_str());
+  return StringUtils::Format("%d:%s:%s:%d", m_channelData.iFrequencyKHz, m_parameters.c_str(), cSource::ToString(m_channelData.source).c_str(), m_channelData.srate);
 }
 
 uint32_t cChannel::Hash(void) const
