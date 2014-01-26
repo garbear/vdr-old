@@ -201,7 +201,7 @@ bool cChannel::SerialiseChannel(TiXmlNode *node) const
   channelElement->SetAttribute(CHANNEL_XML_ATTR_NAME,       m_name);
   channelElement->SetAttribute(CHANNEL_XML_ATTR_SHORTNAME,  m_shortName);
   channelElement->SetAttribute(CHANNEL_XML_ATTR_PROVIDER,   m_provider);
-  channelElement->SetAttribute(CHANNEL_XML_ATTR_FREQUENCY,  m_channelData.iFrequencyKHz);
+  channelElement->SetAttribute(CHANNEL_XML_ATTR_FREQUENCY,  m_channelData.iFrequencyHz);
   channelElement->SetAttribute(CHANNEL_XML_ATTR_PARAMETERS, m_parameters);
   channelElement->SetAttribute(CHANNEL_XML_ATTR_SOURCE,     cSource::ToString(m_channelData.source));
   channelElement->SetAttribute(CHANNEL_XML_ATTR_SRATE,      m_channelData.srate);
@@ -406,7 +406,7 @@ bool cChannel::SerialiseConf(std::string &str) const
     *q = 0;
 
     buffer = StringUtils::Format("%s:%d:%s:%s:%d:%s:%s:%s:%s:%d:%d:%d:%d\n",
-        FullName, m_channelData.iFrequencyKHz, m_parameters.c_str(), cSource::ToString(m_channelData.source).c_str(), m_channelData.srate,
+        FullName, FrequencyKHz(), m_parameters.c_str(), cSource::ToString(m_channelData.source).c_str(), m_channelData.srate,
         vpidbuf, apidbuf, tpidbuf, caidbuf, m_channelData.sid, m_channelData.nid, m_channelData.tid, m_channelData.rid);
   }
 
@@ -451,7 +451,7 @@ bool cChannel::Deserialise(const TiXmlNode *node, bool bSeparator /* = false */)
 
     const char *frequency = elem->Attribute(CHANNEL_XML_ATTR_FREQUENCY);
     if (frequency != NULL)
-      m_channelData.iFrequencyKHz = StringUtils::IntVal(frequency);
+      m_channelData.iFrequencyHz = StringUtils::IntVal(frequency);
 
     const char *parameters = elem->Attribute(CHANNEL_XML_ATTR_PARAMETERS);
     if (parameters != NULL)
@@ -650,12 +650,12 @@ bool cChannel::DeserialiseConf(const string &str)
       fields++;
       if ((pos = strcopy.find(':')) != string::npos)
       {
-        m_channelData.iFrequencyKHz = StringUtils::IntVal(strcopy.substr(0, pos));
+        m_channelData.iFrequencyHz = StringUtils::IntVal(strcopy.substr(0, pos)) * 1000;
         strcopy = strcopy.substr(pos + 1);
       }
       else
       {
-        m_channelData.iFrequencyKHz = StringUtils::IntVal(strcopy);
+        m_channelData.iFrequencyHz = StringUtils::IntVal(strcopy) * 1000;
         strcopy.clear();
       }
     }
@@ -1052,7 +1052,7 @@ bool cChannel::DeserialiseConf(const string &str)
 
 int cChannel::Transponder() const
 {
-  int transponderFreq = m_channelData.iFrequencyKHz;
+  int transponderFreq = FrequencyKHz();
   while (transponderFreq > 20000) // XXX
     transponderFreq /= 1000;
 
@@ -1116,10 +1116,10 @@ int cChannel::Modification(int mask /* = CHANNELMOD_ALL */)
 
 void cChannel::CopyTransponderData(const cChannel &channel)
 {
-  m_channelData.iFrequencyKHz = channel.m_channelData.iFrequencyKHz;
-  m_channelData.source    = channel.m_channelData.source;
-  m_channelData.srate     = channel.m_channelData.srate;
-  m_parameters            = channel.m_parameters;
+  m_channelData.iFrequencyHz = channel.m_channelData.iFrequencyHz;
+  m_channelData.source       = channel.m_channelData.source;
+  m_channelData.srate        = channel.m_channelData.srate;
+  m_parameters               = channel.m_parameters;
   SetChanged();
 }
 
@@ -1448,8 +1448,8 @@ void cChannel::SetLinkChannels(cLinkChannels *linkChannels)
 string cChannel::TransponderDataToString() const
 {
   if (cSource::IsTerr(m_channelData.source))
-    return StringUtils::Format("%d:%s:%s", m_channelData.iFrequencyKHz, m_parameters.c_str(), cSource::ToString(m_channelData.source).c_str());
-  return StringUtils::Format("%d:%s:%s:%d", m_channelData.iFrequencyKHz, m_parameters.c_str(), cSource::ToString(m_channelData.source).c_str(), m_channelData.srate);
+    return StringUtils::Format("%d:%s:%s", FrequencyHz(), m_parameters.c_str(), cSource::ToString(m_channelData.source).c_str());
+  return StringUtils::Format("%d:%s:%s:%d", FrequencyHz(), m_parameters.c_str(), cSource::ToString(m_channelData.source).c_str(), m_channelData.srate);
 }
 
 uint32_t cChannel::Hash(void) const

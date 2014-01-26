@@ -94,7 +94,7 @@ typedef std::vector<cLinkChannel*> cLinkChannels;
 
 struct tChannelData
 {
-  int      iFrequencyKHz; // MHz
+  int      iFrequencyHz; // MHz
   int      source;
   int      srate;
   int      vpid;
@@ -157,14 +157,14 @@ public:
   /*!
    * \brief Returns the actual frequency in MHz, as given in 'channels.conf'
    */
-  int FrequencyKHz() const { return m_channelData.iFrequencyKHz; }
+  int FrequencyKHz() const { return m_channelData.iFrequencyHz / 1000; }
 
   /*!
    * \brief Returns the actual frequency in Hz XXX
    */
-  int FrequencyHz() const { return m_channelData.iFrequencyKHz * 1000; }
+  int FrequencyHz() const { return m_channelData.iFrequencyHz; }
 
-  void SetFrequencyHz(int frequency) { m_channelData.iFrequencyKHz = frequency / 1000; } // XXX
+  void SetFrequencyHz(int frequency) { m_channelData.iFrequencyHz = frequency; }
 
   /*!
    * \brief Returns the transponder frequency in MHz, plus the polarization in case of sat
