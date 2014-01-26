@@ -138,6 +138,7 @@ bool cChannelManager::Load(void)
       // convert to xml
       isyslog("converting channels.conf to channels.xml");
       string strFile = m_strFilename;
+      SetChanged();
       if (Save("special://home/system/channels.xml"))
         CFile::Delete(strFile);
 
