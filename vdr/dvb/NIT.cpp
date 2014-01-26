@@ -220,6 +220,7 @@ cNitFilter::Process(u_short Pid, u_char Tid, const u_char *Data, int Length)
                   Channel->SetTransponderData(Source, FrequenciesHz[0], SymbolRate, dtp.Serialize('S'));
                 else if (Channel->Srate() != SymbolRate || strcmp(Channel->Parameters().c_str(), dtp.Serialize('S').c_str()))
                   forceTransponderUpdate = true; // get us receiving this transponder
+                Channel->NotifyObservers(ObservableMessageChannelChanged);
               }
             }
             if (!found || forceTransponderUpdate)
