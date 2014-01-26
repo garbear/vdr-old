@@ -162,6 +162,8 @@ bool cChannelManager::Load(const std::string &file)
     return false;
   }
 
+  m_strFilename = file;
+
   TiXmlElement *root = xmlDoc.RootElement();
   if (root == NULL)
     return false;
