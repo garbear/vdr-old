@@ -297,13 +297,14 @@ void* cVNSIServer::Process(void)
       }
 
       // update epg
-      if((cSchedules::Modified() > epgUpdate + 10) || time(NULL) > epgUpdate + 300)
+      time_t epgModified(cSchedules::Modified());
+      if((epgModified > epgUpdate + 10) || time(NULL) > epgUpdate + 300)
       {
         for (ClientList::iterator i = m_clients.begin(); i != m_clients.end(); i++)
         {
          (*i)->EpgChange();
         }
-        epgUpdate = cSchedules::Modified();
+        epgUpdate = epgModified ? epgModified : time(NULL);
       }
       continue;
     }
