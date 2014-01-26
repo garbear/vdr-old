@@ -307,8 +307,8 @@ bool CChannelFilter::PassFilter(const ChannelPtr channel)
 
 void CChannelFilter::SortChannels()
 {
-  cChannelManager::Get().IncBeingEdited();
-//  XXX Channels.Lock(true);
+  PLATFORM::CLockObject lock(cChannelManager::Get().m_mutex);
+
   std::vector<ChannelPtr> channels = cChannelManager::Get().GetCurrent();
 
   for (std::vector<ChannelPtr>::iterator it = channels.begin(); it != channels.end(); ++it)
@@ -331,8 +331,6 @@ void CChannelFilter::SortChannels()
   }
 
   cChannelManager::Get().SetModified();
-//  XXX Channels.Unlock();
-  cChannelManager::Get().DecBeingEdited();
 }
 
 CChannelFilter VNSIChannelFilter;

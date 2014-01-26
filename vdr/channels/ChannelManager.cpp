@@ -64,8 +64,7 @@ string ChannelString(const ChannelPtr &channel, int number)
 cChannelManager::cChannelManager()
  : m_maxNumber(0),
    m_maxChannelNameLength(0),
-   m_maxShortChannelNameLength(0),
-   m_beingEdited(0)
+   m_maxShortChannelNameLength(0)
 {
 }
 

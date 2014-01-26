@@ -39,9 +39,12 @@ enum eLastModifiedType
 //std::string ChannelString(const ChannelPtr &channel, int number);
 
 class cScanList;
+class CChannelFilter;
 
 class cChannelManager : public Observer, public Observable
 {
+  friend class CChannelFilter;
+
 public:
   cChannelManager();
   ~cChannelManager() { }
@@ -160,11 +163,6 @@ public:
    */
   ChannelPtr NewChannel(const cChannel& transponder, const std::string& name, const std::string& shortName, const std::string& provider, int nid, int tid, int sid, int rid = 0);
 
-  // wtf...
-  int BeingEdited() const { return m_beingEdited; }
-  void IncBeingEdited() { m_beingEdited++; }
-  void DecBeingEdited() { m_beingEdited--; }
-
   void AddTransponders(cScanList* list) const;
 
   std::vector<ChannelPtr> GetCurrent(void) const;
@@ -182,6 +180,5 @@ private:
   unsigned int  m_maxChannelNameLength;
   unsigned int  m_maxShortChannelNameLength;
 
-  int           m_beingEdited;
   std::string   m_strFilename;
 };
