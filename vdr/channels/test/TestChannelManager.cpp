@@ -34,13 +34,6 @@ TEST(ChannelManager, ChannelManager)
   {
     cChannelManager channels;
     EXPECT_TRUE(channels.LoadConf(CSpecialProtocol::TranslatePath(CHANNELS_CONF).c_str()));
-    EXPECT_TRUE(channels.SaveConf(CSpecialProtocol::TranslatePath(CHANNELS2_CONF).c_str()));
-    // TODO: Compare CHANNELS_CONF and CHANNELS2_CONF
-  }
-
-  {
-    cChannelManager channels;
-    EXPECT_TRUE(channels.LoadConf(CSpecialProtocol::TranslatePath(CHANNELS_CONF).c_str()));
     EXPECT_TRUE(channels.Save(CHANNELS2_XML));
     // TODO: Compare CHANNELS_XML and CHANNELS2_XML
   }

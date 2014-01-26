@@ -54,10 +54,10 @@ public:
   void AddChannel(ChannelPtr channel);
   void RemoveChannel(ChannelPtr channel);
 
+  bool Load(void);
   bool Load(const std::string &file);
   bool LoadConf(const std::string &file);
   bool Save(const std::string &file = "");
-  bool SaveConf(const std::string &file = "");
 
   /*!
    * \brief Find a channel by its number

@@ -43,6 +43,11 @@ public:
   virtual ~cVDRDaemon();
 
   /*!
+   * \brief Load the configuration
+   */
+  bool LoadConfig(void);
+
+  /*!
    * \brief Initialize and start the daemon
    */
   bool Init();
@@ -91,4 +96,5 @@ private:
   int              m_exitCode;
   cVNSIServer*     m_server;
   cEpgDataReader*  m_EpgDataReader;
+  bool             m_bConfigLoaded;
 };

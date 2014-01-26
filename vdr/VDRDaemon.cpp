@@ -44,7 +44,8 @@ using namespace PLATFORM;
 cVDRDaemon::cVDRDaemon()
  : m_exitCode(0),
    m_server(NULL),
-   m_EpgDataReader(NULL)
+   m_EpgDataReader(NULL),
+   m_bConfigLoaded(false)
 {
 }
 
@@ -54,8 +55,12 @@ cVDRDaemon::~cVDRDaemon()
   WaitForShutdown();
 }
 
-bool cVDRDaemon::Init()
+bool cVDRDaemon::LoadConfig(void)
 {
+  // XXX clean this up, so we don't need 2+ calls to every method
+  if (m_bConfigLoaded)
+    return true;
+
   if (!CSpecialProtocol::SetFileBasePath())
     return false;
 
@@ -78,8 +83,8 @@ bool cVDRDaemon::Init()
   if (!Scrs.Load("special://home/system/scr.conf"))
     Scrs.Load("special://vdr/system/scr.conf");
 
-  if (!cChannelManager::Get().LoadConf("special://home/system/channels.conf"))
-    cChannelManager::Get().LoadConf("special://vdr/system/channels.conf");
+
+  cChannelManager::Get().Load();
 
   if (!Timers.Load("special://home/system/timers.conf"))
     Timers.Load("special://vdr/system/timers.conf");
@@ -95,6 +100,14 @@ bool cVDRDaemon::Init()
 
   if (!Folders.Load("special://home/system/folders.conf"))
     Folders.Load("special://vdr/system/folders.conf");
+
+  return true;
+}
+
+bool cVDRDaemon::Init()
+{
+  if (!LoadConfig())
+    return false;
 
   // Recordings:
   Recordings.Update();

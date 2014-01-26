@@ -223,7 +223,7 @@ void cEITScanner::Process(void)
       m_nextFullScan.Init(Setup.EPGScanTimeout * 1000 * 60);
       dsyslog("EIT scan finished, next scan in %d minutes", Setup.EPGScanTimeout);
 
-      cChannelManager::Get().SaveConf();
+      cChannelManager::Get().Save();
     }
 
     m_nextTransponderScan.Init(SCAN_TRANSPONDER_TIMEOUT_MS);

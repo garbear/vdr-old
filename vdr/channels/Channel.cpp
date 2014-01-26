@@ -1050,14 +1050,6 @@ bool cChannel::DeserialiseConf(const string &str)
   return ok;
 }
 
-bool cChannel::SaveConf(CFile& file) const
-{
-  string serialisedChannel;
-  SerialiseConf(serialisedChannel);
-  size_t size = serialisedChannel.length();
-  return file.Write(serialisedChannel.c_str(), size) == size;
-}
-
 int cChannel::Transponder() const
 {
   int transponderFreq = m_channelData.iFrequencyKHz;

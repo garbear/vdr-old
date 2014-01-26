@@ -125,6 +125,29 @@ void cChannelManager::RemoveChannel(ChannelPtr channel)
   }
 }
 
+bool cChannelManager::Load(void)
+{
+  if (!Load("special://home/system/channels.xml") &&
+      !Load("special://vdr/system/channels.xml"))
+  {
+    if (LoadConf("special://home/system/channels.conf") ||
+        LoadConf("special://vdr/system/channels.conf"))
+    {
+      // convert to xml
+      isyslog("converting channels.conf to channels.xml");
+      string strFile = m_strFilename;
+      if (Save("special://home/system/channels.xml"))
+        CFile::Delete(strFile);
+
+      return true;
+    }
+
+    return false;
+  }
+
+  return true;
+}
+
 bool cChannelManager::Load(const std::string &file)
 {
   CLockObject lock(m_mutex);
@@ -251,52 +274,25 @@ bool cChannelManager::Save(const string &file /* = ""*/)
     }
   }
 
-  return xmlDoc.SaveFile(file.empty() ? m_strFilename : file);
-}
+  if (!file.empty())
+    m_strFilename = file;
 
-bool cChannelManager::SaveConf(const string &file /* = "" */)
-{
-  std::string strFile = file.empty() ? m_strFilename : file;
-  std::string strTempFile = strFile + ".tmp";
+  assert(!m_strFilename.empty());
 
-  bool result(true);
-  CFile f;
-  if (f.OpenForWrite(strTempFile, true))
+  std::string strTempFile = m_strFilename + ".tmp";
+  isyslog("saving channel configuration to '%s'", m_strFilename.c_str());
+  if (xmlDoc.SaveFile(strTempFile))
   {
-    isyslog("saving channel configuration to '%s'", strFile.c_str());
-
-    {
-      CLockObject lock(m_mutex);
-      for (ChannelVector::const_iterator itChannel = m_channels.begin(); itChannel != m_channels.end(); ++itChannel)
-      {
-        if (!(*itChannel)->SaveConf(f))
-        {
-          esyslog("failed to save channel '%s'", (*itChannel)->Name().c_str());
-          result = false;
-          break;
-        }
-      }
-    }
-
-    f.Close();
-
-    if (!result)
-    {
-      f.Delete(strTempFile);
-    }
-    else
-    {
-      f.Delete(strFile);
-      f.Rename(strTempFile, strFile);
-    }
+    CFile::Delete(m_strFilename);
+    CFile::Rename(strTempFile, m_strFilename);
+    return true;
   }
   else
   {
-    esyslog("failed to save the channel configuration: '%s' could not be opened", strTempFile.c_str());
-    result = false;
+    CFile::Delete(strTempFile);
+    esyslog("failed to save the channel configuration: could not write to '%s'", strTempFile.c_str());
+    return false;
   }
-
-  return result;
 }
 
 ChannelPtr cChannelManager::GetByNumber(int number, int skipGap /* = 0 */)
