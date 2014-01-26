@@ -150,7 +150,6 @@ public:
 
   bool SerialiseChannel(TiXmlNode *node) const; // Serialize as a channel (TODO)
   bool SerialiseSep(TiXmlNode *node) const; // Serialize as a group separator (TODO)
-  bool SerialiseConf(std::string &str) const;
   bool Deserialise(const TiXmlNode *node, bool bSeparator = false);
   bool DeserialiseConf(const std::string &str);
 
