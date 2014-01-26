@@ -250,7 +250,7 @@ void cVNSIClient::EpgChange()
     return;
 
   cSchedulesLock MutexLock;
-  const cSchedules *schedules = cSchedules::Schedules(MutexLock);
+  const cSchedules *schedules = MutexLock.Get();
   if (!schedules)
     return;
 
@@ -1770,7 +1770,7 @@ bool cVNSIClient::processEPG_GetForChannel() /* OPCODE 120 */
   }
 
   cSchedulesLock MutexLock;
-  const cSchedules *Schedules = cSchedules::Schedules(MutexLock);
+  const cSchedules *Schedules = MutexLock.Get();
   m_epgUpdate[channelUID] = 0;
   if (!Schedules)
   {

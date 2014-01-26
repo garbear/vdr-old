@@ -15,6 +15,7 @@
 #include "Config.h"
 #include <sys/time.h>
 #include "epg/EPG.h"
+#include "epg/EPGHandlers.h"
 #include "channels/ChannelManager.h"
 #include "utils/I18N.h"
 #include "libsi/section.h"
@@ -142,7 +143,7 @@ void cEIT::ParseSIDescriptor(SI::Descriptor* d)
           NumContents++;
         }
       }
-      EpgHandlers.SetContents(m_pEvent, Contents);
+      cEpgHandlers::Get().SetContents(m_pEvent, Contents);
     }
     break;
     /*
@@ -162,7 +163,7 @@ void cEIT::ParseSIDescriptor(SI::Descriptor* d)
      case 0x13:          ParentalRating = 16; break;
      default:            ParentalRating = 0;
      }
-     EpgHandlers.SetParentalRating(pEvent, ParentalRating);
+     cEpgHandlers::Get().SetParentalRating(pEvent, ParentalRating);
      }
      }
      }
@@ -196,7 +197,7 @@ void cEIT::ParseSIDescriptor(SI::Descriptor* d)
       else if (month == 0 && m_localTime.tm_mon == 11) // current month is jan, but event is in dec
         m_localTime.tm_year--;
       time_t vps = mktime(&m_localTime);
-      EpgHandlers.SetVps(m_pEvent, vps);
+      cEpgHandlers::Get().SetVps(m_pEvent, vps);
     }
     break;
   case SI::TimeShiftedEventDescriptorTag:
@@ -208,9 +209,9 @@ void cEIT::ParseSIDescriptor(SI::Descriptor* d)
       m_rEvent = (cEvent *) rSchedule->GetEvent(tsed->getReferenceEventId());
       if (!m_rEvent)
         break;
-      EpgHandlers.SetTitle(m_pEvent, m_rEvent->Title());
-      EpgHandlers.SetShortText(m_pEvent, m_rEvent->ShortText());
-      EpgHandlers.SetDescription(m_pEvent, m_rEvent->Description());
+      cEpgHandlers::Get().SetTitle(m_pEvent, m_rEvent->Title());
+      cEpgHandlers::Get().SetShortText(m_pEvent, m_rEvent->ShortText());
+      cEpgHandlers::Get().SetDescription(m_pEvent, m_rEvent->Description());
     }
     break;
   case SI::LinkageDescriptorTag:
@@ -281,7 +282,7 @@ void cEIT::ParseSIDescriptor(SI::Descriptor* d)
 
 bool cEIT::HandleEitEvent(SI::EIT::Event *EitEvent)
 {
-  if (EpgHandlers.HandleEitEvent(m_Schedule, EitEvent, m_Tid, m_Version))
+  if (cEpgHandlers::Get().HandleEitEvent(m_Schedule, EitEvent, m_Tid, m_Version))
     return true; // an EPG handler has done all of the processing
 
   m_StartTime = EitEvent->getStartTime();
@@ -303,7 +304,7 @@ bool cEIT::HandleEitEvent(SI::EIT::Event *EitEvent)
   {
     if (m_bOnlyRunningStatus)
       return true;
-    if (m_bHandledExternally && !EpgHandlers.IsUpdate(EitEvent->getEventId(), m_StartTime, m_Tid, getVersionNumber()))
+    if (m_bHandledExternally && !cEpgHandlers::Get().IsUpdate(EitEvent->getEventId(), m_StartTime, m_Tid, getVersionNumber()))
       return true;
 
     // If we don't have that event yet, we create a new one.
@@ -332,9 +333,9 @@ bool cEIT::HandleEitEvent(SI::EIT::Event *EitEvent)
     else if (m_Tid == TableID && m_pEvent->Version() == getVersionNumber())
       return true;
 
-    EpgHandlers.SetEventID(m_pEvent, EitEvent->getEventId()); // unfortunately some stations use different event ids for the same event in different tables :-(
-    EpgHandlers.SetStartTime(m_pEvent, m_StartTime);
-    EpgHandlers.SetDuration(m_pEvent, m_iDuration);
+    cEpgHandlers::Get().SetEventID(m_pEvent, EitEvent->getEventId()); // unfortunately some stations use different event ids for the same event in different tables :-(
+    cEpgHandlers::Get().SetStartTime(m_pEvent, m_StartTime);
+    cEpgHandlers::Get().SetDuration(m_pEvent, m_iDuration);
   }
 
   if (m_pEvent->TableID() > 0x4E) // for backwards compatibility, table ids less than 0x4E are never overwritten
@@ -381,34 +382,34 @@ bool cEIT::HandleEitEvent(SI::EIT::Event *EitEvent)
       if (m_ShortEventDescriptor)
       {
         char buffer[Utf8BufSize(256)];
-        EpgHandlers.SetTitle(m_pEvent, m_ShortEventDescriptor->name.getText(buffer, sizeof(buffer)));
-        EpgHandlers.SetShortText(m_pEvent, m_ShortEventDescriptor->text.getText(buffer, sizeof(buffer)));
+        cEpgHandlers::Get().SetTitle(m_pEvent, m_ShortEventDescriptor->name.getText(buffer, sizeof(buffer)));
+        cEpgHandlers::Get().SetShortText(m_pEvent, m_ShortEventDescriptor->text.getText(buffer, sizeof(buffer)));
       }
       else
       {
-        EpgHandlers.SetTitle(m_pEvent, NULL);
-        EpgHandlers.SetShortText(m_pEvent, NULL);
+        cEpgHandlers::Get().SetTitle(m_pEvent, NULL);
+        cEpgHandlers::Get().SetShortText(m_pEvent, NULL);
       }
       if (m_ExtendedEventDescriptors)
       {
         char buffer[Utf8BufSize(m_ExtendedEventDescriptors->getMaximumTextLength(": ")) + 1];
-        EpgHandlers.SetDescription(m_pEvent, m_ExtendedEventDescriptors->getText(buffer, sizeof(buffer), ": "));
+        cEpgHandlers::Get().SetDescription(m_pEvent, m_ExtendedEventDescriptors->getText(buffer, sizeof(buffer), ": "));
       }
       else
-        EpgHandlers.SetDescription(m_pEvent, NULL);
+        cEpgHandlers::Get().SetDescription(m_pEvent, NULL);
     }
     SAFE_DELETE(m_DishExtendedEventDescriptor);
     SAFE_DELETE(m_DishShortEventDescriptor);
     SAFE_DELETE(m_ExtendedEventDescriptors);
     SAFE_DELETE(m_ShortEventDescriptor);
 
-    EpgHandlers.SetComponents(m_pEvent, m_Components);
+    cEpgHandlers::Get().SetComponents(m_pEvent, m_Components);
 
-    EpgHandlers.FixEpgBugs(m_pEvent);
+    cEpgHandlers::Get().FixEpgBugs(m_pEvent);
     if (!m_LinkChannels.empty())
       m_channel->SetLinkChannels(m_LinkChannels);
     m_bModified = true;
-    EpgHandlers.HandleEvent(m_pEvent);
+    cEpgHandlers::Get().HandleEvent(m_pEvent);
     if (m_bHandledExternally)
       SAFE_DELETE(m_pEvent);
   }
@@ -426,7 +427,7 @@ cEIT::cEIT(cSchedules *Schedules, int Source, u_char Tid, const u_char *Data, bo
   if (!m_channel)
     return;
 
-  if (EpgHandlers.IgnoreChannel(*m_channel))
+  if (cEpgHandlers::Get().IgnoreChannel(*m_channel))
     return;
 
   m_Now = time(NULL);
@@ -435,7 +436,7 @@ cEIT::cEIT(cSchedules *Schedules, int Source, u_char Tid, const u_char *Data, bo
 
   struct tm tm_r;
   m_localTime          = *localtime_r(&m_Now, &tm_r); // this initializes the time zone in 't'
-  m_bHandledExternally = EpgHandlers.HandledExternally(m_channel.get());
+  m_bHandledExternally = cEpgHandlers::Get().HandledExternally(m_channel.get());
   m_Schedules          = Schedules;
   m_Schedule           = (cSchedule *) Schedules->GetSchedule(m_channel.get(), true);
   m_iSource            = Source;
@@ -462,8 +463,8 @@ cEIT::cEIT(cSchedules *Schedules, int Source, u_char Tid, const u_char *Data, bo
 
   if (m_bModified && !OnlyRunningStatus)
   {
-    EpgHandlers.SortSchedule(m_Schedule);
-    EpgHandlers.DropOutdated(m_Schedule, m_SegmentStart, m_SegmentEnd, Tid, m_Version);
+    cEpgHandlers::Get().SortSchedule(m_Schedule);
+    cEpgHandlers::Get().DropOutdated(m_Schedule, m_SegmentStart, m_SegmentEnd, Tid, m_Version);
     Schedules->SetModified(m_Schedule);
   }
 }
@@ -549,7 +550,7 @@ void cEitFilter::Process(u_short Pid, u_char Tid, const u_char *Data, int Length
     case 0x12: {
          if (Tid >= 0x4E) {
             cSchedulesLock SchedulesLock(true, 10);
-            cSchedules *Schedules = (cSchedules *)cSchedules::Schedules(SchedulesLock);
+            cSchedules *Schedules = SchedulesLock.Get();
             if (Schedules)
                cEIT EIT(Schedules, Source(), Tid, Data);
             else {
@@ -558,7 +559,7 @@ void cEitFilter::Process(u_short Pid, u_char Tid, const u_char *Data, int Length
                // with a read lock we shouldn't be doing that, but it's only integers that
                // get changed, so it should be ok)
                cSchedulesLock SchedulesLock;
-               cSchedules *Schedules = (cSchedules *)cSchedules::Schedules(SchedulesLock);
+               cSchedules *Schedules = SchedulesLock.Get();
                if (Schedules)
                   cEIT EIT(Schedules, Source(), Tid, Data, true);
                }

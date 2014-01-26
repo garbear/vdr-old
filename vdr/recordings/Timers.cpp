@@ -50,7 +50,7 @@ cTimer::cTimer(bool Instant, bool Pause, ChannelPtr Channel)
   stop = 0;
   if (!Setup.InstantRecordTime && channel && (Instant || Pause)) {
      cSchedulesLock SchedulesLock;
-     if (const cSchedules *Schedules = cSchedules::Schedules(SchedulesLock)) {
+     if (const cSchedules *Schedules = SchedulesLock.Get()) {
         if (const cSchedule *Schedule = Schedules->GetSchedule(channel.get())) {
            if (const cEvent *Event = Schedule->GetPresentEvent()) {
               time_t tstart = Event->StartTime();
@@ -521,7 +521,7 @@ void cTimer::SetEventFromSchedule(const cSchedules *Schedules)
   cSchedulesLock SchedulesLock;
   if (!Schedules) {
      lastSetEvent = 0; // forces setting the event, even if the schedule hasn't been modified
-     if (!(Schedules = cSchedules::Schedules(SchedulesLock)))
+     if (!(Schedules = SchedulesLock.Get()))
         return;
      }
   const cSchedule *Schedule = Schedules->GetSchedule(Channel().get());
@@ -806,17 +806,17 @@ void cTimers::SetEvents(void)
   if (time(NULL) - lastSetEvents < 5)
      return;
   cSchedulesLock SchedulesLock(false, 100);
-  const cSchedules *Schedules = cSchedules::Schedules(SchedulesLock);
-  if (Schedules) {
-     if (!lastSetEvents || Schedules->Modified() >= lastSetEvents) {
-        for (cTimer *ti = First(); ti; ti = Next(ti)) {
-          //TODO
-//            if (cRemote::HasKeys())
-//               return; // react immediately on user input
-            ti->SetEventFromSchedule(Schedules);
-            }
-        }
-     }
+  const cSchedules *Schedules = SchedulesLock.Get();
+  if (Schedules)
+  {
+    if (!lastSetEvents || Schedules->Modified() >= lastSetEvents)
+    {
+      for (cTimer *ti = First(); ti; ti = Next(ti))
+      {
+        ti->SetEventFromSchedule(Schedules);
+      }
+    }
+  }
   lastSetEvents = time(NULL);
 }
 

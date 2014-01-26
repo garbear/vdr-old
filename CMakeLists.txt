@@ -137,7 +137,14 @@ set(VDR_SRCS
 	vdr/dvb/PAT.cpp
 	vdr/dvb/SDT.cpp
 	vdr/dvb/Sections.cpp
+	vdr/epg/Components.cpp
 	vdr/epg/EPG.cpp
+	vdr/epg/EPGDataReader.cpp
+	vdr/epg/EPGDataWriter.cpp
+	vdr/epg/EPGHandler.cpp
+	vdr/epg/EPGHandlers.cpp
+	vdr/epg/Event.cpp
+	vdr/epg/Schedule.cpp
 	vdr/filesystem/Directory.cpp
 	vdr/filesystem/DirectoryFetchJob.cpp
 	vdr/filesystem/File.cpp
