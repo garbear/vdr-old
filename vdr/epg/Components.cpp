@@ -27,71 +27,39 @@ bool tComponent::FromString(const std::string& str)
 
 // --- cComponents -----------------------------------------------------------
 
-cComponents::cComponents(void)
-{
-  numComponents = 0;
-  components = NULL;
-}
-
-cComponents::~cComponents(void)
-{
-  for (int i = 0; i < numComponents; i++)
-    free(components[i].description);
-  free(components);
-}
-
-bool cComponents::Realloc(int Index)
-{
-  if (Index >= numComponents)
-  {
-    Index++;
-    if (tComponent *NewBuffer = (tComponent *) realloc(components, Index * sizeof(tComponent)))
-    {
-      int n = numComponents;
-      numComponents = Index;
-      components = NewBuffer;
-      memset(&components[n], 0, sizeof(tComponent) * (numComponents - n));
-    }
-    else
-    {
-      esyslog("ERROR: out of memory");
-      return false;
-    }
-  }
-  return true;
-}
-
 void cComponents::SetComponent(int Index, const char *s)
 {
-  if (Realloc(Index))
-    components[Index].FromString(s);
+  tComponent* component = Component(Index, true);
+  if (component)
+    component->FromString(s);
 }
 
 void cComponents::SetComponent(int Index, uchar Stream, uchar Type, const char *Language, const char *Description)
 {
-  if (!Realloc(Index))
+  tComponent* component = Component(Index, true);
+  if (!component)
     return;
-  tComponent *p = &components[Index];
-  p->stream = Stream;
-  p->type = Type;
-  strn0cpy(p->language, Language, sizeof(p->language));
-  char *q = strchr(p->language, ',');
+
+  component->stream = Stream;
+  component->type   = Type;
+  strn0cpy(component->language, Language, sizeof(component->language));
+  char *q = strchr(component->language, ',');
   if (q)
     *q = 0; // strips rest of "normalized" language codes
-  p->description = strcpyrealloc(p->description, !isempty(Description) ? Description : NULL);
+  component->description = strcpyrealloc(component->description, !isempty(Description) ? Description : NULL);
 }
 
 tComponent *cComponents::GetComponent(int Index, uchar Stream, uchar Type)
 {
-  for (int i = 0; i < numComponents; i++)
+  for (std::map<int, tComponent>::iterator it = m_components.begin(); it != m_components.end(); ++it)
   {
-    if (components[i].stream == Stream && (
+    if (it->second.stream == Stream && (
           Type == 0 || // don't care about the actual Type
-          (Stream == 2 && (components[i].type < 5) == (Type < 5)) // fallback "Dolby" component according to the "Premiere pseudo standard"
+          (Stream == 2 && (it->second.type < 5) == (Type < 5)) // fallback "Dolby" component according to the "Premiere pseudo standard"
          ))
     {
       if (!Index--)
-        return &components[i];
+        return &it->second;
     }
   }
   return NULL;
@@ -99,10 +67,22 @@ tComponent *cComponents::GetComponent(int Index, uchar Stream, uchar Type)
 
 int cComponents::NumComponents(void) const
 {
-  return numComponents;
+  return m_components.size();
 }
 
-tComponent* cComponents::Component(int Index) const
+tComponent* cComponents::Component(int Index, bool bCreate /* = false */)
 {
-  return (Index < numComponents) ? &components[Index] : NULL;
+  std::map<int, tComponent>::iterator it = m_components.find(Index);
+  if (it != m_components.end())
+    return &it->second;
+
+  if (bCreate)
+  {
+    tComponent component;
+    memset(&component, 0, sizeof(tComponent));
+    m_components.insert(std::make_pair(Index, component));
+    return &m_components[Index];
+  }
+
+  return NULL;
 }
