@@ -118,6 +118,11 @@ public:
   virtual void SetChanged(bool bSetTo = true);
 
   /*!
+   * @return True when changed, false otherwise
+   */
+  virtual bool Changed(void);
+
+  /*!
    * @brief Check whether this observable is being observed by an observer.
    * @param obs The observer to check.
    * @return True if this observable is being observed by the given observer, false otherwise.

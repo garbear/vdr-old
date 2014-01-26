@@ -40,7 +40,7 @@ enum eLastModifiedType
 
 class cScanList;
 
-class cChannelManager : public Observer
+class cChannelManager : public Observer, public Observable
 {
 public:
   cChannelManager();
@@ -153,13 +153,7 @@ public:
    */
   unsigned int MaxShortChannelNameLength();
 
-  /*!
-   * \brief Returns 0 if no channels have been modified, 1 if an automatic
-   *        modification has been made, and 2 if the user has made a modification.
-   *        Calling this function resets the 'modified' flag to 0.
-   */
-  eLastModifiedType Modified();
-  void SetModified(bool ByUser = false);
+  void SetModified(void);
 
   /*!
    * \brief It looks like this creates a new channel, adds it to the vector, and re-computes m_channelSids (TODO)
@@ -187,8 +181,6 @@ private:
   unsigned int  m_maxNumber;
   unsigned int  m_maxChannelNameLength;
   unsigned int  m_maxShortChannelNameLength;
-
-  eLastModifiedType m_modified;
 
   int           m_beingEdited;
   std::string   m_strFilename;

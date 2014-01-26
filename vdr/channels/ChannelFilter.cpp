@@ -330,7 +330,7 @@ void CChannelFilter::SortChannels()
     }
   }
 
-  cChannelManager::Get().SetModified(true);
+  cChannelManager::Get().SetModified();
 //  XXX Channels.Unlock();
   cChannelManager::Get().DecBeingEdited();
 }

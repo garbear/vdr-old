@@ -65,7 +65,6 @@ cChannelManager::cChannelManager()
  : m_maxNumber(0),
    m_maxChannelNameLength(0),
    m_maxShortChannelNameLength(0),
-   m_modified(CHANNELSMOD_NONE),
    m_beingEdited(0)
 {
 }
@@ -85,7 +84,11 @@ void cChannelManager::Clear(void)
 
 void cChannelManager::Notify(const Observable &obs, const ObservableMessage msg)
 {
-  //TODO
+  {
+    CLockObject lock(m_mutex);
+    SetChanged();
+  }
+  NotifyObservers(msg);
 }
 
 void cChannelManager::AddChannel(ChannelPtr channel)
@@ -249,6 +252,9 @@ bool cChannelManager::LoadConf(const string& strFilename)
 
 bool cChannelManager::Save(const string &file /* = ""*/)
 {
+  if (!Changed())
+    return true;
+
   CXBMCTinyXML xmlDoc;
   TiXmlDeclaration *decl = new TiXmlDeclaration("1.0", "", "");
   xmlDoc.LinkEndChild(decl);
@@ -530,21 +536,14 @@ unsigned int cChannelManager::MaxShortChannelNameLength()
   return m_maxShortChannelNameLength;
 }
 
-eLastModifiedType cChannelManager::Modified()
+void cChannelManager::SetModified(void)
 {
-  eLastModifiedType result = m_modified;
-  m_modified = CHANNELSMOD_NONE;
-  return result;
-}
-
-void cChannelManager::SetModified(bool bByUser /* = false */)
-{
-  m_maxChannelNameLength = m_maxShortChannelNameLength = 0;
-
-  if (bByUser)
-    m_modified = CHANNELSMOD_USER;
-  else if (m_modified == CHANNELSMOD_NONE)
-    m_modified = CHANNELSMOD_AUTO;
+  {
+    PLATFORM::CLockObject lock(m_mutex);
+    m_maxChannelNameLength = m_maxShortChannelNameLength = 0;
+    SetChanged();
+  }
+  NotifyObservers();
 }
 
 ChannelPtr cChannelManager::NewChannel(const cChannel& transponder, const string& name, const string& shortName, const string& provider, int nid, int tid, int sid, int rid /* = 0 */)

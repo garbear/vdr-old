@@ -134,6 +134,12 @@ void Observable::SetChanged(bool SetTo)
   m_bObservableChanged = SetTo;
 }
 
+bool Observable::Changed(void)
+{
+  CLockObject lock(m_obsCritSection);
+  return m_bObservableChanged;
+}
+
 void Observable::SendMessage(Observable& obs, const ObservableMessage message)
 {
   CLockObject lock(obs.m_obsCritSection);

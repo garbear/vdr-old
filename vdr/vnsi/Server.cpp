@@ -85,6 +85,8 @@ cVNSIServer::cVNSIServer(int listenPort)
 //  VNSIChannelFilter.Load();
 //  VNSIChannelFilter.SortChannels();
 
+  m_bChannelsModified = false;
+
   m_ServerFD = socket(AF_INET, SOCK_STREAM, 0);
   if(m_ServerFD == -1)
     return;
@@ -123,6 +125,15 @@ cVNSIServer::~cVNSIServer()
   m_clients.erase(m_clients.begin(), m_clients.end());
   StopThread();
   isyslog("VNSI Server stopped");
+}
+
+void cVNSIServer::Notify(const Observable &obs, const ObservableMessage msg)
+{
+  if (msg == ObservableMessageChannelChanged)
+  {
+    PLATFORM::CLockObject lock(m_mutex);
+    m_bChannelsModified = true;
+  }
 }
 
 void cVNSIServer::NewClientConnected(int fd)
@@ -170,6 +181,7 @@ void cVNSIServer::NewClientConnected(int fd)
 
   isyslog("Client with ID %d connected: %s", m_IdCnt, cxSocket::ip2txt(sin.sin_addr.s_addr, sin.sin_port, buf));
   cVNSIClient *connection = new cVNSIClient(fd, m_IdCnt, cxSocket::ip2txt(sin.sin_addr.s_addr, sin.sin_port, buf));
+  PLATFORM::CLockObject lock(m_mutex);
   m_clients.push_back(connection);
   m_IdCnt++;
 }
@@ -209,6 +221,8 @@ void* cVNSIServer::Process(void)
   }
   int ret = system(cmd.c_str());
 
+  cChannelManager::Get().RegisterObserver(this);
+
   isyslog("VNSI Server started on port %d", m_ServerPort);
   isyslog("Channel streaming timeout: %i seconds", cSettings::Get().m_StreamTimeout);
 
@@ -228,6 +242,8 @@ void* cVNSIServer::Process(void)
     }
     if (r == 0)
     {
+      PLATFORM::CLockObject lock(m_mutex);
+
       // remove disconnected clients
       for (ClientList::iterator i = m_clients.begin(); i != m_clients.end();)
       {
@@ -245,10 +261,9 @@ void* cVNSIServer::Process(void)
       // trigger clients to reload the modified channel list
       if(m_clients.size() > 0 && chanTimer.TimedOut())
       {
-        int modified = cChannelManager::Get().Modified();
-        if (modified)
+        if (m_bChannelsModified)
         {
-          cChannelManager::Get().SetModified((modified == CHANNELSMOD_USER) ? true : false);
+          m_bChannelsModified = false;
           isyslog("Requesting clients to reload channel list");
           for (ClientList::iterator i = m_clients.begin(); i != m_clients.end(); i++)
             (*i)->ChannelChange();
@@ -303,5 +318,8 @@ void* cVNSIServer::Process(void)
       esyslog("accept failed");
     }
   }
+
+  cChannelManager::Get().UnregisterObserver(this);
+
   return NULL;
 }

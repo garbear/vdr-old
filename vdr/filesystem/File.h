@@ -26,6 +26,7 @@
 #include <stdint.h>
 #include <sys/types.h>
 #include <vector>
+#include <stdio.h>
 
 #define MIME_TYPE_NONE     "none/none"
 

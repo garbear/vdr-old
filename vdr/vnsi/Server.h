@@ -28,26 +28,30 @@
 
 #include <list>
 #include "lib/platform/threads/threads.h"
+#include "utils/Observer.h"
 
 class cVNSIClient;
 
-class cVNSIServer : public PLATFORM::CThread
+class cVNSIServer : public PLATFORM::CThread, public Observer
 {
 public:
   cVNSIServer(int listenPort);
   virtual ~cVNSIServer(void);
 
+  void Notify(const Observable &obs, const ObservableMessage msg);
 protected:
   typedef std::list<cVNSIClient*> ClientList;
 
   void* Process(void);
   void NewClientConnected(int fd);
 
-  int           m_ServerPort;
-  int           m_ServerFD;
-  std::string   m_AllowedHostsFile;
-  ClientList    m_clients;
-  unsigned int  m_IdCnt;
+  int              m_ServerPort;
+  int              m_ServerFD;
+  std::string      m_AllowedHostsFile;
+  ClientList       m_clients;
+  unsigned int     m_IdCnt;
+  bool             m_bChannelsModified;
+  PLATFORM::CMutex m_mutex;
 };
 
 #endif // VNSI_SERVER_H
