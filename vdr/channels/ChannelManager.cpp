@@ -252,9 +252,6 @@ bool cChannelManager::LoadConf(const string& strFilename)
 
 bool cChannelManager::Save(const string &file /* = ""*/)
 {
-  if (!Changed())
-    return true;
-
   CXBMCTinyXML xmlDoc;
   TiXmlDeclaration *decl = new TiXmlDeclaration("1.0", "", "");
   xmlDoc.LinkEndChild(decl);
