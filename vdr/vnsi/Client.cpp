@@ -250,32 +250,16 @@ void cVNSIClient::EpgChange()
     return;
 
   cSchedulesLock MutexLock;
-  const cSchedules *schedules = MutexLock.Get();
+  cSchedules *schedules = MutexLock.Get();
   if (!schedules)
     return;
 
-  std::map<int, time_t>::iterator it;
-  for (const cSchedule *schedule = schedules->First(); schedule; schedule = schedules->Next(schedule))
+  std::vector<cSchedule*> updatedSchedules = schedules->GetUpdatedSchedules(m_epgUpdate, VNSIChannelFilter);
+  for (std::vector<cSchedule*>::const_iterator it = updatedSchedules.begin(); it != updatedSchedules.end(); ++it)
   {
-    cEvent *lastEvent =  schedule->Events()->Last();
-    if (!lastEvent)
-      continue;
-
-    const ChannelPtr channel = cChannelManager::Get().GetByChannelID(schedule->ChannelID());
-    if (channel == cChannel::EmptyChannel)
-      continue;
-
-    if (!VNSIChannelFilter.PassFilter(channel))
-      continue;
-
-    uint32_t channelId = schedule->ChannelID().Hash();
-    it = m_epgUpdate.find(channelId);
-    if (it != m_epgUpdate.end() && it->second >= lastEvent->StartTime())
-    {
-      continue;
-    }
-
-    isyslog("Trigger EPG update for channel %s, id: %d", channel->Name().c_str(), channelId);
+    tChannelID channelId = (*it)->ChannelID();
+    const ChannelPtr channel = cChannelManager::Get().GetByChannelID(channelId);
+    isyslog("Trigger EPG update for channel %s, id: %d", channel->Name().c_str(), channelId.Hash());
 
     cResponsePacket *resp = new cResponsePacket();
     if (!resp->initStatus(VNSI_STATUS_EPGCHANGE))
@@ -283,7 +267,8 @@ void cVNSIClient::EpgChange()
       delete resp;
       return;
     }
-    resp->add_U32(channelId);
+    m_epgUpdate[channelId.Hash()] = time(NULL);
+    resp->add_U32(channelId.Hash());
     resp->finalise();
     m_socket.write(resp->getPtr(), resp->getLen());
     delete resp;
@@ -1770,7 +1755,7 @@ bool cVNSIClient::processEPG_GetForChannel() /* OPCODE 120 */
   }
 
   cSchedulesLock MutexLock;
-  const cSchedules *Schedules = MutexLock.Get();
+  cSchedules *Schedules = MutexLock.Get();
   m_epgUpdate[channelUID] = 0;
   if (!Schedules)
   {
@@ -1782,7 +1767,7 @@ bool cVNSIClient::processEPG_GetForChannel() /* OPCODE 120 */
     return true;
   }
 
-  const cSchedule *Schedule = Schedules->GetSchedule(channel->GetChannelID());
+  cSchedule* Schedule = Schedules->GetSchedule(channel->GetChannelID());
   if (!Schedule)
   {
     m_resp->add_U32(0);

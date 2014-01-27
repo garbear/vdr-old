@@ -26,9 +26,7 @@ void cEpgDataWriter::Perform(void)
   cSchedules *s = SchedulesLock.Get();
   if (s)
   {
-    time_t now = time(NULL);
-    for (cSchedule *p = s->First(); p; p = s->Next(p))
-      p->Cleanup(now);
+    s->CleanTables();
 
     if (dump)
       s->Save();

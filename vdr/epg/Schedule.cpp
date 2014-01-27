@@ -83,7 +83,7 @@ const cEvent *cSchedule::GetFollowingEvent(void) const
   return p;
 }
 
-const cEvent *cSchedule::GetEvent(tEventID EventID, time_t StartTime) const
+cEvent *cSchedule::GetEvent(tEventID EventID, time_t StartTime)
 {
   // Returns the event info with the given StartTime or, if no actual StartTime
   // is given, the one with the given EventID.

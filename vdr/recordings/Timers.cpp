@@ -50,8 +50,8 @@ cTimer::cTimer(bool Instant, bool Pause, ChannelPtr Channel)
   stop = 0;
   if (!Setup.InstantRecordTime && channel && (Instant || Pause)) {
      cSchedulesLock SchedulesLock;
-     if (const cSchedules *Schedules = SchedulesLock.Get()) {
-        if (const cSchedule *Schedule = Schedules->GetSchedule(channel.get())) {
+     if (cSchedules *Schedules = SchedulesLock.Get()) {
+        if (cSchedule *Schedule = Schedules->GetSchedule(channel)) {
            if (const cEvent *Event = Schedule->GetPresentEvent()) {
               time_t tstart = Event->StartTime();
               time_t tstop = Event->EndTime();
@@ -516,7 +516,7 @@ time_t cTimer::StopTime(void) const
 #define EPGLIMITBEFORE   (1 * 3600) // Time in seconds before a timer's start time and
 #define EPGLIMITAFTER    (1 * 3600) // after its stop time within which EPG events will be taken into consideration.
 
-void cTimer::SetEventFromSchedule(const cSchedules *Schedules)
+void cTimer::SetEventFromSchedule(cSchedules *Schedules)
 {
   cSchedulesLock SchedulesLock;
   if (!Schedules) {
@@ -524,7 +524,7 @@ void cTimer::SetEventFromSchedule(const cSchedules *Schedules)
      if (!(Schedules = SchedulesLock.Get()))
         return;
      }
-  const cSchedule *Schedule = Schedules->GetSchedule(Channel().get());
+  cSchedule *Schedule = Schedules->GetSchedule(Channel());
   if (Schedule && Schedule->Events()->First()) {
      time_t now = time(NULL);
      if (!lastSetEvent || Schedule->Modified() >= lastSetEvent) {
@@ -806,7 +806,7 @@ void cTimers::SetEvents(void)
   if (time(NULL) - lastSetEvents < 5)
      return;
   cSchedulesLock SchedulesLock(false, 100);
-  const cSchedules *Schedules = SchedulesLock.Get();
+  cSchedules *Schedules = SchedulesLock.Get();
   if (Schedules)
   {
     if (!lastSetEvents || Schedules->Modified() >= lastSetEvents)

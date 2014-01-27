@@ -246,9 +246,9 @@ public:
   void SetRefChannel(cChannel *refChannel) { m_refChannel = refChannel; }
   void SetSubtitlingDescriptors(uchar *subtitlingTypes, uint16_t *compositionPageIds, uint16_t *ancillaryPageIds);
 
-  void SetSchedule(const cSchedule* schedule) const { m_schedule = schedule; }
+  void SetSchedule(cSchedule* schedule) { m_schedule = schedule; }
   bool HasSchedule(void) const { return m_schedule != NULL; }
-  const cSchedule* Schedule(void) const { return m_schedule; }
+  cSchedule* Schedule(void) const { return m_schedule; }
 
   uint32_t Hash(void) const;
 private:
@@ -263,7 +263,7 @@ private:
 
   std::string              m_parameters;
   int                      m_modification;
-  mutable const cSchedule *m_schedule; //EEEW!
+  cSchedule*               m_schedule; //XXX shared ptr
   //cLinkChannels           *m_linkChannels;
   cLinkChannels            m_linkChannels;
   cChannel                *m_refChannel;

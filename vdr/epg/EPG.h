@@ -14,6 +14,10 @@
 #define __EPG_H
 
 #include "Schedule.h"
+#include <vector>
+#include <map>
+
+class CChannelFilter;
 
 class cSchedulesLock
 {
@@ -27,33 +31,40 @@ private:
   bool m_bLocked;
 };
 
-class cSchedules : public cList<cSchedule> {
+class cSchedules
+{
   friend class cSchedule;
   friend class cSchedulesLock;
 
 public:
+  virtual ~cSchedules(void);
+
   static void SetDataDirectory(const char* strDirectory);
   static time_t Modified(void);
   void SetModified(cSchedule *Schedule);
   void Cleanup(bool Force = false);
   void ResetVersions(void);
   bool ClearAll(void);
+  void CleanTables(void);
 
   bool Save(void);
   bool Read(void);
-  cSchedule *AddSchedule(tChannelID ChannelID);
-  const cSchedule *GetSchedule(tChannelID ChannelID) const;
-  const cSchedule *GetSchedule(const cChannel *Channel, bool AddIfMissing = false) const;
+  cSchedule *AddSchedule(const tChannelID& ChannelID);
+  cSchedule *GetSchedule(const tChannelID& ChannelID);
+  cSchedule *GetSchedule(ChannelPtr Channel, bool AddIfMissing = false);
+  std::vector<cSchedule*> GetUpdatedSchedules(const std::map<int, time_t>& lastUpdated, CChannelFilter& filter);
 
 protected:
   static cSchedules& Get(void);
 
 private:
   cSchedules(void);
-  PLATFORM::CReadWriteLock rwlock;
+
+  PLATFORM::CReadWriteLock m_rwlock;
   std::string              m_strDirectory;
-  time_t                   lastDump;
-  time_t                   modified;
+  time_t                   m_lastDump;
+  time_t                   m_modified;
+  std::vector<cSchedule*>  m_schedules;
 };
 
 void ReportEpgBugFixStats(bool Force = false);

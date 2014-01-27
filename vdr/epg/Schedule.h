@@ -35,7 +35,7 @@ public:
   const cList<cEvent> *Events(void) const { return &events; }
   const cEvent *GetPresentEvent(void) const;
   const cEvent *GetFollowingEvent(void) const;
-  const cEvent *GetEvent(tEventID EventID, time_t StartTime = 0) const;
+  cEvent *GetEvent(tEventID EventID, time_t StartTime = 0);
   const cEvent *GetEventAround(time_t Time) const;
   bool Read(const std::string& strDirectory);
   bool Save(const std::string& strDirectory);

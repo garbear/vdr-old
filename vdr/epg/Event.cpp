@@ -952,7 +952,7 @@ bool cEvent::Deserialise(cSchedule* schedule, const TiXmlNode *eventNode)
   if (id && start && duration && tableId && version)
   {
     tEventID EventID = (tEventID)StringUtils::IntVal(id);
-    event = (cEvent *) schedule->GetEvent(EventID, (time_t)StringUtils::IntVal(start));
+    event = schedule->GetEvent(EventID, (time_t)StringUtils::IntVal(start));
     if (!event)
     {
       event = new cEvent(EventID);

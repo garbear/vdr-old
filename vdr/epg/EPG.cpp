@@ -16,6 +16,7 @@
 #include <limits.h>
 #include <time.h>
 #include "libsi/si.h"
+#include "channels/ChannelFilter.h"
 #include "recordings/Timers.h"
 #include "EPGDefinitions.h"
 #include "platform/threads/threads.h"
@@ -30,13 +31,13 @@
 
 cSchedulesLock::cSchedulesLock(bool WriteLock, int TimeoutMs)
 {
-  m_bLocked = cSchedules::Get().rwlock.Lock(WriteLock, TimeoutMs);
+  m_bLocked = cSchedules::Get().m_rwlock.Lock(WriteLock, TimeoutMs);
 }
 
 cSchedulesLock::~cSchedulesLock()
 {
   if (m_bLocked)
-    cSchedules::Get().rwlock.Unlock();
+    cSchedules::Get().m_rwlock.Unlock();
 }
 
 cSchedules* cSchedulesLock::Get(void) const
@@ -48,8 +49,14 @@ cSchedules* cSchedulesLock::Get(void) const
 
 cSchedules::cSchedules(void)
 {
-  lastDump = time(NULL);
-  modified = 0;
+  m_lastDump = time(NULL);
+  m_modified = 0;
+}
+
+cSchedules::~cSchedules(void)
+{
+  for (std::vector<cSchedule*>::iterator it = m_schedules.begin(); it != m_schedules.end(); ++it)
+    delete *it;
 }
 
 cSchedules& cSchedules::Get(void)
@@ -74,43 +81,50 @@ time_t cSchedules::Modified(void)
 {
   cSchedulesLock lock(true);
   cSchedules* schedules = lock.Get();
-  return schedules ? schedules->modified : 0;
+  return schedules ? schedules->m_modified : 0;
 }
 
 void cSchedules::SetModified(cSchedule *Schedule)
 {
   Schedule->SetModified();
-  modified = time(NULL);
+  m_modified = time(NULL);
 }
 
 void cSchedules::Cleanup(bool Force)
 {
   if (Force)
-    lastDump = 0;
+    m_lastDump = 0;
   time_t now = time(NULL);
-  if (now - lastDump > EPGDATAWRITEDELTA)
+  if (now - m_lastDump > EPGDATAWRITEDELTA)
   {
     if (Force)
       cEpgDataWriter::Get().Perform();
     else if (!cEpgDataWriter::Get().IsRunning())
       cEpgDataWriter::Get().CreateThread();
-    lastDump = now;
+    m_lastDump = now;
   }
 }
 
 void cSchedules::ResetVersions(void)
 {
-  for (cSchedule *Schedule = First(); Schedule; Schedule = Next(Schedule))
-    Schedule->ResetVersions();
+  for (std::vector<cSchedule*>::iterator it = m_schedules.begin(); it != m_schedules.end(); ++it)
+    (*it)->ResetVersions();
 }
 
 bool cSchedules::ClearAll(void)
 {
   for (cTimer *Timer = Timers.First(); Timer; Timer = Timers.Next(Timer))
     Timer->SetEvent(NULL);
-  for (cSchedule *Schedule = First(); Schedule; Schedule = Next(Schedule))
-    Schedule->Cleanup(INT_MAX);
+  for (std::vector<cSchedule*>::iterator it = m_schedules.begin(); it != m_schedules.end(); ++it)
+    (*it)->Cleanup(INT_MAX);
   return true;
+}
+
+void cSchedules::CleanTables(void)
+{
+  time_t now = time(NULL);
+  for (std::vector<cSchedule*>::iterator it = m_schedules.begin(); it != m_schedules.end(); ++it)
+    (*it)->Cleanup(now);
 }
 
 bool cSchedules::Save(void)
@@ -129,15 +143,15 @@ bool cSchedules::Save(void)
   if (root == NULL)
     return false;
 
-  for (cSchedule* schedule = First(); schedule; schedule = Next(schedule))
+  for (std::vector<cSchedule*>::iterator it = m_schedules.begin(); it != m_schedules.end(); ++it)
   {
-    if (schedule->Save(m_strDirectory))
+    if ((*it)->Save(m_strDirectory))
     {
       TiXmlElement tableElement(EPG_XML_ELM_TABLE);
       TiXmlNode* textNode = root->InsertEndChild(tableElement);
       if (textNode)
       {
-        TiXmlText* text = new TiXmlText(StringUtils::Format("%s", schedule->ChannelID().Serialize().c_str()));
+        TiXmlText* text = new TiXmlText(StringUtils::Format("%s", (*it)->ChannelID().Serialize().c_str()));
         textNode->LinkEndChild(text);
       }
     }
@@ -199,40 +213,77 @@ bool cSchedules::Read(void)
   return true;
 }
 
-cSchedule *cSchedules::AddSchedule(tChannelID ChannelID)
+cSchedule *cSchedules::AddSchedule(const tChannelID& ChannelID)
 {
   //ChannelID.ClrRid();
-  cSchedule *p = (cSchedule *) GetSchedule(ChannelID);
-  if (!p)
+  cSchedule* schedule = GetSchedule(ChannelID);
+  if (!schedule)
   {
-    p = new cSchedule(ChannelID);
-    Add(p);
+    schedule = new cSchedule(ChannelID);
+    m_schedules.push_back(schedule);
     ChannelPtr channel = cChannelManager::Get().GetByChannelID(ChannelID);
     if (channel)
-      channel->SetSchedule(p);
+      channel->SetSchedule(schedule);
   }
-  return p;
+  return schedule;
 }
 
-const cSchedule *cSchedules::GetSchedule(tChannelID ChannelID) const
+cSchedule *cSchedules::GetSchedule(const tChannelID& ChannelID)
 {
   //ChannelID.ClrRid();
-  for (cSchedule *p = First(); p; p = Next(p))
+  for (std::vector<cSchedule*>::iterator it = m_schedules.begin(); it != m_schedules.end(); ++it)
   {
-    if (p->ChannelID() == ChannelID)
-      return p;
+    if ((*it)->ChannelID() == ChannelID)
+      return *it;
   }
   return NULL;
 }
 
-const cSchedule *cSchedules::GetSchedule(const cChannel *channel, bool bAddIfMissing) const
+cSchedule *cSchedules::GetSchedule(ChannelPtr channel, bool bAddIfMissing)
 {
+  assert(channel);
+
+  cSchedule* schedule(NULL);
+
   if (!channel->HasSchedule() && bAddIfMissing)
   {
-    cSchedule *Schedule = new cSchedule(channel->GetChannelID());
-    ((cSchedules *) this)->Add(Schedule);
-    channel->SetSchedule(Schedule);
+    schedule = GetSchedule(channel->GetChannelID());
+    if (!schedule)
+      schedule = AddSchedule(channel->GetChannelID());
+    channel->SetSchedule(schedule);
   }
 
-  return channel->HasSchedule() ? channel->Schedule() : NULL;
+  if (!schedule && channel->HasSchedule())
+    schedule = channel->Schedule();
+
+  return schedule;
+}
+
+std::vector<cSchedule*> cSchedules::GetUpdatedSchedules(const std::map<int, time_t>& lastUpdated, CChannelFilter& filter)
+{
+  std::vector<cSchedule*> retval;
+  std::map<int, time_t>::iterator it;
+  std::map<int, time_t>::const_iterator previousIt;
+  for (std::vector<cSchedule*>::iterator it = m_schedules.begin(); it != m_schedules.end(); ++it)
+  {
+    cEvent *lastEvent = (*it)->Events()->Last();
+    if (!lastEvent)
+      continue;
+
+    const ChannelPtr channel = cChannelManager::Get().GetByChannelID((*it)->ChannelID());
+    if (!channel)
+      continue;
+
+    if (!filter.PassFilter(channel))
+      continue;
+
+    uint32_t channelId = (*it)->ChannelID().Hash();
+    previousIt = lastUpdated.find(channelId);
+    if (previousIt != lastUpdated.end() && previousIt->second >= lastEvent->StartTime())
+      continue;
+
+    retval.push_back(*it);
+  }
+
+  return retval;
 }

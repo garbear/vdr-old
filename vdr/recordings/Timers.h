@@ -85,7 +85,7 @@ public:
   bool Expired(void) const;
   time_t StartTime(void) const;
   time_t StopTime(void) const;
-  void SetEventFromSchedule(const cSchedules *Schedules = NULL);
+  void SetEventFromSchedule(cSchedules *Schedules = NULL);
   void SetEvent(const cEvent *Event);
   void SetRecording(bool Recording);
   void SetPending(bool Pending);

@@ -206,7 +206,7 @@ void cEIT::ParseSIDescriptor(SI::Descriptor* d)
       cSchedule *rSchedule = (cSchedule *) m_Schedules->GetSchedule(tChannelID(m_iSource, m_channel->Nid(), m_channel->Tid(), tsed->getReferenceServiceId()));
       if (!rSchedule)
         break;
-      m_rEvent = (cEvent *) rSchedule->GetEvent(tsed->getReferenceEventId());
+      m_rEvent = rSchedule->GetEvent(tsed->getReferenceEventId());
       if (!m_rEvent)
         break;
       cEpgHandlers::Get().SetTitle(m_pEvent, m_rEvent->Title());
@@ -298,7 +298,7 @@ bool cEIT::HandleEitEvent(SI::EIT::Event *EitEvent)
 
   m_newEvent = NULL;
   m_rEvent   = NULL;
-  m_pEvent   = (cEvent *) m_Schedule->GetEvent(EitEvent->getEventId(), m_StartTime);
+  m_pEvent   = m_Schedule->GetEvent(EitEvent->getEventId(), m_StartTime);
 
   if (!m_pEvent || m_bHandledExternally)
   {
@@ -438,7 +438,7 @@ cEIT::cEIT(cSchedules *Schedules, int Source, u_char Tid, const u_char *Data, bo
   m_localTime          = *localtime_r(&m_Now, &tm_r); // this initializes the time zone in 't'
   m_bHandledExternally = cEpgHandlers::Get().HandledExternally(m_channel.get());
   m_Schedules          = Schedules;
-  m_Schedule           = (cSchedule *) Schedules->GetSchedule(m_channel.get(), true);
+  m_Schedule           = Schedules->GetSchedule(m_channel, true);
   m_iSource            = Source;
   m_Tid                = Tid;
   m_Data               = Data;
