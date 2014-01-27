@@ -498,7 +498,7 @@ bool cRecordingInfo::Write(FILE *f, const char *Prefix) const
 {
   if (channelID.Valid())
      fprintf(f, "%sC %s%s%s\n", Prefix, channelID.Serialize().c_str(), channelName ? " " : "", channelName ? channelName : "");
-  event->Dump(f, Prefix, true);
+//  XXX event->Dump(f, Prefix, true);
   fprintf(f, "%sF %s\n", Prefix, *dtoa(framesPerSecond, "%.10g"));
   fprintf(f, "%sP %d\n", Prefix, priority);
   fprintf(f, "%sL %d\n", Prefix, lifetime);

@@ -56,6 +56,7 @@ private:
   PLATFORM::CTimeout m_nextFullScan;
   cScanList*         m_scanList;
   cTransponderList*  m_transponderList;
+  bool               m_bScanFinished;
 
   void CreateScanList(void);
   bool ScanDevice(DevicePtr device);

@@ -1,10 +1,12 @@
 #include "Event.h"
+#include "EPGDefinitions.h"
 #include "Schedule.h"
 #include "channels/ChannelManager.h"
 #include "recordings/Timers.h"
 #include "utils/UTF8Utils.h"
 #include "utils/I18N.h"
 #include "utils/CalendarUtils.h"
+#include "utils/XBMCTinyXML.h"
 
 cEvent::cEvent(tEventID EventID)
 {
@@ -468,45 +470,6 @@ cString cEvent::GetVpsString(void) const
   return buf;
 }
 
-void cEvent::Dump(FILE *f, const char *Prefix, bool InfoOnly) const
-{
-  if (InfoOnly || startTime + duration + Setup.EPGLinger * 60 >= time(NULL))
-  {
-    fprintf(f, "%sE %u %ld %d %X %X\n", Prefix, eventID, startTime, duration, tableID, version);
-    if (!isempty(title))
-      fprintf(f, "%sT %s\n", Prefix, title);
-    if (!isempty(shortText))
-      fprintf(f, "%sS %s\n", Prefix, shortText);
-    if (!isempty(description))
-    {
-      strreplace(description, '\n', '|');
-      fprintf(f, "%sD %s\n", Prefix, description);
-      strreplace(description, '|', '\n');
-    }
-    if (contents[0])
-    {
-      fprintf(f, "%sG", Prefix);
-      for (int i = 0; Contents(i); i++)
-        fprintf(f, " %02X", Contents(i));
-      fprintf(f, "\n");
-    }
-    if (parentalRating || starRating)
-      fprintf(f, "%sR %d %d\n", Prefix, parentalRating, starRating);
-    if (components)
-    {
-      for (int i = 0; i < components->NumComponents(); i++)
-      {
-        tComponent *p = components->Component(i);
-        fprintf(f, "%sX %s\n", Prefix, p->ToString().c_str());
-      }
-    }
-    if (vps)
-      fprintf(f, "%sV %ld\n", Prefix, vps);
-    if (!InfoOnly)
-      fprintf(f, "%se\n", Prefix);
-  }
-}
-
 bool cEvent::Parse(char *s)
 {
   char *t = skipspace(s + 1);
@@ -561,71 +524,6 @@ bool cEvent::Parse(char *s)
     return false;
     }
   return true;
-}
-
-bool cEvent::Read(FILE *f, cSchedule *Schedule)
-{
-  if (Schedule)
-  {
-    cEvent *Event = NULL;
-    char *s;
-    int line = 0;
-    cReadLine ReadLine;
-    while ((s = ReadLine.Read(f)) != NULL)
-    {
-      line++;
-      char *t = skipspace(s + 1);
-      switch (*s)
-        {
-      case 'E':
-        if (!Event)
-        {
-          unsigned int EventID;
-          time_t StartTime;
-          int Duration;
-          unsigned int TableID = 0;
-          unsigned int Version = 0xFF; // actual value is ignored
-          int n = sscanf(t, "%u %ld %d %X %X", &EventID, &StartTime, &Duration, &TableID, &Version);
-          if (n >= 3 && n <= 5)
-          {
-            Event = (cEvent *) Schedule->GetEvent(EventID, StartTime);
-            cEvent *newEvent = NULL;
-            if (Event)
-              DELETENULL(Event->components);
-            if (!Event)
-            {
-              Event = newEvent = new cEvent(EventID);
-              Event->seen = 0;
-            }
-            if (Event)
-            {
-              Event->SetTableID(TableID);
-              Event->SetStartTime(StartTime);
-              Event->SetDuration(Duration);
-              if (newEvent)
-                Schedule->AddEvent(newEvent);
-            }
-          }
-        }
-        break;
-      case 'e':
-        if (Event && !Event->Title())
-          Event->SetTitle(tr("No title"));
-        Event = NULL;
-        break;
-      case 'c': // to keep things simple we react on 'c' here
-        return true;
-      default:
-        if (Event && !Event->Parse(s))
-        {
-          esyslog("ERROR: EPG data problem in line %d", line);
-          return false;
-        }
-        }
-    }
-    esyslog("ERROR: unexpected end of file while reading EPG data");
-  }
-  return false;
 }
 
 #define MAXEPGBUGFIXSTATS 13
@@ -1023,4 +921,178 @@ void cEvent::FixEpgBugs(void)
 #else
   (void)0;
 #endif
+}
+
+void AddEventElement(TiXmlElement* eventElement, const std::string& strElement, const std::string& strText)
+{
+  TiXmlElement textElement(strElement);
+  TiXmlNode* textNode = eventElement->InsertEndChild(textElement);
+  if (textNode)
+  {
+    TiXmlText* text = new TiXmlText(StringUtils::Format("%s", strText.c_str()));
+    textNode->LinkEndChild(text);
+  }
+}
+
+bool cEvent::Deserialise(cSchedule* schedule, const TiXmlNode *eventNode)
+{
+  cEvent* event(NULL);
+  assert(schedule);
+  assert(eventNode);
+
+  const TiXmlElement *elem = eventNode->ToElement();
+  if (elem == NULL)
+    return false;
+
+  const char* id       = elem->Attribute(EPG_XML_ATTR_EVENT_ID);
+  const char* start    = elem->Attribute(EPG_XML_ATTR_START_TIME);
+  const char* duration = elem->Attribute(EPG_XML_ATTR_DURATION);
+  const char* tableId  = elem->Attribute(EPG_XML_ATTR_TABLE_ID);
+  const char* version  = elem->Attribute(EPG_XML_ATTR_VERSION);
+  if (id && start && duration && tableId && version)
+  {
+    tEventID EventID = (tEventID)StringUtils::IntVal(id);
+    event = (cEvent *) schedule->GetEvent(EventID, (time_t)StringUtils::IntVal(start));
+    if (!event)
+    {
+      event = new cEvent(EventID);
+      schedule->AddEvent(event);
+    }
+
+    event->duration = (int)StringUtils::IntVal(duration);
+    event->tableID  = (uchar)StringUtils::IntVal(tableId);
+    event->version  = (uchar)StringUtils::IntVal(version);
+
+    const TiXmlNode *titleNode = elem->FirstChild(EPG_XML_ELM_TITLE);
+    if (titleNode)
+    {
+      delete event->title;
+      event->title = strdup(titleNode->ToElement()->GetText());
+    }
+
+    const TiXmlNode *shortTextNode = elem->FirstChild(EPG_XML_ELM_SHORT_TEXT);
+    if (shortTextNode)
+    {
+      delete event->shortText;
+      event->shortText = strdup(shortTextNode->ToElement()->GetText());
+    }
+
+    const TiXmlNode *descriptionNode = elem->FirstChild(EPG_XML_ELM_DESCRIPTION);
+    if (descriptionNode)
+    {
+      delete event->description;
+      event->description = strdup(descriptionNode->ToElement()->GetText());
+    }
+
+    const char* parental  = elem->Attribute(EPG_XML_ATTR_PARENTAL);
+    if (parental)
+      event->parentalRating = (uint16_t)StringUtils::IntVal(parental);
+
+    const char* starRating  = elem->Attribute(EPG_XML_ATTR_STAR);
+    if (starRating)
+      event->starRating = (uint8_t)StringUtils::IntVal(starRating);
+
+    const char* vps  = elem->Attribute(EPG_XML_ATTR_VPS);
+    if (vps)
+      event->vps = (time_t)StringUtils::IntVal(vps);
+
+    const TiXmlNode *contentsNode = elem->FirstChild(EPG_XML_ELM_CONTENTS);
+    int iPtr(0);
+    while (contentsNode != NULL)
+    {
+      event->contents[iPtr++] = (uchar)StringUtils::IntVal(contentsNode->ToElement()->GetText());
+      contentsNode = contentsNode->NextSibling(EPG_XML_ELM_CONTENTS);
+    }
+
+    //XXX todo: components
+    return true;
+  }
+
+  return false;
+}
+
+bool cEvent::Serialise(TiXmlElement* element) const
+{
+  assert(element);
+
+  if (startTime + duration + Setup.EPGLinger * 60 >= time(NULL))
+  {
+    TiXmlElement eventElement(EPG_XML_ELM_EVENT);
+    TiXmlNode *eventNode = element->InsertEndChild(eventElement);
+
+    TiXmlElement* eventNodeElement = eventNode->ToElement();
+    if (!eventNodeElement)
+      return false;
+
+    eventNodeElement->SetAttribute(EPG_XML_ATTR_EVENT_ID,   eventID);
+    eventNodeElement->SetAttribute(EPG_XML_ATTR_START_TIME, startTime);
+    eventNodeElement->SetAttribute(EPG_XML_ATTR_DURATION,   duration);
+    eventNodeElement->SetAttribute(EPG_XML_ATTR_TABLE_ID,   tableID);
+    eventNodeElement->SetAttribute(EPG_XML_ATTR_VERSION,    version);
+
+    if (!isempty(title))
+      AddEventElement(eventNodeElement, EPG_XML_ELM_TITLE,       title);
+    if (!isempty(shortText))
+      AddEventElement(eventNodeElement, EPG_XML_ELM_SHORT_TEXT,  shortText);
+    if (!isempty(description))
+      AddEventElement(eventNodeElement, EPG_XML_ELM_DESCRIPTION, description);
+    if (contents[0])
+    {
+      TiXmlElement contentsElement(EPG_XML_ELM_CONTENTS);
+      TiXmlNode* contentsNode = eventNodeElement->InsertEndChild(contentsElement);
+      if (contentsNode)
+      {
+        TiXmlElement* contentsElem = contentsNode->ToElement();
+        if (contentsElem)
+        {
+          for (int i = 0; Contents(i); i++)
+          {
+            TiXmlText* text = new TiXmlText(StringUtils::Format("%u", Contents(i)));
+            if (text)
+              contentsElem->LinkEndChild(text);
+          }
+        }
+      }
+    }
+
+    if (parentalRating)
+      eventNodeElement->SetAttribute(EPG_XML_ATTR_PARENTAL, parentalRating);
+
+    if (starRating)
+      eventNodeElement->SetAttribute(EPG_XML_ATTR_STAR, starRating);
+
+    if (components)
+    {
+      TiXmlElement componentsElement(EPG_XML_ELM_COMPONENTS);
+      TiXmlNode* componentsNode = eventNodeElement->InsertEndChild(componentsElement);
+      if (componentsNode)
+      {
+        for (int i = 0; i < components->NumComponents(); i++)
+        {
+          tComponent *p = components->Component(i);
+
+          TiXmlElement componentElement(EPG_XML_ELM_COMPONENT);
+          TiXmlNode* componentNode = componentsNode->InsertEndChild(componentElement);
+          if (componentNode)
+          {
+            TiXmlElement* componentElem = componentNode->ToElement();
+            if (componentElem)
+            {
+              TiXmlText* text = new TiXmlText(StringUtils::Format("%s", p->ToString().c_str()));
+              if (text)
+              {
+                componentElem->LinkEndChild(text);
+                componentElem->SetAttribute(EPG_XML_ATTR_COMPONENT_ID, i);
+              }
+            }
+          }
+        }
+      }
+    }
+
+    if (vps)
+      eventNodeElement->SetAttribute(EPG_XML_ATTR_VPS, vps);
+  }
+
+  return true;
 }

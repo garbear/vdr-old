@@ -32,14 +32,15 @@ class cSchedules : public cList<cSchedule> {
   friend class cSchedulesLock;
 
 public:
-  static void SetEpgDataFileName(const char *FileName);
+  static void SetDataDirectory(const char* strDirectory);
   static time_t Modified(void);
   void SetModified(cSchedule *Schedule);
   void Cleanup(bool Force = false);
   void ResetVersions(void);
   bool ClearAll(void);
-  bool Dump(FILE *f = NULL, const char *Prefix = "", eDumpMode DumpMode = dmAll, time_t AtTime = 0);
-  bool Read(FILE *f = NULL);
+
+  bool Save(void);
+  bool Read(void);
   cSchedule *AddSchedule(tChannelID ChannelID);
   const cSchedule *GetSchedule(tChannelID ChannelID) const;
   const cSchedule *GetSchedule(const cChannel *Channel, bool AddIfMissing = false) const;
@@ -50,7 +51,7 @@ protected:
 private:
   cSchedules(void);
   PLATFORM::CReadWriteLock rwlock;
-  std::string              epgDataFileName;
+  std::string              m_strDirectory;
   time_t                   lastDump;
   time_t                   modified;
 };

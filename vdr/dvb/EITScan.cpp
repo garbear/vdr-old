@@ -10,6 +10,7 @@
 #include "EITScan.h"
 #include <stdlib.h>
 #include "channels/ChannelManager.h"
+#include "epg/EPGDataWriter.h"
 #include "devices/Transfer.h"
 #include "devices/DeviceManager.h"
 #include "devices/subsystems/DeviceChannelSubsystem.h"
@@ -136,7 +137,8 @@ cEITScanner::cEITScanner(void) :
     m_nextTransponderScan(0),
     m_nextFullScan(0),
     m_scanList(NULL),
-    m_transponderList(NULL)
+    m_transponderList(NULL),
+    m_bScanFinished(false)
 {
 }
 
@@ -207,6 +209,19 @@ void cEITScanner::Process(void)
 {
   if (!m_nextTransponderScan.TimeLeft() && !m_nextFullScan.TimeLeft())
   {
+    if (m_bScanFinished)
+    {
+      m_bScanFinished = false;
+      delete m_scanList;
+      m_scanList = NULL;
+      m_nextFullScan.Init(Setup.EPGScanTimeout * 1000 * 60);
+      dsyslog("EIT scan finished, next scan in %d minutes", Setup.EPGScanTimeout);
+
+      cChannelManager::Get().Save();
+      cEpgDataWriter::Get().CreateThread(false);
+      return;
+    }
+
     CreateScanList();
     bool AnyDeviceSwitched = false;
 
@@ -218,12 +233,9 @@ void cEITScanner::Process(void)
 
     if (!AnyDeviceSwitched && m_scanList->TotalTransponders() > 0)
     {
-      delete m_scanList;
-      m_scanList = NULL;
-      m_nextFullScan.Init(Setup.EPGScanTimeout * 1000 * 60);
-      dsyslog("EIT scan finished, next scan in %d minutes", Setup.EPGScanTimeout);
-
-      cChannelManager::Get().Save();
+      m_bScanFinished = true;
+      if (!AnyDeviceSwitched)
+        m_nextTransponderScan.Init(0);
     }
 
     m_nextTransponderScan.Init(SCAN_TRANSPONDER_TIMEOUT_MS);

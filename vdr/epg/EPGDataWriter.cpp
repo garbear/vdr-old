@@ -31,6 +31,6 @@ void cEpgDataWriter::Perform(void)
       p->Cleanup(now);
 
     if (dump)
-      s->Dump();
+      s->Save();
   }
 }

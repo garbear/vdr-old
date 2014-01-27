@@ -17,7 +17,9 @@
 #include <time.h>
 #include "libsi/si.h"
 #include "recordings/Timers.h"
+#include "EPGDefinitions.h"
 #include "platform/threads/threads.h"
+#include "utils/XBMCTinyXML.h"
 
 #include "vdr/utils/CalendarUtils.h"
 #include "vdr/utils/UTF8Utils.h"
@@ -56,14 +58,15 @@ cSchedules& cSchedules::Get(void)
   return _instance;
 }
 
-void cSchedules::SetEpgDataFileName(const char *FileName)
+void cSchedules::SetDataDirectory(const char *FileName)
 {
   cSchedulesLock lock(true);
   cSchedules* schedules = lock.Get();
   if (schedules)
   {
-    schedules->epgDataFileName = FileName ? FileName : "";
-    cEpgDataWriter::Get().SetDump(!schedules->epgDataFileName.empty());
+    schedules->m_strDirectory = FileName ? FileName : "";
+    dsyslog("EPG directory: %s", schedules->m_strDirectory.c_str());
+    cEpgDataWriter::Get().SetDump(!schedules->m_strDirectory.empty());
   }
 }
 
@@ -110,64 +113,98 @@ bool cSchedules::ClearAll(void)
   return true;
 }
 
-bool cSchedules::Dump(FILE *f, const char *Prefix, eDumpMode DumpMode, time_t AtTime)
+bool cSchedules::Save(void)
 {
-  cSafeFile *sf = NULL;
-  if (!f)
-  {
-    sf = new cSafeFile(epgDataFileName.c_str());
-    if (sf->Open())
-      f = *sf;
-    else
-    {
-      LOG_ERROR;
-      delete sf;
-      return false;
-    }
-  }
-  for (cSchedule *p = First(); p; p = Next(p))
-    p->Dump(f, Prefix, DumpMode, AtTime);
-  if (sf)
-  {
-    sf->Close();
-    delete sf;
-  }
-  return true;
-}
+  assert(!m_strDirectory.empty());
+  bool bReturn(true);
 
-bool
-cSchedules::Read(FILE *f)
-{
-  bool OwnFile = f == NULL;
-  if (OwnFile)
+  isyslog("saving EPG data to '%s'", m_strDirectory.c_str());
+
+  CXBMCTinyXML xmlDoc;
+  TiXmlDeclaration *decl = new TiXmlDeclaration("1.0", "", "");
+  xmlDoc.LinkEndChild(decl);
+
+  TiXmlElement rootElement(EPG_XML_ROOT);
+  TiXmlNode *root = xmlDoc.InsertEndChild(rootElement);
+  if (root == NULL)
+    return false;
+
+  for (cSchedule* schedule = First(); schedule; schedule = Next(schedule))
   {
-    if (!epgDataFileName.empty() && access(epgDataFileName.c_str(), R_OK) == 0)
+    if (schedule->Save(m_strDirectory))
     {
-      dsyslog("reading EPG data from %s", epgDataFileName.c_str());
-      if ((f = fopen(epgDataFileName.c_str(), "r")) == NULL)
+      TiXmlElement tableElement(EPG_XML_ELM_TABLE);
+      TiXmlNode* textNode = root->InsertEndChild(tableElement);
+      if (textNode)
       {
-        LOG_ERROR;
-        return false;
+        TiXmlText* text = new TiXmlText(StringUtils::Format("%s", schedule->ChannelID().Serialize().c_str()));
+        textNode->LinkEndChild(text);
       }
     }
     else
-      return false;
-  }
-  bool result = cSchedule::Read(f, this);
-  if (OwnFile)
-    fclose(f);
-  if (result)
-  {
-    // Initialize the channels' schedule pointers, so that the first WhatsOn menu will come up faster:
-    std::vector<ChannelPtr> channels = cChannelManager::Get().GetCurrent();
-    for (std::vector<ChannelPtr>::const_iterator it = channels.begin();
-        it != channels.end(); ++it)
     {
-      ChannelPtr Channel = (*it);
-      GetSchedule(Channel.get());
+      bReturn = false;
     }
   }
-  return result;
+
+  if (bReturn)
+  {
+    std::string strFilename = m_strDirectory + "/epg.xml";
+    std::string strTempFile = strFilename + ".tmp";
+    if (xmlDoc.SaveFile(strTempFile))
+    {
+      CFile::Delete(strFilename);
+      CFile::Rename(strTempFile, strFilename);
+      return true;
+    }
+    else
+    {
+      CFile::Delete(strTempFile);
+      esyslog("failed to save the EPG data: could not write to '%s'", strTempFile.c_str());
+      return false;
+    }
+  }
+
+  return bReturn;
+}
+
+bool cSchedules::Read(void)
+{
+  assert(!m_strDirectory.empty());
+
+  isyslog("reading EPG data from '%s'", m_strDirectory.c_str());
+
+  CXBMCTinyXML xmlDoc;
+  std::string strFilename = m_strDirectory + "/epg.xml";
+  if (!xmlDoc.LoadFile(strFilename.c_str()))
+  {
+    esyslog("failed to open '%s'", strFilename.c_str());
+    return false;
+  }
+
+  TiXmlElement *root = xmlDoc.RootElement();
+  if (root == NULL)
+    return false;
+
+  if (!StringUtils::EqualsNoCase(root->ValueStr(), EPG_XML_ROOT))
+  {
+    esyslog("failed to find root element in '%s'", strFilename.c_str());
+    return false;
+  }
+
+  const TiXmlNode *tableNode = root->FirstChild(EPG_XML_ELM_TABLE);
+  while (tableNode != NULL)
+  {
+    const TiXmlElement *tableElem = tableNode->ToElement();
+    cSchedule* schedule = AddSchedule(tChannelID::Deserialize(tableElem->GetText()));
+    if (schedule)
+    {
+      if (schedule->Read(m_strDirectory))
+        SetModified(schedule);
+    }
+    tableNode = tableNode->NextSibling(EPG_XML_ELM_TABLE);
+  }
+  return true;
 }
 
 cSchedule *cSchedules::AddSchedule(tChannelID ChannelID)

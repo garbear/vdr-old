@@ -37,6 +37,7 @@ public:
   const cEvent *GetFollowingEvent(void) const;
   const cEvent *GetEvent(tEventID EventID, time_t StartTime = 0) const;
   const cEvent *GetEventAround(time_t Time) const;
-  void Dump(FILE *f, const char *Prefix = "", eDumpMode DumpMode = dmAll, time_t AtTime = 0) const;
-  static bool Read(FILE *f, cSchedules *Schedules);
+  bool Read(const std::string& strDirectory);
+  bool Save(const std::string& strDirectory);
+  bool Serialise(TiXmlNode *node) const;
   };

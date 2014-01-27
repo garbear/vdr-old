@@ -115,7 +115,7 @@ bool cVDRDaemon::Init()
   DeletedRecordings.Update();
 
   // EPG data:
-  cSchedules::SetEpgDataFileName("special://home/epg/epg.data");
+  cSchedules::SetDataDirectory("special://home/epg");
 
   m_EpgDataReader = new cEpgDataReader;
   m_EpgDataReader->CreateThread(false);

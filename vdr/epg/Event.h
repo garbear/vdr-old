@@ -6,6 +6,8 @@
 #include "Components.h"
 #include "utils/Tools.h"
 
+class TiXmlElement;
+
 enum { MaxEventContents = 4 };
 
 enum eEventContentGroup {
@@ -97,8 +99,8 @@ public:
   void SetVps(time_t Vps);
   void SetSeen(void);
   cString ToDescr(void) const;
-  void Dump(FILE *f, const char *Prefix = "", bool InfoOnly = false) const;
   bool Parse(char *s);
-  static bool Read(FILE *f, cSchedule *Schedule);
   void FixEpgBugs(void);
+  static bool Deserialise(cSchedule* schedule, const TiXmlNode *eventNode);
+  bool Serialise(TiXmlElement* element) const;
   };

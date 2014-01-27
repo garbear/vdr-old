@@ -1,8 +1,10 @@
 #include "Schedule.h"
 #include "EPG.h"
+#include "EPGDefinitions.h"
 #include "Config.h"
 #include "channels/Channel.h"
 #include "channels/ChannelManager.h"
+#include "utils/XBMCTinyXML.h"
 
 #define RUNNINGSTATUSTIMEOUT 30 // seconds before the running status is considered unknown
 
@@ -216,90 +218,92 @@ void cSchedule::Cleanup(time_t Time)
   }
 }
 
-void cSchedule::Dump(FILE *f, const char *Prefix, eDumpMode DumpMode, time_t AtTime) const
+bool cSchedule::Read(const std::string& strDirectory)
 {
-  ChannelPtr channel = cChannelManager::Get().GetByChannelID(channelID, true);
-  if (channel)
+  assert(!strDirectory.empty());
+
+  CXBMCTinyXML xmlDoc;
+  std::string strFilename = strDirectory + "/epg_" + channelID.Serialize() + ".xml";
+  if (!xmlDoc.LoadFile(strFilename.c_str()))
   {
-    fprintf(f, "%sC %s %s\n", Prefix,
-        channel->GetChannelID().Serialize().c_str(), channel->Name().c_str());
-    const cEvent *p;
-    switch (DumpMode)
-      {
-    case dmAll:
-      {
-        for (p = events.First(); p; p = events.Next(p))
-          p->Dump(f, Prefix);
-      }
+    esyslog("failed to open '%s'", strFilename.c_str());
+    return false;
+  }
+
+  TiXmlElement *root = xmlDoc.RootElement();
+  if (root == NULL)
+    return false;
+
+  if (!StringUtils::EqualsNoCase(root->ValueStr(), EPG_XML_ELM_TABLE))
+  {
+    esyslog("failed to find root element in '%s'", strFilename.c_str());
+    return false;
+  }
+
+  const TiXmlNode *eventNode = root->FirstChild(EPG_XML_ELM_EVENT);
+  while (eventNode != NULL)
+  {
+    if (!cEvent::Deserialise(this, eventNode))
       break;
-    case dmPresent:
-      {
-        if ((p = GetPresentEvent()) != NULL)
-          p->Dump(f, Prefix);
-      }
-      break;
-    case dmFollowing:
-      {
-        if ((p = GetFollowingEvent()) != NULL)
-          p->Dump(f, Prefix);
-      }
-      break;
-    case dmAtTime:
-      {
-        if ((p = GetEventAround(AtTime)) != NULL)
-          p->Dump(f, Prefix);
-      }
-      break;
-    default:
-      esyslog("ERROR: unknown DumpMode %d (%s %d)", DumpMode, __FUNCTION__,
-          __LINE__);
-      }
-    fprintf(f, "%sc\n", Prefix);
+    eventNode = eventNode->NextSibling(EPG_XML_ELM_EVENT);
+  }
+
+  Sort();
+
+  return true;
+}
+
+bool cSchedule::Save(const std::string& strDirectory)
+{
+  assert(!strDirectory.empty());
+  CXBMCTinyXML xmlDoc;
+  TiXmlDeclaration *decl = new TiXmlDeclaration("1.0", "", "");
+  xmlDoc.LinkEndChild(decl);
+
+  TiXmlElement rootElement(EPG_XML_ELM_TABLE);
+  TiXmlNode *root = xmlDoc.InsertEndChild(rootElement);
+  if (root == NULL)
+    return false;
+
+  if (!Serialise(root))
+  {
+    delete decl;
+    return false;
+  }
+
+  std::string strFilename = strDirectory + "/epg_" + channelID.Serialize() + ".xml";
+  std::string strTempFile = strFilename + ".tmp";
+  if (xmlDoc.SaveFile(strTempFile))
+  {
+    CFile::Delete(strFilename);
+    CFile::Rename(strTempFile, strFilename);
+    return true;
+  }
+  else
+  {
+    CFile::Delete(strTempFile);
+    esyslog("failed to save the EPG data: could not write to '%s'", strTempFile.c_str());
+    return false;
   }
 }
 
-bool cSchedule::Read(FILE *f, cSchedules *Schedules)
+bool cSchedule::Serialise(TiXmlNode *node) const
 {
-  if (Schedules)
+  if (node == NULL)
+    return false;
+
+  TiXmlElement* epgElement = node->ToElement();
+  if (!epgElement)
+    return false;
+
+  epgElement->SetAttribute(EPG_XML_ATTR_CHANNEL, channelID.Serialize());
+
+  cEvent* p;
+  for (p = events.First(); p; p = events.Next(p))
   {
-    cReadLine ReadLine;
-    char *s;
-    while ((s = ReadLine.Read(f)) != NULL)
-    {
-      if (*s == 'C')
-      {
-        s = skipspace(s + 1);
-        char *p = strchr(s, ' ');
-        if (p)
-          *p = 0; // strips optional channel name
-        if (*s)
-        {
-          tChannelID channelID = tChannelID::Deserialize(s);
-          if (channelID.Valid())
-          {
-            cSchedule *p = Schedules->AddSchedule(channelID);
-            if (p)
-            {
-              if (!cEvent::Read(f, p))
-                return false;
-              p->Sort();
-              Schedules->SetModified(p);
-            }
-          }
-          else
-          {
-            esyslog("ERROR: invalid channel ID: %s", s);
-            return false;
-          }
-        }
-      }
-      else
-      {
-        esyslog("ERROR: unexpected tag while reading EPG data: %s", s);
-        return false;
-      }
-    }
-    return true;
+    if (!p->Serialise(epgElement))
+      return false;
   }
-  return false;
+
+  return true;
 }
