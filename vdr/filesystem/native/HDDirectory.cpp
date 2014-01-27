@@ -23,6 +23,7 @@
 #include "HDDirectory.h"
 #include "filesystem/File.h"
 #include "utils/url/URLUtils.h"
+#include "filesystem/SpecialProtocol.h"
 
 #include <cstdio>
 #include <dirent.h>
@@ -44,7 +45,8 @@ bool CHDDirectory::GetDirectory(const string &strPath, DirectoryListing &items)
 {
   DIR *dir;
   struct dirent *ent;
-  if ((dir = opendir(strPath.c_str())) != NULL)
+  std::string strTranslatedPath = CSpecialProtocol::TranslatePath(strPath);
+  if ((dir = opendir(strTranslatedPath.c_str())) != NULL)
   {
     // Read all the files and directories within directory
     while ((ent = readdir(dir)) != NULL)
@@ -71,14 +73,16 @@ bool CHDDirectory::Create(const std::string &strPath)
 {
   // TODO: mkdir -p
   int status;
-  status = mkdir(strPath.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+  std::string strTranslatedPath = CSpecialProtocol::TranslatePath(strPath);
+  status = mkdir(strTranslatedPath.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
   return status == 0;
 }
 
 bool CHDDirectory::Exists(const std::string &strPath)
 {
   struct __stat64 data;
-  if (CFile::Stat(strPath, &data) == 0)
+  std::string strTranslatedPath = CSpecialProtocol::TranslatePath(strPath);
+  if (CFile::Stat(strTranslatedPath, &data) == 0)
     return S_ISDIR(data.st_mode);
   return false;
 }
@@ -87,13 +91,16 @@ bool CHDDirectory::Remove(const std::string &strPath)
 {
   // TODO: Windows might want to use http://stackoverflow.com/questions/734717/how-to-delete-a-folder-in-c
   int status;
-  status = rmdir(strPath.c_str());
+  std::string strTranslatedPath = CSpecialProtocol::TranslatePath(strPath);
+  status = rmdir(strTranslatedPath.c_str());
   return status == 0;
 }
 
 bool CHDDirectory::Rename(const std::string &strPath, const std::string &strNewPath)
 {
   int status;
-  status = rename(strPath.c_str(), strNewPath.c_str());
+  std::string strTranslatedPath    = CSpecialProtocol::TranslatePath(strPath);
+  std::string strTranslatedNewPath = CSpecialProtocol::TranslatePath(strNewPath);
+  status = rename(strTranslatedPath.c_str(), strTranslatedNewPath.c_str());
   return status == 0;
 }
