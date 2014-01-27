@@ -284,20 +284,13 @@ bool cChannelManager::Save(const string &file /* = ""*/)
 
   assert(!m_strFilename.empty());
 
-  std::string strTempFile = m_strFilename + ".tmp";
   isyslog("saving channel configuration to '%s'", m_strFilename.c_str());
-  if (xmlDoc.SaveFile(strTempFile))
+  if (!xmlDoc.SafeSaveFile(m_strFilename))
   {
-    CFile::Delete(m_strFilename);
-    CFile::Rename(strTempFile, m_strFilename);
-    return true;
-  }
-  else
-  {
-    CFile::Delete(strTempFile);
-    esyslog("failed to save the channel configuration: could not write to '%s'", strTempFile.c_str());
+    esyslog("failed to save the channel configuration: could not write to '%s'", m_strFilename.c_str());
     return false;
   }
+  return true;
 }
 
 ChannelPtr cChannelManager::GetByNumber(int number, int skipGap /* = 0 */)

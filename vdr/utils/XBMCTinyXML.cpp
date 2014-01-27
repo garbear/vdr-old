@@ -132,6 +132,22 @@ bool CXBMCTinyXML::SaveFile(const std::string& filename) const
   return false;
 }
 
+bool CXBMCTinyXML::SafeSaveFile(const std::string& strFilename) const
+{
+  std::string strTempFile = strFilename + ".tmp";
+  if (SaveFile(strTempFile))
+  {
+    CFile::Delete(strFilename);
+    CFile::Rename(strTempFile, strFilename);
+    return true;
+  }
+  else
+  {
+    CFile::Delete(strTempFile);
+    return false;
+  }
+}
+
 bool CXBMCTinyXML::Parse(const char *_data, TiXmlEncoding encoding)
 {
   return Parse(std::string(_data), encoding);

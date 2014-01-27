@@ -150,17 +150,9 @@ bool cSchedules::Save(void)
   if (bReturn)
   {
     std::string strFilename = m_strDirectory + "/epg.xml";
-    std::string strTempFile = strFilename + ".tmp";
-    if (xmlDoc.SaveFile(strTempFile))
+    if (!xmlDoc.SafeSaveFile(strFilename))
     {
-      CFile::Delete(strFilename);
-      CFile::Rename(strTempFile, strFilename);
-      return true;
-    }
-    else
-    {
-      CFile::Delete(strTempFile);
-      esyslog("failed to save the EPG data: could not write to '%s'", strTempFile.c_str());
+      esyslog("failed to save the EPG data: could not write to '%s'", strFilename.c_str());
       return false;
     }
   }

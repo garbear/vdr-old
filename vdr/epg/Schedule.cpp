@@ -272,19 +272,12 @@ bool cSchedule::Save(const std::string& strDirectory)
   }
 
   std::string strFilename = strDirectory + "/epg_" + channelID.Serialize() + ".xml";
-  std::string strTempFile = strFilename + ".tmp";
-  if (xmlDoc.SaveFile(strTempFile))
+  if (!xmlDoc.SafeSaveFile(strFilename))
   {
-    CFile::Delete(strFilename);
-    CFile::Rename(strTempFile, strFilename);
-    return true;
-  }
-  else
-  {
-    CFile::Delete(strTempFile);
-    esyslog("failed to save the EPG data: could not write to '%s'", strTempFile.c_str());
+    esyslog("failed to save the EPG data: could not write to '%s'", strFilename.c_str());
     return false;
   }
+  return true;
 }
 
 bool cSchedule::Serialise(TiXmlNode *node) const
