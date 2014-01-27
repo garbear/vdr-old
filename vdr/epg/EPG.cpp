@@ -29,6 +29,8 @@
 
 // --- cSchedulesLock --------------------------------------------------------
 
+SchedulePtr cSchedules::EmptySchedule = SchedulePtr();
+
 cSchedulesLock::cSchedulesLock(bool WriteLock, int TimeoutMs)
 {
   m_bLocked = cSchedules::Get().m_rwlock.Lock(WriteLock, TimeoutMs);
@@ -55,8 +57,6 @@ cSchedules::cSchedules(void)
 
 cSchedules::~cSchedules(void)
 {
-  for (std::vector<cSchedule*>::iterator it = m_schedules.begin(); it != m_schedules.end(); ++it)
-    delete *it;
 }
 
 cSchedules& cSchedules::Get(void)
@@ -84,7 +84,7 @@ time_t cSchedules::Modified(void)
   return schedules ? schedules->m_modified : 0;
 }
 
-void cSchedules::SetModified(cSchedule *Schedule)
+void cSchedules::SetModified(SchedulePtr Schedule)
 {
   Schedule->SetModified();
   m_modified = time(NULL);
@@ -107,7 +107,7 @@ void cSchedules::Cleanup(bool Force)
 
 void cSchedules::ResetVersions(void)
 {
-  for (std::vector<cSchedule*>::iterator it = m_schedules.begin(); it != m_schedules.end(); ++it)
+  for (std::vector<SchedulePtr>::iterator it = m_schedules.begin(); it != m_schedules.end(); ++it)
     (*it)->ResetVersions();
 }
 
@@ -115,7 +115,7 @@ bool cSchedules::ClearAll(void)
 {
   for (cTimer *Timer = Timers.First(); Timer; Timer = Timers.Next(Timer))
     Timer->SetEvent(NULL);
-  for (std::vector<cSchedule*>::iterator it = m_schedules.begin(); it != m_schedules.end(); ++it)
+  for (std::vector<SchedulePtr>::iterator it = m_schedules.begin(); it != m_schedules.end(); ++it)
     (*it)->Cleanup(INT_MAX);
   return true;
 }
@@ -123,7 +123,7 @@ bool cSchedules::ClearAll(void)
 void cSchedules::CleanTables(void)
 {
   time_t now = time(NULL);
-  for (std::vector<cSchedule*>::iterator it = m_schedules.begin(); it != m_schedules.end(); ++it)
+  for (std::vector<SchedulePtr>::iterator it = m_schedules.begin(); it != m_schedules.end(); ++it)
     (*it)->Cleanup(now);
 }
 
@@ -143,7 +143,7 @@ bool cSchedules::Save(void)
   if (root == NULL)
     return false;
 
-  for (std::vector<cSchedule*>::iterator it = m_schedules.begin(); it != m_schedules.end(); ++it)
+  for (std::vector<SchedulePtr>::iterator it = m_schedules.begin(); it != m_schedules.end(); ++it)
   {
     if ((*it)->Save(m_strDirectory))
     {
@@ -202,7 +202,7 @@ bool cSchedules::Read(void)
   while (tableNode != NULL)
   {
     const TiXmlElement *tableElem = tableNode->ToElement();
-    cSchedule* schedule = AddSchedule(tChannelID::Deserialize(tableElem->GetText()));
+    SchedulePtr schedule = AddSchedule(tChannelID::Deserialize(tableElem->GetText()));
     if (schedule)
     {
       if (schedule->Read(m_strDirectory))
@@ -213,13 +213,13 @@ bool cSchedules::Read(void)
   return true;
 }
 
-cSchedule *cSchedules::AddSchedule(const tChannelID& ChannelID)
+SchedulePtr cSchedules::AddSchedule(const tChannelID& ChannelID)
 {
   //ChannelID.ClrRid();
-  cSchedule* schedule = GetSchedule(ChannelID);
+  SchedulePtr schedule = GetSchedule(ChannelID);
   if (!schedule)
   {
-    schedule = new cSchedule(ChannelID);
+    schedule = SchedulePtr(new cSchedule(ChannelID));
     m_schedules.push_back(schedule);
     ChannelPtr channel = cChannelManager::Get().GetByChannelID(ChannelID);
     if (channel)
@@ -228,22 +228,22 @@ cSchedule *cSchedules::AddSchedule(const tChannelID& ChannelID)
   return schedule;
 }
 
-cSchedule *cSchedules::GetSchedule(const tChannelID& ChannelID)
+SchedulePtr cSchedules::GetSchedule(const tChannelID& ChannelID)
 {
   //ChannelID.ClrRid();
-  for (std::vector<cSchedule*>::iterator it = m_schedules.begin(); it != m_schedules.end(); ++it)
+  for (std::vector<SchedulePtr>::iterator it = m_schedules.begin(); it != m_schedules.end(); ++it)
   {
     if ((*it)->ChannelID() == ChannelID)
       return *it;
   }
-  return NULL;
+  return EmptySchedule;
 }
 
-cSchedule *cSchedules::GetSchedule(ChannelPtr channel, bool bAddIfMissing)
+SchedulePtr cSchedules::GetSchedule(ChannelPtr channel, bool bAddIfMissing)
 {
   assert(channel);
 
-  cSchedule* schedule(NULL);
+  SchedulePtr schedule;
 
   if (!channel->HasSchedule() && bAddIfMissing)
   {
@@ -259,12 +259,12 @@ cSchedule *cSchedules::GetSchedule(ChannelPtr channel, bool bAddIfMissing)
   return schedule;
 }
 
-std::vector<cSchedule*> cSchedules::GetUpdatedSchedules(const std::map<int, time_t>& lastUpdated, CChannelFilter& filter)
+std::vector<SchedulePtr> cSchedules::GetUpdatedSchedules(const std::map<int, time_t>& lastUpdated, CChannelFilter& filter)
 {
-  std::vector<cSchedule*> retval;
+  std::vector<SchedulePtr> retval;
   std::map<int, time_t>::iterator it;
   std::map<int, time_t>::const_iterator previousIt;
-  for (std::vector<cSchedule*>::iterator it = m_schedules.begin(); it != m_schedules.end(); ++it)
+  for (std::vector<SchedulePtr>::iterator it = m_schedules.begin(); it != m_schedules.end(); ++it)
   {
     cEvent *lastEvent = (*it)->Events()->Last();
     if (!lastEvent)

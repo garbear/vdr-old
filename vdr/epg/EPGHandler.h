@@ -20,7 +20,7 @@ public:
           ///< are asked whether this Channel shall be completely ignored. If any of
           ///< the EPG handlers returns true in this function, no EIT data at all will
           ///< be processed for this Channel.
-  virtual bool HandleEitEvent(cSchedule *Schedule, const SI::EIT::Event *EitEvent, uchar TableID, uchar Version) { return false; }
+  virtual bool HandleEitEvent(SchedulePtr Schedule, const SI::EIT::Event *EitEvent, uchar TableID, uchar Version) { return false; }
           ///< Before the raw EitEvent for the given Schedule is processed, the
           ///< EPG handlers are queried to see if any of them would like to do the
           ///< complete processing by itself. TableID and Version are from the
@@ -50,9 +50,9 @@ public:
   virtual bool HandleEvent(cEvent *Event) { return false; }
           ///< After all modifications of the Event have been done, the EPG handler
           ///< can take a final look at it.
-  virtual bool SortSchedule(cSchedule *Schedule) { return false; }
+  virtual bool SortSchedule(SchedulePtr Schedule) { return false; }
           ///< Sorts the Schedule after the complete table has been processed.
-  virtual bool DropOutdated(cSchedule *Schedule, time_t SegmentStart, time_t SegmentEnd, uchar TableID, uchar Version) { return false; }
+  virtual bool DropOutdated(SchedulePtr Schedule, time_t SegmentStart, time_t SegmentEnd, uchar TableID, uchar Version) { return false; }
           ///< Takes a look at all EPG events between SegmentStart and SegmentEnd and
           ///< drops outdated events.
   };

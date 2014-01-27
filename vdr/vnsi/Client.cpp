@@ -254,8 +254,8 @@ void cVNSIClient::EpgChange()
   if (!schedules)
     return;
 
-  std::vector<cSchedule*> updatedSchedules = schedules->GetUpdatedSchedules(m_epgUpdate, VNSIChannelFilter);
-  for (std::vector<cSchedule*>::const_iterator it = updatedSchedules.begin(); it != updatedSchedules.end(); ++it)
+  std::vector<SchedulePtr> updatedSchedules = schedules->GetUpdatedSchedules(m_epgUpdate, VNSIChannelFilter);
+  for (std::vector<SchedulePtr>::const_iterator it = updatedSchedules.begin(); it != updatedSchedules.end(); ++it)
   {
     tChannelID channelId = (*it)->ChannelID();
     const ChannelPtr channel = cChannelManager::Get().GetByChannelID(channelId);
@@ -1767,7 +1767,7 @@ bool cVNSIClient::processEPG_GetForChannel() /* OPCODE 120 */
     return true;
   }
 
-  cSchedule* Schedule = Schedules->GetSchedule(channel->GetChannelID());
+  SchedulePtr Schedule = Schedules->GetSchedule(channel->GetChannelID());
   if (!Schedule)
   {
     m_resp->add_U32(0);

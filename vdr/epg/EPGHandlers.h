@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Types.h"
 #include "Event.h"
 #include "utils/Tools.h"
 #include <libsi/section.h>
@@ -8,13 +9,12 @@
 class cEpgHandler;
 class cChannel;
 class cEvent;
-class cSchedule;
 
 class cEpgHandlers : public cList<cEpgHandler> {
 public:
   static cEpgHandlers& Get(void);
   bool IgnoreChannel(const cChannel& Channel);
-  bool HandleEitEvent(cSchedule *Schedule, const SI::EIT::Event *EitEvent, uchar TableID, uchar Version);
+  bool HandleEitEvent(SchedulePtr Schedule, const SI::EIT::Event *EitEvent, uchar TableID, uchar Version);
   bool HandledExternally(const cChannel *Channel);
   bool IsUpdate(tEventID EventID, time_t StartTime, uchar TableID, uchar Version);
   void SetEventID(cEvent *Event, tEventID EventID);
@@ -29,6 +29,6 @@ public:
   void SetComponents(cEvent *Event, cComponents *Components);
   void FixEpgBugs(cEvent *Event);
   void HandleEvent(cEvent *Event);
-  void SortSchedule(cSchedule *Schedule);
-  void DropOutdated(cSchedule *Schedule, time_t SegmentStart, time_t SegmentEnd, uchar TableID, uchar Version);
+  void SortSchedule(SchedulePtr Schedule);
+  void DropOutdated(SchedulePtr Schedule, time_t SegmentStart, time_t SegmentEnd, uchar TableID, uchar Version);
   };

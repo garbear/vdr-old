@@ -45,7 +45,7 @@ private:
   int           m_iSource;
   u_char        m_Tid;
   const u_char* m_Data;
-  cSchedule*    m_Schedule;
+  SchedulePtr   m_Schedule;
   uchar         m_Version;
   ChannelPtr    m_channel;
   struct tm     m_localTime;
@@ -203,7 +203,7 @@ void cEIT::ParseSIDescriptor(SI::Descriptor* d)
   case SI::TimeShiftedEventDescriptorTag:
     {
       SI::TimeShiftedEventDescriptor *tsed = (SI::TimeShiftedEventDescriptor *) d;
-      cSchedule *rSchedule = (cSchedule *) m_Schedules->GetSchedule(tChannelID(m_iSource, m_channel->Nid(), m_channel->Tid(), tsed->getReferenceServiceId()));
+      SchedulePtr rSchedule = m_Schedules->GetSchedule(tChannelID(m_iSource, m_channel->Nid(), m_channel->Tid(), tsed->getReferenceServiceId()));
       if (!rSchedule)
         break;
       m_rEvent = rSchedule->GetEvent(tsed->getReferenceEventId());

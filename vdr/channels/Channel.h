@@ -20,14 +20,10 @@
  */
 #pragma once
 
+#include "Types.h"
 #include "ChannelID.h"
 #include "sources/Source.h"
 //#include "timers.h"
-
-#include <shared_ptr/shared_ptr.hpp>
-
-class cChannel;
-typedef VDR::shared_ptr<cChannel> ChannelPtr;
 
 // TODO
 class cTimer2
@@ -246,9 +242,9 @@ public:
   void SetRefChannel(cChannel *refChannel) { m_refChannel = refChannel; }
   void SetSubtitlingDescriptors(uchar *subtitlingTypes, uint16_t *compositionPageIds, uint16_t *ancillaryPageIds);
 
-  void SetSchedule(cSchedule* schedule) { m_schedule = schedule; }
-  bool HasSchedule(void) const { return m_schedule != NULL; }
-  cSchedule* Schedule(void) const { return m_schedule; }
+  void SetSchedule(SchedulePtr schedule);
+  bool HasSchedule(void) const;
+  SchedulePtr Schedule(void) const;
 
   uint32_t Hash(void) const;
 private:
@@ -263,7 +259,7 @@ private:
 
   std::string              m_parameters;
   int                      m_modification;
-  cSchedule*               m_schedule; //XXX shared ptr
+  SchedulePtr              m_schedule;
   //cLinkChannels           *m_linkChannels;
   cLinkChannels            m_linkChannels;
   cChannel                *m_refChannel;

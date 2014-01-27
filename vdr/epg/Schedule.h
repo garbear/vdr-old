@@ -1,6 +1,8 @@
 #pragma once
 
+#include "Types.h"
 #include "Event.h"
+#include <shared_ptr/shared_ptr.hpp>
 
 class cSchedules;
 

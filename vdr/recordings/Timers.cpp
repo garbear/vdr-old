@@ -51,7 +51,7 @@ cTimer::cTimer(bool Instant, bool Pause, ChannelPtr Channel)
   if (!Setup.InstantRecordTime && channel && (Instant || Pause)) {
      cSchedulesLock SchedulesLock;
      if (cSchedules *Schedules = SchedulesLock.Get()) {
-        if (cSchedule *Schedule = Schedules->GetSchedule(channel)) {
+        if (SchedulePtr Schedule = Schedules->GetSchedule(channel)) {
            if (const cEvent *Event = Schedule->GetPresentEvent()) {
               time_t tstart = Event->StartTime();
               time_t tstop = Event->EndTime();
@@ -524,7 +524,7 @@ void cTimer::SetEventFromSchedule(cSchedules *Schedules)
      if (!(Schedules = SchedulesLock.Get()))
         return;
      }
-  cSchedule *Schedule = Schedules->GetSchedule(Channel());
+  SchedulePtr Schedule = Schedules->GetSchedule(Channel());
   if (Schedule && Schedule->Events()->First()) {
      time_t now = time(NULL);
      if (!lastSetEvent || Schedule->Modified() >= lastSetEvent) {

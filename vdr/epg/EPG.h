@@ -41,7 +41,7 @@ public:
 
   static void SetDataDirectory(const char* strDirectory);
   static time_t Modified(void);
-  void SetModified(cSchedule *Schedule);
+  void SetModified(SchedulePtr Schedule);
   void Cleanup(bool Force = false);
   void ResetVersions(void);
   bool ClearAll(void);
@@ -49,11 +49,12 @@ public:
 
   bool Save(void);
   bool Read(void);
-  cSchedule *AddSchedule(const tChannelID& ChannelID);
-  cSchedule *GetSchedule(const tChannelID& ChannelID);
-  cSchedule *GetSchedule(ChannelPtr Channel, bool AddIfMissing = false);
-  std::vector<cSchedule*> GetUpdatedSchedules(const std::map<int, time_t>& lastUpdated, CChannelFilter& filter);
+  SchedulePtr AddSchedule(const tChannelID& ChannelID);
+  SchedulePtr GetSchedule(const tChannelID& ChannelID);
+  SchedulePtr GetSchedule(ChannelPtr Channel, bool AddIfMissing = false);
+  std::vector<SchedulePtr> GetUpdatedSchedules(const std::map<int, time_t>& lastUpdated, CChannelFilter& filter);
 
+  static SchedulePtr EmptySchedule;
 protected:
   static cSchedules& Get(void);
 
@@ -64,7 +65,7 @@ private:
   std::string              m_strDirectory;
   time_t                   m_lastDump;
   time_t                   m_modified;
-  std::vector<cSchedule*>  m_schedules;
+  std::vector<SchedulePtr>  m_schedules;
 };
 
 void ReportEpgBugFixStats(bool Force = false);

@@ -26,7 +26,7 @@
 #include "utils/CRC32.h"
 #include "filesystem/File.h"
 //#include "utils/UTF8Utils.h"
-//#include "epg.h"
+#include "epg/EPG.h"
 //#include "timers.h"
 
 #include "libsi/si.h" // For AC3DescriptorTag
@@ -1076,7 +1076,7 @@ bool cChannel::SetTransponderData(int source, int iFrequencyHz, int srate, const
     SetFrequencyHz(iFrequencyHz);
     m_channelData.srate = srate;
     m_parameters = strParameters;
-    m_schedule = NULL;
+    m_schedule = cSchedules::EmptySchedule;
 
     if (Number() && !bQuiet)
     {
@@ -1107,7 +1107,7 @@ void cChannel::SetId(int nid, int tid, int sid, int rid /* = 0 */)
     m_channelData.rid = rid;
     if (Number())
       ;//Channels.HashChannel(this); // TODO
-    m_schedule = NULL;
+    m_schedule = cSchedules::EmptySchedule;
     SetChanged();
   }
 }
@@ -1381,4 +1381,19 @@ string cChannel::TransponderDataToString() const
 uint32_t cChannel::Hash(void) const
 {
   return m_channelHash ? m_channelHash : GetChannelID().Hash();
+}
+
+void cChannel::SetSchedule(SchedulePtr schedule)
+{
+  m_schedule = schedule;
+}
+
+bool cChannel::HasSchedule(void) const
+{
+  return m_schedule;
+}
+
+SchedulePtr cChannel::Schedule(void) const
+{
+  return m_schedule;
 }

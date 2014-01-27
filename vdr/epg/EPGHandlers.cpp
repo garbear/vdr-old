@@ -18,7 +18,7 @@ bool cEpgHandlers::IgnoreChannel(const cChannel& Channel)
   return false;
 }
 
-bool cEpgHandlers::HandleEitEvent(cSchedule *Schedule, const SI::EIT::Event *EitEvent, uchar TableID, uchar Version)
+bool cEpgHandlers::HandleEitEvent(SchedulePtr Schedule, const SI::EIT::Event *EitEvent, uchar TableID, uchar Version)
 {
   for (cEpgHandler *eh = First(); eh; eh = Next(eh)) {
       if (eh->HandleEitEvent(Schedule, EitEvent, TableID, Version))
@@ -152,7 +152,7 @@ void cEpgHandlers::HandleEvent(cEvent *Event)
       }
 }
 
-void cEpgHandlers::SortSchedule(cSchedule *Schedule)
+void cEpgHandlers::SortSchedule(SchedulePtr Schedule)
 {
   for (cEpgHandler *eh = First(); eh; eh = Next(eh)) {
       if (eh->SortSchedule(Schedule))
@@ -161,7 +161,7 @@ void cEpgHandlers::SortSchedule(cSchedule *Schedule)
   Schedule->Sort();
 }
 
-void cEpgHandlers::DropOutdated(cSchedule *Schedule, time_t SegmentStart, time_t SegmentEnd, uchar TableID, uchar Version)
+void cEpgHandlers::DropOutdated(SchedulePtr Schedule, time_t SegmentStart, time_t SegmentEnd, uchar TableID, uchar Version)
 {
   for (cEpgHandler *eh = First(); eh; eh = Next(eh)) {
       if (eh->DropOutdated(Schedule, SegmentStart, SegmentEnd, TableID, Version))
