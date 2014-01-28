@@ -218,12 +218,12 @@ void cSchedule::Cleanup(time_t Time)
   }
 }
 
-bool cSchedule::Read(const std::string& strDirectory)
+bool cSchedule::Read(void)
 {
-  assert(!strDirectory.empty());
+  assert(!g_setup.EPGDirectory.empty());
 
   CXBMCTinyXML xmlDoc;
-  std::string strFilename = strDirectory + "/epg_" + channelID.Serialize() + ".xml";
+  std::string strFilename = g_setup.EPGDirectory + "/epg_" + channelID.Serialize() + ".xml";
   if (!xmlDoc.LoadFile(strFilename.c_str()))
   {
     esyslog("failed to open '%s'", strFilename.c_str());
@@ -253,9 +253,13 @@ bool cSchedule::Read(const std::string& strDirectory)
   return true;
 }
 
-bool cSchedule::Save(const std::string& strDirectory)
+bool cSchedule::Save(void)
 {
-  assert(!strDirectory.empty());
+  assert(!g_setup.EPGDirectory.empty());
+
+  if (saved == modified)
+    return true;
+
   CXBMCTinyXML xmlDoc;
   TiXmlDeclaration *decl = new TiXmlDeclaration("1.0", "", "");
   xmlDoc.LinkEndChild(decl);
@@ -271,12 +275,18 @@ bool cSchedule::Save(const std::string& strDirectory)
     return false;
   }
 
-  std::string strFilename = strDirectory + "/epg_" + channelID.Serialize() + ".xml";
+  std::string strFilename = g_setup.EPGDirectory + "/epg_" + channelID.Serialize() + ".xml";
   if (!xmlDoc.SafeSaveFile(strFilename))
   {
     esyslog("failed to save the EPG data: could not write to '%s'", strFilename.c_str());
     return false;
   }
+
+  saved = modified;
+
+  ChannelPtr channel = cChannelManager::Get().GetByChannelID(ChannelID());
+  if (channel)
+    dsyslog("EPG for channel '%s' saved", channel->Name().c_str());
   return true;
 }
 

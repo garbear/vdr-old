@@ -406,6 +406,18 @@ ChannelPtr cChannelManager::GetByTransponderID(tChannelID channelID)
   return cChannel::EmptyChannel;
 }
 
+ChannelVector cChannelManager::GetByTransponder(int iSource, int iTransponder)
+{
+  ChannelVector channels;
+  for (ChannelVector::iterator itChannel = m_channels.begin(); itChannel != m_channels.end(); ++itChannel)
+  {
+    ChannelPtr &channel = *itChannel;
+    if (channel->Transponder() == iTransponder && channel->Source() == iSource)
+      channels.push_back(channel);
+  }
+  return channels;
+}
+
 int cChannelManager::GetNextGroup(unsigned int index) const
 {
   CLockObject lock(m_mutex);

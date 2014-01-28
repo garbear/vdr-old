@@ -13,9 +13,8 @@
 #include <time.h>
 #include "Config.h"
 #include "devices/Device.h"
-#include "channels/Channel.h"
+#include "channels/ChannelManager.h"
 
-class cChannelManager;
 class cTransponderList;
 
 class cScanData
@@ -51,22 +50,26 @@ private:
 class cTransponderList;
 
 class cEITScanner {
+public:
+  cEITScanner(void);
+  virtual ~cEITScanner();
+  void AddTransponder(ChannelPtr Channel);
+  void ForceScan(void);
+  void Process(void);
+
 private:
+  void CreateScanList(void);
+  bool ScanDevice(DevicePtr device);
+  void SaveLastChannels(void);
+  bool SwitchNextTransponder(void);
+
   PLATFORM::CTimeout m_nextTransponderScan;
   PLATFORM::CTimeout m_nextFullScan;
   cScanList*         m_scanList;
   cTransponderList*  m_transponderList;
   bool               m_bScanFinished;
-
-  void CreateScanList(void);
-  bool ScanDevice(DevicePtr device);
-public:
-  cEITScanner(void);
-  ~cEITScanner();
-  void AddTransponder(ChannelPtr Channel);
-  void ForceScan(void);
-  void Process(void);
-  };
+  ChannelVector      m_lastChannels;
+};
 
 extern cEITScanner EITScanner;
 

@@ -133,7 +133,7 @@ bool cSchedules::Save(void)
 
   for (std::vector<SchedulePtr>::iterator it = m_schedules.begin(); it != m_schedules.end(); ++it)
   {
-    if ((*it)->Save(g_setup.EPGDirectory))
+    if ((*it)->Save())
     {
       TiXmlElement tableElement(EPG_XML_ELM_TABLE);
       TiXmlNode* textNode = root->InsertEndChild(tableElement);
@@ -193,7 +193,7 @@ bool cSchedules::Read(void)
     SchedulePtr schedule = AddSchedule(tChannelID::Deserialize(tableElem->GetText()));
     if (schedule)
     {
-      if (schedule->Read(g_setup.EPGDirectory))
+      if (schedule->Read())
         SetModified(schedule);
     }
     tableNode = tableNode->NextSibling(EPG_XML_ELM_TABLE);

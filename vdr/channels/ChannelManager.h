@@ -40,6 +40,7 @@ enum eLastModifiedType
 
 class cScanList;
 class CChannelFilter;
+typedef std::vector<ChannelPtr> ChannelVector;
 
 class cChannelManager : public Observer, public Observable
 {
@@ -109,6 +110,14 @@ public:
   ChannelPtr GetByTransponderID(tChannelID channelID);
 
   /*!
+   * Get all channels that match the given source and transponder
+   * @param iSource The source of the channels
+   * @param iTransponder The transponder of the channels
+   * @return The list of channels for this transponder
+   */
+  ChannelVector GetByTransponder(int iSource, int iTransponder);
+
+  /*!
    * \brief Get next channel group (TODO)
    */
   int GetNextGroup(unsigned int index) const;
@@ -169,7 +178,6 @@ public:
   void CreateChannelGroups(bool automatic);
 
 private:
-  typedef std::vector<ChannelPtr>      ChannelVector;
   typedef std::map<int, ChannelVector> ChannelSidMap;
   PLATFORM::CMutex m_mutex;
 

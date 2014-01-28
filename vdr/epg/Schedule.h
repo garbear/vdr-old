@@ -15,6 +15,7 @@ private:
   bool hasRunning;
   time_t modified;
   time_t presentSeen;
+  time_t saved;
 public:
   cSchedule(tChannelID ChannelID);
   tChannelID ChannelID(void) const { return channelID; }
@@ -39,7 +40,7 @@ public:
   const cEvent *GetFollowingEvent(void) const;
   cEvent *GetEvent(tEventID EventID, time_t StartTime = 0);
   const cEvent *GetEventAround(time_t Time) const;
-  bool Read(const std::string& strDirectory);
-  bool Save(const std::string& strDirectory);
+  bool Read(void);
+  bool Save(void);
   bool Serialise(TiXmlNode *node) const;
   };

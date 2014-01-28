@@ -196,48 +196,72 @@ bool cEITScanner::ScanDevice(DevicePtr device)
         (device->Channel()->MaySwitchTransponder(*Channel) || device->Channel()->ProvidesTransponderExclusively(*Channel)))
     {
       dsyslog("EIT scan: device %d  source  %-8s tp %5d", device->CardIndex(), cSource::ToString(Channel->Source()).c_str(), Channel->Transponder());
-      device->Channel()->SwitchChannel(Channel);
+      bSwitched = device->Channel()->SwitchChannel(Channel);
       ScanData->SetScanned();
-      bSwitched = true;
+      if (bSwitched)
+        m_lastChannels = cChannelManager::Get().GetByTransponder(Channel->Source(), Channel->Transponder());
     }
   }
 
   return bSwitched;
 }
 
+void cEITScanner::SaveLastChannels(void)
+{
+  if (!m_lastChannels.empty())
+  {
+    for (ChannelVector::const_iterator it = m_lastChannels.begin(); it != m_lastChannels.end(); ++it)
+    {
+      SchedulePtr schedule = (*it)->Schedule();
+      if (schedule)
+        schedule->Save();
+    }
+
+    m_lastChannels.clear();
+  }
+}
+
+bool cEITScanner::SwitchNextTransponder(void)
+{
+  for (DeviceVector::const_iterator it = cDeviceManager::Get().Iterator(); cDeviceManager::Get().IteratorHasNext(it); cDeviceManager::Get().IteratorNext(it))
+  {
+    if (*it && (*it)->Channel() && (*it)->Channel()->ProvidesEIT())
+    {
+      if (ScanDevice(*it))
+        return true;
+    }
+  }
+  return false;
+}
+
 void cEITScanner::Process(void)
 {
   if (!m_nextTransponderScan.TimeLeft() && !m_nextFullScan.TimeLeft())
   {
+    SaveLastChannels();
+
     if (m_bScanFinished)
     {
       m_bScanFinished = false;
-      delete m_scanList;
-      m_scanList = NULL;
-      m_nextFullScan.Init(g_setup.EPGScanTimeout * 1000 * 60);
-      dsyslog("EIT scan finished, next scan in %d minutes", g_setup.EPGScanTimeout);
+      bool bFailed = m_scanList->UnscannedTransponders() > 0;
+      SAFE_DELETE(m_scanList);
 
-      cChannelManager::Get().Save();
-      cEpgDataWriter::Get().CreateThread(false);
+      if (!bFailed)
+      {
+        cChannelManager::Get().Save();
+        cEpgDataWriter::Get().CreateThread(false);
+      }
+
+      m_nextFullScan.Init(g_setup.EPGScanTimeout * 1000 * 60);
+      dsyslog("EIT scan %s, next scan in %d minutes", bFailed ? "failed" : "finished", g_setup.EPGScanTimeout);
       return;
     }
 
     CreateScanList();
-    bool AnyDeviceSwitched = false;
 
-    for (DeviceVector::const_iterator it = cDeviceManager::Get().Iterator(); cDeviceManager::Get().IteratorHasNext(it); cDeviceManager::Get().IteratorNext(it))
-    {
-      if (*it && (*it)->Channel() && (*it)->Channel()->ProvidesEIT())
-        AnyDeviceSwitched |= ScanDevice(*it);
-    }
-
-    if (!AnyDeviceSwitched && m_scanList->TotalTransponders() > 0)
-    {
+    if (!SwitchNextTransponder())
       m_bScanFinished = true;
-      if (!AnyDeviceSwitched)
-        m_nextTransponderScan.Init(0);
-    }
-
-    m_nextTransponderScan.Init(SCAN_TRANSPONDER_TIMEOUT_MS);
+    else
+      m_nextTransponderScan.Init(SCAN_TRANSPONDER_TIMEOUT_MS);
   }
 }
