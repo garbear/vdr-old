@@ -23,6 +23,7 @@ public:
   time_t PresentSeen(void) const { return presentSeen; }
   bool PresentSeenWithin(int Seconds) const { return time(NULL) - presentSeen < Seconds; }
   void SetModified(void) { modified = time(NULL); }
+  void SetSaved(void) { saved = modified; }
   void SetPresentSeen(void) { presentSeen = time(NULL); }
   void SetRunningStatus(cEvent *Event, int RunningStatus, cChannel *Channel = NULL);
   void ClrRunningStatus(cChannel *Channel = NULL);

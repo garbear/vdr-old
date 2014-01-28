@@ -10,7 +10,6 @@
 #include "EITScan.h"
 #include <stdlib.h>
 #include "channels/ChannelManager.h"
-#include "epg/EPGDataWriter.h"
 #include "devices/Transfer.h"
 #include "devices/DeviceManager.h"
 #include "devices/subsystems/DeviceChannelSubsystem.h"
@@ -198,27 +197,18 @@ bool cEITScanner::ScanDevice(DevicePtr device)
       dsyslog("EIT scan: device %d  source  %-8s tp %5d", device->CardIndex(), cSource::ToString(Channel->Source()).c_str(), Channel->Transponder());
       bSwitched = device->Channel()->SwitchChannel(Channel);
       ScanData->SetScanned();
-      if (bSwitched)
-        m_lastChannels = cChannelManager::Get().GetByTransponder(Channel->Source(), Channel->Transponder());
     }
   }
 
   return bSwitched;
 }
 
-void cEITScanner::SaveLastChannels(void)
+void cEITScanner::SaveEPGData(void)
 {
-  if (!m_lastChannels.empty())
-  {
-    for (ChannelVector::const_iterator it = m_lastChannels.begin(); it != m_lastChannels.end(); ++it)
-    {
-      SchedulePtr schedule = (*it)->Schedule();
-      if (schedule)
-        schedule->Save();
-    }
-
-    m_lastChannels.clear();
-  }
+  cSchedulesLock SchedulesLock(true);
+  cSchedules *s = SchedulesLock.Get();
+  if (s)
+    s->Save();
 }
 
 bool cEITScanner::SwitchNextTransponder(void)
@@ -238,7 +228,7 @@ void cEITScanner::Process(void)
 {
   if (!m_nextTransponderScan.TimeLeft() && !m_nextFullScan.TimeLeft())
   {
-    SaveLastChannels();
+    SaveEPGData();
 
     if (m_bScanFinished)
     {
@@ -249,7 +239,7 @@ void cEITScanner::Process(void)
       if (!bFailed)
       {
         cChannelManager::Get().Save();
-        cEpgDataWriter::Get().CreateThread(false);
+        SaveEPGData();
       }
 
       m_nextFullScan.Init(g_setup.EPGScanTimeout * 1000 * 60);

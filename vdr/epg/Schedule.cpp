@@ -212,7 +212,10 @@ void cSchedule::Cleanup(time_t Time)
   while ((Event = events.First()) != NULL)
   {
     if (!Event->HasTimer() && Event->EndTime() + g_setup.EPGLinger * 60 + 3600 < Time) // adding one hour for safety
+    {
+      modified = time(NULL);
       DelEvent(Event);
+    }
     else
       break;
   }
@@ -256,6 +259,8 @@ bool cSchedule::Read(void)
 bool cSchedule::Save(void)
 {
   assert(!g_setup.EPGDirectory.empty());
+
+  Cleanup();
 
   if (saved == modified)
     return true;

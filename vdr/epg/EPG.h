@@ -41,7 +41,6 @@ public:
 
   static time_t Modified(void);
   void SetModified(SchedulePtr Schedule);
-  void Cleanup(bool Force = false);
   void ResetVersions(void);
   bool ClearAll(void);
   void CleanTables(void);
@@ -61,7 +60,6 @@ private:
   cSchedules(void);
 
   PLATFORM::CReadWriteLock  m_rwlock;
-  time_t                    m_lastDump;
   time_t                    m_modified;
   std::vector<SchedulePtr>  m_schedules;
 };

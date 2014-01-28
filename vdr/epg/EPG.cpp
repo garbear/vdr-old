@@ -11,7 +11,6 @@
  */
 
 #include "EPG.h"
-#include "EPGDataWriter.h"
 #include <ctype.h>
 #include <limits.h>
 #include <time.h>
@@ -51,7 +50,6 @@ cSchedules* cSchedulesLock::Get(void) const
 
 cSchedules::cSchedules(void)
 {
-  m_lastDump = time(NULL);
   m_modified = 0;
 }
 
@@ -76,21 +74,6 @@ void cSchedules::SetModified(SchedulePtr Schedule)
 {
   Schedule->SetModified();
   m_modified = time(NULL);
-}
-
-void cSchedules::Cleanup(bool Force)
-{
-  if (Force)
-    m_lastDump = 0;
-  time_t now = time(NULL);
-  if (now - m_lastDump > EPGDATAWRITEDELTA)
-  {
-    if (Force)
-      cEpgDataWriter::Get().Perform();
-    else if (!cEpgDataWriter::Get().IsRunning())
-      cEpgDataWriter::Get().CreateThread();
-    m_lastDump = now;
-  }
 }
 
 void cSchedules::ResetVersions(void)
@@ -194,7 +177,10 @@ bool cSchedules::Read(void)
     if (schedule)
     {
       if (schedule->Read())
+      {
         SetModified(schedule);
+        schedule->SetSaved();
+      }
     }
     tableNode = tableNode->NextSibling(EPG_XML_ELM_TABLE);
   }

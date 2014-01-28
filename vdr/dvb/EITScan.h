@@ -60,7 +60,7 @@ public:
 private:
   void CreateScanList(void);
   bool ScanDevice(DevicePtr device);
-  void SaveLastChannels(void);
+  void SaveEPGData(void);
   bool SwitchNextTransponder(void);
 
   PLATFORM::CTimeout m_nextTransponderScan;
@@ -68,7 +68,6 @@ private:
   cScanList*         m_scanList;
   cTransponderList*  m_transponderList;
   bool               m_bScanFinished;
-  ChannelVector      m_lastChannels;
 };
 
 extern cEITScanner EITScanner;

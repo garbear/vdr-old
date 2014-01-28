@@ -140,7 +140,6 @@ set(VDR_SRCS
 	vdr/epg/Components.cpp
 	vdr/epg/EPG.cpp
 	vdr/epg/EPGDataReader.cpp
-	vdr/epg/EPGDataWriter.cpp
 	vdr/epg/EPGHandler.cpp
 	vdr/epg/EPGHandlers.cpp
 	vdr/epg/Event.cpp
