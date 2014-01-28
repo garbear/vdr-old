@@ -220,13 +220,14 @@ void cSchedules::DelSchedule(SchedulePtr schedule)
 
 SchedulePtr cSchedules::AddSchedule(const tChannelID& ChannelID)
 {
-  //ChannelID.ClrRid();
-  SchedulePtr schedule = GetSchedule(ChannelID);
+  tChannelID id(ChannelID);
+  id.ClrRid();
+  SchedulePtr schedule = GetSchedule(id);
   if (!schedule)
   {
-    schedule = SchedulePtr(new cSchedule(ChannelID));
+    schedule = SchedulePtr(new cSchedule(id));
     m_schedules.push_back(schedule);
-    ChannelPtr channel = cChannelManager::Get().GetByChannelID(ChannelID);
+    ChannelPtr channel = cChannelManager::Get().GetByChannelID(id);
     if (channel)
       channel->SetSchedule(schedule);
     m_bHasUnsavedData = true;
@@ -236,10 +237,14 @@ SchedulePtr cSchedules::AddSchedule(const tChannelID& ChannelID)
 
 SchedulePtr cSchedules::GetSchedule(const tChannelID& ChannelID)
 {
-  //ChannelID.ClrRid();
+  tChannelID id(ChannelID);
+  tChannelID checkId;
+  id.ClrRid();
   for (std::vector<SchedulePtr>::iterator it = m_schedules.begin(); it != m_schedules.end(); ++it)
   {
-    if ((*it)->ChannelID() == ChannelID)
+    checkId = (*it)->ChannelID();
+    checkId.ClrRid();
+    if (checkId == id)
       return *it;
   }
   return EmptySchedule;
