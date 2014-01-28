@@ -252,11 +252,11 @@ bool cSettings::LoadFromCmdLine(int argc, char *argv[])
       return CutRecording(optarg);
     // filesize
     case 'f' | 0x100:
-      Setup.MaxVideoFileSize = StrToNum(optarg) / MEGABYTE(1);
-      if (Setup.MaxVideoFileSize < MINVIDEOFILESIZE)
-        Setup.MaxVideoFileSize = MINVIDEOFILESIZE;
-      if (Setup.MaxVideoFileSize > MAXVIDEOFILESIZETS)
-        Setup.MaxVideoFileSize = MAXVIDEOFILESIZETS;
+      g_setup.MaxVideoFileSize = StrToNum(optarg) / MEGABYTE(1);
+      if (g_setup.MaxVideoFileSize < MINVIDEOFILESIZE)
+        g_setup.MaxVideoFileSize = MINVIDEOFILESIZE;
+      if (g_setup.MaxVideoFileSize > MAXVIDEOFILESIZETS)
+        g_setup.MaxVideoFileSize = MAXVIDEOFILESIZETS;
       break;
     // genindex
     case 'g' | 0x100:
@@ -332,7 +332,7 @@ bool cSettings::LoadFromCmdLine(int argc, char *argv[])
       break;
     // split
     case 's' | 0x100:
-      Setup.SplitEditedFiles = 1;
+      g_setup.SplitEditedFiles = 1;
       break;
     // user
     case 'u':

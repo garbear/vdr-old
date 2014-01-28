@@ -117,10 +117,10 @@ void cSchedules::CleanTables(void)
 
 bool cSchedules::Save(void)
 {
-  assert(!Setup.EPGDirectory.empty());
+  assert(!g_setup.EPGDirectory.empty());
   bool bReturn(true);
 
-  isyslog("saving EPG data to '%s'", Setup.EPGDirectory.c_str());
+  isyslog("saving EPG data to '%s'", g_setup.EPGDirectory.c_str());
 
   CXBMCTinyXML xmlDoc;
   TiXmlDeclaration *decl = new TiXmlDeclaration("1.0", "", "");
@@ -133,7 +133,7 @@ bool cSchedules::Save(void)
 
   for (std::vector<SchedulePtr>::iterator it = m_schedules.begin(); it != m_schedules.end(); ++it)
   {
-    if ((*it)->Save(Setup.EPGDirectory))
+    if ((*it)->Save(g_setup.EPGDirectory))
     {
       TiXmlElement tableElement(EPG_XML_ELM_TABLE);
       TiXmlNode* textNode = root->InsertEndChild(tableElement);
@@ -151,7 +151,7 @@ bool cSchedules::Save(void)
 
   if (bReturn)
   {
-    std::string strFilename = Setup.EPGDirectory + "/epg.xml";
+    std::string strFilename = g_setup.EPGDirectory + "/epg.xml";
     if (!xmlDoc.SafeSaveFile(strFilename))
     {
       esyslog("failed to save the EPG data: could not write to '%s'", strFilename.c_str());
@@ -164,12 +164,12 @@ bool cSchedules::Save(void)
 
 bool cSchedules::Read(void)
 {
-  assert(!Setup.EPGDirectory.empty());
+  assert(!g_setup.EPGDirectory.empty());
 
-  isyslog("reading EPG data from '%s'", Setup.EPGDirectory.c_str());
+  isyslog("reading EPG data from '%s'", g_setup.EPGDirectory.c_str());
 
   CXBMCTinyXML xmlDoc;
-  std::string strFilename = Setup.EPGDirectory + "/epg.xml";
+  std::string strFilename = g_setup.EPGDirectory + "/epg.xml";
   if (!xmlDoc.LoadFile(strFilename.c_str()))
   {
     esyslog("failed to open '%s'", strFilename.c_str());
@@ -193,7 +193,7 @@ bool cSchedules::Read(void)
     SchedulePtr schedule = AddSchedule(tChannelID::Deserialize(tableElem->GetText()));
     if (schedule)
     {
-      if (schedule->Read(Setup.EPGDirectory))
+      if (schedule->Read(g_setup.EPGDirectory))
         SetModified(schedule);
     }
     tableNode = tableNode->NextSibling(EPG_XML_ELM_TABLE);

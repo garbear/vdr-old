@@ -85,7 +85,7 @@ bool cDvbChannelSubsystem::ProvidesTransponder(const cChannel &channel) const
   if (dtp.Modulation() == PSK_8    && !GetDevice<cDvbDevice>()->m_dvbTuner.HasCapability(FE_CAN_TURBO_FEC) && dtp.System() == SYS_DVBS) return false;
 
   if (!cSource::IsSat(channel.Source()) ||
-      (!Setup.DiSEqC || Diseqcs.Get(Device()->CardIndex() + 1, channel.Source(), channel.FrequencyKHz(), dtp.Polarization(), NULL)))
+      (!g_setup.DiSEqC || Diseqcs.Get(Device()->CardIndex() + 1, channel.Source(), channel.FrequencyKHz(), dtp.Polarization(), NULL)))
     return true; // TODO: Previous this checked to see if any devices provided a transponder for the channel
   return false;
 }

@@ -211,7 +211,7 @@ void cSchedule::Cleanup(time_t Time)
   cEvent *Event;
   while ((Event = events.First()) != NULL)
   {
-    if (!Event->HasTimer() && Event->EndTime() + Setup.EPGLinger * 60 + 3600 < Time) // adding one hour for safety
+    if (!Event->HasTimer() && Event->EndTime() + g_setup.EPGLinger * 60 + 3600 < Time) // adding one hour for safety
       DelEvent(Event);
     else
       break;

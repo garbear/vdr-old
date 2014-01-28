@@ -214,8 +214,8 @@ void cEITScanner::Process(void)
       m_bScanFinished = false;
       delete m_scanList;
       m_scanList = NULL;
-      m_nextFullScan.Init(Setup.EPGScanTimeout * 1000 * 60);
-      dsyslog("EIT scan finished, next scan in %d minutes", Setup.EPGScanTimeout);
+      m_nextFullScan.Init(g_setup.EPGScanTimeout * 1000 * 60);
+      dsyslog("EIT scan finished, next scan in %d minutes", g_setup.EPGScanTimeout);
 
       cChannelManager::Get().Save();
       cEpgDataWriter::Get().CreateThread(false);

@@ -373,7 +373,11 @@ bool cSetupLine::Save(FILE *f)
 
 // --- cSetup ----------------------------------------------------------------
 
-cSetup Setup;
+cSetup& cSetup::Get(void)
+{
+  static cSetup _instance;
+  return _instance;
+}
 
 cSetup::cSetup(void)
 {

@@ -252,7 +252,7 @@ void cPatFilter::Process(u_short Pid, u_char Tid, const u_char *Data, int Length
                       }
                       break;
               case 0x80: // STREAMTYPE_USER_PRIVATE
-                      if (Setup.StandardCompliance == STANDARD_ANSISCTE) { // DigiCipher II VIDEO (ANSI/SCTE 57)
+                      if (g_setup.StandardCompliance == STANDARD_ANSISCTE) { // DigiCipher II VIDEO (ANSI/SCTE 57)
                          Vpid = esPid;
                          Ppid = pmt.getPCRPid();
                          Vtype = 0x02; // compression based upon MPEG-2
@@ -261,7 +261,7 @@ void cPatFilter::Process(u_short Pid, u_char Tid, const u_char *Data, int Length
                          }
                       // fall through
               case 0x81: // STREAMTYPE_USER_PRIVATE
-                      if (Setup.StandardCompliance == STANDARD_ANSISCTE) { // ATSC A/53 AUDIO (ANSI/SCTE 57)
+                      if (g_setup.StandardCompliance == STANDARD_ANSISCTE) { // ATSC A/53 AUDIO (ANSI/SCTE 57)
                          char lang[MAXLANGCODE1] = { 0 };
                          SI::Descriptor *d;
                          for (SI::Loop::Iterator it; (d = stream.streamDescriptors.getNext(it)); ) {
@@ -286,7 +286,7 @@ void cPatFilter::Process(u_short Pid, u_char Tid, const u_char *Data, int Length
                          }
                       // fall through
               case 0x82: // STREAMTYPE_USER_PRIVATE
-                      if (Setup.StandardCompliance == STANDARD_ANSISCTE) { // STANDARD SUBTITLE (ANSI/SCTE 27)
+                      if (g_setup.StandardCompliance == STANDARD_ANSISCTE) { // STANDARD SUBTITLE (ANSI/SCTE 27)
                          //TODO
                          break;
                          }
@@ -340,7 +340,7 @@ void cPatFilter::Process(u_short Pid, u_char Tid, const u_char *Data, int Length
                    }
                }
             }
-        if (Setup.UpdateChannels >= 2) {
+        if (g_setup.UpdateChannels >= 2) {
            Channel->SetPids(Vpid, Ppid, Vtype, Apids, Atypes, ALangs, Dpids, Dtypes, DLangs, Spids, SLangs, Tpid);
            Channel->SetCaIds(CaDescriptors->CaIds().data());
            Channel->SetSubtitlingDescriptors(SubtitlingTypes, CompositionPageIds, AncillaryPageIds);

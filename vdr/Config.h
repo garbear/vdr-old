@@ -332,12 +332,15 @@ public:
   std::string DeviceBondings;
   std::string EPGDirectory;
 
-  cSetup(void);
+  static cSetup& Get(void);
   cSetup& operator= (const cSetup &s);
   bool Load(const char *FileName);
   bool Save(void);
-  };
 
-extern cSetup Setup;
+private:
+  cSetup(void);
+};
+
+#define g_setup cSetup::Get()
 
 #endif //__CONFIG_H

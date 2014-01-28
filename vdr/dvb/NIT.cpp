@@ -189,7 +189,7 @@ cNitFilter::Process(u_short Pid, u_char Tid, const u_char *Data, int Length)
             }
             break;
           }
-          if (Setup.UpdateChannels >= 5)
+          if (g_setup.UpdateChannels >= 5)
           {
             bool found = false;
             bool forceTransponderUpdate = false;
@@ -241,7 +241,7 @@ cNitFilter::Process(u_short Pid, u_char Tid, const u_char *Data, int Length)
         break;
       case SI::S2SatelliteDeliverySystemDescriptorTag:
         {
-          if (Setup.UpdateChannels >= 5)
+          if (g_setup.UpdateChannels >= 5)
           {
             std::vector<ChannelPtr> channels =
                 cChannelManager::Get().GetCurrent();
@@ -296,7 +296,7 @@ cNitFilter::Process(u_short Pid, u_char Tid, const u_char *Data, int Length)
             }
             break;
           }
-          if (Setup.UpdateChannels >= 5)
+          if (g_setup.UpdateChannels >= 5)
           {
             bool found = false;
             bool forceTransponderUpdate = false;
@@ -390,7 +390,7 @@ cNitFilter::Process(u_short Pid, u_char Tid, const u_char *Data, int Length)
             }
             break;
           }
-          if (Setup.UpdateChannels >= 5)
+          if (g_setup.UpdateChannels >= 5)
           {
             bool found = false;
             bool forceTransponderUpdate = false;
@@ -445,7 +445,7 @@ cNitFilter::Process(u_short Pid, u_char Tid, const u_char *Data, int Length)
             {
           case SI::T2DeliverySystemDescriptorTag:
             {
-              if (Setup.UpdateChannels >= 5)
+              if (g_setup.UpdateChannels >= 5)
               {
                 std::vector<ChannelPtr> channels =
                     cChannelManager::Get().GetCurrent();
