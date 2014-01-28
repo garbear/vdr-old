@@ -1038,14 +1038,14 @@ bool cEvent::Serialise(TiXmlElement* element) const
       AddEventElement(eventNodeElement, EPG_XML_ELM_DESCRIPTION, description);
     if (contents[0])
     {
-      TiXmlElement contentsElement(EPG_XML_ELM_CONTENTS);
-      TiXmlNode* contentsNode = eventNodeElement->InsertEndChild(contentsElement);
-      if (contentsNode)
+      for (int i = 0; Contents(i); i++)
       {
-        TiXmlElement* contentsElem = contentsNode->ToElement();
-        if (contentsElem)
+        TiXmlElement contentsElement(EPG_XML_ELM_CONTENTS);
+        TiXmlNode* contentsNode = eventNodeElement->InsertEndChild(contentsElement);
+        if (contentsNode)
         {
-          for (int i = 0; Contents(i); i++)
+          TiXmlElement* contentsElem = contentsNode->ToElement();
+          if (contentsElem)
           {
             TiXmlText* text = new TiXmlText(StringUtils::Format("%u", Contents(i)));
             if (text)
