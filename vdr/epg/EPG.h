@@ -48,6 +48,7 @@ public:
   bool Save(void);
   bool Read(void);
   SchedulePtr AddSchedule(const tChannelID& ChannelID);
+  void DelSchedule(SchedulePtr schedule);
   SchedulePtr GetSchedule(const tChannelID& ChannelID);
   SchedulePtr GetSchedule(ChannelPtr Channel, bool AddIfMissing = false);
   std::vector<SchedulePtr> GetUpdatedSchedules(const std::map<int, time_t>& lastUpdated, CChannelFilter& filter);
@@ -62,6 +63,7 @@ private:
   PLATFORM::CReadWriteLock  m_rwlock;
   time_t                    m_modified;
   std::vector<SchedulePtr>  m_schedules;
+  bool                      m_bHasUnsavedData;
 };
 
 void ReportEpgBugFixStats(bool Force = false);

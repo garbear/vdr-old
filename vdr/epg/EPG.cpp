@@ -51,6 +51,7 @@ cSchedules* cSchedulesLock::Get(void) const
 cSchedules::cSchedules(void)
 {
   m_modified = 0;
+  m_bHasUnsavedData = false;
 }
 
 cSchedules::~cSchedules(void)
@@ -88,6 +89,7 @@ bool cSchedules::ClearAll(void)
     Timer->SetEvent(NULL);
   for (std::vector<SchedulePtr>::iterator it = m_schedules.begin(); it != m_schedules.end(); ++it)
     (*it)->Cleanup(INT_MAX);
+  m_bHasUnsavedData = false;
   return true;
 }
 
@@ -102,6 +104,13 @@ bool cSchedules::Save(void)
 {
   assert(!g_setup.EPGDirectory.empty());
   bool bReturn(true);
+
+  if (!m_bHasUnsavedData)
+  {
+    for (std::vector<SchedulePtr>::iterator it = m_schedules.begin(); it != m_schedules.end(); ++it)
+      (*it)->Save();
+    return true;
+  }
 
   isyslog("saving EPG data to '%s'", g_setup.EPGDirectory.c_str());
 
@@ -139,6 +148,10 @@ bool cSchedules::Save(void)
     {
       esyslog("failed to save the EPG data: could not write to '%s'", strFilename.c_str());
       return false;
+    }
+    else
+    {
+      m_bHasUnsavedData = false;
     }
   }
 
@@ -181,10 +194,28 @@ bool cSchedules::Read(void)
         SetModified(schedule);
         schedule->SetSaved();
       }
+      else
+      {
+        DelSchedule(schedule);
+      }
     }
     tableNode = tableNode->NextSibling(EPG_XML_ELM_TABLE);
   }
+
   return true;
+}
+
+void cSchedules::DelSchedule(SchedulePtr schedule)
+{
+  for (std::vector<SchedulePtr>::iterator it = m_schedules.begin(); it != m_schedules.end(); ++it)
+  {
+    if ((*it)->ChannelID() == schedule->ChannelID())
+    {
+      m_bHasUnsavedData = true;
+      m_schedules.erase(it);
+      return;
+    }
+  }
 }
 
 SchedulePtr cSchedules::AddSchedule(const tChannelID& ChannelID)
@@ -198,6 +229,7 @@ SchedulePtr cSchedules::AddSchedule(const tChannelID& ChannelID)
     ChannelPtr channel = cChannelManager::Get().GetByChannelID(ChannelID);
     if (channel)
       channel->SetSchedule(schedule);
+    m_bHasUnsavedData = true;
   }
   return schedule;
 }
