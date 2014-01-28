@@ -296,15 +296,6 @@ private:
 public:
   // Also adjust cMenuSetup (menu.c) when adding parameters here!
   int __BeginData__;
-//  char OSDLanguage[I18N_MAX_LOCALE_LEN];
-//  char OSDSkin[MaxSkinName];
-//  char OSDTheme[MaxThemeName];
-  int PrimaryDVB;
-//  int ShowInfoOnChSwitch;
-  int TimeoutRequChInfo;
-//  int MenuScrollPage;
-//  int MenuScrollWrap;
-//  int MenuKeyCloses;
   int MarkInstantRecord;
   char NameInstantRecord[NAME_MAX + 1];
   int InstantRecordTime;
@@ -317,70 +308,29 @@ public:
   int TimeTransponder;
   int StandardCompliance;
   int MarginStart, MarginStop;
-  int AudioLanguages[I18N_MAX_LANGUAGES + 1];
-  int DisplaySubtitles;
-  int SubtitleLanguages[I18N_MAX_LANGUAGES + 1];
-//  int SubtitleOffset;
-//  int SubtitleFgTransparency, SubtitleBgTransparency;
   int EPGLanguages[I18N_MAX_LANGUAGES + 1];
   int EPGScanTimeout;
   int EPGBugfixLevel;
   int EPGLinger;
-  int SVDRPTimeout;
-  int ZapTimeout;
-  int ChannelEntryTimeout;
-  int RcRepeatDelay;
-  int RcRepeatDelta;
   int DefaultPriority, DefaultLifetime;
   int PausePriority, PauseLifetime;
-  int PauseKeyHandling;
   int UseSubtitle;
   int UseVps;
   int VpsMargin;
-  int RecordingDirs;
-  int FoldersInTimerMenu;
   int AlwaysSortFoldersFirst;
-  int NumberKeysForChars;
-  int ColorKey0, ColorKey1, ColorKey2, ColorKey3;
-  int VideoDisplayFormat;
-  int VideoFormat;
+  int VideoDisplayFormat;//XXX remove?
+  int VideoFormat;//XXX remove?
   int UpdateChannels;
-  int UseDolbyDigital;
-//  int ChannelInfoPos;
-//  int ChannelInfoTime;
-//  double OSDLeftP, OSDTopP, OSDWidthP, OSDHeightP;
-//  int OSDLeft, OSDTop, OSDWidth, OSDHeight;
-//  double OSDAspect;
-//  int OSDMessageTime;
-//  int UseSmallFont;
-//  int AntiAlias;
-//  char FontOsd[MAXFONTNAME];
-//  char FontSml[MAXFONTNAME];
-//  char FontFix[MAXFONTNAME];
-//  double FontOsdSizeP;
-//  double FontSmlSizeP;
-//  double FontFixSizeP;
-//  int FontOsdSize;
-//  int FontSmlSize;
-//  int FontFixSize;
+  int UseDolbyDigital;//XXX remove?
   int MaxVideoFileSize;
   int SplitEditedFiles;
-  int DelTimeshiftRec;
   int MinEventTimeout, MinUserInactivity;
   time_t NextWakeupTime;
-  int MultiSpeedMode;
-  int ShowReplayMode;
-  int ShowRemainingTime;
-  int ProgressDisplayTime;
-  int PauseOnMarkSet;
-  int ResumeID;
-  int CurrentChannel;
-  int ChannelsWrap;
-//  int ShowChannelNamesWithSource;
+  int ResumeID;//XXX remove?
   int EmergencyExit;
   int __EndData__;
-  cString InitialChannel;
   cString DeviceBondings;
+
   cSetup(void);
   cSetup& operator= (const cSetup &s);
   bool Load(const char *FileName);
