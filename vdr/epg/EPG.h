@@ -39,7 +39,6 @@ class cSchedules
 public:
   virtual ~cSchedules(void);
 
-  static void SetDataDirectory(const char* strDirectory);
   static time_t Modified(void);
   void SetModified(SchedulePtr Schedule);
   void Cleanup(bool Force = false);
@@ -61,10 +60,9 @@ protected:
 private:
   cSchedules(void);
 
-  PLATFORM::CReadWriteLock m_rwlock;
-  std::string              m_strDirectory;
-  time_t                   m_lastDump;
-  time_t                   m_modified;
+  PLATFORM::CReadWriteLock  m_rwlock;
+  time_t                    m_lastDump;
+  time_t                    m_modified;
   std::vector<SchedulePtr>  m_schedules;
 };
 

@@ -330,6 +330,7 @@ public:
   int EmergencyExit;
   int __EndData__;
   std::string DeviceBondings;
+  std::string EPGDirectory;
 
   cSetup(void);
   cSetup& operator= (const cSetup &s);

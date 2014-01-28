@@ -65,18 +65,6 @@ cSchedules& cSchedules::Get(void)
   return _instance;
 }
 
-void cSchedules::SetDataDirectory(const char *FileName)
-{
-  cSchedulesLock lock(true);
-  cSchedules* schedules = lock.Get();
-  if (schedules)
-  {
-    schedules->m_strDirectory = FileName ? FileName : "";
-    dsyslog("EPG directory: %s", schedules->m_strDirectory.c_str());
-    cEpgDataWriter::Get().SetDump(!schedules->m_strDirectory.empty());
-  }
-}
-
 time_t cSchedules::Modified(void)
 {
   cSchedulesLock lock(true);
@@ -129,10 +117,10 @@ void cSchedules::CleanTables(void)
 
 bool cSchedules::Save(void)
 {
-  assert(!m_strDirectory.empty());
+  assert(!Setup.EPGDirectory.empty());
   bool bReturn(true);
 
-  isyslog("saving EPG data to '%s'", m_strDirectory.c_str());
+  isyslog("saving EPG data to '%s'", Setup.EPGDirectory.c_str());
 
   CXBMCTinyXML xmlDoc;
   TiXmlDeclaration *decl = new TiXmlDeclaration("1.0", "", "");
@@ -145,7 +133,7 @@ bool cSchedules::Save(void)
 
   for (std::vector<SchedulePtr>::iterator it = m_schedules.begin(); it != m_schedules.end(); ++it)
   {
-    if ((*it)->Save(m_strDirectory))
+    if ((*it)->Save(Setup.EPGDirectory))
     {
       TiXmlElement tableElement(EPG_XML_ELM_TABLE);
       TiXmlNode* textNode = root->InsertEndChild(tableElement);
@@ -163,7 +151,7 @@ bool cSchedules::Save(void)
 
   if (bReturn)
   {
-    std::string strFilename = m_strDirectory + "/epg.xml";
+    std::string strFilename = Setup.EPGDirectory + "/epg.xml";
     if (!xmlDoc.SafeSaveFile(strFilename))
     {
       esyslog("failed to save the EPG data: could not write to '%s'", strFilename.c_str());
@@ -176,12 +164,12 @@ bool cSchedules::Save(void)
 
 bool cSchedules::Read(void)
 {
-  assert(!m_strDirectory.empty());
+  assert(!Setup.EPGDirectory.empty());
 
-  isyslog("reading EPG data from '%s'", m_strDirectory.c_str());
+  isyslog("reading EPG data from '%s'", Setup.EPGDirectory.c_str());
 
   CXBMCTinyXML xmlDoc;
-  std::string strFilename = m_strDirectory + "/epg.xml";
+  std::string strFilename = Setup.EPGDirectory + "/epg.xml";
   if (!xmlDoc.LoadFile(strFilename.c_str()))
   {
     esyslog("failed to open '%s'", strFilename.c_str());
@@ -205,7 +193,7 @@ bool cSchedules::Read(void)
     SchedulePtr schedule = AddSchedule(tChannelID::Deserialize(tableElem->GetText()));
     if (schedule)
     {
-      if (schedule->Read(m_strDirectory))
+      if (schedule->Read(Setup.EPGDirectory))
         SetModified(schedule);
     }
     tableNode = tableNode->NextSibling(EPG_XML_ELM_TABLE);

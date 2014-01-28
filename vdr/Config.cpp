@@ -413,6 +413,7 @@ cSetup::cSetup(void)
   NextWakeupTime = 0;
   ResumeID = 0;
   EmergencyExit = 1;
+  EPGDirectory = "special://home/epg";
 }
 
 cSetup& cSetup::operator= (const cSetup &s)
@@ -552,6 +553,7 @@ bool cSetup::Parse(const char *Name, const char *Value)
   else if (!strcasecmp(Name, "ResumeID"))            ResumeID           = atoi(Value);
   else if (!strcasecmp(Name, "DeviceBondings"))      DeviceBondings     = Value;
   else if (!strcasecmp(Name, "EmergencyExit"))       EmergencyExit      = atoi(Value);
+  else if (!strcasecmp(Name, "EPGDirectory"))        EPGDirectory       = Value;
   else
      return false;
   return true;
@@ -594,6 +596,7 @@ bool cSetup::Save(void)
   Store("ResumeID",           ResumeID);
   Store("DeviceBondings",     DeviceBondings.c_str());
   Store("EmergencyExit",      EmergencyExit);
+  Store("EPGDirectory",       EPGDirectory.c_str());
 
   Sort();
 
