@@ -4,7 +4,6 @@
 
 cEpgDataWriter::cEpgDataWriter(void)
 {
-  dump = false;
 }
 
 cEpgDataWriter& cEpgDataWriter::Get(void)
@@ -27,8 +26,6 @@ void cEpgDataWriter::Perform(void)
   if (s)
   {
     s->CleanTables();
-
-    if (dump)
-      s->Save();
+    s->Save();
   }
 }

@@ -6,7 +6,6 @@ class cEpgDataWriter : public PLATFORM::CThread
 {
 public:
   static cEpgDataWriter& Get(void);
-  void SetDump(bool Dump) { dump = Dump; }
   void Perform(void);
 
 protected:
@@ -16,5 +15,4 @@ private:
   cEpgDataWriter(void);
 
   PLATFORM::CMutex mutex;
-  bool             dump;
 };
