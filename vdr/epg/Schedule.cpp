@@ -14,6 +14,7 @@ cSchedule::cSchedule(tChannelID ChannelID)
   hasRunning  = false;
   modified    = 0;
   presentSeen = 0;
+  saved       = 0;
 }
 
 cEvent *cSchedule::AddEvent(cEvent *Event)
