@@ -119,7 +119,7 @@ public:
    * A bonding is a sequence of device numbers (starting at 1), separated by '+'
    * characters. Several bondings are separated by commas, as in "1+2,3+4+5".
    */
-  static bool BondDevices(const char *bondings);
+  static bool BondDevices(const std::string& bondings);
 
   /*!
    * \brief Unbonds all devices

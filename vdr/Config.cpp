@@ -64,11 +64,11 @@ bool cSVDRPhost::Accepts(in_addr_t Address)
 
 // --- cSatCableNumbers ------------------------------------------------------
 
-cSatCableNumbers::cSatCableNumbers(int Size, const char *s)
+cSatCableNumbers::cSatCableNumbers(int Size, const std::string& bindings)
 {
   size = Size;
   array = MALLOC(int, size);
-  FromString(s);
+  FromString(bindings.c_str());
 }
 
 cSatCableNumbers::~cSatCableNumbers()
@@ -412,7 +412,6 @@ cSetup::cSetup(void)
   MinUserInactivity = 300;
   NextWakeupTime = 0;
   ResumeID = 0;
-  DeviceBondings = "";
   EmergencyExit = 1;
 }
 
@@ -593,7 +592,7 @@ bool cSetup::Save(void)
   Store("MinUserInactivity",  MinUserInactivity);
   Store("NextWakeupTime",     NextWakeupTime);
   Store("ResumeID",           ResumeID);
-  Store("DeviceBondings",     DeviceBondings);
+  Store("DeviceBondings",     DeviceBondings.c_str());
   Store("EmergencyExit",      EmergencyExit);
 
   Sort();

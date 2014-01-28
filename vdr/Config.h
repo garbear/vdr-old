@@ -104,7 +104,7 @@ private:
   int size;
   int *array;
 public:
-  cSatCableNumbers(int Size, const char *s = NULL);
+  cSatCableNumbers(int Size, const std::string& bindings);
   ~cSatCableNumbers();
   int Size(void) const { return size; }
   int *Array(void) { return array; }
@@ -329,7 +329,7 @@ public:
   int ResumeID;//XXX remove?
   int EmergencyExit;
   int __EndData__;
-  cString DeviceBondings;
+  std::string DeviceBondings;
 
   cSetup(void);
   cSetup& operator= (const cSetup &s);

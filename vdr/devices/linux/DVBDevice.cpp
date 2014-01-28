@@ -348,12 +348,12 @@ bool cDvbDevice::BondingOk(const cChannel &channel, bool bConsiderOccupied) cons
   return true;
 }
 
-bool cDvbDevice::BondDevices(const char *bondings)
+bool cDvbDevice::BondDevices(const std::string& bondings)
 {
   UnBondDevices();
-  if (bondings)
+  if (!bondings.empty())
   {
-    cSatCableNumbers SatCableNumbers(MAXDEVICES, bondings);
+    cSatCableNumbers SatCableNumbers(MAXDEVICES, bondings.c_str());
     for (int i = 0; i < cDeviceManager::Get().NumDevices(); i++)
     {
       int d = SatCableNumbers.FirstDeviceIndex(i);
@@ -379,7 +379,7 @@ bool cDvbDevice::BondDevices(const char *bondings)
 
             if (ErrorDevice)
             {
-              esyslog("ERROR: device '%d' in device bondings '%s' is not a cDvbDevice", ErrorDevice, bondings);
+              esyslog("ERROR: device '%d' in device bondings '%s' is not a cDvbDevice", ErrorDevice, bondings.c_str());
               return false;
             }
           }
@@ -391,7 +391,7 @@ bool cDvbDevice::BondDevices(const char *bondings)
 
         if (ErrorDevice)
         {
-          esyslog("ERROR: unknown device '%d' in device bondings '%s'", ErrorDevice, bondings);
+          esyslog("ERROR: unknown device '%d' in device bondings '%s'", ErrorDevice, bondings.c_str());
           return false;
         }
       }
