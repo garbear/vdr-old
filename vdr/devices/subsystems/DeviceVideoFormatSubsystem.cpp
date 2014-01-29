@@ -35,7 +35,7 @@ void cDeviceVideoFormatSubsystem::SetVideoDisplayFormat(eVideoDisplayFormat vide
   cSpuDecoder *spuDecoder = SPU()->GetSpuDecoder();
   if (spuDecoder)
   {
-    if (g_setup.VideoFormat)
+    if (cSetup::Get().VideoFormat)
       spuDecoder->setScaleMode(cSpuDecoder::eSpuNormal);
     else
     {

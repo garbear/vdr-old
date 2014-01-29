@@ -77,11 +77,11 @@ public:
   void SetUserInactiveTimeout(int Seconds = -1, bool Force = false);
        ///< Set the time in the future when VDR will switch into non-interactive mode or power down.
        ///< Seconds >= 0 means that many seconds in the future.
-       ///< Seconds = -1 means Setup.MinUserInactivity in the future.
+       ///< Seconds = -1 means cSetup::Get().MinUserInactivity in the future.
        ///< Seconds = -2 means never.
        ///< Seconds = -3 means a long, unknown time ago.
-       ///< Setup.MinUserInactivity = 0 will overrule this, unless Force = true is given.
-       ///< If Setup.MinUserInactivity = 0 and Force = false, Seconds is ignored and VDR will
+       ///< cSetup::Get().MinUserInactivity = 0 will overrule this, unless Force = true is given.
+       ///< If cSetup::Get().MinUserInactivity = 0 and Force = false, Seconds is ignored and VDR will
        ///< stay interactive forever (like Seconds = -2).
   void SetUserInactive(void) { SetUserInactiveTimeout(0, true); }
        ///< Set VDR manually into non-interactive mode from now on.

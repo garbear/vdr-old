@@ -58,7 +58,7 @@ size_t cDeviceManager::Initialise(void)
   dsyslog("initialising DVB devices");
 
   DeviceVector devices = cDvbDevice::FindDevices();
-  cDvbDevice::BondDevices(g_setup.DeviceBondings);
+  cDvbDevice::BondDevices(cSetup::Get().DeviceBondings);
   dsyslog("%u DVB devices found", devices.size());
 
   for (DeviceVector::iterator it = devices.begin(); it != devices.end(); ++it)

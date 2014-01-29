@@ -134,9 +134,9 @@ cVDRDaemon2::~cVDRDaemon2(void)
   SourceParams.Clear();
   if (ShutdownHandler.GetExitCode() != 2)
   {
-    Setup.CurrentChannel = cDevice::CurrentChannel();
-    Setup.CurrentVolume = cDevice::CurrentVolume();
-    Setup.Save();
+    cSetup::Get().CurrentChannel = cDevice::CurrentChannel();
+    cSetup::Get().CurrentVolume = cDevice::CurrentVolume();
+    cSetup::Get().Save();
   }
   cDevice::Shutdown();
   EpgHandlers.Clear();
@@ -222,10 +222,10 @@ bool cVDRDaemon2::Init(void)
   cThemes::SetThemesDirectory(AddDirectory(m_settings.m_ConfigDirectory.c_str(), "themes"));
 
   // Configuration data:
-  Setup.Load(AddDirectory(m_settings.m_ConfigDirectory.c_str(), "setup.conf"));
+  cSetup::Get().Load(AddDirectory(m_settings.m_ConfigDirectory.c_str(), "setup.conf"));
   Sources.Load(AddDirectory(m_settings.m_ConfigDirectory.c_str(), "sources.conf"), true, true);
   Diseqcs.Load(AddDirectory(m_settings.m_ConfigDirectory.c_str(), "diseqc.conf"), true,
-      Setup.DiSEqC);
+      cSetup::Get().DiSEqC);
   Scrs.Load(AddDirectory(m_settings.m_ConfigDirectory.c_str(), "scr.conf"), true);
   Channels.Load(AddDirectory(m_settings.m_ConfigDirectory.c_str(), "channels.conf"), false, true);
   Timers.Load(AddDirectory(m_settings.m_ConfigDirectory.c_str(), "timers.conf"));
@@ -236,7 +236,7 @@ bool cVDRDaemon2::Init(void)
   KeyMacros.Load(AddDirectory(m_settings.m_ConfigDirectory.c_str(), "keymacros.conf"), true);
   Folders.Load(AddDirectory(m_settings.m_ConfigDirectory.c_str(), "folders.conf"));
 
-  if (!*cFont::GetFontFileName(Setup.FontOsd))
+  if (!*cFont::GetFontFileName(cSetup::Get().FontOsd))
   {
     const char *msg = "no fonts available - OSD will not show any text!";
     fprintf(stderr, "vdr: %s\n", msg);
@@ -269,14 +269,14 @@ bool cVDRDaemon2::Init(void)
 
   // DVB interfaces:
   cDvbDevice::Initialize();
-  cDvbDevice::BondDevices(Setup.DeviceBondings);
+  cDvbDevice::BondDevices(cSetup::Get().DeviceBondings);
 
   // Initialize plugins:
   if (!m_settings.m_pluginManager->InitializePlugins())
     return false;
 
   // Primary device:
-  cDevice::SetPrimaryDevice(Setup.PrimaryDVB);
+  cDevice::SetPrimaryDevice(cSetup::Get().PrimaryDVB);
   if (!cDevice::PrimaryDevice() || !cDevice::PrimaryDevice()->HasDecoder())
   {
     if (cDevice::PrimaryDevice() && !cDevice::PrimaryDevice()->HasDecoder())
@@ -290,7 +290,7 @@ bool cVDRDaemon2::Init(void)
         isyslog("trying device number %d instead", i + 1);
         if (cDevice::SetPrimaryDevice(i + 1))
         {
-          Setup.PrimaryDVB = i + 1;
+          cSetup::Get().PrimaryDVB = i + 1;
           break;
         }
       }
@@ -322,8 +322,8 @@ bool cVDRDaemon2::Init(void)
   new cSkinLCARS;
   new cSkinSTTNG;
   new cSkinClassic;
-  Skins.SetCurrent(Setup.OSDSkin);
-  cThemes::Load(Skins.Current()->Name(), Setup.OSDTheme,
+  Skins.SetCurrent(cSetup::Get().OSDSkin);
+  cThemes::Load(Skins.Current()->Name(), cSetup::Get().OSDTheme,
       Skins.Current()->Theme());
   m_CurrentSkin = Skins.Current();
 
@@ -334,10 +334,10 @@ bool cVDRDaemon2::Init(void)
   // Set skin and theme in case they're implemented by a plugin:
   if (!m_CurrentSkin
       || (m_CurrentSkin == Skins.Current()
-          && strcmp(Skins.Current()->Name(), Setup.OSDSkin) != 0))
+          && strcmp(Skins.Current()->Name(), cSetup::Get().OSDSkin) != 0))
   {
-    Skins.SetCurrent(Setup.OSDSkin);
-    cThemes::Load(Skins.Current()->Name(), Setup.OSDTheme,
+    Skins.SetCurrent(cSetup::Get().OSDSkin);
+    cThemes::Load(Skins.Current()->Name(), cSetup::Get().OSDTheme,
         Skins.Current()->Theme());
   }
 
@@ -358,24 +358,24 @@ bool cVDRDaemon2::Init(void)
   // Channel:
   if (!cDevice::WaitForAllDevicesReady(DEVICEREADYTIMEOUT))
     dsyslog("not all devices ready after %d seconds", DEVICEREADYTIMEOUT);
-  if (*Setup.InitialChannel)
+  if (*cSetup::Get().InitialChannel)
   {
-    if (is_number(Setup.InitialChannel))
+    if (is_number(cSetup::Get().InitialChannel))
     { // for compatibility with old setup.conf files
-      if (cChannel *Channel = Channels.GetByNumber(atoi(Setup.InitialChannel)))
-        Setup.InitialChannel = Channel->GetChannelID().ToString();
+      if (cChannel *Channel = Channels.GetByNumber(atoi(cSetup::Get().InitialChannel)))
+        cSetup::Get().InitialChannel = Channel->GetChannelID().ToString();
     }
     if (cChannel *Channel = Channels.GetByChannelID(
-        tChannelID::FromString(Setup.InitialChannel)))
-      Setup.CurrentChannel = Channel->Number();
+        tChannelID::FromString(cSetup::Get().InitialChannel)))
+      cSetup::Get().CurrentChannel = Channel->Number();
   }
-  if (Setup.InitialVolume >= 0)
-    Setup.CurrentVolume = Setup.InitialVolume;
-  Channels.SwitchTo(Setup.CurrentChannel);
+  if (cSetup::Get().InitialVolume >= 0)
+    cSetup::Get().CurrentVolume = cSetup::Get().InitialVolume;
+  Channels.SwitchTo(cSetup::Get().CurrentChannel);
   if (m_settings.m_MuteAudio)
     cDevice::PrimaryDevice()->ToggleMute();
   else
-    cDevice::PrimaryDevice()->SetVolume(Setup.CurrentVolume, true);
+    cDevice::PrimaryDevice()->SetVolume(cSetup::Get().CurrentVolume, true);
   return true;
 }
 
@@ -491,7 +491,7 @@ bool cVDRDaemon2::Iterate(void)
     m_LastChannel = cDevice::CurrentChannel();
     m_LastChannelChanged = Now;
   }
-  if (Now - m_LastChannelChanged >= Setup.ZapTimeout
+  if (Now - m_LastChannelChanged >= cSetup::Get().ZapTimeout
       && m_LastChannel != m_PreviousChannel[m_PreviousChannelIndex])
     m_PreviousChannel[m_PreviousChannelIndex ^= 1] = m_LastChannel;
   // Timers and Recordings:
@@ -524,7 +524,7 @@ bool cVDRDaemon2::Iterate(void)
         {
           if (Timer->HasFlags(tfVps))
           {
-            if (Timer->Matches(Now, true, Setup.VpsMargin))
+            if (Timer->Matches(Now, true, cSetup::Get().VpsMargin))
             {
               InVpsMargin = true;
               Timer->SetInVpsMargin(InVpsMargin);
@@ -709,7 +709,7 @@ bool cVDRDaemon2::HandleInput(time_t Now)
         else
           WasOpen = false;
       }
-      if (!WasOpen || (!WasMenu && !Setup.MenuKeyCloses))
+      if (!WasOpen || (!WasMenu && !cSetup::Get().MenuKeyCloses))
         m_Menu = new cMenuMain;
     }
     break;
@@ -870,9 +870,9 @@ bool cVDRDaemon2::HandleInput(time_t Now)
       m_IsInfoMenu &= (m_Menu == NULL);
       delete m_Menu;
       m_Menu = NULL;
-      if (Setup.PauseKeyHandling)
+      if (cSetup::Get().PauseKeyHandling)
       {
-        if (Setup.PauseKeyHandling > 1
+        if (cSetup::Get().PauseKeyHandling > 1
             || Interface->Confirm(tr("Pause live video?")))
         {
           if (!cRecordControls::PauseLiveVideo())
@@ -991,7 +991,7 @@ bool cVDRDaemon2::HandleInput(time_t Now)
       m_Menu = NULL;
       cControl::Shutdown();
       Skins.QueueMessage(mtInfo, tr("Switching primary DVB..."));
-      cDevice::SetPrimaryDevice(Setup.PrimaryDVB);
+      cDevice::SetPrimaryDevice(cSetup::Get().PrimaryDVB);
       break;
     case osPlugin:
       m_IsInfoMenu &= (m_Menu == NULL);

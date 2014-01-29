@@ -560,7 +560,7 @@ static void EpgBugFixStat(int Number, tChannelID ChannelID)
 
 void ReportEpgBugFixStats(bool Force)
 {
-  if (g_setup.EPGBugfixLevel > 0)
+  if (cSetup::Get().EPGBugfixLevel > 0)
   {
     static time_t LastReport = 0;
     time_t now = time(NULL);
@@ -663,7 +663,7 @@ void cEvent::FixEpgBugs(void)
      EpgBugFixStat(12, ChannelID());
      }
 
-  if (g_setup.EPGBugfixLevel == 0)
+  if (cSetup::Get().EPGBugfixLevel == 0)
      goto Final;
 
   // Some TV stations apparently have their own idea about how to fill in the
@@ -747,7 +747,7 @@ void cEvent::FixEpgBugs(void)
     }
   }
 
-  if (g_setup.EPGBugfixLevel <= 1)
+  if (cSetup::Get().EPGBugfixLevel <= 1)
     goto Final;
 
   // Some channels apparently try to do some formatting in the texts,
@@ -798,7 +798,7 @@ void cEvent::FixEpgBugs(void)
   strreplace(shortText, '`', '\'');
   strreplace(description, '`', '\'');
 
-  if (g_setup.EPGBugfixLevel <= 2)
+  if (cSetup::Get().EPGBugfixLevel <= 2)
      goto Final;
 
   // The stream components have a "description" field which some channels
@@ -1015,7 +1015,7 @@ bool cEvent::Serialise(TiXmlElement* element) const
 {
   assert(element);
 
-  if (startTime + duration + g_setup.EPGLinger * 60 >= time(NULL))
+  if (startTime + duration + cSetup::Get().EPGLinger * 60 >= time(NULL))
   {
     TiXmlElement eventElement(EPG_XML_ELM_EVENT);
     TiXmlNode *eventNode = element->InsertEndChild(eventElement);

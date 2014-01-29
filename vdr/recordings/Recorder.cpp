@@ -94,7 +94,7 @@ bool cRecorder::RunningLowOnDiskSpace(void)
 bool cRecorder::NextFile(void)
 {
   if (recordFile && frameDetector->IndependentFrame()) { // every file shall start with an independent frame
-     if (fileSize > MEGABYTE(off_t(g_setup.MaxVideoFileSize)) || RunningLowOnDiskSpace()) {
+     if (fileSize > MEGABYTE(off_t(cSetup::Get().MaxVideoFileSize)) || RunningLowOnDiskSpace()) {
         recordFile = fileName->NextFile();
         fileSize = 0;
         }

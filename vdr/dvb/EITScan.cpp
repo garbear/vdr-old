@@ -242,8 +242,8 @@ void cEITScanner::Process(void)
         SaveEPGData();
       }
 
-      m_nextFullScan.Init(g_setup.EPGScanTimeout * 1000 * 60);
-      dsyslog("EIT scan %s, next scan in %d minutes", bFailed ? "failed" : "finished", g_setup.EPGScanTimeout);
+      m_nextFullScan.Init(cSetup::Get().EPGScanTimeout * 1000 * 60);
+      dsyslog("EIT scan %s, next scan in %d minutes", bFailed ? "failed" : "finished", cSetup::Get().EPGScanTimeout);
       return;
     }
 

@@ -295,7 +295,7 @@ cCuttingThread::cCuttingThread(const char *FromFileName, const char *ToFileName)
         fromIndex = new cIndexFile(FromFileName, false, isPesRecording);
         toIndex = new cIndexFile(ToFileName, true, isPesRecording);
         toMarks.Load(ToFileName, framesPerSecond, isPesRecording); // doesn't actually load marks, just sets the file name
-        maxVideoFileSize = MEGABYTE(g_setup.MaxVideoFileSize);
+        maxVideoFileSize = MEGABYTE(cSetup::Get().MaxVideoFileSize);
         if (isPesRecording && maxVideoFileSize > MEGABYTE(MAXVIDEOFILESIZEPES))
            maxVideoFileSize = MEGABYTE(MAXVIDEOFILESIZEPES);
         CreateThread();
@@ -632,7 +632,7 @@ void* cCuttingThread::Process(void)
            BeginMark = fromMarks.GetNextBegin(EndMark);
            if (BeginMark) {
               // Split edited files:
-              if (g_setup.SplitEditedFiles) {
+              if (cSetup::Get().SplitEditedFiles) {
                  if (!SwitchFile(true))
                     break;
                  }

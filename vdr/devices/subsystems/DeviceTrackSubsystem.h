@@ -123,7 +123,7 @@ public:
   /*!
    * \brief Makes sure one of the preferred language subtitle tracks is selected
    *
-   * Only has an effect if Setup.DisplaySubtitles is on.
+   * Only has an effect if cSetup::Get().DisplaySubtitles is on.
    */
   void EnsureSubtitleTrack();
 
