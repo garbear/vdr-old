@@ -889,7 +889,7 @@ bool cDvbTuner::SetFrontend()
   else if (m_frontendType == SYS_DVBC_ANNEX_AC || m_frontendType == SYS_DVBC_ANNEX_B)
   {
     // DVB-C
-    SETCMD(DTV_FREQUENCY, FrequencyToHz(m_channel.FrequencyKHz()));
+    SETCMD(DTV_FREQUENCY, m_channel.FrequencyHz());
     SETCMD(DTV_INVERSION, dtp.Inversion());
     SETCMD(DTV_SYMBOL_RATE, m_channel.Srate() * 1000UL);
     SETCMD(DTV_INNER_FEC, dtp.CoderateH());
@@ -901,7 +901,7 @@ bool cDvbTuner::SetFrontend()
   else if (m_frontendType == SYS_DVBT || m_frontendType == SYS_DVBT2)
   {
     // DVB-T/DVB-T2 (common parts)
-    SETCMD(DTV_FREQUENCY, FrequencyToHz(m_channel.FrequencyKHz()));
+    SETCMD(DTV_FREQUENCY, m_channel.FrequencyHz());
     SETCMD(DTV_INVERSION, dtp.Inversion());
     SETCMD(DTV_BANDWIDTH_HZ, dtp.Bandwidth());
     SETCMD(DTV_CODE_RATE_HP, dtp.CoderateH());
@@ -925,7 +925,7 @@ bool cDvbTuner::SetFrontend()
   else if (m_frontendType == SYS_ATSC)
   {
     // ATSC
-    SETCMD(DTV_FREQUENCY, FrequencyToHz(m_channel.FrequencyKHz()));
+    SETCMD(DTV_FREQUENCY, m_channel.FrequencyHz());
     SETCMD(DTV_INVERSION, dtp.Inversion());
     SETCMD(DTV_MODULATION, dtp.Modulation());
 
@@ -946,11 +946,4 @@ bool cDvbTuner::SetFrontend()
     return false;
   }
   return true;
-}
-
-unsigned int cDvbTuner::FrequencyToHz(unsigned int f)
-{
-  while (f && f < 1000000)
-    f *= 1000;
-  return f;
 }

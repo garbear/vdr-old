@@ -96,8 +96,6 @@ private:
   void ResetToneAndVoltage();
   bool SetFrontend();
 
-  static unsigned int FrequencyToHz(unsigned int f);
-
   enum eTunerStatus
   {
     tsIdle,
