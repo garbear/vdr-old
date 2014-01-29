@@ -334,6 +334,8 @@ void *cDvbTuner::Process()
         }
         continue;
       }
+      if (GetFrontendStatus(NewStatus))
+        Status = NewStatus;
       WaitTime = 100; // allows for a quick change from tsTuned to tsLocked
       // no break (TODO: Garrett's comment, not original)
     case tsLocked:
