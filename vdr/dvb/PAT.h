@@ -25,7 +25,7 @@ private:
   int numPmtEntries;
   bool PmtVersionChanged(int PmtPid, int Sid, int Version);
 protected:
-  virtual void Process(u_short Pid, u_char Tid, const u_char *Data, int Length);
+  virtual void ProcessData(u_short Pid, u_char Tid, const u_char *Data, int Length);
 public:
   cPatFilter(void);
   virtual void SetStatus(bool On);

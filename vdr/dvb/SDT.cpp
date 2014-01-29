@@ -29,7 +29,7 @@ void cSdtFilter::SetStatus(bool On)
   sectionSyncer.Reset();
 }
 
-void cSdtFilter::Process(u_short Pid, u_char Tid, const u_char *Data, int Length)
+void cSdtFilter::ProcessData(u_short Pid, u_char Tid, const u_char *Data, int Length)
 {
   if (!(Source() && Transponder()))
      return;

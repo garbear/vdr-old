@@ -34,7 +34,7 @@ private:
   ChannelPtr      m_Channel;
   cVideoInput    *m_VideoInput;
 
-  virtual void Process(u_short Pid, u_char Tid, const u_char *Data, int Length);
+  virtual void ProcessData(u_short Pid, u_char Tid, const u_char *Data, int Length);
 
 public:
   cLivePatFilter(cVideoInput *VideoInput, ChannelPtr Channel);

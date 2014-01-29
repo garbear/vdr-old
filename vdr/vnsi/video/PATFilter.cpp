@@ -37,7 +37,7 @@ cLivePatFilter::cLivePatFilter(cVideoInput *VideoInput, ChannelPtr Channel)
   Set(0x00, 0x00);  // PAT
 }
 
-void cLivePatFilter::Process(u_short Pid, u_char Tid, const u_char *Data, int Length)
+void cLivePatFilter::ProcessData(u_short Pid, u_char Tid, const u_char *Data, int Length)
 {
   if (Pid == 0x00)
   {

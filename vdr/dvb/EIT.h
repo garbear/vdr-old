@@ -16,7 +16,7 @@ class cEitFilter : public cFilter {
 private:
   static time_t disableUntil;
 protected:
-  virtual void Process(u_short Pid, u_char Tid, const u_char *Data, int Length);
+  virtual void ProcessData(u_short Pid, u_char Tid, const u_char *Data, int Length);
 public:
   cEitFilter(void);
   static void SetDisableUntil(time_t Time);

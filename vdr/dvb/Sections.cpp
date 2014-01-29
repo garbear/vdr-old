@@ -245,7 +245,7 @@ cSectionHandler::Process(void)
                 for (cFilter *fi = m_filters.First(); fi; fi = m_filters.Next(fi))
                 {
                   if (fi->Matches(pid, tid))
-                    fi->Process(pid, tid, buf, len);
+                    fi->ProcessData(pid, tid, buf, len);
                 }
               }
               else if (time(NULL) - m_lastIncompleteSection > 10)

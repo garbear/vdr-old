@@ -36,7 +36,7 @@ cNitFilter::SetStatus(bool On)
 }
 
 void
-cNitFilter::Process(u_short Pid, u_char Tid, const u_char *Data, int Length)
+cNitFilter::ProcessData(u_short Pid, u_char Tid, const u_char *Data, int Length)
 {
   SI::NIT nit(Data, false);
   if (!nit.CheckCRCAndParse())

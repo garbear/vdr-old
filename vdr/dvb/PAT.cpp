@@ -66,7 +66,7 @@ bool cPatFilter::PmtVersionChanged(int PmtPid, int Sid, int Version)
   return true;
 }
 
-void cPatFilter::Process(u_short Pid, u_char Tid, const u_char *Data, int Length)
+void cPatFilter::ProcessData(u_short Pid, u_char Tid, const u_char *Data, int Length)
 {
   if (Pid == 0x00) {
      if (Tid == 0x00) {

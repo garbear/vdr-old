@@ -536,7 +536,7 @@ void cEitFilter::SetDisableUntil(time_t Time)
   disableUntil = Time;
 }
 
-void cEitFilter::Process(u_short Pid, u_char Tid, const u_char *Data, int Length)
+void cEitFilter::ProcessData(u_short Pid, u_char Tid, const u_char *Data, int Length)
 {
   if (disableUntil) {
      if (time(NULL) > disableUntil)

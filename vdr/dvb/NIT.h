@@ -33,7 +33,7 @@ private:
   u_short networkId;
   int numNits;
 protected:
-  virtual void Process(u_short Pid, u_char Tid, const u_char *Data, int Length);
+  virtual void ProcessData(u_short Pid, u_char Tid, const u_char *Data, int Length);
 public:
   cNitFilter(void);
   virtual void SetStatus(bool On);

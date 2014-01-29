@@ -56,7 +56,7 @@ protected:
        ///< automatically deleted. Those parameters that have been added
        ///< with Sticky set to 'true' will be automatically reused when
        ///< SetStatus(true) is called.
-  virtual void Process(u_short Pid, u_char Tid, const u_char *Data, int Length) = 0;
+  virtual void ProcessData(u_short Pid, u_char Tid, const u_char *Data, int Length) = 0;
        ///< Processes the data delivered to this filter.
        ///< Pid and Tid is one of the combinations added to this filter by
        ///< a previous call to Add(), Data is a pointer to Length bytes of

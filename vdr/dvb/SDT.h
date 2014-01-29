@@ -18,7 +18,7 @@ private:
   cSectionSyncer sectionSyncer;
   cPatFilter *patFilter;
 protected:
-  virtual void Process(u_short Pid, u_char Tid, const u_char *Data, int Length);
+  virtual void ProcessData(u_short Pid, u_char Tid, const u_char *Data, int Length);
 public:
   cSdtFilter(cPatFilter *PatFilter);
   virtual void SetStatus(bool On);
