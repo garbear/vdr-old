@@ -118,7 +118,11 @@ bool cVDRDaemon::Init()
   m_EpgDataReader = new cEpgDataReader;
   m_EpgDataReader->CreateThread(false);
 
-  cDeviceManager::Get().Initialise();
+  if (cDeviceManager::Get().Initialise() == 0)
+  {
+    esyslog("no devices detected, exiting");
+    return false;
+  }
 
   m_server = new cVNSIServer(cSettings::Get().m_ListenPort);
 
