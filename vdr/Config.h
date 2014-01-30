@@ -341,4 +341,6 @@ private:
   cSetup(void);
 };
 
+#define g_setup cSetup::Get()
+
 #endif //__CONFIG_H

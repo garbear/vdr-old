@@ -307,7 +307,7 @@ void cDevicePlayerSubsystem::Detach(cPlayer *player)
     p->device = NULL;
     PLATFORM::CLockObject lock(Track()->m_mutexCurrentSubtitleTrack);
     SetPlayMode(pmNone);
-    VideoFormat()->SetVideoDisplayFormat(eVideoDisplayFormat(cSetup::Get().VideoDisplayFormat));
+    VideoFormat()->SetVideoDisplayFormat(eVideoDisplayFormat(g_setup.VideoDisplayFormat));
     PlayTs(vector<uchar>());
     m_patPmtParser.Reset();
     m_bIsPlayingVideo = false;
@@ -380,7 +380,7 @@ pre_1_3_19_PrivateStreamDetected:
             w = PlaySubtitle(vecStart);
           break;
         case 0x80: // AC3 & DTS
-          if (cSetup::Get().UseDolbyDigital)
+          if (g_setup.UseDolbyDigital)
           {
             Track()->SetAvailableTrack(ttDolby, SubStreamIndex, SubStreamId);
             if ((!bVideoOnly || HasIBPTrickSpeed()) && SubStreamId == Track()->m_availableTracks[Track()->m_currentAudioTrack].id)

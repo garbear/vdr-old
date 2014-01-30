@@ -98,7 +98,7 @@ cShutdownHandler::~cShutdownHandler()
 
 void cShutdownHandler::RequestEmergencyExit(void)
 {
-  if (cSetup::Get().EmergencyExit) {
+  if (g_setup.EmergencyExit) {
      esyslog("initiating emergency exit");
      emergencyExitRequested = true;
      Exit(1);
@@ -109,9 +109,9 @@ void cShutdownHandler::RequestEmergencyExit(void)
 
 void cShutdownHandler::CheckManualStart(int ManualStart)
 {
-  time_t Delta = cSetup::Get().NextWakeupTime ? cSetup::Get().NextWakeupTime - time(NULL) : 0;
+  time_t Delta = g_setup.NextWakeupTime ? g_setup.NextWakeupTime - time(NULL) : 0;
 
-  if (!cSetup::Get().NextWakeupTime || abs(Delta) > ManualStart) {
+  if (!g_setup.NextWakeupTime || abs(Delta) > ManualStart) {
      // Apparently the user started VDR manually
      dsyslog("assuming manual start of VDR");
      // Set inactive after MinUserInactivity
@@ -139,21 +139,21 @@ void cShutdownHandler::CallShutdownCommand(time_t WakeupTime, int Channel, const
   if (!WIFEXITED(Status) || WEXITSTATUS(Status))
      esyslog("SystemExec() failed with status %d", Status);
   else {
-     cSetup::Get().NextWakeupTime = WakeupTime; // Remember this wakeup time for comparison on reboot
-     cSetup::Get().Save();
+     g_setup.NextWakeupTime = WakeupTime; // Remember this wakeup time for comparison on reboot
+     g_setup.Save();
      }
 }
 
 void cShutdownHandler::SetUserInactiveTimeout(int Seconds, bool Force)
 {
-  if (!cSetup::Get().MinUserInactivity && !Force) {
+  if (!g_setup.MinUserInactivity && !Force) {
      activeTimeout = 0;
      return;
      }
   if (Seconds >= 0)
      activeTimeout = time(NULL) + Seconds;
   else if (Seconds == -1)
-     activeTimeout = time(NULL) + cSetup::Get().MinUserInactivity * 60;
+     activeTimeout = time(NULL) + g_setup.MinUserInactivity * 60;
   else if (Seconds == -2)
      activeTimeout = 0;
   else if (Seconds == -3)
@@ -182,7 +182,7 @@ bool cShutdownHandler::ConfirmShutdown(bool Interactive)
 //        return false;
 //     }
 //  else
-    if (Next && Delta <= cSetup::Get().MinEventTimeout * 60) {
+    if (Next && Delta <= g_setup.MinEventTimeout * 60) {
      // Timer within Min Event Timeout
      if (!Interactive)
         return false;
@@ -197,7 +197,7 @@ bool cShutdownHandler::ConfirmShutdown(bool Interactive)
 //  cPlugin *Plugin = cPluginManager::GetNextWakeupPlugin();
 //  Next = Plugin ? Plugin->WakeupTime() : 0;
 //  Delta = Next ? Next - time(NULL) : 0;
-//  if (Next && Delta <= cSetup::Get().MinEventTimeout * 60) {
+//  if (Next && Delta <= g_setup.MinEventTimeout * 60) {
 //     // Plugin wakeup within Min Event Timeout
 //     if (!Interactive)
 //        return false;
@@ -246,10 +246,10 @@ bool cShutdownHandler::DoShutdown(bool Force)
 //     }
   time_t Delta = Next ? Next - Now : 0;
 
-  if (Next && Delta < cSetup::Get().MinEventTimeout * 60) {
+  if (Next && Delta < g_setup.MinEventTimeout * 60) {
      if (!Force)
         return false;
-     Delta = cSetup::Get().MinEventTimeout * 60;
+     Delta = g_setup.MinEventTimeout * 60;
      Next = Now + Delta;
      timer = NULL;
      dsyslog("reboot at %s", CalendarUtils::TimeToString(Next).c_str());

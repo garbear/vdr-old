@@ -102,7 +102,7 @@ void cSchedules::CleanTables(void)
 
 bool cSchedules::Save(void)
 {
-  assert(!cSetup::Get().EPGDirectory.empty());
+  assert(!g_setup.EPGDirectory.empty());
   bool bReturn(true);
 
   if (!m_bHasUnsavedData)
@@ -112,7 +112,7 @@ bool cSchedules::Save(void)
     return true;
   }
 
-  isyslog("saving EPG data to '%s'", cSetup::Get().EPGDirectory.c_str());
+  isyslog("saving EPG data to '%s'", g_setup.EPGDirectory.c_str());
 
   CXBMCTinyXML xmlDoc;
   TiXmlDeclaration *decl = new TiXmlDeclaration("1.0", "", "");
@@ -143,7 +143,7 @@ bool cSchedules::Save(void)
 
   if (bReturn)
   {
-    std::string strFilename = cSetup::Get().EPGDirectory + "/epg.xml";
+    std::string strFilename = g_setup.EPGDirectory + "/epg.xml";
     if (!xmlDoc.SafeSaveFile(strFilename))
     {
       esyslog("failed to save the EPG data: could not write to '%s'", strFilename.c_str());
@@ -160,12 +160,12 @@ bool cSchedules::Save(void)
 
 bool cSchedules::Read(void)
 {
-  assert(!cSetup::Get().EPGDirectory.empty());
+  assert(!g_setup.EPGDirectory.empty());
 
-  isyslog("reading EPG data from '%s'", cSetup::Get().EPGDirectory.c_str());
+  isyslog("reading EPG data from '%s'", g_setup.EPGDirectory.c_str());
 
   CXBMCTinyXML xmlDoc;
-  std::string strFilename = cSetup::Get().EPGDirectory + "/epg.xml";
+  std::string strFilename = g_setup.EPGDirectory + "/epg.xml";
   if (!xmlDoc.LoadFile(strFilename.c_str()))
   {
     esyslog("failed to open '%s'", strFilename.c_str());

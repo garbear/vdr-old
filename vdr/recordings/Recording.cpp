@@ -238,7 +238,7 @@ cResumeFile::cResumeFile(const char *FileName, bool IsPesRecording)
   fileName = MALLOC(char, strlen(FileName) + strlen(Suffix) + 1);
   if (fileName) {
      strcpy(fileName, FileName);
-     sprintf(fileName + strlen(fileName), Suffix, cSetup::Get().ResumeID ? "." : "", cSetup::Get().ResumeID ? *itoa(cSetup::Get().ResumeID) : "");
+     sprintf(fileName + strlen(fileName), Suffix, g_setup.ResumeID ? "." : "", g_setup.ResumeID ? *itoa(g_setup.ResumeID) : "");
      }
   else
      esyslog("ERROR: can't allocate memory for resume file name");
@@ -780,7 +780,7 @@ cRecording::cRecording(cTimer *Timer, const cEvent *Event)
         Timers.SetModified();
         }
      }
-  else if (Timer->IsSingleEvent() || !cSetup::Get().UseSubtitle)
+  else if (Timer->IsSingleEvent() || !g_setup.UseSubtitle)
      name = strdup(Timer->File());
   else
      name = strdup(cString::sprintf("%s~%s", Timer->File(), Subtitle));
@@ -965,7 +965,7 @@ char *cRecording::SortName(void) const
   char **sb = (RecordingsSortMode == rsmName) ? &sortBufferName : &sortBufferTime;
   if (!*sb) {
      char *s = strdup(FileName() + strlen(VideoDirectory));
-     if (RecordingsSortMode != rsmName || cSetup::Get().AlwaysSortFoldersFirst)
+     if (RecordingsSortMode != rsmName || g_setup.AlwaysSortFoldersFirst)
         s = StripEpisodeName(s, RecordingsSortMode != rsmName);
      strreplace(s, '/', '0'); // some locales ignore '/' when sorting
      int l = strxfrm(NULL, s, 0) + 1;

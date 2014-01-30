@@ -212,7 +212,7 @@ void cSchedule::Cleanup(time_t Time)
   cEvent *Event;
   while ((Event = events.First()) != NULL)
   {
-    if (!Event->HasTimer() && Event->EndTime() + cSetup::Get().EPGLinger * 60 + 3600 < Time) // adding one hour for safety
+    if (!Event->HasTimer() && Event->EndTime() + g_setup.EPGLinger * 60 + 3600 < Time) // adding one hour for safety
     {
       modified = time(NULL);
       DelEvent(Event);
@@ -224,10 +224,10 @@ void cSchedule::Cleanup(time_t Time)
 
 bool cSchedule::Read(void)
 {
-  assert(!cSetup::Get().EPGDirectory.empty());
+  assert(!g_setup.EPGDirectory.empty());
 
   CXBMCTinyXML xmlDoc;
-  std::string strFilename = cSetup::Get().EPGDirectory + "/epg_" + channelID.Serialize() + ".xml";
+  std::string strFilename = g_setup.EPGDirectory + "/epg_" + channelID.Serialize() + ".xml";
   if (!xmlDoc.LoadFile(strFilename.c_str()))
   {
     esyslog("failed to open '%s'", strFilename.c_str());
@@ -259,7 +259,7 @@ bool cSchedule::Read(void)
 
 bool cSchedule::Save(void)
 {
-  assert(!cSetup::Get().EPGDirectory.empty());
+  assert(!g_setup.EPGDirectory.empty());
 
   Cleanup();
 
@@ -281,7 +281,7 @@ bool cSchedule::Save(void)
     return false;
   }
 
-  std::string strFilename = cSetup::Get().EPGDirectory + "/epg_" + channelID.Serialize() + ".xml";
+  std::string strFilename = g_setup.EPGDirectory + "/epg_" + channelID.Serialize() + ".xml";
   if (!xmlDoc.SafeSaveFile(strFilename))
   {
     esyslog("failed to save the EPG data: could not write to '%s'", strFilename.c_str());

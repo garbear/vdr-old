@@ -75,7 +75,7 @@ void cEIT::ParseSIDescriptor(SI::Descriptor* d)
     {
       SI::ExtendedEventDescriptor *eed = (SI::ExtendedEventDescriptor *) d;
 
-      if (I18nIsPreferredLanguage(cSetup::Get().EPGLanguages, eed->languageCode, m_iLanguagePreferenceExt) || !m_ExtendedEventDescriptors)
+      if (I18nIsPreferredLanguage(g_setup.EPGLanguages, eed->languageCode, m_iLanguagePreferenceExt) || !m_ExtendedEventDescriptors)
       {
         delete m_ExtendedEventDescriptors;
         m_ExtendedEventDescriptors = new SI::ExtendedEventDescriptors;
@@ -119,7 +119,7 @@ void cEIT::ParseSIDescriptor(SI::Descriptor* d)
   case SI::ShortEventDescriptorTag:
     {
       SI::ShortEventDescriptor *sed = (SI::ShortEventDescriptor *) d;
-      if (I18nIsPreferredLanguage(cSetup::Get().EPGLanguages, sed->languageCode, m_iLanguagePreferenceShort) || !m_ShortEventDescriptor)
+      if (I18nIsPreferredLanguage(g_setup.EPGLanguages, sed->languageCode, m_iLanguagePreferenceShort) || !m_ShortEventDescriptor)
       {
         delete m_ShortEventDescriptor;
         m_ShortEventDescriptor = sed;
@@ -152,7 +152,7 @@ void cEIT::ParseSIDescriptor(SI::Descriptor* d)
      SI::ParentalRatingDescriptor *prd = (SI::ParentalRatingDescriptor *)d;
      SI::ParentalRatingDescriptor::Rating Rating;
      for (SI::Loop::Iterator it3; prd->ratingLoop.getNext(Rating, it3); ) {
-     if (I18nIsPreferredLanguage(cSetup::Get().EPGLanguages, Rating.languageCode, LanguagePreferenceRating)) {
+     if (I18nIsPreferredLanguage(Setup.EPGLanguages, Rating.languageCode, LanguagePreferenceRating)) {
      int ParentalRating = (Rating.getRating() & 0xFF);
      switch (ParentalRating) {
      // values defined by the DVB standard (minimum age = rating + 3 years):
@@ -233,13 +233,13 @@ void cEIT::ParseSIDescriptor(SI::Descriptor* d)
             //fprintf(stderr, "Linkage %s %4d %4d %5d %5d %5d %5d  %02X  '%s'\n", hit ? "*" : "", channel->Number(), link ? link->Number() : -1, SiEitEvent.getEventId(), ld->getOriginalNetworkId(), ld->getTransportStreamId(), ld->getServiceId(), ld->getLinkageType(), linkName);//XXX
             if (link)
             {
-              if (cSetup::Get().UpdateChannels == 1 || cSetup::Get().UpdateChannels >= 3)
+              if (g_setup.UpdateChannels == 1 || g_setup.UpdateChannels >= 3)
               {
                 link->SetName(linkName, "", "");
                 link->NotifyObservers(ObservableMessageChannelChanged);
               }
             }
-            else if (cSetup::Get().UpdateChannels >= 4)
+            else if (g_setup.UpdateChannels >= 4)
             {
               ChannelPtr transponder = m_channel;
               if (m_channel->Tid() != ld->getTransportStreamId())
@@ -567,7 +567,7 @@ void cEitFilter::ProcessData(u_short Pid, u_char Tid, const u_char *Data, int Le
          }
          break;
     case 0x14: {
-         if (cSetup::Get().SetSystemTime && cSetup::Get().TimeSource == Source() && cSetup::Get().TimeTransponder && ISTRANSPONDER(Transponder(), cSetup::Get().TimeTransponder))
+         if (g_setup.SetSystemTime && g_setup.TimeSource == Source() && g_setup.TimeTransponder && ISTRANSPONDER(Transponder(), g_setup.TimeTransponder))
             cTDT TDT(Data);
          }
          break;

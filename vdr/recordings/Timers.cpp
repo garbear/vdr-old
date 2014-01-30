@@ -48,20 +48,20 @@ cTimer::cTimer(bool Instant, bool Pause, ChannelPtr Channel)
   weekdays = 0;
   start = now->tm_hour * 100 + now->tm_min;
   stop = 0;
-  if (!cSetup::Get().InstantRecordTime && channel && (Instant || Pause)) {
+  if (!g_setup.InstantRecordTime && channel && (Instant || Pause)) {
      cSchedulesLock SchedulesLock;
      if (cSchedules *Schedules = SchedulesLock.Get()) {
         if (SchedulePtr Schedule = Schedules->GetSchedule(channel)) {
            if (const cEvent *Event = Schedule->GetPresentEvent()) {
               time_t tstart = Event->StartTime();
               time_t tstop = Event->EndTime();
-              if (Event->Vps() && cSetup::Get().UseVps) {
+              if (Event->Vps() && g_setup.UseVps) {
                  SetFlags(tfVps);
                  tstart = Event->Vps();
                  }
               else {
-                 tstop  += cSetup::Get().MarginStop * 60;
-                 tstart -= cSetup::Get().MarginStart * 60;
+                 tstop  += g_setup.MarginStop * 60;
+                 tstart -= g_setup.MarginStart * 60;
                  }
               day = SetTime(tstart, 0);
               struct tm *time = localtime_r(&tstart, &tm_r);
@@ -74,15 +74,15 @@ cTimer::cTimer(bool Instant, bool Pause, ChannelPtr Channel)
         }
      }
   if (!stop) {
-     stop = now->tm_hour * 60 + now->tm_min + (cSetup::Get().InstantRecordTime ? cSetup::Get().InstantRecordTime : DEFINSTRECTIME);
+     stop = now->tm_hour * 60 + now->tm_min + (g_setup.InstantRecordTime ? g_setup.InstantRecordTime : DEFINSTRECTIME);
      stop = (stop / 60) * 100 + (stop % 60);
      }
   if (stop >= 2400)
      stop -= 2400;
-  priority = Pause ? cSetup::Get().PausePriority : cSetup::Get().DefaultPriority;
-  lifetime = Pause ? cSetup::Get().PauseLifetime : cSetup::Get().DefaultLifetime;
+  priority = Pause ? g_setup.PausePriority : g_setup.DefaultPriority;
+  lifetime = Pause ? g_setup.PauseLifetime : g_setup.DefaultLifetime;
   if (Instant && channel)
-     snprintf(file, sizeof(file), "%s%s", cSetup::Get().MarkInstantRecord ? "@" : "", *cSetup::Get().NameInstantRecord ? cSetup::Get().NameInstantRecord : channel->Name().c_str());
+     snprintf(file, sizeof(file), "%s%s", g_setup.MarkInstantRecord ? "@" : "", *g_setup.NameInstantRecord ? g_setup.NameInstantRecord : channel->Name().c_str());
 }
 
 cTimer::cTimer(const cEvent *Event)
@@ -95,14 +95,14 @@ cTimer::cTimer(const cEvent *Event)
   *file = 0;
   aux = NULL;
   event = NULL;
-  if (Event->Vps() && cSetup::Get().UseVps)
+  if (Event->Vps() && g_setup.UseVps)
      SetFlags(tfVps);
   channel = cChannelManager::Get().GetByChannelID(Event->ChannelID(), true);
   time_t tstart = (flags & tfVps) ? Event->Vps() : Event->StartTime();
   time_t tstop = tstart + Event->Duration();
   if (!(HasFlags(tfVps))) {
-     tstop  += cSetup::Get().MarginStop * 60;
-     tstart -= cSetup::Get().MarginStart * 60;
+     tstop  += g_setup.MarginStop * 60;
+     tstart -= g_setup.MarginStart * 60;
      }
   struct tm tm_r;
   struct tm *time = localtime_r(&tstart, &tm_r);
@@ -113,8 +113,8 @@ cTimer::cTimer(const cEvent *Event)
   stop = time->tm_hour * 100 + time->tm_min;
   if (stop >= 2400)
      stop -= 2400;
-  priority = cSetup::Get().DefaultPriority;
-  lifetime = cSetup::Get().DefaultLifetime;
+  priority = g_setup.DefaultPriority;
+  lifetime = g_setup.DefaultLifetime;
   const char *Title = Event->Title();
   if (!isempty(Title))
     cUtf8Utils::Utf8Strn0Cpy(file, Event->Title(), sizeof(file));

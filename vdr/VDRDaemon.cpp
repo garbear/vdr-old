@@ -72,8 +72,8 @@ bool cVDRDaemon::LoadConfig(void)
   CDirectory::Create("special://home/system/");
   CDirectory::Create("special://home/video/");
 
-  if (!cSetup::Get().Load("special://home/system/setup.conf"))
-    cSetup::Get().Load("special://vdr/system/setup.conf");
+  if (!g_setup.Load("special://home/system/setup.conf"))
+    g_setup.Load("special://vdr/system/setup.conf");
 
 //  if (!Sources.Load("special://home/system/sources.conf"))
 //    Sources.Load("special://vdr/system/sources.conf");
