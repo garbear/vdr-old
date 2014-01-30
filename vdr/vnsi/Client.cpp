@@ -1739,18 +1739,13 @@ bool cVNSIClient::processEPG_GetForChannel() /* OPCODE 120 */
   uint32_t duration       = m_req->extract_U32();
 
   ChannelPtr channel = cChannelManager::Get().GetByChannelUID(channelUID);
-  if(channel != cChannel::EmptyChannel)
-  {
-    dsyslog("get schedule called for channel '%s'", (const char*)channel->Name().c_str());
-  }
-
-  if (channel == cChannel::EmptyChannel)
+  if(!channel)
   {
     m_resp->add_U32(0);
     m_resp->finalise();
     m_socket.write(m_resp->getPtr(), m_resp->getLen());
 
-    esyslog("written 0 because channel = NULL");
+    esyslog("cannot find channel '%d'", channelUID);
     return true;
   }
 
@@ -1763,18 +1758,18 @@ bool cVNSIClient::processEPG_GetForChannel() /* OPCODE 120 */
     m_resp->finalise();
     m_socket.write(m_resp->getPtr(), m_resp->getLen());
 
-    dsyslog("written 0 because Schedule!s! = NULL");
+    dsyslog("cannot write EPG data for channel '%s': cannot acquire a lock", channel->Name().c_str());
     return true;
   }
 
-  SchedulePtr Schedule = Schedules->GetSchedule(channel->GetChannelID());
+  SchedulePtr Schedule = channel->Schedule();
   if (!Schedule)
   {
     m_resp->add_U32(0);
     m_resp->finalise();
     m_socket.write(m_resp->getPtr(), m_resp->getLen());
 
-    dsyslog("written 0 because Schedule = NULL");
+    dsyslog("cannot find EPG data for channel '%s'", channel->Name().c_str());
     return true;
   }
 
@@ -1826,12 +1821,14 @@ bool cVNSIClient::processEPG_GetForChannel() /* OPCODE 120 */
     atLeastOneEvent = true;
   }
 
-  dsyslog("Got all event data");
-
   if (!atLeastOneEvent)
   {
     m_resp->add_U32(0);
-    dsyslog("Written 0 because no data");
+    dsyslog("cannot find EPG data for channel '%s': schedule is empty", channel->Name().c_str());
+  }
+  else
+  {
+    dsyslog("writing EPG data for channel '%s'", channel->Name().c_str());
   }
 
   m_resp->finalise();
@@ -1842,7 +1839,6 @@ bool cVNSIClient::processEPG_GetForChannel() /* OPCODE 120 */
   {
     m_epgUpdate[channelUID] = lastEvent->StartTime();
   }
-  dsyslog("written schedules packet");
 
   return true;
 }
