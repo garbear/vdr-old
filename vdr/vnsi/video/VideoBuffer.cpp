@@ -245,7 +245,6 @@ void cVideoBufferRAM::Put(uint8_t *buf, unsigned int size)
 {
   if (Available() + MARGIN >= m_BufferSize)
   {
-    esyslog("------------- skipping data");
     return;
   }
 
@@ -451,7 +450,6 @@ void cVideoBufferFile::Put(uint8_t *buf, unsigned int size)
 {
   if (Available() + MARGIN >= m_BufferSize)
   {
-    esyslog("------------- skipping data");
     return;
   }
 
