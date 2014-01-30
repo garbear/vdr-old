@@ -106,6 +106,12 @@ int cParserAAC::FindHeaders(uint8_t *buf, int buf_size)
       return -1;
     }
   }
+  else if (buf_ptr[0] == 0xFF && (buf_ptr[1] & 0xF0) == 0xF0)
+  {
+    m_Stream->SetType(stAACADTS);
+    isyslog("cParserAAC::FindHeaders - detected ADTS muxing mode");
+    return -1;
+  }
   else if (m_Stream->Type() == stAACADTS)
   {
     if(buf_ptr[0] == 0xFF && (buf_ptr[1] & 0xF0) == 0xF0)
@@ -137,6 +143,12 @@ int cParserAAC::FindHeaders(uint8_t *buf, int buf_size)
       m_curPTS += 90000 * 1024 / m_SampleRate;
       return -1;
     }
+  }
+  else if (buf_ptr[0] == 0x56 && (buf_ptr[1] & 0xE0) == 0xE0)
+  {
+    m_Stream->SetType(stAACLATM);
+    isyslog("cParserAAC::FindHeaders - detected LATM muxing mode");
+    return -1;
   }
   return 0;
 }
