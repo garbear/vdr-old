@@ -122,6 +122,7 @@ private:
   bool processRecStream_PositionFromFrameNumber();
   bool processRecStream_FrameNumberFromPosition();
   bool processRecStream_GetIFrame();
+  bool processRecStream_GetLength();
 
   bool processCHANNELS_GroupsCount();
   bool processCHANNELS_ChannelsCount();
