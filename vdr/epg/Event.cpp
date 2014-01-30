@@ -1007,7 +1007,19 @@ bool cEvent::Deserialise(cSchedule* schedule, const TiXmlNode *eventNode)
       contentsNode = contentsNode->NextSibling(EPG_XML_ELM_CONTENTS);
     }
 
-    //XXX todo: components
+    const TiXmlNode *componentsNode = elem->FirstChild(EPG_XML_ELM_COMPONENTS);
+    if (componentsNode)
+    {
+      int iPtr(0);
+      const TiXmlNode *componentNode = componentsNode->FirstChild(EPG_XML_ELM_COMPONENTS);
+      while (componentNode != NULL)
+      {
+        const char* num  = componentNode->ToElement()->Attribute(EPG_XML_ATTR_COMPONENT_ID);
+        if (num)
+          event->components->SetComponent((int)StringUtils::IntVal(num), componentNode->ToElement()->GetText());
+        componentNode = componentNode->NextSibling(EPG_XML_ELM_COMPONENT);
+      }
+    }
 
     if (bNewEvent)
       schedule->AddEvent(event);
