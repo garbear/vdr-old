@@ -936,6 +936,7 @@ void AddEventElement(TiXmlElement* eventElement, const std::string& strElement, 
 
 bool cEvent::Deserialise(cSchedule* schedule, const TiXmlNode *eventNode)
 {
+  bool bNewEvent(false);
   cEvent* event(NULL);
   assert(schedule);
   assert(eventNode);
@@ -952,11 +953,13 @@ bool cEvent::Deserialise(cSchedule* schedule, const TiXmlNode *eventNode)
   if (id && start && duration && tableId && version)
   {
     tEventID EventID = (tEventID)StringUtils::IntVal(id);
-    event = schedule->GetEvent(EventID, (time_t)StringUtils::IntVal(start));
+    time_t startTime = (time_t)StringUtils::IntVal(start);
+    event = schedule->GetEvent(EventID, startTime);
     if (!event)
     {
       event = new cEvent(EventID);
-      schedule->AddEvent(event);
+      event->startTime = startTime;
+      bNewEvent = true;
     }
 
     event->duration = (int)StringUtils::IntVal(duration);
@@ -1005,6 +1008,12 @@ bool cEvent::Deserialise(cSchedule* schedule, const TiXmlNode *eventNode)
     }
 
     //XXX todo: components
+
+    if (bNewEvent)
+      schedule->AddEvent(event);
+    else
+      schedule->HashEvent(event);
+
     return true;
   }
 
