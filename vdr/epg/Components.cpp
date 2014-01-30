@@ -54,7 +54,6 @@ CEpgComponent* CEpgComponents::Component(int Index, bool bCreate /* = false */)
   if (bCreate)
   {
     CEpgComponent component;
-    memset(&component, 0, sizeof(CEpgComponent));
     if (Index < 0)
       Index = m_components.size();
     m_components.insert(std::make_pair(Index, component));
