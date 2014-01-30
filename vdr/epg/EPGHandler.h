@@ -44,7 +44,7 @@ public:
   virtual bool SetStartTime(cEvent *Event, time_t StartTime) { return false; }
   virtual bool SetDuration(cEvent *Event, int Duration) { return false; }
   virtual bool SetVps(cEvent *Event, time_t Vps) { return false; }
-  virtual bool SetComponents(cEvent *Event, cComponents *Components) { return false; }
+  virtual bool SetComponents(cEvent *Event, CEpgComponents *Components) { return false; }
   virtual bool FixEpgBugs(cEvent *Event) { return false; }
           ///< Fixes some known problems with EPG data.
   virtual bool HandleEvent(cEvent *Event) { return false; }

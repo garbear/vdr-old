@@ -91,7 +91,7 @@ void cEvent::SetDescription(const char *Description)
   description = strcpyrealloc(description, Description);
 }
 
-void cEvent::SetComponents(cComponents *Components)
+void cEvent::SetComponents(CEpgComponents *Components)
 {
   delete components;
   components = Components;
@@ -513,7 +513,7 @@ bool cEvent::Parse(char *s)
     break;
   case 'X':
     if (!components)
-      components = new cComponents;
+      components = new CEpgComponents;
     components->SetComponent(COMPONENT_ADD_NEW, t);
     break;
   case 'V':
@@ -807,54 +807,54 @@ void cEvent::FixEpgBugs(void)
   {
     for (int i = 0; i < components->NumComponents(); i++)
     {
-      tComponent *p = components->Component(i);
-      switch (p->stream)
+      CEpgComponent *p = components->Component(i);
+      switch (p->Stream())
         {
       case 0x01:
         { // video
-          if (p->description)
+          if (!p->Description().empty())
           {
-            if (strcasecmp(p->description, "Video") == 0
-                || strcasecmp(p->description, "Bildformat") == 0)
+            const char* description = p->Description().c_str();
+            if (strcasecmp(description, "Video") == 0
+                || strcasecmp(description, "Bildformat") == 0)
             {
               // Yes, we know it's video - that's what the 'stream' code
               // is for! But _which_ video is it?
-              free(p->description);
-              p->description = NULL;
+              p->SetDescription("");
               EpgBugFixStat(8, ChannelID());
             }
           }
-          if (!p->description)
+          if (p->Description().empty())
           {
-            switch (p->type)
+            switch (p->Type())
               {
             case 0x01:
             case 0x05:
-              p->description = strdup("4:3");
+              p->SetDescription("4:3");
               break;
             case 0x02:
             case 0x03:
             case 0x06:
             case 0x07:
-              p->description = strdup("16:9");
+              p->SetDescription("16:9");
               break;
             case 0x04:
             case 0x08:
-              p->description = strdup(">16:9");
+              p->SetDescription(">16:9");
               break;
             case 0x09:
             case 0x0D:
-              p->description = strdup("HD 4:3");
+              p->SetDescription("HD 4:3");
               break;
             case 0x0A:
             case 0x0B:
             case 0x0E:
             case 0x0F:
-              p->description = strdup("HD 16:9");
+              p->SetDescription("HD 16:9");
               break;
             case 0x0C:
             case 0x10:
-              p->description = strdup("HD >16:9");
+              p->SetDescription("HD >16:9");
               break;
             default:
               ;
@@ -865,23 +865,23 @@ void cEvent::FixEpgBugs(void)
         break;
       case 0x02:
         { // audio
-          if (p->description)
+          if (!p->Description().empty())
           {
-            if (strcasecmp(p->description, "Audio") == 0)
+            const char* description = p->Description().c_str();
+            if (strcasecmp(description, "Audio") == 0)
             {
               // Yes, we know it's audio - that's what the 'stream' code
               // is for! But _which_ audio is it?
-              free(p->description);
-              p->description = NULL;
+              p->SetDescription("");
               EpgBugFixStat(10, ChannelID());
             }
           }
-          if (!p->description)
+          if (p->Description().empty())
           {
-            switch (p->type)
+            switch (p->Type())
               {
             case 0x05:
-              p->description = strdup("Dolby Digital");
+              p->SetDescription("Dolby Digital");
               break;
             default:
               ; // all others will just display the language
@@ -909,7 +909,7 @@ void cEvent::FixEpgBugs(void)
   {
     for (int i = 0; i < components->NumComponents(); i++)
     {
-      tComponent *p = components->Component(i);
+      CEpgComponent *p = components->Component(i);
       if (p->description)
         strreplace(p->description, '\n', ' ');
     }
@@ -1078,7 +1078,7 @@ bool cEvent::Serialise(TiXmlElement* element) const
       {
         for (int i = 0; i < components->NumComponents(); i++)
         {
-          tComponent *p = components->Component(i);
+          CEpgComponent *p = components->Component(i);
 
           TiXmlElement componentElement(EPG_XML_ELM_COMPONENT);
           TiXmlNode* componentNode = componentsNode->InsertEndChild(componentElement);
@@ -1087,7 +1087,7 @@ bool cEvent::Serialise(TiXmlElement* element) const
             TiXmlElement* componentElem = componentNode->ToElement();
             if (componentElem)
             {
-              TiXmlText* text = new TiXmlText(StringUtils::Format("%s", p->ToString().c_str()));
+              TiXmlText* text = new TiXmlText(StringUtils::Format("%s", p->Serialise().c_str()));
               if (text)
               {
                 componentElem->LinkEndChild(text);

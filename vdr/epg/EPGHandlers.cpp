@@ -126,7 +126,7 @@ void cEpgHandlers::SetVps(cEvent *Event, time_t Vps)
   Event->SetVps(Vps);
 }
 
-void cEpgHandlers::SetComponents(cEvent *Event, cComponents *Components)
+void cEpgHandlers::SetComponents(cEvent *Event, CEpgComponents *Components)
 {
   for (cEpgHandler *eh = First(); eh; eh = Next(eh)) {
       if (eh->SetComponents(Event, Components))

@@ -26,7 +26,7 @@ public:
   void SetStartTime(cEvent *Event, time_t StartTime);
   void SetDuration(cEvent *Event, int Duration);
   void SetVps(cEvent *Event, time_t Vps);
-  void SetComponents(cEvent *Event, cComponents *Components);
+  void SetComponents(cEvent *Event, CEpgComponents *Components);
   void FixEpgBugs(cEvent *Event);
   void HandleEvent(cEvent *Event);
   void SortSchedule(SchedulePtr Schedule);

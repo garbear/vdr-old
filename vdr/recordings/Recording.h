@@ -69,7 +69,7 @@ public:
   const char *Title(void) const { return event->Title(); }
   const char *ShortText(void) const { return event->ShortText(); }
   const char *Description(void) const { return event->Description(); }
-  const cComponents *Components(void) const { return event->Components(); }
+  const CEpgComponents *Components(void) const { return event->Components(); }
   const char *Aux(void) const { return aux; }
   double FramesPerSecond(void) const { return framesPerSecond; }
   void SetFramesPerSecond(double FramesPerSecond);

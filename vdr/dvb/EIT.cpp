@@ -64,7 +64,7 @@ private:
   SI::ExtendedEventDescriptors* m_ExtendedEventDescriptors;
   SI::ShortEventDescriptor*     m_ShortEventDescriptor;
   cLinkChannels                 m_LinkChannels;
-  cComponents*                  m_Components;
+  CEpgComponents*                  m_Components;
 };
 
 void cEIT::ParseSIDescriptor(SI::Descriptor* d)
@@ -269,7 +269,7 @@ void cEIT::ParseSIDescriptor(SI::Descriptor* d)
       if (1 <= Stream && Stream <= 6 && Type != 0)
       { // 1=MPEG2-video, 2=MPEG1-audio, 3=subtitles, 4=AC3-audio, 5=H.264-video, 6=HEAAC-audio
         if (!m_Components)
-          m_Components = new cComponents;
+          m_Components = new CEpgComponents;
         char buffer[Utf8BufSize(256)];
         m_Components->SetComponent(COMPONENT_ADD_NEW, Stream, Type, I18nNormalizeLanguageCode(cd->languageCode), cd->description.getText(buffer, sizeof(buffer)));
       }

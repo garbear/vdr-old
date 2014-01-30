@@ -137,6 +137,7 @@ set(VDR_SRCS
 	vdr/dvb/PAT.cpp
 	vdr/dvb/SDT.cpp
 	vdr/dvb/Sections.cpp
+	vdr/epg/Component.cpp
 	vdr/epg/Components.cpp
 	vdr/epg/EPG.cpp
 	vdr/epg/EPGDataReader.cpp

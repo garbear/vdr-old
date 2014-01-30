@@ -349,17 +349,17 @@ cRecordingInfo::cRecordingInfo(const cChannel *Channel, const cEvent *Event)
      // Since the EPG data's component records can carry only a single
      // language code, let's see whether the channel's PID data has
      // more information:
-     cComponents *Components = (cComponents *)event->Components();
+     CEpgComponents *Components = (CEpgComponents *)event->Components();
      if (!Components)
-        Components = new cComponents;
+        Components = new CEpgComponents;
      for (int i = 0; i < MAXAPIDS; i++) {
          const char *s = Channel->Alang(i);
          if (*s) {
-            tComponent *Component = Components->GetComponent(i, 2, 3);
+            CEpgComponent *Component = Components->GetComponent(i, 2, 3);
             if (!Component)
                Components->SetComponent(COMPONENT_ADD_NEW, 2, 3, s, NULL);
-            else if (strlen(s) > strlen(Component->language))
-               strn0cpy(Component->language, s, sizeof(Component->language));
+            else if (strlen(s) > strlen(Component->Language().c_str()))
+              Component->SetLanguage(s);
             }
          }
      // There's no "multiple languages" for Dolby Digital tracks, but
@@ -368,24 +368,24 @@ cRecordingInfo::cRecordingInfo(const cChannel *Channel, const cEvent *Event)
      for (int i = 0; i < MAXDPIDS; i++) {
          const char *s = Channel->Dlang(i);
          if (*s) {
-            tComponent *Component = Components->GetComponent(i, 4, 0); // AC3 component according to the DVB standard
+            CEpgComponent *Component = Components->GetComponent(i, 4, 0); // AC3 component according to the DVB standard
             if (!Component)
                Component = Components->GetComponent(i, 2, 5); // fallback "Dolby" component according to the "Premiere pseudo standard"
             if (!Component)
                Components->SetComponent(COMPONENT_ADD_NEW, 2, 5, s, NULL);
-            else if (strlen(s) > strlen(Component->language))
-               strn0cpy(Component->language, s, sizeof(Component->language));
+            else if (strlen(s) > strlen(Component->Language().c_str()))
+              Component->SetLanguage(s);
             }
          }
      // The same applies to subtitles:
      for (int i = 0; i < MAXSPIDS; i++) {
          const char *s = Channel->Slang(i);
          if (*s) {
-            tComponent *Component = Components->GetComponent(i, 3, 3);
+            CEpgComponent *Component = Components->GetComponent(i, 3, 3);
             if (!Component)
                Components->SetComponent(COMPONENT_ADD_NEW, 3, 3, s, NULL);
-            else if (strlen(s) > strlen(Component->language))
-               strn0cpy(Component->language, s, sizeof(Component->language));
+            else if (strlen(s) > strlen(Component->Language().c_str()))
+              Component->SetLanguage(s);
             }
          }
      if (Components != event->Components())

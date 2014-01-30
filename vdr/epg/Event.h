@@ -45,7 +45,7 @@ private:
   char *title;             // Title of this event
   char *shortText;         // Short description of this event (typically the episode name in case of a series)
   char *description;       // Description of this event
-  cComponents *components; // The stream components of this event
+  CEpgComponents *components; // The stream components of this event
   uchar contents[MaxEventContents]; // Contents of this event
   time_t startTime;        // Start time of this event
   int duration;            // Duration of this event in seconds
@@ -64,7 +64,7 @@ public:
   const char *Title(void) const { return title; }
   const char *ShortText(void) const { return shortText; }
   const char *Description(void) const { return description; }
-  const cComponents *Components(void) const { return components; }
+  const CEpgComponents *Components(void) const { return components; }
   uchar Contents(int i = 0) const { return (0 <= i && i < MaxEventContents) ? contents[i] : uchar(0); }
   int ParentalRating(void) const { return parentalRating; }
   uint8_t StarRating(void) const { return starRating; }
@@ -90,7 +90,7 @@ public:
   void SetTitle(const char *Title);
   void SetShortText(const char *ShortText);
   void SetDescription(const char *Description);
-  void SetComponents(cComponents *Components); // Will take ownership of Components!
+  void SetComponents(CEpgComponents *Components); // Will take ownership of Components!
   void SetContents(uchar *Contents);
   void SetParentalRating(int ParentalRating);
   void SetStarRating(uint8_t StarRating) { starRating = StarRating; }
