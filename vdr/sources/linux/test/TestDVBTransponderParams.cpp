@@ -19,8 +19,7 @@
  *
  */
 
-#include "sources/linux/DVBSourceParams.h"
-
+#include "sources/linux/DVBTransponderParams.h"
 #include "gtest/gtest.h"
 
 #include <string>

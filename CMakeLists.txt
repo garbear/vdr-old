@@ -164,6 +164,7 @@ set(VDR_SRCS
 	vdr/sources/ISourceParams.cpp
 	vdr/sources/Source.cpp
 	vdr/sources/linux/DVBSourceParams.cpp
+	vdr/sources/linux/DVBTransponderParams.cpp
 	vdr/utils/CalendarUtils.cpp
 	vdr/utils/CharsetConverter.cpp
 	vdr/utils/CharSetConverterVDR.cpp
@@ -218,7 +219,7 @@ set(VDR_TEST_SRCS
 	vdr/filesystem/test/TestSpecialProtocol.cpp
 	vdr/filesystem/native/test/TestHDDirectory.cpp
 	vdr/filesystem/native/test/TestHDFile.cpp
-	vdr/sources/linux/test/TestDVBSourceParams.cpp
+	vdr/sources/linux/test/TestDVBTransponderParams.cpp
 	vdr/test/gtest/TestBasicEnvironment.cpp
 	vdr/test/gtest/TestUtils.cpp
 	vdr/test/gtest/vdr-test.cpp

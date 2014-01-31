@@ -23,7 +23,6 @@
 #include <string>
 
 class cChannel;
-class cOsdItem;
 
 /*!
  * \brief Source parameter handling interface
@@ -54,16 +53,6 @@ public:
    * \brief Copies all source specific parameters to the given Channel
    */
   virtual void GetData(cChannel &channel) const = 0;
-
-  /*!
-   * \brief Returns all the OSD items necessary for editing the source specific
-   *        parameters of the channel that was given in the last call to SetData()
-   *
-   * Each call to GetOsdItem() returns exactly one such item. After all items
-   * have been fetched, any further calls to GetOsdItem() return NULL. After
-   * another call to SetData(), the OSD items can be fetched again.
-   */
-  //virtual cOsdItem *GetOsdItem() = 0;
 
 private:
   char m_source;
