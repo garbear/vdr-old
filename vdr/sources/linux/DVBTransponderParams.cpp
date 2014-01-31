@@ -33,6 +33,8 @@ using namespace std;
 #define ARRAY_SIZE(x)  (sizeof(x) / sizeof(x[0]))
 #endif
 
+#define INT_INVALID  -1
+
 struct tDvbParameter
 {
   int         userValue;
@@ -250,8 +252,8 @@ string cDvbTransponderParams::Serialize(char type) const
  */
 void DeserializeDriverValue(string &str, int &paramValue)
 {
-  long temp = StringUtils::IntVal(str, str, -1);
-  if (temp != -1)
+  long temp = StringUtils::IntVal(str, str, INT_INVALID);
+  if (temp != INT_INVALID)
     paramValue = temp;
   else
     str = ""; // Don't continue deserializing
@@ -272,13 +274,13 @@ void DeserializeDriverValue(string &str, int &paramValue)
 template <size_t N>
 void DeserializeDriverValue(string &str, int &driverValue, const tDvbParameter (&dvbParamTable)[N])
 {
-  long userValue = StringUtils::IntVal(str, str, -1);
-  if (userValue != -1)
+  long userValue = StringUtils::IntVal(str, str, INT_INVALID);
+  if (userValue != INT_INVALID)
   {
     for (unsigned int i = 0; i < N; i++)
     {
       if (dvbParamTable[i].userValue == userValue)
-        driverValue = dvbParamTable[i].userValue;
+        driverValue = dvbParamTable[i].driverValue;
     }
   }
   else

@@ -33,18 +33,18 @@ using namespace std;
 TEST(DvbTransponderParams, DefaultValues)
 {
   cDvbTransponderParams params;
-  EXPECT_EQ(params.Polarization(), 0);
-  EXPECT_EQ(params.Inversion(),    INVERSION_AUTO);
-  EXPECT_EQ(params.Bandwidth(),    8000000);
-  EXPECT_EQ(params.CoderateH(),    FEC_AUTO);
-  EXPECT_EQ(params.CoderateL(),    FEC_AUTO);
-  EXPECT_EQ(params.Modulation(),   QPSK);
-  EXPECT_EQ(params.System(),       DVB_SYSTEM_1);
-  EXPECT_EQ(params.Transmission(), TRANSMISSION_MODE_AUTO);
-  EXPECT_EQ(params.Guard(),        GUARD_INTERVAL_AUTO);
-  EXPECT_EQ(params.Hierarchy(),    HIERARCHY_AUTO);
-  EXPECT_EQ(params.RollOff(),      ROLLOFF_AUTO);
-  EXPECT_EQ(params.StreamId(),     0);
+  EXPECT_EQ(0,                      params.Polarization());
+  EXPECT_EQ(INVERSION_AUTO,         params.Inversion());
+  EXPECT_EQ(8000000,                params.Bandwidth());
+  EXPECT_EQ(FEC_AUTO,               params.CoderateH());
+  EXPECT_EQ(FEC_AUTO,               params.CoderateL());
+  EXPECT_EQ(QPSK,                   params.Modulation());
+  EXPECT_EQ(DVB_SYSTEM_1,           params.System());
+  EXPECT_EQ(TRANSMISSION_MODE_AUTO, params.Transmission());
+  EXPECT_EQ(GUARD_INTERVAL_AUTO,    params.Guard());
+  EXPECT_EQ(HIERARCHY_AUTO,         params.Hierarchy());
+  EXPECT_EQ(ROLLOFF_AUTO,           params.RollOff());
+  EXPECT_EQ(0,                      params.StreamId());
 }
 
 /*
@@ -71,18 +71,90 @@ TEST(DvbTransponderParams, Serialize)
   EXPECT_STREQ(serialized.c_str(), "");
 }
 
-/*
- * Test serialization of default parameters.
- */
 TEST(DvbTransponderParams, Deserialize)
 {
-  cDvbTransponderParams params;
+  {
+    cDvbTransponderParams params;
+    EXPECT_TRUE(params.Deserialize(""));
+    EXPECT_EQ(0,                      params.Polarization());
+    EXPECT_EQ(INVERSION_AUTO,         params.Inversion());
+    EXPECT_EQ(8000000,                params.Bandwidth());
+    EXPECT_EQ(FEC_AUTO,               params.CoderateH());
+    EXPECT_EQ(FEC_AUTO,               params.CoderateL());
+    EXPECT_EQ(QPSK,                   params.Modulation());
+    EXPECT_EQ(DVB_SYSTEM_1,           params.System());
+    EXPECT_EQ(TRANSMISSION_MODE_AUTO, params.Transmission());
+    EXPECT_EQ(GUARD_INTERVAL_AUTO,    params.Guard());
+    EXPECT_EQ(HIERARCHY_AUTO,         params.Hierarchy());
+    EXPECT_EQ(ROLLOFF_AUTO,           params.RollOff());
+    EXPECT_EQ(0,                      params.StreamId());
+  }
 
-  EXPECT_TRUE(params.Deserialize(""));
-  EXPECT_TRUE(params.Deserialize("I999M2"));
-  EXPECT_TRUE(params.Deserialize("C999I999M2"));
-  EXPECT_TRUE(params.Deserialize("C999I999M2S0"));
-  EXPECT_TRUE(params.Deserialize("B8C999D999G999I999M2S0T999Y999"));
+  {
+    cDvbTransponderParams params;
+    EXPECT_TRUE(params.Deserialize("I1M10"));
+    EXPECT_EQ(0,                      params.Polarization());
+    EXPECT_EQ(INVERSION_ON,           params.Inversion());
+    EXPECT_EQ(8000000,                params.Bandwidth());
+    EXPECT_EQ(FEC_AUTO,               params.CoderateH());
+    EXPECT_EQ(FEC_AUTO,               params.CoderateL());
+    EXPECT_EQ(VSB_8,                  params.Modulation());
+    EXPECT_EQ(DVB_SYSTEM_1,           params.System());
+    EXPECT_EQ(TRANSMISSION_MODE_AUTO, params.Transmission());
+    EXPECT_EQ(GUARD_INTERVAL_AUTO,    params.Guard());
+    EXPECT_EQ(HIERARCHY_AUTO,         params.Hierarchy());
+    EXPECT_EQ(ROLLOFF_AUTO,           params.RollOff());
+    EXPECT_EQ(0,                      params.StreamId());
+  }
 
-  // TODO: More tests
+  {
+    cDvbTransponderParams params;
+    EXPECT_TRUE(params.Deserialize("C45I0M2"));
+    EXPECT_EQ(0,                      params.Polarization());
+    EXPECT_EQ(INVERSION_OFF,          params.Inversion());
+    EXPECT_EQ(8000000,                params.Bandwidth());
+    EXPECT_EQ(FEC_4_5,                params.CoderateH());
+    EXPECT_EQ(FEC_AUTO,               params.CoderateL());
+    EXPECT_EQ(QPSK,                   params.Modulation());
+    EXPECT_EQ(DVB_SYSTEM_1,           params.System());
+    EXPECT_EQ(TRANSMISSION_MODE_AUTO, params.Transmission());
+    EXPECT_EQ(GUARD_INTERVAL_AUTO,    params.Guard());
+    EXPECT_EQ(HIERARCHY_AUTO,         params.Hierarchy());
+    EXPECT_EQ(ROLLOFF_AUTO,           params.RollOff());
+    EXPECT_EQ(0,                      params.StreamId());
+  }
+
+  {
+    cDvbTransponderParams params;
+    EXPECT_TRUE(params.Deserialize("C910I999M256S1"));
+    EXPECT_EQ(0,                      params.Polarization());
+    EXPECT_EQ(INVERSION_AUTO,         params.Inversion());
+    EXPECT_EQ(8000000,                params.Bandwidth());
+    EXPECT_EQ(FEC_9_10,               params.CoderateH());
+    EXPECT_EQ(FEC_AUTO,               params.CoderateL());
+    EXPECT_EQ(QAM_256,                params.Modulation());
+    EXPECT_EQ(DVB_SYSTEM_2,           params.System());
+    EXPECT_EQ(TRANSMISSION_MODE_AUTO, params.Transmission());
+    EXPECT_EQ(GUARD_INTERVAL_AUTO,    params.Guard());
+    EXPECT_EQ(HIERARCHY_AUTO,         params.Hierarchy());
+    EXPECT_EQ(ROLLOFF_AUTO,           params.RollOff());
+    EXPECT_EQ(0,                      params.StreamId());
+  }
+
+  {
+    cDvbTransponderParams params;
+    EXPECT_TRUE(params.Deserialize("B8C999D0G19128I999M2S0T16Y4"));
+    EXPECT_EQ(0,                      params.Polarization());
+    EXPECT_EQ(INVERSION_AUTO,         params.Inversion());
+    EXPECT_EQ(8000000,                params.Bandwidth());
+    EXPECT_EQ(FEC_AUTO,               params.CoderateH());
+    EXPECT_EQ(FEC_NONE,               params.CoderateL());
+    EXPECT_EQ(QPSK,                   params.Modulation());
+    EXPECT_EQ(DVB_SYSTEM_1,           params.System());
+    EXPECT_EQ(TRANSMISSION_MODE_16K,  params.Transmission());
+    EXPECT_EQ(GUARD_INTERVAL_19_128,  params.Guard());
+    EXPECT_EQ(HIERARCHY_4,            params.Hierarchy());
+    EXPECT_EQ(ROLLOFF_AUTO,           params.RollOff());
+    EXPECT_EQ(0,                      params.StreamId());
+  }
 }
