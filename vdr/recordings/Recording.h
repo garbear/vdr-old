@@ -17,6 +17,7 @@
 #include "epg/EPG.h"
 #include "utils/Tools.h"
 #include "platform/threads/threads.h"
+#include "filesystem/File.h"
 
 #define FOLDERDELIMCHAR '~'
 
@@ -57,7 +58,7 @@ private:
   int lifetime;
   char *fileName;
   cRecordingInfo(const cChannel *Channel = NULL, const cEvent *Event = NULL);
-  bool Read(FILE *f);
+  bool Read(CFile& file);
   void SetData(const char *Title, const char *ShortText, const char *Description);
   void SetAux(const char *Aux);
 public:
@@ -73,7 +74,7 @@ public:
   const char *Aux(void) const { return aux; }
   double FramesPerSecond(void) const { return framesPerSecond; }
   void SetFramesPerSecond(double FramesPerSecond);
-  bool Write(FILE *f, const char *Prefix = "") const;
+  bool Write(CFile& file, const char *Prefix = "") const;
   bool Read(void);
   bool Write(void) const;
   };
@@ -166,7 +167,7 @@ private:
   int state;
   const char *UpdateFileName(void);
   void Refresh(bool Foreground = false);
-  void ScanVideoDir(const char *DirName, bool Foreground = false, int LinkLevel = 0);
+  void ScanVideoDir(const std::string& strDirName, bool Foreground = false, int LinkLevel = 0);
 protected:
   void* Process(void);
 public:
@@ -290,7 +291,7 @@ class cIndexFileGenerator;
 
 class cIndexFile {
 private:
-  int f;
+  CFile m_file;
   cString fileName;
   int size, last;
   tIndexTs *index;

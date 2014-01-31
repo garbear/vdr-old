@@ -470,10 +470,10 @@ cString cEvent::GetVpsString(void) const
   return buf;
 }
 
-bool cEvent::Parse(char *s)
+bool cEvent::Parse(const std::string& data)
 {
-  char *t = skipspace(s + 1);
-  switch (*s)
+  char *t = skipspace(data.c_str() + 1);
+  switch (*data.c_str())
     {
   case 'T':
     SetTitle(t);
@@ -520,7 +520,7 @@ bool cEvent::Parse(char *s)
     SetVps(atoi(t));
     break;
   default:
-    esyslog("ERROR: unexpected tag while reading EPG data: %s", s);
+    esyslog("ERROR: unexpected tag while reading EPG data: %s", data.c_str());
     return false;
     }
   return true;

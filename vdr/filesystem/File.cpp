@@ -40,13 +40,14 @@ using namespace std;
 
 CFile::CFile()
  : m_pFileImpl(NULL),
-   m_flags(0)
+   m_flags(0),
+   m_bOpenForWrite(false)
 {
 }
 
 CFile::~CFile()
 {
-  SAFE_DELETE(m_pFileImpl);
+  Close();
 }
 
 IFile *CFile::CreateLoader(const string &path)
@@ -67,6 +68,7 @@ IFile *CFile::CreateLoader(const string &path)
 
 bool CFile::Open(const string &url, unsigned int flags /* = 0 */)
 {
+  Close();
   // TODO: Evaluate if we should import SpecialProtocolFile from XBMC so that
   // we can remove calls to TranslatePath() at the beginning of most functions
   string translatedPath = CSpecialProtocol::TranslatePath(url);
@@ -119,6 +121,7 @@ bool CFile::Open(const string &url, unsigned int flags /* = 0 */)
 
 bool CFile::OpenForWrite(const string &url, bool bOverWrite /* = false */)
 {
+  Close();
   string translatedPath = CSpecialProtocol::TranslatePath(url);
 
   m_pFileImpl = CreateLoader(translatedPath);
@@ -138,6 +141,8 @@ bool CFile::OpenForWrite(const string &url, bool bOverWrite /* = false */)
     SAFE_DELETE(m_pFileImpl);
     return false;
   }
+
+  m_bOpenForWrite = true;
 
   return true;
 }
@@ -221,7 +226,7 @@ bool CFile::LoadFile(const string &url, vector<uint8_t> &outputBuffer)
 
 int64_t CFile::Write(const void *lpBuf, int64_t uiBufSize)
 {
-  if (!m_pFileImpl)
+  if (!m_pFileImpl || !m_bOpenForWrite)
     return 0;
   return m_pFileImpl->Write(lpBuf, uiBufSize);
 }
@@ -266,6 +271,8 @@ void CFile::Close()
   if (!m_pFileImpl)
     return;
   m_pFileImpl->Close();
+  SAFE_DELETE(m_pFileImpl);
+  m_bOpenForWrite = false;
 }
 
 string CFile::GetContentMimeType()

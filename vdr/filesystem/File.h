@@ -48,6 +48,7 @@ public:
   int64_t GetPosition();
   int64_t GetLength();
   void Close();
+  bool IsOpen(void) const { return m_pFileImpl != NULL; }
 
   std::string GetContentMimeType();
   std::string GetContentCharset();
@@ -85,5 +86,6 @@ private:
 
   IFile        *m_pFileImpl;
   unsigned int  m_flags;
+  bool          m_bOpenForWrite;
   //CFileStreamBuffer* m_pBuffer;
 };
