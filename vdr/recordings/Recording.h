@@ -18,6 +18,9 @@
 #include "utils/Tools.h"
 #include "platform/threads/threads.h"
 #include "filesystem/File.h"
+#include "ResumeFile.h"
+
+class cRecordingInfo;
 
 #define FOLDERDELIMCHAR '~'
 
@@ -32,52 +35,6 @@ void AssertFreeDiskSpace(int Priority = 0, bool Force = false);
      ///< deleted recordings faster than normal (because we're cutting).
      ///< If Force is true, the check will be done even if the timeout
      ///< hasn't expired yet.
-
-class cResumeFile {
-private:
-  char *fileName;
-  bool isPesRecording;
-public:
-  cResumeFile(const char *FileName, bool IsPesRecording);
-  ~cResumeFile();
-  int Read(void);
-  bool Save(int Index);
-  void Delete(void);
-  };
-
-class cRecordingInfo {
-  friend class cRecording;
-private:
-  tChannelID channelID;
-  char *channelName;
-  const cEvent *event;
-  cEvent *ownEvent;
-  char *aux;
-  double framesPerSecond;
-  int priority;
-  int lifetime;
-  char *fileName;
-  cRecordingInfo(const cChannel *Channel = NULL, const cEvent *Event = NULL);
-  bool Read(CFile& file);
-  void SetData(const char *Title, const char *ShortText, const char *Description);
-  void SetAux(const char *Aux);
-public:
-  cRecordingInfo(const char *FileName);
-  ~cRecordingInfo();
-  tChannelID ChannelID(void) const { return channelID; }
-  const char *ChannelName(void) const { return channelName; }
-  const cEvent *GetEvent(void) const { return event; }
-  const char *Title(void) const { return event->Title(); }
-  const char *ShortText(void) const { return event->ShortText(); }
-  const char *Description(void) const { return event->Description(); }
-  const CEpgComponents *Components(void) const { return event->Components(); }
-  const char *Aux(void) const { return aux; }
-  double FramesPerSecond(void) const { return framesPerSecond; }
-  void SetFramesPerSecond(double FramesPerSecond);
-  bool Write(CFile& file, const char *Prefix = "") const;
-  bool Read(void);
-  bool Write(void) const;
-  };
 
 class cRecording : public cListObject {
   friend class cRecordings;
@@ -325,26 +282,6 @@ public:
        ///< Calculates the recording length (number of frames) without actually reading the index file.
        ///< Returns -1 in case of error.
   static cString IndexFileName(const char *FileName, bool IsPesRecording);
-  };
-
-class cFileName {
-private:
-  cUnbufferedFile *file;
-  uint16_t fileNumber;
-  char *fileName, *pFileNumber;
-  bool record;
-  bool blocking;
-  bool isPesRecording;
-public:
-  cFileName(const char *FileName, bool Record, bool Blocking = false, bool IsPesRecording = false);
-  ~cFileName();
-  const char *Name(void) { return fileName; }
-  uint16_t Number(void) { return fileNumber; }
-  bool GetLastPatPmtVersions(int &PatVersion, int &PmtVersion);
-  cUnbufferedFile *Open(void);
-  void Close(void);
-  cUnbufferedFile *SetOffset(int Number, off_t Offset = 0); // yes, Number is int for easier internal calculating
-  cUnbufferedFile *NextFile(void);
   };
 
 cString IndexToHMSF(int Index, bool WithFrame = false, double FramesPerSecond = DEFAULTFRAMESPERSECOND);

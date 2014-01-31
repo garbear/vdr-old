@@ -10,6 +10,7 @@
 #include "RecordingCutter.h"
 //#include "menu.h"
 #include "Recording.h"
+#include "FileName.h"
 #include "devices/Remux.h"
 #include "filesystem/Videodir.h"
 #include "filesystem/Directory.h"

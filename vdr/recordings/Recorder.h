@@ -16,6 +16,8 @@
 #include "utils/Ringbuffer.h"
 #include "platform/threads/threads.h"
 
+class cFileName;
+
 class cRecorder : public cReceiver, PLATFORM::CThread {
 private:
   cRingBufferLinear *ringBuffer;

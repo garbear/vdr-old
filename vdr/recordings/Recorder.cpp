@@ -8,6 +8,8 @@
  */
 
 #include "Recorder.h"
+#include "RecordingInfo.h"
+#include "FileName.h"
 #include "filesystem/Directory.h"
 #include "utils/Shutdown.h"
 

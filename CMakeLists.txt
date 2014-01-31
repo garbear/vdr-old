@@ -153,9 +153,12 @@ set(VDR_SRCS
 	vdr/filesystem/ReadDir.cpp
 	vdr/filesystem/SpecialProtocol.cpp
 	vdr/filesystem/Videodir.cpp
+	vdr/recordings/FileName.cpp
 	vdr/recordings/Recorder.cpp
 	vdr/recordings/Recording.cpp
 	vdr/recordings/RecordingCutter.cpp
+	vdr/recordings/RecordingInfo.cpp
+	vdr/recordings/ResumeFile.cpp
 	vdr/recordings/Timers.cpp
 	vdr/settings/Settings.cpp
 	vdr/sources/ISourceParams.cpp
