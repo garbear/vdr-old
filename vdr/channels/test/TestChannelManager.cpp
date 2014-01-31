@@ -24,24 +24,15 @@
 
 #include "gtest/gtest.h"
 
-#define CHANNELS_CONF   "special://vdr/system/channels.conf"
 #define CHANNELS_XML    "special://vdr/system/channels.xml"
-#define CHANNELS2_CONF  "special://temp/channels.conf"
 #define CHANNELS2_XML   "special://temp/channels.xml"
 
 TEST(ChannelManager, ChannelManager)
 {
   {
     cChannelManager channels;
-    EXPECT_TRUE(channels.LoadConf(CSpecialProtocol::TranslatePath(CHANNELS_CONF).c_str()));
+    EXPECT_TRUE(channels.Load(CHANNELS_XML));
     EXPECT_TRUE(channels.Save(CHANNELS2_XML));
-    // TODO: Compare CHANNELS_XML and CHANNELS2_XML
-  }
-
-  {
-    cChannelManager channels;
-    //EXPECT_TRUE(channels.Load(CHANNELS_XML)); // TODO: Parsing the XML takes too long
-    //EXPECT_TRUE(channels.SaveConf(CHANNELS2_CONF));
     // TODO: Compare CHANNELS_CONF and CHANNELS2_CONF
   }
 }

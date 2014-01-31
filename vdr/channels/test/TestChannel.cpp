@@ -30,52 +30,46 @@
 
 using namespace std;
 
-TEST(Channel, Channel)
+TEST(Channel, Construction)
 {
-  {
-    cChannel channel;
-    string serializedChannel;
-//TODO    EXPECT_TRUE(channel.SerialiseConf(serializedChannel));
-    EXPECT_STREQ(serializedChannel.c_str(), ":0:::0:0:0:0:0:0:0:0:0\n");
+  cChannel channel;
+  EXPECT_EQ(channel.FrequencyKHz(), 0);
+  EXPECT_EQ(channel.Source(), 0);
+  EXPECT_EQ(channel.Srate(), 0);
+  EXPECT_EQ(channel.Vpid(), 0);
+  EXPECT_EQ(channel.Ppid(), 0);
+  EXPECT_NE(channel.Apids(), (const int*)NULL);
+  EXPECT_NE(channel.Dpids(), (const int*)NULL);
+  EXPECT_NE(channel.Spids(), (const int*)NULL);
+  EXPECT_EQ(channel.Apid(0), 0);
+  EXPECT_EQ(channel.Dpid(0), 0);
+  EXPECT_EQ(channel.Spid(0), 0);
+  EXPECT_NE(channel.Alang(0), (const char*)NULL);
+  EXPECT_STREQ(channel.Alang(0), "");
+  EXPECT_NE(channel.Dlang(0), (const char*)NULL);
+  EXPECT_STREQ(channel.Dlang(0), "");
+  EXPECT_NE(channel.Slang(0), (const char*)NULL);
+  EXPECT_STREQ(channel.Slang(0), "");
+  EXPECT_EQ(channel.Atype(0), 0);
+  EXPECT_EQ(channel.Dtype(0), 0);
+  EXPECT_EQ(channel.SubtitlingType(0), (uchar)0);
+  EXPECT_EQ(channel.CompositionPageId(0), (uint16_t)0);
+  EXPECT_EQ(channel.AncillaryPageId(0), (uint16_t)0);
+  EXPECT_EQ(channel.Tpid(), 0);
+  EXPECT_NE(channel.Caids(), (const int*)NULL);
+  EXPECT_EQ(channel.Ca(0), 0);
+  EXPECT_EQ(channel.Nid(), 0);
+  EXPECT_EQ(channel.Tid(), 0);
+  EXPECT_EQ(channel.Sid(), 0);
+  EXPECT_EQ(channel.Rid(), 0);
+  EXPECT_EQ(channel.Number(), 0);
+}
 
-    EXPECT_TRUE(channel.DeserialiseConf(serializedChannel));
-    EXPECT_EQ(channel.FrequencyKHz(), 0);
-    EXPECT_EQ(channel.Source(), 0);
-    EXPECT_EQ(channel.Srate(), 0);
-    EXPECT_EQ(channel.Vpid(), 0);
-    EXPECT_EQ(channel.Ppid(), 0);
-    EXPECT_NE(channel.Apids(), (const int*)NULL);
-    EXPECT_NE(channel.Dpids(), (const int*)NULL);
-    EXPECT_NE(channel.Spids(), (const int*)NULL);
-    EXPECT_EQ(channel.Apid(0), 0);
-    EXPECT_EQ(channel.Dpid(0), 0);
-    EXPECT_EQ(channel.Spid(0), 0);
-    EXPECT_NE(channel.Alang(0), (const char*)NULL);
-    EXPECT_STREQ(channel.Alang(0), "");
-    EXPECT_NE(channel.Dlang(0), (const char*)NULL);
-    EXPECT_STREQ(channel.Dlang(0), "");
-    EXPECT_NE(channel.Slang(0), (const char*)NULL);
-    EXPECT_STREQ(channel.Slang(0), "");
-    EXPECT_EQ(channel.Atype(0), 0);
-    EXPECT_EQ(channel.Dtype(0), 0);
-    EXPECT_EQ(channel.SubtitlingType(0), (uchar)0);
-    EXPECT_EQ(channel.CompositionPageId(0), (uint16_t)0);
-    EXPECT_EQ(channel.AncillaryPageId(0), (uint16_t)0);
-    EXPECT_EQ(channel.Tpid(), 0);
-    EXPECT_NE(channel.Caids(), (const int*)NULL);
-    EXPECT_EQ(channel.Ca(0), 0);
-    EXPECT_EQ(channel.Nid(), 0);
-    EXPECT_EQ(channel.Tid(), 0);
-    EXPECT_EQ(channel.Sid(), 0);
-    EXPECT_EQ(channel.Rid(), 0);
-    EXPECT_EQ(channel.Number(), 0);
-    //EXPECT_EQ(channel.GroupSep(), false); // Fails because first character is a :
-  }
-
+TEST(Channel, SerialiseDeserialise)
+{
   TiXmlElement channelElement(CHANNEL_XML_ELM_CHANNEL);
   {
     cChannel channel;
-    // TODO: frequency should maybe be written as 177000000?
     EXPECT_TRUE(channel.DeserialiseConf("KABC-DT;(null):177000:M10:A:0:49=2:0;52=eng@106,53=esl@106:0:0:1:0:0:0\n"));
     EXPECT_EQ(channel.FrequencyHz(), 177000000);
     EXPECT_EQ(channel.Source(), 1090519040);
@@ -107,10 +101,6 @@ TEST(Channel, Channel)
     EXPECT_EQ(channel.Sid(), 1);
     EXPECT_EQ(channel.Rid(), 0);
     EXPECT_EQ(channel.Number(), 0);
-
-    string serializedChannel;
-//TODO    EXPECT_TRUE(channel.SerialiseConf(serializedChannel));
-    EXPECT_STREQ(serializedChannel.c_str(), "KABC-DT;(null):177000:M10:A:0:49=2:0;52=eng@106,53=esl@106:0:0:1:0:0:0\n");
 
     EXPECT_TRUE(channel.SerialiseChannel(&channelElement));
 
@@ -282,10 +272,6 @@ TEST(Channel, Channel)
     EXPECT_EQ(channel.Rid(), 0);
     EXPECT_EQ(channel.Number(), 0);
 
-    string serializedChannel;
-//TODO    EXPECT_TRUE(channel.SerialiseConf(serializedChannel));
-    EXPECT_STREQ(serializedChannel.c_str(), "RedZone;(null):617000:M10:A:0:647=27:648=eng@15:0:1863:88:0:0:0\n");
-
     EXPECT_TRUE(channel.SerialiseChannel(&channelElement2));
 
     const TiXmlNode *caidsNode = channelElement2.FirstChild(CHANNEL_XML_ELM_CAIDS);
@@ -330,7 +316,10 @@ TEST(Channel, Channel)
     EXPECT_EQ(channel.Rid(), 0);
     EXPECT_EQ(channel.Number(), 0);
   }
+}
 
+TEST(Channel, Transponder)
+{
   unsigned int frequency = 1000 * 1000 * 1000; // 1GHz
   EXPECT_EQ(cChannel::Transponder(frequency, 'H'), frequency + 100 * 1000);
   EXPECT_EQ(cChannel::Transponder(frequency, 'V'), frequency + 200 * 1000);
