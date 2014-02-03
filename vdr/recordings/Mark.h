@@ -1,9 +1,8 @@
 #pragma once
 
+#include "RecordingConfig.h"
 #include "utils/Tools.h"
 #include "platform/threads/mutex.h"
-
-#define DEFAULTFRAMESPERSECOND 25.0
 
 extern double MarkFramesPerSecond;
 extern PLATFORM::CMutex MutexMarkFramesPerSecond;
