@@ -29,6 +29,7 @@
 
 #include "recordings/Recordings.h"
 #include "recordings/RecordingInfo.h"
+#include "recordings/Marks.h"
 #include "channels/ChannelManager.h"
 #include "channels/ChannelGroup.h"
 #include "channels/ChannelFilter.h"

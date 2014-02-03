@@ -19,6 +19,7 @@
 #include "platform/threads/threads.h"
 #include "filesystem/File.h"
 #include "ResumeFile.h"
+#include "recordings/Mark.h"
 
 class cRecordingInfo;
 
@@ -119,66 +120,43 @@ public:
        ///< Returns false in case of error
   };
 
-#define DEFAULTFRAMESPERSECOND 25.0
-
-class cMark : public cListObject {
-  friend class cMarks; // for sorting
-private:
-  double framesPerSecond;
-  int position;
-  cString comment;
-public:
-  cMark(int Position = 0, const char *Comment = NULL, double FramesPerSecond = DEFAULTFRAMESPERSECOND);
-  virtual ~cMark();
-  int Position(void) const { return position; }
-  const char *Comment(void) const { return comment; }
-  void SetPosition(int Position) { position = Position; }
-  void SetComment(const char *Comment) { comment = Comment; }
-  cString ToText(void);
-  bool Parse(const char *s);
-  bool Save(FILE *f);
-  };
-
-class cMarks : public cConfig<cMark> {
-private:
-  cString recordingFileName;
-  cString fileName;
-  double framesPerSecond;
-  bool isPesRecording;
-  time_t nextUpdate;
-  time_t lastFileTime;
-  time_t lastChange;
-public:
-  bool Load(const char *RecordingFileName, double FramesPerSecond = DEFAULTFRAMESPERSECOND, bool IsPesRecording = false);
-  bool Update(void);
-  bool Save(void);
-  void Align(void);
-  void Sort(void);
-  void Add(int Position);
-  cMark *Get(int Position);
-  cMark *GetPrev(int Position);
-  cMark *GetNext(int Position);
-  cMark *GetNextBegin(cMark *EndMark = NULL);
-       ///< Returns the next "begin" mark after EndMark, skipping any marks at the
-       ///< same position as EndMark. If EndMark is NULL, the first actual "begin"
-       ///< will be returned (if any).
-  cMark *GetNextEnd(cMark *BeginMark);
-       ///< Returns the next "end" mark after BeginMark, skipping any marks at the
-       ///< same position as BeginMark.
-  int GetNumSequences(void);
-       ///< Returns the actual number of sequences to be cut from the recording.
-       ///< If there is only one actual "begin" mark, and it is positioned at index
-       ///< 0 (the beginning of the recording), and there is no "end" mark, the
-       ///< return value is 0, which means that the result is the same as the original
-       ///< recording.
-  };
-
 #define RUC_BEFORERECORDING "before"
 #define RUC_AFTERRECORDING  "after"
 #define RUC_EDITEDRECORDING "edited"
 #define RUC_DELETERECORDING "deleted"
 
 #define MININDEXAGE      3600 // seconds before an index file is considered no longer to be written
+
+#define SUMMARYFALLBACK
+
+/* This was the original code, which works fine in a Linux only environment.
+   Unfortunately, because of Windows and its brain dead file system, we have
+   to use a more complicated approach, in order to allow users who have enabled
+   the --vfat command line option to see their recordings even if they forget to
+   enable --vfat when restarting VDR... Gee, do I hate Windows.
+   (kls 2002-07-27)
+#define DATAFORMAT   "%4d-%02d-%02d.%02d:%02d.%02d.%02d" RECEXT
+#define NAMEFORMAT   "%s/%s/" DATAFORMAT
+*/
+#define DATAFORMATPES   "%4d-%02d-%02d.%02d%*c%02d.%02d.%02d" RECEXT
+#define NAMEFORMATPES   "%s/%s/" "%4d-%02d-%02d.%02d.%02d.%02d.%02d" RECEXT
+#define DATAFORMATTS    "%4d-%02d-%02d.%02d.%02d.%d-%d" RECEXT
+#define NAMEFORMATTS    "%s/%s/" DATAFORMATTS
+
+#ifdef SUMMARYFALLBACK
+#define SUMMARYFILESUFFIX "/summary.vdr"
+#endif
+#define MARKSFILESUFFIX   "/marks"
+
+#define SORTMODEFILE      ".sort"
+
+#define MINDISKSPACE 1024 // MB
+
+#define REMOVECHECKDELTA   60 // seconds between checks for removing deleted files
+#define DELETEDLIFETIME   300 // seconds after which a deleted recording will be actually removed
+#define DISKCHECKDELTA    100 // seconds between checks for free disk space
+#define REMOVELATENCY      10 // seconds to wait until next check after removing a file
+#define MARKSUPDATEDELTA   10 // seconds between checks for updating editing marks
 
 class cRecordingUserCommand {
 private:
