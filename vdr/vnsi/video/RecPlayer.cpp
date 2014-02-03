@@ -29,6 +29,7 @@
  */
 
 #include "RecPlayer.h"
+#include "recordings/IndexFile.h"
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/stat.h>

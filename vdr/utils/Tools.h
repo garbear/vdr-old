@@ -54,6 +54,10 @@ extern int SysLogLevel;
 
 #define MALLOC(type, size)  (type *)malloc(sizeof(type) * (size))
 
+#ifndef PRId64
+#define PRId64       "I64d"
+#endif
+
 template<class T> inline void DELETENULL(T *&p) { T *q = p; p = NULL; delete q; }
 
 #define CHECK(s) { if ((s) < 0) LOG_ERROR; } // used for 'ioctl()' calls

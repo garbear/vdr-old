@@ -37,6 +37,8 @@
 
 #include <vector>
 
+class cIndexFile;
+
 class cSegment
 {
   public:

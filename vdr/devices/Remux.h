@@ -11,6 +11,7 @@
 #define __REMUX_H
 
 #include "channels/ChannelManager.h"
+#include "channels/Channel.h"
 #include "utils/Tools.h"
 
 enum ePesHeader {

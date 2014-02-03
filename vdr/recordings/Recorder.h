@@ -17,6 +17,7 @@
 #include "platform/threads/threads.h"
 
 class cFileName;
+class cIndexFile;
 
 class cRecorder : public cReceiver, PLATFORM::CThread {
 private:

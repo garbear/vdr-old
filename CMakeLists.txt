@@ -154,6 +154,7 @@ set(VDR_SRCS
 	vdr/filesystem/SpecialProtocol.cpp
 	vdr/filesystem/Videodir.cpp
 	vdr/recordings/FileName.cpp
+	vdr/recordings/IndexFile.cpp
 	vdr/recordings/Recorder.cpp
 	vdr/recordings/Recording.cpp
 	vdr/recordings/RecordingCutter.cpp
