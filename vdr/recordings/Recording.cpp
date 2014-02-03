@@ -811,7 +811,7 @@ bool cRecording::Delete(void)
      isyslog("deleting recording '%s'", FileName());
      if (CFile::Exists(FileName())) {
         result = RenameVideoFile(FileName(), NewName);
-        cRecordingUserCommand::InvokeCommand(RUC_DELETERECORDING, NewName);
+        cRecordingUserCommand::Get().InvokeCommand(RUC_DELETERECORDING, NewName);
         }
      else {
         isyslog("recording '%s' vanished", FileName());

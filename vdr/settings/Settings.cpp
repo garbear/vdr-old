@@ -322,7 +322,7 @@ bool cSettings::LoadFromCmdLine(int argc, char *argv[])
       break;
     // record
     case 'r':
-      cRecordingUserCommand::SetCommand(optarg);
+      cRecordingUserCommand::Get().SetCommand(optarg);
       break;
     // resdir
     case 'r' | 0x100:

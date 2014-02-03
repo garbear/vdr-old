@@ -725,7 +725,7 @@ bool cCutter::Active(const char *FileName)
      error = cuttingThread->Error();
      Stop();
      if (!error)
-        cRecordingUserCommand::InvokeCommand(RUC_EDITEDRECORDING, editedVersionName, originalVersionName);
+        cRecordingUserCommand::Get().InvokeCommand(RUC_EDITEDRECORDING, *editedVersionName, *originalVersionName);
      originalVersionName = NULL;
      editedVersionName = NULL;
      ended = true;

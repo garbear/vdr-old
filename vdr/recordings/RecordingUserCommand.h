@@ -2,12 +2,18 @@
 
 #include "RecordingConfig.h"
 #include <stddef.h>
+#include <string>
 
-class cRecordingUserCommand {
-private:
-  static const char *command;
+class cRecordingUserCommand
+{
 public:
-  static void SetCommand(const char *Command) { command = Command; }
-  static void InvokeCommand(const char *State, const char *RecordingFileName, const char *SourceFileName = NULL);
-  };
+  virtual ~cRecordingUserCommand(void) {}
+  static cRecordingUserCommand& Get(void);
 
+  void SetCommand(const std::string& strCommand);
+  void InvokeCommand(const std::string& strState, const std::string& strRecordingFileName, const std::string& strSourceFileName = "");
+
+private:
+  cRecordingUserCommand(void) {}
+  std::string m_strCommand;
+};
