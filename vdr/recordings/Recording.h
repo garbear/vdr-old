@@ -116,10 +116,6 @@ public:
        ///< Returns false in case of error
   };
 
-cString IndexToHMSF(int Index, bool WithFrame = false, double FramesPerSecond = DEFAULTFRAMESPERSECOND);
-      // Converts the given index to a string, optionally containing the frame number.
-int HMSFToIndex(const char *HMSF, double FramesPerSecond = DEFAULTFRAMESPERSECOND);
-      // Converts the given string (format: "hh:mm:ss.ff") to an index.
 int SecondsToFrames(int Seconds, double FramesPerSecond = DEFAULTFRAMESPERSECOND);
       // Returns the number of frames corresponding to the given number of seconds.
 

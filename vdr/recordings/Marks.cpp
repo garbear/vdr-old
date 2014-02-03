@@ -63,7 +63,7 @@ void cMarks::Align(void)
   for (cMark *m = First(); m; m = Next(m)) {
       int p = IndexFile.GetClosestIFrame(m->Position());
       if (int d = m->Position() - p) {
-         isyslog("aligned editing mark %s to %s (off by %d frame%s)", *IndexToHMSF(m->Position(), true, framesPerSecond), *IndexToHMSF(p, true, framesPerSecond), d, abs(d) > 1 ? "s" : "");
+         isyslog("aligned editing mark %s to %s (off by %d frame%s)", cMark::IndexToHMSF(m->Position(), true, framesPerSecond).c_str(), cMark::IndexToHMSF(p, true, framesPerSecond).c_str(), d, abs(d) > 1 ? "s" : "");
          m->SetPosition(p);
          }
       }
@@ -74,8 +74,8 @@ void cMarks::Sort(void)
   for (cMark *m1 = First(); m1; m1 = Next(m1)) {
       for (cMark *m2 = Next(m1); m2; m2 = Next(m2)) {
           if (m2->Position() < m1->Position()) {
-             std::swap(m1->position, m2->position);
-             std::swap(m1->comment, m2->comment);
+             std::swap(m1->m_iPosition, m2->m_iPosition);
+             std::swap(m1->m_strComment, m2->m_strComment);
              }
           }
       }
