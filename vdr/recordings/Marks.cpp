@@ -1,6 +1,7 @@
 #include "Marks.h"
 #include "Recording.h"
 #include "IndexFile.h"
+#include "RecordingUserCommand.h"
 
 using namespace PLATFORM;
 

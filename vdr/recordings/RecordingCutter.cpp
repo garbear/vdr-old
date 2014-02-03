@@ -13,6 +13,7 @@
 #include "FileName.h"
 #include "IndexFile.h"
 #include "Marks.h"
+#include "RecordingUserCommand.h"
 #include "devices/Remux.h"
 #include "filesystem/Videodir.h"
 #include "filesystem/Directory.h"

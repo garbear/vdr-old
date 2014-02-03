@@ -31,7 +31,8 @@
 #include "RecordingInfo.h"
 #include "FileName.h"
 #include "Recordings.h"
-#include "recordings/IndexFile.h"
+#include "IndexFile.h"
+#include "RecordingUserCommand.h"
 
 #include "vdr/filesystem/Directory.h"
 #include "vdr/utils/UTF8Utils.h"
@@ -891,23 +892,6 @@ int cRecording::FileSizeMB(void) const
      fileSizeMB = fs;
      }
   return fileSizeMB;
-}
-
-// --- cRecordingUserCommand -------------------------------------------------
-
-const char *cRecordingUserCommand::command = NULL;
-
-void cRecordingUserCommand::InvokeCommand(const char *State, const char *RecordingFileName, const char *SourceFileName)
-{
-  if (command) {
-    cString cmd;
-    if (SourceFileName)
-       cmd = cString::sprintf("%s %s \"%s\" \"%s\"", command, State, *strescape(RecordingFileName, "\\\"$"), *strescape(SourceFileName, "\\\"$"));
-    else
-       cmd = cString::sprintf("%s %s \"%s\"", command, State, *strescape(RecordingFileName, "\\\"$"));
-    isyslog("executing '%s'", *cmd);
-    SystemExec(cmd);
-  }
 }
 
 // --- Index stuff -----------------------------------------------------------

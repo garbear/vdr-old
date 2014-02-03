@@ -116,14 +116,6 @@ public:
        ///< Returns false in case of error
   };
 
-class cRecordingUserCommand {
-private:
-  static const char *command;
-public:
-  static void SetCommand(const char *Command) { command = Command; }
-  static void InvokeCommand(const char *State, const char *RecordingFileName, const char *SourceFileName = NULL);
-  };
-
 cString IndexToHMSF(int Index, bool WithFrame = false, double FramesPerSecond = DEFAULTFRAMESPERSECOND);
       // Converts the given index to a string, optionally containing the frame number.
 int HMSFToIndex(const char *HMSF, double FramesPerSecond = DEFAULTFRAMESPERSECOND);
