@@ -27,7 +27,7 @@
 #include <stdio.h>
 #include <map>
 
-#include "recordings/Recording.h"
+#include "recordings/Recordings.h"
 #include "recordings/RecordingInfo.h"
 #include "channels/ChannelManager.h"
 #include "channels/ChannelGroup.h"

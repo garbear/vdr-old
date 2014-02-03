@@ -16,7 +16,7 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <unistd.h>
-#include "recordings/Recording.h"
+#include "recordings/Recordings.h"
 #include "utils/Tools.h"
 #include "Directory.h"
 #include "File.h"

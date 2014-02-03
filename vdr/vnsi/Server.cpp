@@ -42,6 +42,7 @@
 
 #include "utils/Shutdown.h"
 #include "filesystem/Videodir.h"
+#include "recordings/Recordings.h"
 
 #include "Server.h"
 #include "Client.h"

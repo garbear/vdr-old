@@ -158,6 +158,7 @@ set(VDR_SRCS
 	vdr/recordings/Recording.cpp
 	vdr/recordings/RecordingCutter.cpp
 	vdr/recordings/RecordingInfo.cpp
+	vdr/recordings/Recordings.cpp
 	vdr/recordings/ResumeFile.cpp
 	vdr/recordings/Timers.cpp
 	vdr/settings/Settings.cpp

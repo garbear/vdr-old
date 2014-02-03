@@ -27,7 +27,7 @@
 #include "epg/EPGDataReader.h"
 #include "filesystem/Directory.h"
 #include "filesystem/SpecialProtocol.h"
-#include "recordings/Recording.h"
+#include "recordings/Recordings.h"
 #include "recordings/Timers.h"
 #include "settings/Settings.h"
 #include "utils/Shutdown.h"
