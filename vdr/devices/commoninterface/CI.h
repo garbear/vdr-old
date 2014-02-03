@@ -109,7 +109,7 @@ protected:
   /*!
    * \brief Handles the attached CAM slots in a separate thread
    *
-   * The derived class must call the Start() function to actually start CAM
+   * The derived class must call the CreateThread() function to actually start CAM
    * handling.
    */
   virtual void *Process();
