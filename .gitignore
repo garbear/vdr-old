@@ -8,3 +8,5 @@
 /Build
 
 /system/channels.xml
+/system/allowed_hosts.conf #old filetype
+/epg
