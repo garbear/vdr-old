@@ -16,7 +16,7 @@
 #include <time.h>
 #include "libsi/si.h"
 #include "channels/ChannelFilter.h"
-#include "recordings/Timers.h"
+#include "timers/Timers.h"
 #include "EPGDefinitions.h"
 #include "platform/threads/threads.h"
 #include "utils/XBMCTinyXML.h"

@@ -21,7 +21,7 @@
 //#include "interface.h"
 //#include "menu.h"
 //#include "plugin.h"
-#include "recordings/Timers.h"
+#include "timers/Timers.h"
 #include "recordings/Recording.h"
 #include "Tools.h"
 

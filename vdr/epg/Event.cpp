@@ -2,7 +2,7 @@
 #include "EPGDefinitions.h"
 #include "Schedule.h"
 #include "channels/ChannelManager.h"
-#include "recordings/Timers.h"
+#include "timers/Timers.h"
 #include "utils/UTF8Utils.h"
 #include "utils/I18N.h"
 #include "utils/CalendarUtils.h"

@@ -14,7 +14,7 @@
 #include "RecordingConfig.h"
 #include "channels/ChannelManager.h"
 #include "Config.h"
-#include "Timers.h"
+#include "timers/Timers.h"
 #include "epg/EPG.h"
 #include "utils/Tools.h"
 #include "platform/threads/threads.h"

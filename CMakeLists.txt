@@ -164,12 +164,13 @@ set(VDR_SRCS
 	vdr/recordings/RecordingUserCommand.cpp
 	vdr/recordings/Recordings.cpp
 	vdr/recordings/ResumeFile.cpp
-	vdr/recordings/Timers.cpp
 	vdr/settings/Settings.cpp
 	vdr/sources/ISourceParams.cpp
 	vdr/sources/Source.cpp
 	vdr/sources/linux/DVBSourceParams.cpp
 	vdr/sources/linux/DVBTransponderParams.cpp
+	vdr/timers/Timer.cpp
+	vdr/timers/Timers.cpp
 	vdr/utils/CalendarUtils.cpp
 	vdr/utils/CharsetConverter.cpp
 	vdr/utils/CharSetConverterVDR.cpp

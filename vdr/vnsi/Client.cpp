@@ -34,7 +34,7 @@
 #include "channels/ChannelGroup.h"
 #include "channels/ChannelFilter.h"
 #include "filesystem/Videodir.h"
-#include "recordings/Timers.h"
+#include "timers/Timers.h"
 #include "devices/Device.h"
 
 //#include "vnsi.h"

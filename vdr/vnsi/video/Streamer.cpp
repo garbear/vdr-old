@@ -35,7 +35,7 @@
 #include "vnsi/net/ResponsePacket.h"
 #include "VideoBuffer.h"
 #include "devices/DeviceManager.h"
-#include "recordings/Timers.h"
+#include "timers/Timers.h"
 #include "recordings/Recordings.h"
 #include "settings/Settings.h"
 
