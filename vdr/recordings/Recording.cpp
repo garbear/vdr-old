@@ -465,22 +465,6 @@ char *cRecording::StripEpisodeName(char *s, bool Strip)
   return s;
 }
 
-char *cRecording::SortName(void) const
-{
-  char **sb = (RecordingsSortMode == rsmName) ? &sortBufferName : &sortBufferTime;
-  if (!*sb) {
-     char *s = strdup(FileName() + strlen(VideoDirectory));
-     if (RecordingsSortMode != rsmName || g_setup.AlwaysSortFoldersFirst)
-        s = StripEpisodeName(s, RecordingsSortMode != rsmName);
-     strreplace(s, '/', '0'); // some locales ignore '/' when sorting
-     int l = strxfrm(NULL, s, 0) + 1;
-     *sb = MALLOC(char, l);
-     strxfrm(*sb, s, l);
-     free(s);
-     }
-  return *sb;
-}
-
 void cRecording::ClearSortName(void)
 {
   DELETENULL(sortBufferName);
@@ -494,12 +478,6 @@ int cRecording::GetResume(void) const
      resume = ResumeFile.Read();
      }
   return resume;
-}
-
-int cRecording::Compare(const cListObject &ListObject) const
-{
-  cRecording *r = (cRecording *)&ListObject;
-  return strcasecmp(SortName(), r->SortName());
 }
 
 const char *cRecording::FileName(void) const
@@ -770,46 +748,4 @@ int ReadFrame(cUnbufferedFile *f, uchar *b, int Length, int Max)
   if (r < 0)
      LOG_ERROR;
   return r;
-}
-
-// --- Recordings Sort Mode --------------------------------------------------
-
-eRecordingsSortMode RecordingsSortMode = rsmName;
-
-bool HasRecordingsSortMode(const char *Directory)
-{
-  return CDirectory::Exists(*AddDirectory(Directory, SORTMODEFILE));
-}
-
-void GetRecordingsSortMode(const char *Directory)
-{
-  CFile file;
-  if (file.Open(*AddDirectory(Directory, SORTMODEFILE)))
-  {
-    char buf[8];
-    if (file.Read(buf, sizeof(buf)))
-      RecordingsSortMode = eRecordingsSortMode(constrain(atoi(buf), 0, int(rsmTime)));
-    file.Close();
-  }
-}
-
-void SetRecordingsSortMode(const char *Directory, eRecordingsSortMode SortMode)
-{
-  CFile file;
-  if (file.OpenForWrite(*AddDirectory(Directory, SORTMODEFILE)))
-  {
-    char buf[8];
-    snprintf(buf, 8, "%d\n", SortMode);
-    file.Write(buf, 8);
-    file.Close();
-  }
-}
-
-void IncRecordingsSortMode(const char *Directory)
-{
-  GetRecordingsSortMode(Directory);
-  RecordingsSortMode = eRecordingsSortMode(int(RecordingsSortMode) + 1);
-  if (RecordingsSortMode > rsmTime)
-     RecordingsSortMode = eRecordingsSortMode(0);
-  SetRecordingsSortMode(Directory, RecordingsSortMode);
 }
