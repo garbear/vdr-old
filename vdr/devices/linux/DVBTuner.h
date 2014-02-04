@@ -80,6 +80,8 @@ public:
 
   int IoControl(unsigned long int request, void* param) const;
 
+  fe_caps_t GetCapabilities() const { return m_frontendInfo.caps; }
+
 private:
   std::vector<fe_delivery_system> GetDeliverySystems() const;
 
