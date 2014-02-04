@@ -6,3 +6,5 @@
 # VDR ignorables
 /build
 /Build
+
+/system/channels.xml
