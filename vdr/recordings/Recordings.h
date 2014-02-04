@@ -2,17 +2,8 @@
 
 #include "Recording.h"
 
-class cRecordings : public cList<cRecording>, public PLATFORM::CThread {
-private:
-  static char *updateFileName;
-  bool deleted;
-  time_t lastUpdate;
-  int state;
-  const char *UpdateFileName(void);
-  void Refresh(bool Foreground = false);
-  void ScanVideoDir(const std::string& strDirName, bool Foreground = false, int LinkLevel = 0);
-protected:
-  void* Process(void);
+class cRecordings : public PLATFORM::CThread
+{
 public:
   cRecordings(bool Deleted = false);
   virtual ~cRecordings();
@@ -40,11 +31,42 @@ public:
   cRecording* FindByUID(uint32_t uid);
   void DelByName(const char *FileName);
   void UpdateByName(const char *FileName);
-  int TotalFileSizeMB(void);
+  int TotalFileSizeMB(bool bDeletedRecordings = false);
   double MBperMinute(void);
        ///< Returns the average data rate (in MB/min) of all recordings, or -1 if
        ///< this value is unknown.
-  };
+
+  void Add(cRecording* recording);
+  void Clear(void);
+  bool RemoveDeletedRecordings(void);
+  bool RemoveDeletedRecording(time_t& LastFreeDiskCheck, int Factor);
+  bool RemoveOldestRecording(int Priority);
+  void AssertFreeDiskSpace(int Priority = 0, bool Force = false);
+       ///< The special Priority value -1 means that we shall get rid of any
+       ///< deleted recordings faster than normal (because we're cutting).
+       ///< If Force is true, the check will be done even if the timeout
+       ///< hasn't expired yet.
+
+  size_t Size(void) const;
+
+  /// XXX use shared_ptr for these
+  std::vector<cRecording*> Recordings(void) const;
+
+protected:
+  void* Process(void);
+
+private:
+  const char *UpdateFileName(void);
+  void Refresh(bool Foreground = false);
+  void ScanVideoDir(const std::string& strDirName, bool Foreground = false, int LinkLevel = 0);
+
+  static char *updateFileName;
+  bool deleted;
+  time_t lastUpdate;
+  int state;
+  std::vector<cRecording*> m_recordings;
+  std::vector<cRecording*> m_deletedRecordings;
+  time_t                   m_LastFreeDiskCheck;
+};
 
 extern cRecordings Recordings;
-extern cRecordings DeletedRecordings;

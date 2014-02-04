@@ -112,7 +112,6 @@ bool cVDRDaemon::Init()
 
   // Recordings:
   Recordings.Update();
-  DeletedRecordings.Update();
 
   // EPG data:
   m_EpgDataReader = new cEpgDataReader;

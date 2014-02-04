@@ -1528,7 +1528,7 @@ bool cVNSIClient::processRECORDINGS_GetDiskSpace() /* OPCODE 100 */
 bool cVNSIClient::processRECORDINGS_GetCount() /* OPCODE 101 */
 {
   Recordings.Load();
-  m_resp->add_U32(Recordings.Count());
+  m_resp->add_U32(Recordings.Size());
 
   m_resp->finalise();
   m_socket.write(m_resp->getPtr(), m_resp->getLen());
@@ -1539,10 +1539,10 @@ bool cVNSIClient::processRECORDINGS_GetList() /* OPCODE 102 */
 {
   CLockObject lock(m_timerLock);
   CThreadLock RecordingsLock(&Recordings);
-
-  for (cRecording *recording = Recordings.First(); recording; recording = Recordings.Next(recording))
+  std::vector<cRecording*> recordings = Recordings.Recordings();
+  for (std::vector<cRecording*>::const_iterator it = recordings.begin(); it != recordings.end(); ++it)
   {
-    const cEvent *event = recording->Info()->GetEvent();
+    const cEvent *event = (*it)->Info()->GetEvent();
 
     time_t recordingStart    = 0;
     int    recordingDuration = 0;
@@ -1561,7 +1561,7 @@ bool cVNSIClient::processRECORDINGS_GetList() /* OPCODE 102 */
 //      }
 //      else
 //      {
-        recordingStart = recording->Start();
+        recordingStart = (*it)->Start();
 //      }
     }
     dsyslog("GRI: RC: recordingStart=%lu recordingDuration=%i", recordingStart, recordingDuration);
@@ -1573,15 +1573,15 @@ bool cVNSIClient::processRECORDINGS_GetList() /* OPCODE 102 */
     m_resp->add_U32(recordingDuration);
 
     // priority
-    m_resp->add_U32(recording->Priority());
+    m_resp->add_U32((*it)->Priority());
 
     // lifetime
-    m_resp->add_U32(recording->Lifetime());
+    m_resp->add_U32((*it)->Lifetime());
 
     // channel_name
-    m_resp->add_String(recording->Info()->ChannelName() ? m_toUTF8.Convert(recording->Info()->ChannelName()) : "");
+    m_resp->add_String((*it)->Info()->ChannelName() ? m_toUTF8.Convert((*it)->Info()->ChannelName()) : "");
 
-    char* fullname = strdup(recording->Name());
+    char* fullname = strdup((*it)->Name());
     char* recname = strrchr(fullname, FOLDERDELIMCHAR);
     char* directory = NULL;
 
@@ -1598,14 +1598,14 @@ bool cVNSIClient::processRECORDINGS_GetList() /* OPCODE 102 */
     m_resp->add_String(m_toUTF8.Convert(recname));
 
     // subtitle
-    if (!isempty(recording->Info()->ShortText()))
-      m_resp->add_String(m_toUTF8.Convert(recording->Info()->ShortText()));
+    if (!isempty((*it)->Info()->ShortText()))
+      m_resp->add_String(m_toUTF8.Convert((*it)->Info()->ShortText()));
     else
       m_resp->add_String("");
 
     // description
-    if (!isempty(recording->Info()->Description()))
-      m_resp->add_String(m_toUTF8.Convert(recording->Info()->Description()));
+    if (!isempty((*it)->Info()->Description()))
+      m_resp->add_String(m_toUTF8.Convert((*it)->Info()->Description()));
     else
       m_resp->add_String("");
 
@@ -1623,7 +1623,7 @@ bool cVNSIClient::processRECORDINGS_GetList() /* OPCODE 102 */
     m_resp->add_String((isempty(directory)) ? "" : m_toUTF8.Convert(directory));
 
     // filename / uid of recording
-    m_resp->add_U32(recording->UID());
+    m_resp->add_U32((*it)->UID());
 
     free(fullname);
   }

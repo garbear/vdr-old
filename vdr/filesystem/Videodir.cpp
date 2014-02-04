@@ -205,7 +205,7 @@ bool VideoFileSpaceAvailable(int SizeMB)
 int VideoDiskSpace(int *FreeMB, int *UsedMB)
 {
   int free = 0, used = 0;
-  int deleted = DeletedRecordings.TotalFileSizeMB();
+  int deleted = Recordings.TotalFileSizeMB(true);
   cVideoDirectory Dir;
   do {
      int u;

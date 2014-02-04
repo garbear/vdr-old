@@ -565,7 +565,7 @@ bool cCuttingThread::ProcessSequence(int LastEndIndex, int BeginIndex, int EndIn
       int Length;
       if (LoadFrame(Index, Buffer, Independent, Length)) {
          // Make sure there is enough disk space:
-         AssertFreeDiskSpace(-1);
+         Recordings.AssertFreeDiskSpace(-1);
          bool CutIn = !SeamlessBegin && Index == BeginIndex;
          bool CutOut = !SeamlessEnd && Index == EndIndex - 1;
          bool DeletedFrame = false;
