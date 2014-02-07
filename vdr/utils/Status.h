@@ -24,7 +24,7 @@ private:
   static cList<cStatus> statusMonitors;
 protected:
   // These functions can be implemented by derived classes to receive status information:
-  virtual void TimerChange(const cTimer *Timer, eTimerChange Change) {}
+  virtual void TimerChange(const TimerPtr Timer, eTimerChange Change) {}
                // Indicates a change in the timer settings.
                // If Change is tcAdd or tcDel, Timer points to the timer that has
                // been added or will be deleted, respectively. In case of tcMod,
@@ -85,7 +85,7 @@ public:
   cStatus(void);
   virtual ~cStatus();
   // These functions are called whenever the related status information changes:
-  static void MsgTimerChange(const cTimer *Timer, eTimerChange Change);
+  static void MsgTimerChange(const TimerPtr Timer, eTimerChange Change);
   static void MsgChannelSwitch(const cDevice *Device, int ChannelNumber);
   static void MsgRecording(const cDevice *Device, const char *Name, const char *FileName, bool On);
   static void MsgReplaying(const cControl *Control, const char *Name, const char *FileName, bool On);

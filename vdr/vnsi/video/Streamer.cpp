@@ -94,29 +94,14 @@ bool cLiveStreamer::Open(int serial)
   }
   else if (serial == -1)
   {
-    for (cTimer *timer = Timers.First(); timer; timer = Timers.Next(timer))
+    cRecording* rec = cTimers::Get().GetActiveRecording(m_Channel);
+    if (rec)
     {
-      if (timer &&
-          timer->Recording() &&
-          timer->Channel().get() == m_Channel.get())
-      {
-        Recordings.Load();
-        cRecording matchRec(timer, timer->Event());
-        cRecording *rec;
-        {
-          PLATFORM::CThreadLock RecordingsLock(&Recordings);
-          rec = Recordings.GetByName(matchRec.FileName());
-          if (!rec)
-          {
-            return false;
-          }
-        }
-        m_VideoBuffer = cVideoBuffer::Create(rec);
-        recording = true;
-        break;
-      }
+      recording = true;
+      m_VideoBuffer = cVideoBuffer::Create(rec);
     }
   }
+
   if (!recording)
   {
     m_VideoBuffer = cVideoBuffer::Create(m_ClientID, m_Timeshift);

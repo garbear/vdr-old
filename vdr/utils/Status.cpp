@@ -23,7 +23,7 @@ cStatus::~cStatus()
   statusMonitors.Del(this, false);
 }
 
-void cStatus::MsgTimerChange(const cTimer *Timer, eTimerChange Change)
+void cStatus::MsgTimerChange(const TimerPtr Timer, eTimerChange Change)
 {
   for (cStatus *sm = statusMonitors.First(); sm; sm = statusMonitors.Next(sm))
       sm->TimerChange(Timer, Change);

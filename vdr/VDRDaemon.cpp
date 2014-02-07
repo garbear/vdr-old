@@ -86,10 +86,9 @@ bool cVDRDaemon::LoadConfig(void)
 
 
   cChannelManager::Get().Load();
+  cTimers::Get().Load();
 
-  if (!Timers.Load("special://home/system/timers.conf"))
-    Timers.Load("special://vdr/system/timers.conf");
-
+  //TODO
   if (!Commands.Load("special://home/system/commands.conf"))
     Commands.Load("special://vdr/system/commands.conf");
 
@@ -150,6 +149,7 @@ void *cVDRDaemon::Process()
     m_sleepEvent.Wait(100);
   }
   DeInit();
+  cTimers::Get().Save();
   m_exitEvent.Broadcast();
   return NULL;
 }

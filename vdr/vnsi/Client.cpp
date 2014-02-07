@@ -1218,7 +1218,7 @@ bool cVNSIClient::processTIMER_GetCount() /* OPCODE 80 */
 {
   CLockObject lock(m_timerLock);
 
-  int count = Timers.Count();
+  size_t count = cTimers::Get().Size();
 
   m_resp->add_U32(count);
 
@@ -1233,15 +1233,15 @@ bool cVNSIClient::processTIMER_Get() /* OPCODE 81 */
 
   uint32_t number = m_req->extract_U32();
 
-  int numTimers = Timers.Count();
+  size_t numTimers = cTimers::Get().Size();
   if (numTimers > 0)
   {
-    cTimer *timer = Timers.Get(number-1);
+    TimerPtr timer = cTimers::Get().GetByIndex(number-1);
     if (timer)
     {
       m_resp->add_U32(VNSI_RET_OK);
 
-      m_resp->add_U32(timer->Index()+1);
+      m_resp->add_U32(timer->Index()+1); //TODO
       m_resp->add_U32(timer->HasFlags(tfActive));
       m_resp->add_U32(timer->Recording());
       m_resp->add_U32(timer->Pending());
@@ -1253,7 +1253,7 @@ bool cVNSIClient::processTIMER_Get() /* OPCODE 81 */
       m_resp->add_U32(timer->StopTime());
       m_resp->add_U32(timer->Day());
       m_resp->add_U32(timer->WeekDays());
-      m_resp->add_String(m_toUTF8.Convert(timer->File()));
+      m_resp->add_String(m_toUTF8.Convert(timer->File().c_str()));
     }
     else
       m_resp->add_U32(VNSI_RET_DATAUNKNOWN);
@@ -1270,18 +1270,18 @@ bool cVNSIClient::processTIMER_GetList() /* OPCODE 82 */
 {
   CLockObject lock(m_timerLock);
 
-  cTimer *timer;
-  int numTimers = Timers.Count();
+  TimerPtr timer;
+  size_t numTimers = cTimers::Get().Size();
 
   m_resp->add_U32(numTimers);
 
   for (int i = 0; i < numTimers; i++)
   {
-    timer = Timers.Get(i);
+    timer = cTimers::Get().GetByIndex(i);
     if (!timer)
       continue;
 
-    m_resp->add_U32(timer->Index()+1);
+    m_resp->add_U32(timer->Index()+1); //TODO
     m_resp->add_U32(timer->HasFlags(tfActive));
     m_resp->add_U32(timer->Recording());
     m_resp->add_U32(timer->Pending());
@@ -1293,7 +1293,7 @@ bool cVNSIClient::processTIMER_GetList() /* OPCODE 82 */
     m_resp->add_U32(timer->StopTime());
     m_resp->add_U32(timer->Day());
     m_resp->add_U32(timer->WeekDays());
-    m_resp->add_String(m_toUTF8.Convert(timer->File()));
+    m_resp->add_String(m_toUTF8.Convert(timer->File().c_str()));
   }
 
   m_resp->finalise();
@@ -1340,15 +1340,15 @@ bool cVNSIClient::processTIMER_Add() /* OPCODE 83 */
   delete[] file;
   delete[] aux;
 
-  cTimer *timer = new cTimer;
+  cTimer* timer = new cTimer;
   if (timer->Parse(buffer))
   {
-    cTimer *t = Timers.GetTimer(timer);
+    TimerPtr t = cTimers::Get().GetTimer(timer);
     if (!t)
     {
-      Timers.Add(timer);
-      Timers.SetModified();
-      isyslog("Timer %s added", *timer->ToDescr());
+      cTimers::Get().Add(TimerPtr(timer));
+      cTimers::Get().SetModified();
+      isyslog("Timer %s added", timer->ToDescr().c_str());
       m_resp->add_U32(VNSI_RET_OK);
       m_resp->finalise();
       m_socket.write(m_resp->getPtr(), m_resp->getLen());
@@ -1356,7 +1356,7 @@ bool cVNSIClient::processTIMER_Add() /* OPCODE 83 */
     }
     else
     {
-      esyslog("Timer already defined: %d %s", t->Index() + 1, *t->ToText());
+      esyslog("Timer already defined: %d %s", t->Index() + 1, t->Serialise().c_str()); //TODO
       m_resp->add_U32(VNSI_RET_DATALOCKED);
     }
   }
@@ -1380,44 +1380,36 @@ bool cVNSIClient::processTIMER_Delete() /* OPCODE 84 */
   uint32_t number = m_req->extract_U32();
   bool     force  = m_req->extract_U32();
 
-  if (number <= 0 || number > (uint32_t)Timers.Count())
+  if (number <= 0 || number > (uint32_t)cTimers::Get().Size())
   {
     esyslog("Unable to delete timer - invalid timer identifier");
     m_resp->add_U32(VNSI_RET_DATAINVALID);
   }
   else
   {
-    cTimer *timer = Timers.Get(number-1);
+    TimerPtr timer = cTimers::Get().GetByIndex(number-1);
     if (timer)
     {
-      if (!Timers.BeingEdited())
+      if (timer->Recording())
       {
-        if (timer->Recording())
+        if (force)
         {
-          if (force)
-          {
-            timer->Skip();
-//XXX            cRecordControls::Process(time(NULL));
-          }
-          else
-          {
-            esyslog("Timer \"%i\" is recording and can be deleted (use force=1 to stop it)", number);
-            m_resp->add_U32(VNSI_RET_RECRUNNING);
-            m_resp->finalise();
-            m_socket.write(m_resp->getPtr(), m_resp->getLen());
-            return true;
-          }
+          timer->Skip();
+//XXX          cRecordControls::Process(time(NULL));
         }
-        isyslog("Deleting timer %s", *timer->ToDescr());
-        Timers.Del(timer);
-        Timers.SetModified();
-        m_resp->add_U32(VNSI_RET_OK);
+        else
+        {
+          esyslog("Timer \"%i\" is recording and can be deleted (use force=1 to stop it)", number);
+          m_resp->add_U32(VNSI_RET_RECRUNNING);
+          m_resp->finalise();
+          m_socket.write(m_resp->getPtr(), m_resp->getLen());
+          return true;
+        }
       }
-      else
-      {
-        esyslog("Unable to delete timer - timers being edited at VDR");
-        m_resp->add_U32(VNSI_RET_DATALOCKED);
-      }
+      isyslog("Deleting timer %s", timer->ToDescr().c_str());
+      cTimers::Get().Del(timer);
+      cTimers::Get().SetModified();
+      m_resp->add_U32(VNSI_RET_OK);
     }
     else
     {
@@ -1438,7 +1430,7 @@ bool cVNSIClient::processTIMER_Update() /* OPCODE 85 */
   uint32_t index  = m_req->extract_U32();
   bool active     = m_req->extract_U32();
 
-  cTimer *timer = Timers.Get(index - 1);
+  TimerPtr timer = cTimers::Get().GetByIndex(index - 1);
   if (!timer)
   {
     esyslog("Timer \"%u\" not defined", index);
@@ -1499,7 +1491,7 @@ bool cVNSIClient::processTIMER_Update() /* OPCODE 85 */
   }
 
   *timer = t;
-  Timers.SetModified();
+  cTimers::Get().SetModified();
 
   m_resp->add_U32(VNSI_RET_OK);
   m_resp->finalise();

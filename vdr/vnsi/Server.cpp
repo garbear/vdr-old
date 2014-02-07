@@ -200,7 +200,7 @@ void* cVNSIServer::Process(void)
 
   // get initial state of the timers
   int timerState = -1;
-  Timers.Modified(timerState);
+  cTimers::Get().Modified(timerState);
 
   // last update of epg
   time_t epgUpdate = cSchedules::Modified();
@@ -287,7 +287,7 @@ void* cVNSIServer::Process(void)
       }
 
       // update timers
-      if(Timers.Modified(timerState))
+      if(cTimers::Get().Modified(timerState))
       {
         isyslog("Timers state changed (%i)", timerState);
         isyslog("Requesting clients to reload timers");

@@ -244,7 +244,7 @@ char *LimitNameLengths(char *s, int PathMax, int NameMax)
   return s;
 }
 
-cRecording::cRecording(cTimer *Timer, const cEvent *Event)
+cRecording::cRecording(TimerPtr Timer, const cEvent *Event)
 {
   resume = RESUME_NOT_INITIALIZED;
   titleBuffer = NULL;
@@ -267,12 +267,13 @@ cRecording::cRecording(cTimer *Timer, const cEvent *Event)
      Title = Timer->Channel()->Name().c_str();
   if (isempty(Subtitle))
      Subtitle = " ";
-  const char *macroTITLE   = strstr(Timer->File(), TIMERMACRO_TITLE);
-  const char *macroEPISODE = strstr(Timer->File(), TIMERMACRO_EPISODE);
-  if (macroTITLE || macroEPISODE) {
-     name = strdup(Timer->File());
-     name = strreplace(name, TIMERMACRO_TITLE, Title);
-     name = strreplace(name, TIMERMACRO_EPISODE, Subtitle);
+  size_t macroTitle   = Timer->File().find(TIMERMACRO_TITLE);
+  size_t macroEpisode = Timer->File().find(TIMERMACRO_EPISODE);
+  if (macroTitle != std::string::npos || macroEpisode != std::string::npos) {
+     std::string strName = Timer->File();
+     StringUtils::Replace(strName, TIMERMACRO_TITLE, Title);
+     StringUtils::Replace(strName, TIMERMACRO_EPISODE, Subtitle);
+     name = strdup(strName.c_str());
      // avoid blanks at the end:
      int l = strlen(name);
      while (l-- > 2) {
@@ -283,13 +284,13 @@ cRecording::cRecording(cTimer *Timer, const cEvent *Event)
            }
      if (Timer->IsSingleEvent()) {
         Timer->SetFile(name); // this was an instant recording, so let's set the actual data
-        Timers.SetModified();
+        cTimers::Get().SetModified();
         }
      }
   else if (Timer->IsSingleEvent() || !g_setup.UseSubtitle)
-     name = strdup(Timer->File());
+     name = strdup(Timer->File().c_str());
   else
-     name = strdup(cString::sprintf("%s~%s", Timer->File(), Subtitle));
+     name = strdup(cString::sprintf("%s~%s", Timer->File().c_str(), Subtitle));
   // substitute characters that would cause problems in file names:
   strreplace(name, '\n', ' ');
   start = Timer->StartTime();

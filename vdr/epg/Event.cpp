@@ -145,12 +145,7 @@ cString cEvent::ToDescr(void) const
 
 bool cEvent::HasTimer(void) const
 {
-  for (cTimer *t = Timers.First(); t; t = Timers.Next(t))
-  {
-    if (t->Event() == this)
-      return true;
-  }
-  return false;
+  return cTimers::Get().HasTimer(this);
 }
 
 bool cEvent::IsRunning(bool OrAboutToStart) const

@@ -58,7 +58,7 @@ private:
   time_t deleted;
   int64_t m_hash;
 public:
-  cRecording(cTimer *Timer, const cEvent *Event);
+  cRecording(TimerPtr Timer, const cEvent *Event);
   cRecording(const char *FileName);
   virtual ~cRecording();
   time_t Start(void) const { return start; }

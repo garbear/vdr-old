@@ -85,8 +85,7 @@ void cSchedules::ResetVersions(void)
 
 bool cSchedules::ClearAll(void)
 {
-  for (cTimer *Timer = Timers.First(); Timer; Timer = Timers.Next(Timer))
-    Timer->SetEvent(NULL);
+  cTimers::Get().ClearEvents();
   for (std::vector<SchedulePtr>::iterator it = m_schedules.begin(); it != m_schedules.end(); ++it)
     (*it)->Cleanup(INT_MAX);
   m_bHasUnsavedData = false;

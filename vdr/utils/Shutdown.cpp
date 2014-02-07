@@ -172,7 +172,7 @@ bool cShutdownHandler::ConfirmShutdown(bool Interactive)
 //        return false;
 //     }
 
-  cTimer *timer = Timers.GetNextActiveTimer();
+  TimerPtr timer = cTimers::Get().GetNextActiveTimer();
   time_t Next = timer ? timer->StartTime() : 0;
   time_t Delta = timer ? Next - time(NULL) : 0;
 
@@ -216,7 +216,7 @@ bool cShutdownHandler::ConfirmRestart(bool Interactive)
 //        return false;
      }
 
-  cTimer *timer = Timers.GetNextActiveTimer();
+  TimerPtr timer = cTimers::Get().GetNextActiveTimer();
   time_t Next  = timer ? timer->StartTime() : 0;
   time_t Delta = timer ? Next - time(NULL) : 0;
 
@@ -235,7 +235,7 @@ bool cShutdownHandler::ConfirmRestart(bool Interactive)
 bool cShutdownHandler::DoShutdown(bool Force)
 {
   time_t Now = time(NULL);
-  cTimer *timer = Timers.GetNextActiveTimer();
+  TimerPtr timer = cTimers::Get().GetNextActiveTimer();
 //XXX  cPlugin *Plugin = cPluginManager::GetNextWakeupPlugin();
 
   time_t Next = timer ? timer->StartTime() : 0;
@@ -251,13 +251,13 @@ bool cShutdownHandler::DoShutdown(bool Force)
         return false;
      Delta = g_setup.MinEventTimeout * 60;
      Next = Now + Delta;
-     timer = NULL;
+     timer = cTimer::EmptyTimer;
      dsyslog("reboot at %s", CalendarUtils::TimeToString(Next).c_str());
      }
 
   if (Next && timer) {
      dsyslog("next timer event at %s", CalendarUtils::TimeToString(Next).c_str());
-     CallShutdownCommand(Next, timer->Channel()->Number(), timer->File(), Force);
+     CallShutdownCommand(Next, timer->Channel()->Number(), timer->File().c_str(), Force);
      }
 //XXX  else if (Next && Plugin) {
 //     CallShutdownCommand(Next, 0, Plugin->Name(), Force);

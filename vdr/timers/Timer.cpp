@@ -1,174 +1,291 @@
 #include "Config.h"
 #include "Timers.h"
 #include "Timer.h"
+#include "TimerDefinitions.h"
 #include "channels/ChannelManager.h"
 #include "devices/Device.h"
 #include "devices/DeviceManager.h"
+#include "epg/Event.h"
 #include "utils/Status.h"
 #include "utils/UTF8Utils.h"
+#include "utils/XBMCTinyXML.h"
 
 // IMPORTANT NOTE: in the 'sscanf()' calls there is a blank after the '%d'
 // format characters in order to allow any number of blanks after a numeric
 // value!
 
-// --- cTimer ----------------------------------------------------------------
+TimerPtr cTimer::EmptyTimer;
 
 cTimer::cTimer(bool Instant, bool Pause, ChannelPtr Channel)
 {
-  startTime = stopTime = 0;
-  lastSetEvent = 0;
-  deferred = 0;
-  recording = pending = inVpsMargin = false;
-  flags = tfNone;
-  *file = 0;
-  aux = NULL;
-  event = NULL;
-  if (Instant)
-     SetFlags(tfActive | tfInstant);
-  channel = Channel ? Channel : cChannelManager::Get().GetByNumber(1 /* XXX */);
   time_t t = time(NULL);
   struct tm tm_r;
   struct tm *now = localtime_r(&t, &tm_r);
-  day = SetTime(t, 0);
-  weekdays = 0;
-  start = now->tm_hour * 100 + now->tm_min;
-  stop = 0;
-  if (!g_setup.InstantRecordTime && channel && (Instant || Pause)) {
-     cSchedulesLock SchedulesLock;
-     if (cSchedules *Schedules = SchedulesLock.Get()) {
-        if (SchedulePtr Schedule = Schedules->GetSchedule(channel)) {
-           if (const cEvent *Event = Schedule->GetPresentEvent()) {
-              time_t tstart = Event->StartTime();
-              time_t tstop = Event->EndTime();
-              if (Event->Vps() && g_setup.UseVps) {
-                 SetFlags(tfVps);
-                 tstart = Event->Vps();
-                 }
-              else {
-                 tstop  += g_setup.MarginStop * 60;
-                 tstart -= g_setup.MarginStart * 60;
-                 }
-              day = SetTime(tstart, 0);
-              struct tm *time = localtime_r(&tstart, &tm_r);
-              start = time->tm_hour * 100 + time->tm_min;
-              time = localtime_r(&tstop, &tm_r);
-              stop = time->tm_hour * 100 + time->tm_min;
-              SetEvent(Event);
-              }
-           }
+
+  startTime    = 0;
+  stopTime     = 0;
+  lastSetEvent = 0;
+  deferred     = 0;
+  recording    = false;
+  pending      = false;
+  inVpsMargin  = false;
+  m_flags      = tfNone;
+  m_aux        = NULL;
+  event        = NULL;
+  m_channel    = Channel ? Channel : cChannelManager::Get().GetByNumber(1 /* XXX */);
+  m_day        = SetTime(t, 0);
+  m_weekdays   = 0;
+  m_start      = now->tm_hour * 100 + now->tm_min;
+  m_stop       = 0;
+  m_index      = 0;
+
+  if (Instant)
+    SetFlags(tfActive | tfInstant);
+
+  if (!g_setup.InstantRecordTime && m_channel && (Instant || Pause))
+  {
+    cSchedulesLock SchedulesLock;
+    if (cSchedules *Schedules = SchedulesLock.Get())
+    {
+      if (SchedulePtr Schedule = Schedules->GetSchedule(m_channel))
+      {
+        if (const cEvent *Event = Schedule->GetPresentEvent())
+        {
+          time_t tstart = Event->StartTime();
+          time_t tstop = Event->EndTime();
+          if (Event->Vps() && g_setup.UseVps)
+          {
+            SetFlags(tfVps);
+            tstart = Event->Vps();
+          }
+          else
+          {
+            tstop  += g_setup.MarginStop * 60;
+            tstart -= g_setup.MarginStart * 60;
+          }
+          m_day = SetTime(tstart, 0);
+
+          struct tm *time = localtime_r(&tstart, &tm_r);
+          m_start = time->tm_hour * 100 + time->tm_min;
+
+          time = localtime_r(&tstop, &tm_r);
+          m_stop = time->tm_hour * 100 + time->tm_min;
+
+          SetEvent(Event);
         }
-     }
-  if (!stop) {
-     stop = now->tm_hour * 60 + now->tm_min + (g_setup.InstantRecordTime ? g_setup.InstantRecordTime : DEFINSTRECTIME);
-     stop = (stop / 60) * 100 + (stop % 60);
-     }
-  if (stop >= 2400)
-     stop -= 2400;
-  priority = Pause ? g_setup.PausePriority : g_setup.DefaultPriority;
-  lifetime = Pause ? g_setup.PauseLifetime : g_setup.DefaultLifetime;
-  if (Instant && channel)
-     snprintf(file, sizeof(file), "%s%s", g_setup.MarkInstantRecord ? "@" : "", *g_setup.NameInstantRecord ? g_setup.NameInstantRecord : channel->Name().c_str());
+      }
+    }
+  }
+  if (!m_stop)
+  {
+     m_stop = now->tm_hour * 60 + now->tm_min + (g_setup.InstantRecordTime ? g_setup.InstantRecordTime : DEFINSTRECTIME);
+     m_stop = (m_stop / 60) * 100 + (m_stop % 60);
+  }
+
+  if (m_stop >= 2400)
+    m_stop -= 2400;
+  m_priority = Pause ? g_setup.PausePriority : g_setup.DefaultPriority;
+  m_lifetime = Pause ? g_setup.PauseLifetime : g_setup.DefaultLifetime;
+
+  if (Instant && m_channel)
+  {
+    m_file = StringUtils::Format("%s%s", g_setup.MarkInstantRecord ? "@" : "", *g_setup.NameInstantRecord ? g_setup.NameInstantRecord : m_channel->Name().c_str());
+  }
+
+  Matches();
 }
 
 cTimer::cTimer(const cEvent *Event)
 {
-  startTime = stopTime = 0;
+  startTime    = 0;
+  stopTime     = 0;
   lastSetEvent = 0;
-  deferred = 0;
-  recording = pending = inVpsMargin = false;
-  flags = tfActive;
-  *file = 0;
-  aux = NULL;
-  event = NULL;
+  deferred     = 0;
+  recording    = false;
+  pending      = false;
+  inVpsMargin  = false;
+  m_flags      = tfActive;
+  m_aux        = NULL;
+  event        = NULL;
+  m_index      = 0;
+
   if (Event->Vps() && g_setup.UseVps)
-     SetFlags(tfVps);
-  channel = cChannelManager::Get().GetByChannelID(Event->ChannelID(), true);
-  time_t tstart = (flags & tfVps) ? Event->Vps() : Event->StartTime();
+    SetFlags(tfVps);
+
+  m_channel = cChannelManager::Get().GetByChannelID(Event->ChannelID(), true);
+
+  time_t tstart = (m_flags & tfVps) ? Event->Vps() : Event->StartTime();
   time_t tstop = tstart + Event->Duration();
-  if (!(HasFlags(tfVps))) {
-     tstop  += g_setup.MarginStop * 60;
-     tstart -= g_setup.MarginStart * 60;
-     }
+
+  if (!(HasFlags(tfVps)))
+  {
+    tstop  += g_setup.MarginStop * 60;
+    tstart -= g_setup.MarginStart * 60;
+  }
   struct tm tm_r;
   struct tm *time = localtime_r(&tstart, &tm_r);
-  day = SetTime(tstart, 0);
-  weekdays = 0;
-  start = time->tm_hour * 100 + time->tm_min;
+  m_day = SetTime(tstart, 0);
+  m_weekdays = 0;
+  m_start = time->tm_hour * 100 + time->tm_min;
   time = localtime_r(&tstop, &tm_r);
-  stop = time->tm_hour * 100 + time->tm_min;
-  if (stop >= 2400)
-     stop -= 2400;
-  priority = g_setup.DefaultPriority;
-  lifetime = g_setup.DefaultLifetime;
+  m_stop = time->tm_hour * 100 + time->tm_min;
+  if (m_stop >= 2400)
+     m_stop -= 2400;
+  m_priority = g_setup.DefaultPriority;
+  m_lifetime = g_setup.DefaultLifetime;
   const char *Title = Event->Title();
   if (!isempty(Title))
-    cUtf8Utils::Utf8Strn0Cpy(file, Event->Title(), sizeof(file));
+    m_file = Title;
   SetEvent(Event);
+  Matches();
 }
 
 cTimer::cTimer(const cTimer &Timer)
 {
-  channel = cChannel::EmptyChannel;
-  aux = NULL;
-  event = NULL;
-  flags = tfNone;
-  *this = Timer;
+  m_channel = cChannel::EmptyChannel;
+  m_aux     = NULL;
+  event   = NULL;
+  m_flags = tfNone;
+  *this   = Timer;
 }
 
 cTimer::~cTimer()
 {
-  free(aux);
+  free(m_aux);
 }
 
 cTimer& cTimer::operator= (const cTimer &Timer)
 {
   if (&Timer != this) {
-     uint OldFlags = flags & tfRecording;
+     uint OldFlags = m_flags & tfRecording;
      startTime    = Timer.startTime;
      stopTime     = Timer.stopTime;
      lastSetEvent = 0;
-     deferred = 0;
+     deferred     = 0;
      recording    = Timer.recording;
      pending      = Timer.pending;
      inVpsMargin  = Timer.inVpsMargin;
-     flags        = Timer.flags | OldFlags;
-     channel      = Timer.channel;
-     day          = Timer.day;
-     weekdays     = Timer.weekdays;
-     start        = Timer.start;
-     stop         = Timer.stop;
-     priority     = Timer.priority;
-     lifetime     = Timer.lifetime;
-     strncpy(file, Timer.file, sizeof(file));
-     free(aux);
-     aux = Timer.aux ? strdup(Timer.aux) : NULL;
+     m_flags      = Timer.m_flags | OldFlags;
+     m_channel    = Timer.m_channel;
+     m_day        = Timer.m_day;
+     m_weekdays   = Timer.m_weekdays;
+     m_start      = Timer.m_start;
+     m_stop       = Timer.m_stop;
+     m_priority   = Timer.m_priority;
+     m_lifetime   = Timer.m_lifetime;
+     m_file       = Timer.m_file;
+     free(m_aux);
+     m_aux = Timer.m_aux ? strdup(Timer.m_aux) : NULL;
      event = NULL;
+     Matches();
      }
   return *this;
 }
 
-int cTimer::Compare(const cListObject &ListObject) const
+bool cTimer::operator==(const cTimer &Timer)
 {
-  const cTimer *ti = (const cTimer *)&ListObject;
+  if (&Timer == this)
+    return true;
+
+  return (StartTime() == Timer.StartTime() &&
+          StopTime() == Timer.StopTime() &&
+          m_channel->GetChannelID() == Timer.Channel()->GetChannelID());
+}
+
+int cTimer::Compare(const cTimer &Timer) const
+{
   time_t t1 = StartTime();
-  time_t t2 = ti->StartTime();
+  time_t t2 = Timer.StartTime();
   int r = t1 - t2;
   if (r == 0)
-     r = ti->priority - priority;
+    r = Timer.m_priority - m_priority;
   return r;
 }
 
-cString cTimer::ToText(bool UseChannelID) const
+std::string cTimer::Serialise(bool UseChannelID) const
 {
-  strreplace(file, ':', '|');
-  cString buffer = cString::sprintf("%u:%s:%s:%04d:%04d:%d:%d:%s:%s\n", flags, UseChannelID ? Channel()->GetChannelID().Serialize().c_str() : *itoa(Channel()->Number()), *PrintDay(day, weekdays, true), start, stop, priority, lifetime, file, aux ? aux : "");
-  strreplace(file, '|', ':');
-  return buffer;
+  std::string strReturn = m_file;
+  StringUtils::Replace(strReturn, ':', '|');
+  strReturn = StringUtils::Format("%u:%s:%s:%04d:%04d:%d:%d:%s:%s\n", m_flags, UseChannelID ? Channel()->GetChannelID().Serialize().c_str() : *itoa(Channel()->Number()), *PrintDay(m_day, m_weekdays, true), m_start, m_stop, m_priority, m_lifetime, strReturn.c_str(), m_aux ? m_aux : "");
+  return strReturn;
 }
 
-cString cTimer::ToDescr(void) const
+bool cTimer::SerialiseTimer(TiXmlNode *node) const
 {
-  return cString::sprintf("%d (%d %04d-%04d %s'%s')", Index() + 1, Channel()->Number(), start, stop, HasFlags(tfVps) ? "VPS " : "", file);
+  if (node == NULL)
+    return false;
+
+  TiXmlElement *timerElement = node->ToElement();
+  if (timerElement == NULL)
+    return false;
+
+  timerElement->SetAttribute(TIMER_XML_ATTR_FLAGS,    m_flags);
+  timerElement->SetAttribute(TIMER_XML_ATTR_CHANNEL,  Channel()->GetChannelID().Serialize().c_str());
+  timerElement->SetAttribute(TIMER_XML_ATTR_DAYS,     *PrintDay(m_day, m_weekdays, true));
+  timerElement->SetAttribute(TIMER_XML_ATTR_START,    m_start);
+  timerElement->SetAttribute(TIMER_XML_ATTR_STOP,     m_stop);
+  timerElement->SetAttribute(TIMER_XML_ATTR_PRIORITY, m_priority);
+  timerElement->SetAttribute(TIMER_XML_ATTR_LIFETIME, m_lifetime);
+  timerElement->SetAttribute(TIMER_XML_ATTR_FILENAME, m_file);
+  timerElement->SetAttribute(TIMER_XML_ATTR_AUX,      m_aux ? m_aux : "");
+
+  return true;
+}
+
+bool cTimer::DeserialiseTimer(const TiXmlNode *node)
+{
+  if (node == NULL)
+    return false;
+
+  const TiXmlElement *elem = node->ToElement();
+  if (elem == NULL)
+    return false;
+
+  const char *flags = elem->Attribute(TIMER_XML_ATTR_FLAGS);
+  if (flags != NULL)
+    m_flags = StringUtils::IntVal(flags);
+
+  const char *channel = elem->Attribute(TIMER_XML_ATTR_CHANNEL);
+  if (channel != NULL)
+  {
+    tChannelID chanId = tChannelID::Deserialize(channel);
+    m_channel = cChannelManager::Get().GetByChannelID(chanId);
+  }
+
+  const char *days = elem->Attribute(TIMER_XML_ATTR_DAYS);
+  if (days != NULL)
+  {
+    ParseDay(days, m_day, m_weekdays);
+  }
+
+  const char *start = elem->Attribute(TIMER_XML_ATTR_START);
+  if (start != NULL)
+    m_start = StringUtils::IntVal(start);
+
+  const char *stop = elem->Attribute(TIMER_XML_ATTR_STOP);
+  if (stop != NULL)
+    m_stop = StringUtils::IntVal(stop);
+
+  const char *priority = elem->Attribute(TIMER_XML_ATTR_PRIORITY);
+  if (priority != NULL)
+    m_priority = StringUtils::IntVal(priority);
+
+  const char *lifetime = elem->Attribute(TIMER_XML_ATTR_LIFETIME);
+  if (lifetime != NULL)
+    m_lifetime = StringUtils::IntVal(lifetime);
+
+  const char *file = elem->Attribute(TIMER_XML_ATTR_FILENAME);
+  if (file != NULL)
+    m_file = file;
+
+  //XXX
+//  timerElement->SetAttribute(TIMER_XML_ATTR_AUX,      m_aux ? m_aux : "");
+  return false;
+}
+
+std::string cTimer::ToDescr(void) const
+{
+  return StringUtils::Format("%d %04d-%04d %s'%s'", Channel()->Number(), m_start, m_stop, HasFlags(tfVps) ? "VPS " : "", m_file.c_str());
 }
 
 int cTimer::TimeToInt(int t)
@@ -271,8 +388,8 @@ cString cTimer::PrintDay(time_t Day, int WeekDays, bool SingleByteChars)
 
 cString cTimer::PrintFirstDay(void) const
 {
-  if (weekdays) {
-     cString s = PrintDay(day, weekdays, true);
+  if (m_weekdays) {
+     cString s = PrintDay(m_day, m_weekdays, true);
      if (strlen(s) == 18)
         return *s + 8;
      }
@@ -284,8 +401,8 @@ bool cTimer::Parse(const char *s)
   char *channelbuffer = NULL;
   char *daybuffer = NULL;
   char *filebuffer = NULL;
-  free(aux);
-  aux = NULL;
+  free(m_aux);
+  m_aux = NULL;
   //XXX Apparently sscanf() doesn't work correctly if the last %a argument
   //XXX results in an empty string (this first occurred when the EIT gathering
   //XXX was put into a separate thread - don't know why this happens...
@@ -302,21 +419,21 @@ bool cTimer::Parse(const char *s)
      s = s2;
      }
   bool result = false;
-  if (8 <= sscanf(s, "%u :%a[^:]:%a[^:]:%d :%d :%d :%d :%a[^:\n]:%a[^\n]", &flags, &channelbuffer, &daybuffer, &start, &stop, &priority, &lifetime, &filebuffer, &aux)) {
+  if (8 <= sscanf(s, "%u :%a[^:]:%a[^:]:%d :%d :%d :%d :%a[^:\n]:%a[^\n]", &m_flags, &channelbuffer, &daybuffer, &m_start, &m_stop, &m_priority, &m_lifetime, &filebuffer, &m_aux)) {
      ClrFlags(tfRecording);
-     if (aux && !*skipspace(aux)) {
-        free(aux);
-        aux = NULL;
+     if (m_aux && !*skipspace(m_aux)) {
+        free(m_aux);
+        m_aux = NULL;
         }
      //TODO add more plausibility checks
-     result = ParseDay(daybuffer, day, weekdays);
-     cUtf8Utils::Utf8Strn0Cpy(file, filebuffer, sizeof(file));
-     strreplace(file, '|', ':');
+     result = ParseDay(daybuffer, m_day, m_weekdays);
+     m_file = filebuffer;
+     StringUtils::Replace(m_file, '|', ':');
      if (is_number(channelbuffer))
-        channel = cChannelManager::Get().GetByNumber(atoi(channelbuffer));
+       m_channel = cChannelManager::Get().GetByNumber(atoi(channelbuffer));
      else
-        channel = cChannelManager::Get().GetByChannelID(tChannelID::Deserialize(channelbuffer), true, true);
-     if (!channel) {
+       m_channel = cChannelManager::Get().GetByChannelID(tChannelID::Deserialize(channelbuffer), true, true);
+     if (!m_channel) {
         esyslog("ERROR: channel %s not defined", channelbuffer);
         result = false;
         }
@@ -325,17 +442,14 @@ bool cTimer::Parse(const char *s)
   free(daybuffer);
   free(filebuffer);
   free(s2);
+  if (result)
+    Matches();
   return result;
-}
-
-bool cTimer::Save(FILE *f)
-{
-  return fprintf(f, "%s", *ToText(true)) > 0;
 }
 
 bool cTimer::IsSingleEvent(void) const
 {
-  return !weekdays;
+  return !m_weekdays;
 }
 
 int cTimer::GetMDay(time_t t)
@@ -353,7 +467,7 @@ int cTimer::GetWDay(time_t t)
 
 bool cTimer::DayMatches(time_t t) const
 {
-  return IsSingleEvent() ? SetTime(t, 0) == day : (weekdays & (1 << GetWDay(t))) != 0;
+  return IsSingleEvent() ? SetTime(t, 0) == m_day : (m_weekdays & (1 << GetWDay(t))) != 0;
 }
 
 time_t cTimer::IncDay(time_t t, int Days)
@@ -382,33 +496,33 @@ time_t cTimer::SetTime(time_t t, int SecondsFromMidnight)
 void cTimer::SetFile(const char *File)
 {
   if (!isempty(File))
-    cUtf8Utils::Utf8Strn0Cpy(file, File, sizeof(file));
+    m_file = File;
 }
 
 #define EITPRESENTFOLLOWINGRATE 10 // max. seconds between two occurrences of the "EIT present/following table for the actual multiplex" (2s by the standard, using some more for safety)
 
-bool cTimer::Matches(time_t t, bool Directly, int Margin) const
+bool cTimer::Matches(time_t t, bool Directly, int Margin)
 {
   startTime = stopTime = 0;
   if (t == 0)
      t = time(NULL);
 
-  int begin  = TimeToInt(start); // seconds from midnight
-  int length = TimeToInt(stop) - begin;
+  int begin  = TimeToInt(m_start); // seconds from midnight
+  int length = TimeToInt(m_stop) - begin;
   if (length < 0)
      length += SECSINDAY;
 
   if (IsSingleEvent()) {
-     startTime = SetTime(day, begin);
+     startTime = SetTime(m_day, begin);
      stopTime = startTime + length;
      }
   else {
      for (int i = -1; i <= 7; i++) {
-         time_t t0 = IncDay(day ? ::max(day, t) : t, i);
+         time_t t0 = IncDay(m_day ? ::max(m_day, t) : t, i);
          if (DayMatches(t0)) {
             time_t a = SetTime(t0, begin);
             time_t b = a + length;
-            if ((!day || a >= day) && t < b) {
+            if ((!m_day || a >= m_day) && t < b) {
                startTime = a;
                stopTime = b;
                break;
@@ -417,8 +531,8 @@ bool cTimer::Matches(time_t t, bool Directly, int Margin) const
          }
      if (!startTime)
         startTime = IncDay(t, 7); // just to have something that's more than a week in the future
-     else if (!Directly && (t > startTime || t > day + SECSINDAY + 3600)) // +3600 in case of DST change
-        day = 0;
+     else if (!Directly && (t > startTime || t > m_day + SECSINDAY + 3600)) // +3600 in case of DST change
+        m_day = 0;
      }
 
   if (t < deferred)
@@ -446,14 +560,14 @@ bool cTimer::Matches(time_t t, bool Directly, int Margin) const
 
 #define FULLMATCH 1000
 
-eTimerMatch cTimer::Matches(const cEvent *Event, int *Overlap) const
+eTimerMatch cTimer::MatchesEvent(const cEvent *Event, int *Overlap)
 {
   // Overlap is the percentage of the Event's duration that is covered by
   // this timer (based on FULLMATCH for finer granularity than just 100).
   // To make sure a VPS timer can be distinguished from a plain 100% overlap,
   // it gets an additional 100 added, and a VPS event that is actually running
   // gets 200 added to the FULLMATCH.
-  if (HasFlags(tfActive) && channel->GetChannelID() == Event->ChannelID()) {
+  if (HasFlags(tfActive) && m_channel->GetChannelID() == Event->ChannelID()) {
      bool UseVps = HasFlags(tfVps) && Event->Vps();
      Matches(UseVps ? Event->Vps() : Event->StartTime(), true);
      int overlap = 0;
@@ -486,15 +600,11 @@ bool cTimer::Expired(void) const
 
 time_t cTimer::StartTime(void) const
 {
-  if (!startTime)
-     Matches();
   return startTime;
 }
 
 time_t cTimer::StopTime(void) const
 {
-  if (!stopTime)
-     Matches();
   return stopTime;
 }
 
@@ -526,7 +636,7 @@ void cTimer::SetEventFromSchedule(cSchedules *Schedules)
            for (const cEvent *e = Schedule->Events()->First(); e; e = Schedule->Events()->Next(e)) {
                if (e->StartTime() && e->RunningStatus() != SI::RunningStatusNotRunning) { // skip outdated events
                   int overlap = 0;
-                  Matches(e, &overlap);
+                  MatchesEvent(e, &overlap);
                   if (overlap > FULLMATCH) {
                      Event = e;
                      break; // take the first matching event
@@ -547,7 +657,7 @@ void cTimer::SetEventFromSchedule(cSchedules *Schedules)
                if (e->StartTime() > TimeFrameEnd)
                   break; // the rest is way after the timer ends
                int overlap = 0;
-               Matches(e, &overlap);
+               MatchesEvent(e, &overlap);
                if (overlap && overlap >= Overlap) {
                   if (Event && overlap == Overlap && e->Duration() <= Event->Duration())
                      continue; // if overlap is the same, we take the longer event
@@ -565,9 +675,9 @@ void cTimer::SetEvent(const cEvent *Event)
 {
   if (event != Event) { //XXX TODO check event data, too???
      if (Event)
-        isyslog("timer %s set to event %s", *ToDescr(), *Event->ToDescr());
+        isyslog("timer %s set to event %s", ToDescr().c_str(), *Event->ToDescr());
      else
-        isyslog("timer %s set to no event", *ToDescr());
+        isyslog("timer %s set to no event", ToDescr().c_str());
      event = Event;
      }
 }
@@ -579,7 +689,7 @@ void cTimer::SetRecording(bool Recording)
      SetFlags(tfRecording);
   else
      ClrFlags(tfRecording);
-  isyslog("timer %s %s", *ToDescr(), recording ? "start" : "stop");
+  isyslog("timer %s %s", ToDescr().c_str(), recording ? "start" : "stop");
 }
 
 void cTimer::SetPending(bool Pending)
@@ -590,75 +700,77 @@ void cTimer::SetPending(bool Pending)
 void cTimer::SetInVpsMargin(bool InVpsMargin)
 {
   if (InVpsMargin && !inVpsMargin)
-     isyslog("timer %s entered VPS margin", *ToDescr());
+     isyslog("timer %s entered VPS margin", ToDescr().c_str());
   inVpsMargin = InVpsMargin;
 }
 
 void cTimer::SetDay(time_t Day)
 {
-  day = Day;
+  m_day = Day;
 }
 
 void cTimer::SetWeekDays(int WeekDays)
 {
-  weekdays = WeekDays;
+  m_weekdays = WeekDays;
 }
 
 void cTimer::SetStart(int Start)
 {
-  start = Start;
+  m_start = Start;
+  Matches();
 }
 
 void cTimer::SetStop(int Stop)
 {
-  stop = Stop;
+  m_stop = Stop;
+  Matches();
 }
 
 void cTimer::SetPriority(int Priority)
 {
-  priority = Priority;
+  m_priority = Priority;
 }
 
 void cTimer::SetLifetime(int Lifetime)
 {
-  lifetime = Lifetime;
+  m_lifetime = Lifetime;
 }
 
 void cTimer::SetAux(const char *Aux)
 {
-  free(aux);
-  aux = strdup(Aux);
+  free(m_aux);
+  m_aux = strdup(Aux);
 }
 
 void cTimer::SetDeferred(int Seconds)
 {
   deferred = time(NULL) + Seconds;
-  isyslog("timer %s deferred for %d seconds", *ToDescr(), Seconds);
+  isyslog("timer %s deferred for %d seconds", ToDescr().c_str(), Seconds);
 }
 
 void cTimer::SetFlags(uint Flags)
 {
-  flags |= Flags;
+  m_flags |= Flags;
 }
 
 void cTimer::ClrFlags(uint Flags)
 {
-  flags &= ~Flags;
+  m_flags &= ~Flags;
 }
 
 void cTimer::InvFlags(uint Flags)
 {
-  flags ^= Flags;
+  m_flags ^= Flags;
 }
 
 bool cTimer::HasFlags(uint Flags) const
 {
-  return (flags & Flags) == Flags;
+  return (m_flags & Flags) == Flags;
 }
 
 void cTimer::Skip(void)
 {
-  day = IncDay(SetTime(StartTime(), 0), 1);
+  m_day = IncDay(SetTime(StartTime(), 0), 1);
   startTime = 0;
   SetEvent(NULL);
 }
@@ -667,8 +779,8 @@ void cTimer::OnOff(void)
 {
   if (IsSingleEvent())
      InvFlags(tfActive);
-  else if (day) {
-     day = 0;
+  else if (m_day) {
+     m_day = 0;
      ClrFlags(tfActive);
      }
   else if (HasFlags(tfActive))

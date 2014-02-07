@@ -9,156 +9,235 @@
 
 #include "Timers.h"
 #include "Timer.h"
+#include "TimerDefinitions.h"
 #include "channels/ChannelManager.h"
 #include "devices/Device.h"
 #include "devices/DeviceManager.h"
+#include "recordings/Recordings.h"
 #include "utils/Status.h"
 #include "utils/UTF8Utils.h"
+#include "utils/XBMCTinyXML.h"
 
 using namespace std;
+using namespace PLATFORM;
 
-
-// --- cTimers ---------------------------------------------------------------
-
-cTimers Timers;
+cTimers& cTimers::Get(void)
+{
+  static cTimers _instance;
+  return _instance;
+}
 
 cTimers::cTimers(void)
 {
-  state = 0;
-  beingEdited = 0;;
-  lastSetEvents = 0;
-  lastDeleteExpired = 0;
+  m_iState             = 0;
+  m_lastSetEvents     = 0;
+  m_lastDeleteExpired = 0;
+  m_maxIndex        = 0;
 }
 
-cTimer *cTimers::GetTimer(cTimer *Timer)
+TimerPtr cTimers::GetTimer(cTimer *Timer)
 {
-  for (cTimer *ti = First(); ti; ti = Next(ti)) {
-      if (ti->Channel() == Timer->Channel() &&
-          (ti->WeekDays() && ti->WeekDays() == Timer->WeekDays() || !ti->WeekDays() && ti->Day() == Timer->Day()) &&
-          ti->Start() == Timer->Start() &&
-          ti->Stop() == Timer->Stop())
-         return ti;
-      }
-  return NULL;
+  for (std::vector<TimerPtr>::iterator it = m_timers.begin(); it != m_timers.end(); ++it)
+  {
+    if ((*it)->Channel() == Timer->Channel() &&
+       (
+           ((*it)->WeekDays() && (*it)->WeekDays() == Timer->WeekDays()) ||
+           (!(*it)->WeekDays() && (*it)->Day() == Timer->Day())) &&
+       (*it)->Start() == Timer->Start() &&
+       (*it)->Stop() == Timer->Stop())
+    {
+      return (*it);
+    }
+  }
+  return cTimer::EmptyTimer;
 }
 
-cTimer *cTimers::GetMatch(time_t t)
+TimerPtr cTimers::GetMatch(time_t t)
 {
-  static int LastPending = -1;
-  cTimer *t0 = NULL;
-  for (cTimer *ti = First(); ti; ti = Next(ti)) {
-      if (!ti->Recording() && ti->Matches(t)) {
-         if (ti->Pending()) {
-            if (ti->Index() > LastPending) {
-               LastPending = ti->Index();
-               return ti;
-               }
-            else
-               continue;
-            }
-         if (!t0 || ti->Priority() > t0->Priority())
-            t0 = ti;
-         }
+  static TimerPtr LastPending;
+  TimerPtr t0;
+  bool bGetNext(false);
+  for (std::vector<TimerPtr>::iterator it = m_timers.begin(); it != m_timers.end(); ++it)
+  {
+    if (!(*it)->Recording() && (*it)->Matches(t))
+    {
+      if ((*it)->Pending())
+      {
+        if (bGetNext)
+        {
+          LastPending = *it;
+          return *it;
+        }
+        if (LastPending && *LastPending == **it)
+        {
+          bGetNext = true;
+        }
       }
+      if (!t0 || (*it)->Priority() > t0->Priority())
+      {
+        t0 = (*it);
+      }
+    }
+  }
   if (!t0)
-     LastPending = -1;
+    LastPending = cTimer::EmptyTimer;
   return t0;
 }
 
-cTimer *cTimers::GetMatch(const cEvent *Event, eTimerMatch *Match)
+TimerPtr cTimers::GetMatch(const cEvent *Event, eTimerMatch *Match)
 {
-  cTimer *t = NULL;
+  TimerPtr t;
   eTimerMatch m = tmNone;
-  for (cTimer *ti = First(); ti; ti = Next(ti)) {
-      eTimerMatch tm = ti->Matches(Event);
-      if (tm > m) {
-         t = ti;
-         m = tm;
-         if (m == tmFull)
-            break;
-         }
-      }
+  for (std::vector<TimerPtr>::iterator it = m_timers.begin(); it != m_timers.end(); ++it)
+  {
+    eTimerMatch tm = (*it)->MatchesEvent(Event);
+    if (tm > m)
+    {
+      t = (*it);
+      m = tm;
+      if (m == tmFull)
+        break;
+    }
+  }
   if (Match)
-     *Match = m;
+    *Match = m;
   return t;
 }
 
-cTimer *cTimers::GetNextActiveTimer(void)
+TimerPtr cTimers::GetNextActiveTimer(void)
 {
-  cTimer *t0 = NULL;
-  for (cTimer *ti = First(); ti; ti = Next(ti)) {
-      ti->Matches();
-      if ((ti->HasFlags(tfActive)) && (!t0 || ti->StopTime() > time(NULL) && ti->Compare(*t0) < 0))
-         t0 = ti;
+  TimerPtr retval;
+  TimerPtr timer;
+  for (std::vector<TimerPtr>::iterator it = m_timers.begin(); it != m_timers.end(); ++it)
+  {
+    timer = *it;
+    timer->Matches();
+    if ((timer->HasFlags(tfActive)) &&
+        (!retval || (timer->StopTime() > time(NULL) && timer->Compare(*retval) < 0)))
+      retval = timer;
+  }
+  return retval;
+}
+
+cRecording* cTimers::GetActiveRecording(const ChannelPtr channel)
+{
+  for (std::vector<TimerPtr>::iterator it = m_timers.begin(); it != m_timers.end(); ++it)
+  {
+    if ((*it)->Recording() && (*it)->Channel().get() == channel.get())
+    {
+      Recordings.Load();
+      cRecording matchRec((*it), (*it)->Event());
+      {
+        CThreadLock RecordingsLock(&Recordings);
+        return Recordings.GetByName(matchRec.FileName());
       }
-  return t0;
+      break;
+    }
+  }
+
+  return NULL;
+}
+
+TimerPtr cTimers::GetByIndex(size_t index)
+{
+  for (std::vector<TimerPtr>::iterator it = m_timers.begin(); it != m_timers.end(); ++it)
+  {
+    if ((*it)->Index() == index)
+      return *it;
+  }
+  return cTimer::EmptyTimer;
 }
 
 void cTimers::SetModified(void)
 {
-  cStatus::MsgTimerChange(NULL, tcMod);
-  state++;
+  cStatus::MsgTimerChange(cTimer::EmptyTimer, tcMod);
+  m_iState++;
 }
 
-void cTimers::Add(cTimer *Timer, cTimer *After)
+void cTimers::Add(TimerPtr Timer, TimerPtr After)
 {
-  cConfig<cTimer>::Add(Timer, After);
+  if (After)
+  {
+    std::vector<TimerPtr>::iterator it = std::find(m_timers.begin(), m_timers.end(), After);
+    if (it != m_timers.end())
+    {
+      m_timers.insert(it, Timer);
+      return;
+    }
+  }
+
+  Timer->SetIndex(+m_maxIndex);
+  m_timers.push_back(Timer);
   cStatus::MsgTimerChange(Timer, tcAdd);
 }
 
-void cTimers::Ins(cTimer *Timer, cTimer *Before)
+void cTimers::Ins(TimerPtr Timer, TimerPtr Before)
 {
-  cConfig<cTimer>::Ins(Timer, Before);
+  if (Before)
+  {
+    std::vector<TimerPtr>::iterator previous = m_timers.end();
+    for (std::vector<TimerPtr>::iterator it = m_timers.begin(); it != m_timers.end(); ++it)
+    {
+      if (**it == *Before)
+      {
+        m_timers.insert(previous, Timer);
+        return;
+      }
+      previous = it;
+    }
+  }
+
   cStatus::MsgTimerChange(Timer, tcAdd);
 }
 
-void cTimers::Del(cTimer *Timer, bool DeleteObject)
+void cTimers::Del(TimerPtr Timer, bool DeleteObject)
 {
   cStatus::MsgTimerChange(Timer, tcDel);
-  cConfig<cTimer>::Del(Timer, DeleteObject);
+  std::vector<TimerPtr>::iterator it = std::find(m_timers.begin(), m_timers.end(), Timer);
+  if (it != m_timers.end())
+    m_timers.erase(it);
 }
 
 bool cTimers::Modified(int &State)
 {
-  bool Result = state != State;
-  State = state;
+  bool Result = m_iState != State;
+  State = m_iState;
   return Result;
 }
 
 void cTimers::SetEvents(void)
 {
-  if (time(NULL) - lastSetEvents < 5)
+  if (time(NULL) - m_lastSetEvents < 5)
      return;
   cSchedulesLock SchedulesLock(false, 100);
   cSchedules *Schedules = SchedulesLock.Get();
   if (Schedules)
   {
-    if (!lastSetEvents || Schedules->Modified() >= lastSetEvents)
+    if (!m_lastSetEvents || Schedules->Modified() >= m_lastSetEvents)
     {
-      for (cTimer *ti = First(); ti; ti = Next(ti))
+      for (std::vector<TimerPtr>::iterator it = m_timers.begin(); it != m_timers.end(); ++it)
       {
-        ti->SetEventFromSchedule(Schedules);
+        (*it)->SetEventFromSchedule(Schedules);
       }
     }
   }
-  lastSetEvents = time(NULL);
+  m_lastSetEvents = time(NULL);
 }
 
 void cTimers::DeleteExpired(void)
 {
-  if (time(NULL) - lastDeleteExpired < 30)
+  if (time(NULL) - m_lastDeleteExpired < 30)
      return;
-  cTimer *ti = First();
-  while (ti) {
-        cTimer *next = Next(ti);
-        if (ti->Expired()) {
-           isyslog("deleting timer %s", *ti->ToDescr());
-           Del(ti);
-           SetModified();
-           }
-        ti = next;
-        }
-  lastDeleteExpired = time(NULL);
+  for (std::vector<TimerPtr>::iterator it = m_timers.begin(); it != m_timers.end(); ++it)
+  {
+    if ((*it)->Expired())
+    {
+      isyslog("deleting timer %s", (*it)->ToDescr().c_str());
+      it = m_timers.erase(it);
+      SetModified();
+    }
+  }
+  m_lastDeleteExpired = time(NULL);
 }
 
 int cTimer::CompareTimers(const cTimer *a, const cTimer *b)
@@ -167,6 +246,109 @@ int cTimer::CompareTimers(const cTimer *a, const cTimer *b)
   time_t t2 = b->StartTime();
   int r = t1 - t2;
   if (r == 0)
-    r = b->priority - a->priority;
+    r = b->m_priority - a->m_priority;
   return r;
+}
+
+void cTimers::ClearEvents(void)
+{
+  for (std::vector<TimerPtr>::iterator it = m_timers.begin(); it != m_timers.end(); ++it)
+    (*it)->SetEvent(NULL);
+}
+
+bool cTimers::HasTimer(const cEvent* event) const
+{
+  for (std::vector<TimerPtr>::const_iterator it = m_timers.begin(); it != m_timers.end(); ++it)
+  {
+    if ((*it)->Event() == event)
+      return true;
+  }
+  return false;
+}
+
+bool cTimers::Load(void)
+{
+  if (!Load("special://home/system/timers.xml") &&
+      !Load("special://vdr/system/timers.xml"))
+  {
+    // create a new empty file
+    Save("special://home/system/timers.xml");
+    return false;
+  }
+
+  return true;
+}
+
+bool cTimers::Load(const std::string &file)
+{
+  CLockObject lock(m_mutex);
+  m_timers.clear();
+
+  CXBMCTinyXML xmlDoc;
+  if (!xmlDoc.LoadFile(file.c_str()))
+    return false;
+
+  m_strFilename = file;
+
+  TiXmlElement *root = xmlDoc.RootElement();
+  if (root == NULL)
+    return false;
+
+  if (!StringUtils::EqualsNoCase(root->ValueStr(), TIMER_XML_ROOT))
+  {
+    // log
+    return false;
+  }
+
+  const TiXmlNode *timerNode = root->FirstChild(TIMER_XML_ELM_TIMER);
+  while (timerNode != NULL)
+  {
+    TimerPtr timer = TimerPtr(new cTimer);
+    if (timer && timer->DeserialiseTimer(timerNode))
+    {
+      m_timers.push_back(timer);
+    }
+    else
+    {
+      // log
+      continue;
+    }
+    timerNode = timerNode->NextSibling(TIMER_XML_ELM_TIMER);
+  }
+
+  return true;
+}
+
+
+bool cTimers::Save(const string &file /* = ""*/)
+{
+  CXBMCTinyXML xmlDoc;
+  TiXmlDeclaration *decl = new TiXmlDeclaration("1.0", "", "");
+  xmlDoc.LinkEndChild(decl);
+
+  TiXmlElement rootElement(TIMER_XML_ROOT);
+  TiXmlNode *root = xmlDoc.InsertEndChild(rootElement);
+  if (root == NULL)
+    return false;
+
+  CLockObject lock(m_mutex);
+  for (std::vector<TimerPtr>::const_iterator itTimer = m_timers.begin(); itTimer != m_timers.end(); ++itTimer)
+  {
+    TiXmlElement timerElement(TIMER_XML_ELM_TIMER);
+    TiXmlNode *timerNode = root->InsertEndChild(timerElement);
+    (*itTimer)->SerialiseTimer(timerNode);
+  }
+
+  if (!file.empty())
+    m_strFilename = file;
+
+  assert(!m_strFilename.empty());
+
+  isyslog("saving channel configuration to '%s'", m_strFilename.c_str());
+  if (!xmlDoc.SafeSaveFile(m_strFilename))
+  {
+    esyslog("failed to save the channel configuration: could not write to '%s'", m_strFilename.c_str());
+    return false;
+  }
+  return true;
 }

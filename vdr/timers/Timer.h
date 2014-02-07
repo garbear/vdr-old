@@ -15,52 +15,43 @@ enum eTimerMatch { tmNone, tmPartial, tmFull };
 
 class cEvent;
 class cSchedules;
+class TiXmlNode;
 
-class cTimer : public cListObject {
-  friend class cMenuEditTimer;
-private:
-  mutable time_t startTime, stopTime;
-  time_t lastSetEvent;
-  mutable time_t deferred; ///< Matches(time_t, ...) will return false if the current time is before this value
-  bool recording, pending, inVpsMargin;
-  uint flags;
-  ChannelPtr channel;
-  mutable time_t day; ///< midnight of the day this timer shall hit, or of the first day it shall hit in case of a repeating timer
-  int weekdays;       ///< bitmask, lowest bits: SSFTWTM  (the 'M' is the LSB)
-  int start;
-  int stop;
-  int priority;
-  int lifetime;
-  mutable char file[NAME_MAX * 2 + 1]; // *2 to be able to hold 'title' and 'episode', which can each be up to 255 characters long
-  char *aux;
-  const cEvent *event;
+class cTimer
+{
 public:
   cTimer(bool Instant = false, bool Pause = false, ChannelPtr Channel = cChannel::EmptyChannel);
   cTimer(const cEvent *Event);
   cTimer(const cTimer &Timer);
   virtual ~cTimer();
+
+  static TimerPtr EmptyTimer;
+
   cTimer& operator= (const cTimer &Timer);
-  virtual int Compare(const cListObject &ListObject) const;
-  bool Recording(void) const { return recording; }
-  bool Pending(void) const { return pending; }
-  bool InVpsMargin(void) const { return inVpsMargin; }
-  uint Flags(void) const { return flags; }
-  ChannelPtr Channel(void) const { return channel; }
-  time_t Day(void) const { return day; }
-  int WeekDays(void) const { return weekdays; }
-  int Start(void) const { return start; }
-  int Stop(void) const { return stop; }
-  int Priority(void) const { return priority; }
-  int Lifetime(void) const { return lifetime; }
-  const char *File(void) const { return file; }
-  time_t FirstDay(void) const { return weekdays ? day : 0; }
-  const char *Aux(void) const { return aux; }
-  time_t Deferred(void) const { return deferred; }
-  cString ToText(bool UseChannelID = false) const;
-  cString ToDescr(void) const;
+  bool operator==(const cTimer &Timer);
+  virtual int Compare(const cTimer &Timer) const;
+
+  bool Recording(void) const      { return recording; }
+  bool Pending(void) const        { return pending; }
+  bool InVpsMargin(void) const    { return inVpsMargin; }
+  uint Flags(void) const          { return m_flags; }
+  ChannelPtr Channel(void) const  { return m_channel; }
+  time_t Day(void) const          { return m_day; }
+  int WeekDays(void) const        { return m_weekdays; }
+  int Start(void) const           { return m_start; }
+  int Stop(void) const            { return m_stop; }
+  int Priority(void) const        { return m_priority; }
+  int Lifetime(void) const        { return m_lifetime; }
+  std::string File(void) const    { return m_file; }
+  time_t FirstDay(void) const     { return m_weekdays ? m_day : 0; }
+  const char *Aux(void) const     { return m_aux; }
+  time_t Deferred(void) const     { return deferred; }
   const cEvent *Event(void) const { return event; }
+  std::string Serialise(bool UseChannelID = false) const;
+  bool SerialiseTimer(TiXmlNode *node) const;
+  bool DeserialiseTimer(const TiXmlNode *node);
+  std::string ToDescr(void) const;
   bool Parse(const char *s);
-  bool Save(FILE *f);
   bool IsSingleEvent(void) const;
   static int GetMDay(time_t t);
   static int GetWDay(time_t t);
@@ -68,8 +59,8 @@ public:
   static time_t IncDay(time_t t, int Days);
   static time_t SetTime(time_t t, int SecondsFromMidnight);
   void SetFile(const char *File);
-  bool Matches(time_t t = 0, bool Directly = false, int Margin = 0) const;
-  eTimerMatch Matches(const cEvent *Event, int *Overlap = NULL) const;
+  bool Matches(time_t t = 0, bool Directly = false, int Margin = 0);
+  eTimerMatch MatchesEvent(const cEvent *Event, int *Overlap = NULL);
   bool Expired(void) const;
   time_t StartTime(void) const;
   time_t StopTime(void) const;
@@ -92,10 +83,30 @@ public:
   bool HasFlags(uint Flags) const;
   void Skip(void);
   void OnOff(void);
+  size_t Index(void) const { return m_index; }
+  void SetIndex(size_t index) { m_index = index; }
   cString PrintFirstDay(void) const;
   static int TimeToInt(int t);
   static bool ParseDay(const char *s, time_t &Day, int &WeekDays);
   static cString PrintDay(time_t Day, int WeekDays, bool SingleByteChars);
 
   static int CompareTimers(const cTimer *a, const cTimer *b);
+
+private:
+  time_t startTime, stopTime;
+  time_t lastSetEvent;
+  time_t deferred; ///< Matches(time_t, ...) will return false if the current time is before this value
+  bool recording, pending, inVpsMargin;
+  uint m_flags;
+  ChannelPtr m_channel;
+  time_t m_day; ///< midnight of the day this timer shall hit, or of the first day it shall hit in case of a repeating timer
+  int m_weekdays;       ///< bitmask, lowest bits: SSFTWTM  (the 'M' is the LSB)
+  int m_start;
+  int m_stop;
+  int m_priority;
+  int m_lifetime;
+  std::string m_file;
+  char *m_aux;
+  const cEvent *event;
+  size_t m_index;
   };
