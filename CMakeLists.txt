@@ -153,8 +153,9 @@ set(VDR_SRCS
 	vdr/filesystem/ReadDir.cpp
 	vdr/filesystem/SpecialProtocol.cpp
 	vdr/filesystem/Videodir.cpp
-	vdr/recordings/FileName.cpp
-	vdr/recordings/IndexFile.cpp
+	vdr/recordings/filesystem/FileName.cpp
+	vdr/recordings/filesystem/IndexFile.cpp
+	vdr/recordings/filesystem/ResumeFile.cpp
 	vdr/recordings/marks/Mark.cpp
 	vdr/recordings/marks/Marks.cpp
 	vdr/recordings/Recorder.cpp
@@ -163,7 +164,6 @@ set(VDR_SRCS
 	vdr/recordings/RecordingInfo.cpp
 	vdr/recordings/RecordingUserCommand.cpp
 	vdr/recordings/Recordings.cpp
-	vdr/recordings/ResumeFile.cpp
 	vdr/settings/Settings.cpp
 	vdr/sources/ISourceParams.cpp
 	vdr/sources/Source.cpp

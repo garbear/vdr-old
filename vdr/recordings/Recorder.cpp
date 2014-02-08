@@ -10,8 +10,8 @@
 #include "Recorder.h"
 #include "RecordingInfo.h"
 #include "Recordings.h"
-#include "IndexFile.h"
-#include "FileName.h"
+#include "filesystem/IndexFile.h"
+#include "filesystem/FileName.h"
 #include "filesystem/Directory.h"
 #include "utils/Shutdown.h"
 

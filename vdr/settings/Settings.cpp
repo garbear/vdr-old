@@ -27,7 +27,7 @@
 #include "utils/Tools.h"
 #include "devices/DeviceManager.h"
 #include "recordings/RecordingCutter.h"
-#include "recordings/IndexFile.h"
+#include "recordings/filesystem/IndexFile.h"
 #include "recordings/RecordingUserCommand.h"
 
 #include <getopt.h>

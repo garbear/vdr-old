@@ -29,9 +29,9 @@
 #include "filesystem/ReadDir.h"
 #include "utils/CRC32.h"
 #include "RecordingInfo.h"
-#include "FileName.h"
+#include "filesystem/FileName.h"
 #include "Recordings.h"
-#include "IndexFile.h"
+#include "filesystem/IndexFile.h"
 #include "RecordingUserCommand.h"
 
 #include "vdr/filesystem/Directory.h"
