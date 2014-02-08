@@ -1,6 +1,6 @@
 #pragma once
 
-#include "RecordingConfig.h"
+#include "../RecordingConfig.h"
 #include "utils/Tools.h"
 #include "platform/threads/mutex.h"
 

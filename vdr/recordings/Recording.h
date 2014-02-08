@@ -20,7 +20,7 @@
 #include "platform/threads/threads.h"
 #include "filesystem/File.h"
 #include "ResumeFile.h"
-#include "recordings/Mark.h"
+#include "marks/Mark.h"
 
 class cRecordingInfo;
 

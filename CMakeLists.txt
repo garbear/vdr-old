@@ -155,8 +155,8 @@ set(VDR_SRCS
 	vdr/filesystem/Videodir.cpp
 	vdr/recordings/FileName.cpp
 	vdr/recordings/IndexFile.cpp
-	vdr/recordings/Mark.cpp
-	vdr/recordings/Marks.cpp
+	vdr/recordings/marks/Mark.cpp
+	vdr/recordings/marks/Marks.cpp
 	vdr/recordings/Recorder.cpp
 	vdr/recordings/Recording.cpp
 	vdr/recordings/RecordingCutter.cpp

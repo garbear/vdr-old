@@ -14,7 +14,7 @@
 #include "devices/subsystems/DeviceTrackSubsystem.h"
 #include "devices/subsystems/DeviceVideoFormatSubsystem.h"
 #include "recordings/Recording.h"
-#include "recordings/Mark.h"
+#include "recordings/marks/Mark.h"
 
 class cDevice;
 

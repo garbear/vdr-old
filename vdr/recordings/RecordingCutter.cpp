@@ -12,7 +12,7 @@
 #include "Recordings.h"
 #include "FileName.h"
 #include "IndexFile.h"
-#include "Marks.h"
+#include "marks/Marks.h"
 #include "RecordingUserCommand.h"
 #include "devices/Remux.h"
 #include "filesystem/Videodir.h"
