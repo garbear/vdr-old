@@ -72,7 +72,7 @@ bool NeedsConversion(const char *p)
           || *p == '.' && (!*(p + 1) || *(p + 1) == FOLDERDELIMCHAR)); // Windows can't handle '.' at the end of file/directory names
 }
 
-char *ExchangeChars(char *s, bool ToFileSystem)
+char *cRecording::ExchangeChars(char *s, bool ToFileSystem)
 {
   char *p = s;
   while (*p) {
@@ -728,16 +728,12 @@ int cRecording::FileSizeMB(void) const
   return fileSizeMB;
 }
 
-// --- Index stuff -----------------------------------------------------------
-
-int SecondsToFrames(int Seconds, double FramesPerSecond)
+int cRecording::SecondsToFrames(int Seconds, double FramesPerSecond)
 {
   return int(round(Seconds * FramesPerSecond));
 }
 
-// --- ReadFrame -------------------------------------------------------------
-
-int ReadFrame(cUnbufferedFile *f, uchar *b, int Length, int Max)
+int cRecording::ReadFrame(cUnbufferedFile *f, uchar *b, int Length, int Max)
 {
   if (Length == -1)
      Length = Max; // this means we read up to EOF (see cIndex)

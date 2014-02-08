@@ -32,31 +32,6 @@ extern int InstanceId;
 class cRecording
 {
   friend class cRecordings;
-private:
-  mutable int resume;
-  mutable char *titleBuffer;
-  mutable char *sortBufferName;
-  mutable char *sortBufferTime;
-  mutable char *fileName;
-  mutable char *name;
-  mutable int fileSizeMB;
-  mutable int numFrames;
-  int channel;
-  int instanceId;
-  bool isPesRecording;
-  mutable int isOnVideoDirectoryFileSystem; // -1 = unknown, 0 = no, 1 = yes
-  double framesPerSecond;
-  cRecordingInfo *info;
-  cRecording(const cRecording&); // can't copy cRecording
-  cRecording &operator=(const cRecording &); // can't assign cRecording
-  static char *StripEpisodeName(char *s, bool Strip);
-  void ClearSortName(void);
-  int GetResume(void) const;
-  time_t start;
-  int priority;
-  int lifetime;
-  time_t deleted;
-  int64_t m_hash;
 public:
   cRecording(TimerPtr Timer, const cEvent *Event);
   cRecording(const char *FileName);
@@ -106,17 +81,43 @@ public:
        ///< Changes the file name so that it will be visible in the "Recordings" menu again and
        ///< not processed by cRemoveDeletedRecordingsThread.
        ///< Returns false in case of error
-  };
 
-int SecondsToFrames(int Seconds, double FramesPerSecond = DEFAULTFRAMESPERSECOND);
-      // Returns the number of frames corresponding to the given number of seconds.
+  static int SecondsToFrames(int Seconds, double FramesPerSecond = DEFAULTFRAMESPERSECOND);
+        // Returns the number of frames corresponding to the given number of seconds.
 
-int ReadFrame(cUnbufferedFile *f, uchar *b, int Length, int Max);
+  static int ReadFrame(cUnbufferedFile *f, uchar *b, int Length, int Max);
 
-char *ExchangeChars(char *s, bool ToFileSystem);
-      // Exchanges the characters in the given string to or from a file system
-      // specific representation (depending on ToFileSystem). The given string will
-      // be modified and may be reallocated if more space is needed. The return
-      // value points to the resulting string, which may be different from s.
+  static char *ExchangeChars(char *s, bool ToFileSystem);
+        // Exchanges the characters in the given string to or from a file system
+        // specific representation (depending on ToFileSystem). The given string will
+        // be modified and may be reallocated if more space is needed. The return
+        // value points to the resulting string, which may be different from s.
+
+private:
+  mutable int resume;
+  mutable char *titleBuffer;
+  mutable char *sortBufferName;
+  mutable char *sortBufferTime;
+  mutable char *fileName;
+  mutable char *name;
+  mutable int fileSizeMB;
+  mutable int numFrames;
+  int channel;
+  int instanceId;
+  bool isPesRecording;
+  mutable int isOnVideoDirectoryFileSystem; // -1 = unknown, 0 = no, 1 = yes
+  double framesPerSecond;
+  cRecordingInfo *info;
+  cRecording(const cRecording&); // can't copy cRecording
+  cRecording &operator=(const cRecording &); // can't assign cRecording
+  static char *StripEpisodeName(char *s, bool Strip);
+  void ClearSortName(void);
+  int GetResume(void) const;
+  time_t start;
+  int priority;
+  int lifetime;
+  time_t deleted;
+  int64_t m_hash;
+};
 
 #endif //__RECORDING_H

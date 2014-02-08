@@ -344,7 +344,7 @@ bool cCuttingThread::LoadFrame(int Index, uchar *Buffer, bool &Independent, int 
      fromFile = fromFileName->SetOffset(FileNumber, FileOffset);
      if (fromFile) {
         fromFile->SetReadAhead(MEGABYTE(20));
-        int len = ReadFrame(fromFile, Buffer,  Length, MAXFRAMESIZE);
+        int len = cRecording::ReadFrame(fromFile, Buffer,  Length, MAXFRAMESIZE);
         if (len < 0)
            error = "ReadFrame";
         else if (len != Length)
