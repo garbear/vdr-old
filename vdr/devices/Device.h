@@ -25,9 +25,9 @@
  */
 
 #include "platform/threads/threads.h"
+#include "Types.h"
 
 #include <list>
-#include "shared_ptr/shared_ptr.hpp"
 #include <string>
 #include <vector>
 
@@ -67,7 +67,6 @@ class cDevice;
 class cPlayer;
 class cReceiver;
 
-typedef VDR::shared_ptr<cDevice> DevicePtr;
 typedef std::vector<DevicePtr> DeviceVector;
 
 class cDevice : public PLATFORM::CThread
