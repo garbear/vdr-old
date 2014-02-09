@@ -24,7 +24,7 @@
 
 #include "gtest/gtest.h"
 
-#define CHANNELS_XML    "special://vdr/system/channels.xml"
+#define CHANNELS_XML    "special://vdr/vdr/channels/test/channels.xml"
 #define CHANNELS2_XML   "special://temp/channels.xml"
 
 TEST(ChannelManager, ChannelManager)

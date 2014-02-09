@@ -1,0 +1,701 @@
+<?xml version="1.0" ?>
+<channels>
+    <channel name="KABC-DT" shortname="" provider="(null)" frequency="177000000" parameters="M10" source="A" srate="0" vpid="49" ppid="49" vtype="2" tpid="0" sid="1" nid="0" tid="0" rid="0">
+        <dpids>
+            <dpid dlang="eng" dtype="106">52</dpid>
+            <dpid dlang="esl" dtype="106">53</dpid>
+        </dpids>
+    </channel>
+    <channel name="LivWell" shortname="" provider="(null)" frequency="177000000" parameters="M10" source="A" srate="0" vpid="65" ppid="65" vtype="2" tpid="0" sid="2" nid="0" tid="0" rid="0">
+        <dpids>
+            <dpid dlang="eng" dtype="106">68</dpid>
+        </dpids>
+    </channel>
+    <channel name="LWN-SD" shortname="" provider="(null)" frequency="177000000" parameters="M10" source="A" srate="0" vpid="81" ppid="81" vtype="2" tpid="0" sid="3" nid="0" tid="0" rid="0">
+        <dpids>
+            <dpid dlang="eng" dtype="106">84</dpid>
+        </dpids>
+    </channel>
+    <channel name="RTV" shortname="" provider="(null)" frequency="183000000" parameters="M10" source="A" srate="0" vpid="49" ppid="49" vtype="2" tpid="0" sid="1" nid="0" tid="0" rid="0">
+        <dpids>
+            <dpid dlang="" dtype="106">52</dpid>
+        </dpids>
+    </channel>
+    <channel name="CS-TV" shortname="" provider="(null)" frequency="183000000" parameters="M10" source="A" srate="0" vpid="65" ppid="65" vtype="2" tpid="0" sid="2" nid="0" tid="0" rid="0">
+        <dpids>
+            <dpid dlang="" dtype="106">68</dpid>
+        </dpids>
+    </channel>
+    <channel name="TuffTV" shortname="" provider="(null)" frequency="183000000" parameters="M10" source="A" srate="0" vpid="81" ppid="81" vtype="2" tpid="0" sid="3" nid="0" tid="0" rid="0">
+        <dpids>
+            <dpid dlang="" dtype="106">84</dpid>
+        </dpids>
+    </channel>
+    <channel name="Vmas" shortname="" provider="(null)" frequency="183000000" parameters="M10" source="A" srate="0" vpid="97" ppid="97" vtype="2" tpid="0" sid="4" nid="0" tid="0" rid="0">
+        <dpids>
+            <dpid dlang="" dtype="106">100</dpid>
+        </dpids>
+    </channel>
+    <channel name="JTV" shortname="" provider="(null)" frequency="183000000" parameters="M10" source="A" srate="0" vpid="113" ppid="113" vtype="2" tpid="0" sid="5" nid="0" tid="0" rid="0">
+        <dpids>
+            <dpid dlang="" dtype="106">116</dpid>
+        </dpids>
+    </channel>
+    <channel name="KCAL-DT" shortname="" provider="(null)" frequency="189000000" parameters="M10" source="A" srate="0" vpid="49" ppid="49" vtype="2" tpid="0" sid="1" nid="0" tid="0" rid="0" />
+    <channel name="USARMTV" shortname="" provider="(null)" frequency="195000000" parameters="M10" source="A" srate="0" vpid="49" ppid="49" vtype="2" tpid="0" sid="1" nid="0" tid="0" rid="0">
+        <dpids>
+            <dpid dlang="" dtype="106">52</dpid>
+        </dpids>
+    </channel>
+    <channel name="BestTV" shortname="" provider="(null)" frequency="195000000" parameters="M10" source="A" srate="0" vpid="65" ppid="65" vtype="2" tpid="0" sid="3" nid="0" tid="0" rid="0">
+        <dpids>
+            <dpid dlang="" dtype="106">68</dpid>
+        </dpids>
+    </channel>
+    <channel name="KIIO-LD" shortname="" provider="(null)" frequency="195000000" parameters="M10" source="A" srate="0" vpid="81" ppid="81" vtype="2" tpid="0" sid="4" nid="0" tid="0" rid="0">
+        <dpids>
+            <dpid dlang="" dtype="106">84</dpid>
+        </dpids>
+    </channel>
+    <channel name="H2" shortname="" provider="(null)" frequency="195000000" parameters="M10" source="A" srate="0" vpid="97" ppid="97" vtype="2" tpid="0" sid="5" nid="0" tid="0" rid="0">
+        <dpids>
+            <dpid dlang="" dtype="106">100</dpid>
+        </dpids>
+    </channel>
+    <channel name="KTTV DT" shortname="" provider="(null)" frequency="201000000" parameters="M10" source="A" srate="0" vpid="49" ppid="49" vtype="2" tpid="0" sid="3" nid="0" tid="0" rid="0">
+        <dpids>
+            <dpid dlang="eng" dtype="106">52</dpid>
+            <dpid dlang="esl" dtype="106">53</dpid>
+        </dpids>
+    </channel>
+    <channel name="KCOP HD" shortname="" provider="(null)" frequency="213000000" parameters="M10" source="A" srate="0" vpid="49" ppid="49" vtype="2" tpid="0" sid="3" nid="0" tid="0" rid="0">
+        <dpids>
+            <dpid dlang="eng" dtype="106">52</dpid>
+            <dpid dlang="esl" dtype="106">53</dpid>
+        </dpids>
+    </channel>
+    <channel name="KTTV SD" shortname="" provider="(null)" frequency="213000000" parameters="M10" source="A" srate="0" vpid="65" ppid="65" vtype="2" tpid="0" sid="4" nid="0" tid="0" rid="0">
+        <dpids>
+            <dpid dlang="eng" dtype="106">68</dpid>
+            <dpid dlang="eng" dtype="106">69</dpid>
+        </dpids>
+    </channel>
+    <channel name="BOUNCE TV" shortname="" provider="(null)" frequency="213000000" parameters="M10" source="A" srate="0" vpid="81" ppid="81" vtype="2" tpid="0" sid="5" nid="0" tid="0" rid="0">
+        <dpids>
+            <dpid dlang="eng" dtype="106">84</dpid>
+        </dpids>
+    </channel>
+    <channel name="Fox Movies" shortname="" provider="(null)" frequency="213000000" parameters="M10" source="A" srate="0" vpid="97" ppid="97" vtype="2" tpid="0" sid="6" nid="0" tid="0" rid="0">
+        <dpids>
+            <dpid dlang="eng" dtype="106">100</dpid>
+        </dpids>
+    </channel>
+    <channel name="LA18.1" shortname="" provider="(null)" frequency="497000000" parameters="M10" source="A" srate="0" vpid="49" ppid="49" vtype="2" tpid="0" sid="1" nid="0" tid="0" rid="0" />
+    <channel name="LA18.2" shortname="" provider="(null)" frequency="497000000" parameters="M10" source="A" srate="0" vpid="65" ppid="65" vtype="2" tpid="0" sid="2" nid="0" tid="0" rid="0" />
+    <channel name="LA18.3" shortname="" provider="(null)" frequency="497000000" parameters="M10" source="A" srate="0" vpid="81" ppid="81" vtype="2" tpid="0" sid="3" nid="0" tid="0" rid="0" />
+    <channel name="LA18.4" shortname="" provider="(null)" frequency="497000000" parameters="M10" source="A" srate="0" vpid="97" ppid="97" vtype="2" tpid="0" sid="4" nid="0" tid="0" rid="0" />
+    <channel name="LA18.5" shortname="" provider="(null)" frequency="497000000" parameters="M10" source="A" srate="0" vpid="113" ppid="113" vtype="2" tpid="0" sid="5" nid="0" tid="0" rid="0" />
+    <channel name="LA18.6" shortname="" provider="(null)" frequency="497000000" parameters="M10" source="A" srate="0" vpid="129" ppid="129" vtype="2" tpid="0" sid="6" nid="0" tid="0" rid="0" />
+    <channel name="LA18.7" shortname="" provider="(null)" frequency="497000000" parameters="M10" source="A" srate="0" vpid="145" ppid="145" vtype="2" tpid="0" sid="7" nid="0" tid="0" rid="0" />
+    <channel name="LA18.8" shortname="" provider="(null)" frequency="497000000" parameters="M10" source="A" srate="0" vpid="161" ppid="161" vtype="2" tpid="0" sid="8" nid="0" tid="0" rid="0" />
+    <channel name="LA18.9" shortname="" provider="(null)" frequency="497000000" parameters="M10" source="A" srate="0" vpid="177" ppid="177" vtype="2" tpid="0" sid="9" nid="0" tid="0" rid="0" />
+    <channel name="KBEH-DT-5" shortname="" provider="(null)" frequency="533000000" parameters="M10" source="A" srate="0" vpid="113" ppid="113" vtype="2" tpid="0" sid="5" nid="0" tid="0" rid="0">
+        <dpids>
+            <dpid dlang="eng" dtype="106">116</dpid>
+        </dpids>
+    </channel>
+    <channel name="KBEH-DT" shortname="" provider="(null)" frequency="533000000" parameters="M10" source="A" srate="0" vpid="129" ppid="129" vtype="2" tpid="0" sid="6" nid="0" tid="0" rid="0">
+        <dpids>
+            <dpid dlang="eng" dtype="106">132</dpid>
+        </dpids>
+    </channel>
+    <channel name="KBEH-DT" shortname="" provider="(null)" frequency="533000000" parameters="M10" source="A" srate="0" vpid="81" ppid="81" vtype="2" tpid="0" sid="3" nid="0" tid="0" rid="0">
+        <dpids>
+            <dpid dlang="eng" dtype="106">84</dpid>
+        </dpids>
+    </channel>
+    <channel name="KBEH-DT" shortname="" provider="(null)" frequency="533000000" parameters="M10" source="A" srate="0" vpid="145" ppid="145" vtype="2" tpid="0" sid="7" nid="0" tid="0" rid="0">
+        <dpids>
+            <dpid dlang="eng" dtype="106">148</dpid>
+        </dpids>
+    </channel>
+    <channel name="KBEH-DT" shortname="" provider="(null)" frequency="533000000" parameters="M10" source="A" srate="0" vpid="65" ppid="65" vtype="2" tpid="0" sid="2" nid="0" tid="0" rid="0">
+        <dpids>
+            <dpid dlang="eng" dtype="106">68</dpid>
+        </dpids>
+    </channel>
+    <channel name="KBEH-DT" shortname="" provider="(null)" frequency="533000000" parameters="M10" source="A" srate="0" vpid="97" ppid="97" vtype="2" tpid="0" sid="4" nid="0" tid="0" rid="0">
+        <dpids>
+            <dpid dlang="eng" dtype="106">100</dpid>
+        </dpids>
+    </channel>
+    <channel name="KBEH-DT" shortname="" provider="(null)" frequency="533000000" parameters="M10" source="A" srate="0" vpid="257" ppid="257" vtype="2" tpid="0" sid="8" nid="0" tid="0" rid="0">
+        <dpids>
+            <dpid dlang="esl" dtype="106">260</dpid>
+        </dpids>
+    </channel>
+    <channel name="KBEH-DT" shortname="" provider="(null)" frequency="533000000" parameters="M10" source="A" srate="0" vpid="49" ppid="49" vtype="2" tpid="0" sid="1" nid="0" tid="0" rid="0">
+        <dpids>
+            <dpid dlang="eng" dtype="106">52</dpid>
+        </dpids>
+    </channel>
+    <channel name="HSN" shortname="" provider="(null)" frequency="539000000" parameters="M10" source="A" srate="0" vpid="49" ppid="49" vtype="2" tpid="0" sid="3" nid="0" tid="0" rid="0">
+        <dpids>
+            <dpid dlang="eng" dtype="106">52</dpid>
+        </dpids>
+    </channel>
+    <channel name="18.8" shortname="" provider="(null)" frequency="539000000" parameters="M10" source="A" srate="0" vpid="65" ppid="65" vtype="2" tpid="0" sid="4" nid="0" tid="0" rid="0">
+        <dpids>
+            <dpid dlang="eng" dtype="106">68</dpid>
+        </dpids>
+    </channel>
+    <channel name="ALIENTO" shortname="" provider="(null)" frequency="539000000" parameters="M10" source="A" srate="0" vpid="81" ppid="81" vtype="2" tpid="0" sid="5" nid="0" tid="0" rid="0">
+        <dpids>
+            <dpid dlang="eng" dtype="106">84</dpid>
+        </dpids>
+    </channel>
+    <channel name="TESTING" shortname="" provider="(null)" frequency="539000000" parameters="M10" source="A" srate="0" vpid="97" ppid="97" vtype="2" tpid="0" sid="6" nid="0" tid="0" rid="0">
+        <dpids>
+            <dpid dlang="eng" dtype="106">100</dpid>
+        </dpids>
+    </channel>
+    <channel name="KhmerTV" shortname="" provider="(null)" frequency="551000000" parameters="M10" source="A" srate="0" vpid="481" ppid="481" vtype="2" tpid="0" sid="1" nid="0" tid="0" rid="0">
+        <dpids>
+            <dpid dlang="eng" dtype="106">482</dpid>
+        </dpids>
+    </channel>
+    <channel name="CEN-TV" shortname="" provider="(null)" frequency="551000000" parameters="M10" source="A" srate="0" vpid="65" ppid="65" vtype="2" tpid="0" sid="4" nid="0" tid="0" rid="0">
+        <dpids>
+            <dpid dlang="eng" dtype="106">68</dpid>
+        </dpids>
+    </channel>
+    <channel name="TOCANDO" shortname="" provider="(null)" frequency="551000000" parameters="M10" source="A" srate="0" vpid="81" ppid="81" vtype="2" tpid="0" sid="5" nid="0" tid="0" rid="0">
+        <dpids>
+            <dpid dlang="eng" dtype="106">84</dpid>
+        </dpids>
+    </channel>
+    <channel name="KCET-HD" shortname="" provider="(null)" frequency="557000000" parameters="M10" source="A" srate="0" vpid="49" ppid="49" vtype="2" tpid="0" sid="1" nid="0" tid="0" rid="0">
+        <dpids>
+            <dpid dlang="eng" dtype="106">52</dpid>
+            <dpid dlang="esl" dtype="106">53</dpid>
+        </dpids>
+    </channel>
+    <channel name="KCET-LN" shortname="" provider="(null)" frequency="557000000" parameters="M10" source="A" srate="0" vpid="97" ppid="97" vtype="2" tpid="0" sid="2" nid="0" tid="0" rid="0">
+        <dpids>
+            <dpid dlang="eng" dtype="106">100</dpid>
+        </dpids>
+    </channel>
+    <channel name="KCET-Vm" shortname="" provider="(null)" frequency="557000000" parameters="M10" source="A" srate="0" vpid="81" ppid="81" vtype="2" tpid="0" sid="3" nid="0" tid="0" rid="0">
+        <dpids>
+            <dpid dlang="eng" dtype="106">84</dpid>
+        </dpids>
+    </channel>
+    <channel name="N H K" shortname="" provider="(null)" frequency="557000000" parameters="M10" source="A" srate="0" vpid="65" ppid="65" vtype="2" tpid="0" sid="4" nid="0" tid="0" rid="0">
+        <dpids>
+            <dpid dlang="eng" dtype="106">68</dpid>
+        </dpids>
+    </channel>
+    <channel name="Telefutura" shortname="" provider="(null)" frequency="563000000" parameters="M10" source="A" srate="0" vpid="49" ppid="49" vtype="2" tpid="0" sid="1" nid="0" tid="0" rid="0">
+        <dpids>
+            <dpid dlang="esl" dtype="106">52</dpid>
+        </dpids>
+    </channel>
+    <channel name="KTLA-DT" shortname="" provider="(null)" frequency="575000000" parameters="M10" source="A" srate="0" vpid="49" ppid="49" vtype="2" tpid="0" sid="3" nid="0" tid="0" rid="0">
+        <dpids>
+            <dpid dlang="eng" dtype="106">52</dpid>
+            <dpid dlang="esl" dtype="106">53</dpid>
+        </dpids>
+    </channel>
+    <channel name="Antenna" shortname="" provider="(null)" frequency="575000000" parameters="M10" source="A" srate="0" vpid="65" ppid="65" vtype="2" tpid="0" sid="4" nid="0" tid="0" rid="0">
+        <dpids>
+            <dpid dlang="eng" dtype="106">68</dpid>
+        </dpids>
+    </channel>
+    <channel name="This TV" shortname="" provider="(null)" frequency="575000000" parameters="M10" source="A" srate="0" vpid="81" ppid="81" vtype="2" tpid="0" sid="5" nid="0" tid="0" rid="0">
+        <dpids>
+            <dpid dlang="eng" dtype="106">84</dpid>
+        </dpids>
+    </channel>
+    <channel name="KDOC-HD" shortname="" provider="(null)" frequency="581000000" parameters="M10" source="A" srate="0" vpid="49" ppid="49" vtype="2" tpid="0" sid="1" nid="0" tid="0" rid="0">
+        <dpids>
+            <dpid dlang="eng" dtype="106">52</dpid>
+        </dpids>
+    </channel>
+    <channel name="METVLA " shortname="" provider="(null)" frequency="581000000" parameters="M10" source="A" srate="0" vpid="65" ppid="65" vtype="2" tpid="0" sid="2" nid="0" tid="0" rid="0">
+        <dpids>
+            <dpid dlang="eng" dtype="106">68</dpid>
+        </dpids>
+    </channel>
+    <channel name="ESNE   " shortname="" provider="(null)" frequency="581000000" parameters="M10" source="A" srate="0" vpid="81" ppid="81" vtype="2" tpid="0" sid="3" nid="0" tid="0" rid="0">
+        <dpids>
+            <dpid dlang="eng" dtype="106">84</dpid>
+        </dpids>
+    </channel>
+    <channel name="NDOC   " shortname="" provider="(null)" frequency="581000000" parameters="M10" source="A" srate="0" vpid="97" ppid="97" vtype="2" tpid="0" sid="4" nid="0" tid="0" rid="0">
+        <dpids>
+            <dpid dlang="eng" dtype="106">100</dpid>
+        </dpids>
+    </channel>
+    <channel name="KVLA   " shortname="" provider="(null)" frequency="581000000" parameters="M10" source="A" srate="0" vpid="113" ppid="113" vtype="2" tpid="0" sid="5" nid="0" tid="0" rid="0">
+        <dpids>
+            <dpid dlang="eng" dtype="106">116</dpid>
+        </dpids>
+    </channel>
+    <channel name="KTBN-TBN" shortname="" provider="(null)" frequency="587000000" parameters="M10" source="A" srate="0" vpid="49" ppid="49" vtype="2" tpid="0" sid="3" nid="0" tid="0" rid="0">
+        <dpids>
+            <dpid dlang="eng" dtype="106">52</dpid>
+        </dpids>
+    </channel>
+    <channel name="KTBN-TCC" shortname="" provider="(null)" frequency="587000000" parameters="M10" source="A" srate="0" vpid="65" ppid="65" vtype="2" tpid="0" sid="4" nid="0" tid="0" rid="0">
+        <dpids>
+            <dpid dlang="eng" dtype="106">68</dpid>
+        </dpids>
+    </channel>
+    <channel name="KTBN-JCTV" shortname="" provider="(null)" frequency="587000000" parameters="M10" source="A" srate="0" vpid="81" ppid="81" vtype="2" tpid="0" sid="5" nid="0" tid="0" rid="0">
+        <dpids>
+            <dpid dlang="eng" dtype="106">84</dpid>
+        </dpids>
+    </channel>
+    <channel name="KTBN-Enlace" shortname="" provider="(null)" frequency="587000000" parameters="M10" source="A" srate="0" vpid="97" ppid="97" vtype="2" tpid="0" sid="6" nid="0" tid="0" rid="0">
+        <dpids>
+            <dpid dlang="esl" dtype="106">100</dpid>
+        </dpids>
+    </channel>
+    <channel name="KTBN-SOAC" shortname="" provider="(null)" frequency="587000000" parameters="M10" source="A" srate="0" vpid="113" ppid="113" vtype="2" tpid="0" sid="7" nid="0" tid="0" rid="0">
+        <dpids>
+            <dpid dlang="eng" dtype="106">116</dpid>
+        </dpids>
+    </channel>
+    <channel name="KMEX-DT" shortname="" provider="(null)" frequency="593000000" parameters="M10" source="A" srate="0" vpid="49" ppid="49" vtype="2" tpid="0" sid="1" nid="0" tid="0" rid="0">
+        <dpids>
+            <dpid dlang="esl" dtype="106">52</dpid>
+        </dpids>
+    </channel>
+    <channel name="KRCA DT" shortname="" provider="(null)" frequency="599000000" parameters="M10" source="A" srate="0" vpid="49" ppid="49" vtype="2" tpid="0" sid="1" nid="0" tid="0" rid="0">
+        <dpids>
+            <dpid dlang="esl" dtype="106">52</dpid>
+        </dpids>
+    </channel>
+    <channel name="HTTV US" shortname="" provider="(null)" frequency="599000000" parameters="M10" source="A" srate="0" vpid="65" ppid="65" vtype="2" tpid="0" sid="2" nid="0" tid="0" rid="0">
+        <dpids>
+            <dpid dlang="chi" dtype="106">68</dpid>
+        </dpids>
+    </channel>
+    <channel name="VNN TV" shortname="" provider="(null)" frequency="599000000" parameters="M10" source="A" srate="0" vpid="81" ppid="81" vtype="2" tpid="0" sid="3" nid="0" tid="0" rid="0">
+        <dpids>
+            <dpid dlang="" dtype="106">84</dpid>
+        </dpids>
+    </channel>
+    <channel name="IMIGRAN" shortname="" provider="(null)" frequency="599000000" parameters="M10" source="A" srate="0" vpid="97" ppid="97" vtype="2" tpid="0" sid="4" nid="0" tid="0" rid="0">
+        <dpids>
+            <dpid dlang="eng" dtype="106">100</dpid>
+        </dpids>
+    </channel>
+    <channel name="STVUSA" shortname="" provider="(null)" frequency="599000000" parameters="M10" source="A" srate="0" vpid="129" ppid="129" vtype="2" tpid="0" sid="6" nid="0" tid="0" rid="0">
+        <dpids>
+            <dpid dlang="eng" dtype="106">132</dpid>
+        </dpids>
+    </channel>
+    <channel name="KNBC Los Angeles" shortname="" provider="(null)" frequency="605000000" parameters="M10" source="A" srate="0" vpid="49" ppid="49" vtype="2" tpid="0" sid="3" nid="0" tid="0" rid="0" />
+    <channel name="COZI-TV" shortname="" provider="(null)" frequency="605000000" parameters="M10" source="A" srate="0" vpid="65" ppid="65" vtype="2" tpid="0" sid="4" nid="0" tid="0" rid="0" />
+    <channel name="KPXN ION" shortname="" provider="(null)" frequency="617000000" parameters="M10" source="A" srate="0" vpid="49" ppid="49" vtype="2" tpid="0" sid="3" nid="0" tid="0" rid="0" />
+    <channel name="KPXN qubo" shortname="" provider="(null)" frequency="617000000" parameters="M10" source="A" srate="0" vpid="65" ppid="65" vtype="2" tpid="0" sid="4" nid="0" tid="0" rid="0">
+        <dpids>
+            <dpid dlang="eng" dtype="106">68</dpid>
+            <dpid dlang="esl" dtype="106">69</dpid>
+        </dpids>
+    </channel>
+    <channel name="IONLife" shortname="" provider="(null)" frequency="617000000" parameters="M10" source="A" srate="0" vpid="81" ppid="81" vtype="2" tpid="0" sid="5" nid="0" tid="0" rid="0" />
+    <channel name="Shop" shortname="" provider="(null)" frequency="617000000" parameters="M10" source="A" srate="0" vpid="97" ppid="97" vtype="2" tpid="0" sid="6" nid="0" tid="0" rid="0" />
+    <channel name="KPXN QVC" shortname="" provider="(null)" frequency="617000000" parameters="M10" source="A" srate="0" vpid="113" ppid="113" vtype="2" tpid="0" sid="7" nid="0" tid="0" rid="0" />
+    <channel name="RedZone" shortname="" provider="(null)" frequency="617000000" parameters="M10" source="A" srate="0" vpid="647" ppid="647" vtype="27" tpid="0" sid="88" nid="0" tid="0" rid="0">
+        <apids>
+            <apid alang="eng" atype="15">648</apid>
+        </apids>
+        <caids>
+            <caid>6243</caid>
+        </caids>
+    </channel>
+    <channel name="Starz" shortname="" provider="(null)" frequency="617000000" parameters="M10" source="A" srate="0" vpid="657" ppid="657" vtype="27" tpid="0" sid="90" nid="0" tid="0" rid="0">
+        <apids>
+            <apid alang="eng" atype="15">658</apid>
+            <apid alang="esl" atype="15">659</apid>
+        </apids>
+        <caids>
+            <caid>6243</caid>
+        </caids>
+    </channel>
+    <channel name="Airbox" shortname="" provider="(null)" frequency="617000000" parameters="M10" source="A" srate="0" vpid="687" ppid="687" vtype="27" tpid="0" sid="96" nid="0" tid="0" rid="0">
+        <apids>
+            <apid alang="eng" atype="15">688</apid>
+            <apid alang="esl" atype="15">689</apid>
+        </apids>
+        <caids>
+            <caid>6243</caid>
+        </caids>
+    </channel>
+    <channel name="KVEA Los Angeles" shortname="" provider="(null)" frequency="623000000" parameters="M10" source="A" srate="0" vpid="49" ppid="49" vtype="2" tpid="0" sid="3" nid="0" tid="0" rid="0" />
+    <channel name="Exitos TV KVEA Corona / Los Angeles" shortname="" provider="(null)" frequency="623000000" parameters="M10" source="A" srate="0" vpid="65" ppid="65" vtype="2" tpid="0" sid="4" nid="0" tid="0" rid="0" />
+    <channel name="KVHD-LD" shortname="" provider="(null)" frequency="629000000" parameters="M10" source="A" srate="0" vpid="481" ppid="481" vtype="2" tpid="0" sid="1" nid="0" tid="0" rid="0">
+        <dpids>
+            <dpid dlang="eng" dtype="106">482</dpid>
+            <dpid dlang="eng" dtype="106">4128</dpid>
+        </dpids>
+    </channel>
+    <channel name="KVHD-LD" shortname="" provider="(null)" frequency="629000000" parameters="M10" source="A" srate="0" vpid="4384" ppid="4384" vtype="2" tpid="0" sid="2" nid="0" tid="0" rid="0">
+        <dpids>
+            <dpid dlang="eng" dtype="106">4385</dpid>
+            <dpid dlang="eng" dtype="106">4386</dpid>
+        </dpids>
+    </channel>
+    <channel name="KVHD-LD" shortname="" provider="(null)" frequency="629000000" parameters="M10" source="A" srate="0" vpid="4640" ppid="4640" vtype="2" tpid="0" sid="3" nid="0" tid="0" rid="0">
+        <dpids>
+            <dpid dlang="eng" dtype="106">4641</dpid>
+            <dpid dlang="eng" dtype="106">4642</dpid>
+        </dpids>
+    </channel>
+    <channel name="KVHD-LD" shortname="" provider="(null)" frequency="629000000" parameters="M10" source="A" srate="0" vpid="4896" ppid="4896" vtype="2" tpid="0" sid="4" nid="0" tid="0" rid="0">
+        <dpids>
+            <dpid dlang="eng" dtype="106">4897</dpid>
+            <dpid dlang="eng" dtype="106">483</dpid>
+        </dpids>
+    </channel>
+    <channel name="KVHD-LD" shortname="" provider="(null)" frequency="629000000" parameters="M10" source="A" srate="0" vpid="5152" ppid="5152" vtype="2" tpid="0" sid="5" nid="0" tid="0" rid="0">
+        <dpids>
+            <dpid dlang="eng" dtype="106">5153</dpid>
+            <dpid dlang="eng" dtype="106">5154</dpid>
+        </dpids>
+    </channel>
+    <channel name="KVHD-LD" shortname="" provider="(null)" frequency="629000000" parameters="M10" source="A" srate="0" vpid="5408" ppid="5408" vtype="2" tpid="0" sid="7" nid="0" tid="0" rid="0">
+        <dpids>
+            <dpid dlang="eng" dtype="106">5409</dpid>
+            <dpid dlang="eng" dtype="106">5410</dpid>
+        </dpids>
+    </channel>
+    <channel name="KVHD-LD" shortname="" provider="(null)" frequency="629000000" parameters="M10" source="A" srate="0" vpid="5665" ppid="5665" vtype="2" tpid="0" sid="8" nid="0" tid="0" rid="0">
+        <dpids>
+            <dpid dlang="eng" dtype="106">5666</dpid>
+            <dpid dlang="eng" dtype="106">5664</dpid>
+        </dpids>
+    </channel>
+    <channel name="KVHD-LD" shortname="" provider="(null)" frequency="629000000" parameters="M10" source="A" srate="0" vpid="0" ppid="0" vtype="0" tpid="0" sid="10" nid="0" tid="0" rid="0">
+        <dpids>
+            <dpid dlang="eng" dtype="106">4128</dpid>
+        </dpids>
+    </channel>
+    <channel name="KVHD-LD" shortname="" provider="(null)" frequency="629000000" parameters="M10" source="A" srate="0" vpid="0" ppid="0" vtype="0" tpid="0" sid="12" nid="0" tid="0" rid="0">
+        <dpids>
+            <dpid dlang="eng" dtype="106">4642</dpid>
+        </dpids>
+    </channel>
+    <channel name="KVHD-LD" shortname="" provider="(null)" frequency="629000000" parameters="M10" source="A" srate="0" vpid="0" ppid="0" vtype="0" tpid="0" sid="13" nid="0" tid="0" rid="0">
+        <dpids>
+            <dpid dlang="eng" dtype="106">483</dpid>
+        </dpids>
+    </channel>
+    <channel name="KVHD-LD" shortname="" provider="(null)" frequency="629000000" parameters="M10" source="A" srate="0" vpid="0" ppid="0" vtype="0" tpid="0" sid="14" nid="0" tid="0" rid="0">
+        <dpids>
+            <dpid dlang="eng" dtype="106">5154</dpid>
+        </dpids>
+    </channel>
+    <channel name="KVHD-LD" shortname="" provider="(null)" frequency="629000000" parameters="M10" source="A" srate="0" vpid="0" ppid="0" vtype="0" tpid="0" sid="15" nid="0" tid="0" rid="0">
+        <dpids>
+            <dpid dlang="eng" dtype="106">4386</dpid>
+        </dpids>
+    </channel>
+    <channel name="KVHD-LD" shortname="" provider="(null)" frequency="629000000" parameters="M10" source="A" srate="0" vpid="0" ppid="0" vtype="0" tpid="0" sid="16" nid="0" tid="0" rid="0">
+        <dpids>
+            <dpid dlang="eng" dtype="106">5664</dpid>
+        </dpids>
+    </channel>
+    <channel name="KLCS-1" shortname="" provider="(null)" frequency="635000000" parameters="M10" source="A" srate="0" vpid="49" ppid="49" vtype="2" tpid="0" sid="2" nid="0" tid="0" rid="0">
+        <dpids>
+            <dpid dlang="eng" dtype="106">52</dpid>
+            <dpid dlang="esl" dtype="106">53</dpid>
+        </dpids>
+    </channel>
+    <channel name="KLCS-2" shortname="" provider="(null)" frequency="635000000" parameters="M10" source="A" srate="0" vpid="65" ppid="65" vtype="2" tpid="0" sid="3" nid="0" tid="0" rid="0">
+        <dpids>
+            <dpid dlang="eng" dtype="106">68</dpid>
+        </dpids>
+    </channel>
+    <channel name="KLCS-3" shortname="" provider="(null)" frequency="635000000" parameters="M10" source="A" srate="0" vpid="81" ppid="81" vtype="2" tpid="0" sid="4" nid="0" tid="0" rid="0">
+        <dpids>
+            <dpid dlang="eng" dtype="106">84</dpid>
+        </dpids>
+    </channel>
+    <channel name="KLCS-4" shortname="" provider="(null)" frequency="635000000" parameters="M10" source="A" srate="0" vpid="97" ppid="97" vtype="2" tpid="0" sid="5" nid="0" tid="0" rid="0">
+        <dpids>
+            <dpid dlang="eng" dtype="106">100</dpid>
+        </dpids>
+    </channel>
+    <channel name="KWHY-DT" shortname="" provider="(null)" frequency="641000000" parameters="M10" source="A" srate="0" vpid="49" ppid="49" vtype="2" tpid="0" sid="1" nid="0" tid="0" rid="0" />
+    <channel name="KWHYSD1" shortname="" provider="(null)" frequency="641000000" parameters="M10" source="A" srate="0" vpid="65" ppid="65" vtype="2" tpid="0" sid="2" nid="0" tid="0" rid="0" />
+    <channel name="KWHYSD2" shortname="" provider="(null)" frequency="641000000" parameters="M10" source="A" srate="0" vpid="81" ppid="81" vtype="2" tpid="0" sid="3" nid="0" tid="0" rid="0" />
+    <channel name="KWHYSD3" shortname="" provider="(null)" frequency="641000000" parameters="M10" source="A" srate="0" vpid="97" ppid="97" vtype="2" tpid="0" sid="4" nid="0" tid="0" rid="0" />
+    <channel name="KWHYSD4" shortname="" provider="(null)" frequency="641000000" parameters="M10" source="A" srate="0" vpid="113" ppid="113" vtype="2" tpid="0" sid="5" nid="0" tid="0" rid="0" />
+    <channel name="KWHYSD5" shortname="" provider="(null)" frequency="641000000" parameters="M10" source="A" srate="0" vpid="129" ppid="129" vtype="2" tpid="0" sid="6" nid="0" tid="0" rid="0" />
+    <channel name="KCBS-HD" shortname="" provider="(null)" frequency="647000000" parameters="M10" source="A" srate="0" vpid="49" ppid="49" vtype="2" tpid="0" sid="1" nid="0" tid="0" rid="0" />
+    <channel name="KCBS-SD" shortname="" provider="(null)" frequency="647000000" parameters="M10" source="A" srate="0" vpid="65" ppid="65" vtype="2" tpid="0" sid="2" nid="0" tid="0" rid="0" />
+    <channel name="KILM-DT" shortname="" provider="(null)" frequency="653000000" parameters="M10" source="A" srate="0" vpid="49" ppid="49" vtype="2" tpid="0" sid="1" nid="0" tid="0" rid="0">
+        <dpids>
+            <dpid dlang="eng" dtype="106">52</dpid>
+        </dpids>
+    </channel>
+    <channel name="SINO TV" shortname="" provider="(null)" frequency="653000000" parameters="M10" source="A" srate="0" vpid="65" ppid="65" vtype="2" tpid="0" sid="2" nid="0" tid="0" rid="0">
+        <dpids>
+            <dpid dlang="eng" dtype="106">68</dpid>
+        </dpids>
+    </channel>
+    <channel name="Rev-CH" shortname="" provider="(null)" frequency="653000000" parameters="M10" source="A" srate="0" vpid="81" ppid="81" vtype="2" tpid="0" sid="3" nid="0" tid="0" rid="0">
+        <dpids>
+            <dpid dlang="eng" dtype="106">84</dpid>
+        </dpids>
+    </channel>
+    <channel name="Veria" shortname="" provider="(null)" frequency="653000000" parameters="M10" source="A" srate="0" vpid="97" ppid="97" vtype="2" tpid="0" sid="4" nid="0" tid="0" rid="0">
+        <dpids>
+            <dpid dlang="eng" dtype="106">100</dpid>
+        </dpids>
+    </channel>
+    <channel name="KILM 5" shortname="" provider="(null)" frequency="653000000" parameters="M10" source="A" srate="0" vpid="113" ppid="113" vtype="2" tpid="0" sid="5" nid="0" tid="0" rid="0">
+        <dpids>
+            <dpid dlang="eng" dtype="106">116</dpid>
+        </dpids>
+    </channel>
+    <channel name="KILM6" shortname="" provider="(null)" frequency="653000000" parameters="M10" source="A" srate="0" vpid="129" ppid="129" vtype="2" tpid="0" sid="6" nid="0" tid="0" rid="0">
+        <dpids>
+            <dpid dlang="eng" dtype="106">132</dpid>
+        </dpids>
+    </channel>
+    <channel name="A LA MANERA DE DIOS" shortname="" provider="(null)" frequency="665000000" parameters="M10" source="A" srate="0" vpid="481" ppid="481" vtype="2" tpid="0" sid="1" nid="0" tid="0" rid="0">
+        <dpids>
+            <dpid dlang="eng" dtype="106">482</dpid>
+            <dpid dlang="eng" dtype="106">483</dpid>
+        </dpids>
+    </channel>
+    <channel name="GUIDE US TV" shortname="" provider="(null)" frequency="665000000" parameters="M10" source="A" srate="0" vpid="4384" ppid="4384" vtype="2" tpid="0" sid="2" nid="0" tid="0" rid="0">
+        <dpids>
+            <dpid dlang="eng" dtype="106">4385</dpid>
+            <dpid dlang="eng" dtype="106">4386</dpid>
+        </dpids>
+    </channel>
+    <channel name="A LA MANERA DE DIOS" shortname="" provider="(null)" frequency="665000000" parameters="M10" source="A" srate="0" vpid="5152" ppid="5152" vtype="2" tpid="0" sid="3" nid="0" tid="0" rid="0">
+        <dpids>
+            <dpid dlang="eng" dtype="106">5153</dpid>
+            <dpid dlang="eng" dtype="106">5154</dpid>
+        </dpids>
+    </channel>
+    <channel name="A LA MANERA DE DIOS" shortname="" provider="(null)" frequency="665000000" parameters="M10" source="A" srate="0" vpid="4896" ppid="4896" vtype="2" tpid="0" sid="4" nid="0" tid="0" rid="0">
+        <dpids>
+            <dpid dlang="eng" dtype="106">4897</dpid>
+            <dpid dlang="eng" dtype="106">4898</dpid>
+        </dpids>
+    </channel>
+    <channel name="A LA MANERA DE DIOS" shortname="" provider="(null)" frequency="665000000" parameters="M10" source="A" srate="0" vpid="4640" ppid="4640" vtype="2" tpid="0" sid="5" nid="0" tid="0" rid="0">
+        <dpids>
+            <dpid dlang="eng" dtype="106">4641</dpid>
+            <dpid dlang="eng" dtype="106">4642</dpid>
+        </dpids>
+    </channel>
+    <channel name="PEACE TV" shortname="" provider="(null)" frequency="665000000" parameters="M10" source="A" srate="0" vpid="5408" ppid="5408" vtype="2" tpid="0" sid="6" nid="0" tid="0" rid="0">
+        <dpids>
+            <dpid dlang="eng" dtype="106">5409</dpid>
+            <dpid dlang="esl" dtype="106">5410</dpid>
+        </dpids>
+    </channel>
+    <channel name="KTAV-LP" shortname="" provider="(null)" frequency="665000000" parameters="M10" source="A" srate="0" vpid="5664" ppid="5664" vtype="2" tpid="0" sid="7" nid="0" tid="0" rid="0">
+        <apids>
+            <apid alang="eng" atype="3">5666</apid>
+        </apids>
+        <dpids>
+            <dpid dlang="eng" dtype="106">5665</dpid>
+        </dpids>
+    </channel>
+    <channel name="A LA MANERA DE DIOS" shortname="" provider="(null)" frequency="665000000" parameters="M10" source="A" srate="0" vpid="0" ppid="0" vtype="0" tpid="0" sid="8" nid="0" tid="0" rid="0">
+        <dpids>
+            <dpid dlang="eng" dtype="106">4898</dpid>
+        </dpids>
+    </channel>
+    <channel name="A LA MANERA DE DIOS" shortname="" provider="(null)" frequency="665000000" parameters="M10" source="A" srate="0" vpid="0" ppid="0" vtype="0" tpid="0" sid="9" nid="0" tid="0" rid="0">
+        <dpids>
+            <dpid dlang="eng" dtype="106">4386</dpid>
+        </dpids>
+    </channel>
+    <channel name="KAZA-D2" shortname="" provider="(null)" frequency="671000000" parameters="M10" source="A" srate="0" vpid="65" ppid="65" vtype="2" tpid="0" sid="4" nid="0" tid="0" rid="0" />
+    <channel name="KAZA-D3" shortname="" provider="(null)" frequency="671000000" parameters="M10" source="A" srate="0" vpid="81" ppid="81" vtype="2" tpid="0" sid="5" nid="0" tid="0" rid="0" />
+    <channel name="KAZA-DT" shortname="" provider="(null)" frequency="671000000" parameters="M10" source="A" srate="0" vpid="49" ppid="49" vtype="2" tpid="0" sid="3" nid="0" tid="0" rid="0" />
+    <channel name="PBS-HD" shortname="" provider="(null)" frequency="677000000" parameters="M10" source="A" srate="0" vpid="49" ppid="49" vtype="2" tpid="0" sid="3" nid="0" tid="0" rid="0">
+        <apids>
+            <apid alang="eng" atype="4">52</apid>
+        </apids>
+        <dpids>
+            <dpid dlang="" dtype="106">52</dpid>
+        </dpids>
+    </channel>
+    <channel name="PBSplus" shortname="" provider="(null)" frequency="677000000" parameters="M10" source="A" srate="0" vpid="65" ppid="65" vtype="2" tpid="0" sid="4" nid="0" tid="0" rid="0">
+        <apids>
+            <apid alang="eng" atype="4">68</apid>
+        </apids>
+        <dpids>
+            <dpid dlang="" dtype="106">68</dpid>
+        </dpids>
+    </channel>
+    <channel name="PBSwrld" shortname="" provider="(null)" frequency="677000000" parameters="M10" source="A" srate="0" vpid="81" ppid="81" vtype="2" tpid="0" sid="5" nid="0" tid="0" rid="0">
+        <apids>
+            <apid alang="eng" atype="4">84</apid>
+        </apids>
+        <dpids>
+            <dpid dlang="" dtype="106">84</dpid>
+        </dpids>
+    </channel>
+    <channel name="Daystar" shortname="" provider="(null)" frequency="677000000" parameters="M10" source="A" srate="0" vpid="97" ppid="97" vtype="2" tpid="0" sid="6" nid="0" tid="0" rid="0">
+        <apids>
+            <apid alang="eng" atype="4">100</apid>
+        </apids>
+        <dpids>
+            <dpid dlang="" dtype="106">100</dpid>
+        </dpids>
+    </channel>
+    <channel name="KJLA-DT" shortname="" provider="(null)" frequency="683000000" parameters="M10" source="A" srate="0" vpid="49" ppid="49" vtype="2" tpid="0" sid="1" nid="0" tid="0" rid="0">
+        <apids>
+            <apid alang="eng" atype="4">52</apid>
+        </apids>
+        <dpids>
+            <dpid dlang="" dtype="106">52</dpid>
+        </dpids>
+    </channel>
+    <channel name="STV" shortname="" provider="(null)" frequency="683000000" parameters="M10" source="A" srate="0" vpid="145" ppid="145" vtype="2" tpid="0" sid="7" nid="0" tid="0" rid="0">
+        <apids>
+            <apid alang="" atype="4">148</apid>
+        </apids>
+        <dpids>
+            <dpid dlang="" dtype="106">148</dpid>
+        </dpids>
+    </channel>
+    <channel name="SET" shortname="" provider="(null)" frequency="683000000" parameters="M10" source="A" srate="0" vpid="97" ppid="97" vtype="2" tpid="0" sid="4" nid="0" tid="0" rid="0">
+        <apids>
+            <apid alang="eng" atype="4">100</apid>
+        </apids>
+        <dpids>
+            <dpid dlang="" dtype="106">100</dpid>
+        </dpids>
+    </channel>
+    <channel name="IBC-TV" shortname="" provider="(null)" frequency="683000000" parameters="M10" source="A" srate="0" vpid="161" ppid="161" vtype="2" tpid="0" sid="8" nid="0" tid="0" rid="0">
+        <apids>
+            <apid alang="eng" atype="4">164</apid>
+        </apids>
+        <dpids>
+            <dpid dlang="" dtype="106">164</dpid>
+        </dpids>
+    </channel>
+    <channel name="ZWTV" shortname="" provider="(null)" frequency="683000000" parameters="M10" source="A" srate="0" vpid="177" ppid="177" vtype="2" tpid="0" sid="9" nid="0" tid="0" rid="0">
+        <apids>
+            <apid alang="eng" atype="4">180</apid>
+        </apids>
+        <dpids>
+            <dpid dlang="" dtype="106">180</dpid>
+        </dpids>
+    </channel>
+    <channel name="VBS-TV" shortname="" provider="(null)" frequency="683000000" parameters="M10" source="A" srate="0" vpid="129" ppid="129" vtype="2" tpid="0" sid="6" nid="0" tid="0" rid="0">
+        <apids>
+            <apid alang="eng" atype="4">132</apid>
+        </apids>
+        <dpids>
+            <dpid dlang="" dtype="106">132</dpid>
+        </dpids>
+    </channel>
+    <channel name="ENT" shortname="" provider="(null)" frequency="683000000" parameters="M10" source="A" srate="0" vpid="193" ppid="193" vtype="2" tpid="0" sid="10" nid="0" tid="0" rid="0">
+        <apids>
+            <apid alang="eng" atype="4">196</apid>
+        </apids>
+        <dpids>
+            <dpid dlang="" dtype="106">196</dpid>
+        </dpids>
+    </channel>
+    <channel name="VNA-TV" shortname="" provider="(null)" frequency="683000000" parameters="M10" source="A" srate="0" vpid="81" ppid="81" vtype="2" tpid="0" sid="3" nid="0" tid="0" rid="0">
+        <apids>
+            <apid alang="eng" atype="4">84</apid>
+        </apids>
+        <dpids>
+            <dpid dlang="" dtype="106">84</dpid>
+        </dpids>
+    </channel>
+    <channel name="SGTV" shortname="" provider="(null)" frequency="683000000" parameters="M10" source="A" srate="0" vpid="113" ppid="113" vtype="2" tpid="0" sid="5" nid="0" tid="0" rid="0">
+        <apids>
+            <apid alang="eng" atype="4">116</apid>
+        </apids>
+        <dpids>
+            <dpid dlang="" dtype="106">116</dpid>
+        </dpids>
+    </channel>
+    <channel name="VFACE" shortname="" provider="(null)" frequency="683000000" parameters="M10" source="A" srate="0" vpid="65" ppid="65" vtype="2" tpid="0" sid="2" nid="0" tid="0" rid="0">
+        <apids>
+            <apid alang="eng" atype="4">68</apid>
+        </apids>
+        <dpids>
+            <dpid dlang="" dtype="106">68</dpid>
+        </dpids>
+    </channel>
+    <channel name="HSN" shortname="" provider="(null)" frequency="689000000" parameters="M10" source="A" srate="0" vpid="49" ppid="49" vtype="2" tpid="0" sid="3" nid="0" tid="0" rid="0">
+        <apids>
+            <apid alang="eng" atype="4">52</apid>
+        </apids>
+        <dpids>
+            <dpid dlang="" dtype="106">52</dpid>
+        </dpids>
+    </channel>
+    <channel name="18.8" shortname="" provider="(null)" frequency="689000000" parameters="M10" source="A" srate="0" vpid="65" ppid="65" vtype="2" tpid="0" sid="4" nid="0" tid="0" rid="0">
+        <apids>
+            <apid alang="eng" atype="4">68</apid>
+        </apids>
+        <dpids>
+            <dpid dlang="" dtype="106">68</dpid>
+        </dpids>
+    </channel>
+    <channel name="ALIENTO" shortname="" provider="(null)" frequency="689000000" parameters="M10" source="A" srate="0" vpid="81" ppid="81" vtype="2" tpid="0" sid="5" nid="0" tid="0" rid="0">
+        <apids>
+            <apid alang="eng" atype="4">84</apid>
+        </apids>
+        <dpids>
+            <dpid dlang="" dtype="106">84</dpid>
+        </dpids>
+    </channel>
+    <channel name="TESTING" shortname="" provider="(null)" frequency="689000000" parameters="M10" source="A" srate="0" vpid="97" ppid="97" vtype="2" tpid="0" sid="6" nid="0" tid="0" rid="0">
+        <apids>
+            <apid alang="eng" atype="4">100</apid>
+        </apids>
+        <dpids>
+            <dpid dlang="" dtype="106">100</dpid>
+        </dpids>
+    </channel>
+    <channel name="NTDTV" shortname="" provider="(null)" frequency="695000000" parameters="M10" source="A" srate="0" vpid="145" ppid="145" vtype="2" tpid="0" sid="7" nid="0" tid="0" rid="0">
+        <dpids>
+            <dpid dlang="eng" dtype="106">148</dpid>
+        </dpids>
+    </channel>
+    <channel name="ICN" shortname="" provider="(null)" frequency="695000000" parameters="M10" source="A" srate="0" vpid="161" ppid="161" vtype="2" tpid="0" sid="8" nid="0" tid="0" rid="0" />
+    <channel name="amga tv" shortname="" provider="(null)" frequency="695000000" parameters="M10" source="A" srate="0" vpid="193" ppid="193" vtype="2" tpid="0" sid="10" nid="0" tid="0" rid="0">
+        <dpids>
+            <dpid dlang="eng" dtype="106">196</dpid>
+        </dpids>
+    </channel>
+    <channel name="KXLA-DT" shortname="" provider="(null)" frequency="695000000" parameters="M10" source="A" srate="0" vpid="49" ppid="49" vtype="2" tpid="0" sid="1" nid="0" tid="0" rid="0">
+        <dpids>
+            <dpid dlang="eng" dtype="106">52</dpid>
+        </dpids>
+    </channel>
+    <channel name="KXLADT3" shortname="" provider="(null)" frequency="695000000" parameters="M10" source="A" srate="0" vpid="81" ppid="81" vtype="2" tpid="0" sid="3" nid="0" tid="0" rid="0" />
+    <channel name="MBN" shortname="" provider="(null)" frequency="695000000" parameters="M10" source="A" srate="0" vpid="65" ppid="65" vtype="2" tpid="0" sid="2" nid="0" tid="0" rid="0" />
+    <channel name="ARRANG" shortname="" provider="(null)" frequency="695000000" parameters="M10" source="A" srate="0" vpid="113" ppid="113" vtype="2" tpid="0" sid="5" nid="0" tid="0" rid="0">
+        <dpids>
+            <dpid dlang="eng" dtype="106">116</dpid>
+        </dpids>
+    </channel>
+    <channel name="IAVC" shortname="" provider="(null)" frequency="695000000" parameters="M10" source="A" srate="0" vpid="129" ppid="129" vtype="2" tpid="0" sid="6" nid="0" tid="0" rid="0">
+        <dpids>
+            <dpid dlang="eng" dtype="106">132</dpid>
+        </dpids>
+    </channel>
+    <channel name="GETV" shortname="" provider="(null)" frequency="695000000" parameters="M10" source="A" srate="0" vpid="177" ppid="177" vtype="2" tpid="0" sid="9" nid="0" tid="0" rid="0" />
+    <channel name="SKY-CAN" shortname="" provider="(null)" frequency="695000000" parameters="M10" source="A" srate="0" vpid="97" ppid="97" vtype="2" tpid="0" sid="4" nid="0" tid="0" rid="0" />
+</channels>
