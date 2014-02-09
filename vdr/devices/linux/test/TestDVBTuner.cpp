@@ -21,9 +21,11 @@
  */
 
 #include "DVBDeviceNames.h"
+#include "channels/ChannelManager.h"
 #include "devices/linux/DVBDevice.h"
 #include "devices/linux/DVBTuner.h"
 #include "devices/linux/subsystems/DVBChannelSubsystem.h"
+#include "filesystem/SpecialProtocol.h"
 #include "gtest/gtest.h"
 
 #include <vector>
@@ -40,12 +42,47 @@ TEST(DvbTuner, cDvbTuner)
     if (!device)
       continue;
 
-    ASSERT_TRUE(device->Initialise());
-
     cDvbTuner& tuner = device->m_dvbTuner;
-    ASSERT_TRUE(tuner.IsOpen());
+
     EXPECT_EQ(device->Adapter(), tuner.Adapter());
     EXPECT_EQ(device->Frontend(), tuner.Frontend());
+  }
+}
+
+TEST(DvbTuner, Open)
+{
+  DeviceVector devices = cDvbDevice::FindDevices();
+  ASSERT_FALSE(devices.empty());
+  for (DeviceVector::iterator it = devices.begin(); it != devices.end(); ++it)
+  {
+    cDvbDevice *device = dynamic_cast<cDvbDevice*>(it->get());
+    if (!device)
+      continue;
+
+    cDvbTuner& tuner = device->m_dvbTuner;
+
+    EXPECT_FALSE(tuner.IsOpen());
+    EXPECT_TRUE(tuner.Open());
+    EXPECT_TRUE(tuner.IsOpen());
+    tuner.Close();
+    EXPECT_FALSE(tuner.IsOpen());
+  }
+}
+
+TEST(DvbTuner, Getters)
+{
+  DeviceVector devices = cDvbDevice::FindDevices();
+  ASSERT_FALSE(devices.empty());
+  for (DeviceVector::iterator it = devices.begin(); it != devices.end(); ++it)
+  {
+    cDvbDevice *device = dynamic_cast<cDvbDevice*>(it->get());
+    if (!device)
+      continue;
+
+    cDvbTuner& tuner = device->m_dvbTuner;
+
+    ASSERT_TRUE(tuner.Open());
+
     EXPECT_STRNE("", tuner.Name().c_str());
 
     if (tuner.Name() == WINTVHVR950Q)
@@ -98,7 +135,7 @@ TEST(DvbTuner, cDvbTuner)
       EXPECT_FALSE(tuner.HasCapability(FE_CAN_16VSB));
       EXPECT_FALSE(tuner.HasCapability(FE_CAN_MULTISTREAM));
       EXPECT_FALSE(tuner.HasCapability(FE_CAN_TURBO_FEC));
-      EXPECT_FALSE(tuner.HasCapability(FE_CAN_2G_MODULATION));
+      EXPECT_FALSE(tuner.HasCapability((fe_caps)FE_CAN_2G_MODULATION));
       EXPECT_FALSE(tuner.HasCapability(FE_NEEDS_BENDING));
       EXPECT_FALSE(tuner.HasCapability(FE_CAN_RECOVER));
       EXPECT_FALSE(tuner.HasCapability(FE_CAN_MUTE_TS));
@@ -109,5 +146,36 @@ TEST(DvbTuner, cDvbTuner)
     {
       EXPECT_NE(SYS_UNDEFINED, tuner.FrontendType());
     }
+  }
+}
+
+TEST(DvbTuner, Locked)
+{
+  // Load a channel
+  cChannelManager channelManager;
+  ASSERT_TRUE(channelManager.Load("special://vdr/system/channels.xml"));
+  ChannelVector channels = channelManager.GetCurrent();
+  ASSERT_FALSE(channels.empty());
+  ChannelPtr channel = channels[0];
+  ASSERT_TRUE(channel.get());
+
+  DeviceVector devices = cDvbDevice::FindDevices();
+  ASSERT_FALSE(devices.empty());
+  for (DeviceVector::iterator it = devices.begin(); it != devices.end(); ++it)
+  {
+    cDvbDevice *device = dynamic_cast<cDvbDevice*>(it->get());
+    if (!device)
+      continue;
+
+    cDvbTuner& tuner = device->m_dvbTuner;
+
+    ASSERT_TRUE(tuner.Open());
+
+    EXPECT_STRNE("", tuner.Name().c_str());
+
+    EXPECT_FALSE(tuner.IsTunedTo(*channel));
+    tuner.SetChannel(*channel);
+    EXPECT_TRUE(tuner.IsTunedTo(*channel));
+    EXPECT_TRUE(tuner.Locked(10 * 1000)); // 10s
   }
 }
