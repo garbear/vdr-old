@@ -472,7 +472,7 @@ void cRecording::ClearSortName(void)
   DELETENULL(sortBufferTime);
 }
 
-int cRecording::GetResume(void) const
+int cRecording::GetResume(void)
 {
   if (resume == RESUME_NOT_INITIALIZED) {
      cResumeFile ResumeFile(FileName(), isPesRecording);
@@ -481,7 +481,7 @@ int cRecording::GetResume(void) const
   return resume;
 }
 
-const char *cRecording::FileName(void) const
+const char *cRecording::FileName(void)
 {
   if (!fileName) {
      struct tm tm_r;
@@ -507,7 +507,7 @@ uint32_t cRecording::UID(void)
   return (uint32_t)m_hash;
 }
 
-const char *cRecording::Title(char Delimiter, bool NewIndicator, int Level) const
+const char *cRecording::Title(char Delimiter, bool NewIndicator, int Level)
 {
   char New = NewIndicator && IsNew() ? '*' : ' ';
   free(titleBuffer);
@@ -597,7 +597,7 @@ bool cRecording::IsEdited(void) const
   return *s == '%';
 }
 
-bool cRecording::IsOnVideoDirectoryFileSystem(void) const
+bool cRecording::IsOnVideoDirectoryFileSystem(void)
 {
   if (isOnVideoDirectoryFileSystem < 0)
      isOnVideoDirectoryFileSystem = ::IsOnVideoDirectoryFileSystem(FileName());
@@ -693,12 +693,12 @@ bool cRecording::Undelete(void)
   return result;
 }
 
-void cRecording::ResetResume(void) const
+void cRecording::ResetResume(void)
 {
   resume = RESUME_NOT_INITIALIZED;
 }
 
-int cRecording::NumFrames(void) const
+int cRecording::NumFrames(void)
 {
   if (numFrames < 0) {
      int nf = cIndexFile::GetLength(FileName(), IsPesRecording());
@@ -709,7 +709,7 @@ int cRecording::NumFrames(void) const
   return numFrames;
 }
 
-int cRecording::LengthInSeconds(void) const
+int cRecording::LengthInSeconds(void)
 {
   int nf = NumFrames();
   if (nf >= 0)
@@ -717,7 +717,7 @@ int cRecording::LengthInSeconds(void) const
   return -1;
 }
 
-int cRecording::FileSizeMB(void) const
+int cRecording::FileSizeMB(void)
 {
   if (fileSizeMB < 0) {
      int fs = DirSizeMB(FileName());

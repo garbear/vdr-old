@@ -41,26 +41,26 @@ public:
   int Lifetime(void) const { return lifetime; }
   time_t Deleted(void) const { return deleted; }
   const char *Name(void) const { return name; }
-  const char *FileName(void) const;
+  const char *FileName(void);
   uint32_t UID(void);
-  const char *Title(char Delimiter = ' ', bool NewIndicator = false, int Level = -1) const;
+  const char *Title(char Delimiter = ' ', bool NewIndicator = false, int Level = -1);
   const cRecordingInfo *Info(void) const { return info; }
   const char *PrefixFileName(char Prefix);
   int HierarchyLevels(void) const;
-  void ResetResume(void) const;
+  void ResetResume(void);
   double FramesPerSecond(void) const { return framesPerSecond; }
-  int NumFrames(void) const;
+  int NumFrames(void);
        ///< Returns the number of frames in this recording.
        ///< If the number of frames is unknown, -1 will be returned.
-  int LengthInSeconds(void) const;
+  int LengthInSeconds(void);
        ///< Returns the length (in seconds) of this recording, or -1 in case of error.
-  int FileSizeMB(void) const;
+  int FileSizeMB(void);
        ///< Returns the total file size of this recording (in MB), or -1 if the file
        ///< size is unknown.
-  bool IsNew(void) const { return GetResume() <= 0; }
+  bool IsNew(void) { return GetResume() <= 0; }
   bool IsEdited(void) const;
   bool IsPesRecording(void) const { return isPesRecording; }
-  bool IsOnVideoDirectoryFileSystem(void) const;
+  bool IsOnVideoDirectoryFileSystem(void);
   void ReadInfo(void);
   bool WriteInfo(void);
   void SetStartTime(time_t Start);
@@ -94,25 +94,25 @@ public:
         // value points to the resulting string, which may be different from s.
 
 private:
-  mutable int resume;
-  mutable char *titleBuffer;
-  mutable char *sortBufferName;
-  mutable char *sortBufferTime;
-  mutable char *fileName;
-  mutable char *name;
-  mutable int fileSizeMB;
-  mutable int numFrames;
+  int resume;
+  char *titleBuffer;
+  char *sortBufferName;
+  char *sortBufferTime;
+  char *fileName;
+  char *name;
+  int fileSizeMB;
+  int numFrames;
   int channel;
   int instanceId;
   bool isPesRecording;
-  mutable int isOnVideoDirectoryFileSystem; // -1 = unknown, 0 = no, 1 = yes
+  int isOnVideoDirectoryFileSystem; // -1 = unknown, 0 = no, 1 = yes
   double framesPerSecond;
   cRecordingInfo *info;
   cRecording(const cRecording&); // can't copy cRecording
   cRecording &operator=(const cRecording &); // can't assign cRecording
   static char *StripEpisodeName(char *s, bool Strip);
   void ClearSortName(void);
-  int GetResume(void) const;
+  int GetResume(void);
   time_t start;
   int priority;
   int lifetime;
