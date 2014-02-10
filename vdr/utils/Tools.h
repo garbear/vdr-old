@@ -137,6 +137,7 @@ inline char *skipspace(const char *s)
   return (char *)s;
 }
 char *stripspace(char *s);
+void stripspace(std::string& s);
 char *compactspace(char *s);
 cString strescape(const char *s, const char *chars);
 bool startswith(const char *s, const char *p);

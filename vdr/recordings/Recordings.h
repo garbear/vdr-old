@@ -25,7 +25,6 @@ public:
   void ChangeState(void) { state++; }
   bool StateChanged(int &State);
   void ResetResume(const char *ResumeFileName = NULL);
-  void ClearSortNames(void);
   cRecording *GetByName(const char *FileName);
   void AddByName(const char *FileName, bool TriggerUpdate = true);
   cRecording* FindByUID(uint32_t uid);

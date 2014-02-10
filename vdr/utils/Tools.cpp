@@ -205,6 +205,18 @@ char *stripspace(char *s)
   return s;
 }
 
+void stripspace(std::string& s)
+{
+  ssize_t strip = s.length();
+  for (ssize_t pos = s.length() - 1; pos > 0; pos--)
+  {
+    if (!isspace(s.at(pos)))
+      break;
+    strip = pos;
+  }
+  s.erase(strip);
+}
+
 char *compactspace(char *s)
 {
   if (s && *s) {

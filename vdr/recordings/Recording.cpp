@@ -247,8 +247,6 @@ char *LimitNameLengths(char *s, int PathMax, int NameMax)
 cRecording::cRecording(TimerPtr Timer, const cEvent *Event)
 {
   m_iResume = RESUME_NOT_INITIALIZED;
-  m_strTitleBuffer = NULL;
-  m_strSortBufferName = m_strSortBufferTime = NULL;
   m_strFileName = NULL;
   m_strName = NULL;
   m_iFileSizeMB = -1; // unknown
@@ -316,8 +314,6 @@ cRecording::cRecording(const char *FileName)
   m_dFramesPerSecond = DEFAULTFRAMESPERSECOND;
   m_iNumFrames = -1;
   m_deleted = 0;
-  m_strTitleBuffer = NULL;
-  m_strSortBufferName = m_strSortBufferTime = NULL;
   m_hash = -1;
   FileName = m_strFileName = strdup(FileName);
   if (*(m_strFileName + strlen(m_strFileName) - 1) == '/')
@@ -429,9 +425,6 @@ cRecording::cRecording(const char *FileName)
 
 cRecording::~cRecording()
 {
-  free(m_strTitleBuffer);
-  free(m_strSortBufferName);
-  free(m_strSortBufferTime);
   free(m_strFileName);
   free(m_strName);
   delete m_recordingInfo;
@@ -464,12 +457,6 @@ char *cRecording::StripEpisodeName(char *s, bool Strip)
         }
      }
   return s;
-}
-
-void cRecording::ClearSortName(void)
-{
-  DELETENULL(m_strSortBufferName);
-  DELETENULL(m_strSortBufferTime);
 }
 
 int cRecording::GetResume(void)
@@ -505,67 +492,6 @@ uint32_t cRecording::UID(void)
   if (m_hash < 0)
     m_hash = (int64_t)CCRC32::CRC32(FileName());
   return (uint32_t)m_hash;
-}
-
-const char *cRecording::Title(char Delimiter, bool NewIndicator, int Level)
-{
-  char New = NewIndicator && IsNew() ? '*' : ' ';
-  free(m_strTitleBuffer);
-  m_strTitleBuffer = NULL;
-  if (Level < 0 || Level == HierarchyLevels()) {
-     struct tm tm_r;
-     struct tm *t = localtime_r(&m_start, &tm_r);
-     char *s;
-     if (Level > 0 && (s = strrchr(m_strName, FOLDERDELIMCHAR)) != NULL)
-        s++;
-     else
-        s = m_strName;
-     cString Length("");
-     if (NewIndicator) {
-        int Minutes = max(0, (LengthInSeconds() + 30) / 60);
-        Length = cString::sprintf("%c%d:%02d",
-                   Delimiter,
-                   Minutes / 60,
-                   Minutes % 60
-                   );
-        }
-     m_strTitleBuffer = strdup(cString::sprintf("%02d.%02d.%02d%c%02d:%02d%s%c%c%s",
-                            t->tm_mday,
-                            t->tm_mon + 1,
-                            t->tm_year % 100,
-                            Delimiter,
-                            t->tm_hour,
-                            t->tm_min,
-                            *Length,
-                            New,
-                            Delimiter,
-                            s));
-     // let's not display a trailing FOLDERDELIMCHAR:
-     if (!NewIndicator)
-        stripspace(m_strTitleBuffer);
-     s = &m_strTitleBuffer[strlen(m_strTitleBuffer) - 1];
-     if (*s == FOLDERDELIMCHAR)
-        *s = 0;
-     }
-  else if (Level < HierarchyLevels()) {
-     const char *s = m_strName;
-     const char *p = s;
-     while (*++s) {
-           if (*s == FOLDERDELIMCHAR) {
-              if (Level--)
-                 p = s + 1;
-              else
-                 break;
-              }
-           }
-     m_strTitleBuffer = MALLOC(char, s - p + 3);
-     *m_strTitleBuffer = Delimiter;
-     *(m_strTitleBuffer + 1) = Delimiter;
-     strn0cpy(m_strTitleBuffer + 2, p, s - p + 1);
-     }
-  else
-     return "";
-  return m_strTitleBuffer;
 }
 
 const char *cRecording::PrefixFileName(char Prefix)

@@ -43,7 +43,6 @@ public:
   const char *Name(void) const { return m_strName; }
   const char *FileName(void);
   uint32_t UID(void);
-  const char *Title(char Delimiter = ' ', bool NewIndicator = false, int Level = -1);
   const cRecordingInfo *Info(void) const { return m_recordingInfo; }
   const char *PrefixFileName(char Prefix);
   int HierarchyLevels(void) const;
@@ -97,13 +96,9 @@ private:
   cRecording(const cRecording&); // can't copy cRecording
   cRecording &operator=(const cRecording &); // can't assign cRecording
   static char *StripEpisodeName(char *s, bool Strip);
-  void ClearSortName(void);
   int GetResume(void);
 
   int             m_iResume;
-  char*           m_strTitleBuffer;
-  char*           m_strSortBufferName;
-  char*           m_strSortBufferTime;
   char*           m_strFileName;
   char*           m_strName;
   int             m_iFileSizeMB;

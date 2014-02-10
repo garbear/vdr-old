@@ -277,13 +277,6 @@ void cRecordings::ResetResume(const char *ResumeFileName)
   ChangeState();
 }
 
-void cRecordings::ClearSortNames(void)
-{
-  CThreadLock lock(this);
-  for (std::vector<cRecording*>::iterator it = m_recordings.begin(); it != m_recordings.end(); ++it)
-    (*it)->ClearSortName();
-}
-
 void cRecordings::Add(cRecording* recording)
 {
   CThreadLock lock(this);
