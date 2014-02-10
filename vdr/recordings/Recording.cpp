@@ -246,19 +246,19 @@ char *LimitNameLengths(char *s, int PathMax, int NameMax)
 
 cRecording::cRecording(TimerPtr Timer, const cEvent *Event)
 {
-  resume = RESUME_NOT_INITIALIZED;
-  titleBuffer = NULL;
-  sortBufferName = sortBufferTime = NULL;
-  fileName = NULL;
-  name = NULL;
-  fileSizeMB = -1; // unknown
-  channel = Timer->Channel()->Number();
-  instanceId = InstanceId;
-  isPesRecording = false;
-  isOnVideoDirectoryFileSystem = -1; // unknown
-  framesPerSecond = DEFAULTFRAMESPERSECOND;
-  numFrames = -1;
-  deleted = 0;
+  m_iResume = RESUME_NOT_INITIALIZED;
+  m_strTitleBuffer = NULL;
+  m_strSortBufferName = m_strSortBufferTime = NULL;
+  m_strFileName = NULL;
+  m_strName = NULL;
+  m_iFileSizeMB = -1; // unknown
+  m_iChannel = Timer->Channel()->Number();
+  m_iInstanceId = InstanceId;
+  m_bIsPesRecording = false;
+  m_iIsOnVideoDirectoryFileSystem = -1; // unknown
+  m_dFramesPerSecond = DEFAULTFRAMESPERSECOND;
+  m_iNumFrames = -1;
+  m_deleted = 0;
   m_hash = -1;
   // set up the actual name:
   const char *Title = Event ? Event->Title() : NULL;
@@ -273,102 +273,102 @@ cRecording::cRecording(TimerPtr Timer, const cEvent *Event)
      std::string strName = Timer->File();
      StringUtils::Replace(strName, TIMERMACRO_TITLE, Title);
      StringUtils::Replace(strName, TIMERMACRO_EPISODE, Subtitle);
-     name = strdup(strName.c_str());
+     m_strName = strdup(strName.c_str());
      // avoid blanks at the end:
-     int l = strlen(name);
+     int l = strlen(m_strName);
      while (l-- > 2) {
-           if (name[l] == ' ' && name[l - 1] != FOLDERDELIMCHAR)
-              name[l] = 0;
+           if (m_strName[l] == ' ' && m_strName[l - 1] != FOLDERDELIMCHAR)
+              m_strName[l] = 0;
            else
               break;
            }
      if (Timer->IsSingleEvent()) {
-        Timer->SetFile(name); // this was an instant recording, so let's set the actual data
+        Timer->SetFile(m_strName); // this was an instant recording, so let's set the actual data
         cTimers::Get().SetModified();
         }
      }
   else if (Timer->IsSingleEvent() || !g_setup.UseSubtitle)
-     name = strdup(Timer->File().c_str());
+     m_strName = strdup(Timer->File().c_str());
   else
-     name = strdup(cString::sprintf("%s~%s", Timer->File().c_str(), Subtitle));
+     m_strName = strdup(cString::sprintf("%s~%s", Timer->File().c_str(), Subtitle));
   // substitute characters that would cause problems in file names:
-  strreplace(name, '\n', ' ');
-  start = Timer->StartTime();
-  priority = Timer->Priority();
-  lifetime = Timer->Lifetime();
+  strreplace(m_strName, '\n', ' ');
+  m_start = Timer->StartTime();
+  m_iPriority = Timer->Priority();
+  m_iLifetime = Timer->Lifetime();
   // handle info:
-  info = new cRecordingInfo(Timer->Channel().get(), Event);
-  info->SetAux(Timer->Aux());
-  info->priority = priority;
-  info->lifetime = lifetime;
+  m_recordingInfo = new cRecordingInfo(Timer->Channel().get(), Event);
+  m_recordingInfo->SetAux(Timer->Aux());
+  m_recordingInfo->priority = m_iPriority;
+  m_recordingInfo->lifetime = m_iLifetime;
 }
 
 cRecording::cRecording(const char *FileName)
 {
-  resume = RESUME_NOT_INITIALIZED;
-  fileSizeMB = -1; // unknown
-  channel = -1;
-  instanceId = -1;
-  priority = MAXPRIORITY; // assume maximum in case there is no info file
-  lifetime = MAXLIFETIME;
-  isPesRecording = false;
-  isOnVideoDirectoryFileSystem = -1; // unknown
-  framesPerSecond = DEFAULTFRAMESPERSECOND;
-  numFrames = -1;
-  deleted = 0;
-  titleBuffer = NULL;
-  sortBufferName = sortBufferTime = NULL;
+  m_iResume = RESUME_NOT_INITIALIZED;
+  m_iFileSizeMB = -1; // unknown
+  m_iChannel = -1;
+  m_iInstanceId = -1;
+  m_iPriority = MAXPRIORITY; // assume maximum in case there is no info file
+  m_iLifetime = MAXLIFETIME;
+  m_bIsPesRecording = false;
+  m_iIsOnVideoDirectoryFileSystem = -1; // unknown
+  m_dFramesPerSecond = DEFAULTFRAMESPERSECOND;
+  m_iNumFrames = -1;
+  m_deleted = 0;
+  m_strTitleBuffer = NULL;
+  m_strSortBufferName = m_strSortBufferTime = NULL;
   m_hash = -1;
-  FileName = fileName = strdup(FileName);
-  if (*(fileName + strlen(fileName) - 1) == '/')
-     *(fileName + strlen(fileName) - 1) = 0;
+  FileName = m_strFileName = strdup(FileName);
+  if (*(m_strFileName + strlen(m_strFileName) - 1) == '/')
+     *(m_strFileName + strlen(m_strFileName) - 1) = 0;
   if (strstr(FileName, VideoDirectory) == FileName)
      FileName += strlen(VideoDirectory) + 1;
   const char *p = strrchr(FileName, '/');
 
-  name = NULL;
-  info = new cRecordingInfo(fileName);
+  m_strName = NULL;
+  m_recordingInfo = new cRecordingInfo(m_strFileName);
   if (p) {
      time_t now = time(NULL);
      struct tm tm_r;
      struct tm t = *localtime_r(&now, &tm_r); // this initializes the time zone in 't'
      t.tm_isdst = -1; // makes sure mktime() will determine the correct DST setting
-     if (7 == sscanf(p + 1, DATAFORMATTS, &t.tm_year, &t.tm_mon, &t.tm_mday, &t.tm_hour, &t.tm_min, &channel, &instanceId)
-      || 7 == sscanf(p + 1, DATAFORMATPES, &t.tm_year, &t.tm_mon, &t.tm_mday, &t.tm_hour, &t.tm_min, &priority, &lifetime)) {
+     if (7 == sscanf(p + 1, DATAFORMATTS, &t.tm_year, &t.tm_mon, &t.tm_mday, &t.tm_hour, &t.tm_min, &m_iChannel, &m_iInstanceId)
+      || 7 == sscanf(p + 1, DATAFORMATPES, &t.tm_year, &t.tm_mon, &t.tm_mday, &t.tm_hour, &t.tm_min, &m_iPriority, &m_iLifetime)) {
         t.tm_year -= 1900;
         t.tm_mon--;
         t.tm_sec = 0;
-        start = mktime(&t);
-        name = MALLOC(char, p - FileName + 1);
-        strncpy(name, FileName, p - FileName);
-        name[p - FileName] = 0;
-        name = ExchangeChars(name, false);
-        isPesRecording = instanceId < 0;
+        m_start = mktime(&t);
+        m_strName = MALLOC(char, p - FileName + 1);
+        strncpy(m_strName, FileName, p - FileName);
+        m_strName[p - FileName] = 0;
+        m_strName = ExchangeChars(m_strName, false);
+        m_bIsPesRecording = m_iInstanceId < 0;
         }
      else
         return;
      GetResume();
      // read an optional info file:
-     std::string InfoFileName = *cString::sprintf("%s%s", fileName, isPesRecording ? INFOFILESUFFIX ".vdr" : INFOFILESUFFIX);
+     std::string InfoFileName = *cString::sprintf("%s%s", m_strFileName, m_bIsPesRecording ? INFOFILESUFFIX ".vdr" : INFOFILESUFFIX);
      CFile file;
      if (file.Open(InfoFileName))
      {
-       if (!info->Read(file))
+       if (!m_recordingInfo->Read(file))
            esyslog("ERROR: EPG data problem in file %s", InfoFileName.c_str());
-        else if (!isPesRecording) {
-           priority = info->priority;
-           lifetime = info->lifetime;
-           framesPerSecond = info->framesPerSecond;
+        else if (!m_bIsPesRecording) {
+           m_iPriority = m_recordingInfo->priority;
+           m_iLifetime = m_recordingInfo->lifetime;
+           m_dFramesPerSecond = m_recordingInfo->framesPerSecond;
            }
         }
      else if (errno == ENOENT)
-        info->ownEvent->SetTitle(name);
+        m_recordingInfo->ownEvent->SetTitle(m_strName);
      else
         LOG_ERROR_STR(InfoFileName.c_str());
 #ifdef SUMMARYFALLBACK
      // fall back to the old 'summary.vdr' if there was no 'info.vdr':
-     if (isempty(info->Title())) {
-        std::string SummaryFileName = *cString::sprintf("%s%s", fileName, SUMMARYFILESUFFIX);
+     if (isempty(m_recordingInfo->Title())) {
+        std::string SummaryFileName = *cString::sprintf("%s%s", m_strFileName, SUMMARYFILESUFFIX);
         CFile file;
         if (file.Open(SummaryFileName))
         {
@@ -416,7 +416,7 @@ cRecording::cRecording(const char *FileName)
                     esyslog("ERROR: out of memory");
                  }
               }
-           info->SetData(data[0], data[1], data[2]);
+           m_recordingInfo->SetData(data[0], data[1], data[2]);
            for (int i = 0; i < 3; i ++)
                free(data[i]);
            }
@@ -429,12 +429,12 @@ cRecording::cRecording(const char *FileName)
 
 cRecording::~cRecording()
 {
-  free(titleBuffer);
-  free(sortBufferName);
-  free(sortBufferTime);
-  free(fileName);
-  free(name);
-  delete info;
+  free(m_strTitleBuffer);
+  free(m_strSortBufferName);
+  free(m_strSortBufferTime);
+  free(m_strFileName);
+  free(m_strName);
+  delete m_recordingInfo;
 }
 
 char *cRecording::StripEpisodeName(char *s, bool Strip)
@@ -468,35 +468,35 @@ char *cRecording::StripEpisodeName(char *s, bool Strip)
 
 void cRecording::ClearSortName(void)
 {
-  DELETENULL(sortBufferName);
-  DELETENULL(sortBufferTime);
+  DELETENULL(m_strSortBufferName);
+  DELETENULL(m_strSortBufferTime);
 }
 
 int cRecording::GetResume(void)
 {
-  if (resume == RESUME_NOT_INITIALIZED) {
-     cResumeFile ResumeFile(FileName(), isPesRecording);
-     resume = ResumeFile.Read();
+  if (m_iResume == RESUME_NOT_INITIALIZED) {
+     cResumeFile ResumeFile(FileName(), m_bIsPesRecording);
+     m_iResume = ResumeFile.Read();
      }
-  return resume;
+  return m_iResume;
 }
 
 const char *cRecording::FileName(void)
 {
-  if (!fileName) {
+  if (!m_strFileName) {
      struct tm tm_r;
-     struct tm *t = localtime_r(&start, &tm_r);
-     const char *fmt = isPesRecording ? NAMEFORMATPES : NAMEFORMATTS;
-     int ch = isPesRecording ? priority : channel;
-     int ri = isPesRecording ? lifetime : instanceId;
-     char *Name = LimitNameLengths(strdup(name), DirectoryPathMax - strlen(VideoDirectory) - 1 - 42, DirectoryNameMax); // 42 = length of an actual recording directory name (generated with DATAFORMATTS) plus some reserve
-     if (strcmp(Name, name) != 0)
-        dsyslog("recording file name '%s' truncated to '%s'", name, Name);
+     struct tm *t = localtime_r(&m_start, &tm_r);
+     const char *fmt = m_bIsPesRecording ? NAMEFORMATPES : NAMEFORMATTS;
+     int ch = m_bIsPesRecording ? m_iPriority : m_iChannel;
+     int ri = m_bIsPesRecording ? m_iLifetime : m_iInstanceId;
+     char *Name = LimitNameLengths(strdup(m_strName), DirectoryPathMax - strlen(VideoDirectory) - 1 - 42, DirectoryNameMax); // 42 = length of an actual recording directory name (generated with DATAFORMATTS) plus some reserve
+     if (strcmp(Name, m_strName) != 0)
+        dsyslog("recording file name '%s' truncated to '%s'", m_strName, Name);
      Name = ExchangeChars(Name, true);
-     fileName = strdup(cString::sprintf(fmt, VideoDirectory, Name, t->tm_year + 1900, t->tm_mon + 1, t->tm_mday, t->tm_hour, t->tm_min, ch, ri));
+     m_strFileName = strdup(cString::sprintf(fmt, VideoDirectory, Name, t->tm_year + 1900, t->tm_mon + 1, t->tm_mday, t->tm_hour, t->tm_min, ch, ri));
      free(Name);
      }
-  return fileName;
+  return m_strFileName;
 }
 
 uint32_t cRecording::UID(void)
@@ -510,16 +510,16 @@ uint32_t cRecording::UID(void)
 const char *cRecording::Title(char Delimiter, bool NewIndicator, int Level)
 {
   char New = NewIndicator && IsNew() ? '*' : ' ';
-  free(titleBuffer);
-  titleBuffer = NULL;
+  free(m_strTitleBuffer);
+  m_strTitleBuffer = NULL;
   if (Level < 0 || Level == HierarchyLevels()) {
      struct tm tm_r;
-     struct tm *t = localtime_r(&start, &tm_r);
+     struct tm *t = localtime_r(&m_start, &tm_r);
      char *s;
-     if (Level > 0 && (s = strrchr(name, FOLDERDELIMCHAR)) != NULL)
+     if (Level > 0 && (s = strrchr(m_strName, FOLDERDELIMCHAR)) != NULL)
         s++;
      else
-        s = name;
+        s = m_strName;
      cString Length("");
      if (NewIndicator) {
         int Minutes = max(0, (LengthInSeconds() + 30) / 60);
@@ -529,7 +529,7 @@ const char *cRecording::Title(char Delimiter, bool NewIndicator, int Level)
                    Minutes % 60
                    );
         }
-     titleBuffer = strdup(cString::sprintf("%02d.%02d.%02d%c%02d:%02d%s%c%c%s",
+     m_strTitleBuffer = strdup(cString::sprintf("%02d.%02d.%02d%c%02d:%02d%s%c%c%s",
                             t->tm_mday,
                             t->tm_mon + 1,
                             t->tm_year % 100,
@@ -542,13 +542,13 @@ const char *cRecording::Title(char Delimiter, bool NewIndicator, int Level)
                             s));
      // let's not display a trailing FOLDERDELIMCHAR:
      if (!NewIndicator)
-        stripspace(titleBuffer);
-     s = &titleBuffer[strlen(titleBuffer) - 1];
+        stripspace(m_strTitleBuffer);
+     s = &m_strTitleBuffer[strlen(m_strTitleBuffer) - 1];
      if (*s == FOLDERDELIMCHAR)
         *s = 0;
      }
   else if (Level < HierarchyLevels()) {
-     const char *s = name;
+     const char *s = m_strName;
      const char *p = s;
      while (*++s) {
            if (*s == FOLDERDELIMCHAR) {
@@ -558,30 +558,30 @@ const char *cRecording::Title(char Delimiter, bool NewIndicator, int Level)
                  break;
               }
            }
-     titleBuffer = MALLOC(char, s - p + 3);
-     *titleBuffer = Delimiter;
-     *(titleBuffer + 1) = Delimiter;
-     strn0cpy(titleBuffer + 2, p, s - p + 1);
+     m_strTitleBuffer = MALLOC(char, s - p + 3);
+     *m_strTitleBuffer = Delimiter;
+     *(m_strTitleBuffer + 1) = Delimiter;
+     strn0cpy(m_strTitleBuffer + 2, p, s - p + 1);
      }
   else
      return "";
-  return titleBuffer;
+  return m_strTitleBuffer;
 }
 
 const char *cRecording::PrefixFileName(char Prefix)
 {
   cString p = PrefixVideoFileName(FileName(), Prefix);
   if (*p) {
-     free(fileName);
-     fileName = strdup(p);
-     return fileName;
+     free(m_strFileName);
+     m_strFileName = strdup(p);
+     return m_strFileName;
      }
   return NULL;
 }
 
 int cRecording::HierarchyLevels(void) const
 {
-  const char *s = name;
+  const char *s = m_strName;
   int level = 0;
   while (*++s) {
         if (*s == FOLDERDELIMCHAR)
@@ -592,32 +592,32 @@ int cRecording::HierarchyLevels(void) const
 
 bool cRecording::IsEdited(void) const
 {
-  const char *s = strrchr(name, FOLDERDELIMCHAR);
-  s = !s ? name : s + 1;
+  const char *s = strrchr(m_strName, FOLDERDELIMCHAR);
+  s = !s ? m_strName : s + 1;
   return *s == '%';
 }
 
 bool cRecording::IsOnVideoDirectoryFileSystem(void)
 {
-  if (isOnVideoDirectoryFileSystem < 0)
-     isOnVideoDirectoryFileSystem = ::IsOnVideoDirectoryFileSystem(FileName());
-  return isOnVideoDirectoryFileSystem;
+  if (m_iIsOnVideoDirectoryFileSystem < 0)
+     m_iIsOnVideoDirectoryFileSystem = ::IsOnVideoDirectoryFileSystem(FileName());
+  return m_iIsOnVideoDirectoryFileSystem;
 }
 
 void cRecording::ReadInfo(void)
 {
-  info->Read();
-  priority = info->priority;
-  lifetime = info->lifetime;
-  framesPerSecond = info->framesPerSecond;
+  m_recordingInfo->Read();
+  m_iPriority = m_recordingInfo->priority;
+  m_iLifetime = m_recordingInfo->lifetime;
+  m_dFramesPerSecond = m_recordingInfo->framesPerSecond;
 }
 
 bool cRecording::WriteInfo(void)
 {
-  std::string InfoFileName = *cString::sprintf("%s%s", fileName, isPesRecording ? INFOFILESUFFIX ".vdr" : INFOFILESUFFIX);
+  std::string InfoFileName = *cString::sprintf("%s%s", m_strFileName, m_bIsPesRecording ? INFOFILESUFFIX ".vdr" : INFOFILESUFFIX);
   CFile file;
   if (file.OpenForWrite(InfoFileName))
-    info->Write(file);
+    m_recordingInfo->Write(file);
   else
     LOG_ERROR_STR(InfoFileName.c_str());
   return true;
@@ -625,9 +625,9 @@ bool cRecording::WriteInfo(void)
 
 void cRecording::SetStartTime(time_t Start)
 {
-  start = Start;
-  free(fileName);
-  fileName = NULL;
+  m_start = Start;
+  free(m_strFileName);
+  m_strFileName = NULL;
 }
 
 bool cRecording::Delete(void)
@@ -695,18 +695,18 @@ bool cRecording::Undelete(void)
 
 void cRecording::ResetResume(void)
 {
-  resume = RESUME_NOT_INITIALIZED;
+  m_iResume = RESUME_NOT_INITIALIZED;
 }
 
 int cRecording::NumFrames(void)
 {
-  if (numFrames < 0) {
+  if (m_iNumFrames < 0) {
      int nf = cIndexFile::GetLength(FileName(), IsPesRecording());
      if (time(NULL) - LastModifiedTime(cIndexFile::IndexFileName(FileName(), IsPesRecording())) < MININDEXAGE)
         return nf; // check again later for ongoing recordings
-     numFrames = nf;
+     m_iNumFrames = nf;
      }
-  return numFrames;
+  return m_iNumFrames;
 }
 
 int cRecording::LengthInSeconds(void)
@@ -719,13 +719,13 @@ int cRecording::LengthInSeconds(void)
 
 int cRecording::FileSizeMB(void)
 {
-  if (fileSizeMB < 0) {
+  if (m_iFileSizeMB < 0) {
      int fs = DirSizeMB(FileName());
      if (time(NULL) - LastModifiedTime(cIndexFile::IndexFileName(FileName(), IsPesRecording())) < MININDEXAGE)
         return fs; // check again later for ongoing recordings
-     fileSizeMB = fs;
+     m_iFileSizeMB = fs;
      }
-  return fileSizeMB;
+  return m_iFileSizeMB;
 }
 
 int cRecording::SecondsToFrames(int Seconds, double FramesPerSecond)

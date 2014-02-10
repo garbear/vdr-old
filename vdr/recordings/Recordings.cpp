@@ -97,7 +97,7 @@ void cRecordings::ScanVideoDir(const std::string& strDirName, bool Foreground, i
             r->NumFrames(); // initializes the numFrames member XXX wtf
             r->FileSizeMB(); // initializes the fileSizeMB member XXX
             if (deleted)
-              r->deleted = time(NULL);
+              r->m_deleted = time(NULL);
             CThreadLock lock(this);
             m_recordings.push_back(r);
             ChangeState();
@@ -203,13 +203,13 @@ void cRecordings::DelByName(const char *FileName)
       }
     }
 
-    char *ext = strrchr(recording->fileName, '.');
+    char *ext = strrchr(recording->m_strFileName, '.');
     if (ext)
     {
       strncpy(ext, DELEXT, strlen(ext));
       if (CFile::Exists(recording->FileName()))
       {
-        recording->deleted = time(NULL);
+        recording->m_deleted = time(NULL);
         m_deletedRecordings.push_back(recording);
         recording = NULL; // to prevent it from being deleted below
       }

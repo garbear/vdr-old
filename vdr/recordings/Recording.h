@@ -36,19 +36,19 @@ public:
   cRecording(TimerPtr Timer, const cEvent *Event);
   cRecording(const char *FileName);
   virtual ~cRecording();
-  time_t Start(void) const { return start; }
-  int Priority(void) const { return priority; }
-  int Lifetime(void) const { return lifetime; }
-  time_t Deleted(void) const { return deleted; }
-  const char *Name(void) const { return name; }
+  time_t Start(void) const { return m_start; }
+  int Priority(void) const { return m_iPriority; }
+  int Lifetime(void) const { return m_iLifetime; }
+  time_t Deleted(void) const { return m_deleted; }
+  const char *Name(void) const { return m_strName; }
   const char *FileName(void);
   uint32_t UID(void);
   const char *Title(char Delimiter = ' ', bool NewIndicator = false, int Level = -1);
-  const cRecordingInfo *Info(void) const { return info; }
+  const cRecordingInfo *Info(void) const { return m_recordingInfo; }
   const char *PrefixFileName(char Prefix);
   int HierarchyLevels(void) const;
   void ResetResume(void);
-  double FramesPerSecond(void) const { return framesPerSecond; }
+  double FramesPerSecond(void) const { return m_dFramesPerSecond; }
   int NumFrames(void);
        ///< Returns the number of frames in this recording.
        ///< If the number of frames is unknown, -1 will be returned.
@@ -59,7 +59,7 @@ public:
        ///< size is unknown.
   bool IsNew(void) { return GetResume() <= 0; }
   bool IsEdited(void) const;
-  bool IsPesRecording(void) const { return isPesRecording; }
+  bool IsPesRecording(void) const { return m_bIsPesRecording; }
   bool IsOnVideoDirectoryFileSystem(void);
   void ReadInfo(void);
   bool WriteInfo(void);
@@ -94,30 +94,31 @@ public:
         // value points to the resulting string, which may be different from s.
 
 private:
-  int resume;
-  char *titleBuffer;
-  char *sortBufferName;
-  char *sortBufferTime;
-  char *fileName;
-  char *name;
-  int fileSizeMB;
-  int numFrames;
-  int channel;
-  int instanceId;
-  bool isPesRecording;
-  int isOnVideoDirectoryFileSystem; // -1 = unknown, 0 = no, 1 = yes
-  double framesPerSecond;
-  cRecordingInfo *info;
   cRecording(const cRecording&); // can't copy cRecording
   cRecording &operator=(const cRecording &); // can't assign cRecording
   static char *StripEpisodeName(char *s, bool Strip);
   void ClearSortName(void);
   int GetResume(void);
-  time_t start;
-  int priority;
-  int lifetime;
-  time_t deleted;
-  int64_t m_hash;
+
+  int             m_iResume;
+  char*           m_strTitleBuffer;
+  char*           m_strSortBufferName;
+  char*           m_strSortBufferTime;
+  char*           m_strFileName;
+  char*           m_strName;
+  int             m_iFileSizeMB;
+  int             m_iNumFrames;
+  int             m_iChannel;
+  int             m_iInstanceId;
+  bool            m_bIsPesRecording;
+  int             m_iIsOnVideoDirectoryFileSystem; // -1 = unknown, 0 = no, 1 = yes
+  double          m_dFramesPerSecond;
+  cRecordingInfo* m_recordingInfo;
+  time_t          m_start;
+  int             m_iPriority;
+  int             m_iLifetime;
+  time_t          m_deleted;
+  int64_t         m_hash;
 };
 
 #endif //__RECORDING_H
