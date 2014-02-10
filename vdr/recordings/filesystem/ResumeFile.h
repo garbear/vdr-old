@@ -1,5 +1,7 @@
 #pragma once
 
+#include <string>
+
 class cResumeFile
 {
 public:
@@ -9,6 +11,6 @@ public:
   bool Save(int Index);
   void Delete(void);
 private:
-  char *fileName;
-  bool isPesRecording;
+  std::string m_strFileName;
+  bool        m_bIsPesRecording;
 };

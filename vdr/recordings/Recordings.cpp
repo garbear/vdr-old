@@ -2,6 +2,7 @@
 #include "utils/Tools.h"
 #include "filesystem/Directory.h"
 #include "filesystem/Videodir.h"
+#include "utils/url/URLUtils.h"
 #include "platform/threads/throttle.h"
 
 using namespace PLATFORM;
@@ -152,12 +153,12 @@ bool cRecordings::Update(bool Wait)
   return false;
 }
 
-cRecording *cRecordings::GetByName(const char *FileName)
+cRecording *cRecordings::GetByName(const std::string& FileName)
 {
-  if (FileName)
+  if (!FileName.empty())
   {
     for (std::vector<cRecording*>::iterator it = m_recordings.begin(); it != m_recordings.end(); ++it)
-      if (strcmp((*it)->FileName(), FileName) == 0)
+      if (strcmp((*it)->FileName(), FileName.c_str()) == 0)
         return (*it);
   }
   return NULL;
@@ -194,19 +195,13 @@ void cRecordings::DelByName(const char *FileName)
   cRecording *recording = GetByName(FileName);
   if (recording)
   {
-    for (std::vector<cRecording*>::iterator it = m_recordings.begin(); it != m_recordings.end(); ++it)
-    {
-      if (!strcmp((*it)->FileName(), FileName))
-      {
-        m_recordings.erase(it);
-        break;
-      }
-    }
+    std::vector<cRecording*>::iterator it = std::find(m_recordings.begin(), m_recordings.end(), recording);
+    if (it != m_recordings.end())
+      m_recordings.erase(it);
 
-    char *ext = strrchr(recording->m_strFileName, '.');
-    if (ext)
+    std::string strExt = URLUtils::GetExtension(recording->m_strFileName);
+    if (!strExt.empty() && strcmp(strExt.c_str(), DELEXT))
     {
-      strncpy(ext, DELEXT, strlen(ext));
       if (CFile::Exists(recording->FileName()))
       {
         recording->m_deleted = time(NULL);
@@ -214,16 +209,17 @@ void cRecordings::DelByName(const char *FileName)
         recording = NULL; // to prevent it from being deleted below
       }
     }
+
     delete recording;
     ChangeState();
     TouchUpdate();
   }
 }
 
-void cRecordings::UpdateByName(const char *FileName)
+void cRecordings::UpdateByName(const std::string& strFileName)
 {
   CThreadLock lock(this);
-  cRecording *recording = GetByName(FileName);
+  cRecording *recording = GetByName(strFileName);
   if (recording)
      recording->ReadInfo();
 }
@@ -266,12 +262,12 @@ double cRecordings::MBperMinute(void)
   return (size && length) ? double(size) * 60 / length : -1;
 }
 
-void cRecordings::ResetResume(const char *ResumeFileName)
+void cRecordings::ResetResume(const std::string& ResumeFileName /* = "" */)
 {
   CThreadLock lock(this);
   for (std::vector<cRecording*>::iterator it = m_recordings.begin(); it != m_recordings.end(); ++it)
   {
-    if (!ResumeFileName || strncmp(ResumeFileName, (*it)->FileName(), strlen((*it)->FileName())) == 0)
+    if (ResumeFileName.empty() || strncmp(ResumeFileName.c_str(), (*it)->FileName(), strlen((*it)->FileName())) == 0)
       (*it)->ResetResume();
   }
   ChangeState();

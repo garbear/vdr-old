@@ -2,6 +2,7 @@
 
 #include <stdint.h>
 #include <stdio.h>
+#include <string>
 
 class cUnbufferedFile;
 
@@ -10,8 +11,8 @@ class cFileName
 public:
   cFileName(const char *FileName, bool Record, bool Blocking = false, bool IsPesRecording = false);
   ~cFileName();
-  const char *Name(void) { return fileName; }
-  uint16_t Number(void) { return fileNumber; }
+  std::string Name(void) { return m_strFileName + m_strFileOffset; }
+  uint16_t Number(void) { return m_iFileNumber; }
   bool GetLastPatPmtVersions(int &PatVersion, int &PmtVersion);
   cUnbufferedFile *Open(void);
   void Close(void);
@@ -19,10 +20,11 @@ public:
   cUnbufferedFile *NextFile(void);
 
 private:
-  cUnbufferedFile *file;
-  uint16_t fileNumber;
-  char *fileName, *pFileNumber;
-  bool record;
-  bool blocking;
-  bool isPesRecording;
+  cUnbufferedFile* m_file;
+  uint16_t         m_iFileNumber;
+  std::string      m_strFileName;
+  std::string      m_strFileOffset;
+  bool             m_bRecord;
+  bool             m_bBlocking;
+  bool             m_bIsPesRecording;
 };

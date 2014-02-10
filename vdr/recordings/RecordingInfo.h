@@ -14,7 +14,7 @@ class cRecordingInfo
 {
   friend class cRecording;
 public:
-  cRecordingInfo(const char *FileName);
+  cRecordingInfo(const std::string& strFileName);
   ~cRecordingInfo();
   tChannelID ChannelID(void) const { return channelID; }
   const char *ChannelName(void) const { return channelName; }

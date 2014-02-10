@@ -7,35 +7,29 @@
 
 cResumeFile::cResumeFile(const char *FileName, bool IsPesRecording)
 {
-  isPesRecording = IsPesRecording;
-  const char *Suffix = isPesRecording ? RESUMEFILESUFFIX ".vdr" : RESUMEFILESUFFIX;
-  fileName = MALLOC(char, strlen(FileName) + strlen(Suffix) + 1);
-  if (fileName) {
-     strcpy(fileName, FileName);
-     sprintf(fileName + strlen(fileName), Suffix, g_setup.ResumeID ? "." : "", g_setup.ResumeID ? *itoa(g_setup.ResumeID) : "");
-     }
-  else
-     esyslog("ERROR: can't allocate memory for resume file name");
+  m_bIsPesRecording = IsPesRecording;
+  const char *Suffix = m_bIsPesRecording ? RESUMEFILESUFFIX ".vdr" : RESUMEFILESUFFIX;
+  m_strFileName = FileName;
+  m_strFileName.append(StringUtils::Format(Suffix, g_setup.ResumeID ? "." : "", g_setup.ResumeID ? *itoa(g_setup.ResumeID) : ""));
 }
 
 cResumeFile::~cResumeFile()
 {
-  free(fileName);
 }
 
 int cResumeFile::Read(void)
 {
   int resume = -1;
-  if (fileName)
+  if (!m_strFileName.empty())
   {
     CFile file;
-    if (file.Open(fileName))
+    if (file.Open(m_strFileName))
     {
-      if (isPesRecording)
+      if (m_bIsPesRecording)
       {
         if (!file.Read(&resume, sizeof(resume)))
         {
-          LOG_ERROR_STR(fileName);
+          LOG_ERROR_STR(m_strFileName.c_str());
           resume = -1;
         }
       }
@@ -49,7 +43,7 @@ int cResumeFile::Read(void)
     }
     else
     {
-      LOG_ERROR_STR(fileName);
+      LOG_ERROR_STR(m_strFileName.c_str());
     }
   }
 
@@ -58,11 +52,12 @@ int cResumeFile::Read(void)
 
 bool cResumeFile::Save(int Index)
 {
-  if (fileName) {
+  if (!m_strFileName.empty())
+  {
     CFile file;
-    if (file.OpenForWrite(fileName, true))
+    if (file.OpenForWrite(m_strFileName, true))
     {
-      if (isPesRecording)
+      if (m_bIsPesRecording)
       {
         file.Write(&Index, sizeof(Index));
       }
@@ -72,12 +67,12 @@ bool cResumeFile::Save(int Index)
         snprintf(buf, 8, "I %d\n", Index);
         file.Write(buf, sizeof(buf));
       }
-      Recordings.ResetResume(fileName);
+      Recordings.ResetResume(m_strFileName);
       return true;
     }
     else
     {
-      LOG_ERROR_STR(fileName);
+      LOG_ERROR_STR(m_strFileName.c_str());
     }
   }
   return false;
@@ -85,11 +80,11 @@ bool cResumeFile::Save(int Index)
 
 void cResumeFile::Delete(void)
 {
-  if (fileName)
+  if (!m_strFileName.empty())
   {
-    if (CFile::Delete(fileName))
-      Recordings.ResetResume(fileName);
-    else if (CFile::Exists(fileName))
-      LOG_ERROR_STR(fileName);
+    if (CFile::Delete(m_strFileName))
+      Recordings.ResetResume(m_strFileName);
+    else if (CFile::Exists(m_strFileName))
+      LOG_ERROR_STR(m_strFileName.c_str());
   }
 }

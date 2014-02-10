@@ -99,7 +99,7 @@ private:
   int GetResume(void);
 
   int             m_iResume;
-  char*           m_strFileName;
+  std::string     m_strFileName;
   char*           m_strName;
   int             m_iFileSizeMB;
   int             m_iNumFrames;

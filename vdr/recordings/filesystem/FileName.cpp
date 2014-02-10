@@ -14,155 +14,177 @@
 
 cFileName::cFileName(const char *FileName, bool Record, bool Blocking, bool IsPesRecording)
 {
-  file = NULL;
-  fileNumber = 0;
-  record = Record;
-  blocking = Blocking;
-  isPesRecording = IsPesRecording;
+  m_file = NULL;
+  m_iFileNumber = 0;
+  m_bRecord = Record;
+  m_bBlocking = Blocking;
+  m_bIsPesRecording = IsPesRecording;
   // Prepare the file name:
-  fileName = MALLOC(char, strlen(FileName) + RECORDFILESUFFIXLEN);
-  if (!fileName) {
-     esyslog("ERROR: can't copy file name '%s'", fileName);
-     return;
-     }
-  strcpy(fileName, FileName);
-  pFileNumber = fileName + strlen(fileName);
+  m_strFileName = FileName;
   SetOffset(1);
 }
 
 cFileName::~cFileName()
 {
   Close();
-  free(fileName);
 }
 
 bool cFileName::GetLastPatPmtVersions(int &PatVersion, int &PmtVersion)
 {
-  if (fileName && !isPesRecording) {
-     // Find the last recording file:
-     int Number = 1;
-     for (; Number <= MAXFILESPERRECORDINGTS + 1; Number++) { // +1 to correctly set Number in case there actually are that many files
-         sprintf(pFileNumber, RECORDFILESUFFIXTS, Number);
-         if (!CFile::Exists(fileName)) { // file doesn't exist
-            Number--;
-            break;
+  if (!m_strFileName.empty() && !m_bIsPesRecording)
+  {
+    // Find the last recording file:
+    int Number = 1;
+    for (; Number <= MAXFILESPERRECORDINGTS + 1; Number++)
+    { // +1 to correctly set Number in case there actually are that many files
+      m_strFileOffset = StringUtils::Format(RECORDFILESUFFIXTS, Number);
+      if (!CFile::Exists(m_strFileName + m_strFileOffset))
+      { // file doesn't exist
+        Number--;
+        break;
+      }
+    }
+
+    m_strFileOffset = StringUtils::Format(RECORDFILESUFFIXTS, Number);
+
+    for (; Number > 0; Number--)
+    {
+      // Search for a PAT packet from the end of the file:
+      cPatPmtParser PatPmtParser;
+      //XXX
+      int fd = open((m_strFileName + m_strFileOffset).c_str(), O_RDONLY | O_LARGEFILE, DEFFILEMODE);
+      if (fd >= 0)
+      {
+        off_t pos = lseek(fd, -TS_SIZE, SEEK_END);
+        while (pos >= 0)
+        {
+          // Read and parse the PAT/PMT:
+          uchar buf[TS_SIZE];
+          while (read(fd, buf, sizeof(buf)) == sizeof(buf))
+          {
+            if (buf[0] == TS_SYNC_BYTE)
+            {
+              int Pid = TsPid(buf);
+              if (Pid == PATPID)
+                PatPmtParser.ParsePat(buf, sizeof(buf));
+              else if (PatPmtParser.IsPmtPid(Pid))
+              {
+                PatPmtParser.ParsePmt(buf, sizeof(buf));
+                if (PatPmtParser.GetVersions(PatVersion, PmtVersion))
+                {
+                  close(fd);
+                  return true;
+                }
+              }
+              else
+                break; // PAT/PMT is always in one sequence
             }
-         }
-     for (; Number > 0; Number--) {
-         // Search for a PAT packet from the end of the file:
-         cPatPmtParser PatPmtParser;
-         sprintf(pFileNumber, RECORDFILESUFFIXTS, Number);
-         int fd = open(fileName, O_RDONLY | O_LARGEFILE, DEFFILEMODE);
-         if (fd >= 0) {
-            off_t pos = lseek(fd, -TS_SIZE, SEEK_END);
-            while (pos >= 0) {
-                  // Read and parse the PAT/PMT:
-                  uchar buf[TS_SIZE];
-                  while (read(fd, buf, sizeof(buf)) == sizeof(buf)) {
-                        if (buf[0] == TS_SYNC_BYTE) {
-                           int Pid = TsPid(buf);
-                           if (Pid == PATPID)
-                              PatPmtParser.ParsePat(buf, sizeof(buf));
-                           else if (PatPmtParser.IsPmtPid(Pid)) {
-                              PatPmtParser.ParsePmt(buf, sizeof(buf));
-                              if (PatPmtParser.GetVersions(PatVersion, PmtVersion)) {
-                                 close(fd);
-                                 return true;
-                                 }
-                              }
-                           else
-                              break; // PAT/PMT is always in one sequence
-                           }
-                        else
-                           return false;
-                        }
-                  pos = lseek(fd, pos - TS_SIZE, SEEK_SET);
-                  }
-            close(fd);
-            }
-         else
-            break;
-         }
-     }
+            else
+              return false;
+          }
+          pos = lseek(fd, pos - TS_SIZE, SEEK_SET);
+        }
+        close(fd);
+      }
+      else
+        break;
+    }
+  }
   return false;
 }
 
 cUnbufferedFile *cFileName::Open(void)
 {
-  if (!file) {
-     int BlockingFlag = blocking ? 0 : O_NONBLOCK;
-     if (record) {
-        dsyslog("recording to '%s'", fileName);
-        file = OpenVideoFile(fileName, O_RDWR | O_CREAT | O_LARGEFILE | BlockingFlag);
-        if (!file)
-           LOG_ERROR_STR(fileName);
-        }
-     else {
-        if (CFile::Exists(fileName)) {
-           dsyslog("playing '%s'", fileName);
-           file = cUnbufferedFile::Create(fileName, O_RDONLY | O_LARGEFILE | BlockingFlag);
-           if (!file)
-              LOG_ERROR_STR(fileName);
-           }
-        else if (errno != ENOENT)
-           LOG_ERROR_STR(fileName);
-        }
-     }
-  return file;
+  if (!m_file)
+  {
+    int BlockingFlag = m_bBlocking ? 0 : O_NONBLOCK;
+    std::string fileName = m_strFileName + m_strFileOffset;
+    if (m_bRecord)
+    {
+      dsyslog("recording to '%s'", fileName.c_str());
+      m_file = OpenVideoFile(fileName.c_str(),
+          O_RDWR | O_CREAT | O_LARGEFILE | BlockingFlag);
+      if (!m_file)
+        LOG_ERROR_STR(fileName.c_str());
+    }
+    else
+    {
+      if (CFile::Exists(fileName))
+      {
+        dsyslog("playing '%s'", fileName.c_str());
+        m_file = cUnbufferedFile::Create(fileName.c_str(),
+            O_RDONLY | O_LARGEFILE | BlockingFlag);
+        if (!m_file)
+          LOG_ERROR_STR(fileName.c_str());
+      }
+      else if (errno != ENOENT)
+        LOG_ERROR_STR(fileName.c_str());
+    }
+  }
+  return m_file;
 }
 
 void cFileName::Close(void)
 {
-  if (file) {
-     if (CloseVideoFile(file) < 0)
-        LOG_ERROR_STR(fileName);
-     file = NULL;
-     }
+  if (m_file)
+  {
+    if (CloseVideoFile(m_file) < 0)
+      LOG_ERROR_STR((m_strFileName + m_strFileOffset).c_str());
+    m_file = NULL;
+  }
 }
 
 cUnbufferedFile *cFileName::SetOffset(int Number, off_t Offset)
 {
-  if (fileNumber != Number)
-     Close();
-  int MaxFilesPerRecording = isPesRecording ? MAXFILESPERRECORDINGPES : MAXFILESPERRECORDINGTS;
-  if (0 < Number && Number <= MaxFilesPerRecording) {
-     fileNumber = uint16_t(Number);
-     sprintf(pFileNumber, isPesRecording ? RECORDFILESUFFIXPES : RECORDFILESUFFIXTS, fileNumber);
-     if (record) {
-       if (CFile::Exists(fileName)) {
-           // file exists, check if it has non-zero size
-           struct __stat64 buf;
-           if (CFile::Stat(fileName, &buf) == 0) {
-              if (buf.st_size != 0)
-                 return SetOffset(Number + 1); // file exists and has non zero size, let's try next suffix
-              else {
-                 // zero size file, remove it
-                 dsyslog("cFileName::SetOffset: removing zero-sized file %s", fileName);
-                 unlink(fileName);
-                 }
-              }
-           else
-              return SetOffset(Number + 1); // error with fstat - should not happen, just to be on the safe side
-           }
-        else if (errno != ENOENT) { // something serious has happened
-           LOG_ERROR_STR(fileName);
-           return NULL;
-           }
-        // found a non existing file suffix
+  if (m_iFileNumber != Number)
+    Close();
+  int MaxFilesPerRecording = m_bIsPesRecording ? MAXFILESPERRECORDINGPES : MAXFILESPERRECORDINGTS;
+  if (0 < Number && Number <= MaxFilesPerRecording)
+  {
+    m_iFileNumber = uint16_t(Number);
+    m_strFileOffset = StringUtils::Format(m_bIsPesRecording ? RECORDFILESUFFIXPES : RECORDFILESUFFIXTS, m_iFileNumber);
+    if (m_bRecord)
+    {
+      if (CFile::Exists(m_strFileName + m_strFileOffset))
+      {
+        // file exists, check if it has non-zero size
+        struct __stat64 buf;
+        if (CFile::Stat(m_strFileName + m_strFileOffset, &buf) == 0)
+        {
+          if (buf.st_size != 0)
+            return SetOffset(Number + 1); // file exists and has non zero size, let's try next suffix
+          else
+          {
+            // zero size file, remove it
+            dsyslog("cFileName::SetOffset: removing zero-sized file %s", (m_strFileName + m_strFileOffset).c_str());
+            CFile::Delete(m_strFileName + m_strFileOffset);
+          }
         }
-     if (Open() >= 0) {
-        if (!record && Offset >= 0 && file && file->Seek(Offset, SEEK_SET) != Offset) {
-           LOG_ERROR_STR(fileName);
-           return NULL;
-           }
-        }
-     return file;
-     }
+        else
+          return SetOffset(Number + 1); // error with fstat - should not happen, just to be on the safe side
+      }
+      else if (errno != ENOENT)
+      { // something serious has happened
+        LOG_ERROR_STR((m_strFileName + m_strFileOffset).c_str());
+        return NULL;
+      }
+      // found a non existing file suffix
+    }
+    if (Open() >= 0)
+    {
+      if (!m_bRecord && Offset >= 0 && m_file && m_file->Seek(Offset, SEEK_SET) != Offset)
+      {
+        LOG_ERROR_STR((m_strFileName + m_strFileOffset).c_str());
+        return NULL;
+      }
+    }
+    return m_file;
+  }
   esyslog("ERROR: max number of files (%d) exceeded", MaxFilesPerRecording);
   return NULL;
 }
 
 cUnbufferedFile *cFileName::NextFile(void)
 {
-  return SetOffset(fileNumber + 1);
+  return SetOffset(m_iFileNumber + 1);
 }

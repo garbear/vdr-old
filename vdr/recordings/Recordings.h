@@ -24,12 +24,12 @@ public:
   bool NeedsUpdate(void);
   void ChangeState(void) { state++; }
   bool StateChanged(int &State);
-  void ResetResume(const char *ResumeFileName = NULL);
-  cRecording *GetByName(const char *FileName);
+  void ResetResume(const std::string& ResumeFileName = "");
+  cRecording *GetByName(const std::string& strFileName);
   void AddByName(const char *FileName, bool TriggerUpdate = true);
   cRecording* FindByUID(uint32_t uid);
   void DelByName(const char *FileName);
-  void UpdateByName(const char *FileName);
+  void UpdateByName(const std::string& strFileName);
   int TotalFileSizeMB(bool bDeletedRecordings = false);
   double MBperMinute(void);
        ///< Returns the average data rate (in MB/min) of all recordings, or -1 if

@@ -42,7 +42,7 @@ struct tIndexTs {
 
 class cIndexFileGenerator : public PLATFORM::CThread {
 private:
-  cString recordingName;
+  std::string m_strRecordingName;
 protected:
   virtual void* Process(void);
 public:
@@ -51,7 +51,7 @@ public:
   };
 
 cIndexFileGenerator::cIndexFileGenerator(const char *RecordingName)
-:recordingName(RecordingName)
+:m_strRecordingName(RecordingName)
 {
   CreateThread();
 }
@@ -66,12 +66,12 @@ void* cIndexFileGenerator::Process(void)
   bool IndexFileComplete = false;
   bool IndexFileWritten = false;
   bool Rewind = false;
-  cFileName FileName(recordingName, false);
+  cFileName FileName(m_strRecordingName.c_str(), false);
   cUnbufferedFile *ReplayFile = FileName.Open();
   cRingBufferLinear Buffer(IFG_BUFFER_SIZE, MIN_TS_PACKETS_FOR_FRAME_DETECTOR * TS_SIZE);
   cPatPmtParser PatPmtParser;
   cFrameDetector FrameDetector;
-  cIndexFile IndexFile(recordingName, true);
+  cIndexFile IndexFile(m_strRecordingName.c_str(), true);
   int BufferChunks = KILOBYTE(1); // no need to read a lot at the beginning when parsing PAT/PMT
   off_t FileSize = 0;
   off_t FrameOffset = -1;
@@ -153,12 +153,12 @@ void* cIndexFileGenerator::Process(void)
         }
   if (IndexFileComplete) {
      if (IndexFileWritten) {
-        cRecordingInfo RecordingInfo(recordingName);
+        cRecordingInfo RecordingInfo(m_strRecordingName);
         if (RecordingInfo.Read()) {
            if (FrameDetector.FramesPerSecond() > 0 && !DoubleEqual(RecordingInfo.FramesPerSecond(), FrameDetector.FramesPerSecond())) {
               RecordingInfo.SetFramesPerSecond(FrameDetector.FramesPerSecond());
               RecordingInfo.Write();
-              Recordings.UpdateByName(recordingName);
+              Recordings.UpdateByName(m_strRecordingName);
               }
            }
         isyslog(tr("Index file regeneration complete"));
@@ -174,78 +174,78 @@ void* cIndexFileGenerator::Process(void)
 }
 
 cIndexFile::cIndexFile(const char *FileName, bool Record, bool IsPesRecording, bool PauseLive)
-:resumeFile(FileName, IsPesRecording)
+:m_resumeFile(FileName, IsPesRecording)
 {
-  size = 0;
-  last = -1;
-  index = NULL;
-  isPesRecording = IsPesRecording;
-  indexFileGenerator = NULL;
+  m_iSize = 0;
+  m_iLast = -1;
+  m_index = NULL;
+  m_bIsPesRecording = IsPesRecording;
+  m_indexFileGenerator = NULL;
   if (FileName) {
-     fileName = IndexFileName(FileName, isPesRecording);
+     m_strFilename = *IndexFileName(FileName, m_bIsPesRecording);
      if (!Record && PauseLive) {
         // Wait until the index file contains at least two frames:
         time_t tmax = time(NULL) + MAXWAITFORINDEXFILE;
-        while (time(NULL) < tmax && FileSize(fileName) < off_t(2 * sizeof(tIndexTs)))
+        while (time(NULL) < tmax && FileSize(m_strFilename.c_str()) < off_t(2 * sizeof(tIndexTs)))
           CEvent::Sleep(INDEXFILETESTINTERVAL);
         }
      int delta = 0;
-     if (!Record && !CFile::Exists(*fileName)) {
+     if (!Record && !CFile::Exists(m_strFilename)) {
         // Index file doesn't exist, so try to regenerate it:
-        if (!isPesRecording) { // sorry, can only do this for TS recordings
-           resumeFile.Delete(); // just in case
-           indexFileGenerator = new cIndexFileGenerator(FileName);
+        if (!m_bIsPesRecording) { // sorry, can only do this for TS recordings
+           m_resumeFile.Delete(); // just in case
+           m_indexFileGenerator = new cIndexFileGenerator(FileName);
            // Wait until the index file exists:
            time_t tmax = time(NULL) + MAXWAITFORINDEXFILE;
            do {
              CEvent::Sleep(INDEXFILECHECKINTERVAL); // start with a sleep, to give it a head start
-              } while (!CFile::Exists(*fileName) && time(NULL) < tmax);
+              } while (!CFile::Exists(m_strFilename) && time(NULL) < tmax);
            }
         }
-     if (CFile::Exists(*fileName)) {
+     if (CFile::Exists(m_strFilename)) {
         struct __stat64 buf;
-        if (CFile::Stat(*fileName, &buf) == 0) {
+        if (CFile::Stat(m_strFilename, &buf) == 0) {
            delta = int(buf.st_size % sizeof(tIndexTs));
            if (delta) {
               delta = sizeof(tIndexTs) - delta;
-              esyslog("ERROR: invalid file size (%"PRId64") in '%s'", buf.st_size, *fileName);
+              esyslog("ERROR: invalid file size (%"PRId64") in '%s'", buf.st_size, m_strFilename.c_str());
               }
-           last = int((buf.st_size + delta) / sizeof(tIndexTs) - 1);
-           if (!Record && last >= 0) {
-              size = last + 1;
-              index = MALLOC(tIndexTs, size);
-              if (index) {
+           m_iLast = int((buf.st_size + delta) / sizeof(tIndexTs) - 1);
+           if (!Record && m_iLast >= 0) {
+              m_iSize = m_iLast + 1;
+              m_index = MALLOC(tIndexTs, m_iSize);
+              if (m_index) {
                  if (m_file.Open(FileName))
                  {
-                   if (m_file.Read(index, size_t(buf.st_size)) != buf.st_size)
+                   if (m_file.Read(m_index, size_t(buf.st_size)) != buf.st_size)
                    {
-                     esyslog("ERROR: can't read from file '%s'", *fileName);
-                     free(index);
-                     index = NULL;
+                     esyslog("ERROR: can't read from file '%s'", m_strFilename.c_str());
+                     free(m_index);
+                     m_index = NULL;
                    }
-                    else if (isPesRecording)
-                       ConvertFromPes(index, size);
-                    if (!index || time(NULL) - buf.st_mtime >= MININDEXAGE)
+                    else if (m_bIsPesRecording)
+                       ConvertFromPes(m_index, m_iSize);
+                    if (!m_index || time(NULL) - buf.st_mtime >= MININDEXAGE)
                     {
                       m_file.Close();
                     }
                     // otherwise we don't close f here, see CatchUp()!
                     }
                  else
-                    LOG_ERROR_STR(*fileName);
+                    LOG_ERROR_STR(m_strFilename.c_str());
                  }
               else
-                 esyslog("ERROR: can't allocate %zd bytes for index '%s'", size * sizeof(tIndexTs), *fileName);
+                 esyslog("ERROR: can't allocate %zd bytes for index '%s'", m_iSize * sizeof(tIndexTs), m_strFilename.c_str());
               }
            }
         else
            LOG_ERROR;
         }
      else if (!Record)
-        isyslog("missing index file %s", *fileName);
+        isyslog("missing index file %s", m_strFilename.c_str());
      if (Record)
      {
-       if (m_file.OpenForWrite(*fileName, false))
+       if (m_file.OpenForWrite(m_strFilename, false))
        {
          if (delta)
          {
@@ -256,7 +256,7 @@ cIndexFile::cIndexFile(const char *FileName, bool Record, bool IsPesRecording, b
          }
        }
        else
-         LOG_ERROR_STR(*fileName);
+         LOG_ERROR_STR(m_strFilename.c_str());
      }
   }
 }
@@ -264,8 +264,8 @@ cIndexFile::cIndexFile(const char *FileName, bool Record, bool IsPesRecording, b
 cIndexFile::~cIndexFile()
 {
   m_file.Close();
-  free(index);
-  delete indexFileGenerator;
+  free(m_index);
+  delete m_indexFileGenerator;
 }
 
 cString cIndexFile::IndexFileName(const char *FileName, bool IsPesRecording)
@@ -301,47 +301,47 @@ void cIndexFile::ConvertToPes(tIndexTs *IndexTs, int Count)
 bool cIndexFile::CatchUp(int Index)
 {
   // returns true unless something really goes wrong, so that 'index' becomes NULL
-  if (index && m_file.IsOpen())
+  if (m_index && m_file.IsOpen())
   {
-    CLockObject lock(mutex);
+    CLockObject lock(m_mutex);
     // Note that CatchUp() is triggered even if Index is 'last' (and thus valid).
     // This is done to make absolutely sure we don't miss any data at the very end.
-    for (int i = 0; i <= MAXINDEXCATCHUP && (Index < 0 || Index >= last); i++)
+    for (int i = 0; i <= MAXINDEXCATCHUP && (Index < 0 || Index >= m_iLast); i++)
     {
       int64_t iPosition = m_file.GetPosition();
       int newLast = int(iPosition / sizeof(tIndexTs) - 1);
-      if (newLast > last)
+      if (newLast > m_iLast)
       {
-        int NewSize = size;
+        int NewSize = m_iSize;
         if (NewSize <= newLast)
         {
           NewSize *= 2;
           if (NewSize <= newLast)
             NewSize = newLast + 1;
         }
-        if (tIndexTs *NewBuffer = (tIndexTs *) realloc(index,
+        if (tIndexTs *NewBuffer = (tIndexTs *) realloc(m_index,
             NewSize * sizeof(tIndexTs)))
         {
-          size = NewSize;
-          index = NewBuffer;
-          int offset = (last + 1) * sizeof(tIndexTs);
-          int delta = (newLast - last) * sizeof(tIndexTs);
+          m_iSize = NewSize;
+          m_index = NewBuffer;
+          int offset = (m_iLast + 1) * sizeof(tIndexTs);
+          int delta = (newLast - m_iLast) * sizeof(tIndexTs);
           if (m_file.Seek(offset, SEEK_SET) == offset)
           {
-            if (m_file.Read(&index[last + 1], delta) != delta)
+            if (m_file.Read(&m_index[m_iLast + 1], delta) != delta)
             {
               esyslog("ERROR: can't read from index");
-              free(index);
-              index = NULL;
+              free(m_index);
+              m_index = NULL;
               m_file.Close();
               break;
             }
-            if (isPesRecording)
-              ConvertFromPes(&index[last + 1], newLast - last);
-            last = newLast;
+            if (m_bIsPesRecording)
+              ConvertFromPes(&m_index[m_iLast + 1], newLast - m_iLast);
+            m_iLast = newLast;
           }
           else
-            LOG_ERROR_STR(*fileName);
+            LOG_ERROR_STR(m_strFilename.c_str());
         }
         else
         {
@@ -350,14 +350,14 @@ bool cIndexFile::CatchUp(int Index)
         }
       }
 
-      if (Index < last)
+      if (Index < m_iLast)
         break;
       CCondition<bool> CondVar;
       bool b = false;
-      CondVar.Wait(mutex, b, INDEXCATCHUPWAIT);
+      CondVar.Wait(m_mutex, b, INDEXCATCHUPWAIT);
     }
   }
-  return index != NULL;
+  return m_index != NULL;
 }
 
 bool cIndexFile::Write(bool Independent, uint16_t FileNumber, off_t FileOffset)
@@ -365,16 +365,16 @@ bool cIndexFile::Write(bool Independent, uint16_t FileNumber, off_t FileOffset)
   if (m_file.IsOpen())
   {
     tIndexTs i(FileOffset, Independent, FileNumber);
-    if (isPesRecording)
+    if (m_bIsPesRecording)
       ConvertToPes(&i, 1);
 
     if (!m_file.Write(&i, sizeof(i)))
     {
-      LOG_ERROR_STR(*fileName);
+      LOG_ERROR_STR(m_strFilename.c_str());
       m_file.Close();
       return false;
     }
-    last++;
+    m_iLast++;
   }
 
   return m_file.IsOpen();
@@ -383,15 +383,15 @@ bool cIndexFile::Write(bool Independent, uint16_t FileNumber, off_t FileOffset)
 bool cIndexFile::Get(int Index, uint16_t *FileNumber, off_t *FileOffset, bool *Independent, int *Length)
 {
   if (CatchUp(Index)) {
-     if (Index >= 0 && Index <= last) {
-        *FileNumber = index[Index].number;
-        *FileOffset = index[Index].offset;
+     if (Index >= 0 && Index <= m_iLast) {
+        *FileNumber = m_index[Index].number;
+        *FileOffset = m_index[Index].offset;
         if (Independent)
-           *Independent = index[Index].independent;
+           *Independent = m_index[Index].independent;
         if (Length) {
-           if (Index < last) {
-              uint16_t fn = index[Index + 1].number;
-              off_t fo = index[Index + 1].offset;
+           if (Index < m_iLast) {
+              uint16_t fn = m_index[Index + 1].number;
+              off_t fo = m_index[Index + 1].offset;
               if (fn == *FileNumber)
                  *Length = int(fo - *FileOffset);
               else
@@ -412,20 +412,20 @@ int cIndexFile::GetNextIFrame(int Index, bool Forward, uint16_t *FileNumber, off
      int d = Forward ? 1 : -1;
      for (;;) {
          Index += d;
-         if (Index >= 0 && Index <= last) {
-            if (index[Index].independent) {
+         if (Index >= 0 && Index <= m_iLast) {
+            if (m_index[Index].independent) {
                uint16_t fn;
                if (!FileNumber)
                   FileNumber = &fn;
                off_t fo;
                if (!FileOffset)
                   FileOffset = &fo;
-               *FileNumber = index[Index].number;
-               *FileOffset = index[Index].offset;
+               *FileNumber = m_index[Index].number;
+               *FileOffset = m_index[Index].offset;
                if (Length) {
-                  if (Index < last) {
-                     uint16_t fn = index[Index + 1].number;
-                     off_t fo = index[Index + 1].offset;
+                  if (Index < m_iLast) {
+                     uint16_t fn = m_index[Index + 1].number;
+                     off_t fo = m_index[Index + 1].offset;
                      if (fn == *FileNumber)
                         *Length = int(fo - *FileOffset);
                      else
@@ -446,22 +446,22 @@ int cIndexFile::GetNextIFrame(int Index, bool Forward, uint16_t *FileNumber, off
 
 int cIndexFile::GetClosestIFrame(int Index)
 {
-  if (last > 0) {
-     Index = constrain(Index, 0, last);
-     if (index[Index].independent)
+  if (m_iLast > 0) {
+     Index = constrain(Index, 0, m_iLast);
+     if (m_index[Index].independent)
         return Index;
      int il = Index - 1;
      int ih = Index + 1;
      for (;;) {
          if (il >= 0) {
-            if (index[il].independent)
+            if (m_index[il].independent)
                return il;
             il--;
             }
-         else if (ih > last)
+         else if (ih > m_iLast)
             break;
-         if (ih <= last) {
-            if (index[ih].independent)
+         if (ih <= m_iLast) {
+            if (m_index[ih].independent)
                return ih;
             ih++;
             }
@@ -477,8 +477,8 @@ int cIndexFile::Get(uint16_t FileNumber, off_t FileOffset)
   if (CatchUp()) {
      //TODO implement binary search!
      int i;
-     for (i = 0; i <= last; i++) {
-         if (index[i].number > FileNumber || (index[i].number == FileNumber) && off_t(index[i].offset) >= FileOffset)
+     for (i = 0; i <= m_iLast; i++) {
+         if (m_index[i].number > FileNumber || (m_index[i].number == FileNumber) && off_t(m_index[i].offset) >= FileOffset)
             break;
          }
      return i;
@@ -493,11 +493,11 @@ bool cIndexFile::IsStillRecording()
 
 void cIndexFile::Delete(void)
 {
-  if (*fileName)
+  if (!m_strFilename.empty())
   {
     m_file.Close();
-    dsyslog("deleting index file '%s'", *fileName);
-    CFile::Delete(*fileName);
+    dsyslog("deleting index file '%s'", m_strFilename.c_str());
+    CFile::Delete(m_strFilename);
   }
 }
 

@@ -247,7 +247,6 @@ char *LimitNameLengths(char *s, int PathMax, int NameMax)
 cRecording::cRecording(TimerPtr Timer, const cEvent *Event)
 {
   m_iResume = RESUME_NOT_INITIALIZED;
-  m_strFileName = NULL;
   m_strName = NULL;
   m_iFileSizeMB = -1; // unknown
   m_iChannel = Timer->Channel()->Number();
@@ -303,21 +302,25 @@ cRecording::cRecording(TimerPtr Timer, const cEvent *Event)
 
 cRecording::cRecording(const char *FileName)
 {
-  m_iResume = RESUME_NOT_INITIALIZED;
-  m_iFileSizeMB = -1; // unknown
-  m_iChannel = -1;
-  m_iInstanceId = -1;
-  m_iPriority = MAXPRIORITY; // assume maximum in case there is no info file
-  m_iLifetime = MAXLIFETIME;
-  m_bIsPesRecording = false;
+  m_iResume                       = RESUME_NOT_INITIALIZED;
+  m_iFileSizeMB                   = -1; // unknown
+  m_iChannel                      = -1;
+  m_iInstanceId                   = -1;
+  m_iPriority                     = MAXPRIORITY; // assume maximum in case there is no info file
+  m_iLifetime                     = MAXLIFETIME;
+  m_bIsPesRecording               = false;
   m_iIsOnVideoDirectoryFileSystem = -1; // unknown
-  m_dFramesPerSecond = DEFAULTFRAMESPERSECOND;
-  m_iNumFrames = -1;
-  m_deleted = 0;
-  m_hash = -1;
-  FileName = m_strFileName = strdup(FileName);
-  if (*(m_strFileName + strlen(m_strFileName) - 1) == '/')
-     *(m_strFileName + strlen(m_strFileName) - 1) = 0;
+  m_dFramesPerSecond              = DEFAULTFRAMESPERSECOND;
+  m_iNumFrames                    = -1;
+  m_deleted                       = 0;
+  m_hash                          = -1;
+  m_strFileName                   = FileName;
+
+  // strip slash
+  size_t pos = m_strFileName.find('/');
+  if (pos != std::string::npos)
+    m_strFileName.erase(pos);
+
   if (strstr(FileName, VideoDirectory) == FileName)
      FileName += strlen(VideoDirectory) + 1;
   const char *p = strrchr(FileName, '/');
@@ -345,7 +348,7 @@ cRecording::cRecording(const char *FileName)
         return;
      GetResume();
      // read an optional info file:
-     std::string InfoFileName = *cString::sprintf("%s%s", m_strFileName, m_bIsPesRecording ? INFOFILESUFFIX ".vdr" : INFOFILESUFFIX);
+     std::string InfoFileName = StringUtils::Format("%s%s", m_strFileName.c_str(), m_bIsPesRecording ? INFOFILESUFFIX ".vdr" : INFOFILESUFFIX);
      CFile file;
      if (file.Open(InfoFileName))
      {
@@ -364,7 +367,7 @@ cRecording::cRecording(const char *FileName)
 #ifdef SUMMARYFALLBACK
      // fall back to the old 'summary.vdr' if there was no 'info.vdr':
      if (isempty(m_recordingInfo->Title())) {
-        std::string SummaryFileName = *cString::sprintf("%s%s", m_strFileName, SUMMARYFILESUFFIX);
+        std::string SummaryFileName = StringUtils::Format("%s%s", m_strFileName.c_str(), SUMMARYFILESUFFIX);
         CFile file;
         if (file.Open(SummaryFileName))
         {
@@ -425,7 +428,6 @@ cRecording::cRecording(const char *FileName)
 
 cRecording::~cRecording()
 {
-  free(m_strFileName);
   free(m_strName);
   delete m_recordingInfo;
 }
@@ -470,20 +472,22 @@ int cRecording::GetResume(void)
 
 const char *cRecording::FileName(void)
 {
-  if (!m_strFileName) {
-     struct tm tm_r;
-     struct tm *t = localtime_r(&m_start, &tm_r);
-     const char *fmt = m_bIsPesRecording ? NAMEFORMATPES : NAMEFORMATTS;
-     int ch = m_bIsPesRecording ? m_iPriority : m_iChannel;
-     int ri = m_bIsPesRecording ? m_iLifetime : m_iInstanceId;
-     char *Name = LimitNameLengths(strdup(m_strName), DirectoryPathMax - strlen(VideoDirectory) - 1 - 42, DirectoryNameMax); // 42 = length of an actual recording directory name (generated with DATAFORMATTS) plus some reserve
-     if (strcmp(Name, m_strName) != 0)
-        dsyslog("recording file name '%s' truncated to '%s'", m_strName, Name);
-     Name = ExchangeChars(Name, true);
-     m_strFileName = strdup(cString::sprintf(fmt, VideoDirectory, Name, t->tm_year + 1900, t->tm_mon + 1, t->tm_mday, t->tm_hour, t->tm_min, ch, ri));
-     free(Name);
-     }
-  return m_strFileName;
+  if (m_strFileName.empty())
+  {
+    struct tm tm_r;
+    struct tm *t = localtime_r(&m_start, &tm_r);
+    const char *fmt = m_bIsPesRecording ? NAMEFORMATPES : NAMEFORMATTS;
+    int ch = m_bIsPesRecording ? m_iPriority : m_iChannel;
+    int ri = m_bIsPesRecording ? m_iLifetime : m_iInstanceId;
+    char *Name = LimitNameLengths(strdup(m_strName), DirectoryPathMax - strlen(VideoDirectory) - 1 - 42, DirectoryNameMax); // 42 = length of an actual recording directory name (generated with DATAFORMATTS) plus some reserve
+    if (strcmp(Name, m_strName) != 0)
+      dsyslog("recording file name '%s' truncated to '%s'", m_strName, Name);
+    Name = ExchangeChars(Name, true);
+    m_strFileName = StringUtils::Format(fmt, VideoDirectory, Name, t->tm_year + 1900,
+            t->tm_mon + 1, t->tm_mday, t->tm_hour, t->tm_min, ch, ri);
+    free(Name);
+  }
+  return m_strFileName.c_str();
 }
 
 uint32_t cRecording::UID(void)
@@ -496,12 +500,12 @@ uint32_t cRecording::UID(void)
 
 const char *cRecording::PrefixFileName(char Prefix)
 {
-  cString p = PrefixVideoFileName(FileName(), Prefix);
-  if (*p) {
-     free(m_strFileName);
-     m_strFileName = strdup(p);
-     return m_strFileName;
-     }
+  std::string p = PrefixVideoFileName(FileName(), Prefix);
+  if (!p.empty())
+  {
+    m_strFileName = p;
+    return m_strFileName.c_str();
+  }
   return NULL;
 }
 
@@ -540,7 +544,7 @@ void cRecording::ReadInfo(void)
 
 bool cRecording::WriteInfo(void)
 {
-  std::string InfoFileName = *cString::sprintf("%s%s", m_strFileName, m_bIsPesRecording ? INFOFILESUFFIX ".vdr" : INFOFILESUFFIX);
+  std::string InfoFileName = *cString::sprintf("%s%s", m_strFileName.c_str(), m_bIsPesRecording ? INFOFILESUFFIX ".vdr" : INFOFILESUFFIX);
   CFile file;
   if (file.OpenForWrite(InfoFileName))
     m_recordingInfo->Write(file);
@@ -552,8 +556,7 @@ bool cRecording::WriteInfo(void)
 void cRecording::SetStartTime(time_t Start)
 {
   m_start = Start;
-  free(m_strFileName);
-  m_strFileName = NULL;
+  m_strFileName.clear();
 }
 
 bool cRecording::Delete(void)

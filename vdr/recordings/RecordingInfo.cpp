@@ -63,7 +63,7 @@ cRecordingInfo::cRecordingInfo(const cChannel *Channel, const cEvent *Event)
      }
 }
 
-cRecordingInfo::cRecordingInfo(const char *FileName)
+cRecordingInfo::cRecordingInfo(const std::string& strFileName)
 {
   channelID = tChannelID::InvalidID;
   channelName = NULL;
@@ -73,7 +73,7 @@ cRecordingInfo::cRecordingInfo(const char *FileName)
   framesPerSecond = DEFAULTFRAMESPERSECOND;
   priority = MAXPRIORITY;
   lifetime = MAXLIFETIME;
-  fileName = strdup(cString::sprintf("%s%s", FileName, INFOFILESUFFIX));
+  fileName = strdup(cString::sprintf("%s%s", strFileName.c_str(), INFOFILESUFFIX));
 }
 
 cRecordingInfo::~cRecordingInfo()

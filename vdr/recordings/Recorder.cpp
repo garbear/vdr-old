@@ -164,7 +164,7 @@ void* cRecorder::Process(void)
                              }
                        }
                     if (recordFile->Write(b, Count) < 0) {
-                       LOG_ERROR_STR(fileName->Name());
+                       LOG_ERROR_STR(fileName->Name().c_str());
                        break;
                        }
                     fileSize += Count;

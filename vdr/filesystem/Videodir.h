@@ -22,7 +22,7 @@ bool RenameVideoFile(const char *OldName, const char *NewName);
 bool RemoveVideoFile(const char *FileName);
 bool VideoFileSpaceAvailable(int SizeMB);
 int VideoDiskSpace(int *FreeMB = NULL, int *UsedMB = NULL); // returns the used disk space in percent
-cString PrefixVideoFileName(const char *FileName, char Prefix);
+std::string PrefixVideoFileName(const char *FileName, char Prefix);
 void RemoveEmptyVideoDirectories(const char *IgnoreFiles[] = NULL);
 bool IsOnVideoDirectoryFileSystem(const char *FileName);
 

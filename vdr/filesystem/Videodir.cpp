@@ -223,24 +223,29 @@ int VideoDiskSpace(int *FreeMB, int *UsedMB)
   return (free + used) ? used * 100 / (free + used) : 0;
 }
 
-cString PrefixVideoFileName(const char *FileName, char Prefix)
+std::string PrefixVideoFileName(const char *FileName, char Prefix)
 {
+  std::string retval;
   char PrefixedName[strlen(FileName) + 2];
 
   const char *p = FileName + strlen(FileName); // p points at the terminating 0
   int n = 2;
-  while (p-- > FileName && n > 0) {
-        if (*p == '/') {
-           if (--n == 0) {
-              int l = p - FileName + 1;
-              strncpy(PrefixedName, FileName, l);
-              PrefixedName[l] = Prefix;
-              strcpy(PrefixedName + l + 1, p + 1);
-              return PrefixedName;
-              }
-           }
-        }
-  return NULL;
+  while (p-- > FileName && n > 0)
+  {
+    if (*p == '/')
+    {
+      if (--n == 0)
+      {
+        int l = p - FileName + 1;
+        strncpy(PrefixedName, FileName, l);
+        PrefixedName[l] = Prefix;
+        strcpy(PrefixedName + l + 1, p + 1);
+        retval = PrefixedName;
+        break;
+      }
+    }
+  }
+  return retval;
 }
 
 void RemoveEmptyVideoDirectories(const char *IgnoreFiles[])
