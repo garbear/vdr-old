@@ -1,5 +1,6 @@
 #include "RecordingUserCommand.h"
 #include "utils/Tools.h"
+#include "utils/StringUtils.h"
 
 cRecordingUserCommand& cRecordingUserCommand::Get(void)
 {
@@ -18,9 +19,9 @@ void cRecordingUserCommand::InvokeCommand(const std::string& strState, const std
   {
     std::string cmd;
     if (!strSourceFileName.empty())
-       cmd = *cString::sprintf("%s %s \"%s\" \"%s\"", m_strCommand.c_str(), strState.c_str(), *strescape(strState.c_str(), "\\\"$"), *strescape(strSourceFileName.c_str(), "\\\"$"));
+       cmd = StringUtils::Format("%s %s \"%s\" \"%s\"", m_strCommand.c_str(), strState.c_str(), *strescape(strState.c_str(), "\\\"$"), *strescape(strSourceFileName.c_str(), "\\\"$"));
     else
-       cmd = *cString::sprintf("%s %s \"%s\"", m_strCommand.c_str(), strState.c_str(), *strescape(strState.c_str(), "\\\"$"));
+       cmd = StringUtils::Format("%s %s \"%s\"", m_strCommand.c_str(), strState.c_str(), *strescape(strState.c_str(), "\\\"$"));
     isyslog("executing '%s'", cmd.c_str());
     SystemExec(cmd.c_str());
   }
