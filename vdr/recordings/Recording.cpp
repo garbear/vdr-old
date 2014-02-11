@@ -463,66 +463,6 @@ cRecording::cRecording(const std::string& strFileName)
         m_recordingInfo->ownEvent->SetTitle(m_strName);
      else
         LOG_ERROR_STR(InfoFileName.c_str());
-#ifdef SUMMARYFALLBACK
-     // fall back to the old 'summary.vdr' if there was no 'info.vdr':
-     if (m_recordingInfo->Title().empty()) {
-        std::string SummaryFileName = StringUtils::Format("%s%s", m_strFileName.c_str(), SUMMARYFILESUFFIX);
-        CFile file;
-        if (file.Open(SummaryFileName))
-        {
-           int line = 0;
-           char *data[3] = { NULL };
-           std::string strLine;
-           //XXX
-           while (file.ReadLine(strLine)) {
-                 if (*strLine.c_str() || line > 1) {
-                    if (data[line]) {
-                       size_t len = strLine.size();
-                       len += strlen(data[line]) + 1;
-                       if (char *NewBuffer = (char *)realloc(data[line], len + 1)) {
-                          data[line] = NewBuffer;
-                          strcat(data[line], "\n");
-                          strcat(data[line], strLine.c_str());
-                          }
-                       else
-                          esyslog("ERROR: out of memory");
-                       }
-                    else
-                       data[line] = strdup(strLine.c_str());
-                    }
-                 else
-                    line++;
-                 }
-           if (!data[2]) {
-              data[2] = data[1];
-              data[1] = NULL;
-              }
-           else if (data[1] && data[2]) {
-              // if line 1 is too long, it can't be the short text,
-              // so assume the short text is missing and concatenate
-              // line 1 and line 2 to be the long text:
-              int len = strlen(data[1]);
-              if (len > 80) {
-                 if (char *NewBuffer = (char *)realloc(data[1], len + 1 + strlen(data[2]) + 1)) {
-                    data[1] = NewBuffer;
-                    strcat(data[1], "\n");
-                    strcat(data[1], data[2]);
-                    free(data[2]);
-                    data[2] = data[1];
-                    data[1] = NULL;
-                    }
-                 else
-                    esyslog("ERROR: out of memory");
-                 }
-              }
-           m_recordingInfo->SetData(data[0], data[1], data[2]);
-           for (int i = 0; i < 3; i ++)
-               free(data[i]);
-           }
-        else if (errno != ENOENT)
-           LOG_ERROR_STR(SummaryFileName.c_str());
-        }
-#endif
      }
 }
 

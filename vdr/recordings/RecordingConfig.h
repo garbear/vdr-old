@@ -12,8 +12,6 @@
 
 #define MININDEXAGE      3600 // seconds before an index file is considered no longer to be written
 
-#define SUMMARYFALLBACK
-
 /* This was the original code, which works fine in a Linux only environment.
    Unfortunately, because of Windows and its brain dead file system, we have
    to use a more complicated approach, in order to allow users who have enabled
@@ -28,9 +26,6 @@
 #define DATAFORMATTS    "%4d-%02d-%02d.%02d.%02d.%d-%d." RECEXT_
 #define NAMEFORMATTS    "%s/%s/" DATAFORMATTS
 
-#ifdef SUMMARYFALLBACK
-#define SUMMARYFILESUFFIX "/summary.vdr"
-#endif
 #define MARKSFILESUFFIX   "/marks"
 
 #define SORTMODEFILE      ".sort"
