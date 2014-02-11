@@ -5,10 +5,10 @@
 
 using namespace PLATFORM;
 
-bool cMarks::Load(const char *RecordingFileName, double FramesPerSecond, bool IsPesRecording)
+bool cMarks::Load(const std::string& strRecordingFileName, double FramesPerSecond, bool IsPesRecording)
 {
-  recordingFileName = RecordingFileName;
-  fileName = AddDirectory(RecordingFileName, IsPesRecording ? MARKSFILESUFFIX ".vdr" : MARKSFILESUFFIX);
+  recordingFileName = strRecordingFileName;
+  fileName = AddDirectory(strRecordingFileName, IsPesRecording ? MARKSFILESUFFIX ".vdr" : MARKSFILESUFFIX);
   framesPerSecond = FramesPerSecond;
   isPesRecording = IsPesRecording;
   nextUpdate = 0;
@@ -38,7 +38,7 @@ bool cMarks::Update(void)
            lastFileTime--; // make sure we don't miss updates in the remaining second
         CLockObject lock(MutexMarkFramesPerSecond);
         MarkFramesPerSecond = framesPerSecond;
-        if (cConfig<cMark>::Load(fileName)) {
+        if (cConfig<cMark>::Load(fileName.c_str())) {
            Align();
            Sort();
            return true;

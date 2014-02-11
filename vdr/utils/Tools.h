@@ -163,21 +163,20 @@ cString dtoa(double d, const char *Format = "%f");
     ///< the decimal point, independent of the currently selected locale.
     ///< If Format is given, it will be used instead of the default.
 cString itoa(int n);
-cString AddDirectory(const char *DirName, const char *FileName);
-bool MakeDirs(const char *FileName, bool IsDirectory = false);
-bool RemoveFileOrDir(const char *FileName, bool FollowSymlinks = false);
-bool RemoveEmptyDirectories(const char *DirName, bool RemoveThis = false, const char *IgnoreFiles[] = NULL);
+std::string AddDirectory(const std::string& strDirName, const std::string& strFileName);
+bool MakeDirs(const std::string& strFileName, bool IsDirectory = false);
+bool RemoveEmptyDirectories(const std::string& strDirName, bool RemoveThis = false, const char *IgnoreFiles[] = NULL);
      ///< Removes all empty directories under the given directory DirName.
      ///< If RemoveThis is true, DirName will also be removed if it is empty.
      ///< IgnoreFiles can be set to an array of file names that will be ignored when
      ///< considering whether a directory is empty. If IgnoreFiles is given, the array
      ///< must end with a NULL pointer.
-int DirSizeMB(const char *DirName); ///< returns the total size of the files in the given directory, or -1 in case of an error
-char *ReadLink(const char *FileName); ///< returns a new string allocated on the heap, which the caller must delete (or NULL in case of an error)
-bool SpinUpDisk(const char *FileName);
-void TouchFile(const char *FileName);
-time_t LastModifiedTime(const char *FileName);
-off_t FileSize(const char *FileName); ///< returns the size of the given file, or -1 in case of an error (e.g. if the file doesn't exist)
+int DirSizeMB(const std::string& strDirName); ///< returns the total size of the files in the given directory, or -1 in case of an error
+char *ReadLink(const char* FileName); ///< returns a new string allocated on the heap, which the caller must delete (or NULL in case of an error)
+bool SpinUpDisk(const std::string& strFileName);
+void TouchFile(const std::string& strFileName);
+time_t LastModifiedTime(const std::string& strFileName);
+off_t FileSize(const std::string& strFileName); ///< returns the size of the given file, or -1 in case of an error (e.g. if the file doesn't exist)
 
 class cBitStream {
 private:
@@ -287,10 +286,10 @@ public:
 
 class cLockFile {
 private:
-  char *fileName;
+  std::string m_strFilename;
   int f;
 public:
-  cLockFile(const char *Directory);
+  cLockFile(const std::string& strDirectory);
   ~cLockFile();
   bool Lock(int WaitSeconds = 0);
   void Unlock(void);

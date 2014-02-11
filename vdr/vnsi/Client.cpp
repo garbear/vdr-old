@@ -1573,7 +1573,7 @@ bool cVNSIClient::processRECORDINGS_GetList() /* OPCODE 102 */
     // channel_name
     m_resp->add_String((*it)->Info()->ChannelName() ? m_toUTF8.Convert((*it)->Info()->ChannelName()) : "");
 
-    char* fullname = strdup((*it)->Name());
+    char* fullname = strdup((*it)->Name().c_str());
     char* recname = strrchr(fullname, FOLDERDELIMCHAR);
     char* directory = NULL;
 
@@ -1590,14 +1590,14 @@ bool cVNSIClient::processRECORDINGS_GetList() /* OPCODE 102 */
     m_resp->add_String(m_toUTF8.Convert(recname));
 
     // subtitle
-    if (!isempty((*it)->Info()->ShortText()))
-      m_resp->add_String(m_toUTF8.Convert((*it)->Info()->ShortText()));
+    if (!(*it)->Info()->ShortText().empty())
+      m_resp->add_String(m_toUTF8.Convert((*it)->Info()->ShortText().c_str()));
     else
       m_resp->add_String("");
 
     // description
-    if (!isempty((*it)->Info()->Description()))
-      m_resp->add_String(m_toUTF8.Convert((*it)->Info()->Description()));
+    if (!(*it)->Info()->Description().empty())
+      m_resp->add_String(m_toUTF8.Convert((*it)->Info()->Description().c_str()));
     else
       m_resp->add_String("");
 
@@ -1634,7 +1634,7 @@ bool cVNSIClient::processRECORDINGS_Rename() /* OPCODE 103 */
 
   if(recording != NULL) {
     // get filename and remove last part (recording time)
-    char* filename_old = strdup((const char*)recording->FileName());
+    char* filename_old = strdup((const char*)recording->FileName().c_str());
     char* sep = strrchr(filename_old, '/');
     if(sep != NULL) {
       *sep = 0;
@@ -1676,7 +1676,7 @@ bool cVNSIClient::processRECORDINGS_Delete() /* OPCODE 104 */
 
   if (recording)
   {
-    dsyslog("deleting recording: %s", recording->Name());
+    dsyslog("deleting recording: %s", recording->Name().c_str());
 
 //    cRecordControl *rc = cRecordControls::GetRecordControl(recording->FileName());
 //    if (!rc)
@@ -1801,9 +1801,9 @@ bool cVNSIClient::processEPG_GetForChannel() /* OPCODE 120 */
   for (const cEvent* event = Schedule->Events()->First(); event; event = Schedule->Events()->Next(event))
   {
     thisEventID           = event->EventID();
-    thisEventTitle        = event->Title();
-    thisEventSubTitle     = event->ShortText();
-    thisEventDescription  = event->Description();
+    thisEventTitle        = event->Title().c_str();
+    thisEventSubTitle     = event->ShortText().c_str();
+    thisEventDescription  = event->Description().c_str();
     thisEventTime         = event->StartTime();
     thisEventDuration     = event->Duration();
     thisEventContent      = event->Contents();

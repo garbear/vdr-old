@@ -46,12 +46,12 @@ private:
 protected:
   virtual void* Process(void);
 public:
-  cIndexFileGenerator(const char *RecordingName);
+  cIndexFileGenerator(const std::string& strRecordingName);
   ~cIndexFileGenerator();
   };
 
-cIndexFileGenerator::cIndexFileGenerator(const char *RecordingName)
-:m_strRecordingName(RecordingName)
+cIndexFileGenerator::cIndexFileGenerator(const std::string& strRecordingName)
+:m_strRecordingName(strRecordingName)
 {
   CreateThread();
 }
@@ -173,16 +173,16 @@ void* cIndexFileGenerator::Process(void)
   return NULL;
 }
 
-cIndexFile::cIndexFile(const char *FileName, bool Record, bool IsPesRecording, bool PauseLive)
-:m_resumeFile(FileName, IsPesRecording)
+cIndexFile::cIndexFile(const std::string& strFileName, bool Record, bool IsPesRecording, bool PauseLive)
+:m_resumeFile(strFileName, IsPesRecording)
 {
   m_iSize = 0;
   m_iLast = -1;
   m_index = NULL;
   m_bIsPesRecording = IsPesRecording;
   m_indexFileGenerator = NULL;
-  if (FileName) {
-     m_strFilename = *IndexFileName(FileName, m_bIsPesRecording);
+  if (!strFileName.empty()) {
+     m_strFilename = IndexFileName(strFileName, m_bIsPesRecording);
      if (!Record && PauseLive) {
         // Wait until the index file contains at least two frames:
         time_t tmax = time(NULL) + MAXWAITFORINDEXFILE;
@@ -194,7 +194,7 @@ cIndexFile::cIndexFile(const char *FileName, bool Record, bool IsPesRecording, b
         // Index file doesn't exist, so try to regenerate it:
         if (!m_bIsPesRecording) { // sorry, can only do this for TS recordings
            m_resumeFile.Delete(); // just in case
-           m_indexFileGenerator = new cIndexFileGenerator(FileName);
+           m_indexFileGenerator = new cIndexFileGenerator(strFileName);
            // Wait until the index file exists:
            time_t tmax = time(NULL) + MAXWAITFORINDEXFILE;
            do {
@@ -215,7 +215,7 @@ cIndexFile::cIndexFile(const char *FileName, bool Record, bool IsPesRecording, b
               m_iSize = m_iLast + 1;
               m_index = MALLOC(tIndexTs, m_iSize);
               if (m_index) {
-                 if (m_file.Open(FileName))
+                 if (m_file.Open(strFileName))
                  {
                    if (m_file.Read(m_index, size_t(buf.st_size)) != buf.st_size)
                    {
@@ -268,9 +268,9 @@ cIndexFile::~cIndexFile()
   delete m_indexFileGenerator;
 }
 
-cString cIndexFile::IndexFileName(const char *FileName, bool IsPesRecording)
+std::string cIndexFile::IndexFileName(const std::string& strFileName, bool IsPesRecording)
 {
-  return cString::sprintf("%s%s", FileName, IsPesRecording ? INDEXFILESUFFIX ".vdr" : INDEXFILESUFFIX);
+  return StringUtils::Format("%s%s", strFileName.c_str(), IsPesRecording ? INDEXFILESUFFIX ".vdr" : INDEXFILESUFFIX);
 }
 
 void cIndexFile::ConvertFromPes(tIndexTs *IndexTs, int Count)
@@ -501,11 +501,11 @@ void cIndexFile::Delete(void)
   }
 }
 
-int cIndexFile::GetLength(const char *FileName, bool IsPesRecording)
+int cIndexFile::GetLength(const std::string& strFileName, bool IsPesRecording)
 {
   struct __stat64 buf;
-  cString s = IndexFileName(FileName, IsPesRecording);
-  if (*s && CFile::Stat(*s, &buf) == 0)
+  std::string s = IndexFileName(strFileName.c_str(), IsPesRecording); //XXX
+  if (!s.empty() && CFile::Stat(s.c_str(), &buf) == 0)
      return buf.st_size / (IsPesRecording ? sizeof(tIndexTs) : sizeof(tIndexPes));
   return -1;
 }
@@ -514,17 +514,17 @@ bool GenerateIndex(const char *FileName)
 {
   if (CDirectory::CanWrite(FileName)) {
      cRecording Recording(FileName);
-     if (Recording.Name()) {
+     if (!Recording.Name().empty()) {
         if (!Recording.IsPesRecording()) {
-           cString IndexFileName = AddDirectory(FileName, INDEXFILESUFFIX);
-           unlink(IndexFileName);
+           std::string IndexFileName = AddDirectory(FileName, INDEXFILESUFFIX);
+           CFile::Delete(IndexFileName.c_str());
            cIndexFileGenerator *IndexFileGenerator = new cIndexFileGenerator(FileName);
            while (IndexFileGenerator->IsRunning())
              CEvent::Sleep(INDEXFILECHECKINTERVAL);
-           if (CFile::Exists(*IndexFileName))
+           if (CFile::Exists(IndexFileName))
               return true;
            else
-              fprintf(stderr, "cannot create '%s'\n", *IndexFileName);
+              fprintf(stderr, "cannot create '%s'\n", IndexFileName.c_str());
            }
         else
            fprintf(stderr, "'%s' is not a TS recording\n", FileName);

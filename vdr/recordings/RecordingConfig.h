@@ -1,8 +1,8 @@
 #pragma once
 
 #define FOLDERDELIMCHAR '~'
-#define RECEXT          ".rec"
-#define DELEXT          ".del"
+#define RECEXT_          "rec"
+#define DELEXT_          "del"
 #define MAX_LINK_LEVEL  6
 
 #define RUC_BEFORERECORDING "before"
@@ -23,9 +23,9 @@
 #define DATAFORMAT   "%4d-%02d-%02d.%02d:%02d.%02d.%02d" RECEXT
 #define NAMEFORMAT   "%s/%s/" DATAFORMAT
 */
-#define DATAFORMATPES   "%4d-%02d-%02d.%02d%*c%02d.%02d.%02d" RECEXT
-#define NAMEFORMATPES   "%s/%s/" "%4d-%02d-%02d.%02d.%02d.%02d.%02d" RECEXT
-#define DATAFORMATTS    "%4d-%02d-%02d.%02d.%02d.%d-%d" RECEXT
+#define DATAFORMATPES   "%4d-%02d-%02d.%02d%*c%02d.%02d.%02d." RECEXT_
+#define NAMEFORMATPES   "%s/%s/" "%4d-%02d-%02d.%02d.%02d.%02d.%02d." RECEXT_
+#define DATAFORMATTS    "%4d-%02d-%02d.%02d.%02d.%d-%d." RECEXT_
 #define NAMEFORMATTS    "%s/%s/" DATAFORMATTS
 
 #ifdef SUMMARYFALLBACK

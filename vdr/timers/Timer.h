@@ -58,7 +58,7 @@ public:
   bool DayMatches(time_t t) const;
   static time_t IncDay(time_t t, int Days);
   static time_t SetTime(time_t t, int SecondsFromMidnight);
-  void SetFile(const char *File);
+  void SetFile(const std::string& strFile);
   bool Matches(time_t t = 0, bool Directly = false, int Margin = 0);
   eTimerMatch MatchesEvent(const cEvent *Event, int *Overlap = NULL);
   bool Expired(void) const;

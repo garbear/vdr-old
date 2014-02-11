@@ -238,17 +238,17 @@ bool cRecordingInfo::Write(void) const
   return Result;
 }
 
-const char* cRecordingInfo::Title(void) const
+std::string cRecordingInfo::Title(void) const
 {
   return event->Title();
 }
 
-const char* cRecordingInfo::ShortText(void) const
+std::string cRecordingInfo::ShortText(void) const
 {
   return event->ShortText();
 }
 
-const char* cRecordingInfo::Description(void) const
+std::string cRecordingInfo::Description(void) const
 {
   return event->Description();
 }

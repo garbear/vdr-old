@@ -913,7 +913,7 @@ cVideoBuffer* cVideoBuffer::Create(cString filename)
 
 cVideoBuffer* cVideoBuffer::Create(cRecording *rec)
 {
-  isyslog("Open recording: %s", rec->FileName());
+  isyslog("Open recording: %s", rec->FileName().c_str());
   cVideoBufferRecording *buffer = new cVideoBufferRecording(rec);
   if (!buffer->Init())
   {

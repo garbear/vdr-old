@@ -5,15 +5,15 @@
 
 class cMarks : public cConfig<cMark> {
 private:
-  cString recordingFileName;
-  cString fileName;
+  std::string recordingFileName;
+  std::string fileName;
   double framesPerSecond;
   bool isPesRecording;
   time_t nextUpdate;
   time_t lastFileTime;
   time_t lastChange;
 public:
-  bool Load(const char *RecordingFileName, double FramesPerSecond = DEFAULTFRAMESPERSECOND, bool IsPesRecording = false);
+  bool Load(const std::string& strRecordingFileName, double FramesPerSecond = DEFAULTFRAMESPERSECOND, bool IsPesRecording = false);
   bool Update(void);
   bool Save(void);
   void Align(void);

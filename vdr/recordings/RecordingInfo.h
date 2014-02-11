@@ -19,9 +19,9 @@ public:
   tChannelID ChannelID(void) const { return channelID; }
   const char *ChannelName(void) const { return channelName; }
   const cEvent *GetEvent(void) const { return event; }
-  const char *Title(void) const;
-  const char *ShortText(void) const;
-  const char *Description(void) const;
+  std::string Title(void) const;
+  std::string ShortText(void) const;
+  std::string Description(void) const;
   const CEpgComponents *Components(void) const;
   const char *Aux(void) const { return aux; }
   double FramesPerSecond(void) const { return framesPerSecond; }

@@ -12,7 +12,8 @@
 #include "filesystem/Directory.h"
 #include "filesystem/Poller.h"
 #include "filesystem/ReadDir.h"
-#include "utils/UTF8Utils.h"
+#include "UTF8Utils.h"
+#include "StringUtils.h"
 #include "platform/threads/threads.h"
 
 #include <algorithm>
@@ -330,9 +331,9 @@ bool StrInArray(const char *a[], const char *s)
   return false;
 }
 
-cString AddDirectory(const char *DirName, const char *FileName)
+std::string AddDirectory(const std::string& strDirName, const std::string& strFileName)
 {
-  return cString::sprintf("%s/%s", DirName && *DirName ? DirName : ".", FileName);
+  return StringUtils::Format("%s/%s", !strDirName.empty() ? strDirName.c_str() : ".", strFileName.c_str());
 }
 
 #define DECIMAL_POINT_C '.'
@@ -375,10 +376,11 @@ cString itoa(int n)
   return buf;
 }
 
-bool MakeDirs(const char *FileName, bool IsDirectory)
+bool MakeDirs(const std::string& strFileName, bool IsDirectory)
 {
+  //XXX
   bool result = true;
-  char *s = strdup(FileName);
+  char *s = strdup(strFileName.c_str());
   char *p = s;
   if (*p == '/')
      p++;
@@ -403,76 +405,19 @@ bool MakeDirs(const char *FileName, bool IsDirectory)
   return result;
 }
 
-bool RemoveFileOrDir(const char *FileName, bool FollowSymlinks)
+bool RemoveEmptyDirectories(const std::string& strDirName, bool RemoveThis, const char *IgnoreFiles[])
 {
-  struct stat st;
-  if (stat(FileName, &st) == 0) {
-     if (S_ISDIR(st.st_mode)) {
-        cReadDir d(FileName);
-        if (d.Ok()) {
-           struct dirent *e;
-           while ((e = d.Next()) != NULL) {
-                 cString buffer = AddDirectory(FileName, e->d_name);
-                 if (FollowSymlinks) {
-                    struct stat st2;
-                    if (lstat(buffer, &st2) == 0) {
-                       if (S_ISLNK(st2.st_mode)) {
-                          int size = st2.st_size + 1;
-                          char *l = MALLOC(char, size);
-                          int n = readlink(buffer, l, size - 1);
-                          if (n < 0) {
-                             if (errno != EINVAL)
-                                LOG_ERROR_STR(*buffer);
-                             }
-                          else {
-                             l[n] = 0;
-                             dsyslog("removing %s", l);
-                             if (remove(l) < 0)
-                                LOG_ERROR_STR(l);
-                             }
-                          free(l);
-                          }
-                       }
-                    else if (errno != ENOENT) {
-                       LOG_ERROR_STR(FileName);
-                       return false;
-                       }
-                    }
-                 dsyslog("removing %s", *buffer);
-                 if (remove(buffer) < 0)
-                    LOG_ERROR_STR(*buffer);
-                 }
-           }
-        else {
-           LOG_ERROR_STR(FileName);
-           return false;
-           }
-        }
-     dsyslog("removing %s", FileName);
-     if (remove(FileName) < 0) {
-        LOG_ERROR_STR(FileName);
-        return false;
-        }
-     }
-  else if (errno != ENOENT) {
-     LOG_ERROR_STR(FileName);
-     return false;
-     }
-  return true;
-}
-
-bool RemoveEmptyDirectories(const char *DirName, bool RemoveThis, const char *IgnoreFiles[])
-{
+  //XXX
   bool HasIgnoredFiles = false;
-  cReadDir d(DirName);
+  cReadDir d(strDirName.c_str());
   if (d.Ok()) {
      bool empty = true;
      struct dirent *e;
      while ((e = d.Next()) != NULL) {
            if (strcmp(e->d_name, "lost+found")) {
-              cString buffer = AddDirectory(DirName, e->d_name);
+              std::string buffer = AddDirectory(strDirName, e->d_name);
               struct stat st;
-              if (stat(buffer, &st) == 0) {
+              if (stat(buffer.c_str(), &st) == 0) {
                  if (S_ISDIR(st.st_mode)) {
                     if (!RemoveEmptyDirectories(buffer, true, IgnoreFiles))
                        empty = false;
@@ -483,7 +428,7 @@ bool RemoveEmptyDirectories(const char *DirName, bool RemoveThis, const char *Ig
                     empty = false;
                  }
               else {
-                 LOG_ERROR_STR(*buffer);
+                 LOG_ERROR_STR(buffer.c_str());
                  empty = false;
                  }
               }
@@ -491,59 +436,65 @@ bool RemoveEmptyDirectories(const char *DirName, bool RemoveThis, const char *Ig
      if (RemoveThis && empty) {
         if (HasIgnoredFiles) {
            while (*IgnoreFiles) {
-                 cString buffer = AddDirectory(DirName, *IgnoreFiles);
-                 if (access(buffer, F_OK) == 0) {
-                    dsyslog("removing %s", *buffer);
-                    if (remove(buffer) < 0) {
-                       LOG_ERROR_STR(*buffer);
+                 std::string buffer = AddDirectory(strDirName, *IgnoreFiles);
+                 if (access(buffer.c_str(), F_OK) == 0) {
+                    dsyslog("removing %s", buffer.c_str());
+                    if (remove(buffer.c_str()) < 0) {
+                       LOG_ERROR_STR(buffer.c_str());
                        return false;
                        }
                     }
                  IgnoreFiles++;
                  }
            }
-        dsyslog("removing %s", DirName);
-        if (remove(DirName) < 0) {
-           LOG_ERROR_STR(DirName);
+        dsyslog("removing %s", strDirName.c_str());
+        if (remove(strDirName.c_str()) < 0) {
+           LOG_ERROR_STR(strDirName.c_str());
            return false;
            }
         }
      return empty;
      }
   else
-     LOG_ERROR_STR(DirName);
+     LOG_ERROR_STR(strDirName.c_str());
   return false;
 }
 
-int DirSizeMB(const char *DirName)
+int DirSizeMB(const std::string& strDirName)
 {
-  cReadDir d(DirName);
-  if (d.Ok()) {
-     int size = 0;
-     struct dirent *e;
-     while (size >= 0 && (e = d.Next()) != NULL) {
-           cString buffer = AddDirectory(DirName, e->d_name);
-           struct stat st;
-           if (stat(buffer, &st) == 0) {
-              if (S_ISDIR(st.st_mode)) {
-                 int n = DirSizeMB(buffer);
-                 if (n >= 0)
-                    size += n;
-                 else
-                    size = -1;
-                 }
-              else
-                 size += st.st_size / MEGABYTE(1);
-              }
-           else {
-              LOG_ERROR_STR(*buffer);
-              size = -1;
-              }
-           }
-     return size;
-     }
+  //XXX
+  cReadDir d(strDirName.c_str());
+  if (d.Ok())
+  {
+    int size = 0;
+    struct dirent *e;
+    while (size >= 0 && (e = d.Next()) != NULL)
+    {
+      std::string buffer = AddDirectory(strDirName.c_str(), e->d_name);
+      struct stat st;
+      if (stat(buffer.c_str(), &st) == 0)
+      {
+        if (S_ISDIR(st.st_mode))
+        {
+          int n = DirSizeMB(buffer);
+          if (n >= 0)
+            size += n;
+          else
+            size = -1;
+        }
+        else
+          size += st.st_size / MEGABYTE(1);
+      }
+      else
+      {
+        LOG_ERROR_STR(buffer.c_str());
+        size = -1;
+      }
+    }
+    return size;
+  }
   else
-     LOG_ERROR_STR(DirName);
+    LOG_ERROR_STR(strDirName.c_str());
   return -1;
 }
 
@@ -565,24 +516,25 @@ char *ReadLink(const char *FileName)
   return TargetName;
 }
 
-bool SpinUpDisk(const char *FileName)
+bool SpinUpDisk(const std::string& strFileName)
 {
+  //XXX
   for (int n = 0; n < 10; n++) {
-      cString buf;
-      if (CDirectory::CanWrite(FileName))
-         buf = cString::sprintf("%s/vdr-%06d", *FileName ? FileName : ".", n);
+      std::string buf;
+      if (CDirectory::CanWrite(strFileName))
+         buf = StringUtils::Format("%s/vdr-%06d", !strFileName.empty() ? strFileName.c_str() : ".", n);
       else
-         buf = cString::sprintf("%s.vdr-%06d", FileName, n);
-      if (access(buf, F_OK) != 0) { // the file does not exist
+         buf = StringUtils::Format("%s.vdr-%06d", strFileName.c_str(), n);
+      if (access(buf.c_str(), F_OK) != 0) { // the file does not exist
          timeval tp1, tp2;
          gettimeofday(&tp1, NULL);
-         int f = open(buf, O_WRONLY | O_CREAT, DEFFILEMODE);
+         int f = open(buf.c_str(), O_WRONLY | O_CREAT, DEFFILEMODE);
          // O_SYNC doesn't work on all file systems
          if (f >= 0) {
             if (fdatasync(f) < 0)
-               LOG_ERROR_STR(*buf);
+               LOG_ERROR_STR(buf.c_str());
             close(f);
-            remove(buf);
+            remove(buf.c_str());
             gettimeofday(&tp2, NULL);
             double seconds = (((long long)tp2.tv_sec * 1000000 + tp2.tv_usec) - ((long long)tp1.tv_sec * 1000000 + tp1.tv_usec)) / 1000000.0;
             if (seconds > 0.5)
@@ -590,31 +542,34 @@ bool SpinUpDisk(const char *FileName)
             return true;
             }
          else
-            LOG_ERROR_STR(*buf);
+            LOG_ERROR_STR(buf.c_str());
          }
       }
   esyslog("ERROR: SpinUpDisk failed");
   return false;
 }
 
-void TouchFile(const char *FileName)
+void TouchFile(const std::string& strFileName)
 {
-  if (utime(FileName, NULL) == -1 && errno != ENOENT)
-     LOG_ERROR_STR(FileName);
+  //XXX
+  if (utime(strFileName.c_str(), NULL) == -1 && errno != ENOENT)
+     LOG_ERROR_STR(strFileName.c_str());
 }
 
-time_t LastModifiedTime(const char *FileName)
+time_t LastModifiedTime(const std::string& strFileName)
 {
   struct stat fs;
-  if (stat(FileName, &fs) == 0)
+  //XXX
+  if (stat(strFileName.c_str(), &fs) == 0)
      return fs.st_mtime;
   return 0;
 }
 
-off_t FileSize(const char *FileName)
+off_t FileSize(const std::string& strFileName)
 {
   struct stat fs;
-  if (stat(FileName, &fs) == 0)
+  //XXX
+  if (stat(strFileName.c_str(), &fs) == 0)
      return fs.st_size;
   return -1;
 }
@@ -839,7 +794,8 @@ bool GetSubDirectories(const string &strDirectory, vector<string> &vecFileNames)
       while ((e = d.Next()) != NULL)
       {
         struct stat64 ds;
-        if (stat64(AddDirectory(strDirectory.c_str(), e->d_name), &ds) == 0)
+        //XXX
+        if (stat64(AddDirectory(strDirectory.c_str(), e->d_name).c_str(), &ds) == 0)
         {
           if (!S_ISDIR(ds.st_mode))
             continue;
@@ -1217,46 +1173,45 @@ cUnbufferedFile *cUnbufferedFile::Create(const char *FileName, int Flags, mode_t
 #define LOCKFILENAME      ".lock-vdr"
 #define LOCKFILESTALETIME 600 // seconds before considering a lock file "stale"
 
-cLockFile::cLockFile(const char *Directory)
+cLockFile::cLockFile(const std::string& strDirectory)
 {
-  fileName = NULL;
   f = -1;
-  if (CDirectory::CanWrite(Directory))
-     fileName = strdup(AddDirectory(Directory, LOCKFILENAME));
+  if (CDirectory::CanWrite(strDirectory))
+    m_strFilename = AddDirectory(strDirectory, LOCKFILENAME);
 }
 
 cLockFile::~cLockFile()
 {
   Unlock();
-  free(fileName);
 }
 
 bool cLockFile::Lock(int WaitSeconds)
 {
-  if (f < 0 && fileName) {
+  //XXX
+  if (f < 0 && !m_strFilename.empty()) {
      time_t Timeout = time(NULL) + WaitSeconds;
      do {
-        f = open(fileName, O_WRONLY | O_CREAT | O_EXCL, DEFFILEMODE);
+        f = open(m_strFilename.c_str(), O_WRONLY | O_CREAT | O_EXCL, DEFFILEMODE);
         if (f < 0) {
            if (errno == EEXIST) {
               struct stat fs;
-              if (stat(fileName, &fs) == 0) {
+              if (stat(m_strFilename.c_str(), &fs) == 0) {
                  if (abs(time(NULL) - fs.st_mtime) > LOCKFILESTALETIME) {
-                    esyslog("ERROR: removing stale lock file '%s'", fileName);
-                    if (remove(fileName) < 0) {
-                       LOG_ERROR_STR(fileName);
+                    esyslog("ERROR: removing stale lock file '%s'", m_strFilename.c_str());
+                    if (remove(m_strFilename.c_str()) < 0) {
+                       LOG_ERROR_STR(m_strFilename.c_str());
                        break;
                        }
                     continue;
                     }
                  }
               else if (errno != ENOENT) {
-                 LOG_ERROR_STR(fileName);
+                 LOG_ERROR_STR(m_strFilename.c_str());
                  break;
                  }
               }
            else {
-              LOG_ERROR_STR(fileName);
+              LOG_ERROR_STR(m_strFilename.c_str());
               break;
               }
            if (WaitSeconds)
@@ -1271,7 +1226,7 @@ void cLockFile::Unlock(void)
 {
   if (f >= 0) {
      close(f);
-     remove(fileName);
+     remove(m_strFilename.c_str());
      f = -1;
      }
 }

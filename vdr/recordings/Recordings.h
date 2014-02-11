@@ -26,9 +26,9 @@ public:
   bool StateChanged(int &State);
   void ResetResume(const std::string& ResumeFileName = "");
   cRecording *GetByName(const std::string& strFileName);
-  void AddByName(const char *FileName, bool TriggerUpdate = true);
+  void AddByName(const std::string& strFileName, bool TriggerUpdate = true);
   cRecording* FindByUID(uint32_t uid);
-  void DelByName(const char *FileName);
+  void DelByName(const std::string& strFileName);
   void UpdateByName(const std::string& strFileName);
   int TotalFileSizeMB(bool bDeletedRecordings = false);
   double MBperMinute(void);
@@ -55,11 +55,11 @@ protected:
   void* Process(void);
 
 private:
-  const char *UpdateFileName(void);
+  std::string UpdateFileName(void);
   void Refresh(bool Foreground = false);
   void ScanVideoDir(const std::string& strDirName, bool Foreground = false, int LinkLevel = 0);
 
-  static char *updateFileName;
+  static std::string m_strUpdateFileName;
   bool deleted;
   time_t lastUpdate;
   int state;

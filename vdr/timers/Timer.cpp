@@ -133,9 +133,9 @@ cTimer::cTimer(const cEvent *Event)
      m_stop -= 2400;
   m_priority = g_setup.DefaultPriority;
   m_lifetime = g_setup.DefaultLifetime;
-  const char *Title = Event->Title();
-  if (!isempty(Title))
-    m_file = Title;
+  std::string strTitle = Event->Title();
+  if (!strTitle.empty())
+    m_file = strTitle;
   SetEvent(Event);
   Matches();
 }
@@ -493,10 +493,10 @@ time_t cTimer::SetTime(time_t t, int SecondsFromMidnight)
   return mktime(&tm);
 }
 
-void cTimer::SetFile(const char *File)
+void cTimer::SetFile(const std::string& strFile)
 {
-  if (!isempty(File))
-    m_file = File;
+  if (!strFile.empty())
+    m_file = strFile;
 }
 
 #define EITPRESENTFOLLOWINGRATE 10 // max. seconds between two occurrences of the "EIT present/following table for the actual multiplex" (2s by the standard, using some more for safety)
@@ -675,7 +675,7 @@ void cTimer::SetEvent(const cEvent *Event)
 {
   if (event != Event) { //XXX TODO check event data, too???
      if (Event)
-        isyslog("timer %s set to event %s", ToDescr().c_str(), *Event->ToDescr());
+        isyslog("timer %s set to event %s", ToDescr().c_str(), Event->ToDescr().c_str());
      else
         isyslog("timer %s set to no event", ToDescr().c_str());
      event = Event;

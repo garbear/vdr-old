@@ -66,17 +66,17 @@ public:
 
 private:
   void cleanup();
-  char* fileNameFromIndex(int index);
+  std::string fileNameFromIndex(int index);
   void checkBufferSize(int s);
 
-  char        m_fileName[512];
+  std::string m_fileName;
   cIndexFile *m_indexFile;
   int         m_file;
   int         m_fileOpen;
   std::vector<cSegment*> m_segments;
   uint64_t    m_totalLength;
   uint32_t    m_totalFrames;
-  char       *m_recordingFilename;
+  std::string m_recordingFilename;
   bool        m_pesrecording;
   bool        m_inProgress;
 };

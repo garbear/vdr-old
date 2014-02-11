@@ -36,9 +36,9 @@ public:
           ///< therefore the EPG handlers have to take care of this. Otherwise the parsing of
           ///< non-updates will waste a lot of resources.
   virtual bool SetEventID(cEvent *Event, tEventID EventID) { return false; }
-  virtual bool SetTitle(cEvent *Event, const char *Title) { return false; }
-  virtual bool SetShortText(cEvent *Event, const char *ShortText) { return false; }
-  virtual bool SetDescription(cEvent *Event, const char *Description) { return false; }
+  virtual bool SetTitle(cEvent *Event, const std::string& strTitle) { return false; }
+  virtual bool SetShortText(cEvent *Event, const std::string& strShortText) { return false; }
+  virtual bool SetDescription(cEvent *Event, const std::string& strDescription) { return false; }
   virtual bool SetContents(cEvent *Event, uchar *Contents) { return false; }
   virtual bool SetParentalRating(cEvent *Event, int ParentalRating) { return false; }
   virtual bool SetStartTime(cEvent *Event, time_t StartTime) { return false; }

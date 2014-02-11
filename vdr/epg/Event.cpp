@@ -15,9 +15,6 @@ cEvent::cEvent(tEventID EventID)
   tableID = 0xFF; // actual table ids are 0x4E..0x60
   version = 0xFF; // actual version numbers are 0..31
   runningStatus = SI::RunningStatusUndefined;
-  title = NULL;
-  shortText = NULL;
-  description = NULL;
   components = NULL;
   memset(contents, 0, sizeof(contents));
   parentalRating = 0;
@@ -30,9 +27,6 @@ cEvent::cEvent(tEventID EventID)
 
 cEvent::~cEvent()
 {
-  free(title);
-  free(shortText);
-  free(description);
   delete components;
 }
 
@@ -72,23 +66,23 @@ void cEvent::SetVersion(uchar Version)
 void cEvent::SetRunningStatus(int RunningStatus, cChannel *Channel)
 {
   if (Channel && runningStatus != RunningStatus && (RunningStatus > SI::RunningStatusNotRunning || runningStatus > SI::RunningStatusUndefined) && Channel->HasTimer())
-    isyslog("channel %d (%s) event %s status %d", Channel->Number(), Channel->Name().c_str(), *ToDescr(), RunningStatus);
+    isyslog("channel %d (%s) event %s status %d", Channel->Number(), Channel->Name().c_str(), ToDescr().c_str(), RunningStatus);
   runningStatus = RunningStatus;
 }
 
-void cEvent::SetTitle(const char *Title)
+void cEvent::SetTitle(const std::string& strTitle)
 {
-  title = strcpyrealloc(title, Title);
+  m_strTitle = strTitle;
 }
 
-void cEvent::SetShortText(const char *ShortText)
+void cEvent::SetShortText(const std::string& strShortText)
 {
-  shortText = strcpyrealloc(shortText, ShortText);
+  m_strShortText = strShortText;
 }
 
-void cEvent::SetDescription(const char *Description)
+void cEvent::SetDescription(const std::string& strDescription)
 {
-  description = strcpyrealloc(description, Description);
+  m_strDescription = strDescription;
 }
 
 void cEvent::SetComponents(CEpgComponents *Components)
@@ -135,12 +129,12 @@ void cEvent::SetSeen(void)
   seen = time(NULL);
 }
 
-cString cEvent::ToDescr(void) const
+std::string cEvent::ToDescr(void) const
 {
   char vpsbuf[64] = "";
   if (Vps())
-    sprintf(vpsbuf, "(VPS: %s) ", *GetVpsString());
-  return cString::sprintf("%s %s-%s %s'%s'", *GetDateString(), *GetTimeString(), *GetEndTimeString(), vpsbuf, Title());
+    sprintf(vpsbuf, "(VPS: %s) ", GetVpsString().c_str());
+  return StringUtils::Format("%s %s-%s %s'%s'", GetDateString().c_str(), GetTimeString().c_str(), GetEndTimeString().c_str(), vpsbuf, Title().c_str());
 }
 
 bool cEvent::HasTimer(void) const
@@ -412,7 +406,7 @@ const char *cEvent::ContentToString(uchar Content)
   return "";
 }
 
-cString cEvent::GetParentalRatingString(void) const
+std::string cEvent::GetParentalRatingString(void) const
 {
   static const char * const ratings[8] = { "", "G", "PG", "PG-13", "R", "NR/AO", "", "NC-17" };
   char buffer[19];
@@ -433,31 +427,31 @@ cString cEvent::GetParentalRatingString(void) const
       s[0] = ']';
   }
 
-  return isempty(buffer) ? NULL : buffer;
+  return isempty(buffer) ? "" : buffer;
 }
 
-cString cEvent::GetStarRatingString(void) const
+std::string cEvent::GetStarRatingString(void) const
 {
   static const char *const critiques[8] = { "", "*", "*+", "**", "**+", "***", "***+", "****" };
   return critiques[starRating & 0x07];
 }
 
-cString cEvent::GetDateString(void) const
+std::string cEvent::GetDateString(void) const
 {
-  return CalendarUtils::DateString(startTime).c_str();
+  return CalendarUtils::DateString(startTime);
 }
 
-cString cEvent::GetTimeString(void) const
+std::string cEvent::GetTimeString(void) const
 {
-  return CalendarUtils::TimeString(startTime).c_str();
+  return CalendarUtils::TimeString(startTime);
 }
 
-cString cEvent::GetEndTimeString(void) const
+std::string cEvent::GetEndTimeString(void) const
 {
-  return CalendarUtils::TimeString(startTime + duration).c_str();
+  return CalendarUtils::TimeString(startTime + duration);
 }
 
-cString cEvent::GetVpsString(void) const
+std::string cEvent::GetVpsString(void) const
 {
   char buf[25];
   struct tm tm_r;
@@ -652,11 +646,11 @@ static void StripControlCharacters(char *s)
 
 void cEvent::FixEpgBugs(void)
 {
-  if (isempty(title)) {
+  if (m_strTitle.empty()) {
      // we don't want any "(null)" titles
-     title = strcpyrealloc(title, tr("No title"));
-     EpgBugFixStat(12, ChannelID());
-     }
+    m_strTitle = tr("No title");
+    EpgBugFixStat(12, ChannelID());
+  }
 
   if (g_setup.EPGBugfixLevel == 0)
      goto Final;
@@ -670,22 +664,19 @@ void cEvent::FixEpgBugs(void)
   // Title
   // "ShortText". Description
   //
-  if ((shortText == NULL) != (description == NULL))
+  if (m_strShortText.empty() != !m_strDescription.empty())
   {
-    char *p = shortText ? shortText : description;
-    if (*p == '"')
+    std::string strCheck = !m_strShortText.empty() ? m_strShortText : m_strDescription;
+    if (!strCheck.empty() && strCheck.at(0) == '"')
     {
       const char *delim = "\".";
-      char *e = strstr(p + 1, delim);
-      if (e)
+      strCheck.erase(0, 1);
+      size_t delimPos = strCheck.find(delim);
+      if (delimPos != std::string::npos)
       {
-        *e = 0;
-        char *s = strdup(p + 1);
-        char *d = strdup(e + strlen(delim));
-        free(shortText);
-        free(description);
-        shortText = s;
-        description = d;
+        m_strDescription = m_strShortText = strCheck;
+        m_strDescription.erase(0, delimPos);
+        m_strShortText.erase(delimPos);
         EpgBugFixStat(1, ChannelID());
       }
     }
@@ -698,15 +689,12 @@ void cEvent::FixEpgBugs(void)
   // Title
   //  Description
   //
-  if (shortText && !description)
+  if (!m_strShortText.empty() && m_strDescription.empty())
   {
-    if (*shortText == ' ')
-    {
-      memmove(shortText, shortText + 1, strlen(shortText));
-      description = shortText;
-      shortText = NULL;
-      EpgBugFixStat(2, ChannelID());
-    }
+    StringUtils::Trim(m_strShortText);
+    m_strDescription = m_strShortText;
+    m_strShortText.clear();
+    EpgBugFixStat(2, ChannelID());
   }
 
   // Sometimes they repeat the Title in the ShortText:
@@ -714,10 +702,9 @@ void cEvent::FixEpgBugs(void)
   // Title
   // Title
   //
-  if (shortText && strcmp(title, shortText) == 0)
+  if (!m_strShortText.empty() && strcmp(m_strTitle.c_str(), m_strShortText.c_str()) == 0)
   {
-    free(shortText);
-    shortText = NULL;
+    m_strShortText.clear();
     EpgBugFixStat(3, ChannelID());
   }
 
@@ -727,17 +714,18 @@ void cEvent::FixEpgBugs(void)
   // Title
   // "ShortText"[.]
   //
-  if (shortText && *shortText == '"')
+  if (!m_strShortText.empty() && m_strShortText.at(0) == '"')
   {
-    int l = strlen(shortText);
-    if (l > 2
-        && (shortText[l - 1] == '"'
-            || (shortText[l - 1] == '.' && shortText[l - 2] == '"')))
+    size_t len = m_strShortText.size();
+    if (len > 2 &&
+        (m_strShortText.at(len - 1) == '"' ||
+            (m_strShortText.at(len - 1) == '.' && m_strShortText.at(len - 2) == '"')))
     {
-      memmove(shortText, shortText + 1, l);
-      char *p = strrchr(shortText, '"');
+      m_strShortText.erase(0, 1);
+      const char* tmp = m_strShortText.c_str();
+      const char *p = strrchr(tmp, '"');
       if (p)
-        *p = 0;
+        m_strShortText.erase(m_strShortText.size() - (p - tmp));
       EpgBugFixStat(4, ChannelID());
     }
   }
@@ -749,49 +737,43 @@ void cEvent::FixEpgBugs(void)
   // which is a bad idea because they have no way of knowing the width
   // of the window that will actually display the text.
   // Remove excess whitespace:
-  title = compactspace(title);
-  shortText = compactspace(shortText);
-  description = compactspace(description);
+  StringUtils::Trim(m_strTitle);
+  StringUtils::Trim(m_strShortText);
+  StringUtils::Trim(m_strDescription);
 
 #define MAX_USEFUL_EPISODE_LENGTH 40
   // Some channels put a whole lot of information in the ShortText and leave
   // the Description totally empty. So if the ShortText length exceeds
   // MAX_USEFUL_EPISODE_LENGTH, let's put this into the Description
   // instead:
-  if (!isempty(shortText) && isempty(description))
+  if (!m_strShortText.empty() && m_strDescription.empty())
   {
-    if (strlen(shortText) > MAX_USEFUL_EPISODE_LENGTH)
+    if (m_strShortText.size() > MAX_USEFUL_EPISODE_LENGTH)
     {
-      free(description);
-      description = shortText;
-      shortText = NULL;
+      m_strDescription = m_strShortText;
+      m_strShortText.clear();
       EpgBugFixStat(6, ChannelID());
     }
   }
 
   // Some channels put the same information into ShortText and Description.
   // In that case we delete one of them:
-  if (shortText && description && strcmp(shortText, description) == 0)
+  if (!m_strShortText.empty() && !m_strDescription.empty() && strcmp(m_strShortText.c_str(), m_strDescription.c_str()) == 0)
   {
-    if (strlen(shortText) > MAX_USEFUL_EPISODE_LENGTH)
-    {
-      free(shortText);
-      shortText = NULL;
-    }
+    if (m_strShortText.size() > MAX_USEFUL_EPISODE_LENGTH)
+      m_strShortText.clear();
     else
-    {
-      free(description);
-      description = NULL;
-    }
+      m_strDescription.clear();
+
     EpgBugFixStat(7, ChannelID());
   }
 
   // Some channels use the ` ("backtick") character, where a ' (single quote)
   // would be normally used. Actually, "backticks" in normal text don't make
   // much sense, so let's replace them:
-  strreplace(title, '`', '\'');
-  strreplace(shortText, '`', '\'');
-  strreplace(description, '`', '\'');
+  StringUtils::Replace(m_strTitle, '`', '\'');
+  StringUtils::Replace(m_strShortText, '`', '\'');
+  StringUtils::Replace(m_strDescription, '`', '\'');
 
   if (g_setup.EPGBugfixLevel <= 2)
      goto Final;
@@ -964,22 +946,19 @@ bool cEvent::Deserialise(cSchedule* schedule, const TiXmlNode *eventNode)
     const TiXmlNode *titleNode = elem->FirstChild(EPG_XML_ELM_TITLE);
     if (titleNode)
     {
-      delete event->title;
-      event->title = strdup(titleNode->ToElement()->GetText());
+      event->m_strTitle = titleNode->ToElement()->GetText();
     }
 
     const TiXmlNode *shortTextNode = elem->FirstChild(EPG_XML_ELM_SHORT_TEXT);
     if (shortTextNode)
     {
-      delete event->shortText;
-      event->shortText = strdup(shortTextNode->ToElement()->GetText());
+      event->m_strShortText = shortTextNode->ToElement()->GetText();
     }
 
     const TiXmlNode *descriptionNode = elem->FirstChild(EPG_XML_ELM_DESCRIPTION);
     if (descriptionNode)
     {
-      delete event->description;
-      event->description = strdup(descriptionNode->ToElement()->GetText());
+      event->m_strDescription = descriptionNode->ToElement()->GetText();
     }
 
     const char* parental  = elem->Attribute(EPG_XML_ATTR_PARENTAL);
@@ -1046,12 +1025,12 @@ bool cEvent::Serialise(TiXmlElement* element) const
     eventNodeElement->SetAttribute(EPG_XML_ATTR_TABLE_ID,   tableID);
     eventNodeElement->SetAttribute(EPG_XML_ATTR_VERSION,    version);
 
-    if (!isempty(title))
-      AddEventElement(eventNodeElement, EPG_XML_ELM_TITLE,       title);
-    if (!isempty(shortText))
-      AddEventElement(eventNodeElement, EPG_XML_ELM_SHORT_TEXT,  shortText);
-    if (!isempty(description))
-      AddEventElement(eventNodeElement, EPG_XML_ELM_DESCRIPTION, description);
+    if (!m_strTitle.empty())
+      AddEventElement(eventNodeElement, EPG_XML_ELM_TITLE,       m_strTitle.c_str());
+    if (!m_strShortText.empty())
+      AddEventElement(eventNodeElement, EPG_XML_ELM_SHORT_TEXT,  m_strShortText.c_str());
+    if (!m_strDescription.empty())
+      AddEventElement(eventNodeElement, EPG_XML_ELM_DESCRIPTION, m_strDescription.c_str());
     if (contents[0])
     {
       for (int i = 0; Contents(i); i++)

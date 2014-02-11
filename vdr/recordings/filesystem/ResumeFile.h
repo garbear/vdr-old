@@ -5,7 +5,7 @@
 class cResumeFile
 {
 public:
-  cResumeFile(const char *FileName, bool IsPesRecording);
+  cResumeFile(const std::string& strFileName, bool IsPesRecording);
   ~cResumeFile();
   int Read(void);
   bool Save(int Index);

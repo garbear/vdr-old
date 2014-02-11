@@ -18,13 +18,12 @@ extern const char *VideoDirectory;
 void SetVideoDirectory(const char *Directory);
 cUnbufferedFile *OpenVideoFile(const char *FileName, int Flags);
 int CloseVideoFile(cUnbufferedFile *File);
-bool RenameVideoFile(const char *OldName, const char *NewName);
-bool RemoveVideoFile(const char *FileName);
+bool RenameVideoFile(const std::string& strOldName, const std::string& strNewName);
+bool RemoveVideoFile(const std::string& strFileName);
 bool VideoFileSpaceAvailable(int SizeMB);
 int VideoDiskSpace(int *FreeMB = NULL, int *UsedMB = NULL); // returns the used disk space in percent
-std::string PrefixVideoFileName(const char *FileName, char Prefix);
 void RemoveEmptyVideoDirectories(const char *IgnoreFiles[] = NULL);
-bool IsOnVideoDirectoryFileSystem(const char *FileName);
+bool IsOnVideoDirectoryFileSystem(const std::string& strFileName);
 
 class cVideoDiskUsage {
 private:

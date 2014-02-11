@@ -18,9 +18,9 @@ public:
   bool HandledExternally(const cChannel *Channel);
   bool IsUpdate(tEventID EventID, time_t StartTime, uchar TableID, uchar Version);
   void SetEventID(cEvent *Event, tEventID EventID);
-  void SetTitle(cEvent *Event, const char *Title);
-  void SetShortText(cEvent *Event, const char *ShortText);
-  void SetDescription(cEvent *Event, const char *Description);
+  void SetTitle(cEvent *Event, const std::string& Title);
+  void SetShortText(cEvent *Event, const std::string& ShortText);
+  void SetDescription(cEvent *Event, const std::string& Description);
   void SetContents(cEvent *Event, uchar *Contents);
   void SetParentalRating(cEvent *Event, int ParentalRating);
   void SetStartTime(cEvent *Event, time_t StartTime);

@@ -9,7 +9,7 @@ using namespace PLATFORM;
 
 cRecordings Recordings;
 
-char *cRecordings::updateFileName = NULL;
+std::string cRecordings::m_strUpdateFileName;
 
 class cRemoveDeletedRecordingsThread : public CThread {
 public:
@@ -46,11 +46,11 @@ void* cRecordings::Process(void)
   return NULL;
 }
 
-const char *cRecordings::UpdateFileName(void)
+std::string cRecordings::UpdateFileName(void)
 {
-  if (!updateFileName)
-     updateFileName = strdup(AddDirectory(VideoDirectory, ".update"));
-  return updateFileName;
+  if (m_strUpdateFileName.empty())
+    m_strUpdateFileName = AddDirectory(VideoDirectory, ".update");
+  return m_strUpdateFileName;
 }
 
 void cRecordings::Refresh(bool Foreground)
@@ -71,7 +71,7 @@ void cRecordings::ScanVideoDir(const std::string& strDirName, bool Foreground, i
   dsyslog("scanning in directory '%s' for recordings", strDirName.c_str());
   for (DirectoryListing::const_iterator it = dirListing.begin(); it != dirListing.end() && !IsStopped(); ++it)
   {
-    std::string filename = *AddDirectory(strDirName.c_str(), (*it).Name().c_str());
+    std::string filename = AddDirectory(strDirName, (*it).Name());
     struct __stat64 st;
     if (CFile::Stat(filename, &st) == 0)
     {
@@ -90,10 +90,10 @@ void cRecordings::ScanVideoDir(const std::string& strDirName, bool Foreground, i
       }
       if (S_ISDIR(st.st_mode))
       {
-        if (endswith(filename.c_str(), deleted ? DELEXT : RECEXT))
+        if (StringUtils::EndsWith(filename, deleted ? DELEXT_ : RECEXT_))
         {
           cRecording *r = new cRecording(filename.c_str());
-          if (r->Name())
+          if (!r->Name().empty())
           {
             r->NumFrames(); // initializes the numFrames member XXX wtf
             r->FileSizeMB(); // initializes the fileSizeMB member XXX
@@ -153,23 +153,23 @@ bool cRecordings::Update(bool Wait)
   return false;
 }
 
-cRecording *cRecordings::GetByName(const std::string& FileName)
+cRecording *cRecordings::GetByName(const std::string& strFileName)
 {
-  if (!FileName.empty())
+  if (!strFileName.empty())
   {
     for (std::vector<cRecording*>::iterator it = m_recordings.begin(); it != m_recordings.end(); ++it)
-      if (strcmp((*it)->FileName(), FileName.c_str()) == 0)
+      if (strcmp((*it)->FileName().c_str(), strFileName.c_str()) == 0)
         return (*it);
   }
   return NULL;
 }
 
-void cRecordings::AddByName(const char *FileName, bool TriggerUpdate)
+void cRecordings::AddByName(const std::string& strFileName, bool TriggerUpdate)
 {
   CThreadLock lock(this);
-  cRecording *recording = GetByName(FileName);
+  cRecording *recording = GetByName(strFileName);
   if (!recording) {
-     recording = new cRecording(FileName);
+     recording = new cRecording(strFileName);
      m_recordings.push_back(recording);
      ChangeState();
      if (TriggerUpdate)
@@ -189,10 +189,10 @@ cRecording* cRecordings::FindByUID(uint32_t uid)
   return NULL;
 }
 
-void cRecordings::DelByName(const char *FileName)
+void cRecordings::DelByName(const std::string& strFileName)
 {
   CThreadLock lock(this);
-  cRecording *recording = GetByName(FileName);
+  cRecording *recording = GetByName(strFileName);
   if (recording)
   {
     std::vector<cRecording*>::iterator it = std::find(m_recordings.begin(), m_recordings.end(), recording);
@@ -200,7 +200,7 @@ void cRecordings::DelByName(const char *FileName)
       m_recordings.erase(it);
 
     std::string strExt = URLUtils::GetExtension(recording->m_strFileName);
-    if (!strExt.empty() && strcmp(strExt.c_str(), DELEXT))
+    if (!strExt.empty() && strcmp(strExt.c_str(), DELEXT_))
     {
       if (CFile::Exists(recording->FileName()))
       {
@@ -267,7 +267,7 @@ void cRecordings::ResetResume(const std::string& ResumeFileName /* = "" */)
   CThreadLock lock(this);
   for (std::vector<cRecording*>::iterator it = m_recordings.begin(); it != m_recordings.end(); ++it)
   {
-    if (ResumeFileName.empty() || strncmp(ResumeFileName.c_str(), (*it)->FileName(), strlen((*it)->FileName())) == 0)
+    if (ResumeFileName.empty() || strncmp(ResumeFileName.c_str(), (*it)->FileName().c_str(), (*it)->FileName().size()) == 0)
       (*it)->ResetResume();
   }
   ChangeState();

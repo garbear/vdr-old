@@ -42,10 +42,10 @@ private:
   uchar runningStatus;     // 0=undefined, 1=not running, 2=starts in a few seconds, 3=pausing, 4=running
   uint16_t parentalRating; // Parental rating of this event
   uint8_t starRating;      // Dish/BEV star rating
-  char *title;             // Title of this event
-  char *shortText;         // Short description of this event (typically the episode name in case of a series)
-  char *description;       // Description of this event
-  CEpgComponents *components; // The stream components of this event
+  std::string m_strTitle;  // Title of this event
+  std::string m_strShortText; // Short description of this event (typically the episode name in case of a series)
+  std::string m_strDescription; // Description of this event
+  CEpgComponents *components;       // The stream components of this event
   uchar contents[MaxEventContents]; // Contents of this event
   time_t startTime;        // Start time of this event
   int duration;            // Duration of this event in seconds
@@ -61,9 +61,9 @@ public:
   uchar TableID(void) const { return tableID; }
   uchar Version(void) const { return version; }
   int RunningStatus(void) const { return runningStatus; }
-  const char *Title(void) const { return title; }
-  const char *ShortText(void) const { return shortText; }
-  const char *Description(void) const { return description; }
+  std::string Title(void) const { return m_strTitle; }
+  std::string ShortText(void) const { return m_strShortText; }
+  std::string Description(void) const { return m_strDescription; }
   const CEpgComponents *Components(void) const { return components; }
   uchar Contents(int i = 0) const { return (0 <= i && i < MaxEventContents) ? contents[i] : uchar(0); }
   int ParentalRating(void) const { return parentalRating; }
@@ -77,19 +77,19 @@ public:
   bool HasTimer(void) const;
   bool IsRunning(bool OrAboutToStart = false) const;
   static const char *ContentToString(uchar Content);
-  cString GetParentalRatingString(void) const;
-  cString GetStarRatingString(void) const;
-  cString GetDateString(void) const;
-  cString GetTimeString(void) const;
-  cString GetEndTimeString(void) const;
-  cString GetVpsString(void) const;
+  std::string GetParentalRatingString(void) const;
+  std::string GetStarRatingString(void) const;
+  std::string GetDateString(void) const;
+  std::string GetTimeString(void) const;
+  std::string GetEndTimeString(void) const;
+  std::string GetVpsString(void) const;
   void SetEventID(tEventID EventID);
   void SetTableID(uchar TableID);
   void SetVersion(uchar Version);
   void SetRunningStatus(int RunningStatus, cChannel *Channel = NULL);
-  void SetTitle(const char *Title);
-  void SetShortText(const char *ShortText);
-  void SetDescription(const char *Description);
+  void SetTitle(const std::string& strTitle);
+  void SetShortText(const std::string& strShortText);
+  void SetDescription(const std::string& strDescription);
   void SetComponents(CEpgComponents *Components); // Will take ownership of Components!
   void SetContents(uchar *Contents);
   void SetParentalRating(int ParentalRating);
@@ -98,7 +98,7 @@ public:
   void SetDuration(int Duration);
   void SetVps(time_t Vps);
   void SetSeen(void);
-  cString ToDescr(void) const;
+  std::string ToDescr(void) const;
   bool Parse(const std::string& data);
   void FixEpgBugs(void);
   static bool Deserialise(cSchedule* schedule, const TiXmlNode *eventNode);

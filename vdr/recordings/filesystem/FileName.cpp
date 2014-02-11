@@ -12,7 +12,7 @@
 #define RECORDFILESUFFIXTS      "/%05d.ts"
 #define RECORDFILESUFFIXLEN 20 // some additional bytes for safety...
 
-cFileName::cFileName(const char *FileName, bool Record, bool Blocking, bool IsPesRecording)
+cFileName::cFileName(const std::string& strFileName, bool Record, bool Blocking, bool IsPesRecording)
 {
   m_file = NULL;
   m_iFileNumber = 0;
@@ -20,7 +20,7 @@ cFileName::cFileName(const char *FileName, bool Record, bool Blocking, bool IsPe
   m_bBlocking = Blocking;
   m_bIsPesRecording = IsPesRecording;
   // Prepare the file name:
-  m_strFileName = FileName;
+  m_strFileName = strFileName;
   SetOffset(1);
 }
 

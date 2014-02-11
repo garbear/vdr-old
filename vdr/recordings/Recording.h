@@ -34,17 +34,17 @@ class cRecording
   friend class cRecordings;
 public:
   cRecording(TimerPtr Timer, const cEvent *Event);
-  cRecording(const char *FileName);
+  cRecording(const std::string& strFileName);
   virtual ~cRecording();
   time_t Start(void) const { return m_start; }
   int Priority(void) const { return m_iPriority; }
   int Lifetime(void) const { return m_iLifetime; }
   time_t Deleted(void) const { return m_deleted; }
-  const char *Name(void) const { return m_strName; }
-  const char *FileName(void);
+  std::string Name(void) const { return m_strName; }
+  std::string FileName(void);
   uint32_t UID(void);
   const cRecordingInfo *Info(void) const { return m_recordingInfo; }
-  const char *PrefixFileName(char Prefix);
+  std::string PrefixFileName(char Prefix);
   int HierarchyLevels(void) const;
   void ResetResume(void);
   double FramesPerSecond(void) const { return m_dFramesPerSecond; }
@@ -86,7 +86,7 @@ public:
 
   static int ReadFrame(cUnbufferedFile *f, uchar *b, int Length, int Max);
 
-  static char *ExchangeChars(char *s, bool ToFileSystem);
+  static std::string ExchangeChars(const std::string& strSubject, bool ToFileSystem);
         // Exchanges the characters in the given string to or from a file system
         // specific representation (depending on ToFileSystem). The given string will
         // be modified and may be reallocated if more space is needed. The return
@@ -98,9 +98,11 @@ private:
   static char *StripEpisodeName(char *s, bool Strip);
   int GetResume(void);
 
+  static char *ExchangeCharsXXX(char *s, bool ToFileSystem);
+
   int             m_iResume;
   std::string     m_strFileName;
-  char*           m_strName;
+  std::string     m_strName;
   int             m_iFileSizeMB;
   int             m_iNumFrames;
   int             m_iChannel;

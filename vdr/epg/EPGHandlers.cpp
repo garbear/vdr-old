@@ -54,31 +54,33 @@ void cEpgHandlers::SetEventID(cEvent *Event, tEventID EventID)
   Event->SetEventID(EventID);
 }
 
-void cEpgHandlers::SetTitle(cEvent *Event, const char *Title)
+void cEpgHandlers::SetTitle(cEvent *Event, const std::string& strTitle)
 {
-  for (cEpgHandler *eh = First(); eh; eh = Next(eh)) {
-      if (eh->SetTitle(Event, Title))
-         return;
-      }
-  Event->SetTitle(Title);
+  for (cEpgHandler *eh = First(); eh; eh = Next(eh))
+  {
+    if (eh->SetTitle(Event, strTitle))
+      return;
+  }
+  Event->SetTitle(strTitle);
 }
 
-void cEpgHandlers::SetShortText(cEvent *Event, const char *ShortText)
+void cEpgHandlers::SetShortText(cEvent *Event, const std::string& strShortText)
 {
-  for (cEpgHandler *eh = First(); eh; eh = Next(eh)) {
-      if (eh->SetShortText(Event, ShortText))
-         return;
-      }
-  Event->SetShortText(ShortText);
+  for (cEpgHandler *eh = First(); eh; eh = Next(eh))
+  {
+      return;
+  }
+  Event->SetShortText(strShortText);
 }
 
-void cEpgHandlers::SetDescription(cEvent *Event, const char *Description)
+void cEpgHandlers::SetDescription(cEvent *Event, const std::string& strDescription)
 {
-  for (cEpgHandler *eh = First(); eh; eh = Next(eh)) {
-      if (eh->SetDescription(Event, Description))
-         return;
-      }
-  Event->SetDescription(Description);
+  for (cEpgHandler *eh = First(); eh; eh = Next(eh))
+  {
+    if (eh->SetDescription(Event, strDescription))
+      return;
+  }
+  Event->SetDescription(strDescription);
 }
 
 void cEpgHandlers::SetContents(cEvent *Event, uchar *Contents)

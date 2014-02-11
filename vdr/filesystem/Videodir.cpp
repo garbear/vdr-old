@@ -170,21 +170,16 @@ int CloseVideoFile(cUnbufferedFile *File)
   return Result;
 }
 
-bool RenameVideoFile(const char *OldName, const char *NewName)
+bool RenameVideoFile(const std::string& strOldName, const std::string& strNewName)
 {
-  // Only the base video directory entry will be renamed, leaving the
-  // possible symlinks untouched. Going through all the symlinks and disks
-  // would be unnecessary work - maybe later...
-  if (rename(OldName, NewName) == -1) {
-     LOG_ERROR_STR(OldName);
-     return false;
-     }
-  return true;
+  return CFile::Rename(strOldName, strNewName);
 }
 
-bool RemoveVideoFile(const char *FileName)
+bool RemoveVideoFile(const std::string& strFileName)
 {
-  return RemoveFileOrDir(FileName, true);
+  if (CDirectory::Exists(strFileName))
+    return CDirectory::Remove(strFileName);
+  return CFile::Delete(strFileName);
 }
 
 bool VideoFileSpaceAvailable(int SizeMB)
@@ -223,31 +218,6 @@ int VideoDiskSpace(int *FreeMB, int *UsedMB)
   return (free + used) ? used * 100 / (free + used) : 0;
 }
 
-std::string PrefixVideoFileName(const char *FileName, char Prefix)
-{
-  std::string retval;
-  char PrefixedName[strlen(FileName) + 2];
-
-  const char *p = FileName + strlen(FileName); // p points at the terminating 0
-  int n = 2;
-  while (p-- > FileName && n > 0)
-  {
-    if (*p == '/')
-    {
-      if (--n == 0)
-      {
-        int l = p - FileName + 1;
-        strncpy(PrefixedName, FileName, l);
-        PrefixedName[l] = Prefix;
-        strcpy(PrefixedName + l + 1, p + 1);
-        retval = PrefixedName;
-        break;
-      }
-    }
-  }
-  return retval;
-}
-
 void RemoveEmptyVideoDirectories(const char *IgnoreFiles[])
 {
   cVideoDirectory Dir;
@@ -256,13 +226,15 @@ void RemoveEmptyVideoDirectories(const char *IgnoreFiles[])
      } while (Dir.Next());
 }
 
-bool IsOnVideoDirectoryFileSystem(const char *FileName)
+bool IsOnVideoDirectoryFileSystem(const std::string& strFileName)
 {
   cVideoDirectory Dir;
-  do {
-     if (CFile::OnSameFileSystem(Dir.Name(), FileName))
-        return true;
-     } while (Dir.Next());
+  do
+  {
+    if (CFile::OnSameFileSystem(Dir.Name(), strFileName))
+      return true;
+  }
+  while (Dir.Next());
   return false;
 }
 

@@ -41,12 +41,12 @@ cRecPlayer::cRecPlayer(cRecording* rec, bool inProgress)
 {
   m_file          = -1;
   m_fileOpen      = -1;
-  m_recordingFilename = strdup(rec->FileName());
+  m_recordingFilename = rec->FileName();
   m_inProgress = inProgress;
 
   // FIXME find out max file path / name lengths
   m_pesrecording = rec->IsPesRecording();
-  if(m_pesrecording) isyslog("recording '%s' is a PES recording", m_recordingFilename);
+  if(m_pesrecording) isyslog("recording '%s' is a PES recording", m_recordingFilename.c_str());
   m_indexFile = new cIndexFile(m_recordingFilename, false, m_pesrecording);
 
   scan();
@@ -74,7 +74,8 @@ void cRecPlayer::scan()
   {
     fileNameFromIndex(i);
 
-    if(stat(m_fileName, &s) == -1) {
+    //XXX
+    if(stat(m_fileName.c_str(), &s) == -1) {
       break;
     }
 
@@ -102,7 +103,8 @@ void cRecPlayer::reScan()
   {
     fileNameFromIndex(i);
 
-    if(stat(m_fileName, &s) == -1) {
+    //XXX
+    if(stat(m_fileName.c_str(), &s) == -1) {
       break;
     }
 
@@ -129,14 +131,13 @@ cRecPlayer::~cRecPlayer()
 {
   cleanup();
   closeFile();
-  free(m_recordingFilename);
 }
 
-char* cRecPlayer::fileNameFromIndex(int index) {
+std::string cRecPlayer::fileNameFromIndex(int index) {
   if (m_pesrecording)
-    snprintf(m_fileName, sizeof(m_fileName), "%s/%03i.vdr", m_recordingFilename, index+1);
+    m_fileName = StringUtils::Format("%s/%03i.vdr", m_recordingFilename.c_str(), index+1);
   else
-    snprintf(m_fileName, sizeof(m_fileName), "%s/%05i.ts", m_recordingFilename, index+1);
+    m_fileName = StringUtils::Format("%s/%05i.ts", m_recordingFilename.c_str(), index+1);
 
   return m_fileName;
 }
@@ -147,9 +148,10 @@ bool cRecPlayer::openFile(int index)
   closeFile();
 
   fileNameFromIndex(index);
-  isyslog("openFile called for index %i string:%s", index, m_fileName);
+  isyslog("openFile called for index %i string:%s", index, m_fileName.c_str());
 
-  m_file = open(m_fileName, O_RDONLY);
+  //XXX
+  m_file = open(m_fileName.c_str(), O_RDONLY);
   if (m_file == -1)
   {
     isyslog("file failed to open");

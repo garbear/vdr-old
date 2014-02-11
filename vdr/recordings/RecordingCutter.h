@@ -18,8 +18,8 @@ class cCuttingThread;
 class cCutter {
 private:
   static PLATFORM::CMutex mutex;
-  static cString originalVersionName;
-  static cString editedVersionName;
+  static std::string originalVersionName;
+  static std::string editedVersionName;
   static cCuttingThread *cuttingThread;
   static bool error;
   static bool ended;

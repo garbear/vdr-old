@@ -387,8 +387,8 @@ bool cEIT::HandleEitEvent(SI::EIT::Event *EitEvent)
       }
       else
       {
-        cEpgHandlers::Get().SetTitle(m_pEvent, NULL);
-        cEpgHandlers::Get().SetShortText(m_pEvent, NULL);
+        cEpgHandlers::Get().SetTitle(m_pEvent, "");
+        cEpgHandlers::Get().SetShortText(m_pEvent, "");
       }
       if (m_ExtendedEventDescriptors)
       {
@@ -396,7 +396,7 @@ bool cEIT::HandleEitEvent(SI::EIT::Event *EitEvent)
         cEpgHandlers::Get().SetDescription(m_pEvent, m_ExtendedEventDescriptors->getText(buffer, sizeof(buffer), ": "));
       }
       else
-        cEpgHandlers::Get().SetDescription(m_pEvent, NULL);
+        cEpgHandlers::Get().SetDescription(m_pEvent, "");
     }
     SAFE_DELETE(m_DishExtendedEventDescriptor);
     SAFE_DELETE(m_DishShortEventDescriptor);

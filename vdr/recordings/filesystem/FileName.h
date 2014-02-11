@@ -9,7 +9,7 @@ class cUnbufferedFile;
 class cFileName
 {
 public:
-  cFileName(const char *FileName, bool Record, bool Blocking = false, bool IsPesRecording = false);
+  cFileName(const std::string& strFileName, bool Record, bool Blocking = false, bool IsPesRecording = false);
   ~cFileName();
   std::string Name(void) { return m_strFileName + m_strFileOffset; }
   uint16_t Number(void) { return m_iFileNumber; }

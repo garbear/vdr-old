@@ -10,7 +10,7 @@ class cIndexFileGenerator;
 
 class cIndexFile {
 public:
-  cIndexFile(const char *FileName, bool Record, bool IsPesRecording = false, bool PauseLive = false);
+  cIndexFile(const std::string& strFileName, bool Record, bool IsPesRecording = false, bool PauseLive = false);
   ~cIndexFile();
   bool Ok(void) { return m_index != NULL; }
   bool Write(bool Independent, uint16_t FileNumber, off_t FileOffset);
@@ -28,10 +28,10 @@ public:
   bool StoreResume(int Index) { return m_resumeFile.Save(Index); }
   bool IsStillRecording(void);
   void Delete(void);
-  static int GetLength(const char *FileName, bool IsPesRecording = false);
+  static int GetLength(const std::string& strFileName, bool IsPesRecording = false);
        ///< Calculates the recording length (number of frames) without actually reading the index file.
        ///< Returns -1 in case of error.
-  static cString IndexFileName(const char *FileName, bool IsPesRecording);
+  static std::string IndexFileName(const std::string& strFileName, bool IsPesRecording);
 
 private:
   void ConvertFromPes(tIndexTs *IndexTs, int Count);

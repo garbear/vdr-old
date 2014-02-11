@@ -265,19 +265,19 @@ private:
 protected:
   virtual void* Process(void);
 public:
-  cCuttingThread(const char *FromFileName, const char *ToFileName);
+  cCuttingThread(const std::string& strFromFileName, const std::string& strToFileName);
   virtual ~cCuttingThread();
   const char *Error(void) { return error; }
   };
 
-cCuttingThread::cCuttingThread(const char *FromFileName, const char *ToFileName)
+cCuttingThread::cCuttingThread(const std::string& strFromFileName, const std::string& strToFileName)
 :CThread()
 {
   error = NULL;
   fromFile = toFile = NULL;
   fromFileName = toFileName = NULL;
   fromIndex = toIndex = NULL;
-  cRecording Recording(FromFileName);
+  cRecording Recording(strFromFileName);
   isPesRecording = Recording.IsPesRecording();
   framesPerSecond = Recording.FramesPerSecond();
   suspensionLogged = false;
@@ -291,24 +291,24 @@ cCuttingThread::cCuttingThread(const char *FromFileName, const char *ToFileName)
   tRefOffset = 0;
   memset(counter, 0x00, sizeof(counter));
   numIFrames = 0;
-  if (fromMarks.Load(FromFileName, framesPerSecond, isPesRecording) && fromMarks.Count()) {
+  if (fromMarks.Load(strFromFileName.c_str(), framesPerSecond, isPesRecording) && fromMarks.Count()) {
      numSequences = fromMarks.GetNumSequences();
      if (numSequences > 0) {
-        fromFileName = new cFileName(FromFileName, false, true, isPesRecording);
-        toFileName = new cFileName(ToFileName, true, true, isPesRecording);
-        fromIndex = new cIndexFile(FromFileName, false, isPesRecording);
-        toIndex = new cIndexFile(ToFileName, true, isPesRecording);
-        toMarks.Load(ToFileName, framesPerSecond, isPesRecording); // doesn't actually load marks, just sets the file name
+        fromFileName = new cFileName(strFromFileName, false, true, isPesRecording);
+        toFileName = new cFileName(strToFileName, true, true, isPesRecording);
+        fromIndex = new cIndexFile(strFromFileName, false, isPesRecording);
+        toIndex = new cIndexFile(strToFileName, true, isPesRecording);
+        toMarks.Load(strToFileName.c_str(), framesPerSecond, isPesRecording); // doesn't actually load marks, just sets the file name
         maxVideoFileSize = MEGABYTE(g_setup.MaxVideoFileSize);
         if (isPesRecording && maxVideoFileSize > MEGABYTE(MAXVIDEOFILESIZEPES))
            maxVideoFileSize = MEGABYTE(MAXVIDEOFILESIZEPES);
         CreateThread();
         }
      else
-        esyslog("no editing sequences found for %s", FromFileName);
+        esyslog("no editing sequences found for %s", strFromFileName.c_str());
      }
   else
-     esyslog("no editing marks found for %s", FromFileName);
+     esyslog("no editing marks found for %s", strFromFileName.c_str());
 }
 
 cCuttingThread::~cCuttingThread()
@@ -653,8 +653,8 @@ void* cCuttingThread::Process(void)
 // --- cCutter ---------------------------------------------------------------
 
 CMutex cCutter::mutex;
-cString cCutter::originalVersionName;
-cString cCutter::editedVersionName;
+std::string cCutter::originalVersionName;
+std::string cCutter::editedVersionName;
 cCuttingThread *cCutter::cuttingThread = NULL;
 bool cCutter::error = false;
 bool cCutter::ended = false;
@@ -673,11 +673,11 @@ bool cCutter::Start(const char *FileName)
      if (cMark *First = FromMarks.GetNextBegin())
         Recording.SetStartTime(Recording.Start() + (int(First->Position() / Recording.FramesPerSecond() + 30) / 60) * 60);
 
-     const char *evn = Recording.PrefixFileName('%');
-     if (evn && RemoveVideoFile(evn) && MakeDirs(evn, true)) {
+     std::string strEvent = Recording.PrefixFileName('%');
+     if (!strEvent.empty() && RemoveVideoFile(strEvent) && MakeDirs(strEvent, true)) {
         // XXX this can be removed once RenameVideoFile() follows symlinks (see videodir.c)
         // remove a possible deleted recording with the same name to avoid symlink mixups:
-        char *s = strdup(evn);
+        char *s = strdup(strEvent.c_str());
         char *e = strrchr(s, '.');
         if (e) {
            if (strcmp(e, ".rec") == 0) {
@@ -687,7 +687,7 @@ bool cCutter::Start(const char *FileName)
            }
         free(s);
         // XXX
-        editedVersionName = evn;
+        editedVersionName = strEvent;
         Recording.WriteInfo();
         Recordings.AddByName(editedVersionName, false);
         cuttingThread = new cCuttingThread(FileName, editedVersionName);
@@ -704,7 +704,7 @@ void cCutter::Stop(void)
   const char *Error = cuttingThread ? cuttingThread->Error() : NULL;
   delete cuttingThread;
   cuttingThread = NULL;
-  if ((Interrupted || Error) && *editedVersionName) {
+  if ((Interrupted || Error) && !editedVersionName.empty()) {
      if (Interrupted)
         isyslog("editing process has been interrupted");
      if (Error)
@@ -721,13 +721,13 @@ bool cCutter::Active(const char *FileName)
   CLockObject lock(mutex);
   if (cuttingThread) {
      if (cuttingThread->IsRunning())
-        return !FileName || strcmp(FileName, originalVersionName) == 0 || strcmp(FileName, editedVersionName) == 0;
+        return !FileName || strcmp(FileName, originalVersionName.c_str()) == 0 || strcmp(FileName, editedVersionName.c_str()) == 0;
      error = cuttingThread->Error();
      Stop();
      if (!error)
-        cRecordingUserCommand::Get().InvokeCommand(RUC_EDITEDRECORDING, *editedVersionName, *originalVersionName);
-     originalVersionName = NULL;
-     editedVersionName = NULL;
+        cRecordingUserCommand::Get().InvokeCommand(RUC_EDITEDRECORDING, editedVersionName, originalVersionName);
+     originalVersionName.clear();
+     editedVersionName.clear();
      ended = true;
      }
   return false;
@@ -755,7 +755,7 @@ bool CutRecording(const char *FileName)
 {
   if (CDirectory::CanWrite(FileName)) {
      cRecording Recording(FileName);
-     if (Recording.Name()) {
+     if (!Recording.Name().empty()) {
         cMarks Marks;
         if (Marks.Load(FileName, Recording.FramesPerSecond(), Recording.IsPesRecording()) && Marks.Count()) {
            if (Marks.GetNumSequences()) {

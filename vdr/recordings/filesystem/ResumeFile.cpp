@@ -5,11 +5,11 @@
 
 #define RESUMEFILESUFFIX  "/resume%s%s"
 
-cResumeFile::cResumeFile(const char *FileName, bool IsPesRecording)
+cResumeFile::cResumeFile(const std::string& strFileName, bool IsPesRecording)
 {
   m_bIsPesRecording = IsPesRecording;
   const char *Suffix = m_bIsPesRecording ? RESUMEFILESUFFIX ".vdr" : RESUMEFILESUFFIX;
-  m_strFileName = FileName;
+  m_strFileName = strFileName;
   m_strFileName.append(StringUtils::Format(Suffix, g_setup.ResumeID ? "." : "", g_setup.ResumeID ? *itoa(g_setup.ResumeID) : ""));
 }
 
