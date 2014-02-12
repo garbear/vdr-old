@@ -1334,6 +1334,7 @@ bool cVNSIClient::processTIMER_Add() /* OPCODE 83 */
   ChannelPtr channel = cChannelManager::Get().GetByChannelUID(channelid);
   if(channel)
   {
+    //XXX
     buffer = cString::sprintf("%u:%s:%s:%04d:%04d:%d:%d:%s:%s\n", flags, (const char*)channel->GetChannelID().Serialize().c_str(), *cTimer::PrintDay(day, weekdays, true), start, stop, priority, lifetime, file, aux);
   }
 
@@ -1356,7 +1357,7 @@ bool cVNSIClient::processTIMER_Add() /* OPCODE 83 */
     }
     else
     {
-      esyslog("Timer already defined: %d %s", t->Index() + 1, t->Serialise().c_str()); //TODO
+      esyslog("Timer already defined: %d %s", t->Index() + 1, t->ToDescr().c_str());
       m_resp->add_U32(VNSI_RET_DATALOCKED);
     }
   }
@@ -1474,6 +1475,7 @@ bool cVNSIClient::processTIMER_Update() /* OPCODE 85 */
     ChannelPtr channel = cChannelManager::Get().GetByChannelUID(channelid);
     if(channel)
     {
+      //XXX
       buffer = cString::sprintf("%u:%s:%s:%04d:%04d:%d:%d:%s:%s\n", flags, (const char*)channel->GetChannelID().Serialize().c_str(), *cTimer::PrintDay(day, weekdays, true), start, stop, priority, lifetime, file, aux);
     }
 

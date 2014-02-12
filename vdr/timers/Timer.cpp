@@ -202,14 +202,6 @@ int cTimer::Compare(const cTimer &Timer) const
   return r;
 }
 
-std::string cTimer::Serialise(bool UseChannelID) const
-{
-  std::string strReturn = m_file;
-  StringUtils::Replace(strReturn, ':', '|');
-  strReturn = StringUtils::Format("%u:%s:%s:%04d:%04d:%d:%d:%s:%s\n", m_flags, UseChannelID ? Channel()->GetChannelID().Serialize().c_str() : *itoa(Channel()->Number()), *PrintDay(m_day, m_weekdays, true), m_start, m_stop, m_priority, m_lifetime, strReturn.c_str(), m_aux ? m_aux : "");
-  return strReturn;
-}
-
 bool cTimer::SerialiseTimer(TiXmlNode *node) const
 {
   if (node == NULL)
@@ -384,16 +376,6 @@ cString cTimer::PrintDay(time_t Day, int WeekDays, bool SingleByteChars)
      }
   *b = 0;
   return buffer;
-}
-
-cString cTimer::PrintFirstDay(void) const
-{
-  if (m_weekdays) {
-     cString s = PrintDay(m_day, m_weekdays, true);
-     if (strlen(s) == 18)
-        return *s + 8;
-     }
-  return ""; // not NULL, so the caller can always use the result
 }
 
 bool cTimer::Parse(const char *s)

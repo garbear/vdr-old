@@ -47,23 +47,24 @@ public:
   const char *Aux(void) const     { return m_aux; }
   time_t Deferred(void) const     { return deferred; }
   const cEvent *Event(void) const { return event; }
-  std::string Serialise(bool UseChannelID = false) const;
+
+  std::string ToDescr(void) const;
+
   bool SerialiseTimer(TiXmlNode *node) const;
   bool DeserialiseTimer(const TiXmlNode *node);
-  std::string ToDescr(void) const;
   bool Parse(const char *s);
+
   bool IsSingleEvent(void) const;
-  static int GetMDay(time_t t);
-  static int GetWDay(time_t t);
   bool DayMatches(time_t t) const;
-  static time_t IncDay(time_t t, int Days);
-  static time_t SetTime(time_t t, int SecondsFromMidnight);
-  void SetFile(const std::string& strFile);
   bool Matches(time_t t = 0, bool Directly = false, int Margin = 0);
   eTimerMatch MatchesEvent(const cEvent *Event, int *Overlap = NULL);
   bool Expired(void) const;
   time_t StartTime(void) const;
   time_t StopTime(void) const;
+  bool HasFlags(uint Flags) const;
+  size_t Index(void) const { return m_index; }
+
+  void SetFile(const std::string& strFile);
   void SetEventFromSchedule(cSchedules *Schedules = NULL);
   void SetEvent(const cEvent *Event);
   void SetRecording(bool Recording);
@@ -80,16 +81,18 @@ public:
   void SetFlags(uint Flags);
   void ClrFlags(uint Flags);
   void InvFlags(uint Flags);
-  bool HasFlags(uint Flags) const;
+  void SetIndex(size_t index) { m_index = index; }
+
   void Skip(void);
   void OnOff(void);
-  size_t Index(void) const { return m_index; }
-  void SetIndex(size_t index) { m_index = index; }
-  cString PrintFirstDay(void) const;
+
+  static int GetMDay(time_t t);
+  static int GetWDay(time_t t);
+  static time_t IncDay(time_t t, int Days);
+  static time_t SetTime(time_t t, int SecondsFromMidnight);
   static int TimeToInt(int t);
   static bool ParseDay(const char *s, time_t &Day, int &WeekDays);
   static cString PrintDay(time_t Day, int WeekDays, bool SingleByteChars);
-
   static int CompareTimers(const cTimer *a, const cTimer *b);
 
 private:
