@@ -253,7 +253,7 @@ int cTimer::CompareTimers(const cTimer *a, const cTimer *b)
 void cTimers::ClearEvents(void)
 {
   for (std::vector<TimerPtr>::iterator it = m_timers.begin(); it != m_timers.end(); ++it)
-    (*it)->SetEvent(NULL);
+    (*it)->ClearEvent();
 }
 
 bool cTimers::HasTimer(const cEvent* event) const

@@ -20,7 +20,7 @@ class TiXmlNode;
 class cTimer
 {
 public:
-  cTimer(bool Instant = false, bool Pause = false, ChannelPtr Channel = cChannel::EmptyChannel);
+  cTimer(void);
   cTimer(const cEvent *Event);
   cTimer(const cTimer &Timer);
   virtual ~cTimer();
@@ -66,6 +66,7 @@ public:
 
   void SetFile(const std::string& strFile);
   void SetEventFromSchedule(cSchedules *Schedules = NULL);
+  void ClearEvent(void);
   void SetEvent(const cEvent *Event);
   void SetRecording(bool Recording);
   void SetPending(bool Pending);

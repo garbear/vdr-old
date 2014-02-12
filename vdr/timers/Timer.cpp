@@ -16,7 +16,7 @@
 
 TimerPtr cTimer::EmptyTimer;
 
-cTimer::cTimer(bool Instant, bool Pause, ChannelPtr Channel)
+cTimer::cTimer(void)
 {
   time_t t = time(NULL);
   struct tm tm_r;
@@ -32,65 +32,19 @@ cTimer::cTimer(bool Instant, bool Pause, ChannelPtr Channel)
   m_flags      = tfNone;
   m_aux        = NULL;
   event        = NULL;
-  m_channel    = Channel ? Channel : cChannelManager::Get().GetByNumber(1 /* XXX */);
+  m_channel    = cChannelManager::Get().GetByNumber(1 /* XXX */);
   m_day        = SetTime(t, 0);
   m_weekdays   = 0;
   m_start      = now->tm_hour * 100 + now->tm_min;
-  m_stop       = 0;
   m_index      = 0;
 
-  if (Instant)
-    SetFlags(tfActive | tfInstant);
-
-  if (!g_setup.InstantRecordTime && m_channel && (Instant || Pause))
-  {
-    cSchedulesLock SchedulesLock;
-    if (cSchedules *Schedules = SchedulesLock.Get())
-    {
-      if (SchedulePtr Schedule = Schedules->GetSchedule(m_channel))
-      {
-        if (const cEvent *Event = Schedule->GetPresentEvent())
-        {
-          time_t tstart = Event->StartTime();
-          time_t tstop = Event->EndTime();
-          if (Event->Vps() && g_setup.UseVps)
-          {
-            SetFlags(tfVps);
-            tstart = Event->Vps();
-          }
-          else
-          {
-            tstop  += g_setup.MarginStop * 60;
-            tstart -= g_setup.MarginStart * 60;
-          }
-          m_day = SetTime(tstart, 0);
-
-          struct tm *time = localtime_r(&tstart, &tm_r);
-          m_start = time->tm_hour * 100 + time->tm_min;
-
-          time = localtime_r(&tstop, &tm_r);
-          m_stop = time->tm_hour * 100 + time->tm_min;
-
-          SetEvent(Event);
-        }
-      }
-    }
-  }
-  if (!m_stop)
-  {
-     m_stop = now->tm_hour * 60 + now->tm_min + (g_setup.InstantRecordTime ? g_setup.InstantRecordTime : DEFINSTRECTIME);
-     m_stop = (m_stop / 60) * 100 + (m_stop % 60);
-  }
+  m_stop = now->tm_hour * 60 + now->tm_min + (g_setup.InstantRecordTime ? g_setup.InstantRecordTime : DEFINSTRECTIME);
+  m_stop = (m_stop / 60) * 100 + (m_stop % 60);
 
   if (m_stop >= 2400)
     m_stop -= 2400;
-  m_priority = Pause ? g_setup.PausePriority : g_setup.DefaultPriority;
-  m_lifetime = Pause ? g_setup.PauseLifetime : g_setup.DefaultLifetime;
-
-  if (Instant && m_channel)
-  {
-    m_file = StringUtils::Format("%s%s", g_setup.MarkInstantRecord ? "@" : "", *g_setup.NameInstantRecord ? g_setup.NameInstantRecord : m_channel->Name().c_str());
-  }
+  m_priority = g_setup.DefaultPriority;
+  m_lifetime = g_setup.DefaultLifetime;
 
   Matches();
 }
@@ -653,6 +607,13 @@ void cTimer::SetEventFromSchedule(cSchedules *Schedules)
      }
 }
 
+void cTimer::ClearEvent(void)
+{
+  if (event)
+    isyslog("timer %s set to no event", ToDescr().c_str());
+  event = NULL;
+}
+
 void cTimer::SetEvent(const cEvent *Event)
 {
   if (event != Event) { //XXX TODO check event data, too???
@@ -754,7 +715,7 @@ void cTimer::Skip(void)
 {
   m_day = IncDay(SetTime(StartTime(), 0), 1);
   startTime = 0;
-  SetEvent(NULL);
+  ClearEvent();
 }
 
 void cTimer::OnOff(void)
@@ -769,6 +730,6 @@ void cTimer::OnOff(void)
      Skip();
   else
      SetFlags(tfActive);
-  SetEvent(NULL);
+  ClearEvent();
   Matches(); // refresh start and end time
 }
