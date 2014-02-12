@@ -36,6 +36,7 @@
 #include "filesystem/Videodir.h"
 #include "timers/Timers.h"
 #include "devices/Device.h"
+#include "utils/TimeUtils.h"
 
 //#include "vnsi.h"
 #include "settings/Settings.h"
@@ -1325,7 +1326,7 @@ bool cVNSIClient::processTIMER_Add() /* OPCODE 83 */
   struct tm tm_r;
   struct tm *time = localtime_r(&startTime, &tm_r);
   if (day <= 0)
-    day = cTimer::SetTime(startTime, 0);
+    day = CTimeUtils::SetTime(startTime, 0);
   int start = time->tm_hour * 100 + time->tm_min;
   time = localtime_r(&stopTime, &tm_r);
   int stop = time->tm_hour * 100 + time->tm_min;
@@ -1335,7 +1336,7 @@ bool cVNSIClient::processTIMER_Add() /* OPCODE 83 */
   if(channel)
   {
     //XXX
-    buffer = cString::sprintf("%u:%s:%s:%04d:%04d:%d:%d:%s:%s\n", flags, (const char*)channel->GetChannelID().Serialize().c_str(), *cTimer::PrintDay(day, weekdays, true), start, stop, priority, lifetime, file, aux);
+    buffer = cString::sprintf("%u:%s:%s:%04d:%04d:%d:%d:%s:%s\n", flags, (const char*)channel->GetChannelID().Serialize().c_str(), CTimeUtils::PrintDay(day, weekdays, true).c_str(), start, stop, priority, lifetime, file, aux);
   }
 
   delete[] file;
@@ -1466,7 +1467,7 @@ bool cVNSIClient::processTIMER_Update() /* OPCODE 85 */
     struct tm tm_r;
     struct tm *time = localtime_r(&startTime, &tm_r);
     if (day <= 0)
-      day = cTimer::SetTime(startTime, 0);
+      day = CTimeUtils::SetTime(startTime, 0);
     int start = time->tm_hour * 100 + time->tm_min;
     time = localtime_r(&stopTime, &tm_r);
     int stop = time->tm_hour * 100 + time->tm_min;
@@ -1476,7 +1477,7 @@ bool cVNSIClient::processTIMER_Update() /* OPCODE 85 */
     if(channel)
     {
       //XXX
-      buffer = cString::sprintf("%u:%s:%s:%04d:%04d:%d:%d:%s:%s\n", flags, (const char*)channel->GetChannelID().Serialize().c_str(), *cTimer::PrintDay(day, weekdays, true), start, stop, priority, lifetime, file, aux);
+      buffer = cString::sprintf("%u:%s:%s:%04d:%04d:%d:%d:%s:%s\n", flags, (const char*)channel->GetChannelID().Serialize().c_str(), CTimeUtils::PrintDay(day, weekdays, true).c_str(), start, stop, priority, lifetime, file, aux);
     }
 
     delete[] file;

@@ -7,6 +7,7 @@
 #include "devices/DeviceManager.h"
 #include "epg/Event.h"
 #include "utils/Status.h"
+#include "utils/TimeUtils.h"
 #include "utils/UTF8Utils.h"
 #include "utils/XBMCTinyXML.h"
 
@@ -33,7 +34,7 @@ cTimer::cTimer(void)
   m_aux        = NULL;
   event        = NULL;
   m_channel    = cChannelManager::Get().GetByNumber(1 /* XXX */);
-  m_day        = SetTime(t, 0);
+  m_day        = CTimeUtils::SetTime(t, 0);
   m_weekdays   = 0;
   m_start      = now->tm_hour * 100 + now->tm_min;
   m_index      = 0;
@@ -78,7 +79,7 @@ cTimer::cTimer(const cEvent *Event)
   }
   struct tm tm_r;
   struct tm *time = localtime_r(&tstart, &tm_r);
-  m_day = SetTime(tstart, 0);
+  m_day = CTimeUtils::SetTime(tstart, 0);
   m_weekdays = 0;
   m_start = time->tm_hour * 100 + time->tm_min;
   time = localtime_r(&tstop, &tm_r);
@@ -167,7 +168,7 @@ bool cTimer::SerialiseTimer(TiXmlNode *node) const
 
   timerElement->SetAttribute(TIMER_XML_ATTR_FLAGS,    m_flags);
   timerElement->SetAttribute(TIMER_XML_ATTR_CHANNEL,  Channel()->GetChannelID().Serialize().c_str());
-  timerElement->SetAttribute(TIMER_XML_ATTR_DAYS,     *PrintDay(m_day, m_weekdays, true));
+  timerElement->SetAttribute(TIMER_XML_ATTR_DAYS,     CTimeUtils::PrintDay(m_day, m_weekdays, true).c_str());
   timerElement->SetAttribute(TIMER_XML_ATTR_START,    m_start);
   timerElement->SetAttribute(TIMER_XML_ATTR_STOP,     m_stop);
   timerElement->SetAttribute(TIMER_XML_ATTR_PRIORITY, m_priority);
@@ -201,7 +202,7 @@ bool cTimer::DeserialiseTimer(const TiXmlNode *node)
   const char *days = elem->Attribute(TIMER_XML_ATTR_DAYS);
   if (days != NULL)
   {
-    ParseDay(days, m_day, m_weekdays);
+    CTimeUtils::ParseDay(days, m_day, m_weekdays);
   }
 
   const char *start = elem->Attribute(TIMER_XML_ATTR_START);
@@ -234,104 +235,6 @@ std::string cTimer::ToDescr(void) const
   return StringUtils::Format("%d %04d-%04d %s'%s'", Channel()->Number(), m_start, m_stop, HasFlags(tfVps) ? "VPS " : "", m_file.c_str());
 }
 
-int cTimer::TimeToInt(int t)
-{
-  return (t / 100 * 60 + t % 100) * 60;
-}
-
-bool cTimer::ParseDay(const char *s, time_t &Day, int &WeekDays)
-{
-  // possible formats are:
-  // 19
-  // 2005-03-19
-  // MTWTFSS
-  // MTWTFSS@19
-  // MTWTFSS@2005-03-19
-
-  Day = 0;
-  WeekDays = 0;
-  s = skipspace(s);
-  if (!*s)
-     return false;
-  const char *a = strchr(s, '@');
-  const char *d = a ? a + 1 : isdigit(*s) ? s : NULL;
-  if (d) {
-     if (strlen(d) == 10) {
-        struct tm tm_r;
-        if (3 == sscanf(d, "%d-%d-%d", &tm_r.tm_year, &tm_r.tm_mon, &tm_r.tm_mday)) {
-           tm_r.tm_year -= 1900;
-           tm_r.tm_mon--;
-           tm_r.tm_hour = tm_r.tm_min = tm_r.tm_sec = 0;
-           tm_r.tm_isdst = -1; // makes sure mktime() will determine the correct DST setting
-           Day = mktime(&tm_r);
-           }
-        else
-           return false;
-        }
-     else {
-        // handle "day of month" for compatibility with older versions:
-        char *tail = NULL;
-        int day = strtol(d, &tail, 10);
-        if (tail && *tail || day < 1 || day > 31)
-           return false;
-        time_t t = time(NULL);
-        int DaysToCheck = 61; // 61 to handle months with 31/30/31
-        for (int i = -1; i <= DaysToCheck; i++) {
-            time_t t0 = IncDay(t, i);
-            if (GetMDay(t0) == day) {
-               Day = SetTime(t0, 0);
-               break;
-               }
-            }
-        }
-     }
-  if (a || !isdigit(*s)) {
-     if ((a && a - s == 7) || strlen(s) == 7) {
-        for (const char *p = s + 6; p >= s; p--) {
-            WeekDays <<= 1;
-            WeekDays |= (*p != '-');
-            }
-        }
-     else
-        return false;
-     }
-  return true;
-}
-
-cString cTimer::PrintDay(time_t Day, int WeekDays, bool SingleByteChars)
-{
-#define DAYBUFFERSIZE 64
-  char buffer[DAYBUFFERSIZE];
-  char *b = buffer;
-  if (WeekDays) {
-     // TRANSLATORS: the first character of each weekday, beginning with monday
-     const char *w = trNOOP("MTWTFSS");
-     if (!SingleByteChars)
-        w = tr(w);
-     while (*w) {
-           int sl = cUtf8Utils::Utf8CharLen(w);
-           if (WeekDays & 1) {
-              for (int i = 0; i < sl; i++)
-                  b[i] = w[i];
-              b += sl;
-              }
-           else
-              *b++ = '-';
-           WeekDays >>= 1;
-           w += sl;
-           }
-     if (Day)
-        *b++ = '@';
-     }
-  if (Day) {
-     struct tm tm_r;
-     localtime_r(&Day, &tm_r);
-     b += strftime(b, DAYBUFFERSIZE - (b - buffer), "%Y-%m-%d", &tm_r);
-     }
-  *b = 0;
-  return buffer;
-}
-
 bool cTimer::Parse(const char *s)
 {
   char *channelbuffer = NULL;
@@ -362,7 +265,7 @@ bool cTimer::Parse(const char *s)
         m_aux = NULL;
         }
      //TODO add more plausibility checks
-     result = ParseDay(daybuffer, m_day, m_weekdays);
+     result = CTimeUtils::ParseDay(daybuffer, m_day, m_weekdays);
      m_file = filebuffer;
      StringUtils::Replace(m_file, '|', ':');
      if (is_number(channelbuffer))
@@ -388,45 +291,9 @@ bool cTimer::IsSingleEvent(void) const
   return !m_weekdays;
 }
 
-int cTimer::GetMDay(time_t t)
-{
-  struct tm tm_r;
-  return localtime_r(&t, &tm_r)->tm_mday;
-}
-
-int cTimer::GetWDay(time_t t)
-{
-  struct tm tm_r;
-  int weekday = localtime_r(&t, &tm_r)->tm_wday;
-  return weekday == 0 ? 6 : weekday - 1; // we start with Monday==0!
-}
-
 bool cTimer::DayMatches(time_t t) const
 {
-  return IsSingleEvent() ? SetTime(t, 0) == m_day : (m_weekdays & (1 << GetWDay(t))) != 0;
-}
-
-time_t cTimer::IncDay(time_t t, int Days)
-{
-  struct tm tm_r;
-  tm tm = *localtime_r(&t, &tm_r);
-  tm.tm_mday += Days; // now tm_mday may be out of its valid range
-  int h = tm.tm_hour; // save original hour to compensate for DST change
-  tm.tm_isdst = -1;   // makes sure mktime() will determine the correct DST setting
-  t = mktime(&tm);    // normalize all values
-  tm.tm_hour = h;     // compensate for DST change
-  return mktime(&tm); // calculate final result
-}
-
-time_t cTimer::SetTime(time_t t, int SecondsFromMidnight)
-{
-  struct tm tm_r;
-  tm tm = *localtime_r(&t, &tm_r);
-  tm.tm_hour = SecondsFromMidnight / 3600;
-  tm.tm_min = (SecondsFromMidnight % 3600) / 60;
-  tm.tm_sec =  SecondsFromMidnight % 60;
-  tm.tm_isdst = -1; // makes sure mktime() will determine the correct DST setting
-  return mktime(&tm);
+  return IsSingleEvent() ? CTimeUtils::SetTime(t, 0) == m_day : (m_weekdays & (1 << CTimeUtils::GetWDay(t))) != 0;
 }
 
 void cTimer::SetFile(const std::string& strFile)
@@ -443,20 +310,20 @@ bool cTimer::Matches(time_t t, bool Directly, int Margin)
   if (t == 0)
      t = time(NULL);
 
-  int begin  = TimeToInt(m_start); // seconds from midnight
-  int length = TimeToInt(m_stop) - begin;
+  int begin  = CTimeUtils::TimeToInt(m_start); // seconds from midnight
+  int length = CTimeUtils::TimeToInt(m_stop) - begin;
   if (length < 0)
      length += SECSINDAY;
 
   if (IsSingleEvent()) {
-     startTime = SetTime(m_day, begin);
+     startTime = CTimeUtils::SetTime(m_day, begin);
      stopTime = startTime + length;
      }
   else {
      for (int i = -1; i <= 7; i++) {
-         time_t t0 = IncDay(m_day ? ::max(m_day, t) : t, i);
+         time_t t0 = CTimeUtils::IncDay(m_day ? ::max(m_day, t) : t, i);
          if (DayMatches(t0)) {
-            time_t a = SetTime(t0, begin);
+            time_t a = CTimeUtils::SetTime(t0, begin);
             time_t b = a + length;
             if ((!m_day || a >= m_day) && t < b) {
                startTime = a;
@@ -466,7 +333,7 @@ bool cTimer::Matches(time_t t, bool Directly, int Margin)
             }
          }
      if (!startTime)
-        startTime = IncDay(t, 7); // just to have something that's more than a week in the future
+        startTime = CTimeUtils::IncDay(t, 7); // just to have something that's more than a week in the future
      else if (!Directly && (t > startTime || t > m_day + SECSINDAY + 3600)) // +3600 in case of DST change
         m_day = 0;
      }
@@ -713,7 +580,7 @@ bool cTimer::HasFlags(uint Flags) const
 
 void cTimer::Skip(void)
 {
-  m_day = IncDay(SetTime(StartTime(), 0), 1);
+  m_day = CTimeUtils::IncDay(CTimeUtils::SetTime(StartTime(), 0), 1);
   startTime = 0;
   ClearEvent();
 }

@@ -180,6 +180,7 @@ set(VDR_SRCS
 	vdr/utils/RegExp.cpp
 	vdr/utils/Ringbuffer.cpp
 	vdr/utils/StringUtils.cpp
+	vdr/utils/TimeUtils.cpp
 	vdr/utils/Tools.cpp
 	vdr/utils/XBMCTinyXML.cpp
 	vdr/utils/XMLUtils.cpp
