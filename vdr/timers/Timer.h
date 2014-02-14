@@ -44,7 +44,6 @@ public:
   int Lifetime(void) const        { return m_lifetime; }
   std::string File(void) const    { return m_file; }
   time_t FirstDay(void) const     { return m_weekdays ? m_day : 0; }
-  const char *Aux(void) const     { return m_aux; }
   time_t Deferred(void) const     { return deferred; }
   const cEvent *Event(void) const { return event; }
 
@@ -54,7 +53,7 @@ public:
   bool DeserialiseTimer(const TiXmlNode *node);
   bool Parse(const char *s);
 
-  bool IsSingleEvent(void) const;
+  bool IsRepeatingEvent(void) const;
   bool DayMatches(time_t t) const;
   bool Matches(time_t t = 0, bool Directly = false, int Margin = 0);
   eTimerMatch MatchesEvent(const cEvent *Event, int *Overlap = NULL);
@@ -77,7 +76,6 @@ public:
   void SetStop(int Stop);
   void SetPriority(int Priority);
   void SetLifetime(int Lifetime);
-  void SetAux(const char *Aux);
   void SetDeferred(int Seconds);
   void SetFlags(uint Flags);
   void ClrFlags(uint Flags);
@@ -103,7 +101,6 @@ private:
   int m_priority;
   int m_lifetime;
   std::string m_file;
-  char *m_aux;
   const cEvent *event;
   size_t m_index;
   };

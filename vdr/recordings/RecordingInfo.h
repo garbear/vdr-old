@@ -23,7 +23,6 @@ public:
   std::string ShortText(void) const;
   std::string Description(void) const;
   const CEpgComponents *Components(void) const;
-  const char *Aux(void) const { return aux; }
   double FramesPerSecond(void) const { return framesPerSecond; }
   void SetFramesPerSecond(double FramesPerSecond);
   bool Write(CFile& file, const char *Prefix = "") const;
@@ -35,7 +34,6 @@ private:
   char *channelName;
   const cEvent *event;
   cEvent *ownEvent;
-  char *aux;
   double framesPerSecond;
   int priority;
   int lifetime;
@@ -43,5 +41,4 @@ private:
   cRecordingInfo(const cChannel *Channel = NULL, const cEvent *Event = NULL);
   bool Read(CFile& file);
   void SetData(const char *Title, const char *ShortText, const char *Description);
-  void SetAux(const char *Aux);
 };

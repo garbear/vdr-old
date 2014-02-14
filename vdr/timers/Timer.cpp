@@ -31,7 +31,6 @@ cTimer::cTimer(void)
   pending      = false;
   inVpsMargin  = false;
   m_flags      = tfNone;
-  m_aux        = NULL;
   event        = NULL;
   m_channel    = cChannelManager::Get().GetByNumber(1 /* XXX */);
   m_day        = CTimeUtils::SetTime(t, 0);
@@ -60,7 +59,6 @@ cTimer::cTimer(const cEvent *Event)
   pending      = false;
   inVpsMargin  = false;
   m_flags      = tfActive;
-  m_aux        = NULL;
   event        = NULL;
   m_index      = 0;
 
@@ -98,7 +96,6 @@ cTimer::cTimer(const cEvent *Event)
 cTimer::cTimer(const cTimer &Timer)
 {
   m_channel = cChannel::EmptyChannel;
-  m_aux     = NULL;
   event   = NULL;
   m_flags = tfNone;
   *this   = Timer;
@@ -106,7 +103,6 @@ cTimer::cTimer(const cTimer &Timer)
 
 cTimer::~cTimer()
 {
-  free(m_aux);
 }
 
 cTimer& cTimer::operator= (const cTimer &Timer)
@@ -129,8 +125,6 @@ cTimer& cTimer::operator= (const cTimer &Timer)
      m_priority   = Timer.m_priority;
      m_lifetime   = Timer.m_lifetime;
      m_file       = Timer.m_file;
-     free(m_aux);
-     m_aux = Timer.m_aux ? strdup(Timer.m_aux) : NULL;
      event = NULL;
      Matches();
      }
@@ -174,7 +168,6 @@ bool cTimer::SerialiseTimer(TiXmlNode *node) const
   timerElement->SetAttribute(TIMER_XML_ATTR_PRIORITY, m_priority);
   timerElement->SetAttribute(TIMER_XML_ATTR_LIFETIME, m_lifetime);
   timerElement->SetAttribute(TIMER_XML_ATTR_FILENAME, m_file);
-  timerElement->SetAttribute(TIMER_XML_ATTR_AUX,      m_aux ? m_aux : "");
 
   return true;
 }
@@ -235,13 +228,12 @@ std::string cTimer::ToDescr(void) const
   return StringUtils::Format("%d %04d-%04d %s'%s'", Channel()->Number(), m_start, m_stop, HasFlags(tfVps) ? "VPS " : "", m_file.c_str());
 }
 
+// XXX this method has to go...
 bool cTimer::Parse(const char *s)
 {
   char *channelbuffer = NULL;
   char *daybuffer = NULL;
   char *filebuffer = NULL;
-  free(m_aux);
-  m_aux = NULL;
   //XXX Apparently sscanf() doesn't work correctly if the last %a argument
   //XXX results in an empty string (this first occurred when the EIT gathering
   //XXX was put into a separate thread - don't know why this happens...
@@ -258,12 +250,8 @@ bool cTimer::Parse(const char *s)
      s = s2;
      }
   bool result = false;
-  if (8 <= sscanf(s, "%u :%a[^:]:%a[^:]:%d :%d :%d :%d :%a[^:\n]:%a[^\n]", &m_flags, &channelbuffer, &daybuffer, &m_start, &m_stop, &m_priority, &m_lifetime, &filebuffer, &m_aux)) {
+  if (8 <= sscanf(s, "%u :%a[^:]:%a[^:]:%d :%d :%d :%d :%a[^\n]", &m_flags, &channelbuffer, &daybuffer, &m_start, &m_stop, &m_priority, &m_lifetime, &filebuffer)) {
      ClrFlags(tfRecording);
-     if (m_aux && !*skipspace(m_aux)) {
-        free(m_aux);
-        m_aux = NULL;
-        }
      //TODO add more plausibility checks
      result = CTimeUtils::ParseDay(daybuffer, m_day, m_weekdays);
      m_file = filebuffer;
@@ -286,14 +274,16 @@ bool cTimer::Parse(const char *s)
   return result;
 }
 
-bool cTimer::IsSingleEvent(void) const
+bool cTimer::IsRepeatingEvent(void) const
 {
-  return !m_weekdays;
+  return m_weekdays;
 }
 
 bool cTimer::DayMatches(time_t t) const
 {
-  return IsSingleEvent() ? CTimeUtils::SetTime(t, 0) == m_day : (m_weekdays & (1 << CTimeUtils::GetWDay(t))) != 0;
+  return !IsRepeatingEvent() ?
+      CTimeUtils::SetTime(t, 0) == m_day :
+      (m_weekdays & (1 << CTimeUtils::GetWDay(t))) != 0;
 }
 
 void cTimer::SetFile(const std::string& strFile)
@@ -304,60 +294,73 @@ void cTimer::SetFile(const std::string& strFile)
 
 #define EITPRESENTFOLLOWINGRATE 10 // max. seconds between two occurrences of the "EIT present/following table for the actual multiplex" (2s by the standard, using some more for safety)
 
-bool cTimer::Matches(time_t t, bool Directly, int Margin)
+bool cTimer::Matches(time_t checkTime, bool bDirectly, int iMarginSeconds)
 {
-  startTime = stopTime = 0;
-  if (t == 0)
-     t = time(NULL);
+  startTime = 0;
+  stopTime  = 0;
+
+  if (checkTime == 0)
+    checkTime = time(NULL);
 
   int begin  = CTimeUtils::TimeToInt(m_start); // seconds from midnight
   int length = CTimeUtils::TimeToInt(m_stop) - begin;
   if (length < 0)
-     length += SECSINDAY;
+    length += SECSINDAY;
 
-  if (IsSingleEvent()) {
-     startTime = CTimeUtils::SetTime(m_day, begin);
-     stopTime = startTime + length;
-     }
-  else {
-     for (int i = -1; i <= 7; i++) {
-         time_t t0 = CTimeUtils::IncDay(m_day ? ::max(m_day, t) : t, i);
-         if (DayMatches(t0)) {
-            time_t a = CTimeUtils::SetTime(t0, begin);
-            time_t b = a + length;
-            if ((!m_day || a >= m_day) && t < b) {
-               startTime = a;
-               stopTime = b;
-               break;
-               }
-            }
-         }
-     if (!startTime)
-        startTime = CTimeUtils::IncDay(t, 7); // just to have something that's more than a week in the future
-     else if (!Directly && (t > startTime || t > m_day + SECSINDAY + 3600)) // +3600 in case of DST change
-        m_day = 0;
-     }
+  if (!IsRepeatingEvent())
+  {
+    startTime = CTimeUtils::SetTime(m_day, begin);
+    stopTime  = startTime + length;
+  }
+  else
+  {
+    for (int i = -1; i <= 7; i++)
+    {
+      time_t t0 = CTimeUtils::IncDay(m_day ? ::max(m_day, checkTime) : checkTime, i);
+      if (DayMatches(t0))
+      {
+        time_t a = CTimeUtils::SetTime(t0, begin);
+        time_t b = a + length;
+        if ((!m_day || a >= m_day) && checkTime < b)
+        {
+          startTime = a;
+          stopTime = b;
+          break;
+        }
+      }
+    }
+    if (!startTime)
+      startTime = CTimeUtils::IncDay(checkTime, 7); // just to have something that's more than a week in the future
+    else if (!bDirectly && (checkTime > startTime || checkTime > m_day + SECSINDAY + 3600)) // +3600 in case of DST change
+      m_day = 0;
+  }
 
-  if (t < deferred)
-     return false;
+  if (checkTime < deferred)
+    return false;
   deferred = 0;
 
-  if (HasFlags(tfActive)) {
-     if (HasFlags(tfVps) && event && event->Vps()) {
-        if (Margin || !Directly) {
-           startTime = event->StartTime();
-           stopTime = event->EndTime();
-           if (!Margin) { // this is an actual check
-              if (event->Schedule()->PresentSeenWithin(EITPRESENTFOLLOWINGRATE)) { // VPS control can only work with up-to-date events...
-                 if (event->StartTime() > 0) // checks for "phased out" events
-                    return event->IsRunning(true);
-                 }
-              return startTime <= t && t < stopTime; // ...otherwise we fall back to normal timer handling
-              }
-           }
+  if (HasFlags(tfActive))
+  {
+    if (HasFlags(tfVps) && event && event->Vps())
+    {
+      if (iMarginSeconds || !bDirectly)
+      {
+        startTime = event->StartTime();
+        stopTime = event->EndTime();
+        if (!iMarginSeconds)
+        { // this is an actual check
+          if (event->Schedule()->PresentSeenWithin(EITPRESENTFOLLOWINGRATE))
+          { // VPS control can only work with up-to-date events...
+            if (event->StartTime() > 0) // checks for "phased out" events
+              return event->IsRunning(true);
+          }
+          return startTime <= checkTime && checkTime < stopTime; // ...otherwise we fall back to normal timer handling
         }
-     return startTime <= t + Margin && t < stopTime; // must stop *before* stopTime to allow adjacent timers
-     }
+      }
+    }
+    return startTime <= checkTime + iMarginSeconds && checkTime < stopTime; // must stop *before* stopTime to allow adjacent timers
+  }
+
   return false;
 }
 
@@ -398,7 +401,10 @@ eTimerMatch cTimer::MatchesEvent(const cEvent *Event, int *Overlap)
 
 bool cTimer::Expired(void) const
 {
-  return IsSingleEvent() && !Recording() && StopTime() + EXPIRELATENCY <= time(NULL) && (!HasFlags(tfVps) || !event || !event->Vps());
+  return !IsRepeatingEvent() &&
+      !Recording() &&
+      StopTime() + EXPIRELATENCY <= time(NULL) &&
+      (!HasFlags(tfVps) || !event || !event->Vps());
 }
 
 time_t cTimer::StartTime(void) const
@@ -546,12 +552,6 @@ void cTimer::SetLifetime(int Lifetime)
   m_lifetime = Lifetime;
 }
 
-void cTimer::SetAux(const char *Aux)
-{
-  free(m_aux);
-  m_aux = strdup(Aux);
-}
-
 void cTimer::SetDeferred(int Seconds)
 {
   deferred = time(NULL) + Seconds;
@@ -587,7 +587,7 @@ void cTimer::Skip(void)
 
 void cTimer::OnOff(void)
 {
-  if (IsSingleEvent())
+  if (!IsRepeatingEvent())
      InvFlags(tfActive);
   else if (m_day) {
      m_day = 0;

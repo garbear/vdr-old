@@ -10,7 +10,6 @@ cRecordingInfo::cRecordingInfo(const cChannel *Channel, const cEvent *Event)
   channelName = Channel ? strdup(Channel->Name().c_str()) : NULL;
   ownEvent = Event ? NULL : new cEvent(0);
   event = ownEvent ? ownEvent : Event;
-  aux = NULL;
   framesPerSecond = DEFAULTFRAMESPERSECOND;
   priority = MAXPRIORITY;
   lifetime = MAXLIFETIME;
@@ -69,7 +68,6 @@ cRecordingInfo::cRecordingInfo(const std::string& strFileName)
   channelName = NULL;
   ownEvent = new cEvent(0);
   event = ownEvent;
-  aux = NULL;
   framesPerSecond = DEFAULTFRAMESPERSECOND;
   priority = MAXPRIORITY;
   lifetime = MAXLIFETIME;
@@ -79,7 +77,6 @@ cRecordingInfo::cRecordingInfo(const std::string& strFileName)
 cRecordingInfo::~cRecordingInfo()
 {
   delete ownEvent;
-  free(aux);
   free(channelName);
   free(fileName);
 }
@@ -92,12 +89,6 @@ void cRecordingInfo::SetData(const char *Title, const char *ShortText, const cha
      ((cEvent *)event)->SetShortText(ShortText);
   if (!isempty(Description))
      ((cEvent *)event)->SetDescription(Description);
-}
-
-void cRecordingInfo::SetAux(const char *Aux)
-{
-  free(aux);
-  aux = Aux ? strdup(Aux) : NULL;
 }
 
 void cRecordingInfo::SetFramesPerSecond(double FramesPerSecond)
@@ -158,9 +149,7 @@ bool cRecordingInfo::Read(CFile& file)
         priority = atoi(t);
         break;
       case '@':
-        free(aux);
-        aux = strdup(t);
-        break;
+        break; // 'aux' in old recordings is ignored
       case '#':
         break; // comments are ignored
       default:
@@ -191,8 +180,6 @@ bool cRecordingInfo::Write(CFile& file, const char *Prefix) const
   pos += snprintf(buf + pos, 255 - pos, "%sF %s\n", Prefix, *dtoa(framesPerSecond, "%.10g"));
   pos += snprintf(buf + pos, 255 - pos, "%sP %d\n", Prefix, priority);
   pos += snprintf(buf + pos, 255 - pos, "%sL %d\n", Prefix, lifetime);
-  if (aux)
-    pos += snprintf(buf + pos, 255 - pos, "%s@ %s\n", Prefix, aux);
   file.Write(buf, pos);
   return true;
 }

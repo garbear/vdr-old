@@ -371,13 +371,13 @@ cRecording::cRecording(TimerPtr Timer, const cEvent *Event)
       else
         break;
     }
-    if (Timer->IsSingleEvent())
+    if (Timer->IsRepeatingEvent())
     {
       Timer->SetFile(m_strName); // this was an instant recording, so let's set the actual data
       cTimers::Get().SetModified();
     }
   }
-  else if (Timer->IsSingleEvent() || !g_setup.UseSubtitle)
+  else if (Timer->IsRepeatingEvent() || !g_setup.UseSubtitle)
   {
     m_strName = Timer->File();
   }
@@ -392,7 +392,6 @@ cRecording::cRecording(TimerPtr Timer, const cEvent *Event)
   m_iLifetime = Timer->Lifetime();
   // handle info:
   m_recordingInfo = new cRecordingInfo(Timer->Channel().get(), Event);
-  m_recordingInfo->SetAux(Timer->Aux());
   m_recordingInfo->priority = m_iPriority;
   m_recordingInfo->lifetime = m_iLifetime;
 }
