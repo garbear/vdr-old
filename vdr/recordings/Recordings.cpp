@@ -351,12 +351,12 @@ bool cRecordings::RemoveOldestRecording(int Priority)
     {
       if ((*it)->IsOnVideoDirectoryFileSystem())
       { // only delete recordings that will actually increase the free video disk space
-        if (!(*it)->IsEdited() && (*it)->Lifetime() < MAXLIFETIME)
+        if (!(*it)->IsEdited() && (*it)->LifetimeDays() < MAXLIFETIME)
         { // edited recordings and recordings with MAXLIFETIME live forever
-          if (((*it)->Lifetime() == 0 && Priority > (*it)->Priority()) || // the recording has no guaranteed lifetime and the new recording has higher priority
-              ((*it)->Lifetime() > 0
+          if (((*it)->LifetimeDays() == 0 && Priority > (*it)->Priority()) || // the recording has no guaranteed lifetime and the new recording has higher priority
+              ((*it)->LifetimeDays() > 0
                   && (time(NULL) - (*it)->Start()) / SECSINDAY
-                      >= (*it)->Lifetime()))
+                      >= (*it)->LifetimeDays()))
           { // the recording's guaranteed lifetime has expired
             if (deleteRecording != m_recordings.end())
             {

@@ -354,11 +354,11 @@ cRecording::cRecording(TimerPtr Timer, const cEvent *Event)
     strTitle = Timer->Channel()->Name();
   if (strSubtitle.empty())
     strSubtitle = " ";
-  size_t macroTitle = Timer->File().find(TIMERMACRO_TITLE);
-  size_t macroEpisode = Timer->File().find(TIMERMACRO_EPISODE);
+  size_t macroTitle = Timer->RecordingFilename().find(TIMERMACRO_TITLE);
+  size_t macroEpisode = Timer->RecordingFilename().find(TIMERMACRO_EPISODE);
   if (macroTitle != std::string::npos || macroEpisode != std::string::npos)
   {
-    std::string strName = Timer->File();
+    std::string strName = Timer->RecordingFilename();
     StringUtils::Replace(strName, TIMERMACRO_TITLE, strTitle);
     StringUtils::Replace(strName, TIMERMACRO_EPISODE, strSubtitle);
     m_strName = strName;
@@ -373,27 +373,27 @@ cRecording::cRecording(TimerPtr Timer, const cEvent *Event)
     }
     if (Timer->IsRepeatingEvent())
     {
-      Timer->SetFile(m_strName); // this was an instant recording, so let's set the actual data
+      Timer->SetRecordingFilename(m_strName); // this was an instant recording, so let's set the actual data
       cTimers::Get().SetModified();
     }
   }
   else if (Timer->IsRepeatingEvent() || !g_setup.UseSubtitle)
   {
-    m_strName = Timer->File();
+    m_strName = Timer->RecordingFilename();
   }
   else
   {
-    m_strName = StringUtils::Format("%s~%s", Timer->File().c_str(), strSubtitle.c_str());
+    m_strName = StringUtils::Format("%s~%s", Timer->RecordingFilename().c_str(), strSubtitle.c_str());
   }
   // substitute characters that would cause problems in file names:
   StringUtils::Replace(m_strName, '\n', ' ');
   m_start = Timer->StartTime();
   m_iPriority = Timer->Priority();
-  m_iLifetime = Timer->Lifetime();
+  m_iLifetimeDays = Timer->LifetimeDays();
   // handle info:
   m_recordingInfo = new cRecordingInfo(Timer->Channel().get(), Event);
   m_recordingInfo->priority = m_iPriority;
-  m_recordingInfo->lifetime = m_iLifetime;
+  m_recordingInfo->lifetime = m_iLifetimeDays;
 }
 
 cRecording::cRecording(const std::string& strFileName)
@@ -403,7 +403,7 @@ cRecording::cRecording(const std::string& strFileName)
   m_iChannel                      = -1;
   m_iInstanceId                   = -1;
   m_iPriority                     = MAXPRIORITY; // assume maximum in case there is no info file
-  m_iLifetime                     = MAXLIFETIME;
+  m_iLifetimeDays                     = MAXLIFETIME;
   m_bIsPesRecording               = false;
   m_iIsOnVideoDirectoryFileSystem = -1; // unknown
   m_dFramesPerSecond              = DEFAULTFRAMESPERSECOND;
@@ -432,7 +432,7 @@ cRecording::cRecording(const std::string& strFileName)
      struct tm t = *localtime_r(&now, &tm_r); // this initializes the time zone in 't'
      t.tm_isdst = -1; // makes sure mktime() will determine the correct DST setting
      if (7 == sscanf(p + 1, DATAFORMATTS, &t.tm_year, &t.tm_mon, &t.tm_mday, &t.tm_hour, &t.tm_min, &m_iChannel, &m_iInstanceId)
-      || 7 == sscanf(p + 1, DATAFORMATPES, &t.tm_year, &t.tm_mon, &t.tm_mday, &t.tm_hour, &t.tm_min, &m_iPriority, &m_iLifetime)) {
+      || 7 == sscanf(p + 1, DATAFORMATPES, &t.tm_year, &t.tm_mon, &t.tm_mday, &t.tm_hour, &t.tm_min, &m_iPriority, &m_iLifetimeDays)) {
         t.tm_year -= 1900;
         t.tm_mon--;
         t.tm_sec = 0;
@@ -454,7 +454,7 @@ cRecording::cRecording(const std::string& strFileName)
            esyslog("ERROR: EPG data problem in file %s", InfoFileName.c_str());
         else if (!m_bIsPesRecording) {
            m_iPriority = m_recordingInfo->priority;
-           m_iLifetime = m_recordingInfo->lifetime;
+           m_iLifetimeDays = m_recordingInfo->lifetime;
            m_dFramesPerSecond = m_recordingInfo->framesPerSecond;
            }
         }
@@ -516,7 +516,7 @@ std::string cRecording::FileName(void)
     struct tm *t = localtime_r(&m_start, &tm_r);
     const char* fmt = m_bIsPesRecording ? NAMEFORMATPES : NAMEFORMATTS;
     int ch = m_bIsPesRecording ? m_iPriority : m_iChannel;
-    int ri = m_bIsPesRecording ? m_iLifetime : m_iInstanceId;
+    int ri = m_bIsPesRecording ? m_iLifetimeDays : m_iInstanceId;
     std::string strName = LimitNameLengths(m_strName, DirectoryPathMax - strlen(VideoDirectory) - 1 - 42, DirectoryNameMax); // 42 = length of an actual recording directory name (generated with DATAFORMATTS) plus some reserve
     if (strName.compare(m_strName.c_str()))
       dsyslog("recording file name '%s' truncated to '%s'", m_strName.c_str(), strName.c_str());
@@ -577,7 +577,7 @@ void cRecording::ReadInfo(void)
 {
   m_recordingInfo->Read();
   m_iPriority = m_recordingInfo->priority;
-  m_iLifetime = m_recordingInfo->lifetime;
+  m_iLifetimeDays = m_recordingInfo->lifetime;
   m_dFramesPerSecond = m_recordingInfo->framesPerSecond;
 }
 

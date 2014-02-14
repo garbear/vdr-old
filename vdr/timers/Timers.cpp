@@ -44,7 +44,7 @@ TimerPtr cTimers::GetTimer(cTimer *Timer)
            ((*it)->WeekDays() && (*it)->WeekDays() == Timer->WeekDays()) ||
            (!(*it)->WeekDays() && (*it)->Day() == Timer->Day())) &&
        (*it)->Start() == Timer->Start() &&
-       (*it)->Stop() == Timer->Stop())
+       (*it)->DurationSecs() == Timer->DurationSecs())
     {
       return (*it);
     }
@@ -246,7 +246,7 @@ int cTimer::CompareTimers(const cTimer *a, const cTimer *b)
   time_t t2 = b->StartTime();
   int r = t1 - t2;
   if (r == 0)
-    r = b->m_priority - a->m_priority;
+    r = b->m_iPriority - a->m_iPriority;
   return r;
 }
 

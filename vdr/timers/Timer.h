@@ -4,14 +4,29 @@
 #include <limits.h>
 #include "channels/Channel.h"
 
-enum eTimerFlags { tfNone      = 0x0000,
-                   tfActive    = 0x0001,
-                   tfInstant   = 0x0002,
-                   tfVps       = 0x0004,
-                   tfRecording = 0x0008,
-                   tfAll       = 0xFFFF,
-                 };
+enum eTimerFlags
+{
+  tfNone      = 0,
+  tfActive    = 1 << 0,
+  tfInstant   = 1 << 1,
+  tfVps       = 1 << 2,
+  tfRecording = 1 << 3,
+  tfAll       = 0xFFFF,
+};
+
 enum eTimerMatch { tmNone, tmPartial, tmFull };
+
+enum eTimerDays
+{
+  tdNone      = 0,
+  tdMonday    = 1 << 0,
+  tdTuesday   = 1 << 1,
+  tdWednesday = 1 << 2,
+  tdThursday  = 1 << 3,
+  tdFriday    = 1 << 4,
+  tdSaturday  = 1 << 5,
+  tdSunday    = 1 << 6
+};
 
 class cEvent;
 class cSchedules;
@@ -31,21 +46,20 @@ public:
   bool operator==(const cTimer &Timer);
   virtual int Compare(const cTimer &Timer) const;
 
-  bool Recording(void) const      { return recording; }
-  bool Pending(void) const        { return pending; }
-  bool InVpsMargin(void) const    { return inVpsMargin; }
-  uint Flags(void) const          { return m_flags; }
-  ChannelPtr Channel(void) const  { return m_channel; }
-  time_t Day(void) const          { return m_day; }
-  int WeekDays(void) const        { return m_weekdays; }
-  int Start(void) const           { return m_start; }
-  int Stop(void) const            { return m_stop; }
-  int Priority(void) const        { return m_priority; }
-  int Lifetime(void) const        { return m_lifetime; }
-  std::string File(void) const    { return m_file; }
-  time_t FirstDay(void) const     { return m_weekdays ? m_day : 0; }
-  time_t Deferred(void) const     { return deferred; }
-  const cEvent *Event(void) const { return event; }
+  bool Recording(void) const                { return m_bRecording; }
+  bool Pending(void) const                  { return m_bPending; }
+  bool InVpsMargin(void) const              { return m_bInVpsMargin; }
+  uint Flags(void) const                    { return m_iTimerFlags; }
+  ChannelPtr Channel(void) const            { return m_channel; }
+  time_t Day(void) const                    { return m_iFirstDay; }
+  int WeekDays(void) const                  { return m_iWeekdaysMask; }
+  int Start(void) const                     { return m_iStartSecsSinceMidnight; }
+  int DurationSecs(void) const              { return m_iDurationSecs; }
+  int Priority(void) const                  { return m_iPriority; }
+  int LifetimeDays(void) const              { return m_iLifetimeDays; }
+  std::string RecordingFilename(void) const { return m_strRecordingFilename; }
+  time_t FirstDay(void) const               { return m_iWeekdaysMask ? m_iFirstDay : 0; }
+  const cEvent *Event(void) const           { return m_epgEvent; }
 
   std::string ToDescr(void) const;
 
@@ -63,20 +77,19 @@ public:
   bool HasFlags(uint Flags) const;
   size_t Index(void) const { return m_index; }
 
-  void SetFile(const std::string& strFile);
+  void SetRecordingFilename(const std::string& strFile);
   void SetEventFromSchedule(cSchedules *Schedules = NULL);
   void ClearEvent(void);
   void SetEvent(const cEvent *Event);
-  void SetRecording(bool Recording);
+  void SetRecording(bool Recording); // XXX this isn't called yet?
   void SetPending(bool Pending);
   void SetInVpsMargin(bool InVpsMargin);
   void SetDay(time_t Day);
   void SetWeekDays(int WeekDays);
   void SetStart(int Start);
-  void SetStop(int Stop);
+  void SetDuration(int iDurationSecs);
   void SetPriority(int Priority);
-  void SetLifetime(int Lifetime);
-  void SetDeferred(int Seconds);
+  void SetLifetimeDays(int iLifetimeDays);
   void SetFlags(uint Flags);
   void ClrFlags(uint Flags);
   void InvFlags(uint Flags);
@@ -89,18 +102,19 @@ public:
 
 private:
   time_t startTime, stopTime;
-  time_t lastSetEvent;
-  time_t deferred; ///< Matches(time_t, ...) will return false if the current time is before this value
-  bool recording, pending, inVpsMargin;
-  uint m_flags;
-  ChannelPtr m_channel;
-  time_t m_day; ///< midnight of the day this timer shall hit, or of the first day it shall hit in case of a repeating timer
-  int m_weekdays;       ///< bitmask, lowest bits: SSFTWTM  (the 'M' is the LSB)
-  int m_start;
-  int m_stop;
-  int m_priority;
-  int m_lifetime;
-  std::string m_file;
-  const cEvent *event;
-  size_t m_index;
-  };
+  time_t        m_lastEPGEventCheck;       ///< last time we searched for a matching event
+  bool          m_bRecording;
+  bool          m_bPending;
+  bool          m_bInVpsMargin;
+  uint          m_iTimerFlags;             ///< flags for this timer. see eTimerFlags
+  time_t        m_iFirstDay;               ///< midnight of the day this timer shall hit, or of the first day it shall hit in case of a repeating timer
+  int           m_iWeekdaysMask;           ///< bitmask, lowest bits: SSFTWTM  (the 'M' is the LSB)
+  int           m_iStartSecsSinceMidnight; ///< start of the recording in seconds after midnight on m_day
+  int           m_iDurationSecs;           ///< duration of the recording in seconds
+  int           m_iPriority;               ///< lower priority is deleted first when we run out of disk space
+  int           m_iLifetimeDays;           ///< recording is deleted after this many days if lower than MAXLIFETIME
+  std::string   m_strRecordingFilename;    ///< filename of the recording or empty if not recording or recorded
+  ChannelPtr    m_channel;                 ///< the channel to record
+  const cEvent* m_epgEvent;                ///< the EPG event to record (XXX shouldn't we get the start/end from this?)
+  size_t        m_index; // XXX (re)move me
+};

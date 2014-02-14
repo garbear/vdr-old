@@ -257,7 +257,7 @@ bool cShutdownHandler::DoShutdown(bool Force)
 
   if (Next && timer) {
      dsyslog("next timer event at %s", CalendarUtils::TimeToString(Next).c_str());
-     CallShutdownCommand(Next, timer->Channel()->Number(), timer->File().c_str(), Force);
+     CallShutdownCommand(Next, timer->Channel()->Number(), timer->RecordingFilename().c_str(), Force);
      }
 //XXX  else if (Next && Plugin) {
 //     CallShutdownCommand(Next, 0, Plugin->Name(), Force);

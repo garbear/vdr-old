@@ -38,7 +38,7 @@ public:
   virtual ~cRecording();
   time_t Start(void) const { return m_start; }
   int Priority(void) const { return m_iPriority; }
-  int Lifetime(void) const { return m_iLifetime; }
+  int LifetimeDays(void) const { return m_iLifetimeDays; }
   time_t Deleted(void) const { return m_deleted; }
   std::string Name(void) const { return m_strName; }
   std::string FileName(void);
@@ -113,7 +113,7 @@ private:
   cRecordingInfo* m_recordingInfo;
   time_t          m_start;
   int             m_iPriority;
-  int             m_iLifetime;
+  int             m_iLifetimeDays;
   time_t          m_deleted;
   int64_t         m_hash;
 };

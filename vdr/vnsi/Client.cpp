@@ -1247,14 +1247,14 @@ bool cVNSIClient::processTIMER_Get() /* OPCODE 81 */
       m_resp->add_U32(timer->Recording());
       m_resp->add_U32(timer->Pending());
       m_resp->add_U32(timer->Priority());
-      m_resp->add_U32(timer->Lifetime());
+      m_resp->add_U32(timer->LifetimeDays());
       m_resp->add_U32(timer->Channel()->Number());
       m_resp->add_U32(timer->Channel()->Hash());
       m_resp->add_U32(timer->StartTime());
       m_resp->add_U32(timer->StopTime());
       m_resp->add_U32(timer->Day());
       m_resp->add_U32(timer->WeekDays());
-      m_resp->add_String(m_toUTF8.Convert(timer->File().c_str()));
+      m_resp->add_String(m_toUTF8.Convert(timer->RecordingFilename().c_str()));
     }
     else
       m_resp->add_U32(VNSI_RET_DATAUNKNOWN);
@@ -1287,14 +1287,14 @@ bool cVNSIClient::processTIMER_GetList() /* OPCODE 82 */
     m_resp->add_U32(timer->Recording());
     m_resp->add_U32(timer->Pending());
     m_resp->add_U32(timer->Priority());
-    m_resp->add_U32(timer->Lifetime());
+    m_resp->add_U32(timer->LifetimeDays());
     m_resp->add_U32(timer->Channel()->Number());
     m_resp->add_U32(timer->Channel()->Hash());
     m_resp->add_U32(timer->StartTime());
     m_resp->add_U32(timer->StopTime());
     m_resp->add_U32(timer->Day());
     m_resp->add_U32(timer->WeekDays());
-    m_resp->add_String(m_toUTF8.Convert(timer->File().c_str()));
+    m_resp->add_String(m_toUTF8.Convert(timer->RecordingFilename().c_str()));
   }
 
   m_resp->finalise();
@@ -1571,7 +1571,7 @@ bool cVNSIClient::processRECORDINGS_GetList() /* OPCODE 102 */
     m_resp->add_U32((*it)->Priority());
 
     // lifetime
-    m_resp->add_U32((*it)->Lifetime());
+    m_resp->add_U32((*it)->LifetimeDays());
 
     // channel_name
     m_resp->add_String((*it)->Info()->ChannelName() ? m_toUTF8.Convert((*it)->Info()->ChannelName()) : "");
