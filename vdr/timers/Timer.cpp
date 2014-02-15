@@ -23,8 +23,8 @@ cTimer::cTimer(void)
   struct tm tm_r;
   struct tm *now = localtime_r(&t, &tm_r);
 
-  startTime                 = 0;
-  stopTime                  = 0;
+  m_startTime               = 0;
+  m_stopTime                = 0;
   m_lastEPGEventCheck       = 0;
   m_bRecording              = false;
   m_bPending                = false;
@@ -43,10 +43,33 @@ cTimer::cTimer(void)
   Matches();
 }
 
+cTimer::cTimer(ChannelPtr channel, time_t startTime, int iDurationSecs, time_t iFirstDay, uint32_t iWeekdaysMask, uint32_t iTimerFlags, uint32_t iPriority, uint32_t iLifetimeDays, const char *strRecordingFilename)
+{
+  m_startTime               = 0;
+  m_stopTime                = 0;
+  m_lastEPGEventCheck       = 0;
+  m_bRecording              = false;
+  m_bPending                = false;
+  m_bInVpsMargin            = false;
+  m_channel                 = channel;
+  m_iStartSecsSinceMidnight = startTime;
+  m_iDurationSecs           = iDurationSecs;
+  m_iFirstDay               = iFirstDay;
+  m_iWeekdaysMask           = iWeekdaysMask;
+  m_iTimerFlags             = iTimerFlags;
+  m_iPriority               = iPriority;
+  m_iLifetimeDays           = iLifetimeDays;
+  m_strRecordingFilename    = strRecordingFilename;
+  m_epgEvent                = NULL;
+  m_index                   = 0;
+
+  Matches();
+}
+
 cTimer::cTimer(const cEvent *Event)
 {
-  startTime           = 0;
-  stopTime            = 0;
+  m_startTime         = 0;
+  m_stopTime          = 0;
   m_lastEPGEventCheck = 0;
   m_bRecording        = false;
   m_bPending          = false;
@@ -100,8 +123,8 @@ cTimer& cTimer::operator= (const cTimer &Timer)
 {
   if (&Timer != this)
   {
-     startTime                 = Timer.startTime;
-     stopTime                  = Timer.stopTime;
+     m_startTime                 = Timer.m_startTime;
+     m_stopTime                  = Timer.m_stopTime;
      m_lastEPGEventCheck       = 0;
      m_bRecording              = Timer.m_bRecording;
      m_bPending                = Timer.m_bPending;
@@ -219,52 +242,6 @@ std::string cTimer::ToDescr(void) const
   return StringUtils::Format("%d %04d-%04d %s'%s'", Channel()->Number(), m_iStartSecsSinceMidnight, m_iStartSecsSinceMidnight + m_iDurationSecs, HasFlags(tfVps) ? "VPS " : "", m_strRecordingFilename.c_str());
 }
 
-// XXX this method has to go...
-bool cTimer::Parse(const char *s)
-{
-  char *channelbuffer = NULL;
-  char *daybuffer = NULL;
-  char *filebuffer = NULL;
-  //XXX Apparently sscanf() doesn't work correctly if the last %a argument
-  //XXX results in an empty string (this first occurred when the EIT gathering
-  //XXX was put into a separate thread - don't know why this happens...
-  //XXX As a cure we copy the original string and add a blank.
-  //XXX If anybody can shed some light on why sscanf() failes here, I'd love
-  //XXX to hear about that!
-  char *s2 = NULL;
-  int l2 = strlen(s);
-  while (l2 > 0 && isspace(s[l2 - 1]))
-        l2--;
-  if (s[l2 - 1] == ':') {
-     s2 = MALLOC(char, l2 + 3);
-     strcat(strn0cpy(s2, s, l2 + 1), " \n");
-     s = s2;
-     }
-  bool result = false;
-  if (8 <= sscanf(s, "%u :%a[^:]:%a[^:]:%d :%d :%d :%d :%a[^\n]", &m_iTimerFlags, &channelbuffer, &daybuffer, &m_iStartSecsSinceMidnight, &m_iDurationSecs, &m_iPriority, &m_iLifetimeDays, &filebuffer)) {
-     ClrFlags(tfRecording);
-     //TODO add more plausibility checks
-     result = CTimeUtils::ParseDay(daybuffer, m_iFirstDay, m_iWeekdaysMask);
-     m_strRecordingFilename = filebuffer;
-     StringUtils::Replace(m_strRecordingFilename, '|', ':');
-     if (is_number(channelbuffer))
-       m_channel = cChannelManager::Get().GetByNumber(atoi(channelbuffer));
-     else
-       m_channel = cChannelManager::Get().GetByChannelID(tChannelID::Deserialize(channelbuffer), true, true);
-     if (!m_channel) {
-        esyslog("ERROR: channel %s not defined", channelbuffer);
-        result = false;
-        }
-     }
-  free(channelbuffer);
-  free(daybuffer);
-  free(filebuffer);
-  free(s2);
-  if (result)
-    Matches();
-  return result;
-}
-
 bool cTimer::IsRepeatingEvent(void) const
 {
   return m_iWeekdaysMask;
@@ -287,8 +264,8 @@ void cTimer::SetRecordingFilename(const std::string& strFile)
 
 bool cTimer::Matches(time_t checkTime, bool bDirectly, int iMarginSeconds)
 {
-  startTime = 0;
-  stopTime  = 0;
+  m_startTime = 0;
+  m_stopTime  = 0;
 
   if (checkTime == 0)
     checkTime = time(NULL);
@@ -300,8 +277,8 @@ bool cTimer::Matches(time_t checkTime, bool bDirectly, int iMarginSeconds)
 
   if (!IsRepeatingEvent())
   {
-    startTime = CTimeUtils::SetTime(m_iFirstDay, begin);
-    stopTime  = startTime + length;
+    m_startTime = CTimeUtils::SetTime(m_iFirstDay, begin);
+    m_stopTime  = m_startTime + length;
   }
   else
   {
@@ -314,15 +291,15 @@ bool cTimer::Matches(time_t checkTime, bool bDirectly, int iMarginSeconds)
         time_t b = a + length;
         if ((!m_iFirstDay || a >= m_iFirstDay) && checkTime < b)
         {
-          startTime = a;
-          stopTime = b;
+          m_startTime = a;
+          m_stopTime = b;
           break;
         }
       }
     }
-    if (!startTime)
-      startTime = CTimeUtils::IncDay(checkTime, 7); // just to have something that's more than a week in the future
-    else if (!bDirectly && (checkTime > startTime || checkTime > m_iFirstDay + SECSINDAY + 3600)) // +3600 in case of DST change
+    if (!m_startTime)
+      m_startTime = CTimeUtils::IncDay(checkTime, 7); // just to have something that's more than a week in the future
+    else if (!bDirectly && (checkTime > m_startTime || checkTime > m_iFirstDay + SECSINDAY + 3600)) // +3600 in case of DST change
       m_iFirstDay = 0;
   }
 
@@ -332,8 +309,8 @@ bool cTimer::Matches(time_t checkTime, bool bDirectly, int iMarginSeconds)
     {
       if (iMarginSeconds || !bDirectly)
       {
-        startTime = m_epgEvent->StartTime();
-        stopTime = m_epgEvent->EndTime();
+        m_startTime = m_epgEvent->StartTime();
+        m_stopTime = m_epgEvent->EndTime();
         if (!iMarginSeconds)
         { // this is an actual check
           if (m_epgEvent->Schedule()->PresentSeenWithin(EITPRESENTFOLLOWINGRATE))
@@ -341,11 +318,11 @@ bool cTimer::Matches(time_t checkTime, bool bDirectly, int iMarginSeconds)
             if (m_epgEvent->StartTime() > 0) // checks for "phased out" events
               return m_epgEvent->IsRunning(true);
           }
-          return startTime <= checkTime && checkTime < stopTime; // ...otherwise we fall back to normal timer handling
+          return m_startTime <= checkTime && checkTime < m_stopTime; // ...otherwise we fall back to normal timer handling
         }
       }
     }
-    return startTime <= checkTime + iMarginSeconds && checkTime < stopTime; // must stop *before* stopTime to allow adjacent timers
+    return m_startTime <= checkTime + iMarginSeconds && checkTime < m_stopTime; // must stop *before* stopTime to allow adjacent timers
   }
 
   return false;
@@ -360,27 +337,29 @@ eTimerMatch cTimer::MatchesEvent(const cEvent *Event, int *Overlap)
   // To make sure a VPS timer can be distinguished from a plain 100% overlap,
   // it gets an additional 100 added, and a VPS event that is actually running
   // gets 200 added to the FULLMATCH.
-  if (HasFlags(tfActive) && m_channel->GetChannelID() == Event->ChannelID()) {
-     bool UseVps = HasFlags(tfVps) && Event->Vps();
-     Matches(UseVps ? Event->Vps() : Event->StartTime(), true);
-     int overlap = 0;
-     if (UseVps)
-        overlap = (startTime == Event->Vps()) ? FULLMATCH + (Event->IsRunning() ? 200 : 100) : 0;
-     if (!overlap) {
-        if (startTime <= Event->StartTime() && Event->EndTime() <= stopTime)
-           overlap = FULLMATCH;
-        else if (stopTime <= Event->StartTime() || Event->EndTime() <= startTime)
-           overlap = 0;
-        else
-           overlap = (::min(stopTime, Event->EndTime()) - ::max(startTime, Event->StartTime())) * FULLMATCH / ::max(Event->Duration(), 1);
-        }
-     startTime = stopTime = 0;
-     if (Overlap)
-        *Overlap = overlap;
-     if (UseVps)
-        return overlap > FULLMATCH ? tmFull : tmNone;
-     return overlap >= FULLMATCH ? tmFull : overlap > 0 ? tmPartial : tmNone;
-     }
+  if (HasFlags(tfActive) && m_channel->GetChannelID() == Event->ChannelID())
+  {
+    bool UseVps = HasFlags(tfVps) && Event->Vps();
+    Matches(UseVps ? Event->Vps() : Event->StartTime(), true);
+    int overlap = 0;
+    if (UseVps)
+      overlap = (m_startTime == Event->Vps()) ? FULLMATCH + (Event->IsRunning() ? 200 : 100) : 0;
+    if (!overlap)
+    {
+      if (m_startTime <= Event->StartTime() && Event->EndTime() <= m_stopTime)
+        overlap = FULLMATCH;
+      else if (m_stopTime <= Event->StartTime() || Event->EndTime() <= m_startTime)
+        overlap = 0;
+      else
+        overlap = (::min(m_stopTime, Event->EndTime()) - ::max(m_startTime, Event->StartTime())) * FULLMATCH / ::max(Event->Duration(), 1);
+    }
+    m_startTime = m_stopTime = 0;
+    if (Overlap)
+      *Overlap = overlap;
+    if (UseVps)
+      return overlap > FULLMATCH ? tmFull : tmNone;
+    return overlap >= FULLMATCH ? tmFull : overlap > 0 ? tmPartial : tmNone;
+  }
   return tmNone;
 }
 
@@ -396,12 +375,12 @@ bool cTimer::Expired(void) const
 
 time_t cTimer::StartTime(void) const
 {
-  return startTime;
+  return m_startTime;
 }
 
 time_t cTimer::StopTime(void) const
 {
-  return stopTime;
+  return m_stopTime;
 }
 
 #define EPGLIMITBEFORE   (1 * 3600) // Time in seconds before a timer's start time and
@@ -563,7 +542,7 @@ bool cTimer::HasFlags(uint Flags) const
 void cTimer::Skip(void)
 {
   m_iFirstDay = CTimeUtils::IncDay(CTimeUtils::SetTime(StartTime(), 0), 1);
-  startTime = 0;
+  m_startTime = 0;
   ClearEvent();
 }
 

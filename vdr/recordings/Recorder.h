@@ -19,28 +19,32 @@
 class cFileName;
 class cIndexFile;
 
-class cRecorder : public cReceiver, PLATFORM::CThread {
-private:
-  cRingBufferLinear *ringBuffer;
-  cFrameDetector *frameDetector;
-  cPatPmtGenerator patPmtGenerator;
-  cFileName *fileName;
-  cIndexFile *index;
-  cUnbufferedFile *recordFile;
-  char *recordingName;
-  off_t fileSize;
-  time_t lastDiskSpaceCheck;
-  bool RunningLowOnDiskSpace(void);
-  bool NextFile(void);
+class cRecorder : public cReceiver, PLATFORM::CThread
+{
+public:
+  cRecorder(const std::string& strFileName, ChannelPtr Channel, int Priority);
+               // Creates a new recorder for the given Channel and
+               // the given Priority that will record into the file FileName.
+  virtual ~cRecorder();
+
 protected:
   virtual void Activate(bool On);
   virtual void Receive(uchar *Data, int Length);
   virtual void* Process(void);
-public:
-  cRecorder(const char *FileName, ChannelPtr Channel, int Priority);
-               // Creates a new recorder for the given Channel and
-               // the given Priority that will record into the file FileName.
-  virtual ~cRecorder();
-  };
+
+private:
+  bool RunningLowOnDiskSpace(void);
+  bool NextFile(void);
+
+  cRingBufferLinear* m_ringBuffer;
+  cFrameDetector*    m_frameDetector;
+  cPatPmtGenerator   m_patPmtGenerator;
+  cFileName*         m_fileName;
+  cIndexFile*        m_index;
+  cUnbufferedFile*   m_recordFile;
+  std::string        m_strRecordingName;
+  off_t              m_fileSize;
+  time_t             m_lastDiskSpaceCheck;
+};
 
 #endif //__RECORDER_H

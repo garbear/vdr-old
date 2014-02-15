@@ -28,18 +28,18 @@ using namespace PLATFORM;
 
 // --- cRecorder -------------------------------------------------------------
 
-cRecorder::cRecorder(const char *FileName, ChannelPtr Channel, int Priority)
+cRecorder::cRecorder(const std::string& strFileName, ChannelPtr Channel, int Priority)
 :cReceiver(Channel, Priority), CThread()
 {
-  recordingName = strdup(FileName);
+  m_strRecordingName = strFileName;
 
   // Make sure the disk is up and running:
 
-  SpinUpDisk(FileName);
+  SpinUpDisk(strFileName);
 
-  ringBuffer = new cRingBufferLinear(RECORDERBUFSIZE, MIN_TS_PACKETS_FOR_FRAME_DETECTOR * TS_SIZE, true, "Recorder");
-  ringBuffer->SetTimeouts(0, 100);
-  ringBuffer->SetIoThrottle();
+  m_ringBuffer = new cRingBufferLinear(RECORDERBUFSIZE, MIN_TS_PACKETS_FOR_FRAME_DETECTOR * TS_SIZE, true, "Recorder");
+  m_ringBuffer->SetTimeouts(0, 100);
+  m_ringBuffer->SetIoThrottle();
 
   int Pid = Channel->Vpid();
   int Type = Channel->Vtype();
@@ -51,21 +51,21 @@ cRecorder::cRecorder(const char *FileName, ChannelPtr Channel, int Priority)
      Pid = Channel->Dpid(0);
      Type = 0x06;
      }
-  frameDetector = new cFrameDetector(Pid, Type);
-  index = NULL;
-  fileSize = 0;
-  lastDiskSpaceCheck = time(NULL);
-  fileName = new cFileName(FileName, true);
+  m_frameDetector = new cFrameDetector(Pid, Type);
+  m_index = NULL;
+  m_fileSize = 0;
+  m_lastDiskSpaceCheck = time(NULL);
+  m_fileName = new cFileName(strFileName, true);
   int PatVersion, PmtVersion;
-  if (fileName->GetLastPatPmtVersions(PatVersion, PmtVersion))
-     patPmtGenerator.SetVersions(PatVersion + 1, PmtVersion + 1);
-  patPmtGenerator.SetChannel(Channel);
-  recordFile = fileName->Open();
-  if (!recordFile)
+  if (m_fileName->GetLastPatPmtVersions(PatVersion, PmtVersion))
+     m_patPmtGenerator.SetVersions(PatVersion + 1, PmtVersion + 1);
+  m_patPmtGenerator.SetChannel(Channel);
+  m_recordFile = m_fileName->Open();
+  if (!m_recordFile)
      return;
   // Create the index file:
-  index = new cIndexFile(FileName, true);
-  if (!index)
+  m_index = new cIndexFile(strFileName, true);
+  if (!m_index)
      esyslog("ERROR: can't allocate index");
      // let's continue without index, so we'll at least have the recording
 }
@@ -73,20 +73,19 @@ cRecorder::cRecorder(const char *FileName, ChannelPtr Channel, int Priority)
 cRecorder::~cRecorder()
 {
   Detach();
-  delete index;
-  delete fileName;
-  delete frameDetector;
-  delete ringBuffer;
-  free(recordingName);
+  delete m_index;
+  delete m_fileName;
+  delete m_frameDetector;
+  delete m_ringBuffer;
 }
 
 bool cRecorder::RunningLowOnDiskSpace(void)
 {
-  if (time(NULL) > lastDiskSpaceCheck + DISKCHECKINTERVAL) {
+  if (time(NULL) > m_lastDiskSpaceCheck + DISKCHECKINTERVAL) {
      unsigned int total, used, free;
-     CDirectory::CalculateDiskSpace(fileName->Name(), total, used, free);
+     CDirectory::CalculateDiskSpace(m_fileName->Name(), total, used, free);
      int Free = free;
-     lastDiskSpaceCheck = time(NULL);
+     m_lastDiskSpaceCheck = time(NULL);
      if (Free < MINFREEDISKSPACE) {
         dsyslog("low disk space (%d MB, limit is %d MB)", Free, MINFREEDISKSPACE);
         return true;
@@ -97,13 +96,13 @@ bool cRecorder::RunningLowOnDiskSpace(void)
 
 bool cRecorder::NextFile(void)
 {
-  if (recordFile && frameDetector->IndependentFrame()) { // every file shall start with an independent frame
-     if (fileSize > MEGABYTE(off_t(g_setup.MaxVideoFileSize)) || RunningLowOnDiskSpace()) {
-        recordFile = fileName->NextFile();
-        fileSize = 0;
+  if (m_recordFile && m_frameDetector->IndependentFrame()) { // every file shall start with an independent frame
+     if (m_fileSize > MEGABYTE(off_t(g_setup.MaxVideoFileSize)) || RunningLowOnDiskSpace()) {
+        m_recordFile = m_fileName->NextFile();
+        m_fileSize = 0;
         }
      }
-  return recordFile != NULL;
+  return m_recordFile != NULL;
 }
 
 void cRecorder::Activate(bool On)
@@ -117,9 +116,9 @@ void cRecorder::Activate(bool On)
 void cRecorder::Receive(uchar *Data, int Length)
 {
   if (!IsStopped()) {
-     int p = ringBuffer->Put(Data, Length);
+     int p = m_ringBuffer->Put(Data, Length);
      if (p != Length && !IsStopped())
-        ringBuffer->ReportOverflow(Length - p);
+        m_ringBuffer->ReportOverflow(Length - p);
      }
 }
 
@@ -130,48 +129,48 @@ void* cRecorder::Process(void)
   bool FirstIframeSeen = false;
   while (!IsStopped()) {
         int r;
-        uchar *b = ringBuffer->Get(r);
+        uchar *b = m_ringBuffer->Get(r);
         if (b) {
-           int Count = frameDetector->Analyze(b, r);
+           int Count = m_frameDetector->Analyze(b, r);
            if (Count) {
-              if (IsStopped() && frameDetector->IndependentFrame()) // finish the recording before the next independent frame
+              if (IsStopped() && m_frameDetector->IndependentFrame()) // finish the recording before the next independent frame
                  break;
-              if (frameDetector->Synced()) {
+              if (m_frameDetector->Synced()) {
                  if (!InfoWritten) {
-                    cRecordingInfo RecordingInfo(recordingName);
+                    cRecordingInfo RecordingInfo(m_strRecordingName);
                     if (RecordingInfo.Read()) {
-                       if (frameDetector->FramesPerSecond() > 0 && DoubleEqual(RecordingInfo.FramesPerSecond(), DEFAULTFRAMESPERSECOND) && !DoubleEqual(RecordingInfo.FramesPerSecond(), frameDetector->FramesPerSecond())) {
-                          RecordingInfo.SetFramesPerSecond(frameDetector->FramesPerSecond());
+                       if (m_frameDetector->FramesPerSecond() > 0 && DoubleEqual(RecordingInfo.FramesPerSecond(), DEFAULTFRAMESPERSECOND) && !DoubleEqual(RecordingInfo.FramesPerSecond(), m_frameDetector->FramesPerSecond())) {
+                          RecordingInfo.SetFramesPerSecond(m_frameDetector->FramesPerSecond());
                           RecordingInfo.Write();
-                          Recordings.UpdateByName(recordingName);
+                          Recordings.UpdateByName(m_strRecordingName);
                           }
                        }
                     InfoWritten = true;
                     }
-                 if (FirstIframeSeen || frameDetector->IndependentFrame()) {
+                 if (FirstIframeSeen || m_frameDetector->IndependentFrame()) {
                     FirstIframeSeen = true; // start recording with the first I-frame
                     if (!NextFile())
                        break;
-                    if (index && frameDetector->NewFrame())
-                       index->Write(frameDetector->IndependentFrame(), fileName->Number(), fileSize);
-                    if (frameDetector->IndependentFrame()) {
-                       recordFile->Write(patPmtGenerator.GetPat(), TS_SIZE);
-                       fileSize += TS_SIZE;
+                    if (m_index && m_frameDetector->NewFrame())
+                       m_index->Write(m_frameDetector->IndependentFrame(), m_fileName->Number(), m_fileSize);
+                    if (m_frameDetector->IndependentFrame()) {
+                       m_recordFile->Write(m_patPmtGenerator.GetPat(), TS_SIZE);
+                       m_fileSize += TS_SIZE;
                        int Index = 0;
-                       while (uchar *pmt = patPmtGenerator.GetPmt(Index)) {
-                             recordFile->Write(pmt, TS_SIZE);
-                             fileSize += TS_SIZE;
+                       while (uchar *pmt = m_patPmtGenerator.GetPmt(Index)) {
+                             m_recordFile->Write(pmt, TS_SIZE);
+                             m_fileSize += TS_SIZE;
                              }
                        }
-                    if (recordFile->Write(b, Count) < 0) {
-                       LOG_ERROR_STR(fileName->Name().c_str());
+                    if (m_recordFile->Write(b, Count) < 0) {
+                       LOG_ERROR_STR(m_fileName->Name().c_str());
                        break;
                        }
-                    fileSize += Count;
+                    m_fileSize += Count;
                     t.Set(MAXBROKENTIMEOUT);
                     }
                  }
-              ringBuffer->Del(Count);
+              m_ringBuffer->Del(Count);
               }
            }
         if (t.TimedOut()) {

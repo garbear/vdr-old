@@ -1315,7 +1315,6 @@ bool cVNSIClient::processTIMER_Add() /* OPCODE 83 */
   time_t day          = m_req->extract_U32();
   uint32_t weekdays   = m_req->extract_U32();
   const char *file    = m_req->extract_String();
-  const char *aux     = m_req->extract_String();
 
   // handle instant timers
   if(startTime == -1 || startTime == 0)
@@ -1333,18 +1332,17 @@ bool cVNSIClient::processTIMER_Add() /* OPCODE 83 */
 
   cString buffer;
   ChannelPtr channel = cChannelManager::Get().GetByChannelUID(channelid);
-  if(channel)
+  if(!channel)
   {
-    //XXX
-    buffer = cString::sprintf("%u:%s:%s:%04d:%04d:%d:%d:%s:%s\n", flags, (const char*)channel->GetChannelID().Serialize().c_str(), CTimeUtils::PrintDay(day, weekdays, true).c_str(), start, stop, priority, lifetime, file, aux);
+    delete[] file;
+    esyslog("Error in timer settings");
+    m_resp->add_U32(VNSI_RET_DATAINVALID);
   }
-
-  delete[] file;
-  delete[] aux;
-
-  cTimer* timer = new cTimer;
-  if (timer->Parse(buffer))
+  else
   {
+    cTimer* timer = new cTimer(channel, start, stop - start, day, weekdays, flags, priority, lifetime, file);
+    delete[] file;
+
     TimerPtr t = cTimers::Get().GetTimer(timer);
     if (!t)
     {
@@ -1361,14 +1359,9 @@ bool cVNSIClient::processTIMER_Add() /* OPCODE 83 */
       esyslog("Timer already defined: %d %s", t->Index() + 1, t->ToDescr().c_str());
       m_resp->add_U32(VNSI_RET_DATALOCKED);
     }
-  }
-  else
-  {
-    esyslog("Error in timer settings");
-    m_resp->add_U32(VNSI_RET_DATAINVALID);
-  }
 
-  delete timer;
+    delete timer;
+  }
 
   m_resp->finalise();
   m_socket.write(m_resp->getPtr(), m_resp->getLen());
@@ -1442,14 +1435,14 @@ bool cVNSIClient::processTIMER_Update() /* OPCODE 85 */
     return true;
   }
 
-  cTimer t = *timer;
+  cTimer& timerData = *timer;
 
   if (length == 8)
   {
     if (active)
-      t.SetFlags(tfActive);
+      timerData.SetFlags(tfActive);
     else
-      t.ClrFlags(tfActive);
+      timerData.ClrFlags(tfActive);
   }
   else
   {
@@ -1462,7 +1455,6 @@ bool cVNSIClient::processTIMER_Update() /* OPCODE 85 */
     time_t day          = m_req->extract_U32();
     uint32_t weekdays   = m_req->extract_U32();
     const char *file    = m_req->extract_String();
-    const char *aux     = m_req->extract_String();
 
     struct tm tm_r;
     struct tm *time = localtime_r(&startTime, &tm_r);
@@ -1476,24 +1468,13 @@ bool cVNSIClient::processTIMER_Update() /* OPCODE 85 */
     ChannelPtr channel = cChannelManager::Get().GetByChannelUID(channelid);
     if(channel)
     {
-      //XXX
-      buffer = cString::sprintf("%u:%s:%s:%04d:%04d:%d:%d:%s:%s\n", flags, (const char*)channel->GetChannelID().Serialize().c_str(), CTimeUtils::PrintDay(day, weekdays, true).c_str(), start, stop, priority, lifetime, file, aux);
+      cTimer newData(channel, start, stop - start, day, weekdays, flags, priority, lifetime, file);
+      timerData = newData;
     }
 
     delete[] file;
-    delete[] aux;
-
-    if (!t.Parse(buffer))
-    {
-      esyslog("Error in timer settings");
-      m_resp->add_U32(VNSI_RET_DATAINVALID);
-      m_resp->finalise();
-      m_socket.write(m_resp->getPtr(), m_resp->getLen());
-      return true;
-    }
   }
 
-  *timer = t;
   cTimers::Get().SetModified();
 
   m_resp->add_U32(VNSI_RET_OK);

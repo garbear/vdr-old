@@ -14,7 +14,12 @@ enum eTimerFlags
   tfAll       = 0xFFFF,
 };
 
-enum eTimerMatch { tmNone, tmPartial, tmFull };
+enum eTimerMatch
+{
+  tmNone,
+  tmPartial,
+  tmFull
+};
 
 enum eTimerDays
 {
@@ -36,6 +41,7 @@ class cTimer
 {
 public:
   cTimer(void);
+  cTimer(ChannelPtr channel, time_t startTime, int iDurationSecs, time_t iFirstDay, uint32_t iWeekdaysMask, uint32_t iTimerFlags, uint32_t iPriority, uint32_t iLifetimeDays, const char *strRecordingFilename);
   cTimer(const cEvent *Event);
   cTimer(const cTimer &Timer);
   virtual ~cTimer();
@@ -65,7 +71,6 @@ public:
 
   bool SerialiseTimer(TiXmlNode *node) const;
   bool DeserialiseTimer(const TiXmlNode *node);
-  bool Parse(const char *s);
 
   bool IsRepeatingEvent(void) const;
   bool DayMatches(time_t t) const;
@@ -101,18 +106,19 @@ public:
   static int CompareTimers(const cTimer *a, const cTimer *b);
 
 private:
-  time_t startTime, stopTime;
+  time_t        m_startTime;               ///< the next timer start time
+  time_t        m_stopTime;                ///< the next timer stop time
   time_t        m_lastEPGEventCheck;       ///< last time we searched for a matching event
   bool          m_bRecording;
   bool          m_bPending;
   bool          m_bInVpsMargin;
   uint          m_iTimerFlags;             ///< flags for this timer. see eTimerFlags
   time_t        m_iFirstDay;               ///< midnight of the day this timer shall hit, or of the first day it shall hit in case of a repeating timer
-  int           m_iWeekdaysMask;           ///< bitmask, lowest bits: SSFTWTM  (the 'M' is the LSB)
-  int           m_iStartSecsSinceMidnight; ///< start of the recording in seconds after midnight on m_day
-  int           m_iDurationSecs;           ///< duration of the recording in seconds
-  int           m_iPriority;               ///< lower priority is deleted first when we run out of disk space
-  int           m_iLifetimeDays;           ///< recording is deleted after this many days if lower than MAXLIFETIME
+  uint32_t      m_iWeekdaysMask;           ///< bitmask, lowest bits: SSFTWTM  (the 'M' is the LSB)
+  uint32_t      m_iStartSecsSinceMidnight; ///< start of the recording in seconds after midnight on m_day
+  uint32_t      m_iDurationSecs;           ///< duration of the recording in seconds
+  uint32_t      m_iPriority;               ///< lower priority is deleted first when we run out of disk space
+  uint32_t      m_iLifetimeDays;           ///< recording is deleted after this many days if lower than MAXLIFETIME
   std::string   m_strRecordingFilename;    ///< filename of the recording or empty if not recording or recorded
   ChannelPtr    m_channel;                 ///< the channel to record
   const cEvent* m_epgEvent;                ///< the EPG event to record (XXX shouldn't we get the start/end from this?)
