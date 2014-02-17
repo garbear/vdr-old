@@ -145,6 +145,7 @@ void *cVDRDaemon::Process()
   while (!IsStopped())
   {
     EITScanner.Process();
+    cTimers::Get().Process();
 
     m_sleepEvent.Wait(100);
   }

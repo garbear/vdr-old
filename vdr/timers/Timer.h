@@ -36,6 +36,7 @@ enum eTimerDays
 class cEvent;
 class cSchedules;
 class TiXmlNode;
+class cRecorder;
 
 class cTimer
 {
@@ -52,7 +53,7 @@ public:
   bool operator==(const cTimer &Timer);
   virtual int Compare(const cTimer &Timer) const;
 
-  bool Recording(void) const                { return m_bRecording; }
+  bool Recording(void) const                { return m_recorder != NULL; }
   bool Pending(void) const                  { return m_bPending; }
   bool InVpsMargin(void) const              { return m_bInVpsMargin; }
   uint Flags(void) const                    { return m_iTimerFlags; }
@@ -86,7 +87,7 @@ public:
   void SetEventFromSchedule(cSchedules *Schedules = NULL);
   void ClearEvent(void);
   void SetEvent(const cEvent *Event);
-  void SetRecording(bool Recording); // XXX this isn't called yet?
+  void SetRecording(cRecorder* recorder);
   void SetPending(bool Pending);
   void SetInVpsMargin(bool InVpsMargin);
   void SetDay(time_t Day);
@@ -103,13 +104,16 @@ public:
   void Skip(void);
   void OnOff(void);
 
+  bool StartRecording(void);
+  bool CheckRecordingStatus(time_t Now);
+  void SwitchTransponder(time_t Now);
+
   static int CompareTimers(const cTimer *a, const cTimer *b);
 
 private:
   time_t        m_startTime;               ///< the next timer start time
   time_t        m_stopTime;                ///< the next timer stop time
   time_t        m_lastEPGEventCheck;       ///< last time we searched for a matching event
-  bool          m_bRecording;
   bool          m_bPending;
   bool          m_bInVpsMargin;
   uint          m_iTimerFlags;             ///< flags for this timer. see eTimerFlags
@@ -122,5 +126,6 @@ private:
   std::string   m_strRecordingFilename;    ///< filename of the recording or empty if not recording or recorded
   ChannelPtr    m_channel;                 ///< the channel to record
   const cEvent* m_epgEvent;                ///< the EPG event to record (XXX shouldn't we get the start/end from this?)
+  cRecorder*    m_recorder;                ///< the recorder that's being used while this timer is being recorded
   size_t        m_index; // XXX (re)move me
 };

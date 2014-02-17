@@ -92,6 +92,8 @@ void* cVNSIClient::Process(void)
   uint32_t dataLength;
   uint8_t* data;
 
+  cTimers::Get().RegisterObserver(this);
+
   while (!IsStopped())
   {
     if (!m_socket.read((uint8_t*)&channelID, sizeof(uint32_t))) break;
@@ -158,6 +160,8 @@ void* cVNSIClient::Process(void)
      possible running stream here */
   StopChannelStreaming();
 
+  cTimers::Get().UnregisterObserver(this);
+
   return NULL;
 }
 
@@ -183,9 +187,18 @@ void cVNSIClient::StopChannelStreaming()
   }
 }
 
-void cVNSIClient::TimerChange(const cTimer *Timer, eTimerChange Change)
+void cVNSIClient::Notify(const Observable &obs, const ObservableMessage msg)
 {
-  TimerChange();
+  switch (msg)
+  {
+  case ObservableMessageTimerAdded:
+  case ObservableMessageTimerChanged:
+  case ObservableMessageTimerDeleted:
+    TimerChange();
+    break;
+  default:
+    break;
+  }
 }
 
 void cVNSIClient::TimerChange()
@@ -1346,12 +1359,11 @@ bool cVNSIClient::processTIMER_Add() /* OPCODE 83 */
     TimerPtr t = cTimers::Get().GetTimer(timer);
     if (!t)
     {
-      cTimers::Get().Add(TimerPtr(timer));
-      cTimers::Get().SetModified();
       isyslog("Timer %s added", timer->ToDescr().c_str());
       m_resp->add_U32(VNSI_RET_OK);
       m_resp->finalise();
       m_socket.write(m_resp->getPtr(), m_resp->getLen());
+      cTimers::Get().Add(TimerPtr(timer));
       return true;
     }
     else
@@ -1402,9 +1414,8 @@ bool cVNSIClient::processTIMER_Delete() /* OPCODE 84 */
         }
       }
       isyslog("Deleting timer %s", timer->ToDescr().c_str());
-      cTimers::Get().Del(timer);
-      cTimers::Get().SetModified();
       m_resp->add_U32(VNSI_RET_OK);
+      cTimers::Get().Del(timer);
     }
     else
     {

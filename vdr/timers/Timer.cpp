@@ -2,18 +2,19 @@
 #include "Timers.h"
 #include "Timer.h"
 #include "TimerDefinitions.h"
+#include "recordings/Recordings.h"
+#include "recordings/Recorder.h"
 #include "channels/ChannelManager.h"
 #include "devices/Device.h"
 #include "devices/DeviceManager.h"
+#include "devices/subsystems/DeviceChannelSubsystem.h"
+#include "devices/subsystems/DeviceReceiverSubsystem.h"
 #include "epg/Event.h"
+#include "filesystem/Videodir.h"
 #include "utils/Status.h"
 #include "utils/TimeUtils.h"
 #include "utils/UTF8Utils.h"
 #include "utils/XBMCTinyXML.h"
-
-// IMPORTANT NOTE: in the 'sscanf()' calls there is a blank after the '%d'
-// format characters in order to allow any number of blanks after a numeric
-// value!
 
 TimerPtr cTimer::EmptyTimer;
 
@@ -26,7 +27,6 @@ cTimer::cTimer(void)
   m_startTime               = 0;
   m_stopTime                = 0;
   m_lastEPGEventCheck       = 0;
-  m_bRecording              = false;
   m_bPending                = false;
   m_bInVpsMargin            = false;
   m_iTimerFlags             = tfNone;
@@ -39,6 +39,7 @@ cTimer::cTimer(void)
   m_index                   = 0;
   m_iPriority               = g_setup.DefaultPriority;
   m_iLifetimeDays           = g_setup.DefaultLifetime;
+  m_recorder                = NULL;
 
   Matches();
 }
@@ -48,7 +49,6 @@ cTimer::cTimer(ChannelPtr channel, time_t startTime, int iDurationSecs, time_t i
   m_startTime               = 0;
   m_stopTime                = 0;
   m_lastEPGEventCheck       = 0;
-  m_bRecording              = false;
   m_bPending                = false;
   m_bInVpsMargin            = false;
   m_channel                 = channel;
@@ -62,6 +62,7 @@ cTimer::cTimer(ChannelPtr channel, time_t startTime, int iDurationSecs, time_t i
   m_strRecordingFilename    = strRecordingFilename;
   m_epgEvent                = NULL;
   m_index                   = 0;
+  m_recorder                = NULL;
 
   Matches();
 }
@@ -71,13 +72,13 @@ cTimer::cTimer(const cEvent *Event)
   m_startTime         = 0;
   m_stopTime          = 0;
   m_lastEPGEventCheck = 0;
-  m_bRecording        = false;
   m_bPending          = false;
   m_bInVpsMargin      = false;
   m_iTimerFlags       = tfActive;
   m_epgEvent          = NULL;
   m_index             = 0;
   m_channel           = cChannelManager::Get().GetByChannelID(Event->ChannelID(), true);
+  m_recorder          = NULL;
 
   if (Event->Vps() && g_setup.UseVps)
     SetFlags(tfVps);
@@ -126,7 +127,6 @@ cTimer& cTimer::operator= (const cTimer &Timer)
      m_startTime                 = Timer.m_startTime;
      m_stopTime                  = Timer.m_stopTime;
      m_lastEPGEventCheck       = 0;
-     m_bRecording              = Timer.m_bRecording;
      m_bPending                = Timer.m_bPending;
      m_bInVpsMargin            = Timer.m_bInVpsMargin;
      m_iTimerFlags             = Timer.m_iTimerFlags | (m_iTimerFlags & tfRecording);
@@ -139,6 +139,7 @@ cTimer& cTimer::operator= (const cTimer &Timer)
      m_iLifetimeDays           = Timer.m_iLifetimeDays;
      m_strRecordingFilename    = Timer.m_strRecordingFilename;
      m_epgEvent                = NULL;
+     m_recorder                = Timer.m_recorder;
 
      Matches();
   }
@@ -465,14 +466,14 @@ void cTimer::SetEvent(const cEvent *Event)
   }
 }
 
-void cTimer::SetRecording(bool Recording)
+void cTimer::SetRecording(cRecorder* recorder)
 {
-  m_bRecording = Recording;
-  if (m_bRecording)
+  m_recorder = recorder;
+  if (m_recorder)
     SetFlags(tfRecording);
   else
     ClrFlags(tfRecording);
-  isyslog("timer %s %s", ToDescr().c_str(), m_bRecording ? "start" : "stop");
+  isyslog("timer %s %s", ToDescr().c_str(), m_recorder ? "start" : "stop");
 }
 
 void cTimer::SetPending(bool Pending)
@@ -562,4 +563,158 @@ void cTimer::OnOff(void)
 
   ClearEvent();
   Matches(); // refresh start and end time
+}
+
+bool cTimer::StartRecording(void)
+{
+  static time_t LastNoDiskSpaceMessage = 0;
+  int FreeMB = 0;
+
+  // already recording
+  if (Recording())
+    return true;
+
+  SetPending(true);
+
+  // check free disk space
+  Recordings.AssertFreeDiskSpace(Priority(), !Pending());
+  VideoDiskSpace(&FreeMB);
+  if (FreeMB < MINFREEDISKSPACE)
+  {
+    if (time(NULL) - LastNoDiskSpaceMessage > DISKCHECKINTERVAL)
+    {
+      isyslog("not enough disk space to start recording %s", ToDescr().c_str());
+      LastNoDiskSpaceMessage = time(NULL);
+    }
+    return false;
+  }
+  LastNoDiskSpaceMessage = 0;
+
+  ChannelPtr channel = Channel();
+  if (channel)
+  {
+    DevicePtr device = cDeviceManager::Get().GetDevice(*channel, Priority(), false);
+    if (device)
+    {
+      // switch channels
+      dsyslog("switching device %d to channel %d", device->CardIndex(), channel->Number());
+      if (!device->Channel()->SwitchChannel(channel))
+      {
+//        XXX why? ShutdownHandler.RequestEmergencyExit();
+        return false;
+      }
+
+      TimerPtr timerPtr = cTimers::Get().GetTimer(this);
+      cRecording recording(timerPtr, Event());
+//      cRecordingUserCommand::Get().InvokeCommand(RUC_BEFORERECORDING, recording.FileName());
+      isyslog("start recording to '%s'", recording.FileName().c_str());
+
+      // create the directory for the recording
+      if (MakeDirs(recording.FileName(), true))
+      {
+        // start recording
+        cRecorder* recorder = new cRecorder(recording.FileName(), channel, Priority());
+        if (device->Receiver()->AttachReceiver(recorder))
+        {
+          recording.WriteInfo();
+//          cStatus::MsgRecording(device, recording.Name(), recording.FileName(), true);
+//          if (!Timer && !cReplayControl::LastReplayed()) // an instant recording, maybe from cRecordControls::PauseLiveVideo()
+//                       cReplayControl::SetRecording(fileName);
+          Recordings.AddByName(recording.FileName());
+          SetRecording(recorder);
+        }
+        else
+        {
+          // failed to attach receiver
+          DELETENULL(recorder);
+        }
+      }
+      else
+      {
+        // failed to create directory
+        esyslog("failed to create directory for recording");
+      }
+    }
+    else
+    {
+      // failed to find device for channel
+//      SetDeferred(DEFERTIMER);
+      isyslog("no free DVB device to record channel '%s'", channel->Name().c_str());
+    }
+  }
+  return false;
+}
+
+void cTimer::SwitchTransponder(time_t Now)
+{
+  bool InVpsMargin = false;
+  bool NeedsTransponder = false;
+  ChannelPtr channel = Channel();
+
+  if (HasFlags(tfActive) && !Recording())
+  {
+    if (HasFlags(tfVps))
+    {
+      if (Matches(Now, true, cSetup::Get().VpsMargin))
+      {
+        InVpsMargin = true;
+        SetInVpsMargin(InVpsMargin);
+      }
+      else if (Event())
+      {
+        InVpsMargin = Event()->StartTime() <= Now && Now < Event()->EndTime();
+        NeedsTransponder = Event()->StartTime() - Now < VPSLOOKAHEADTIME * 3600 && !Event()->SeenWithin(VPSUPTODATETIME);
+      }
+      else
+      {
+        cSchedulesLock SchedulesLock;
+        cSchedules *Schedules = SchedulesLock.Get();
+        if (Schedules)
+        {
+          SchedulePtr Schedule = Schedules->GetSchedule(channel->GetChannelID());
+          InVpsMargin = !Schedule; // we must make sure we have the schedule
+          NeedsTransponder = Schedule && !Schedule->PresentSeenWithin(VPSUPTODATETIME);
+        }
+      }
+//      InhibitEpgScan |= InVpsMargin | NeedsTransponder;
+    }
+    else
+    {
+      NeedsTransponder = Matches(Now, true, TIMERLOOKAHEADTIME);
+    }
+  }
+
+  if (NeedsTransponder || InVpsMargin)
+  {
+    // Find a device that provides the required transponder:
+    DevicePtr device = cDeviceManager::Get().GetDevice(*channel, MINPRIORITY, false);
+    if (!device && InVpsMargin)
+      device = cDeviceManager::Get().GetDevice(*channel, LIVEPRIORITY, false);
+
+    // Switch the device to the transponder:
+    if (device)
+    {
+      if (!device->Channel()->IsTunedToTransponder(*channel))
+      {
+        dsyslog("switching device %d to channel '%s'", device->CardIndex(), Channel()->Name().c_str());
+        if (device->Channel()->SwitchChannel(channel))
+          device->Channel()->SetOccupied(TIMERDEVICETIMEOUT);
+      }
+    }
+  }
+}
+
+bool cTimer::CheckRecordingStatus(time_t Now)
+{
+  if (!m_recorder->IsAttached() || !Matches(Now))
+  {
+    SetPending(false);
+    m_recorder->DetachDevice();
+    delete m_recorder;
+    SetRecording(NULL);
+
+    return false;
+  }
+  Recordings.AssertFreeDiskSpace(Priority());
+  return true;
 }

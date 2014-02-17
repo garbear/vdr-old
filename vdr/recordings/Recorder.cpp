@@ -15,15 +15,6 @@
 #include "filesystem/Directory.h"
 #include "utils/Shutdown.h"
 
-#define RECORDERBUFSIZE  (MEGABYTE(20) / TS_SIZE * TS_SIZE) // multiple of TS_SIZE
-
-// The maximum time we wait before assuming that a recorded video data stream
-// is broken:
-#define MAXBROKENTIMEOUT 30000 // milliseconds
-
-#define MINFREEDISKSPACE    (512) // MB
-#define DISKCHECKINTERVAL   100 // seconds
-
 using namespace PLATFORM;
 
 // --- cRecorder -------------------------------------------------------------

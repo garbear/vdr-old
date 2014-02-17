@@ -13,6 +13,7 @@
 #include "channels/ChannelManager.h"
 #include "Config.h"
 #include "utils/Tools.h"
+#include "utils/Observer.h"
 #include "Timer.h"
 
 #include <vector>
@@ -20,12 +21,15 @@
 class cEvent;
 class cRecording;
 
-class cTimers
+class cTimers : public Observable
 {
 public:
   static cTimers& Get(void);
   TimerPtr GetTimer(cTimer *Timer);
-  TimerPtr GetMatch(time_t t);
+  /*!
+   * @return the next timer that is scheduled to record now with the highest priority
+   */
+  TimerPtr GetNextPendingTimer(time_t Now);
   TimerPtr GetMatch(const cEvent *Event, eTimerMatch *Match = NULL);
   TimerPtr GetNextActiveTimer(void);
   TimerPtr GetByIndex(size_t index);
@@ -49,8 +53,12 @@ public:
   bool Load(const std::string &file);
   bool Save(const std::string &file = "");
 
+  void Process(void);
+
 private:
   cTimers(void);
+
+  void StartNewRecordings(time_t Now);
 
   int                   m_iState;
   time_t                m_lastSetEvents;
@@ -59,6 +67,8 @@ private:
   size_t                m_maxIndex;
   PLATFORM::CMutex      m_mutex;
   std::string           m_strFilename;
+
+  int LastTimerChannel;//XXX
 };
 
 #endif //__TIMERS_H

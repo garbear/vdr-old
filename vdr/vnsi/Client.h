@@ -31,6 +31,7 @@
 #include "devices/Receiver.h"
 #include "utils/Status.h"
 #include "utils/CharSetConverterVDR.h"
+#include "utils/Observer.h"
 
 #include "utils/XSocket.h"
 
@@ -47,7 +48,7 @@ class cCmdControl;
 //class cVnsiOsdProvider;
 
 class cVNSIClient : public PLATFORM::CThread
-                  , public cStatus
+                  , public Observer
 {
 private:
 
@@ -74,7 +75,6 @@ protected:
 
   virtual void* Process(void);
 
-  virtual void TimerChange(const cTimer *Timer, eTimerChange Change);
   virtual void Recording(const cDevice *Device, const char *Name, const char *FileName, bool On);
   virtual void OsdStatusMessage(const char *Message);
 
@@ -89,6 +89,8 @@ public:
   void EpgChange();
 
   unsigned int GetID() { return m_Id; }
+
+  void Notify(const Observable &obs, const ObservableMessage msg);
 
 protected:
 

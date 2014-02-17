@@ -52,14 +52,14 @@ TimerPtr cTimers::GetTimer(cTimer *Timer)
   return cTimer::EmptyTimer;
 }
 
-TimerPtr cTimers::GetMatch(time_t t)
+TimerPtr cTimers::GetNextPendingTimer(time_t Now)
 {
   static TimerPtr LastPending;
   TimerPtr t0;
   bool bGetNext(false);
   for (std::vector<TimerPtr>::iterator it = m_timers.begin(); it != m_timers.end(); ++it)
   {
-    if (!(*it)->Recording() && (*it)->Matches(t))
+    if (!(*it)->Recording() && (*it)->Matches(Now))
     {
       if ((*it)->Pending())
       {
@@ -150,7 +150,8 @@ TimerPtr cTimers::GetByIndex(size_t index)
 
 void cTimers::SetModified(void)
 {
-  cStatus::MsgTimerChange(cTimer::EmptyTimer, tcMod);
+  SetChanged();
+  NotifyObservers(ObservableMessageTimerChanged);
   m_iState++;
 }
 
@@ -162,13 +163,16 @@ void cTimers::Add(TimerPtr Timer, TimerPtr After)
     if (it != m_timers.end())
     {
       m_timers.insert(it, Timer);
+      SetChanged();
+      NotifyObservers(ObservableMessageTimerAdded);
       return;
     }
   }
 
   Timer->SetIndex(+m_maxIndex);
   m_timers.push_back(Timer);
-  cStatus::MsgTimerChange(Timer, tcAdd);
+  SetChanged();
+  NotifyObservers(ObservableMessageTimerAdded);
 }
 
 void cTimers::Ins(TimerPtr Timer, TimerPtr Before)
@@ -181,21 +185,25 @@ void cTimers::Ins(TimerPtr Timer, TimerPtr Before)
       if (**it == *Before)
       {
         m_timers.insert(previous, Timer);
+        SetChanged();
+        NotifyObservers(ObservableMessageTimerAdded);
+
         return;
       }
       previous = it;
     }
   }
-
-  cStatus::MsgTimerChange(Timer, tcAdd);
 }
 
 void cTimers::Del(TimerPtr Timer, bool DeleteObject)
 {
-  cStatus::MsgTimerChange(Timer, tcDel);
   std::vector<TimerPtr>::iterator it = std::find(m_timers.begin(), m_timers.end(), Timer);
   if (it != m_timers.end())
+  {
     m_timers.erase(it);
+    SetChanged();
+    NotifyObservers(ObservableMessageTimerDeleted);
+  }
 }
 
 bool cTimers::Modified(int &State)
@@ -234,7 +242,8 @@ void cTimers::DeleteExpired(void)
     {
       isyslog("deleting timer %s", (*it)->ToDescr().c_str());
       it = m_timers.erase(it);
-      SetModified();
+      SetChanged();
+      NotifyObservers(ObservableMessageTimerDeleted);
     }
   }
   m_lastDeleteExpired = time(NULL);
@@ -351,4 +360,40 @@ bool cTimers::Save(const string &file /* = ""*/)
     return false;
   }
   return true;
+}
+
+void cTimers::StartNewRecordings(time_t Now)
+{
+  //TODO
+  TimerPtr Timer = GetNextPendingTimer(Now);
+  if (Timer)
+    Timer->StartRecording();
+}
+
+void cTimers::Process(void)
+{
+  // Assign events to timers:
+  SetEvents();
+
+  // Must do all following calls with the exact same time!
+  time_t Now = time(0);
+
+  // Process ongoing recordings:
+  for (std::vector<TimerPtr>::iterator it = m_timers.begin(); it != m_timers.end(); ++it)
+    (*it)->CheckRecordingStatus(Now);
+
+  // Start new recordings:
+  StartNewRecordings(Now);
+
+  // Make sure timers "see" their channel early enough:
+  static time_t LastTimerCheck = 0;
+  if (Now - LastTimerCheck > TIMERCHECKDELTA)
+  { // don't do this too often
+    for (std::vector<TimerPtr>::iterator it = m_timers.begin(); it != m_timers.end(); ++it)
+      (*it)->SwitchTransponder(Now);
+    LastTimerCheck = Now;
+  }
+
+  // Delete expired timers:
+  DeleteExpired();
 }

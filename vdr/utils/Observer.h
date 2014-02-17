@@ -35,6 +35,9 @@ typedef enum
   ObservableMessageDeviceNotReady,
   ObservableMessageCAMReady,
   ObservableMessageCAMNotReady,
+  ObservableMessageTimerAdded,
+  ObservableMessageTimerChanged,
+  ObservableMessageTimerDeleted,
 } ObservableMessage;
 
 class Observer

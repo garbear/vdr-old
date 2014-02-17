@@ -52,3 +52,18 @@
 #define MAXVIDEOFILESIZEDEFAULT MAXVIDEOFILESIZEPES
 
 #define DEFAULTFRAMESPERSECOND 25.0
+
+#define RECORDERBUFSIZE  (MEGABYTE(20) / TS_SIZE * TS_SIZE) // multiple of TS_SIZE
+
+// The maximum time we wait before assuming that a recorded video data stream
+// is broken:
+#define MAXBROKENTIMEOUT 30000 // milliseconds
+
+#define MINFREEDISKSPACE    (512) // MB
+#define DISKCHECKINTERVAL   100 // seconds
+
+#define VPSLOOKAHEADTIME      24 // hours within which VPS timers will make sure their events are up to date
+#define VPSUPTODATETIME     3600 // seconds before the event or schedule of a VPS timer needs to be refreshed
+#define TIMERLOOKAHEADTIME    60 // seconds before a non-VPS timer starts and the channel is switched if possible
+#define TIMERCHECKDELTA       10 // seconds between checks for timers that need to see their channel
+#define TIMERDEVICETIMEOUT     8 // seconds before a device used for timer check may be reused
