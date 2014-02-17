@@ -2,6 +2,7 @@
 
 #define TIMER_XML_ROOT           "timers"
 #define TIMER_XML_ELM_TIMER      "timer"
+#define TIMER_XML_ATTR_MAX_INDEX "max_index"
 
 #define TIMER_XML_ATTR_FLAGS     "flags"
 #define TIMER_XML_ATTR_CHANNEL   "channel"

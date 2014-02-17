@@ -706,15 +706,18 @@ void cTimer::SwitchTransponder(time_t Now)
 
 bool cTimer::CheckRecordingStatus(time_t Now)
 {
-  if (!m_recorder->IsAttached() || !Matches(Now))
+  if (m_recorder)
   {
-    SetPending(false);
-    m_recorder->DetachDevice();
-    delete m_recorder;
-    SetRecording(NULL);
+    if (!m_recorder->IsAttached() || !Matches(Now))
+    {
+      SetPending(false);
+      m_recorder->DetachDevice();
+      delete m_recorder;
+      SetRecording(NULL);
 
-    return false;
+      return false;
+    }
+    Recordings.AssertFreeDiskSpace(Priority());
   }
-  Recordings.AssertFreeDiskSpace(Priority());
   return true;
 }

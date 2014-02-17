@@ -66,7 +66,7 @@ cSchedules& cSchedules::Get(void)
 
 time_t cSchedules::Modified(void)
 {
-  cSchedulesLock lock(true);
+  cSchedulesLock lock;
   cSchedules* schedules = lock.Get();
   return schedules ? schedules->m_modified : 0;
 }

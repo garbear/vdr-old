@@ -37,6 +37,7 @@ cTimers::cTimers(void)
 
 TimerPtr cTimers::GetTimer(cTimer *Timer)
 {
+  CLockObject lock(m_mutex);
   for (std::vector<TimerPtr>::iterator it = m_timers.begin(); it != m_timers.end(); ++it)
   {
     if ((*it)->Channel() == Timer->Channel() &&
@@ -57,6 +58,7 @@ TimerPtr cTimers::GetNextPendingTimer(time_t Now)
   static TimerPtr LastPending;
   TimerPtr t0;
   bool bGetNext(false);
+  CLockObject lock(m_mutex);
   for (std::vector<TimerPtr>::iterator it = m_timers.begin(); it != m_timers.end(); ++it)
   {
     if (!(*it)->Recording() && (*it)->Matches(Now))
@@ -88,6 +90,7 @@ TimerPtr cTimers::GetMatch(const cEvent *Event, eTimerMatch *Match)
 {
   TimerPtr t;
   eTimerMatch m = tmNone;
+  CLockObject lock(m_mutex);
   for (std::vector<TimerPtr>::iterator it = m_timers.begin(); it != m_timers.end(); ++it)
   {
     eTimerMatch tm = (*it)->MatchesEvent(Event);
@@ -108,6 +111,7 @@ TimerPtr cTimers::GetNextActiveTimer(void)
 {
   TimerPtr retval;
   TimerPtr timer;
+  CLockObject lock(m_mutex);
   for (std::vector<TimerPtr>::iterator it = m_timers.begin(); it != m_timers.end(); ++it)
   {
     timer = *it;
@@ -121,6 +125,7 @@ TimerPtr cTimers::GetNextActiveTimer(void)
 
 cRecording* cTimers::GetActiveRecording(const ChannelPtr channel)
 {
+  CLockObject lock(m_mutex);
   for (std::vector<TimerPtr>::iterator it = m_timers.begin(); it != m_timers.end(); ++it)
   {
     if ((*it)->Recording() && (*it)->Channel().get() == channel.get())
@@ -140,6 +145,7 @@ cRecording* cTimers::GetActiveRecording(const ChannelPtr channel)
 
 TimerPtr cTimers::GetByIndex(size_t index)
 {
+  CLockObject lock(m_mutex);
   for (std::vector<TimerPtr>::iterator it = m_timers.begin(); it != m_timers.end(); ++it)
   {
     if ((*it)->Index() == index)
@@ -157,6 +163,8 @@ void cTimers::SetModified(void)
 
 void cTimers::Add(TimerPtr Timer, TimerPtr After)
 {
+  CLockObject lock(m_mutex);
+
   if (After)
   {
     std::vector<TimerPtr>::iterator it = std::find(m_timers.begin(), m_timers.end(), After);
@@ -177,6 +185,7 @@ void cTimers::Add(TimerPtr Timer, TimerPtr After)
 
 void cTimers::Ins(TimerPtr Timer, TimerPtr Before)
 {
+  CLockObject lock(m_mutex);
   if (Before)
   {
     std::vector<TimerPtr>::iterator previous = m_timers.end();
@@ -197,6 +206,7 @@ void cTimers::Ins(TimerPtr Timer, TimerPtr Before)
 
 void cTimers::Del(TimerPtr Timer, bool DeleteObject)
 {
+  CLockObject lock(m_mutex);
   std::vector<TimerPtr>::iterator it = std::find(m_timers.begin(), m_timers.end(), Timer);
   if (it != m_timers.end())
   {
@@ -215,6 +225,7 @@ bool cTimers::Modified(int &State)
 
 void cTimers::SetEvents(void)
 {
+  CLockObject lock(m_mutex);
   if (time(NULL) - m_lastSetEvents < 5)
      return;
   cSchedulesLock SchedulesLock(false, 100);
@@ -234,9 +245,10 @@ void cTimers::SetEvents(void)
 
 void cTimers::DeleteExpired(void)
 {
+  CLockObject lock(m_mutex);
   if (time(NULL) - m_lastDeleteExpired < 30)
      return;
-  for (std::vector<TimerPtr>::iterator it = m_timers.begin(); it != m_timers.end(); ++it)
+  for (std::vector<TimerPtr>::iterator it = m_timers.begin(); it != m_timers.end();)
   {
     if ((*it)->Expired())
     {
@@ -244,6 +256,10 @@ void cTimers::DeleteExpired(void)
       it = m_timers.erase(it);
       SetChanged();
       NotifyObservers(ObservableMessageTimerDeleted);
+    }
+    else
+    {
+      ++it;
     }
   }
   m_lastDeleteExpired = time(NULL);
@@ -261,12 +277,14 @@ int cTimer::CompareTimers(const cTimer *a, const cTimer *b)
 
 void cTimers::ClearEvents(void)
 {
+  CLockObject lock(m_mutex);
   for (std::vector<TimerPtr>::iterator it = m_timers.begin(); it != m_timers.end(); ++it)
     (*it)->ClearEvent();
 }
 
 bool cTimers::HasTimer(const cEvent* event) const
 {
+  CLockObject lock(m_mutex);
   for (std::vector<TimerPtr>::const_iterator it = m_timers.begin(); it != m_timers.end(); ++it)
   {
     if ((*it)->Event() == event)
@@ -309,6 +327,10 @@ bool cTimers::Load(const std::string &file)
     return false;
   }
 
+  const char* maxIndex = root->Attribute(TIMER_XML_ATTR_MAX_INDEX);
+  if (maxIndex != NULL)
+    m_maxIndex = StringUtils::IntVal(maxIndex);
+
   const TiXmlNode *timerNode = root->FirstChild(TIMER_XML_ELM_TIMER);
   while (timerNode != NULL)
   {
@@ -336,11 +358,13 @@ bool cTimers::Save(const string &file /* = ""*/)
   xmlDoc.LinkEndChild(decl);
 
   TiXmlElement rootElement(TIMER_XML_ROOT);
+  rootElement.SetAttribute(TIMER_XML_ATTR_MAX_INDEX, m_maxIndex);
   TiXmlNode *root = xmlDoc.InsertEndChild(rootElement);
   if (root == NULL)
     return false;
 
   CLockObject lock(m_mutex);
+
   for (std::vector<TimerPtr>::const_iterator itTimer = m_timers.begin(); itTimer != m_timers.end(); ++itTimer)
   {
     TiXmlElement timerElement(TIMER_XML_ELM_TIMER);
@@ -372,6 +396,8 @@ void cTimers::StartNewRecordings(time_t Now)
 
 void cTimers::Process(void)
 {
+  CLockObject lock(m_mutex);
+
   // Assign events to timers:
   SetEvents();
 
@@ -396,4 +422,10 @@ void cTimers::Process(void)
 
   // Delete expired timers:
   DeleteExpired();
+}
+
+size_t cTimers::Size(void)
+{
+  CLockObject lock(m_mutex);
+  return m_timers.size();
 }

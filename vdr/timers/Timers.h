@@ -45,7 +45,7 @@ public:
   void Ins(TimerPtr Timer, TimerPtr Before = cTimer::EmptyTimer);
   void Del(TimerPtr Timer, bool DeleteObject = true);
   void ClearEvents(void);
-  size_t Size(void) { return m_timers.size(); }
+  size_t Size(void);
 
   bool HasTimer(const cEvent* event) const;
 
