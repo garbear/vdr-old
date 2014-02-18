@@ -33,6 +33,7 @@ public:
   TimerPtr GetMatch(const cEvent *Event, eTimerMatch *Match = NULL);
   TimerPtr GetNextActiveTimer(void);
   TimerPtr GetByIndex(size_t index);
+  std::vector<TimerPtr> GetTimers(void) const;
   cRecording* GetActiveRecording(const ChannelPtr channel);
   void SetModified(void);
   bool Modified(int &State);
@@ -41,9 +42,8 @@ public:
       ///< Upon return the internal state will be stored in State.
   void SetEvents(void);
   void DeleteExpired(void);
-  void Add(TimerPtr Timer, TimerPtr After = cTimer::EmptyTimer);
-  void Ins(TimerPtr Timer, TimerPtr Before = cTimer::EmptyTimer);
-  void Del(TimerPtr Timer, bool DeleteObject = true);
+  void Add(TimerPtr Timer);
+  void Del(TimerPtr Timer);
   void ClearEvents(void);
   size_t Size(void);
 
@@ -60,13 +60,13 @@ private:
 
   void StartNewRecordings(time_t Now);
 
-  int                   m_iState;
-  time_t                m_lastSetEvents;
-  time_t                m_lastDeleteExpired;
-  std::vector<TimerPtr> m_timers;
-  size_t                m_maxIndex;
-  PLATFORM::CMutex      m_mutex;
-  std::string           m_strFilename;
+  int                        m_iState;
+  time_t                     m_lastSetEvents;
+  time_t                     m_lastDeleteExpired;
+  std::map<size_t, TimerPtr> m_timers;
+  size_t                     m_maxIndex;
+  PLATFORM::CMutex           m_mutex;
+  std::string                m_strFilename;
 
   int LastTimerChannel;//XXX
 };

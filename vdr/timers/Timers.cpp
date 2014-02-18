@@ -38,16 +38,16 @@ cTimers::cTimers(void)
 TimerPtr cTimers::GetTimer(cTimer *Timer)
 {
   CLockObject lock(m_mutex);
-  for (std::vector<TimerPtr>::iterator it = m_timers.begin(); it != m_timers.end(); ++it)
+  for (std::map<size_t, TimerPtr>::iterator it = m_timers.begin(); it != m_timers.end(); ++it)
   {
-    if ((*it)->Channel() == Timer->Channel() &&
-       (
-           ((*it)->WeekDays() && (*it)->WeekDays() == Timer->WeekDays()) ||
-           (!(*it)->WeekDays() && (*it)->Day() == Timer->Day())) &&
-       (*it)->Start() == Timer->Start() &&
-       (*it)->DurationSecs() == Timer->DurationSecs())
+    if (it->second->Channel() == Timer->Channel()
+        && ((it->second->WeekDays()
+            && it->second->WeekDays() == Timer->WeekDays())
+            || (!it->second->WeekDays() && it->second->Day() == Timer->Day()))
+        && it->second->Start() == Timer->Start()
+        && it->second->DurationSecs() == Timer->DurationSecs())
     {
-      return (*it);
+      return it->second;
     }
   }
   return cTimer::EmptyTimer;
@@ -59,25 +59,25 @@ TimerPtr cTimers::GetNextPendingTimer(time_t Now)
   TimerPtr t0;
   bool bGetNext(false);
   CLockObject lock(m_mutex);
-  for (std::vector<TimerPtr>::iterator it = m_timers.begin(); it != m_timers.end(); ++it)
+  for (std::map<size_t, TimerPtr>::iterator it = m_timers.begin(); it != m_timers.end(); ++it)
   {
-    if (!(*it)->Recording() && (*it)->Matches(Now))
+    if (!it->second->Recording() && it->second->Matches(Now))
     {
-      if ((*it)->Pending())
+      if (it->second->Pending())
       {
         if (bGetNext)
         {
-          LastPending = *it;
-          return *it;
+          LastPending = it->second;
+          return it->second;
         }
-        if (LastPending && *LastPending == **it)
+        if (LastPending && *LastPending == *it->second)
         {
           bGetNext = true;
         }
       }
-      if (!t0 || (*it)->Priority() > t0->Priority())
+      if (!t0 || it->second->Priority() > t0->Priority())
       {
-        t0 = (*it);
+        t0 = it->second;
       }
     }
   }
@@ -91,12 +91,12 @@ TimerPtr cTimers::GetMatch(const cEvent *Event, eTimerMatch *Match)
   TimerPtr t;
   eTimerMatch m = tmNone;
   CLockObject lock(m_mutex);
-  for (std::vector<TimerPtr>::iterator it = m_timers.begin(); it != m_timers.end(); ++it)
+  for (std::map<size_t, TimerPtr>::iterator it = m_timers.begin(); it != m_timers.end(); ++it)
   {
-    eTimerMatch tm = (*it)->MatchesEvent(Event);
+    eTimerMatch tm = it->second->MatchesEvent(Event);
     if (tm > m)
     {
-      t = (*it);
+      t = it->second;
       m = tm;
       if (m == tmFull)
         break;
@@ -112,9 +112,9 @@ TimerPtr cTimers::GetNextActiveTimer(void)
   TimerPtr retval;
   TimerPtr timer;
   CLockObject lock(m_mutex);
-  for (std::vector<TimerPtr>::iterator it = m_timers.begin(); it != m_timers.end(); ++it)
+  for (std::map<size_t, TimerPtr>::iterator it = m_timers.begin(); it != m_timers.end(); ++it)
   {
-    timer = *it;
+    timer = it->second;
     timer->Matches();
     if ((timer->HasFlags(tfActive)) &&
         (!retval || (timer->StopTime() > time(NULL) && timer->Compare(*retval) < 0)))
@@ -126,12 +126,12 @@ TimerPtr cTimers::GetNextActiveTimer(void)
 cRecording* cTimers::GetActiveRecording(const ChannelPtr channel)
 {
   CLockObject lock(m_mutex);
-  for (std::vector<TimerPtr>::iterator it = m_timers.begin(); it != m_timers.end(); ++it)
+  for (std::map<size_t, TimerPtr>::iterator it = m_timers.begin(); it != m_timers.end(); ++it)
   {
-    if ((*it)->Recording() && (*it)->Channel().get() == channel.get())
+    if (it->second->Recording() && it->second->Channel().get() == channel.get())
     {
       Recordings.Load();
-      cRecording matchRec((*it), (*it)->Event());
+      cRecording matchRec(it->second, it->second->Event());
       {
         CThreadLock RecordingsLock(&Recordings);
         return Recordings.GetByName(matchRec.FileName());
@@ -146,12 +146,17 @@ cRecording* cTimers::GetActiveRecording(const ChannelPtr channel)
 TimerPtr cTimers::GetByIndex(size_t index)
 {
   CLockObject lock(m_mutex);
-  for (std::vector<TimerPtr>::iterator it = m_timers.begin(); it != m_timers.end(); ++it)
-  {
-    if ((*it)->Index() == index)
-      return *it;
-  }
-  return cTimer::EmptyTimer;
+  std::map<size_t, TimerPtr>::iterator it = m_timers.find(index);
+  return it != m_timers.end() ? it->second : cTimer::EmptyTimer;
+}
+
+std::vector<TimerPtr> cTimers::GetTimers(void) const
+{
+  std::vector<TimerPtr> timers;
+  CLockObject lock(m_mutex);
+  for (std::map<size_t, TimerPtr>::const_iterator it = m_timers.begin(); it != m_timers.end(); ++it)
+    timers.push_back(it->second);
+  return timers;
 }
 
 void cTimers::SetModified(void)
@@ -164,25 +169,12 @@ void cTimers::SetModified(void)
   Save();
 }
 
-void cTimers::Add(TimerPtr Timer, TimerPtr After)
+void cTimers::Add(TimerPtr Timer)
 {
   {
     CLockObject lock(m_mutex);
-
-    if (After)
-    {
-      std::vector<TimerPtr>::iterator it = std::find(m_timers.begin(), m_timers.end(), After);
-      if (it != m_timers.end())
-      {
-        m_timers.insert(it, Timer);
-        SetChanged();
-        NotifyObservers(ObservableMessageTimerAdded);
-        return;
-      }
-    }
-
     Timer->SetIndex(++m_maxIndex);
-    m_timers.push_back(Timer);
+    m_timers.insert(make_pair(m_maxIndex, Timer));
     SetChanged();
     NotifyObservers(ObservableMessageTimerAdded);
   }
@@ -190,32 +182,11 @@ void cTimers::Add(TimerPtr Timer, TimerPtr After)
   Save();
 }
 
-void cTimers::Ins(TimerPtr Timer, TimerPtr Before)
-{
-  CLockObject lock(m_mutex);
-  if (Before)
-  {
-    std::vector<TimerPtr>::iterator previous = m_timers.end();
-    for (std::vector<TimerPtr>::iterator it = m_timers.begin(); it != m_timers.end(); ++it)
-    {
-      if (**it == *Before)
-      {
-        m_timers.insert(previous, Timer);
-        SetChanged();
-        NotifyObservers(ObservableMessageTimerAdded);
-
-        return;
-      }
-      previous = it;
-    }
-  }
-}
-
-void cTimers::Del(TimerPtr Timer, bool DeleteObject)
+void cTimers::Del(TimerPtr Timer)
 {
   {
     CLockObject lock(m_mutex);
-    std::vector<TimerPtr>::iterator it = std::find(m_timers.begin(), m_timers.end(), Timer);
+    std::map<size_t, TimerPtr>::iterator it = m_timers.find(Timer->Index());
     if (it != m_timers.end())
     {
       m_timers.erase(it);
@@ -245,9 +216,9 @@ void cTimers::SetEvents(void)
   {
     if (!m_lastSetEvents || Schedules->Modified() >= m_lastSetEvents)
     {
-      for (std::vector<TimerPtr>::iterator it = m_timers.begin(); it != m_timers.end(); ++it)
+      for (std::map<size_t, TimerPtr>::iterator it = m_timers.begin(); it != m_timers.end(); ++it)
       {
-        (*it)->SetEventFromSchedule(Schedules);
+        it->second->SetEventFromSchedule(Schedules);
       }
     }
   }
@@ -259,12 +230,12 @@ void cTimers::DeleteExpired(void)
   CLockObject lock(m_mutex);
   if (time(NULL) - m_lastDeleteExpired < 30)
      return;
-  for (std::vector<TimerPtr>::iterator it = m_timers.begin(); it != m_timers.end();)
+  for (std::map<size_t, TimerPtr>::iterator it = m_timers.begin(); it != m_timers.end();)
   {
-    if ((*it)->Expired())
+    if (it->second->Expired())
     {
-      isyslog("deleting timer %s", (*it)->ToDescr().c_str());
-      it = m_timers.erase(it);
+      isyslog("deleting timer %s", it->second->ToDescr().c_str());
+      m_timers.erase(it++);
       SetChanged();
       NotifyObservers(ObservableMessageTimerDeleted);
     }
@@ -289,16 +260,16 @@ int cTimer::CompareTimers(const cTimer *a, const cTimer *b)
 void cTimers::ClearEvents(void)
 {
   CLockObject lock(m_mutex);
-  for (std::vector<TimerPtr>::iterator it = m_timers.begin(); it != m_timers.end(); ++it)
-    (*it)->ClearEvent();
+  for (std::map<size_t, TimerPtr>::iterator it = m_timers.begin(); it != m_timers.end(); ++it)
+    it->second->ClearEvent();
 }
 
 bool cTimers::HasTimer(const cEvent* event) const
 {
   CLockObject lock(m_mutex);
-  for (std::vector<TimerPtr>::const_iterator it = m_timers.begin(); it != m_timers.end(); ++it)
+  for (std::map<size_t, TimerPtr>::const_iterator it = m_timers.begin(); it != m_timers.end(); ++it)
   {
-    if ((*it)->Event() == event)
+    if (it->second->Event() == event)
       return true;
   }
   return false;
@@ -348,7 +319,8 @@ bool cTimers::Load(const std::string &file)
     TimerPtr timer = TimerPtr(new cTimer);
     if (timer && timer->DeserialiseTimer(timerNode))
     {
-      m_timers.push_back(timer);
+      if (m_timers.find(timer->Index()) == m_timers.end())
+        m_timers.insert(make_pair(timer->Index(), timer));
     }
     else
     {
@@ -375,11 +347,11 @@ bool cTimers::Save(const string &file /* = ""*/)
 
   CLockObject lock(m_mutex);
 
-  for (std::vector<TimerPtr>::const_iterator itTimer = m_timers.begin(); itTimer != m_timers.end(); ++itTimer)
+  for (std::map<size_t, TimerPtr>::const_iterator itTimer = m_timers.begin(); itTimer != m_timers.end(); ++itTimer)
   {
     TiXmlElement timerElement(TIMER_XML_ELM_TIMER);
     TiXmlNode *timerNode = root->InsertEndChild(timerElement);
-    (*itTimer)->SerialiseTimer(timerNode);
+    itTimer->second->SerialiseTimer(timerNode);
   }
 
   if (!file.empty())
@@ -415,8 +387,8 @@ void cTimers::Process(void)
   time_t Now = time(0);
 
   // Process ongoing recordings:
-  for (std::vector<TimerPtr>::iterator it = m_timers.begin(); it != m_timers.end(); ++it)
-    (*it)->CheckRecordingStatus(Now);
+  for (std::map<size_t, TimerPtr>::iterator it = m_timers.begin(); it != m_timers.end(); ++it)
+    it->second->CheckRecordingStatus(Now);
 
   // Start new recordings:
   StartNewRecordings(Now);
@@ -425,8 +397,8 @@ void cTimers::Process(void)
   static time_t LastTimerCheck = 0;
   if (Now - LastTimerCheck > TIMERCHECKDELTA)
   { // don't do this too often
-    for (std::vector<TimerPtr>::iterator it = m_timers.begin(); it != m_timers.end(); ++it)
-      (*it)->SwitchTransponder(Now);
+    for (std::map<size_t, TimerPtr>::iterator it = m_timers.begin(); it != m_timers.end(); ++it)
+      it->second->SwitchTransponder(Now);
     LastTimerCheck = Now;
   }
 
