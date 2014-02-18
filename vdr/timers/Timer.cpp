@@ -235,7 +235,7 @@ bool cTimer::DeserialiseTimer(const TiXmlNode *node)
   if (file != NULL)
     m_strRecordingFilename = file;
 
-  return false;
+  return true;
 }
 
 std::string cTimer::ToDescr(void) const

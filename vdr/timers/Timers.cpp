@@ -156,31 +156,38 @@ TimerPtr cTimers::GetByIndex(size_t index)
 
 void cTimers::SetModified(void)
 {
-  SetChanged();
-  NotifyObservers(ObservableMessageTimerChanged);
-  m_iState++;
+  {
+    SetChanged();
+    NotifyObservers(ObservableMessageTimerChanged);
+    m_iState++;
+  }
+  Save();
 }
 
 void cTimers::Add(TimerPtr Timer, TimerPtr After)
 {
-  CLockObject lock(m_mutex);
-
-  if (After)
   {
-    std::vector<TimerPtr>::iterator it = std::find(m_timers.begin(), m_timers.end(), After);
-    if (it != m_timers.end())
+    CLockObject lock(m_mutex);
+
+    if (After)
     {
-      m_timers.insert(it, Timer);
-      SetChanged();
-      NotifyObservers(ObservableMessageTimerAdded);
-      return;
+      std::vector<TimerPtr>::iterator it = std::find(m_timers.begin(), m_timers.end(), After);
+      if (it != m_timers.end())
+      {
+        m_timers.insert(it, Timer);
+        SetChanged();
+        NotifyObservers(ObservableMessageTimerAdded);
+        return;
+      }
     }
+
+    Timer->SetIndex(++m_maxIndex);
+    m_timers.push_back(Timer);
+    SetChanged();
+    NotifyObservers(ObservableMessageTimerAdded);
   }
 
-  Timer->SetIndex(+m_maxIndex);
-  m_timers.push_back(Timer);
-  SetChanged();
-  NotifyObservers(ObservableMessageTimerAdded);
+  Save();
 }
 
 void cTimers::Ins(TimerPtr Timer, TimerPtr Before)
@@ -206,14 +213,18 @@ void cTimers::Ins(TimerPtr Timer, TimerPtr Before)
 
 void cTimers::Del(TimerPtr Timer, bool DeleteObject)
 {
-  CLockObject lock(m_mutex);
-  std::vector<TimerPtr>::iterator it = std::find(m_timers.begin(), m_timers.end(), Timer);
-  if (it != m_timers.end())
   {
-    m_timers.erase(it);
-    SetChanged();
-    NotifyObservers(ObservableMessageTimerDeleted);
+    CLockObject lock(m_mutex);
+    std::vector<TimerPtr>::iterator it = std::find(m_timers.begin(), m_timers.end(), Timer);
+    if (it != m_timers.end())
+    {
+      m_timers.erase(it);
+      SetChanged();
+      NotifyObservers(ObservableMessageTimerDeleted);
+    }
   }
+
+  Save();
 }
 
 bool cTimers::Modified(int &State)
@@ -342,7 +353,6 @@ bool cTimers::Load(const std::string &file)
     else
     {
       // log
-      continue;
     }
     timerNode = timerNode->NextSibling(TIMER_XML_ELM_TIMER);
   }
