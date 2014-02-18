@@ -83,7 +83,7 @@ bool CHDDirectory::Exists(const std::string &strPath)
 {
   struct __stat64 data;
   std::string strTranslatedPath = CSpecialProtocol::TranslatePath(strPath);
-  if (CFile::Stat(strTranslatedPath, &data) == 0)
+  if (stat64(strTranslatedPath.c_str(), &data) == 0)
     return S_ISDIR(data.st_mode);
   return false;
 }
