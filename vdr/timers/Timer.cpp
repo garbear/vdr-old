@@ -176,6 +176,7 @@ bool cTimer::SerialiseTimer(TiXmlNode *node) const
   if (timerElement == NULL)
     return false;
 
+  timerElement->SetAttribute(TIMER_XML_ATTR_ID,       m_index);
   timerElement->SetAttribute(TIMER_XML_ATTR_FLAGS,    m_iTimerFlags);
   timerElement->SetAttribute(TIMER_XML_ATTR_CHANNEL,  Channel()->GetChannelID().Serialize().c_str());
   timerElement->SetAttribute(TIMER_XML_ATTR_DAYS,     CTimeUtils::PrintDay(m_iFirstDay, m_iWeekdaysMask, true).c_str());
@@ -197,6 +198,10 @@ bool cTimer::DeserialiseTimer(const TiXmlNode *node)
   const TiXmlElement *elem = node->ToElement();
   if (elem == NULL)
     return false;
+
+  const char *id = elem->Attribute(TIMER_XML_ATTR_ID);
+  if (id != NULL)
+    m_index = StringUtils::IntVal(id);
 
   const char *flags = elem->Attribute(TIMER_XML_ATTR_FLAGS);
   if (flags != NULL)
