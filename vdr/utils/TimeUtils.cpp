@@ -43,6 +43,11 @@ int CTimeUtils::TimeToInt(int t)
   return (t / 100 * 60 + t % 100) * 60;
 }
 
+int CTimeUtils::IntToTimeTo(int t)
+{
+  return (t / 3600) * 100 + (t % 3600) / 60;
+}
+
 bool CTimeUtils::ParseDay(const char *s, time_t &Day, uint32_t &WeekDays)
 {
   // possible formats are:
