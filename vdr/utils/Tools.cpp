@@ -383,24 +383,28 @@ bool MakeDirs(const std::string& strFileName, bool IsDirectory)
   char *s = strdup(strFileName.c_str());
   char *p = s;
   if (*p == '/')
-     p++;
-  while ((p = strchr(p, '/')) != NULL || IsDirectory) {
-        if (p)
-           *p = 0;
-        struct stat fs;
-        if (stat(s, &fs) != 0 || !S_ISDIR(fs.st_mode)) {
-           dsyslog("creating directory %s", s);
-           if (mkdir(s, ACCESSPERMS) == -1) {
-              LOG_ERROR_STR(s);
-              result = false;
-              break;
-              }
-           }
-        if (p)
-           *p++ = '/';
-        else
-           break;
+    p++;
+  while ((p = strchr(p, '/')) != NULL || IsDirectory)
+  {
+    if (p)
+      *p = 0;
+    if (strcmp(s, "special:") && strcmp(s, "special:/") && strcmp(s, "special://home"))
+    {
+      if (!CDirectory::Exists(s))
+      {
+        if (!CDirectory::Create(s))
+        {
+          LOG_ERROR_STR(s);
+          result = false;
+          break;
         }
+      }
+    }
+    if (p)
+      *p++ = '/';
+    else
+      break;
+  }
   free(s);
   return result;
 }
