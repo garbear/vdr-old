@@ -12,6 +12,7 @@
 #include "filesystem/Directory.h"
 #include "filesystem/Poller.h"
 #include "filesystem/ReadDir.h"
+#include "filesystem/SpecialProtocol.h"
 #include "UTF8Utils.h"
 #include "StringUtils.h"
 #include "platform/threads/threads.h"
@@ -995,7 +996,9 @@ cUnbufferedFile::~cUnbufferedFile()
 int cUnbufferedFile::Open(const char *FileName, int Flags, mode_t Mode)
 {
   Close();
-  fd = open(FileName, Flags, Mode);
+  //XXX
+  std::string strFilename = CSpecialProtocol::TranslatePath(FileName);
+  fd = open(strFilename.c_str(), Flags, Mode);
   curpos = 0;
 #ifdef USE_FADVISE
   begin = lastpos = ahead = 0;
