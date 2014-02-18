@@ -334,7 +334,7 @@ bool cTimers::Load(const std::string &file)
 
   if (!StringUtils::EqualsNoCase(root->ValueStr(), TIMER_XML_ROOT))
   {
-    // log
+    esyslog("failed to find root element '%s' in file '%s'", TIMER_XML_ROOT, file.c_str());
     return false;
   }
 
@@ -352,7 +352,7 @@ bool cTimers::Load(const std::string &file)
     }
     else
     {
-      // log
+      esyslog("failed to find deserialise timer in file '%s'", file.c_str());
     }
     timerNode = timerNode->NextSibling(TIMER_XML_ELM_TIMER);
   }
