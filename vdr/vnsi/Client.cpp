@@ -1353,7 +1353,8 @@ bool cVNSIClient::processTIMER_Add() /* OPCODE 83 */
   }
   else
   {
-    cTimer* timer = new cTimer(channel, start, stop - start, day, weekdays, flags, priority, lifetime, file);
+    // XXX fix the protocol to use the duration
+    cTimer* timer = new cTimer(channel, start, (stop - start) * 60, day, weekdays, flags, priority, lifetime, file);
     delete[] file;
 
     TimerPtr t = cTimers::Get().GetTimer(timer);
@@ -1479,7 +1480,8 @@ bool cVNSIClient::processTIMER_Update() /* OPCODE 85 */
     ChannelPtr channel = cChannelManager::Get().GetByChannelUID(channelid);
     if(channel)
     {
-      cTimer newData(channel, start, stop - start, day, weekdays, flags, priority, lifetime, file);
+      // XXX fix the protocol to use the duration
+      cTimer newData(channel, start, (stop - start) * 60, day, weekdays, flags, priority, lifetime, file);
       timerData = newData;
     }
 
