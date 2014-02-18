@@ -133,6 +133,16 @@ public:
   virtual bool Exists(const std::string &strPath) { return false; }
 
   /*!
+   * Get disk space info for this directory
+   * @param strPath The path to get the info for
+   * @param size Current size
+   * @param used Current bytes in use
+   * @param free Free bytes on this disk
+   * @return True when fetched successfully
+   */
+  virtual bool DiskSpace(const std::string &strPath, unsigned int &size, unsigned int &used, unsigned int &free) { return false; }
+
+  /*!
   * \brief Removes the directory
   * \param strPath Directory to remove
   * \return true on success

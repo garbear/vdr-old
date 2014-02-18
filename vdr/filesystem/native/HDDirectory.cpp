@@ -28,8 +28,9 @@
 #include <cstdio>
 #include <dirent.h>
 #include <sys/stat.h>
+#include <sys/stat.h>
+#include <sys/statfs.h>
 #include <unistd.h>
-//#include <vector>
 
 using namespace std;
 
@@ -104,3 +105,18 @@ bool CHDDirectory::Rename(const std::string &strPath, const std::string &strNewP
   status = rename(strTranslatedPath.c_str(), strTranslatedNewPath.c_str());
   return status == 0;
 }
+
+bool CHDDirectory::DiskSpace(const std::string &strPath, unsigned int &size, unsigned int &used, unsigned int &free)
+{
+  struct statfs64 statFs;
+  std::string strTranslatedPath = CSpecialProtocol::TranslatePath(strPath);
+  if (statfs64(strTranslatedPath.c_str(), &statFs) == 0)
+  {
+    size = statFs.f_blocks * statFs.f_bsize;
+    used = (statFs.f_blocks - statFs.f_bfree) * statFs.f_bsize;
+    free = statFs.f_bavail * statFs.f_bsize;
+    return true;
+  }
+  return false;
+}
+

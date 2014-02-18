@@ -163,13 +163,16 @@ bool CDirectory::Rename(const string &strPath, const string &strNewPath)
 
 bool CDirectory::CalculateDiskSpace(const string &strPath, unsigned int &size, unsigned int &used, unsigned int &free)
 {
-  struct statfs64 statFs;
-  if (statfs64(strPath.c_str(), &statFs) == 0)
+  try
   {
-    size = statFs.f_blocks * statFs.f_bsize;
-    used = (statFs.f_blocks - statFs.f_bfree) * statFs.f_bsize;
-    free = statFs.f_bavail * statFs.f_bsize;
-    return true;
+    auto_ptr<IDirectory> pDirectory(CreateLoader(strPath));
+    if (!pDirectory.get())
+      return false;
+    return pDirectory->DiskSpace(strPath, size, used, free);
+  }
+  catch (...)
+  {
+    // Log
   }
   return false;
 }
