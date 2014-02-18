@@ -199,46 +199,35 @@ bool cTimer::DeserialiseTimer(const TiXmlNode *node)
   if (elem == NULL)
     return false;
 
-  const char *id = elem->Attribute(TIMER_XML_ATTR_ID);
-  if (id != NULL)
-    m_index = StringUtils::IntVal(id);
+  if (const char* attr = elem->Attribute(TIMER_XML_ATTR_ID))
+    m_index = StringUtils::IntVal(attr);
 
-  const char *flags = elem->Attribute(TIMER_XML_ATTR_FLAGS);
-  if (flags != NULL)
-    m_iTimerFlags = StringUtils::IntVal(flags);
+  if (const char* attr = elem->Attribute(TIMER_XML_ATTR_FLAGS))
+    m_iTimerFlags = StringUtils::IntVal(attr);
 
-  const char *channel = elem->Attribute(TIMER_XML_ATTR_CHANNEL);
-  if (channel != NULL)
+  if (const char* attr = elem->Attribute(TIMER_XML_ATTR_CHANNEL))
   {
-    tChannelID chanId = tChannelID::Deserialize(channel);
+    tChannelID chanId = tChannelID::Deserialize(attr);
     m_channel = cChannelManager::Get().GetByChannelID(chanId);
   }
 
-  const char *days = elem->Attribute(TIMER_XML_ATTR_DAYS);
-  if (days != NULL)
-  {
-    CTimeUtils::ParseDay(days, m_iFirstDay, m_iWeekdaysMask);
-  }
+  if (const char* attr = elem->Attribute(TIMER_XML_ATTR_DAYS))
+    CTimeUtils::ParseDay(attr, m_iFirstDay, m_iWeekdaysMask);
 
-  const char *start = elem->Attribute(TIMER_XML_ATTR_START);
-  if (start != NULL)
-    m_iStartSecsSinceMidnight = StringUtils::IntVal(start);
+  if (const char* attr = elem->Attribute(TIMER_XML_ATTR_START))
+    m_iStartSecsSinceMidnight = StringUtils::IntVal(attr);
 
-  const char *duration = elem->Attribute(TIMER_XML_ATTR_DURATION);
-  if (duration != NULL)
-    m_iDurationSecs = StringUtils::IntVal(duration);
+  if (const char* attr = elem->Attribute(TIMER_XML_ATTR_DURATION))
+    m_iDurationSecs = StringUtils::IntVal(attr);
 
-  const char *priority = elem->Attribute(TIMER_XML_ATTR_PRIORITY);
-  if (priority != NULL)
-    m_iPriority = StringUtils::IntVal(priority);
+  if (const char* attr = elem->Attribute(TIMER_XML_ATTR_PRIORITY))
+    m_iPriority = StringUtils::IntVal(attr);
 
-  const char *lifetime = elem->Attribute(TIMER_XML_ATTR_LIFETIME);
-  if (lifetime != NULL)
-    m_iLifetimeDays = StringUtils::IntVal(lifetime);
+  if (const char* attr = elem->Attribute(TIMER_XML_ATTR_LIFETIME))
+    m_iLifetimeDays = StringUtils::IntVal(attr);
 
-  const char *file = elem->Attribute(TIMER_XML_ATTR_FILENAME);
-  if (file != NULL)
-    m_strRecordingFilename = file;
+  if (const char* attr = elem->Attribute(TIMER_XML_ATTR_FILENAME))
+    m_strRecordingFilename = attr;
 
   return true;
 }
