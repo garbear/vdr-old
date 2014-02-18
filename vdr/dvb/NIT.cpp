@@ -8,13 +8,17 @@
  */
 
 #include "NIT.h"
-#include <linux/dvb/frontend.h>
 #include "channels/ChannelManager.h"
 #include "EITScan.h"
 #include "sources/linux/DVBSourceParams.h"
-#include "libsi/section.h"
-#include "libsi/descriptor.h"
 #include "utils/Tools.h"
+
+#include <linux/dvb/frontend.h>
+#include <libsi/descriptor.h>
+#include <libsi/si_ext.h>
+#include <libsi/section.h>
+
+using namespace SI_EXT;
 
 #define DVB_SYSTEM_1 0 // see also dvbdevice.c
 #define DVB_SYSTEM_2 1
@@ -23,7 +27,7 @@ cNitFilter::cNitFilter(void)
 {
   numNits = 0;
   networkId = 0;
-  Set(0x10, 0x40); // NIT
+  Set(PID_NIT, TABLE_ID_NIT_ACTUAL);
 }
 
 void
