@@ -32,6 +32,7 @@
 #include "filesystem/FileName.h"
 #include "Recordings.h"
 #include "filesystem/IndexFile.h"
+#include "filesystem/VideoFile.h"
 #include "RecordingUserCommand.h"
 
 #include "filesystem/Directory.h"
@@ -329,9 +330,16 @@ std::string LimitNameLengths(const std::string& strSubject, int PathMax, int Nam
 
 std::string cRecording::ExchangeChars(const std::string& strSubject, bool ToFileSystem)
 {
-  char* ns = ExchangeCharsXXX(strdup(strSubject.c_str()), ToFileSystem);
+  std::string strTrimmedSubject(strSubject);
+  StringUtils::Trim(strTrimmedSubject);
+
+  char* ns = ExchangeCharsXXX(strdup(strTrimmedSubject.c_str()), ToFileSystem);
   std::string strReturn = ns;
   free(ns);
+
+  if (*strReturn.rbegin() == '/')
+    strReturn = strReturn.substr(0, strReturn.size() - 1);
+
   return strReturn;
 }
 
@@ -716,7 +724,7 @@ int cRecording::SecondsToFrames(int Seconds, double FramesPerSecond)
   return int(round(Seconds * FramesPerSecond));
 }
 
-int cRecording::ReadFrame(cUnbufferedFile *f, uchar *b, int Length, int Max)
+int cRecording::ReadFrame(CVideoFile *f, uchar *b, int Length, int Max)
 {
   if (Length == -1)
      Length = Max; // this means we read up to EOF (see cIndex)

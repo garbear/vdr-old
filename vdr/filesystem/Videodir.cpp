@@ -16,6 +16,7 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include "filesystem/VideoFile.h"
 #include "recordings/Recordings.h"
 #include "utils/Tools.h"
 #include "Directory.h"
@@ -120,7 +121,7 @@ const char *cVideoDirectory::Adjust(const char *FileName)
   return NULL;
 }
 
-cUnbufferedFile *OpenVideoFile(const char *FileName, int Flags)
+CVideoFile *OpenVideoFile(const char *FileName, int Flags)
 {
   const char *ActualFileName = FileName;
 
@@ -157,17 +158,17 @@ cUnbufferedFile *OpenVideoFile(const char *FileName, int Flags)
            }
         }
      }
-  cUnbufferedFile *File = cUnbufferedFile::Create(ActualFileName, Flags, DEFFILEMODE);
+  CVideoFile *File = CVideoFile::Create(ActualFileName, Flags, DEFFILEMODE);
   if (ActualFileName != FileName)
      free((char *)ActualFileName);
   return File;
 }
 
-int CloseVideoFile(cUnbufferedFile *File)
+int CloseVideoFile(CVideoFile *File)
 {
-  int Result = File->Close();
+  File->Close();
   delete File;
-  return Result;
+  return 0;
 }
 
 bool RenameVideoFile(const std::string& strOldName, const std::string& strNewName)

@@ -23,6 +23,7 @@
 #include "marks/Mark.h"
 
 class cRecordingInfo;
+class CVideoFile;
 
 extern int DirectoryPathMax;
 extern int DirectoryNameMax;
@@ -84,7 +85,7 @@ public:
   static int SecondsToFrames(int Seconds, double FramesPerSecond = DEFAULTFRAMESPERSECOND);
         // Returns the number of frames corresponding to the given number of seconds.
 
-  static int ReadFrame(cUnbufferedFile *f, uchar *b, int Length, int Max);
+  static int ReadFrame(CVideoFile *f, uchar *b, int Length, int Max);
 
   static std::string ExchangeChars(const std::string& strSubject, bool ToFileSystem);
         // Exchanges the characters in the given string to or from a file system

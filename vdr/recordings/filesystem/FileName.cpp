@@ -1,6 +1,7 @@
 #include "FileName.h"
 #include "Config.h"
 #include "filesystem/Videodir.h"
+#include "filesystem/VideoFile.h"
 #include "utils/Tools.h"
 #include "devices/Remux.h"
 //XXX
@@ -93,7 +94,7 @@ bool cFileName::GetLastPatPmtVersions(int &PatVersion, int &PmtVersion)
   return false;
 }
 
-cUnbufferedFile *cFileName::Open(void)
+CVideoFile *cFileName::Open(void)
 {
   if (!m_file)
   {
@@ -112,7 +113,7 @@ cUnbufferedFile *cFileName::Open(void)
       if (CFile::Exists(fileName))
       {
         dsyslog("playing '%s'", fileName.c_str());
-        m_file = cUnbufferedFile::Create(fileName.c_str(),
+        m_file = CVideoFile::Create(fileName.c_str(),
             O_RDONLY | O_LARGEFILE | BlockingFlag);
         if (!m_file)
           LOG_ERROR_STR(fileName.c_str());
@@ -134,7 +135,7 @@ void cFileName::Close(void)
   }
 }
 
-cUnbufferedFile *cFileName::SetOffset(int Number, off_t Offset)
+CVideoFile *cFileName::SetOffset(int Number, off_t Offset)
 {
   if (m_iFileNumber != Number)
     Close();
@@ -184,7 +185,7 @@ cUnbufferedFile *cFileName::SetOffset(int Number, off_t Offset)
   return NULL;
 }
 
-cUnbufferedFile *cFileName::NextFile(void)
+CVideoFile *cFileName::NextFile(void)
 {
   return SetOffset(m_iFileNumber + 1);
 }

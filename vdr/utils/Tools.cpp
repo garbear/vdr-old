@@ -524,34 +524,35 @@ char *ReadLink(const char *FileName)
 bool SpinUpDisk(const std::string& strFileName)
 {
   //XXX
-  for (int n = 0; n < 10; n++) {
-      std::string buf;
-      if (CDirectory::CanWrite(strFileName))
-         buf = StringUtils::Format("%s/vdr-%06d", !strFileName.empty() ? strFileName.c_str() : ".", n);
-      else
-         buf = StringUtils::Format("%s.vdr-%06d", strFileName.c_str(), n);
-      if (access(buf.c_str(), F_OK) != 0) { // the file does not exist
-         timeval tp1, tp2;
-         gettimeofday(&tp1, NULL);
-         int f = open(buf.c_str(), O_WRONLY | O_CREAT, DEFFILEMODE);
-         // O_SYNC doesn't work on all file systems
-         if (f >= 0) {
-            if (fdatasync(f) < 0)
-               LOG_ERROR_STR(buf.c_str());
-            close(f);
-            remove(buf.c_str());
-            gettimeofday(&tp2, NULL);
-            double seconds = (((long long)tp2.tv_sec * 1000000 + tp2.tv_usec) - ((long long)tp1.tv_sec * 1000000 + tp1.tv_usec)) / 1000000.0;
-            if (seconds > 0.5)
-               dsyslog("SpinUpDisk took %.2f seconds", seconds);
-            return true;
-            }
-         else
-            LOG_ERROR_STR(buf.c_str());
-         }
-      }
-  esyslog("ERROR: SpinUpDisk failed");
-  return false;
+  return true;
+//  for (int n = 0; n < 10; n++) {
+//      std::string buf;
+//      if (CDirectory::CanWrite(strFileName))
+//         buf = StringUtils::Format("%s/vdr-%06d", !strFileName.empty() ? strFileName.c_str() : ".", n);
+//      else
+//         buf = StringUtils::Format("%s.vdr-%06d", strFileName.c_str(), n);
+//      if (access(buf.c_str(), F_OK) != 0) { // the file does not exist
+//         timeval tp1, tp2;
+//         gettimeofday(&tp1, NULL);
+//         int f = open(buf.c_str(), O_WRONLY | O_CREAT, DEFFILEMODE);
+//         // O_SYNC doesn't work on all file systems
+//         if (f >= 0) {
+//            if (fdatasync(f) < 0)
+//               LOG_ERROR_STR(buf.c_str());
+//            close(f);
+//            remove(buf.c_str());
+//            gettimeofday(&tp2, NULL);
+//            double seconds = (((long long)tp2.tv_sec * 1000000 + tp2.tv_usec) - ((long long)tp1.tv_sec * 1000000 + tp1.tv_usec)) / 1000000.0;
+//            if (seconds > 0.5)
+//               dsyslog("SpinUpDisk took %.2f seconds", seconds);
+//            return true;
+//            }
+//         else
+//            LOG_ERROR_STR(buf.c_str());
+//         }
+//      }
+//  esyslog("ERROR: SpinUpDisk failed");
+//  return false;
 }
 
 void TouchFile(const std::string& strFileName)
@@ -975,204 +976,6 @@ bool cSafeFile::Close(void)
   else
      result = false;
   return result;
-}
-
-// --- cUnbufferedFile -------------------------------------------------------
-
-#define USE_FADVISE
-
-#define WRITE_BUFFER KILOBYTE(800)
-
-cUnbufferedFile::cUnbufferedFile(void)
-{
-  fd = -1;
-}
-
-cUnbufferedFile::~cUnbufferedFile()
-{
-  Close();
-}
-
-int cUnbufferedFile::Open(const char *FileName, int Flags, mode_t Mode)
-{
-  Close();
-  //XXX
-  std::string strFilename = CSpecialProtocol::TranslatePath(FileName);
-  fd = open(strFilename.c_str(), Flags, Mode);
-  curpos = 0;
-#ifdef USE_FADVISE
-  begin = lastpos = ahead = 0;
-  cachedstart = 0;
-  cachedend = 0;
-  readahead = KILOBYTE(128);
-  written = 0;
-  totwritten = 0;
-  if (fd >= 0)
-     posix_fadvise(fd, 0, 0, POSIX_FADV_RANDOM); // we could use POSIX_FADV_SEQUENTIAL, but we do our own readahead, disabling the kernel one.
-#endif
-  return fd;
-}
-
-int cUnbufferedFile::Close(void)
-{
-  if (fd >= 0) {
-#ifdef USE_FADVISE
-     if (totwritten)    // if we wrote anything make sure the data has hit the disk before
-        fdatasync(fd);  // calling fadvise, as this is our last chance to un-cache it.
-     posix_fadvise(fd, 0, 0, POSIX_FADV_DONTNEED);
-#endif
-     int OldFd = fd;
-     fd = -1;
-     return close(OldFd);
-     }
-  errno = EBADF;
-  return -1;
-}
-
-// When replaying and going e.g. FF->PLAY the position jumps back 2..8M
-// hence we do not want to drop recently accessed data at once.
-// We try to handle the common cases such as PLAY->FF->PLAY, small
-// jumps, moving editing marks etc.
-
-#define FADVGRAN   KILOBYTE(4) // AKA fadvise-chunk-size; PAGE_SIZE or getpagesize(2) would also work.
-#define READCHUNK  MEGABYTE(8)
-
-void cUnbufferedFile::SetReadAhead(size_t ra)
-{
-  readahead = ra;
-}
-
-int cUnbufferedFile::FadviseDrop(off_t Offset, off_t Len)
-{
-  // rounding up the window to make sure that not PAGE_SIZE-aligned data gets freed.
-  return posix_fadvise(fd, Offset - (FADVGRAN - 1), Len + (FADVGRAN - 1) * 2, POSIX_FADV_DONTNEED);
-}
-
-off_t cUnbufferedFile::Seek(off_t Offset, int Whence)
-{
-  if (Whence == SEEK_SET && Offset == curpos)
-     return curpos;
-  curpos = lseek(fd, Offset, Whence);
-  return curpos;
-}
-
-ssize_t cUnbufferedFile::Read(void *Data, size_t Size)
-{
-  if (fd >= 0) {
-#ifdef USE_FADVISE
-     off_t jumped = curpos-lastpos; // nonzero means we're not at the last offset
-     if ((cachedstart < cachedend) && (curpos < cachedstart || curpos > cachedend)) {
-        // current position is outside the cached window -- invalidate it.
-        FadviseDrop(cachedstart, cachedend-cachedstart);
-        cachedstart = curpos;
-        cachedend = curpos;
-        }
-     cachedstart = ::min(cachedstart, curpos);
-#endif
-     ssize_t bytesRead = safe_read(fd, Data, Size);
-     if (bytesRead > 0) {
-        curpos += bytesRead;
-#ifdef USE_FADVISE
-        cachedend = ::max(cachedend, curpos);
-
-        // Read ahead:
-        // no jump? (allow small forward jump still inside readahead window).
-        if (jumped >= 0 && jumped <= (off_t)readahead) {
-           // Trigger the readahead IO, but only if we've used at least
-           // 1/2 of the previously requested area. This avoids calling
-           // fadvise() after every read() call.
-           if (ahead - curpos < (off_t)(readahead / 2)) {
-              posix_fadvise(fd, curpos, readahead, POSIX_FADV_WILLNEED);
-              ahead = curpos + readahead;
-              cachedend = ::max(cachedend, ahead);
-              }
-           if (readahead < Size * 32) { // automagically tune readahead size.
-              readahead = Size * 32;
-              }
-           }
-        else
-           ahead = curpos; // jumped -> we really don't want any readahead, otherwise e.g. fast-rewind gets in trouble.
-#endif
-        }
-#ifdef USE_FADVISE
-     if (cachedstart < cachedend) {
-        if (curpos - cachedstart > READCHUNK * 2) {
-           // current position has moved forward enough, shrink tail window.
-           FadviseDrop(cachedstart, curpos - READCHUNK - cachedstart);
-           cachedstart = curpos - READCHUNK;
-           }
-        else if (cachedend > ahead && cachedend - curpos > READCHUNK * 2) {
-           // current position has moved back enough, shrink head window.
-           FadviseDrop(curpos + READCHUNK, cachedend - (curpos + READCHUNK));
-           cachedend = curpos + READCHUNK;
-           }
-        }
-     lastpos = curpos;
-#endif
-     return bytesRead;
-     }
-  return -1;
-}
-
-ssize_t cUnbufferedFile::Write(const void *Data, size_t Size)
-{
-  if (fd >=0) {
-     ssize_t bytesWritten = safe_write(fd, Data, Size);
-#ifdef USE_FADVISE
-     if (bytesWritten > 0) {
-        begin = ::min(begin, curpos);
-        curpos += bytesWritten;
-        written += bytesWritten;
-        lastpos = ::max(lastpos, curpos);
-        if (written > WRITE_BUFFER) {
-           if (lastpos > begin) {
-              // Now do three things:
-              // 1) Start writeback of begin..lastpos range
-              // 2) Drop the already written range (by the previous fadvise call)
-              // 3) Handle nonpagealigned data.
-              //    This is why we double the WRITE_BUFFER; the first time around the
-              //    last (partial) page might be skipped, writeback will start only after
-              //    second call; the third call will still include this page and finally
-              //    drop it from cache.
-              off_t headdrop = ::min(begin, off_t(WRITE_BUFFER * 2));
-              posix_fadvise(fd, begin - headdrop, lastpos - begin + headdrop, POSIX_FADV_DONTNEED);
-              }
-           begin = lastpos = curpos;
-           totwritten += written;
-           written = 0;
-           // The above fadvise() works when writing slowly (recording), but could
-           // leave cached data around when writing at a high rate, e.g. when cutting,
-           // because by the time we try to flush the cached pages (above) the data
-           // can still be dirty - we are faster than the disk I/O.
-           // So we do another round of flushing, just like above, but at larger
-           // intervals -- this should catch any pages that couldn't be released
-           // earlier.
-           if (totwritten > MEGABYTE(32)) {
-              // It seems in some setups, fadvise() does not trigger any I/O and
-              // a fdatasync() call would be required do all the work (reiserfs with some
-              // kind of write gathering enabled), but the syncs cause (io) load..
-              // Uncomment the next line if you think you need them.
-              //fdatasync(fd);
-              off_t headdrop = ::min(off_t(curpos - totwritten), off_t(totwritten * 2));
-              posix_fadvise(fd, curpos - totwritten - headdrop, totwritten + headdrop, POSIX_FADV_DONTNEED);
-              totwritten = 0;
-              }
-           }
-        }
-#endif
-     return bytesWritten;
-     }
-  return -1;
-}
-
-cUnbufferedFile *cUnbufferedFile::Create(const char *FileName, int Flags, mode_t Mode)
-{
-  cUnbufferedFile *File = new cUnbufferedFile;
-  if (File->Open(FileName, Flags, Mode) < 0) {
-     delete File;
-     File = NULL;
-     }
-  return File;
 }
 
 // --- cLockFile -------------------------------------------------------------

@@ -13,6 +13,7 @@
 #include "filesystem/IndexFile.h"
 #include "filesystem/FileName.h"
 #include "filesystem/Directory.h"
+#include "filesystem/VideoFile.h"
 #include "utils/Shutdown.h"
 
 using namespace PLATFORM;

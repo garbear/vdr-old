@@ -41,7 +41,7 @@ private:
   cPatPmtGenerator   m_patPmtGenerator;
   cFileName*         m_fileName;
   cIndexFile*        m_index;
-  cUnbufferedFile*   m_recordFile;
+  CVideoFile*        m_recordFile;
   std::string        m_strRecordingName;
   off_t              m_fileSize;
   time_t             m_lastDiskSpaceCheck;

@@ -13,11 +13,13 @@
 #include <stdlib.h>
 #include "utils/Tools.h"
 
+class CVideoFile;
+
 extern const char *VideoDirectory;
 
 void SetVideoDirectory(const char *Directory);
-cUnbufferedFile *OpenVideoFile(const char *FileName, int Flags);
-int CloseVideoFile(cUnbufferedFile *File);
+CVideoFile *OpenVideoFile(const char *FileName, int Flags);
+int CloseVideoFile(CVideoFile *File);
 bool RenameVideoFile(const std::string& strOldName, const std::string& strNewName);
 bool RemoveVideoFile(const std::string& strFileName);
 bool VideoFileSpaceAvailable(int SizeMB);

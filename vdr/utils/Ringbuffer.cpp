@@ -14,6 +14,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include "Tools.h"
+#include "filesystem/VideoFile.h"
 
 // --- cRingBuffer -----------------------------------------------------------
 
@@ -263,7 +264,7 @@ int cRingBufferLinear::Read(int FileHandle, int Max)
   return Count;
 }
 
-int cRingBufferLinear::Read(cUnbufferedFile *File, int Max)
+int cRingBufferLinear::Read(CVideoFile *File, int Max)
 {
   int Tail = tail;
   int diff = Tail - head;

@@ -12,6 +12,7 @@
 #include "Recordings.h"
 #include "filesystem/FileName.h"
 #include "filesystem/IndexFile.h"
+#include "filesystem/VideoFile.h"
 #include "marks/Marks.h"
 #include "RecordingUserCommand.h"
 #include "devices/Remux.h"
@@ -233,7 +234,7 @@ private:
   const char *error;
   bool isPesRecording;
   double framesPerSecond;
-  cUnbufferedFile *fromFile, *toFile;
+  CVideoFile *fromFile, *toFile;
   cFileName *fromFileName, *toFileName;
   cIndexFile *fromIndex, *toIndex;
   cMarks fromMarks, toMarks;

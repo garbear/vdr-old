@@ -14,6 +14,8 @@
 #include "platform/threads/throttle.h"
 #include "Tools.h"
 
+class CVideoFile;
+
 class cRingBuffer {
 private:
   PLATFORM::CEvent readyForPut, readyForGet;
@@ -86,8 +88,8 @@ public:
     ///< Only one actual read() call is done.
     ///< Returns the number of bytes actually read and stored, or
     ///< an error value from the actual read() call.
-  int Read(cUnbufferedFile *File, int Max = 0);
-    ///< Like Read(int FileHandle, int Max), but reads from a cUnbufferedFile).
+  int Read(CVideoFile *File, int Max = 0);
+    ///< Like Read(int FileHandle, int Max), but reads from a CVideoFile).
   int Put(const uchar *Data, int Count);
     ///< Puts at most Count bytes of Data into the ring buffer.
     ///< Returns the number of bytes actually stored.

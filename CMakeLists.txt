@@ -153,6 +153,7 @@ set(VDR_SRCS
 	vdr/filesystem/ReadDir.cpp
 	vdr/filesystem/SpecialProtocol.cpp
 	vdr/filesystem/Videodir.cpp
+	vdr/filesystem/VideoFile.cpp
 	vdr/recordings/filesystem/FileName.cpp
 	vdr/recordings/filesystem/IndexFile.cpp
 	vdr/recordings/filesystem/ResumeFile.cpp

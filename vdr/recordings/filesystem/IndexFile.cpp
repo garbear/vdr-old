@@ -67,7 +67,7 @@ void* cIndexFileGenerator::Process(void)
   bool IndexFileWritten = false;
   bool Rewind = false;
   cFileName FileName(m_strRecordingName.c_str(), false);
-  cUnbufferedFile *ReplayFile = FileName.Open();
+  CVideoFile *ReplayFile = FileName.Open();
   cRingBufferLinear Buffer(IFG_BUFFER_SIZE, MIN_TS_PACKETS_FOR_FRAME_DETECTOR * TS_SIZE);
   cPatPmtParser PatPmtParser;
   cFrameDetector FrameDetector;
