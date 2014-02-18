@@ -197,6 +197,7 @@ set(VDR_SRCS
 	vdr/utils/XMLUtils.cpp
 	vdr/utils/UTF8Utils.cpp
 	vdr/utils/Status.cpp
+	vdr/utils/SynchronousAbort.cpp
 	vdr/utils/CRC32.cpp
 	vdr/utils/url/URL.cpp
 	vdr/utils/url/UrlOptions.cpp
@@ -245,6 +246,7 @@ set(VDR_TEST_SRCS
 	vdr/test/gtest/vdr-test.cpp
 	vdr/utils/test/TestRegExp.cpp
 	vdr/utils/test/TestStringUtils.cpp
+	vdr/utils/test/TestSynchronousAbort.cpp
 	vdr/utils/test/TestXBMCTinyXML.cpp
 	vdr/utils/test/TestXMLUtils.cpp
 	vdr/utils/url/test/TestURL.cpp
