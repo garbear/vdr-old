@@ -71,6 +71,9 @@ void cRecordings::ScanVideoDir(const std::string& strDirName, bool Foreground, i
   dsyslog("scanning in directory '%s' for recordings", strDirName.c_str());
   for (DirectoryListing::const_iterator it = dirListing.begin(); it != dirListing.end() && !IsStopped(); ++it)
   {
+    if (!(*it).Name().compare(".") || !(*it).Name().compare(".."))
+      continue;
+
     std::string filename = AddDirectory(strDirName, (*it).Name());
     struct __stat64 st;
     if (CFile::Stat(filename, &st) == 0)

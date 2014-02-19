@@ -422,31 +422,29 @@ cRecording::cRecording(const std::string& strFileName)
 
   //XXX fix this up
 
-  // strip slash
-  size_t pos = m_strFileName.find('/');
-  if (pos != std::string::npos)
-    m_strFileName.erase(pos);
+  m_strName = URLUtils::GetFileName(strFileName);
+//  size_t pos = m_strFileName.find(VideoDirectory);
+//  if (pos != std::string::npos)
+//    m_strFileName.erase((size_t)pos, strlen(VideoDirectory));
+//  const char *p = strrchr(m_strFileName.c_str(), '/');
 
-  pos = m_strFileName.find(VideoDirectory);
-  if (pos != std::string::npos)
-    m_strFileName.erase((size_t)0, pos);
-  const char *p = strrchr(m_strFileName.c_str(), '/');
-
-  m_strName.clear();
   m_recordingInfo = new cRecordingInfo(m_strFileName);
-  if (p) {
+  if (!m_strName.empty())
+  {
+    //XXX
+    const char* p = m_strName.c_str();
      time_t now = time(NULL);
      struct tm tm_r;
      struct tm t = *localtime_r(&now, &tm_r); // this initializes the time zone in 't'
      t.tm_isdst = -1; // makes sure mktime() will determine the correct DST setting
-     if (7 == sscanf(p + 1, DATAFORMATTS, &t.tm_year, &t.tm_mon, &t.tm_mday, &t.tm_hour, &t.tm_min, &m_iChannel, &m_iInstanceId)
-      || 7 == sscanf(p + 1, DATAFORMATPES, &t.tm_year, &t.tm_mon, &t.tm_mday, &t.tm_hour, &t.tm_min, &m_iPriority, &m_iLifetimeDays)) {
+     if (7 == sscanf(p /*+ 1*/, DATAFORMATTS, &t.tm_year, &t.tm_mon, &t.tm_mday, &t.tm_hour, &t.tm_min, &m_iChannel, &m_iInstanceId)
+      || 7 == sscanf(p /*+ 1*/, DATAFORMATPES, &t.tm_year, &t.tm_mon, &t.tm_mday, &t.tm_hour, &t.tm_min, &m_iPriority, &m_iLifetimeDays)) {
         t.tm_year -= 1900;
         t.tm_mon--;
         t.tm_sec = 0;
         m_start = mktime(&t);
-        m_strName = strFileName;
-        m_strName.erase(p - strFileName.c_str());
+//        m_strName = strFileName;
+//        m_strName.erase(p - strFileName.c_str());
         m_strName = ExchangeChars(m_strName, false);
         m_bIsPesRecording = m_iInstanceId < 0;
         }

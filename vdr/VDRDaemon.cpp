@@ -110,7 +110,7 @@ bool cVDRDaemon::Init()
     return false;
 
   // Recordings:
-  Recordings.Update();
+  Recordings.Update(true);
 
   // EPG data:
   m_EpgDataReader = new cEpgDataReader;

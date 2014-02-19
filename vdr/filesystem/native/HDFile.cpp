@@ -197,7 +197,7 @@ bool CHDFile::Exists(const string &url)
 
 int CHDFile::Stat(const string &url, struct __stat64 *buffer)
 {
-  return -1;
+  return stat64(url.c_str(), buffer);
 }
 
 bool CHDFile::Delete(const string &url)
