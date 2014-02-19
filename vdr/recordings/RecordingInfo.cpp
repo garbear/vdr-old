@@ -228,6 +228,12 @@ bool cRecordingInfo::Write(const std::string& strFilename /* = "" */) const
   return true;
 }
 
+void cRecordingInfo::SetEvent(const cEvent* event)
+{
+  m_event = event;
+  Write();
+}
+
 std::string cRecordingInfo::Title(void) const
 {
   return m_event->Title();

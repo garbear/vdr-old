@@ -18,6 +18,7 @@
 
 class cFileName;
 class cIndexFile;
+class cRecordingInfo;
 
 class cRecorder : public cReceiver, PLATFORM::CThread
 {
@@ -26,6 +27,8 @@ public:
                // Creates a new recorder for the given Channel and
                // the given Priority that will record into the file FileName.
   virtual ~cRecorder();
+
+  virtual void SetEvent(const cEvent* event);
 
 protected:
   virtual void Activate(bool On);
@@ -45,6 +48,7 @@ private:
   std::string        m_strRecordingName;
   off_t              m_fileSize;
   time_t             m_lastDiskSpaceCheck;
+  cRecordingInfo*    m_recordingInfo;
 };
 
 #endif //__RECORDER_H

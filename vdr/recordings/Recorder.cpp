@@ -24,6 +24,7 @@ cRecorder::cRecorder(const std::string& strFileName, ChannelPtr Channel, int Pri
 :cReceiver(Channel, Priority), CThread()
 {
   m_strRecordingName = strFileName;
+  m_recordingInfo = NULL;
 
   // Make sure the disk is up and running:
 
@@ -69,6 +70,7 @@ cRecorder::~cRecorder()
   delete m_fileName;
   delete m_frameDetector;
   delete m_ringBuffer;
+  delete m_recordingInfo;
 }
 
 bool cRecorder::RunningLowOnDiskSpace(void)
@@ -114,6 +116,12 @@ void cRecorder::Receive(uchar *Data, int Length)
      }
 }
 
+void cRecorder::SetEvent(const cEvent* event)
+{
+  if (m_recordingInfo)
+    m_recordingInfo->SetEvent(event);
+}
+
 void* cRecorder::Process(void)
 {
   cTimeMs t(MAXBROKENTIMEOUT);
@@ -129,11 +137,11 @@ void* cRecorder::Process(void)
                  break;
               if (m_frameDetector->Synced()) {
                  if (!InfoWritten) {
-                    cRecordingInfo RecordingInfo(m_strRecordingName);
-                    if (RecordingInfo.Read()) {
-                       if (m_frameDetector->FramesPerSecond() > 0 && DoubleEqual(RecordingInfo.FramesPerSecond(), DEFAULTFRAMESPERSECOND) && !DoubleEqual(RecordingInfo.FramesPerSecond(), m_frameDetector->FramesPerSecond())) {
-                          RecordingInfo.SetFramesPerSecond(m_frameDetector->FramesPerSecond());
-                          RecordingInfo.Write();
+                   m_recordingInfo = new cRecordingInfo(m_strRecordingName);
+                    if (m_recordingInfo->Read()) {
+                       if (m_frameDetector->FramesPerSecond() > 0 && DoubleEqual(m_recordingInfo->FramesPerSecond(), DEFAULTFRAMESPERSECOND) && !DoubleEqual(m_recordingInfo->FramesPerSecond(), m_frameDetector->FramesPerSecond())) {
+                         m_recordingInfo->SetFramesPerSecond(m_frameDetector->FramesPerSecond());
+                         m_recordingInfo->Write();
                           Recordings.UpdateByName(m_strRecordingName);
                           }
                        }

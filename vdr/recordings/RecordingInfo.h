@@ -19,6 +19,7 @@ public:
   tChannelID ChannelID(void) const { return m_channelID; }
   std::string ChannelName(void) const { return m_channel ? m_channel->Name() : ""; }
   const cEvent *GetEvent(void) const { return m_event; }
+  void SetEvent(const cEvent* event);
   std::string Title(void) const;
   void SetTitle(const std::string& strTitle);
   std::string ShortText(void) const;

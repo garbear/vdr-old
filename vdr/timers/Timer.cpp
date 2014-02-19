@@ -453,7 +453,11 @@ void cTimer::SetEvent(const cEvent *Event)
   if (m_epgEvent != Event)
   { //XXX TODO check event data, too???
     if (Event)
+    {
       isyslog("timer %s set to event %s", ToDescr().c_str(), Event->ToDescr().c_str());
+      if (m_recorder)
+        m_recorder->SetEvent(Event);
+    }
     else
       isyslog("timer %s set to no event", ToDescr().c_str());
     m_epgEvent = Event;
