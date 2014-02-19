@@ -22,6 +22,7 @@
 
 #include "Types.h"
 #include "ChannelID.h"
+#include "sources/linux/DVBTransponderParams.h"
 #include "sources/Source.h"
 //#include "timers.h"
 
@@ -150,7 +151,7 @@ public:
   bool DeserialiseConf(const std::string &str);
 
   /*!
-   * \brief Returns the actual frequency in MHz, as given in 'channels.conf'
+   * \brief Returns the actual frequency in KHz, as given in 'channels.conf'
    */
   int FrequencyKHz() const { return m_channelData.iFrequencyHz / 1000; }
 
@@ -169,13 +170,13 @@ public:
   /*!
    * \brief Builds the transponder from the given frequency and polarization
    * \param frequency The transponder frequency before polarization is taken into account
-   * \param polarization Either 'H', 'V', 'L' or 'R' (lowercase is ok)
+   * \param polarization The transponder polarization
    * \return The adjusted frequency
    *
    * Some satellites have transponders at the same frequency, just with different
    * polarization.
    */
-  static unsigned int Transponder(unsigned int frequency, char polarization);
+  static unsigned int Transponder(unsigned int frequency, fe_polarization polarization);
 
   int Source()                      const { return m_channelData.source; }
   int Srate()                       const { return m_channelData.srate; }
@@ -214,9 +215,9 @@ public:
 
   void SetNumber(unsigned int number) { m_channelData.number = number; }
 
-  const std::string &Parameters()     const { return m_parameters; }
-  const cLinkChannels &LinkChannels() const { return m_linkChannels; }
-  const cChannel *RefChannel()        const { return m_refChannel; }
+  const cDvbTransponderParams& Parameters() const { return m_parameters; }
+  const cLinkChannels& LinkChannels()       const { return m_linkChannels; }
+  const cChannel* RefChannel()              const { return m_refChannel; }
 
   void SetLinkChannels(cLinkChannels& channels) { m_linkChannels = channels; }
 
@@ -229,7 +230,7 @@ public:
 
   void CopyTransponderData(const cChannel &channel);
 
-  bool SetTransponderData(int source, int frequency, int srate, const std::string &strParameters, bool bQuiet = false);
+  bool SetTransponderData(int source, int frequency, int srate, const cDvbTransponderParams& parameters, bool bQuiet = false);
   void SetId(int nid, int tid, int sid, int rid = 0);
   void SetName(const std::string &strName, const std::string &strShortName, const std::string &strProvider);
   void SetPortalName(const std::string &strPortalName);
@@ -248,8 +249,6 @@ public:
 
   uint32_t Hash(void) const;
 private:
-  std::string TransponderDataToString() const;
-
   std::string              m_name;
   std::string              m_shortName;
   std::string              m_provider;
@@ -257,7 +256,7 @@ private:
 
   tChannelData             m_channelData;
 
-  std::string              m_parameters;
+  cDvbTransponderParams    m_parameters;
   int                      m_modification;
   SchedulePtr              m_schedule;
   //cLinkChannels           *m_linkChannels;

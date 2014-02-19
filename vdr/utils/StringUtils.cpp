@@ -872,12 +872,6 @@ void StringUtils::Tokenize(const std::string& input, std::vector<std::string>& t
 
 long StringUtils::IntVal(const std::string &str, long iDefault /* = 0 */)
 {
-  string dummy;
-  return IntVal(str, dummy, iDefault);
-}
-
-long StringUtils::IntVal(const std::string &str, std::string &remainder, long iDefault /* = 0 */)
-{
   if (!str.empty())
   {
     const char *s = str.c_str();
@@ -885,10 +879,7 @@ long StringUtils::IntVal(const std::string &str, std::string &remainder, long iD
     errno = 0;
     long n = strtol(s, &p, 10);
     if (!errno && s != p)
-    {
-      remainder = p;
       return n;
-    }
   }
   return iDefault;
 }

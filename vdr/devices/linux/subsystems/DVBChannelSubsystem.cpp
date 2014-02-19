@@ -82,7 +82,7 @@ bool cDvbChannelSubsystem::ProvidesTransponder(const cChannel &channel) const
   if (dtp.Modulation() == VSB_8    && !GetDevice<cDvbDevice>()->m_dvbTuner.HasCapability(FE_CAN_8VSB))        return false;
   if (dtp.Modulation() == VSB_16   && !GetDevice<cDvbDevice>()->m_dvbTuner.HasCapability(FE_CAN_16VSB))       return false;
   // "turbo fec" is a non standard FEC used by North American broadcasters - this is a best guess to determine this condition
-  if (dtp.Modulation() == PSK_8    && !GetDevice<cDvbDevice>()->m_dvbTuner.HasCapability(FE_CAN_TURBO_FEC) && dtp.System() == SYS_DVBS) return false;
+  if (dtp.Modulation() == PSK_8    && !GetDevice<cDvbDevice>()->m_dvbTuner.HasCapability(FE_CAN_TURBO_FEC) && dtp.System() == DVB_SYSTEM_1) return false; // TODO: Make this dtp.System() == SYS_DVBS
 
   if (!cSource::IsSat(channel.Source()) ||
       (!g_setup.DiSEqC || Diseqcs.Get(Device()->CardIndex() + 1, channel.Source(), channel.FrequencyKHz(), dtp.Polarization(), NULL)))

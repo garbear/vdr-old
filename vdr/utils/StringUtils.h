@@ -140,9 +140,7 @@ public:
   /*! \brief Convert a string to an integer.
    \param str The string
    \param intVal The value, untouched if IntVal() returns false
-   \param remainder The string following the parsed integer, or empty if the integer consumed the entire string
    \return True on success, or false on error (not an int, overflow, etc)
    */
   static long IntVal(const std::string &str, long iDefault = 0);
-  static long IntVal(const std::string &str, std::string &remainder, long iDefault = 0); // TODO: Remove me
 };

@@ -116,8 +116,8 @@ TEST(Channel, SerialiseDeserialise)
     const char *frequency = channelElement.Attribute(CHANNEL_XML_ATTR_FREQUENCY);
     EXPECT_EQ(StringUtils::IntVal(frequency), 177000000);
 
-    const char *parameters = channelElement.Attribute(CHANNEL_XML_ATTR_PARAMETERS);
-    EXPECT_STREQ(parameters, "M10");
+    //const char *parameters = channelElement.Attribute(CHANNEL_XML_ATTR_PARAMETERS);
+    //EXPECT_STREQ(parameters, "M10");
 
     const char *source = channelElement.Attribute(CHANNEL_XML_ATTR_SOURCE);
     EXPECT_EQ(cSource::FromString(source), 1090519040);
@@ -136,6 +136,10 @@ TEST(Channel, SerialiseDeserialise)
 
     const char *tpid = channelElement.Attribute(CHANNEL_XML_ATTR_TPID);
     EXPECT_EQ(StringUtils::IntVal(tpid), 0);
+
+    TiXmlNode *parametersNode = channelElement.FirstChild(CHANNEL_XML_ELM_PARAMETERS);
+    EXPECT_NE(parametersNode, (TiXmlNode*)NULL);
+    // Further parameters tests in TestDVBTransponderParams.cpp
 
     /*
     const TiXmlNode *apidsNode = channelElement.FirstChild(CHANNEL_XML_ELM_APIDS);
@@ -321,9 +325,8 @@ TEST(Channel, SerialiseDeserialise)
 TEST(Channel, Transponder)
 {
   unsigned int frequency = 1000 * 1000 * 1000; // 1GHz
-  EXPECT_EQ(cChannel::Transponder(frequency, 'H'), frequency + 100 * 1000);
-  EXPECT_EQ(cChannel::Transponder(frequency, 'V'), frequency + 200 * 1000);
-  EXPECT_EQ(cChannel::Transponder(frequency, 'L'), frequency + 300 * 1000);
-  EXPECT_EQ(cChannel::Transponder(frequency, 'R'), frequency + 400 * 1000);
-  EXPECT_EQ(cChannel::Transponder(frequency, 'X'), frequency);
+  EXPECT_EQ(cChannel::Transponder(frequency, POLARIZATION_HORIZONTAL), frequency + 100 * 1000);
+  EXPECT_EQ(cChannel::Transponder(frequency, POLARIZATION_VERTICAL), frequency + 200 * 1000);
+  EXPECT_EQ(cChannel::Transponder(frequency, POLARIZATION_CIRCULAR_LEFT), frequency + 300 * 1000);
+  EXPECT_EQ(cChannel::Transponder(frequency, POLARIZATION_CIRCULAR_RIGHT), frequency + 400 * 1000);
 }

@@ -482,7 +482,7 @@ bool cDvbTuner::IsTunedTo(const cChannel &channel) const
     return false; // sufficient mismatch
 
   // Polarization is already checked as part of the Transponder.
-  return strcmp(m_channel.Parameters().c_str(), channel.Parameters().c_str()) == 0;
+  return m_channel.Parameters() == channel.Parameters();
 }
 
 void cDvbTuner::SetChannel(const cChannel &channel)
@@ -903,7 +903,7 @@ bool cDvbTuner::SetFrontend()
     // DVB-T/DVB-T2 (common parts)
     SETCMD(DTV_FREQUENCY, m_channel.FrequencyHz());
     SETCMD(DTV_INVERSION, dtp.Inversion());
-    SETCMD(DTV_BANDWIDTH_HZ, dtp.Bandwidth());
+    SETCMD(DTV_BANDWIDTH_HZ, dtp.BandwidthHz()); // Use hertz value, not enum
     SETCMD(DTV_CODE_RATE_HP, dtp.CoderateH());
     SETCMD(DTV_CODE_RATE_LP, dtp.CoderateL());
     SETCMD(DTV_MODULATION, dtp.Modulation());

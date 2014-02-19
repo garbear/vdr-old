@@ -32,6 +32,8 @@
 
 using namespace std;
 
+#define CHANNELS_XML    "special://vdr/vdr/channels/test/channels.xml"
+
 TEST(DvbTuner, cDvbTuner)
 {
   DeviceVector devices = cDvbDevice::FindDevices();
@@ -153,7 +155,7 @@ TEST(DvbTuner, Locked)
 {
   // Load a channel
   cChannelManager channelManager;
-  ASSERT_TRUE(channelManager.Load("special://vdr/system/channels.xml"));
+  ASSERT_TRUE(channelManager.Load(CHANNELS_XML));
   ChannelVector channels = channelManager.GetCurrent();
   ASSERT_FALSE(channels.empty());
   ChannelPtr channel = channels[0];

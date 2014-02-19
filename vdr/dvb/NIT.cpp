@@ -20,8 +20,9 @@
 
 using namespace SI_EXT;
 
-#define DVB_SYSTEM_1 0 // see also dvbdevice.c
-#define DVB_SYSTEM_2 1
+#ifndef ARRAY_SIZE
+#define ARRAY_SIZE(x)  (sizeof(x) / sizeof((x)[0]))
+#endif
 
 cNitFilter::cNitFilter(void)
 {
@@ -167,17 +168,16 @@ cNitFilter::ProcessData(u_short Pid, u_char Tid, const u_char *Data, int Length)
           cDvbTransponderParams dtp;
           int Source = cSource::FromData(cSource::stSat, BCD2INT(sd->getOrbitalPosition()) /*, sd->getWestEastFlag()  TODO*/);
           int iFrequencyMHz = FrequenciesHz[0] = BCD2INT(sd->getFrequency()) / 100000;
-          static char Polarizations[] = { 'H', 'V', 'L', 'R' };
-          dtp.SetPolarization(Polarizations[sd->getPolarization()]);
-          static int CodeRates[] =
+          dtp.SetPolarization((fe_polarization)sd->getPolarization());
+          static fe_code_rate CodeRates[] =
             { FEC_NONE, FEC_1_2, FEC_2_3, FEC_3_4, FEC_5_6, FEC_7_8, FEC_8_9,
                 FEC_3_5, FEC_4_5, FEC_9_10, FEC_AUTO, FEC_AUTO, FEC_AUTO,
                 FEC_AUTO, FEC_AUTO, FEC_NONE };
           dtp.SetCoderateH(CodeRates[sd->getFecInner()]);
-          static int Modulations[] = { QAM_AUTO, QPSK, PSK_8, QAM_16 };
+          static fe_modulation Modulations[] = { QAM_AUTO, QPSK, PSK_8, QAM_16 };
           dtp.SetModulation(Modulations[sd->getModulationType()]);
           dtp.SetSystem(sd->getModulationSystem() ? DVB_SYSTEM_2 : DVB_SYSTEM_1);
-          static int RollOffs[] = { ROLLOFF_35, ROLLOFF_25, ROLLOFF_20, ROLLOFF_AUTO };
+          static fe_rolloff RollOffs[] = { ROLLOFF_35, ROLLOFF_25, ROLLOFF_20, ROLLOFF_AUTO };
           dtp.SetRollOff( sd->getModulationSystem() ? RollOffs[sd->getRollOff()] : ROLLOFF_AUTO);
           int SymbolRate = BCD2INT(sd->getSymbolRate()) / 10;
           if (ThisNIT >= 0)
@@ -221,8 +221,8 @@ cNitFilter::ProcessData(u_short Pid, u_char Tid, const u_char *Data, int Length)
                   }
                 }
                 if (ISTRANSPONDER(cChannel::Transponder(iFrequencyMHz, dtp.Polarization()), Transponder())) // only modify channels if we're actually receiving this transponder
-                  Channel->SetTransponderData(Source, FrequenciesHz[0], SymbolRate, dtp.Serialize('S'));
-                else if (Channel->Srate() != SymbolRate || strcmp(Channel->Parameters().c_str(), dtp.Serialize('S').c_str()))
+                  Channel->SetTransponderData(Source, FrequenciesHz[0], SymbolRate, dtp);
+                else if (Channel->Srate() != SymbolRate || Channel->Parameters() != dtp)
                   forceTransponderUpdate = true; // get us receiving this transponder
                 Channel->NotifyObservers(ObservableMessageChannelChanged);
               }
@@ -233,7 +233,7 @@ cNitFilter::ProcessData(u_short Pid, u_char Tid, const u_char *Data, int Length)
               {
                 ChannelPtr Channel = ChannelPtr(new cChannel);
                 Channel->SetId(ts.getOriginalNetworkId(), ts.getTransportStreamId(), 0, 0);
-                if (Channel->SetTransponderData(Source, FrequenciesHz[0], SymbolRate, dtp.Serialize('S')))
+                if (Channel->SetTransponderData(Source, FrequenciesHz[0], SymbolRate, dtp))
                 {
                   EITScanner.AddTransponder(Channel);
                   Channel->NotifyObservers(ObservableMessageChannelChanged);
@@ -262,7 +262,7 @@ cNitFilter::ProcessData(u_short Pid, u_char Tid, const u_char *Data, int Length)
                 cDvbTransponderParams dtp(Channel->Parameters());
                 dtp.SetSystem(DVB_SYSTEM_2);
                 dtp.SetStreamId(sd->getInputStreamIdentifier());
-                Channel->SetTransponderData(Channel->Source(), Channel->FrequencyHz(), Channel->Srate(), dtp.Serialize('S'));
+                Channel->SetTransponderData(Channel->Source(), Channel->FrequencyHz(), Channel->Srate(), dtp);
                 Channel->NotifyObservers(ObservableMessageChannelChanged);
                 break;
               }
@@ -278,12 +278,12 @@ cNitFilter::ProcessData(u_short Pid, u_char Tid, const u_char *Data, int Length)
           int Source = cSource::FromData(cSource::stCable);
           int iFrequencyHz = FrequenciesHz[0] = BCD2INT(sd->getFrequency()) / 10;
           //XXX FEC_outer???
-          static int CodeRates[] =
+          static fe_code_rate CodeRates[] =
             { FEC_NONE, FEC_1_2, FEC_2_3, FEC_3_4, FEC_5_6, FEC_7_8, FEC_8_9,
                 FEC_3_5, FEC_4_5, FEC_9_10, FEC_AUTO, FEC_AUTO, FEC_AUTO,
                 FEC_AUTO, FEC_AUTO, FEC_NONE };
           dtp.SetCoderateH(CodeRates[sd->getFecInner()]);
-          static int Modulations[] =
+          static fe_modulation Modulations[] =
             { QPSK, QAM_16, QAM_32, QAM_64, QAM_128, QAM_256, QAM_AUTO };
           dtp.SetModulation(Modulations[min(sd->getModulation(), 6)]);
           int SymbolRate = BCD2INT(sd->getSymbolRate()) / 10;
@@ -328,10 +328,8 @@ cNitFilter::ProcessData(u_short Pid, u_char Tid, const u_char *Data, int Length)
                   }
                 }
                 if (ISTRANSPONDER(iFrequencyHz / 1000, Transponder())) // only modify channels if we're actually receiving this transponder
-                  Channel->SetTransponderData(Source, iFrequencyHz, SymbolRate, dtp.Serialize('C'));
-                else if (Channel->Srate() != SymbolRate
-                    || strcmp(Channel->Parameters().c_str(),
-                        dtp.Serialize('C').c_str()))
+                  Channel->SetTransponderData(Source, iFrequencyHz, SymbolRate, dtp);
+                else if (Channel->Srate() != SymbolRate || Channel->Parameters() != dtp)
                   forceTransponderUpdate = true; // get us receiving this transponder
               }
             }
@@ -340,9 +338,8 @@ cNitFilter::ProcessData(u_short Pid, u_char Tid, const u_char *Data, int Length)
               for (int n = 0; n < NumFrequencies; n++)
               {
                 ChannelPtr Channel = ChannelPtr(new cChannel);
-                Channel->SetId(ts.getOriginalNetworkId(),
-                    ts.getTransportStreamId(), 0, 0);
-                if (Channel->SetTransponderData(Source, FrequenciesHz[n], SymbolRate, dtp.Serialize('C')))
+                Channel->SetId(ts.getOriginalNetworkId(), ts.getTransportStreamId(), 0, 0);
+                if (Channel->SetTransponderData(Source, FrequenciesHz[n], SymbolRate, dtp))
                 {
                   EITScanner.AddTransponder(Channel);
                   Channel->NotifyObservers(ObservableMessageChannelChanged);
@@ -359,25 +356,28 @@ cNitFilter::ProcessData(u_short Pid, u_char Tid, const u_char *Data, int Length)
           cDvbTransponderParams dtp;
           int Source = cSource::FromData(cSource::stTerr);
           int iFrequencyHz = FrequenciesHz[0] = sd->getFrequency() * 10;
-          static int Bandwidths[] = { 8000000, 7000000, 6000000, 5000000, 0, 0, 0, 0 };
-          dtp.SetBandwidth(Bandwidths[sd->getBandwidth()]);
-          static int Constellations[] = { QPSK, QAM_16, QAM_64, QAM_AUTO };
+          static fe_bandwidth Bandwidths[] = { BANDWIDTH_8_MHZ, BANDWIDTH_7_MHZ, BANDWIDTH_6_MHZ, BANDWIDTH_5_MHZ };
+          if (sd->getBandwidth() < ARRAY_SIZE(Bandwidths))
+            dtp.SetBandwidth(Bandwidths[sd->getBandwidth()]);
+          else
+            dtp.SetBandwidth(BANDWIDTH_8_MHZ); // Note: Default value was 0 Hz ??? Changed to 8 MHz instead
+          static fe_modulation Constellations[] = { QPSK, QAM_16, QAM_64, QAM_AUTO };
           dtp.SetModulation(Constellations[sd->getConstellation()]);
           dtp.SetSystem(DVB_SYSTEM_1);
-          static int Hierarchies[] =
+          static fe_hierarchy Hierarchies[] =
             { HIERARCHY_NONE, HIERARCHY_1, HIERARCHY_2, HIERARCHY_4,
                 HIERARCHY_AUTO, HIERARCHY_AUTO, HIERARCHY_AUTO, HIERARCHY_AUTO };
           dtp.SetHierarchy(Hierarchies[sd->getHierarchy()]);
-          static int CodeRates[] =
+          static fe_code_rate CodeRates[] =
             { FEC_1_2, FEC_2_3, FEC_3_4, FEC_5_6, FEC_7_8, FEC_AUTO, FEC_AUTO,
                 FEC_AUTO };
           dtp.SetCoderateH(CodeRates[sd->getCodeRateHP()]);
           dtp.SetCoderateL(CodeRates[sd->getCodeRateLP()]);
-          static int GuardIntervals[] =
+          static fe_guard_interval GuardIntervals[] =
             { GUARD_INTERVAL_1_32, GUARD_INTERVAL_1_16, GUARD_INTERVAL_1_8,
                 GUARD_INTERVAL_1_4 };
           dtp.SetGuard(GuardIntervals[sd->getGuardInterval()]);
-          static int TransmissionModes[] =
+          static fe_transmit_mode TransmissionModes[] =
             { TRANSMISSION_MODE_2K, TRANSMISSION_MODE_8K, TRANSMISSION_MODE_4K,
                 TRANSMISSION_MODE_AUTO };
           dtp.SetTransmission(TransmissionModes[sd->getTransmissionMode()]);
@@ -422,9 +422,8 @@ cNitFilter::ProcessData(u_short Pid, u_char Tid, const u_char *Data, int Length)
                   }
                 }
                 if (ISTRANSPONDER(iFrequencyHz / 1000000, Transponder())) // only modify channels if we're actually receiving this transponder
-                  Channel->SetTransponderData(Source, iFrequencyHz, 0, dtp.Serialize('T'));
-                else if (strcmp(Channel->Parameters().c_str(),
-                    dtp.Serialize('T').c_str()))
+                  Channel->SetTransponderData(Source, iFrequencyHz, 0, dtp);
+                else if (Channel->Parameters() != dtp)
                   forceTransponderUpdate = true; // get us receiving this transponder
               }
             }
@@ -435,7 +434,7 @@ cNitFilter::ProcessData(u_short Pid, u_char Tid, const u_char *Data, int Length)
                 ChannelPtr Channel = ChannelPtr(new cChannel);
                 Channel->SetId(ts.getOriginalNetworkId(),
                     ts.getTransportStreamId(), 0, 0);
-                if (Channel->SetTransponderData(Source, FrequenciesHz[n], 0, dtp.Serialize('T')))
+                if (Channel->SetTransponderData(Source, FrequenciesHz[n], 0, dtp))
                   EITScanner.AddTransponder(Channel);
               }
             }
@@ -472,17 +471,22 @@ cNitFilter::ProcessData(u_short Pid, u_char Tid, const u_char *Data, int Length)
                     dtp.SetStreamId(td->getPlpId());
                     if (td->getExtendedDataFlag())
                     {
-                      static int T2Bandwidths[] =
-                        { 8000000, 7000000, 6000000, 5000000, 10000000, 1712000,
-                            0, 0 };
-                      dtp.SetBandwidth(T2Bandwidths[td->getBandwidth()]);
-                      static int T2GuardIntervals[] =
+                      static fe_bandwidth T2Bandwidths[] =
+                        { BANDWIDTH_8_MHZ, BANDWIDTH_7_MHZ, BANDWIDTH_6_MHZ, BANDWIDTH_5_MHZ, BANDWIDTH_10_MHZ, BANDWIDTH_1_712_MHZ };
+                      if (td->getBandwidth() < ARRAY_SIZE(T2Bandwidths))
+                        dtp.SetBandwidth(T2Bandwidths[td->getBandwidth()]);
+                      else
+                        dtp.SetBandwidth(BANDWIDTH_8_MHZ); // Note: Default value was 0 Hz ??? Changed to 8 MHz instead
+                      static fe_guard_interval T2GuardIntervals[] =
                         { GUARD_INTERVAL_1_32, GUARD_INTERVAL_1_16,
                             GUARD_INTERVAL_1_8, GUARD_INTERVAL_1_4,
                             GUARD_INTERVAL_1_128, GUARD_INTERVAL_19_128,
-                            GUARD_INTERVAL_19_256, 0 };
-                      dtp.SetGuard(T2GuardIntervals[td->getGuardInterval()]);
-                      static int T2TransmissionModes[] =
+                            GUARD_INTERVAL_19_256 };
+                      if (td->getGuardInterval() < ARRAY_SIZE(T2GuardIntervals))
+                        dtp.SetGuard(T2GuardIntervals[td->getGuardInterval()]);
+                      else
+                        dtp.SetGuard(GUARD_INTERVAL_AUTO); // Note: Default value was 0 ??? Changed to GUARD_INTERVAL_AUTO instead
+                      static fe_transmit_mode T2TransmissionModes[] =
                         { TRANSMISSION_MODE_2K, TRANSMISSION_MODE_8K,
                             TRANSMISSION_MODE_4K, TRANSMISSION_MODE_1K,
                             TRANSMISSION_MODE_16K, TRANSMISSION_MODE_32K,
@@ -491,7 +495,7 @@ cNitFilter::ProcessData(u_short Pid, u_char Tid, const u_char *Data, int Length)
                           T2TransmissionModes[td->getTransmissionMode()]);
                       //TODO add parsing of frequencies
                     }
-                    Channel->SetTransponderData(Source, FrequencyHz, SymbolRate, dtp.Serialize('T'));
+                    Channel->SetTransponderData(Source, FrequencyHz, SymbolRate, dtp);
                     Channel->NotifyObservers(ObservableMessageChannelChanged);
                   }
                 }

@@ -33,6 +33,5 @@ TEST(ChannelManager, ChannelManager)
     cChannelManager channels;
     EXPECT_TRUE(channels.Load(CHANNELS_XML));
     EXPECT_TRUE(channels.Save(CHANNELS2_XML));
-    // TODO: Compare CHANNELS_CONF and CHANNELS2_CONF
   }
 }

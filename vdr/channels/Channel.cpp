@@ -202,13 +202,29 @@ bool cChannel::SerialiseChannel(TiXmlNode *node) const
   channelElement->SetAttribute(CHANNEL_XML_ATTR_SHORTNAME,  m_shortName);
   channelElement->SetAttribute(CHANNEL_XML_ATTR_PROVIDER,   m_provider);
   channelElement->SetAttribute(CHANNEL_XML_ATTR_FREQUENCY,  m_channelData.iFrequencyHz);
-  channelElement->SetAttribute(CHANNEL_XML_ATTR_PARAMETERS, m_parameters);
   channelElement->SetAttribute(CHANNEL_XML_ATTR_SOURCE,     cSource::ToString(m_channelData.source));
   channelElement->SetAttribute(CHANNEL_XML_ATTR_SRATE,      m_channelData.srate);
   channelElement->SetAttribute(CHANNEL_XML_ATTR_VPID,       m_channelData.vpid);
   channelElement->SetAttribute(CHANNEL_XML_ATTR_PPID,       m_channelData.ppid);
   channelElement->SetAttribute(CHANNEL_XML_ATTR_VTYPE,      m_channelData.vtype);
   channelElement->SetAttribute(CHANNEL_XML_ATTR_TPID,       m_channelData.tpid);
+
+  TiXmlElement transponderElement(CHANNEL_XML_ELM_PARAMETERS);
+  TiXmlNode *transponderNode = channelElement->InsertEndChild(transponderElement);
+  if (transponderNode)
+  {
+    bool success = false;
+    if (IsAtsc())
+      success = m_parameters.Serialise(DVB_ATSC, transponderNode);
+    else if (IsCable())
+      success = m_parameters.Serialise(DVB_CABLE, transponderNode);
+    else if (IsSat())
+      success = m_parameters.Serialise(DVB_SAT, transponderNode);
+    else if (IsTerr())
+      success = m_parameters.Serialise(DVB_TERR, transponderNode);
+    if (!success)
+      return false;
+  }
 
   if (m_channelData.apids[0])
   {
@@ -379,10 +395,6 @@ bool cChannel::Deserialise(const TiXmlNode *node, bool bSeparator /* = false */)
     if (frequency != NULL)
       m_channelData.iFrequencyHz = StringUtils::IntVal(frequency);
 
-    const char *parameters = elem->Attribute(CHANNEL_XML_ATTR_PARAMETERS);
-    if (parameters != NULL)
-      m_parameters = parameters;
-
     const char *source = elem->Attribute(CHANNEL_XML_ATTR_SOURCE);
     if (source != NULL)
       m_channelData.source = cSource::FromString(source);
@@ -406,6 +418,25 @@ bool cChannel::Deserialise(const TiXmlNode *node, bool bSeparator /* = false */)
     const char *tpid = elem->Attribute(CHANNEL_XML_ATTR_TPID);
     if (tpid != NULL)
       m_channelData.tpid = StringUtils::IntVal(tpid);
+
+    m_parameters.Reset();
+    const TiXmlNode *transponderNode = elem->FirstChild(CHANNEL_XML_ELM_PARAMETERS);
+    if (transponderNode)
+    {
+      if (!m_parameters.Deserialise(transponderNode))
+        return false;
+    }
+    else
+    {
+      // Backwards compatibility: look for parameters attribute
+      const char *parameters = elem->Attribute(CHANNEL_XML_ATTR_PARAMETERS);
+      if (parameters != NULL)
+      {
+        string strParameters(parameters);
+        if (!m_parameters.Deserialise(strParameters))
+          return false;
+      }
+    }
 
     const TiXmlNode *apidsNode = elem->FirstChild(CHANNEL_XML_ELM_APIDS);
     if (apidsNode)
@@ -787,7 +818,7 @@ bool cChannel::DeserialiseConf(const string &str)
 
       if (parambuf && sourcebuf && vpidbuf && apidbuf)
       {
-        m_parameters = parambuf;
+        m_parameters.Deserialise(parambuf);
         ok = (m_channelData.source = cSource::FromString(sourcebuf)) >= 0;
 
         char *p;
@@ -983,34 +1014,20 @@ int cChannel::Transponder() const
     transponderFreq /= 1000;
 
   if (IsSat())
-  {
-    for (unsigned int i = 0; i < m_parameters.size(); i++)
-    {
-      // Check for lowercase for backwards compatibility
-      char polarization = toupper(m_parameters[i]);
-      if (polarization == 'H' ||
-          polarization == 'V' ||
-          polarization == 'L' ||
-          polarization == 'R')
-      {
-        transponderFreq = Transponder(transponderFreq, polarization);
-        break;
-      }
-    }
-  }
+    transponderFreq = Transponder(transponderFreq, m_parameters.Polarization());
+
   return transponderFreq;
 }
 
-unsigned int cChannel::Transponder(unsigned int frequency, char polarization)
+unsigned int cChannel::Transponder(unsigned int frequency, fe_polarization polarization)
 {
   // some satellites have transponders at the same frequency, just with different polarization:
-  switch (toupper(polarization))
+  switch (polarization)
   {
-  case 'H': frequency += 100000; break;
-  case 'V': frequency += 200000; break;
-  case 'L': frequency += 300000; break;
-  case 'R': frequency += 400000; break;
-  default: /*esyslog("ERROR: invalid value for Polarization '%c'", polarization);*/ break;
+  case POLARIZATION_HORIZONTAL:     frequency += 100000; break;
+  case POLARIZATION_VERTICAL:       frequency += 200000; break;
+  case POLARIZATION_CIRCULAR_LEFT:  frequency += 300000; break;
+  case POLARIZATION_CIRCULAR_RIGHT: frequency += 400000; break;
   }
   return frequency;
 }
@@ -1049,14 +1066,8 @@ void cChannel::CopyTransponderData(const cChannel &channel)
   SetChanged();
 }
 
-bool cChannel::SetTransponderData(int source, int iFrequencyHz, int srate, const string &strParameters, bool bQuiet /* = false */)
+bool cChannel::SetTransponderData(int source, int iFrequencyHz, int srate, const cDvbTransponderParams& parameters, bool bQuiet /* = false */)
 {
-  if (strParameters.find(':') != string::npos)
-  {
-    esyslog("ERROR: parameter string '%s' contains ':'", strParameters.c_str());
-    return false;
-  }
-
   // Workarounds for broadcaster stupidity:
   // Some providers broadcast the transponder frequency of their channels with two different
   // values (like 12551000 and 12552000), so we need to allow for a little tolerance here
@@ -1069,18 +1080,17 @@ bool cChannel::SetTransponderData(int source, int iFrequencyHz, int srate, const
   if (abs(m_channelData.srate - srate) <= 1)
     srate = m_channelData.srate;
 
-  if (m_channelData.source != source || FrequencyHz() != iFrequencyHz || m_channelData.srate != srate || m_parameters != strParameters)
+  if (m_channelData.source != source || FrequencyHz() != iFrequencyHz || m_channelData.srate != srate || m_parameters != parameters)
   {
-    string oldTransponderData = TransponderDataToString();
     m_channelData.source = source;
     SetFrequencyHz(iFrequencyHz);
     m_channelData.srate = srate;
-    m_parameters = strParameters;
+    m_parameters = parameters;
     m_schedule = cSchedules::EmptySchedule;
 
     if (Number() && !bQuiet)
     {
-      dsyslog("changing transponder data of channel %s (%d) from %s to %s", Name().c_str(), Number(), oldTransponderData.c_str(), TransponderDataToString().c_str());
+      dsyslog("changing transponder data of channel %s (%d)", Name().c_str(), Number());
       m_modification |= CHANNELMOD_TRANSP;
     }
 
@@ -1371,12 +1381,6 @@ void cChannel::SetLinkChannels(cLinkChannels *linkChannels)
     dsyslog("%s", buffer);
 }
 */
-string cChannel::TransponderDataToString() const
-{
-  if (cSource::IsTerr(m_channelData.source))
-    return StringUtils::Format("%d:%s:%s", FrequencyHz(), m_parameters.c_str(), cSource::ToString(m_channelData.source).c_str());
-  return StringUtils::Format("%d:%s:%s:%d", FrequencyHz(), m_parameters.c_str(), cSource::ToString(m_channelData.source).c_str(), m_channelData.srate);
-}
 
 uint32_t cChannel::Hash(void) const
 {
