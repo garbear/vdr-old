@@ -20,6 +20,7 @@ cResumeFile::~cResumeFile()
 int cResumeFile::Read(void)
 {
   int resume = -1;
+#if 0
   if (!m_strFileName.empty())
   {
     CFile file;
@@ -46,12 +47,14 @@ int cResumeFile::Read(void)
       LOG_ERROR_STR(m_strFileName.c_str());
     }
   }
+#endif
 
   return resume;
 }
 
 bool cResumeFile::Save(int Index)
 {
+#if 0
   if (!m_strFileName.empty())
   {
     CFile file;
@@ -75,6 +78,7 @@ bool cResumeFile::Save(int Index)
       LOG_ERROR_STR(m_strFileName.c_str());
     }
   }
+#endif
   return false;
 }
 
