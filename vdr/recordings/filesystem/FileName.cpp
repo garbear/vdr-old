@@ -103,8 +103,7 @@ CVideoFile *cFileName::Open(void)
     if (m_bRecord)
     {
       dsyslog("recording to '%s'", fileName.c_str());
-      m_file = OpenVideoFile(fileName.c_str(),
-          O_RDWR | O_CREAT | O_LARGEFILE | BlockingFlag);
+      m_file = OpenVideoFile(fileName.c_str(), O_RDWR | O_CREAT | O_LARGEFILE | BlockingFlag);
       if (!m_file)
         LOG_ERROR_STR(fileName.c_str());
     }
@@ -113,8 +112,7 @@ CVideoFile *cFileName::Open(void)
       if (CFile::Exists(fileName))
       {
         dsyslog("playing '%s'", fileName.c_str());
-        m_file = CVideoFile::Create(fileName.c_str(),
-            O_RDONLY | O_LARGEFILE | BlockingFlag);
+        m_file = CVideoFile::Create(fileName.c_str(), O_RDONLY | O_LARGEFILE | BlockingFlag);
         if (!m_file)
           LOG_ERROR_STR(fileName.c_str());
       }

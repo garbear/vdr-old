@@ -8,37 +8,41 @@ class cEvent;
 class CEpgComponents;
 class CFile;
 
-#define INFOFILESUFFIX    "/info"
+#define INFOFILESUFFIX    "/metadata.xml"
 
 class cRecordingInfo
 {
-  friend class cRecording;
 public:
+  cRecordingInfo(ChannelPtr channel, const cEvent *Event = NULL);
   cRecordingInfo(const std::string& strFileName);
   ~cRecordingInfo();
-  tChannelID ChannelID(void) const { return channelID; }
-  const char *ChannelName(void) const { return channelName; }
-  const cEvent *GetEvent(void) const { return event; }
+  tChannelID ChannelID(void) const { return m_channelID; }
+  std::string ChannelName(void) const { return m_channel ? m_channel->Name() : ""; }
+  const cEvent *GetEvent(void) const { return m_event; }
   std::string Title(void) const;
+  void SetTitle(const std::string& strTitle);
   std::string ShortText(void) const;
   std::string Description(void) const;
   const CEpgComponents *Components(void) const;
-  double FramesPerSecond(void) const { return framesPerSecond; }
+  double FramesPerSecond(void) const { return m_dFramesPerSecond; }
   void SetFramesPerSecond(double FramesPerSecond);
-  bool Write(CFile& file, const char *Prefix = "") const;
-  bool Read(void);
-  bool Write(void) const;
+  int Priority(void) const { return m_iPriority; }
+  void SetPriority(int iPriority) { m_iPriority = iPriority; }
+  int Lifetime(void) const { return m_iLifetime; }
+  void SetLifetime(int iLifetime) { m_iLifetime = iLifetime; }
+
+  bool Read(const std::string& strFilename = "");
+  bool Write(const std::string& strFilename = "") const;
 
 private:
-  tChannelID channelID;
-  char *channelName;
-  const cEvent *event;
-  cEvent *ownEvent;
-  double framesPerSecond;
-  int priority;
-  int lifetime;
-  char *fileName;
-  cRecordingInfo(const cChannel *Channel = NULL, const cEvent *Event = NULL);
-  bool Read(CFile& file);
   void SetData(const char *Title, const char *ShortText, const char *Description);
+
+  ChannelPtr    m_channel;
+  tChannelID    m_channelID;
+  const cEvent* m_event;
+  cEvent *      m_ownEvent;
+  double        m_dFramesPerSecond;
+  int           m_iPriority;
+  int           m_iLifetime;
+  mutable std::string m_strFilename; //XXX
 };

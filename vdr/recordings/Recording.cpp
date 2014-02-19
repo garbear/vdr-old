@@ -399,9 +399,9 @@ cRecording::cRecording(TimerPtr Timer, const cEvent *Event)
   m_iPriority = Timer->Priority();
   m_iLifetimeDays = Timer->LifetimeDays();
   // handle info:
-  m_recordingInfo = new cRecordingInfo(Timer->Channel().get(), Event);
-  m_recordingInfo->priority = m_iPriority;
-  m_recordingInfo->lifetime = m_iLifetimeDays;
+  m_recordingInfo = new cRecordingInfo(Timer->Channel(), Event);
+  m_recordingInfo->SetPriority(m_iPriority);
+  m_recordingInfo->SetLifetime(m_iLifetimeDays);
 }
 
 cRecording::cRecording(const std::string& strFileName)
@@ -454,23 +454,26 @@ cRecording::cRecording(const std::string& strFileName)
         return;
      GetResume();
      // read an optional info file:
-     std::string InfoFileName = StringUtils::Format("%s%s", m_strFileName.c_str(), m_bIsPesRecording ? INFOFILESUFFIX ".vdr" : INFOFILESUFFIX);
-     CFile file;
-     if (file.Open(InfoFileName))
+     std::string InfoFileName = StringUtils::Format("%s%s", m_strFileName.c_str(), INFOFILESUFFIX);
+     if (!m_recordingInfo->Read(InfoFileName))
      {
-       if (!m_recordingInfo->Read(file))
-           esyslog("ERROR: EPG data problem in file %s", InfoFileName.c_str());
-        else if (!m_bIsPesRecording) {
-           m_iPriority = m_recordingInfo->priority;
-           m_iLifetimeDays = m_recordingInfo->lifetime;
-           m_dFramesPerSecond = m_recordingInfo->framesPerSecond;
-           }
-        }
-     else if (errno == ENOENT)
-        m_recordingInfo->ownEvent->SetTitle(m_strName);
+       esyslog("ERROR: EPG data problem in file %s", InfoFileName.c_str());
+     }
+     else if (!m_bIsPesRecording)
+     {
+       m_iPriority        = m_recordingInfo->Priority();
+       m_iLifetimeDays    = m_recordingInfo->Lifetime();
+       m_dFramesPerSecond = m_recordingInfo->FramesPerSecond();
+     }
+     else if (!CFile::Exists(InfoFileName))
+     {
+       m_recordingInfo->SetTitle(m_strName);
+     }
      else
+     {
         LOG_ERROR_STR(InfoFileName.c_str());
      }
+   }
 }
 
 cRecording::~cRecording()
@@ -584,20 +587,15 @@ bool cRecording::IsOnVideoDirectoryFileSystem(void)
 void cRecording::ReadInfo(void)
 {
   m_recordingInfo->Read();
-  m_iPriority = m_recordingInfo->priority;
-  m_iLifetimeDays = m_recordingInfo->lifetime;
-  m_dFramesPerSecond = m_recordingInfo->framesPerSecond;
+  m_iPriority        = m_recordingInfo->Priority();
+  m_iLifetimeDays    = m_recordingInfo->Lifetime();
+  m_dFramesPerSecond = m_recordingInfo->FramesPerSecond();
 }
 
 bool cRecording::WriteInfo(void)
 {
   std::string InfoFileName = StringUtils::Format("%s%s", m_strFileName.c_str(), m_bIsPesRecording ? INFOFILESUFFIX ".vdr" : INFOFILESUFFIX);
-  CFile file;
-  if (file.OpenForWrite(InfoFileName))
-    m_recordingInfo->Write(file);
-  else
-    LOG_ERROR_STR(InfoFileName.c_str());
-  return true;
+  return m_recordingInfo->Write(InfoFileName);
 }
 
 void cRecording::SetStartTime(time_t Start)

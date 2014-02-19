@@ -1552,7 +1552,7 @@ bool cVNSIClient::processRECORDINGS_GetList() /* OPCODE 102 */
     m_resp->add_U32((*it)->LifetimeDays());
 
     // channel_name
-    m_resp->add_String((*it)->Info()->ChannelName() ? m_toUTF8.Convert((*it)->Info()->ChannelName()) : "");
+    m_resp->add_String(!(*it)->Info()->ChannelName().empty() ? m_toUTF8.Convert((*it)->Info()->ChannelName().c_str()) : "");
 
     char* fullname = strdup((*it)->Name().c_str());
     char* recname = strrchr(fullname, FOLDERDELIMCHAR);
