@@ -12,30 +12,14 @@
  * Three different API approaches and one additional
  * wrapper to the old one for vdr-1.7.x 
  */
+#pragma once
 
-#ifndef __WIRBELSCAN_DVB_WRAPPER_H_
-#define __WIRBELSCAN_DVB_WRAPPER_H_
+#include "dvb/extended_frontend.h"
 
 #include <linux/dvb/frontend.h>
 #include <linux/dvb/version.h>
-#include <vdr/dvbdevice.h>
-#include <vdr/channels.h>
-#include "extended_frontend.h"
 
-typedef enum scantype {
-  DVB_TERR    = 0,
-  DVB_CABLE   = 1,
-  DVB_SAT     = 2,
-  PVRINPUT    = 3,
-  PVRINPUT_FM = 4,
-  DVB_ATSC    = 5,
-  NO_DEVICE   = 6,
-  TRANSPONDER = 999
-} scantype_t;
-
-//-------------------------------------------------------------------
-
-// API independend enums
+// API independent enums
 enum eCableSatCodeRates {
  eCoderateAuto = 0,
  eCoderate12   = 1,
@@ -157,64 +141,10 @@ fe_polarization_t       SatPolarizations(eSatPolarizations sp);
 fe_rolloff_t            SatRollOffs(eSatRollOffs ro);
 fe_delivery_system_t    SatSystems(eSatSystems ss);
 fe_modulation_t         SatModulationTypes(eSatModulationTypes mt);
-#if VDRVERSNUM >= 10700
 int                     TerrBandwidths(eTerrBandwidths tb);
-#else
-fe_bandwidth_t          TerrBandwidths(eTerrBandwidths tb);
-#endif
 fe_modulation_t         TerrConstellations(eTerrConstellations tc);
 fe_hierarchy_t          TerrHierarchies(eTerrHierarchies th);
 fe_code_rate_t          TerrCodeRates(eTerrCodeRates cr);
 fe_guard_interval_t     TerrGuardIntervals(eTerrGuardIntervals gi);
 fe_transmit_mode_t      TerrTransmissionModes(eTerrTransmissionModes tm);
 fe_spectral_inversion_t CableTerrInversions(eCableTerrInversions in);
-
-// dvb api -> vdr channels.conf
-int  GetVDRInversionFromDVB(fe_spectral_inversion_t Inversion);
-int  GetVDRBandwidthFromDVB(fe_bandwidth_t Bandwidth);
-int  GetVDRCoderateFromDVB(fe_code_rate_t Coderate);
-int  GetVDRModulationtypeFromDVB(fe_modulation_t Modulationtype);
-int  GetVDRSatSystemFromDVB(fe_delivery_system_t SatSystem);
-int  GetVDRTransmissionModeFromDVB(fe_transmit_mode_t TransmissionMode);
-int  GetVDRGuardFromDVB(fe_guard_interval_t Guard);
-int  GetVDRHierarchyFromDVB(fe_hierarchy_t Hierarchy);
-int  GetVDRRollOffFromDVB(fe_rolloff_t RollOff);
-char GetVDRPolarizationFromDVB(fe_polarization_t Polarization);
-
-// use with dvb api 
-bool SetSatTransponderDataFromDVB(cChannel * channel, int Source, int Frequency, char Polarization, int Srate, int CoderateH, int Modulation, int System, int RollOff);
-bool SetCableTransponderDataFromDVB(cChannel * channel, int Source, int Frequency, int Modulation, int Srate, int CoderateH, int Inversion);
-bool SetTerrTransponderDataFromDVB(cChannel * channel, int Source, int Frequency, int Bandwidth, int Modulation, int Hierarchy, int CodeRateH, int CodeRateL, int Guard, int Transmission, int Inversion);
-
-// use with wirbelscan enums
-bool SetSatTransponderDataFromVDR(cChannel * channel, int Source, int Frequency, eSatPolarizations Polarization, int Srate, eCableSatCodeRates CoderateH, eSatModulationTypes Modulation, eSatSystems System, eSatRollOffs RollOff);
-bool SetCableTransponderDataFromVDR(cChannel * channel, int Source, int Frequency, eCableModulations Modulation, int Srate, eCableSatCodeRates CoderateH, eCableTerrInversions Inversion);
-bool SetTerrTransponderDataFromVDR(cChannel * channel, int Source, int Frequency, eTerrBandwidths Bandwidth, eTerrConstellations Modulation, eTerrHierarchies Hierarchy, eTerrCodeRates CodeRateH, eTerrCodeRates CodeRateL, eTerrGuardIntervals Guard, eTerrTransmissionModes Transmission, eCableTerrInversions Inversion);
-
-void SetPids(cChannel * channel, int Vpid, int Ppid, int Vtype, int *Apids, int *Atypes, char ALangs[][MAXLANGCODE2], int *Dpids, int *Dtypes, char DLangs[][MAXLANGCODE2], int *Spids, char SLangs[][MAXLANGCODE2], int Tpid);
-
-// debug print
-cString PrintTransponder(const cChannel * Transponder);
-cString PrintChannel(const cChannel * Channel);
-cString PrintDvbApi(void);
-cString PrintDvbApiUsed(int cardIndex);
-
-// DVB frontend capabilities
-unsigned int  GetFrontendStatus  (int cardIndex = 0);
-unsigned int  GetFrontendStrength(int cardIndex = 0);
-unsigned int  GetCapabilities    (int cardIndex = 0);
-unsigned int  GetFeType          (int cardIndex = 0);
-cString GetFeName(int cardIndex);
-bool GetTerrCapabilities (int cardIndex, bool *CodeRate, bool *Modulation, bool *Inversion, bool *Bandwidth, bool *Hierarchy, bool *TransmissionMode, bool *GuardInterval);
-bool GetCableCapabilities(int cardIndex, bool *CodeRate, bool *Modulation, bool *Inversion);
-bool GetAtscCapabilities (int cardIndex, bool *CodeRate, bool *Modulation, bool *Inversion, bool *VSB, bool * QAM);
-bool GetSatCapabilities  (int cardIndex, bool *CodeRate, bool *Modulation, bool *RollOff, bool *DvbS2); //DvbS2: true if supported.
-bool ValidSatfreq        (int f, const cChannel * Channel);
-
-// plugin && vdr capabilities/properties
-bool IsPvrinput(const cChannel * Channel);
-bool IsScantype(scantype_t type, const cChannel * c);
-bool ActiveTimers(scantype_t type);
-bool PendingTimers(scantype_t type, int Margin);
-
-#endif
