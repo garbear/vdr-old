@@ -168,7 +168,13 @@ set(VDR_SRCS
 	vdr/scan/CNICodes.cpp
 	vdr/scan/CountryUtils.cpp
 	vdr/scan/dvb_wrapper.cpp
+	vdr/scan/FrontendCapabilities.cpp
 	vdr/scan/SatelliteUtils.cpp
+	vdr/scan/ScanConfig.cpp
+	vdr/scan/ScanFSM.cpp
+	vdr/scan/ScanLimits.cpp
+	vdr/scan/Scanner.cpp
+	vdr/scan/ScanTask.cpp
 	vdr/scan/SWReceiver.cpp
 	vdr/scan/scanners/EITScanner.cpp
 	vdr/scan/scanners/NITScanner.cpp
@@ -240,6 +246,9 @@ set(VDR_TEST_SRCS
 	vdr/filesystem/native/test/TestHDFile.cpp
 	vdr/scan/test/TestCNICodes.cpp
 	vdr/scan/test/TestCountryUtils.cpp
+	vdr/scan/test/TestScanConfig.cpp
+	vdr/scan/test/TestScanner.cpp
+	vdr/scan/test/TestScanTask.cpp
 	vdr/sources/linux/test/TestDVBTransponderParams.cpp
 	vdr/test/gtest/TestBasicEnvironment.cpp
 	vdr/test/gtest/TestUtils.cpp
