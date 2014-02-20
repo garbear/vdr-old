@@ -165,6 +165,7 @@ set(VDR_SRCS
 	vdr/recordings/RecordingInfo.cpp
 	vdr/recordings/RecordingUserCommand.cpp
 	vdr/recordings/Recordings.cpp
+	vdr/scan/CountryUtils.cpp
 	vdr/settings/Settings.cpp
 	vdr/sources/ISourceParams.cpp
 	vdr/sources/Source.cpp
@@ -227,6 +228,7 @@ set(VDR_TEST_SRCS
 	vdr/filesystem/test/TestSpecialProtocol.cpp
 	vdr/filesystem/native/test/TestHDDirectory.cpp
 	vdr/filesystem/native/test/TestHDFile.cpp
+	vdr/scan/test/TestCountryUtils.cpp
 	vdr/sources/linux/test/TestDVBTransponderParams.cpp
 	vdr/test/gtest/TestBasicEnvironment.cpp
 	vdr/test/gtest/TestUtils.cpp
