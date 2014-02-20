@@ -7,6 +7,8 @@
 extern double MarkFramesPerSecond;
 extern PLATFORM::CMutex MutexMarkFramesPerSecond;
 
+class TiXmlNode;
+
 class cMark : public cListObject
 {
   friend class cMarks; // for sorting
@@ -21,12 +23,8 @@ public:
   std::string Comment(void) const;
   void SetComment(const std::string& strComment);
 
-  std::string Serialise(void);
-  //TODO refactor Config.h
-  bool Parse(const char* strData) { return Deserialise(strData); }
-  bool Deserialise(const std::string& strData);
-
-  bool Save(FILE *f);
+  bool Deserialise(const TiXmlNode *node);
+  bool Serialise(TiXmlNode *node) const;
 
   /**
    * Converts the given index to a string, optionally containing the frame number.

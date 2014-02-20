@@ -26,7 +26,7 @@
 #define DATAFORMATTS    "%4d-%02d-%02d.%02d.%02d.%d-%d." RECEXT_
 #define NAMEFORMATTS    "%s/%s/" DATAFORMATTS
 
-#define MARKSFILESUFFIX   "/marks"
+#define MARKSFILESUFFIX   "/marks.xml"
 
 #define SORTMODEFILE      ".sort"
 

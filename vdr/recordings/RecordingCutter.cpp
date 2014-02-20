@@ -292,7 +292,7 @@ cCuttingThread::cCuttingThread(const std::string& strFromFileName, const std::st
   tRefOffset = 0;
   memset(counter, 0x00, sizeof(counter));
   numIFrames = 0;
-  if (fromMarks.Load(strFromFileName.c_str(), framesPerSecond, isPesRecording) && fromMarks.Count()) {
+  if (fromMarks.Load(strFromFileName.c_str(), framesPerSecond, isPesRecording) && !fromMarks.Empty()) {
      numSequences = fromMarks.GetNumSequences();
      if (numSequences > 0) {
         fromFileName = new cFileName(strFromFileName, false, true, isPesRecording);
@@ -593,7 +593,7 @@ bool cCuttingThread::ProcessSequence(int LastEndIndex, int BeginIndex, int EndIn
          fileSize += Length;
          // Generate marks at the editing points in the edited recording:
          if (numSequences > 1 && Index == BeginIndex) {
-            if (toMarks.Count() > 0)
+            if (!toMarks.Empty())
                toMarks.Add(toIndex->Last());
             toMarks.Add(toIndex->Last());
             toMarks.Save();
@@ -758,7 +758,7 @@ bool CutRecording(const char *FileName)
      cRecording Recording(FileName);
      if (!Recording.Name().empty()) {
         cMarks Marks;
-        if (Marks.Load(FileName, Recording.FramesPerSecond(), Recording.IsPesRecording()) && Marks.Count()) {
+        if (Marks.Load(FileName, Recording.FramesPerSecond(), Recording.IsPesRecording()) && !Marks.Empty()) {
            if (Marks.GetNumSequences()) {
               if (cCutter::Start(FileName)) {
                  while (cCutter::Active())

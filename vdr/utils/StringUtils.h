@@ -143,4 +143,6 @@ public:
    \return True on success, or false on error (not an int, overflow, etc)
    */
   static long IntVal(const std::string &str, long iDefault = 0);
+
+  static double DoubleVal(const std::string &str, double iDefault = 0);
 };

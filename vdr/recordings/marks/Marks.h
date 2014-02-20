@@ -3,15 +3,8 @@
 #include "Mark.h"
 #include "Config.h"
 
-class cMarks : public cConfig<cMark> {
-private:
-  std::string recordingFileName;
-  std::string fileName;
-  double framesPerSecond;
-  bool isPesRecording;
-  time_t nextUpdate;
-  time_t lastFileTime;
-  time_t lastChange;
+class cMarks
+{
 public:
   bool Load(const std::string& strRecordingFileName, double FramesPerSecond = DEFAULTFRAMESPERSECOND, bool IsPesRecording = false);
   bool Update(void);
@@ -19,6 +12,8 @@ public:
   void Align(void);
   void Sort(void);
   void Add(int Position);
+  size_t Size(void) const { return m_marks.size(); }
+  bool Empty(void) const { return m_marks.empty(); }
   cMark *Get(int Position);
   cMark *GetPrev(int Position);
   cMark *GetNext(int Position);
@@ -35,4 +30,13 @@ public:
        ///< 0 (the beginning of the recording), and there is no "end" mark, the
        ///< return value is 0, which means that the result is the same as the original
        ///< recording.
-  };
+private:
+  std::string         recordingFileName;
+  std::string         fileName;
+  double              framesPerSecond;
+  bool                isPesRecording;
+  time_t              nextUpdate;
+  time_t              lastFileTime;
+  time_t              lastChange;
+  std::vector<cMark*> m_marks;
+};

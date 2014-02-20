@@ -883,3 +883,17 @@ long StringUtils::IntVal(const std::string &str, long iDefault /* = 0 */)
   }
   return iDefault;
 }
+
+double StringUtils::DoubleVal(const std::string &str, double iDefault /* = 0 */)
+{
+  if (!str.empty())
+  {
+    const char *s = str.c_str();
+    char *p = NULL;
+    errno = 0;
+    double n = strtod(s, &p);
+    if (!errno && s != p)
+      return n;
+  }
+  return iDefault;
+}
