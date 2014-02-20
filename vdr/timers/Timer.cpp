@@ -575,18 +575,18 @@ bool cTimer::StartRecording(void)
   SetPending(true);
 
   // check free disk space
-  Recordings.AssertFreeDiskSpace(Priority(), !Pending());
-  VideoDiskSpace(&FreeMB);
-  if (FreeMB < MINFREEDISKSPACE)
-  {
-    if (time(NULL) - LastNoDiskSpaceMessage > DISKCHECKINTERVAL)
-    {
-      isyslog("not enough disk space to start recording %s", ToDescr().c_str());
-      LastNoDiskSpaceMessage = time(NULL);
-    }
-    return false;
-  }
-  LastNoDiskSpaceMessage = 0;
+//  Recordings.AssertFreeDiskSpace(Priority(), !Pending());
+//  VideoDiskSpace(&FreeMB);
+//  if (FreeMB < MINFREEDISKSPACE)
+//  {
+//    if (time(NULL) - LastNoDiskSpaceMessage > DISKCHECKINTERVAL)
+//    {
+//      isyslog("not enough disk space to start recording %s", ToDescr().c_str());
+//      LastNoDiskSpaceMessage = time(NULL);
+//    }
+//    return false;
+//  }
+//  LastNoDiskSpaceMessage = 0;
 
   ChannelPtr channel = Channel();
   if (channel)
