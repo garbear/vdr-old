@@ -71,11 +71,12 @@ void cRecPlayer::scan()
 
   cleanup();
 
+  isyslog("opening recording '%s'", m_recordingFilename.c_str());
+
   for(int i = 0; ; i++) // i think we only need one possible loop
   {
     fileNameFromIndex(i);
 
-    //XXX
     if(CFile::Stat(m_fileName.c_str(), &s) == -1) {
       break;
     }
@@ -87,11 +88,11 @@ void cRecPlayer::scan()
     m_segments.push_back(segment);
 
     m_totalLength += s.st_size;
-    isyslog("File %i found, size: %lu, totalLength now %llu", i, s.st_size, m_totalLength);
+    dsyslog("File %i found, size: %lu, totalLength now %llu", i, s.st_size, m_totalLength);
   }
 
   m_totalFrames = m_indexFile->Last();
-  isyslog("total frames: %u", m_totalFrames);
+  dsyslog("total frames: %u", m_totalFrames);
 }
 
 void cRecPlayer::reScan()
@@ -148,12 +149,12 @@ bool cRecPlayer::openFile(int index)
   closeFile();
 
   fileNameFromIndex(index);
-  isyslog("openFile called for index %i string:%s", index, m_fileName.c_str());
+  dsyslog("openFile called for index %i string:%s", index, m_fileName.c_str());
 
   m_file = new CFile;
   if (!m_file->Open(m_fileName.c_str()))
   {
-    isyslog("file failed to open");
+    esyslog("file '%s' failed to open", m_fileName.c_str());
     m_fileOpen = -1;
     delete m_file;
     return false;
@@ -168,7 +169,7 @@ void cRecPlayer::closeFile()
     return;
   }
 
-  isyslog("file closed");
+  dsyslog("recording '%s' closed", m_fileName.c_str());
   if (m_file)
     delete m_file;
   m_file     = NULL;
