@@ -30,6 +30,7 @@
 
 #include "RecPlayer.h"
 #include "recordings/filesystem/IndexFile.h"
+#include "filesystem/File.h"
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -39,7 +40,7 @@ using namespace std;
 
 cRecPlayer::cRecPlayer(cRecording* rec, bool inProgress)
 {
-  m_file          = -1;
+  m_file          = NULL;
   m_fileOpen      = -1;
   m_recordingFilename = rec->FileName();
   m_inProgress = inProgress;
@@ -60,7 +61,7 @@ void cRecPlayer::cleanup() {
 
 void cRecPlayer::scan()
 {
-  struct stat s;
+  struct stat64 s;
 
   closeFile();
 
@@ -75,7 +76,7 @@ void cRecPlayer::scan()
     fileNameFromIndex(i);
 
     //XXX
-    if(stat(m_fileName.c_str(), &s) == -1) {
+    if(CFile::Stat(m_fileName.c_str(), &s) == -1) {
       break;
     }
 
@@ -95,7 +96,7 @@ void cRecPlayer::scan()
 
 void cRecPlayer::reScan()
 {
-  struct stat s;
+  struct stat64 s;
 
   m_totalLength = 0;
 
@@ -103,8 +104,7 @@ void cRecPlayer::reScan()
   {
     fileNameFromIndex(i);
 
-    //XXX
-    if(stat(m_fileName.c_str(), &s) == -1) {
+    if(CFile::Stat(m_fileName.c_str(), &s) == -1) {
       break;
     }
 
@@ -150,12 +150,12 @@ bool cRecPlayer::openFile(int index)
   fileNameFromIndex(index);
   isyslog("openFile called for index %i string:%s", index, m_fileName.c_str());
 
-  //XXX
-  m_file = open(m_fileName.c_str(), O_RDONLY);
-  if (m_file == -1)
+  m_file = new CFile;
+  if (!m_file->Open(m_fileName.c_str()))
   {
     isyslog("file failed to open");
     m_fileOpen = -1;
+    delete m_file;
     return false;
   }
   m_fileOpen = index;
@@ -164,14 +164,14 @@ bool cRecPlayer::openFile(int index)
 
 void cRecPlayer::closeFile()
 {
-  if(m_file == -1) {
+  if(!m_file) {
     return;
   }
 
   isyslog("file closed");
-  close(m_file);
-
-  m_file = -1;
+  if (m_file)
+    delete m_file;
+  m_file     = NULL;
   m_fileOpen = -1;
 }
 
@@ -228,14 +228,14 @@ int cRecPlayer::getBlock(unsigned char* buffer, uint64_t position, int amount)
   uint64_t filePosition = position - m_segments[segmentNumber]->start;
 
   // seek to position
-  if(lseek(m_file, filePosition, SEEK_SET) == -1)
+  if(m_file->Seek(filePosition, SEEK_SET) == -1)
   {
     esyslog("unable to seek to position: %llu", filePosition);
     return 0;
   }
 
   // try to read the block
-  int bytes_read = read(m_file, buffer, amount);
+  int bytes_read = m_file->Read(buffer, amount);
 
   // we may got stuck at end of segment
   if ((bytes_read == 0) && (position < m_totalLength))
@@ -250,7 +250,7 @@ int cRecPlayer::getBlock(unsigned char* buffer, uint64_t position, int amount)
   if (!m_inProgress)
   {
     // Tell linux not to bother keeping the data in the FS cache
-    posix_fadvise(m_file, filePosition, bytes_read, POSIX_FADV_DONTNEED);
+//    posix_fadvise(m_file, filePosition, bytes_read, POSIX_FADV_DONTNEED);
   }
 #endif
 

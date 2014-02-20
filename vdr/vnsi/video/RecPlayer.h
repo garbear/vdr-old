@@ -71,7 +71,7 @@ private:
 
   std::string m_fileName;
   cIndexFile *m_indexFile;
-  int         m_file;
+  CFile*      m_file;
   int         m_fileOpen;
   std::vector<cSegment*> m_segments;
   uint64_t    m_totalLength;
