@@ -234,7 +234,7 @@ bool cTimer::DeserialiseTimer(const TiXmlNode *node)
 
 std::string cTimer::ToDescr(void) const
 {
-  return StringUtils::Format("%d %04d-%04d %s'%s'", Channel()->Number(), m_iStartSecsSinceMidnight, CTimeUtils::IntToTimeTo(CTimeUtils::TimeToInt(m_iStartSecsSinceMidnight) + m_iDurationSecs), HasFlags(tfVps) ? "VPS " : "", m_strRecordingFilename.c_str());
+  return StringUtils::Format("%d %04d-%04d %s'%s'", Channel()->Number(), m_iStartSecsSinceMidnight, CTimeUtils::IntToTime(CTimeUtils::TimeToInt(m_iStartSecsSinceMidnight) + m_iDurationSecs), HasFlags(tfVps) ? "VPS " : "", m_strRecordingFilename.c_str());
 }
 
 bool cTimer::IsRepeatingEvent(void) const

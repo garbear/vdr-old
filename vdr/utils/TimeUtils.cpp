@@ -43,7 +43,7 @@ int CTimeUtils::TimeToInt(int t)
   return (t / 100 * 60 + t % 100) * 60;
 }
 
-int CTimeUtils::IntToTimeTo(int t)
+int CTimeUtils::IntToTime(int t)
 {
   return (t / 3600) * 100 + (t % 3600) / 60;
 }
