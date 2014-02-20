@@ -1,117 +1,43 @@
 /*
- * Simple MPEG/DVB parser to achieve network/service information without initial tuning data
+ *      Copyright (C) 2013 Garrett Brown
+ *      Copyright (C) 2013 Lars Op den Kamp
+ *      Portions Copyright (C) 2006, 2007, 2008, 2009 Winfried Koehler
+ *      Portions Copyright (C) 2000, 2003, 2006, 2008, 2013 Klaus Schmidinger
  *
- * Copyright (C) 2006, 2007, 2008, 2009 Winfried Koehler 
+ *  This Program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2, or (at your option)
+ *  any later version.
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
+ *  This Program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ *  GNU General Public License for more details.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ *  You should have received a copy of the GNU General Public License
+ *  along with this Program; see the file COPYING. If not, see
+ *  <http://www.gnu.org/licenses/>.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
- * Or, point your browser to http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
- *
- * The author can be reached at: handygewinnspiel AT gmx DOT de
- *
- * The project's page is http://wirbel.htpc-forum.de/w_scan/index2.html
- * satellite.c/h, added 20090425, version #20100116
  */
 
+#include "SatelliteUtils.h"
 
+#include <assert.h>
 
-/* this file is shared between w_scan and the VDR plugin wirbelscan.
- * For details on both of them see http://wirbel.htpc-forum.de
+using namespace SATELLITE;
+using namespace std;
+
+#ifndef ARRAY_SIZE
+#define ARRAY_SIZE(x)  (sizeof(x) / sizeof((x)[0]))
+#endif
+
+/*
+ * You'll have to scroll down a couple thousand lines before the code starts. Sorry.
  */
 
+#define SAT_TRANSPONDER_COUNT(x) (sizeof(x)/sizeof(struct __sat_transponder))
 
-
-#include <stdio.h>
-#include <string.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include "scan.h"
-#include "satellites.h"
-#include "extended_frontend.h"
-
-
-/******************************************************************************
- * Every satellite has its own number here.
- * if adding new one simply append to enum.
- *****************************************************************************/
-enum __satellite {
-    S4E8 = 0,    
-    S7E0,    
-    S9E0,    
-    S10E0,
-    S13E0,
-    S16E0,
-    S19E2,
-    S21E6,
-    S23E5,
-    S25E5,
-    S26EX,
-    S28E2,
-    S28E5,
-    S31E5,
-    S32E9,
-    S33E0,
-    S35E9,
-    S36E0,
-    S38E0,
-    S39E0,
-    S40EX,
-    S42E0,
-    S45E0,
-    S49E0,
-    S53E0,
-    S57E0,
-    S57EX,
-    S60EX,
-    S62EX,
-    S64E2,
-    S68EX,
-    S70E5,
-    S72EX,
-    S75EX,
-    S76EX,
-    S78E5,
-    S80EX,
-    S83EX,
-    S87E5,
-    S88EX,
-    S90EX,
-    S91E5,
-    S93E5,
-    S95E0,
-    S96EX,
-    S100EX,
-    S105EX,
-    S108EX,
-    S140EX,
-    S160E0,
-    S0W8,    
-    S4W0,    
-    S5WX,    
-    S7W0,    
-    S8W0,    
-    S11WX,
-    S12W5,
-    S14W0,
-    S15W0,
-    S18WX,
-    S22WX,
-    S24WX,
-    S27WX,
-    S30W0,
-    S97W0,
-};
+//#define SAT_COUNT(x) (sizeof(x)/sizeof(struct cSat))
 
 
 
@@ -259,7 +185,7 @@ static const struct __sat_transponder EUTELSAT10_0E[] = { // Eutelsat W1, 2008-0
 {SYS_DVBS ,12611, POLARIZATION_HORIZONTAL, 9259, FEC_5_6,  ROLLOFF_35, QPSK},
 {SYS_DVBS ,12629, POLARIZATION_VERTICAL  , 5632, FEC_3_4,  ROLLOFF_35, QPSK}};
 
-static const struct __sat_transponder HOTBIRD13E[] = { // Hot Bird  6/7A/8, 2008-07-10 
+static const struct __sat_transponder HOTBIRD13E[] = { // Hot Bird  6/7A/8, 2008-07-10
 {SYS_DVBS ,10719, POLARIZATION_VERTICAL  ,27500, FEC_3_4, ROLLOFF_35, QPSK},
 {SYS_DVBS ,10723, POLARIZATION_HORIZONTAL,29900, FEC_3_4, ROLLOFF_35, QPSK},
 {SYS_DVBS ,10758, POLARIZATION_VERTICAL  ,27500, FEC_3_4, ROLLOFF_35, QPSK},
@@ -449,7 +375,7 @@ static const struct __sat_transponder EUTELSAT16_0E[] = { // Eutelsat W2, 2008-0
 {SYS_DVBS ,12727, POLARIZATION_HORIZONTAL, 3333, FEC_3_4,  ROLLOFF_35, QPSK},
 {SYS_DVBS ,12736, POLARIZATION_HORIZONTAL, 6111, FEC_3_4,  ROLLOFF_35, QPSK}};
 
-static const struct __sat_transponder ASTRA19E[] = {    // Astra 1F/1G/1H/1KR/1L, 2009-04-28 
+static const struct __sat_transponder ASTRA19E[] = {    // Astra 1F/1G/1H/1KR/1L, 2009-04-28
 {SYS_DVBS ,10714, POLARIZATION_HORIZONTAL,22000, FEC_5_6 , ROLLOFF_35, QPSK},
 {SYS_DVBS ,10729, POLARIZATION_VERTICAL  ,22000, FEC_5_6 , ROLLOFF_35, QPSK},
 {SYS_DVBS ,10744, POLARIZATION_HORIZONTAL,22000, FEC_5_6 , ROLLOFF_35, QPSK},
@@ -1684,8 +1610,8 @@ static const struct __sat_transponder OPTUS_160_0E[] = { // Optus D1, 2009-05-23
 {SYS_DVBS2,12358, POLARIZATION_HORIZONTAL,22500, FEC_2_3,  ROLLOFF_35,PSK_8},
 {SYS_DVBS ,12391, POLARIZATION_HORIZONTAL,12600, FEC_5_6,  ROLLOFF_35, QPSK},
 {SYS_DVBS ,12394, POLARIZATION_HORIZONTAL,22500, FEC_3_4,  ROLLOFF_35, QPSK},
-{SYS_DVBS ,12407, POLARIZATION_HORIZONTAL,12600, FEC_5_6,  ROLLOFF_35, QPSK}, 
-{SYS_DVBS ,12421, POLARIZATION_HORIZONTAL,22500, FEC_3_4,  ROLLOFF_35, QPSK}, 
+{SYS_DVBS ,12407, POLARIZATION_HORIZONTAL,12600, FEC_5_6,  ROLLOFF_35, QPSK},
+{SYS_DVBS ,12421, POLARIZATION_HORIZONTAL,22500, FEC_3_4,  ROLLOFF_35, QPSK},
 {SYS_DVBS ,12424, POLARIZATION_HORIZONTAL,14294, FEC_7_8,  ROLLOFF_35, QPSK},
 {SYS_DVBS ,12451, POLARIZATION_HORIZONTAL,12600, FEC_5_6,  ROLLOFF_35, QPSK},
 {SYS_DVBS ,12456, POLARIZATION_HORIZONTAL,22500, FEC_3_4,  ROLLOFF_35, QPSK},
@@ -1894,7 +1820,7 @@ static const struct __sat_transponder ATLANTICBIRD08_0W[] = { // Atlantic Bird 2
 {SYS_DVBS ,12748, POLARIZATION_HORIZONTAL, 1097, FEC_2_3,  ROLLOFF_35, QPSK}};
 
 static const struct __sat_transponder EXPRESS11_XW[] = { // Express A3, 2008-07-10
-{SYS_DVBS ,11516, POLARIZATION_VERTICAL      ,  7780, FEC_5_6,  ROLLOFF_35, QPSK}, // 11.0W 
+{SYS_DVBS ,11516, POLARIZATION_VERTICAL      ,  7780, FEC_5_6,  ROLLOFF_35, QPSK}, // 11.0W
 {SYS_DVBS ,11524, POLARIZATION_VERTICAL      ,  2712, FEC_1_2,  ROLLOFF_35, QPSK},
 {SYS_DVBS , 3675, POLARIZATION_CIRCULAR_RIGHT, 29623, FEC_5_6,  ROLLOFF_35, QPSK}};
 
@@ -2119,120 +2045,20 @@ struct cSat sat_list[] = {
 { "S97W0", S97W0, "97.0 west Telstar 5"                         , TELSTAR97_0W,         SAT_TRANSPONDER_COUNT(TELSTAR97_0W),            WEST_FLAG,  0x970, -1, "S97.0W" }};
 /**********************************************************************************************************************************************/
 
-
-/******************************************************************************
- * convert position constant
- * to index number
- *
- *****************************************************************************/
-
-int txt_to_satellite(const char * id) {
-unsigned int i;
-for (i = 0; i < SAT_COUNT(sat_list); i++)
-   if (! strcasecmp(id,sat_list[i].short_name))
-      return sat_list[i].id;
-return -1;
+const cSat& SatelliteUtils::GetSatellite(eSatellite satelliteId)
+{
+  return sat_list[satelliteId];
 }
 
-/******************************************************************************
- * return numbers of satellites defined.
- *
- *
- *****************************************************************************/
-
-int sat_count() {
-      return SAT_COUNT(sat_list);
+const __sat_transponder& SatelliteUtils::GetTransponder(eSatellite satelliteId, unsigned int iChannelNumber)
+{
+  const cSat& sat = GetSatellite(satelliteId);
+  assert(iChannelNumber < sat.item_count);
+  return sat.items[iChannelNumber];
 }
 
-/******************************************************************************
- * convert index number
- * to position constant
- *
- *****************************************************************************/
-
-const char * satellite_to_short_name(int idx) {
-unsigned int i;
-for (i = 0; i < SAT_COUNT(sat_list); i++)
-   if (idx == sat_list[i].id)
-      return sat_list[i].short_name;
-return "??";
-}
-
-/******************************************************************************
- * convert index number
- * to satellite name
- *
- *****************************************************************************/
-
-const char * satellite_to_full_name(int idx) {
-unsigned int i;
-for (i = 0; i < SAT_COUNT(sat_list); i++)
-   if (idx == sat_list[i].id)
-      return sat_list[i].full_name;
-warning("SATELLITE CODE NOT DEFINED. PLEASE RE-CHECK WETHER YOU TYPED CORRECTLY.\n");
-usleep(5000000);
-return "??";
-}
-
-/******************************************************************************
- * return index number
- * from rotor position
- *
- *****************************************************************************/
-int rotor_position_to_sat_list_index(int rotor_position) {
-unsigned int i;
-for (i = 0; i < SAT_COUNT(sat_list); i++)
-   if (rotor_position == sat_list[i].rotor_position)
-      return i;
-return 0;
-}
-
-/******************************************************************************
- * print list of
- * all satellites
- *
- *****************************************************************************/
-
-void print_satellites(void) {
-unsigned int i;
-for (i = 0; i < SAT_COUNT(sat_list); i++)
-    info("\t%s\t\t%s\n", sat_list[i].short_name, sat_list[i].full_name);
-}
-
-/******************************************************************************
- * get transponder data
- *
- *****************************************************************************/
-int get_frontend_param(uint16_t satellite, uint16_t table_index, struct extended_dvb_frontend_parameters * param) {
-unsigned int i;
-
-for (i = 0; i < SAT_COUNT(sat_list); i++)
-    if (satellite == sat_list[i].id) {
-        if (table_index >= sat_list[i].item_count)
-            return 0; //error
-        memset(param, 0, sizeof(struct extended_dvb_frontend_parameters));
-        param->frequency = sat_list[i].items[table_index].intermediate_frequency;
-        param->inversion = INVERSION_AUTO;
-        param->u.qpsk.modulation_system = sat_list[i].items[table_index].modulation_system;
-        param->u.qpsk.polarization      = sat_list[i].items[table_index].polarization;
-        param->u.qpsk.symbol_rate       = sat_list[i].items[table_index].symbol_rate;
-        param->u.qpsk.fec_inner         = sat_list[i].items[table_index].fec_inner;
-        param->u.qpsk.rolloff           = sat_list[i].items[table_index].rolloff;
-        param->u.qpsk.modulation_type   = sat_list[i].items[table_index].modulation_type;    
-        return 1;
-        }
-return 0; // error
-}
-
-int choose_satellite(const char * satellite, int * channellist) {
-    int retval = 0;
-    * channellist = txt_to_satellite(satellite);
-    if (* channellist < 0) {
-        * channellist = S19E2;
-        warning("\n\nSATELLITE CODE IS NOT DEFINED. FALLING BACK TO \"S19E2\"\n\n");
-        sleep(10);
-        retval = -1;
-        }
-    info("using settings for %s\n", satellite_to_full_name(* channellist));
-    return retval;
+unsigned int SatelliteUtils::GetTransponderCount(eSatellite satelliteId)
+{
+  const cSat& sat = GetSatellite(satelliteId);
+  return sat.item_count;
 }

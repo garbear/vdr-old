@@ -167,6 +167,7 @@ set(VDR_SRCS
 	vdr/recordings/Recordings.cpp
 	vdr/scan/CNICodes.cpp
 	vdr/scan/CountryUtils.cpp
+	vdr/scan/SatelliteUtils.cpp
 	vdr/scan/SWReceiver.cpp
 	vdr/settings/Settings.cpp
 	vdr/sources/ISourceParams.cpp
