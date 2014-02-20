@@ -215,9 +215,10 @@ cIndexFile::cIndexFile(const std::string& strFileName, bool Record, bool IsPesRe
               m_iSize = m_iLast + 1;
               m_index = MALLOC(tIndexTs, m_iSize);
               if (m_index) {
-                 if (m_file.Open(strFileName))
+                 if (m_file.Open(m_strFilename))
                  {
-                   if (m_file.Read(m_index, size_t(buf.st_size)) != buf.st_size)
+                   size_t sz = m_file.Read(m_index, size_t(buf.st_size));
+                   if (sz != buf.st_size)
                    {
                      esyslog("ERROR: can't read from file '%s'", m_strFilename.c_str());
                      free(m_index);
