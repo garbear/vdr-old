@@ -55,30 +55,6 @@ void cScanTask::DoWork(const ChannelPtr& channel, cSynchronousAbort* abortableJo
   if (abortableJob && abortableJob->IsAborting())
     return;
 
-  // Channel props
-  const cDvbTransponderParams& params = channel->Parameters();
-
-  dsyslog("Channel properties");
-  dsyslog("params.polarization: %d", params.Polarization());
-  dsyslog("params.inversion: %d", params.Inversion());
-  dsyslog("params.bandwidth: %d", params.Bandwidth());
-  dsyslog("params.coderateH: %d", params.CoderateH());
-  dsyslog("params.coderateL: %d", params.CoderateL());
-  dsyslog("params.modulation: %d", params.Modulation());
-  dsyslog("params.system: %d", params.System());
-  dsyslog("params.transmission: %d", params.Transmission());
-  dsyslog("params.guard: %d", params.Guard());
-  dsyslog("params.hierarchy: %d", params.Hierarchy());
-  dsyslog("params.rollOff: %d", params.RollOff());
-  dsyslog("params.streamId: %d", params.StreamId());
-  dsyslog("channel.number: %d", channel->Number());
-  dsyslog("channel.frequency: %d", channel->FrequencyHz());
-  dsyslog("channel.nid: %d", channel->Nid());
-  dsyslog("channel.tid: %d", channel->Tid());
-  dsyslog("channel.sid: %d", channel->Sid());
-  dsyslog("channel.srate: %d", channel->Srate());
-
-
   cScanFsm scanner(m_device, &cChannelManager::Get(), channel, abortableJob);
   cFiniteStateMachine<cScanFsm> fsm(scanner);
 
