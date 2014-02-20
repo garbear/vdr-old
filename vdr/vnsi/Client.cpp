@@ -2126,6 +2126,8 @@ const char* cVNSIClient::OpcodeToString(uint8_t opcode)
     return "rec stream frame to position";
   case VNSI_RECSTREAM_GETIFRAME:
     return "rec stream get iframe";
+  case VNSI_RECSTREAM_GETLENGTH:
+    return "rec stream get length";
   case VNSI_CHANNELS_GETCOUNT:
     return "channels get count";
   case VNSI_CHANNELS_GETCHANNELS:
