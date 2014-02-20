@@ -186,6 +186,7 @@ set(VDR_SRCS
 	vdr/sources/Source.cpp
 	vdr/sources/linux/DVBSourceParams.cpp
 	vdr/sources/linux/DVBTransponderParams.cpp
+	vdr/threads/SystemClock.cpp
 	vdr/timers/Timer.cpp
 	vdr/timers/Timers.cpp
 	vdr/utils/CalendarUtils.cpp
