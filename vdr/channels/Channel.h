@@ -26,6 +26,8 @@
 #include "sources/Source.h"
 //#include "timers.h"
 
+#define CHANNEL_NAME_UNKNOWN  "???"
+
 // TODO
 class cTimer2
 {
@@ -139,6 +141,8 @@ public:
   static ChannelPtr EmptyChannel;
 
   cChannel& operator=(const cChannel &channel);
+
+  ChannelPtr Clone() const;
 
   std::string Name() const { return m_name; }
   std::string ShortName(bool bOrName = false) const;

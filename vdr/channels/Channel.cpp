@@ -181,6 +181,11 @@ cChannel& cChannel::operator=(const cChannel &channel)
   return *this;
 }
 
+ChannelPtr cChannel::Clone() const
+{
+  return ChannelPtr(new cChannel(*this));
+}
+
 string cChannel::ShortName(bool bOrName /* = false */) const
 {
   if (bOrName && m_shortName.empty())

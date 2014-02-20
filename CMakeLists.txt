@@ -170,6 +170,11 @@ set(VDR_SRCS
 	vdr/scan/dvb_wrapper.cpp
 	vdr/scan/SatelliteUtils.cpp
 	vdr/scan/SWReceiver.cpp
+	vdr/scan/scanners/EITScanner.cpp
+	vdr/scan/scanners/NITScanner.cpp
+	vdr/scan/scanners/PATScanner.cpp
+	vdr/scan/scanners/PMTScanner.cpp
+	vdr/scan/scanners/SDTScanner.cpp
 	vdr/settings/Settings.cpp
 	vdr/sources/ISourceParams.cpp
 	vdr/sources/Source.cpp

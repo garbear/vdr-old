@@ -331,6 +331,20 @@ ChannelPtr cChannelManager::GetByServiceID(int serviceID, int source, int transp
   return cChannel::EmptyChannel;
 }
 
+ChannelPtr cChannelManager::GetByServiceID(const ChannelVector& channels, int serviceID, int source, int transponder)
+{
+  assert(serviceID);
+  assert(source);
+  assert(transponder);
+
+  for (ChannelVector::const_iterator itChannel = channels.begin(); itChannel != channels.end(); ++itChannel)
+  {
+    if ((*itChannel)->Sid() == serviceID && (*itChannel)->Source() == source && ISTRANSPONDER((*itChannel)->Transponder(), transponder))
+      return (*itChannel);
+  }
+  return cChannel::EmptyChannel;
+}
+
 ChannelPtr cChannelManager::GetByChannelID(const tChannelID &channelID, bool bTryWithoutRid /* = false */, bool bTryWithoutPolarization /* = false */)
 {
   int serviceID = channelID.Sid();

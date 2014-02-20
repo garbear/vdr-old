@@ -80,6 +80,7 @@ public:
    * \return The channel, or empty pointer if the channel isn't found
    */
   ChannelPtr GetByServiceID(int serviceID, int source, int transponder) const;
+  static ChannelPtr GetByServiceID(const ChannelVector& channels, int serviceID, int source, int transponder); // TODO: Remove me
 
   /*!
    * \brief Find a channel by its channel ID
@@ -176,6 +177,8 @@ public:
 
   std::vector<ChannelPtr> GetCurrent(void) const;
   void CreateChannelGroups(bool automatic);
+
+  unsigned int ChannelCount() const { return m_channels.size(); }
 
 private:
   typedef std::map<int, ChannelVector> ChannelSidMap;
