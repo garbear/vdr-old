@@ -1,429 +1,37 @@
 /*
- * ttext.c: wirbelscan - A plugin for the Video Disk Recorder
+ *      Copyright (C) 2013 Garrett Brown
+ *      Copyright (C) 2013 Lars Op den Kamp
+ *      Portions Copyright (C) 2006, 2007, 2008, 2009 Winfried Koehler
+ *      Portions Copyright (C) 2000, 2003, 2006, 2008, 2013 Klaus Schmidinger
  *
- * See the README file for copyright information and how to reach the author.
+ *  This Program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2, or (at your option)
+ *  any later version.
  *
- * $Id$
+ *  This Program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this Program; see the file COPYING. If not, see
+ *  <http://www.gnu.org/licenses/>.
+ *
  */
 
-#include <time.h>
-#include <vdr/config.h>
-#include "ttext.h"
-#include "countries.h"
-#include "common.h"
+#include "CNICodes.h"
 
-#define TS_DBG  0
-#define PES_DBG 0
-#define CNI_DBG 0
-#define FUZZY_DBG 0
-#define MAXHITS 50
-#define MINHITS 2
-#define TIMEOUT 15
-#define Dec(x)        (CharToInt(x) < 10)                  /* "z" == 0x30..0x39             */
-#define Hex(x)        (CharToInt(x) < 16)                  /* "h" == 0x30..0x39; 0x41..0x46 */
-#define Delim(x)      ((x==46) || (x==58))                 /* date/time delimiter.          */
-#define Magenta(x)    ((x==5))                             /* ":" == 0x05                   */
-#define Concealed(x)  ((x==0x1b) || (x==0x18))             /* "%" == 0x18; 300231 has typo. */
-
-
-uchar Revert8(uchar inp) {
-  uint8_t lookup[] = {
-      0, 8, 4, 12, 2, 10, 6, 14,
-      1, 9, 5, 13, 3, 11, 7, 15 };
-  return lookup[(inp & 0xF0) >> 4] | lookup[inp & 0xF] << 4;
-}
-
-uint16_t Revert16(uint16_t inp) {
-  return Revert8(inp & 0xFF) << 8 | Revert8(inp >> 8);
-}
-
-uchar RevertNibbles(uchar inp) {
-   inp = Revert8(inp);
-   return (inp & 0xF0) >> 4 | (inp & 0xF) << 4;
-}
-
-uchar Hamming_8_4(uchar aByte) {
-   uchar lookup[] = {
-       21,   2,  73,  94, 100, 115,  56,  47,
-      208, 199, 140, 155, 161, 182, 253, 234 };
-   return lookup[aByte];
-}
-
-int HammingDistance_8(uchar a, uchar b) {
-   int i, ret = 0;
-   int mask[] = {1,2,4,8,16,32,64,128};
-   uchar XOR  = a ^ b;
-   
-   for (i=0; i<8; i++)
-       ret += (XOR & mask[i]) >> i;
-   return ret;
-}
-
-uchar OddParity(uchar u) {
-   int i;
-   int mask[] = {1,2,4,8,16,32,64,128};
-   uchar p=0;
-
-   for (i=0; i<8; i++)
-       p += (u & mask[i]) >> i;
-
-   return p&1?u&0x7F:255;
-}
-
-int DeHamming_8_4(uchar aByte) {
-  
-   for (int i=0; i<16; i++)
-       if (HammingDistance_8(Hamming_8_4(i),aByte) < 2)
-          return i;
-
-   return -1; // 2 or more bit errors: non recoverable.
-}
-
-uint32_t DeHamming_24_18(uchar * data) {
-  //FIXME: add bit error detection and correction.
-  return ((*(data + 0) >> 2) & 0x1) |
-         ((*(data + 0) >> 3) & 0xE) |
-         (uint32_t) ((*(data+1) & 0x7F) << 4 ) |
-         (uint32_t) ((*(data+2) & 0x7F) << 11);
-}
-
-static inline uint8_t CharToInt(uchar c) {
-   switch(c) {
-      case 0x30 ... 0x39: return c-48;
-      case 0x41 ... 0x46: return c-55;
-      case 0x61 ... 0x66: return c-87;
-      default: return 0xff;
-      }
-}
-
-/*-----------------------------------------------------------------------------
- * cSwReceiver
- *---------------------------------------------------------------------------*/
-
-void cSwReceiver::Receive(uchar * Data, int Length) {
-  uchar * p;
-  int count = 184;
-  
-  if (stopped || !Running()) return;
- 
-  // pointer to new PES header or next 184byte payload of current PES packet
-  p = &Data[4];
-
-  if (*(p+0) == 0 && *(p+1) == 0 && *(p+2) == 1) { // next PES header
-      uchar PES_header_data_length = *(p+8);
-      uchar data_identifier;      
-
-      data_identifier = *(p+9+PES_header_data_length);
-      if ((data_identifier < 0x10) || (data_identifier>0x1F))
-         return; // unknown EBU data. not stated in 300472
-      p+=10+PES_header_data_length; count-=10+PES_header_data_length;   
-      }
-
-  buffer->Put(p, count);
-}
-
-void cSwReceiver::DecodePacket(uchar * data) {
-  uchar MsbFirst[48] = { 0 };
-  uchar aByte;
-  int i;
-  int Magazine = 0;
-  int PacketNumber = 0;
-  static uint16_t pagenumber, subpage;
-  
-  switch (data[0]) { // data_unit_id
-      case 0xC3: // VPS line 16
-         {
-         uchar * p = &MsbFirst[3];
-         
-         /* convert data from lsb first to msb first */
-         for (i = 3; i<16; i++)     
-             MsbFirst[i]=Revert8(data[i]);
-         
-         cni_vps = (p[10] & 0x03) << 10 |
-                   (p[11] & 0xC0) << 2  |
-                   (p[ 8] & 0xC0)       |
-                   (p[11] & 0x3F);
-         
-         if (cni_vps && GetCniNameVPS()) {
-            if (CNI_DBG)
-               dlog(3, "cni_vps = 0x%.3x -> %s", cni_vps, GetCniNameVPS());
-            if (++hits > MAXHITS) stopped = true;
-            }
-         }
-         break;
-
-      case 0x02: // EBU teletext
-         {
-         /* convert data from lsb first to msb first */
-         for (i = 4; i<46; i++)
-             MsbFirst[i]=Revert8(data[i]);
-
-         /* decode magazine and packet number */
-         aByte = DeHamming_8_4(MsbFirst[4]);
-
-         if (! (Magazine = aByte & 0x7)) Magazine = 8;
-
-         PacketNumber = (aByte & 0xF) >> 3 | DeHamming_8_4(MsbFirst[5]) << 1;
-
-         switch (PacketNumber) {
-            case 0: /* page header X/0 */
-               {             
-               uchar * p = &MsbFirst[6];               
-               pagenumber = DeHamming_8_4(*(p)) + 10 * DeHamming_8_4(*(p+1)); p += 2;
-               subpage  =  DeHamming_8_4(*(p++));
-               subpage |= (DeHamming_8_4(*(p++)) & 0x7) << 4;
-               subpage |=  DeHamming_8_4(*(p++)) << 7;
-               subpage |= (DeHamming_8_4(*(p++)) & 0x3) << 11;
-               if (Magazine == 1 && ! pagenumber) {
-                  int bytes = 32;
-                  p = &MsbFirst[14];
-                  for (int i = 0; i<bytes; i++) *(p+i) &= 0x7F;
-                  if (FUZZY_DBG) hexdump("raw data", p, bytes);
-                  for (int i = 0; i<bytes-2; i++) {
-                      if ((p[i] == 49) && (p[i+1] == 48) && (p[i+2] == 48)) {
-                         p[i] = p[i+1] = p[i+2] = 0;
-                         break;
-                         }
-                      }
-                  for (int i = 0; i<bytes-4; i++) {
-                      if ((p[i  ] == 118 || p[i  ] == 86) &&
-                          (p[i+1] == 105 || p[i+1] == 73) &&
-                          (p[i+2] == 100 || p[i+2] == 68) &&
-                          (p[i+3] == 101 || p[i+3] == 69) &&
-                          (p[i+4] == 111 || p[i+4] == 79))
-                         p[i] = p[i+1] = p[i+2] = p[i+3] = p[i+4] = 0;
-
-                      if ((p[i  ] == 116 || p[i  ] == 84) &&
-                          (p[i+1] == 101 || p[i+1] == 69) &&
-                          (p[i+2] == 120 || p[i+2] == 88) &&
-                          (p[i+3] == 116 || p[i+3] == 84))
-                         p[i] = p[i+1] = p[i+2] = p[i+3] = 0;   
-
-                      if (Dec(p[i]) && Dec(p[i+1]) && Delim(p[i+2]))
-                         p[i] = p[i+1] = p[i+2] = 0;
-                      }
-
-                  for (int i = 0; i<bytes-3; i++) {
-                      if ((p[i] <= 32) && (p[i+1] <= 32)) {
-                         p[i] = p[i+1] = 0;
-                         }
-
-                      if (p[i] < 32)
-                         p[i] = 0;
-
-                      if (((p[i] == 45) || (p[i] == 46)) && (p[i+1] < 32))
-                         p[i] = 0;
-                      }
-
-                  while (*p < 33) { p++; bytes--; }
-                  while (*(p + bytes) < 33) bytes--;
-                  if (FUZZY_DBG) hexdump("fuzzy data", p, bytes);
-                  UpdatefromName((const char *) p);
-                  }
-               }
-               break;
-            case 1 ... 25: /* visible text X/1..X/25 */
-               {
-               /* PDC embedded into visible text.
-                * 300231 page 30..31 'Method A'
-                */
-               uchar * p = &MsbFirst[6];
-               if (Magazine != 3) break;
-               for (int i = 0; i<48; i++) MsbFirst[i] &= 0x7F;
-               for (int i=0; i<34; i++) {
-                   if (Magenta(*(p++))) {
-                      if (Concealed(*(p)) && Hex(*(p+1)) && Hex(*(p+2)) && Dec(*(p+3)) && Dec(*(p+4)) && Dec(*(p+5)) &&
-                         Concealed(*(p+6))) {
-                         cni_cr_idx =  CharToInt(*(p+1)) << 12 | CharToInt(*(p+2)) << 8;
-                         cni_cr_idx |= CharToInt(*(p+3)) * 100 + CharToInt(*(p+4)) * 10 + CharToInt(*(p+5));
-                         if (cni_cr_idx && GetCniNameCrIdx()) {
-                            if (CNI_DBG)
-                               dlog(3, "cni_cr_idx = %.2X%.3d -> %s",
-                                    cni_cr_idx>>8, cni_cr_idx&255, GetCniNameCrIdx());
-                            if (++hits > MAXHITS) stopped = true;
-                            }
-                         }
-                      }
-                   }
-               }
-               break;
-
-            case 26:
-               {               
-               /* 13 x 3-byte pairs of hammed 24/18 data.
-                * 300231 page 30..31 'Method B'
-                */
-               uchar * p = &MsbFirst[7];
-               for (int i=0; i<13; i++) {
-                   uint32_t value = DeHamming_24_18(p); p+=3;
-                   uint16_t data_word_A, mode_description, data_word_B;
-                   
-                   data_word_A      = (value >> 0 ) & 0x3F;
-                   mode_description = (value >> 6 ) & 0x1F;
-                   data_word_B      = (value >> 11) & 0x7F;
-                   if (mode_description == 0x08) {
-                       // 300231, 7.3.2.3 Coding of preselection data in extension packets X/26
-                       if (data_word_A >= 0x30) {
-                           cni_X_26 = data_word_A << 8 | data_word_B;
-                           if (cni_X_26 && GetCniNameX26()) {
-                              if (CNI_DBG)
-                                 dlog(3, "cni_X_26 = 0x%.4x -> %s", cni_X_26, GetCniNameX26());
-                              if (++hits > MAXHITS) stopped = true;
-                              }
-                           }
-                       }
-                   }
-               }
-               break; // end X/26
-            case 30:
-               if (Magazine < 8) break;
-               {
-               int DesignationCode = DeHamming_8_4(MsbFirst[6]);
-               switch (DesignationCode) {
-                   case 0:
-                   case 1:
-                      /* ETS 300 706: Table 18: Coding of Packet 8/30 Format 1 */
-                      {
-                      cni_8_30_1 = Revert16(MsbFirst[13] | MsbFirst[14] << 8);
-                      if ((cni_8_30_1 == 0xC0C0) || (cni_8_30_1 == 0xA101))
-                         cni_8_30_1 = 0; // known wrong values.
-                     
-                      if (cni_8_30_1 && GetCniNameFormat1())
-                         if (CNI_DBG)
-                            dlog(3, "cni_8_30_1 = 0x%.4x -> %s", cni_8_30_1, GetCniNameFormat1());
-                         if (++hits > MAXHITS) stopped = true;
-                      }
-                      break;
-                   case 2:
-                   case 3:
-                      /* ETS 300 706: Table 19: Coding of Packet 8/30 Format 2 */
-                      {
-                      uchar Data[256];
-                      unsigned CNI_0, CNI_1, CNI_2, CNI_3;
-
-                      for (i=0; i<33; i++)
-                          Data[i]=RevertNibbles(DeHamming_8_4(MsbFirst[13+i]));
-
-                      CNI_0 = (Data[2] & 0xF) >> 0;
-                      CNI_2 = (Data[3] & 0xC) >> 2;
-                      CNI_1 = (Data[8] & 0x3) << 2 | (Data[9]  & 0xC) >> 2;
-                      CNI_3 = (Data[9] & 0x3) << 4 | (Data[10] & 0xF) >> 0;
-
-                      cni_8_30_2 = CNI_0 << 12 | CNI_1 << 8 | CNI_2 << 6 | CNI_3; 
-                      
-                      if (cni_8_30_2 && GetCniNameFormat2())
-                         if (CNI_DBG)
-                            dlog(3, "cni_8_30_2 = 0x%.4x -> %s", cni_8_30_2, GetCniNameFormat2());
-                         if (++hits > MAXHITS) stopped = true;
-                      }
-                      break;
-                   default:;
-                   } // end switch (DesignationCode)
-               }
-               break; // end 8/30/{1,2}
-            default:;
-            }
-         }
-         break; // end EBU teletext
-
-      default:; // ignore wss && closed_caption
-      } // end switch data_unit_id
-}
-
-void cSwReceiver::Decode(uchar * data, int count) {
-  if (count < 184) return;
-
-  while (count >= 46 && !stopped) { 
-    switch (*data) {  // EN 300472 Table 4 data_unit_id
-        case 0x02:    // EBU teletext 
-        case 0xC3:    // VPS line 16
-           DecodePacket(data);
-        default:;     // wss, closed_caption, stuffing
-        }
-    data += 46; count -= 46; buffer->Del(46);
-    }
-}
-
-void cSwReceiver::Action() {
-  uchar * bp;
-  int count;
-
-  while (Running() & !stopped) {
-     count = 184;
-     
-     if ((bp = buffer->Get(count))) {
-        Decode(bp, count);      // always N * 46bytes.
-        TsCount++;
-        }
-     else {
-        cCondWait::SleepMs(10); // wait for new data.
-        }
-     if (time(0) > timeout) {        
-        stopped = true;
-        }
-     }
-  if (hits < MAXHITS) {
-     // we're unshure about result.
-     if ((hits < MINHITS) || (TsCount < 3)) {
-        // probably garbage. clear it.
-        cni_8_30_1 = cni_8_30_2 = cni_X_26 = cni_vps = cni_cr_idx = 0;
-        fuzzy = false;
-        }
-     else
-        dlog(3, "   fuzzy result, hits = %d, TsCount = %lu", hits, TsCount);   
-     }
-}
-
-cSwReceiver::cSwReceiver(cChannel * Channel) : cReceiver(Channel->GetChannelID(),
-   100, Channel->Tpid()), cThread("ttext") {
-
-   stopped = fuzzy = false;
-   channel = Channel;
-   buffer  = new cRingBufferLinear(MEGABYTE(1),184);
-   cni_8_30_1 = cni_8_30_2 = cni_X_26 = cni_vps = cni_cr_idx = 0;
-   hits = 0;
-   timeout = time(0) + TIMEOUT;
-}
-
-void cSwReceiver::Reset() {
-   stopped = fuzzy = false;
-   cCondWait::SleepMs(10);
-   buffer->Clear();
-   cni_8_30_1 = cni_8_30_2 = cni_X_26 = cni_vps = cni_cr_idx = 0;
-   stopped = false;
-   hits = TsCount = 0;
-   timeout = time(0) + TIMEOUT;
-   Start();   
-}
-
-cSwReceiver::~cSwReceiver() {
-   stopped = true;
-   buffer->Clear();
-   DELETENULL(buffer);
-   Cancel(0);
-}
-
-
-/*-----------------------------------------------------------------------------
- * CNI codes
- *---------------------------------------------------------------------------*/
+#include <assert.h>
 
 using namespace COUNTRY;
 
-typedef struct {
-  enum country_t id;
-  const char * network;
-  uint16_t ni_8_30_1;
-  uint8_t  c_8_30_2;
-  uint8_t  ni_8_30_2;
-  uint8_t  a_X_26;
-  uint8_t  b_X_26;
-  uint16_t vps__cni;
-  uint16_t cr_idx;
-} cni_code;
+#ifndef ARRAY_SIZE
+#define ARRAY_SIZE(x)  (sizeof(x) / sizeof((x)[0]))
+#endif
 
-
-static const cni_code cni_codes[] = {
+static const CniCodes::cCniCode cniCodes[] =
+{
 /*Country, Network,                     8/30/1   8/30/2      X/26      VPS CNI cr_idx
  *                                      NI 16b   C 8b NI 8b  A 6b  B 7b
  */
@@ -596,7 +204,7 @@ static const cni_code cni_codes[] = {
  { BE, "FocusTV"                       , 0x3215, 0,    0,    0,    0,    0,     0   },
  { BE, "Be 1 ana"                      , 0x3216, 0,    0,    0,    0,    0,     0   },
  { BE, "Be 1 num"                      , 0x3217, 0,    0,    0,    0,    0,     0   },
- { BE, "Be Ciné 1"                     , 0x3218, 0,    0,    0,    0,    0,     0   },
+ { BE, "Be CinÃ© 1"                     , 0x3218, 0,    0,    0,    0,    0,     0   },
  { BE, "Be Sport 1"                    , 0x3219, 0,    0,    0,    0,    0,     0   },
  { BE, "PRIME Sport 1"                 , 0x321A, 0,    0,    0,    0,    0,     0   },
  { BE, "PRIME SPORT 2"                 , 0x321B, 0,    0,    0,    0,    0,     0   },
@@ -620,16 +228,16 @@ static const cni_code cni_codes[] = {
  { BE, "EXQI Sport FR"                 , 0x322D, 0,    0,    0,    0,    0,     0   },
  { BE, "EXQI Culture FR"               , 0x322E, 0,    0,    0,    0,    0,     0   },
  { BE, "Discovery Flanders"            , 0x322F, 0,    0,    0,    0,    0,     0   },
- { BE, "Télé Bruxelles"                , 0x3230, 0,    0,    0,    0,    0,     0   },
- { BE, "Télésambre"                    , 0x3231, 0,    0,    0,    0,    0,     0   },
+ { BE, "TÃ©lÃ© Bruxelles"                , 0x3230, 0,    0,    0,    0,    0,     0   },
+ { BE, "TÃ©lÃ©sambre"                    , 0x3231, 0,    0,    0,    0,    0,     0   },
  { BE, "TV Com"                        , 0x3232, 0,    0,    0,    0,    0,     0   },
  { BE, "Canal Zoom"                    , 0x3233, 0,    0,    0,    0,    0,     0   },
- { BE, "Vidéoscope"                    , 0x3234, 0,    0,    0,    0,    0,     0   },
+ { BE, "VidÃ©oscope"                    , 0x3234, 0,    0,    0,    0,    0,     0   },
  { BE, "Canal C"                       , 0x3235, 0,    0,    0,    0,    0,     0   },
- { BE, "Télé MB"                       , 0x3236, 0,    0,    0,    0,    0,     0   },
+ { BE, "TÃ©lÃ© MB"                       , 0x3236, 0,    0,    0,    0,    0,     0   },
  { BE, "Antenne Centre"                , 0x3237, 0,    0,    0,    0,    0,     0   },
- { BE, "Télévesdre"                    , 0x3238, 0,    0,    0,    0,    0,     0   },
- { BE, "RTC Télé Liège"                , 0x3239, 0,    0,    0,    0,    0,     0   },
+ { BE, "TÃ©lÃ©vesdre"                    , 0x3238, 0,    0,    0,    0,    0,     0   },
+ { BE, "RTC TÃ©lÃ© LiÃ¨ge"                , 0x3239, 0,    0,    0,    0,    0,     0   },
  { BE, "EXQI Plus NL"                  , 0x323A, 0,    0,    0,    0,    0,     0   },
  { BE, "EXQI Plus FR"                  , 0x323B, 0,    0,    0,    0,    0,     0   },
  { BE, "EXQI Life NL"                  , 0x323C, 0,    0,    0,    0,    0,     0   },
@@ -650,9 +258,9 @@ static const cni_code cni_codes[] = {
  { BE, "Mozaiek/Mosaique"              , 0x3298, 0,    0,    0,    0,    0,     0   },
  { BE, "Info Kanaal/Canal Info"        , 0x3299, 0,    0,    0,    0,    0,     0   },
  { BE, "Be 1 + 1h"                     , 0x32A7, 0,    0,    0,    0,    0,     0   },
- { BE, "Be Ciné 2"                     , 0x32A8, 0,    0,    0,    0,    0,     0   },
+ { BE, "Be CinÃ© 2"                     , 0x32A8, 0,    0,    0,    0,    0,     0   },
  { BE, "Be Sport 2"                    , 0x32A9, 0,    0,    0,    0,    0,     0   },
- { FR, "Arte / La Cinquième"           , 0x330A, 0x2F, 0xA,  0x3F, 0xA,  0,     0   },
+ { FR, "Arte / La CinquiÃ¨me"           , 0x330A, 0x2F, 0xA,  0x3F, 0xA,  0,     0   },
  { FR, "RFO1"                          , 0x3311, 0x2F, 0x11, 0x3F, 0x11, 0,     0   },
  { FR, "RFO2"                          , 0x3312, 0x2F, 0x12, 0x3F, 0x12, 0,     0   },
  { FR, "Aqui TV"                       , 0x3320, 0x2F, 0x20, 0x3F, 0x20, 0,     0   },
@@ -664,14 +272,14 @@ static const cni_code cni_codes[] = {
  { FR, "Canal J"                       , 0x33C2, 0x2F, 0xC2, 0x3F, 0x42, 0,     0   },
  { FR, "Canal Jimmy"                   , 0x33C3, 0x2F, 0xC3, 0x3F, 0x43, 0,     0   },
  { FR, "LCI"                           , 0x33C4, 0x2F, 0xC4, 0x3F, 0x44, 0,     0   },
- { FR, "La Chaîne Météo"               , 0x33C5, 0x2F, 0xC5, 0x3F, 0x45, 0,     0   },
+ { FR, "La ChaÃ®ne MÃ©tÃ©o"               , 0x33C5, 0x2F, 0xC5, 0x3F, 0x45, 0,     0   },
  { FR, "MCM"                           , 0x33C6, 0x2F, 0xC6, 0x3F, 0x46, 0,     0   },
  { FR, "TMC Monte-Carlo"               , 0x33C7, 0x2F, 0xC7, 0x3F, 0x47, 0,     0   },
- { FR, "Paris Première"                , 0x33C8, 0x2F, 0xC8, 0x3F, 0x48, 0,     0   },
- { FR, "Planète"                       , 0x33C9, 0x2F, 0xC9, 0x3F, 0x49, 0,     0   },
- { FR, "Série Club"                    , 0x33CA, 0x2F, 0xCA, 0x3F, 0x4A, 0,     0   },
- { FR, "Télétoon"                      , 0x33CB, 0x2F, 0xCB, 0x3F, 0x4B, 0,     0   },
- { FR, "Téva"                          , 0x33CC, 0x2F, 0xCC, 0x3F, 0x4C, 0,     0   },
+ { FR, "Paris PremiÃ¨re"                , 0x33C8, 0x2F, 0xC8, 0x3F, 0x48, 0,     0   },
+ { FR, "PlanÃ¨te"                       , 0x33C9, 0x2F, 0xC9, 0x3F, 0x49, 0,     0   },
+ { FR, "SÃ©rie Club"                    , 0x33CA, 0x2F, 0xCA, 0x3F, 0x4A, 0,     0   },
+ { FR, "TÃ©lÃ©toon"                      , 0x33CB, 0x2F, 0xCB, 0x3F, 0x4B, 0,     0   },
+ { FR, "TÃ©va"                          , 0x33CC, 0x2F, 0xCC, 0x3F, 0x4C, 0,     0   },
  { FR, "TF1"                           , 0x33F1, 0x2F, 0x1,  0x3F, 0x1,  0,     0   },
  { FR, "France 2"                      , 0x33F2, 0x2F, 0x2,  0x3F, 0x2,  0,     0   },
  { FR, "France 3"                      , 0x33F3, 0x2F, 0x3,  0x3F, 0x3,  0,     0   },
@@ -762,7 +370,7 @@ static const cni_code cni_codes[] = {
  { HU, "MTV2"                          , 0x3602, 0,    0,    0,    0,    0,     0   },
  { HU, "MTV1 regional Budapest"        , 0x3611, 0,    0,    0,    0,    0,     0   },
  { HU, "tv2"                           , 0x3620, 0,    0,    0,    0,    0,     0   },
- { HU, "MTV1 regional Pécs"            , 0x3621, 0,    0,    0,    0,    0,     0   },
+ { HU, "MTV1 regional PÃ©cs"            , 0x3621, 0,    0,    0,    0,    0,     0   },
  { HU, "tv2"                           , 0x3622, 0,    0,    0,    0,    0,     0   },
  { HU, "MTV1 regional Szeged"          , 0x3631, 0,    0,    0,    0,    0,     0   },
  { HU, "Duna Televizio"                , 0x3636, 0,    0,    0,    0,    0,     0   },
@@ -796,7 +404,7 @@ static const cni_code cni_codes[] = {
  { IT, "TN8 Telenorba"                 , 0x391A, 0,    0,    0,    0,    0,     0   },
  { IT, "RaiNotizie24"                  , 0x3920, 0,    0,    0,    0,    0,     0   },
  { IT, "RAI Med"                       , 0x3921, 0,    0,    0,    0,    0,     0   },
- { IT, "RAI Sport Più"                 , 0x3922, 0,    0,    0,    0,    0,     0   },
+ { IT, "RAI Sport PiÃ¹"                 , 0x3922, 0,    0,    0,    0,    0,     0   },
  { IT, "RAI Edu1"                      , 0x3923, 0,    0,    0,    0,    0,     0   },
  { IT, "RAI Edu2"                      , 0x3924, 0,    0,    0,    0,    0,     0   },
  { IT, "RAI NettunoSat1"               , 0x3925, 0,    0,    0,    0,    0,     0   },
@@ -865,7 +473,7 @@ static const cni_code cni_codes[] = {
  { IT, "A1"                            , 0x3980, 0x15, 0x80, 0,    0,    0,     0   },
  { IT, "History Channel"               , 0x3981, 0x15, 0x81, 0,    0,    0,     0   },
  { IT, "FOX KIDS"                      , 0x3985, 0,    0,    0,    0,    0,     0   },
- { IT, "PEOPLE TV – RETE 7"            , 0x3986, 0,    0,    0,    0,    0,     0   },
+ { IT, "PEOPLE TV â€“ RETE 7"            , 0x3986, 0,    0,    0,    0,    0,     0   },
  { IT, "FOX KIDS +1"                   , 0x3987, 0,    0,    0,    0,    0,     0   },
  { IT, "LA7"                           , 0x3988, 0,    0,    0,    0,    0,     0   },
  { IT, "PrimaTV"                       , 0x3989, 0,    0,    0,    0,    0,     0   },
@@ -912,12 +520,12 @@ static const cni_code cni_codes[] = {
  { IT, "E! Entertainment Television"   , 0x39B8, 0x15, 0xB8, 0,    0,    0,     0   },
  { IT, "Toon Disney"                   , 0x39B9, 0x15, 0xB9, 0,    0,    0,     0   },
  { IT, "Play TV Italia"                , 0x39BA, 0,    0,    0,    0,    0,     0   },
- { IT, "La7 Cartapiù A"                , 0x39C1, 0,    0,    0,    0,    0,     0   },
- { IT, "La7 Cartapiù B"                , 0x39C2, 0,    0,    0,    0,    0,     0   },
- { IT, "La7 Cartapiù C"                , 0x39C3, 0,    0,    0,    0,    0,     0   },
- { IT, "La7 Cartapiù D"                , 0x39C4, 0,    0,    0,    0,    0,     0   },
- { IT, "La7 Cartapiù E"                , 0x39C5, 0,    0,    0,    0,    0,     0   },
- { IT, "La7 Cartapiù X"                , 0x39C6, 0,    0,    0,    0,    0,     0   },
+ { IT, "La7 CartapiÃ¹ A"                , 0x39C1, 0,    0,    0,    0,    0,     0   },
+ { IT, "La7 CartapiÃ¹ B"                , 0x39C2, 0,    0,    0,    0,    0,     0   },
+ { IT, "La7 CartapiÃ¹ C"                , 0x39C3, 0,    0,    0,    0,    0,     0   },
+ { IT, "La7 CartapiÃ¹ D"                , 0x39C4, 0,    0,    0,    0,    0,     0   },
+ { IT, "La7 CartapiÃ¹ E"                , 0x39C5, 0,    0,    0,    0,    0,     0   },
+ { IT, "La7 CartapiÃ¹ X"                , 0x39C6, 0,    0,    0,    0,    0,     0   },
  { IT, "Bassano TV"                    , 0x39C7, 0x15, 0xC7, 0,    0,    0,     0   },
  { IT, "ESPN Classic Sport"            , 0x39C8, 0x15, 0xC8, 0,    0,    0,     0   },
  { IT, "VIDEOLINA"                     , 0x39CA, 0,    0,    0,    0,    0,     0   },
@@ -964,7 +572,7 @@ static const cni_code cni_codes[] = {
  { IT, "Mediaset"                      , 0x39FE, 0,    0,    0,    0,    0,     0   },
  { IT, "Mediaset"                      , 0x39FF, 0,    0,    0,    0,    0,     0   },
  { ES, "TVE1"                          , 0x3E00, 0,    0,    0,    0,    0,     0   },
- { LU, "RTL Télé Lëtzebuerg"           , 0x4000, 0,    0,    0,    0,    0x791, 101 },
+ { LU, "RTL TÃ©lÃ© LÃ«tzebuerg"           , 0x4000, 0,    0,    0,    0,    0x791, 101 },
  { LU, "RTL TVI 20 ANS"                , 0x4020, 0,    0,    0,    0,    0,     0   },
  { CH, "SF 1"                          , 0x4101, 0x24, 0xC1, 0x34, 0x41, 0x4C1, 101 },
  { CH, "TSR 1"                         , 0x4102, 0x24, 0xC2, 0x34, 0x42, 0x4C2, 102 },
@@ -976,9 +584,9 @@ static const cni_code cni_codes[] = {
  { CH, "SFi"                           , 0,      0x24, 0,    0,    0,    0x4CC, 112 },
  { CH, "TSR info"                      , 0,      0x24, 0,    0,    0,    0x4CD, 113 },
  { CH, "U1"                            , 0x4121, 0x24, 0x21, 0,    0,    0x495, 221 },
- { CH, "TeleZüri"                      , 0x4122, 0x24, 0x22, 0,    0,    0x481, 201 },
+ { CH, "TeleZÃ¼ri"                      , 0x4122, 0x24, 0x22, 0,    0,    0x481, 201 },
  { CH, "Teleclub Abo"                  , 0,      0x24, 0,    0,    0,    0x482, 202 },
- { CH, "TV Züri"                       , 0,      0x24, 0,    0,    0,    0x483, 203 },
+ { CH, "TV ZÃ¼ri"                       , 0,      0x24, 0,    0,    0,    0x483, 203 },
  { CH, "TeleBern"                      , 0,      0x24, 0,    0,    0,    0x484, 204 },
  { CH, "Tele M1"                       , 0,      0x24, 0,    0,    0,    0x485, 205 },
  { CH, "Star TV"                       , 0,      0x24, 0,    0,    0,    0x486, 206 },
@@ -987,7 +595,7 @@ static const cni_code cni_codes[] = {
  { CH, "Tele 24"                       , 0,      0x24, 0,    0,    0,    0x489, 209 },
  { CH, "kabel eins"                    , 0,      0x24, 0,    0,    0,    0x48A, 210 },
  { CH, "TV3"                           , 0,      0x24, 0,    0,    0,    0x48B, 211 },
- { CH, "TeleZüri 2"                    , 0,      0x24, 0,    0,    0,    0x48C, 212 },
+ { CH, "TeleZÃ¼ri 2"                    , 0,      0x24, 0,    0,    0,    0x48C, 212 },
  { CH, "Swizz Music Television"        , 0,      0x24, 0,    0,    0,    0x48D, 213 },
  { CH, "Intro TV"                      , 0,      0x24, 0,    0,    0,    0x48E, 214 },
  { CH, "Tele Tell"                     , 0,      0x24, 0,    0,    0,    0x48F, 215 },
@@ -1233,7 +841,7 @@ static const cni_code cni_codes[] = {
  { DE, "ZDFtheaterkanal"               , 0x4902, 0x1D, 0x02, 0x3D, 0,    0,     0   },
  { DE, "zdf_neo"                       , 0x4902, 0x1D, 0x02, 0x3D, 0,    0,     0   },
  { DE, "neo/Kika"                      , 0x4902, 0x1D, 0x02, 0x3D, 0,    0,     0   },
- { DE, "OK54 Bürgerrundfunk Trier"     , 0x4904, 0x1D, 0x04, 0x3D, 0,    0xD04, 0   },
+ { DE, "OK54 BÃ¼rgerrundfunk Trier"     , 0x4904, 0x1D, 0x04, 0x3D, 0,    0xD04, 0   },
  { DE, "Phoenix"                       , 0x4908, 0x1D, 0x08, 0x3D, 0,    0xDC8, 0   },
  { DE, "arte"                          , 0x490A, 0x1D, 0x0A, 0x3D, 0,    0xD85, 205 },
  { DE, "VOX"                           , 0x490C, 0x1D, 0x0C, 0x3D, 0,    0xD8E, 214 },
@@ -1306,8 +914,8 @@ static const cni_code cni_codes[] = {
  { DE, "Das Erste"                     , 0x49DE, 0x1D, 0xDE, 0x3D, 0,    0,     0   },
  { DE, "SR"                            , 0x49DF, 0x1D, 0xDF, 0x3D, 0,    0,     0   },
  { DE, "Das Erste"                     , 0x49E0, 0x1D, 0xE0, 0x3D, 0,    0,     0   },
- { DE, "Südwest BW/RP"                 , 0x49E1, 0x1D, 0xE1, 0x3D, 0,    0xDE1, 133 },
- { DE, "Südwest BW/RP"                 , 0x49E1, 0x1D, 0xE1, 0x3D, 0,    0xDE3, 135 },
+ { DE, "SÃ¼dwest BW/RP"                 , 0x49E1, 0x1D, 0xE1, 0x3D, 0,    0xDE1, 133 },
+ { DE, "SÃ¼dwest BW/RP"                 , 0x49E1, 0x1D, 0xE1, 0x3D, 0,    0xDE3, 135 },
  { DE, "Das Erste"                     , 0x49E2, 0x1D, 0xE2, 0x3D, 0,    0,     0   },
  { DE, "Das Erste"                     , 0x49E3, 0x1D, 0xE3, 0x3D, 0,    0,     0   },
  { DE, "SWR Fernsehen RP"              , 0x49E4, 0x1D, 0xE4, 0x3D, 0,    0,     0   },
@@ -1621,116 +1229,13 @@ static const cni_code cni_codes[] = {
  { DE, "rbb"                           , 0,      0,    0,    0,    0,    0xDDC, 0   },
  };
 
-#define CNI_COUNT (sizeof(cni_codes)/sizeof(cni_code))
-
-
-const char * cSwReceiver::GetCniNameFormat1() {
-  unsigned i;
-
-  if (cni_8_30_1) {
-     for (i = 0; i < CNI_COUNT; i++)
-         if (cni_codes[i].ni_8_30_1 == cni_8_30_1)
-            return cni_codes[i].network;
-     if (cni_8_30_2 || cni_X_26 || cni_vps)
-        dlog(0, "unknown 8/30/1 cni 0x%.4x (8/30/2 = 0x%.4x; X/26 = 0x%.4x, VPS = 0x%.4x; cr_idx = 0x%.4x) %s",
-             cni_8_30_1, cni_8_30_2, cni_X_26, cni_vps, cni_cr_idx, "PLEASE REPORT TO WIRBELSCAN AUTHOR.");
-     }
-  
-  return NULL;
+const CniCodes::cCniCode& CniCodes::GetCniCode(unsigned int index)
+{
+  assert(index < GetCniCodeCount());
+  return cniCodes[index];
 }
 
-const char * cSwReceiver::GetCniNameFormat2() {
-  uint8_t  c = cni_8_30_2 >> 8;
-  uint8_t  n = cni_8_30_2 & 0xFF;
-
-  if (cni_8_30_2) {
-     for (unsigned i = 0; i < CNI_COUNT; i++)
-         if ((cni_codes[i].c_8_30_2 == c) && (cni_codes[i].ni_8_30_2 == n))
-            return cni_codes[i].network;
-     if (cni_8_30_1 || cni_X_26 || cni_vps)
-        dlog(0, "unknown 8/30/2 cni 0x%.4x (8/30/1 = 0x%.4x; X/26 = 0x%.4x, VPS = 0x%.4x; cr_idx = 0x%.4x) %s",
-             cni_8_30_2, cni_8_30_1, cni_X_26, cni_vps, cni_cr_idx, "PLEASE REPORT TO WIRBELSCAN AUTHOR.");
-     }
-  
-  return NULL;
-}
-
-const char * cSwReceiver::GetCniNameVPS() {
-
-  if (cni_vps) {
-     for (unsigned i = 0; i < CNI_COUNT; i++)
-         if (cni_codes[i].vps__cni == cni_vps)
-            return cni_codes[i].network;
-     if (cni_8_30_1 || cni_8_30_2 || cni_X_26)
-        dlog(0, "unknown VPS cni 0x%.4x (8/30/1 = 0x%.4x; 8/30/2 = 0x%.4x, X/26 = 0x%.4x; cr_idx = 0x%.4x) %s",
-             cni_vps, cni_8_30_1, cni_8_30_2, cni_X_26, cni_cr_idx, "PLEASE REPORT TO WIRBELSCAN AUTHOR.");
-     }
-  
-  return NULL;
-}
-
-const char * cSwReceiver::GetCniNameX26() {
-  uchar a = cni_X_26 >> 8, b = cni_X_26 & 0xff;
- 
-  if (cni_X_26) {
-     for (unsigned i = 0; i < CNI_COUNT; i++)
-         if ((cni_codes[i].a_X_26 == a) && (cni_codes[i].b_X_26 == b))
-            return cni_codes[i].network;
-     if (cni_8_30_1 || cni_8_30_2 || cni_vps)
-        dlog(0, "unknown X/26 cni 0x%.4x (8/30/1 = 0x%.4x; 8/30/2 = 0x%.4x, VPS = 0x%.4x; cr_idx = 0x%.4x) %s",
-             cni_X_26, cni_8_30_1, cni_8_30_2, cni_vps, cni_cr_idx, "PLEASE REPORT TO WIRBELSCAN AUTHOR.");
-     }
-  
-  return NULL;
-}
-
-const char * cSwReceiver::GetCniNameCrIdx() {
-  uchar c = cni_cr_idx >> 8, idx = cni_cr_idx & 0xff;
- 
-  if (cni_cr_idx) {
-     for (unsigned i = 0; i < CNI_COUNT; i++)
-         if ((cni_codes[i].c_8_30_2 == c) && (cni_codes[i].cr_idx == idx))
-            return cni_codes[i].network;
-     if (cni_8_30_1 || cni_8_30_2 || cni_vps || cni_X_26)
-        if ((cni_cr_idx&255) >= 100) //invalid anyway otherwise.
-        dlog(0, "unknown cr_idx %.2X%.3d (8/30/1 = 0x%.4x; 8/30/2 = 0x%.4x, VPS = 0x%.4x; X/26 = 0x%.4x) %s",
-             cni_cr_idx>>8, cni_cr_idx&255, cni_8_30_1, cni_8_30_2, cni_vps, cni_X_26, "PLEASE REPORT TO WIRBELSCAN AUTHOR.");
-     }
-  
-  return NULL;
-}
-
-void cSwReceiver::UpdatefromName(const char * name) {
-  uint8_t len = strlen(name);
-  uint16_t cni_vps_id = 0;
-
-  if (! len) return;
-
-  for (unsigned i = 0; i < CNI_COUNT; i++)
-      if (strlen(cni_codes[i].network) == len) {
-         if (! strcasecmp(cni_codes[i].network, name)) {
-            if (cni_codes[i].vps__cni) {
-               cni_vps_id = cni_codes[i].vps__cni;
-               if (! cni_vps_id)
-                  dlog(0, "%s: missing cni_vps for ""%s""", __FUNCTION__, name);
-               break;
-               }
-            }
-      }
-
-  if (cni_vps_id) {
-     cni_vps = cni_vps_id;
-     fuzzy = true;
-     len = strlen(GetCniNameVPS());
-     strncpy(fuzzy_network, GetCniNameVPS(), len);
-     fuzzy_network[len] = 0;
-     }
-  else {     
-     dlog(0, "%s: unknown network name ""%s""", __FUNCTION__, name);
-     fuzzy = true;
-     strncpy(fuzzy_network, name, len);
-     fuzzy_network[len] = 0;
-     }
-  hits++;
-  if (++hits > MAXHITS) stopped = true;
+unsigned int CniCodes::GetCniCodeCount()
+{
+  return ARRAY_SIZE(cniCodes);
 }
