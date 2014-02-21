@@ -1,6 +1,8 @@
 /*
- *      Copyright (C) 2005-2013 Team XBMC
- *      http://xbmc.org
+ *      Copyright (C) 2013 Garrett Brown
+ *      Copyright (C) 2013 Lars Op den Kamp
+ *      Portions Copyright (C) 2000, 2003, 2006, 2008, 2013 Klaus Schmidinger
+ *      Portions Copyright (C) 2005-2013 Team XBMC
  *
  *  This Program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -13,14 +15,12 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with XBMC; see the file COPYING.  If not, see
+ *  along with this Program; see the file COPYING. If not, see
  *  <http://www.gnu.org/licenses/>.
  *
  */
 
-#include "system.h"
 #include "XTimeUtils.h"
-#include "LinuxTimezone.h"
 
 #if defined(TARGET_DARWIN)
 #include "threads/Atomics.h"
@@ -45,6 +45,8 @@
 #define IsLeapYear(y) ((!(y % 4)) ? (((!(y % 400)) && (y % 100)) ? 1 : 0) : 0)
 
 #ifdef TARGET_POSIX
+
+bool g_bIsDst = false;
 
 void WINAPI Sleep(DWORD dwMilliSeconds)
 {
@@ -74,7 +76,7 @@ VOID GetLocalTime(LPSYSTEMTIME sysTime)
   sysTime->wSecond = now.tm_sec;
   sysTime->wMilliseconds = 0;
   // NOTE: localtime_r() is not required to set this, but we Assume that it's set here.
-  g_timezone.m_IsDST = now.tm_isdst;
+  g_bIsDst = now.tm_isdst;
 }
 
 BOOL FileTimeToLocalFileTime(const FILETIME* lpFileTime, LPFILETIME lpLocalFileTime)
@@ -111,7 +113,7 @@ BOOL   SystemTimeToFileTime(const SYSTEMTIME* lpSystemTime,  LPFILETIME lpFileTi
   sysTime.tm_min = lpSystemTime->wMinute;
   sysTime.tm_sec = lpSystemTime->wSecond;
   sysTime.tm_yday = dayoffset[sysTime.tm_mon] + (sysTime.tm_mday - 1);
-  sysTime.tm_isdst = g_timezone.m_IsDST;
+  sysTime.tm_isdst = g_bIsDst;
 
   // If this is a leap year, and we're past the 28th of Feb, increment tm_yday.
   if (IsLeapYear(lpSystemTime->wYear) && (sysTime.tm_yday > 58))

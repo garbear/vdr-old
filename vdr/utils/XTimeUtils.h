@@ -1,9 +1,8 @@
-#ifndef __X_TIME_UTILS_
-#define __X_TIME_UTILS_
-
 /*
- *      Copyright (C) 2005-2013 Team XBMC
- *      http://xbmc.org
+ *      Copyright (C) 2013 Garrett Brown
+ *      Copyright (C) 2013 Lars Op den Kamp
+ *      Portions Copyright (C) 2000, 2003, 2006, 2008, 2013 Klaus Schmidinger
+ *      Portions Copyright (C) 2005-2013 Team XBMC
  *
  *  This Program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -16,12 +15,15 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with XBMC; see the file COPYING.  If not, see
+ *  along with this Program; see the file COPYING. If not, see
  *  <http://www.gnu.org/licenses/>.
  *
  */
+#pragma once
 
-#include "PlatformDefs.h"
+#include "linux/WindowsDefs.h"
+
+#include <lib/platform/os.h>
 
 VOID GetLocalTime(LPSYSTEMTIME);
 
@@ -36,6 +38,3 @@ VOID   GetSystemTimeAsFileTime(LPFILETIME lpSystemTimeAsFileTime);
 
 BOOL  FileTimeToTimeT(const FILETIME* lpLocalFileTime, time_t *pTimeT);
 BOOL  TimeTToFileTime(time_t timeT, FILETIME* lpLocalFileTime);
-
-#endif
-

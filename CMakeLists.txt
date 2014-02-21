@@ -193,6 +193,7 @@ set(VDR_SRCS
 	vdr/utils/CharsetConverter.cpp
 	vdr/utils/CharSetConverterVDR.cpp
 	vdr/utils/CharsetDetection.cpp
+	vdr/utils/DateTime.cpp
 	vdr/utils/I18N.cpp
 	vdr/utils/Observer.cpp
 	vdr/utils/RegExp.cpp
@@ -211,6 +212,8 @@ set(VDR_SRCS
 	vdr/utils/url/URLUtils.cpp
 	vdr/utils/Shutdown.cpp
 	vdr/utils/XSocket.cpp
+	vdr/utils/XTimeUtils.cpp
+	vdr/utils/linux/ConvUtils.cpp
 	vdr/Player.cpp
 	vdr/vnsi/net/RequestPacket.cpp
 	vdr/vnsi/net/ResponsePacket.cpp

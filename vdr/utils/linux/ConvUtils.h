@@ -1,9 +1,8 @@
-#ifndef __CONV_UTILS__H__
-#define __CONV_UTILS__H__
-
 /*
- *      Copyright (C) 2005-2013 Team XBMC
- *      http://xbmc.org
+ *      Copyright (C) 2013 Garrett Brown
+ *      Copyright (C) 2013 Lars Op den Kamp
+ *      Portions Copyright (C) 2000, 2003, 2006, 2008, 2013 Klaus Schmidinger
+ *      Portions Copyright (C) 2005-2013 Team XBMC
  *
  *  This Program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -16,13 +15,14 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with XBMC; see the file COPYING.  If not, see
+ *  along with this Program; see the file COPYING. If not, see
  *  <http://www.gnu.org/licenses/>.
  *
  */
-#include "PlatformDefs.h" // UINT DWORD LPCSTR LPSTR LPBOOL ...
+#pragma once
 
+#include "WindowsDefs.h" // UINT DWORD LPCSTR LPSTR LPBOOL ...
+
+LONGLONG Int32x32To64(LONG Multiplier, LONG Multiplicand);
 DWORD GetLastError();
 VOID  SetLastError(DWORD dwErrCode);
-
-#endif
