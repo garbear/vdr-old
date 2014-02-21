@@ -62,6 +62,8 @@
 #define MINFREEDISKSPACE    MEGABYTE(512)
 #define DISKCHECKINTERVAL   100 // seconds
 
+#define RECORDING_START_INTERVAL_SECS (60) // don't try to start the same recording more than once a minute
+
 #define VPSLOOKAHEADTIME      24 // hours within which VPS timers will make sure their events are up to date
 #define VPSUPTODATETIME     3600 // seconds before the event or schedule of a VPS timer needs to be refreshed
 #define TIMERLOOKAHEADTIME    60 // seconds before a non-VPS timer starts and the channel is switched if possible

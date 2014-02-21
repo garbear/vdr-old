@@ -27,6 +27,7 @@ cTimer::cTimer(void)
   m_startTime               = 0;
   m_stopTime                = 0;
   m_lastEPGEventCheck       = 0;
+  m_lastRecordingAttempt    = 0;
   m_bPending                = false;
   m_bInVpsMargin            = false;
   m_iTimerFlags             = tfNone;
@@ -49,6 +50,7 @@ cTimer::cTimer(ChannelPtr channel, time_t startTime, int iDurationSecs, time_t i
   m_startTime               = 0;
   m_stopTime                = 0;
   m_lastEPGEventCheck       = 0;
+  m_lastRecordingAttempt    = 0;
   m_bPending                = false;
   m_bInVpsMargin            = false;
   m_channel                 = channel;
@@ -69,16 +71,17 @@ cTimer::cTimer(ChannelPtr channel, time_t startTime, int iDurationSecs, time_t i
 
 cTimer::cTimer(const cEvent *Event)
 {
-  m_startTime         = 0;
-  m_stopTime          = 0;
-  m_lastEPGEventCheck = 0;
-  m_bPending          = false;
-  m_bInVpsMargin      = false;
-  m_iTimerFlags       = tfActive;
-  m_epgEvent          = NULL;
-  m_index             = 0;
-  m_channel           = cChannelManager::Get().GetByChannelID(Event->ChannelID(), true);
-  m_recorder          = NULL;
+  m_startTime            = 0;
+  m_stopTime             = 0;
+  m_lastEPGEventCheck    = 0;
+  m_lastRecordingAttempt = 0;
+  m_bPending             = false;
+  m_bInVpsMargin         = false;
+  m_iTimerFlags          = tfActive;
+  m_epgEvent             = NULL;
+  m_index                = 0;
+  m_channel              = cChannelManager::Get().GetByChannelID(Event->ChannelID(), true);
+  m_recorder             = NULL;
 
   if (Event->Vps() && g_setup.UseVps)
     SetFlags(tfVps);
@@ -124,9 +127,10 @@ cTimer& cTimer::operator= (const cTimer &Timer)
 {
   if (&Timer != this)
   {
-     m_startTime                 = Timer.m_startTime;
-     m_stopTime                  = Timer.m_stopTime;
+     m_startTime               = Timer.m_startTime;
+     m_stopTime                = Timer.m_stopTime;
      m_lastEPGEventCheck       = 0;
+     m_lastRecordingAttempt    = Timer.m_lastRecordingAttempt;
      m_bPending                = Timer.m_bPending;
      m_bInVpsMargin            = Timer.m_bInVpsMargin;
      m_iTimerFlags             = Timer.m_iTimerFlags | (m_iTimerFlags & tfRecording);
@@ -572,7 +576,12 @@ bool cTimer::StartRecording(void)
   if (Recording())
     return true;
 
+  time_t now = time(NULL);
+  if (m_lastRecordingAttempt && now - m_lastRecordingAttempt < RECORDING_START_INTERVAL_SECS)
+    return false;
+
   SetPending(true);
+  m_lastRecordingAttempt = now;
 
   // check free disk space
   Recordings.AssertFreeDiskSpace(Priority(), !Pending());
@@ -718,4 +727,10 @@ bool cTimer::CheckRecordingStatus(time_t Now)
     Recordings.AssertFreeDiskSpace(Priority());
   }
   return true;
+}
+
+bool cTimer::RecordingAttemptAllowed(void) const
+{
+  return !m_lastRecordingAttempt ||
+      time(NULL) - m_lastRecordingAttempt > RECORDING_START_INTERVAL_SECS;
 }

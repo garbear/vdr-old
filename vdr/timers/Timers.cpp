@@ -63,7 +63,7 @@ TimerPtr cTimers::GetNextPendingTimer(time_t Now)
   {
     if (!it->second->Recording() && it->second->Matches(Now))
     {
-      if (it->second->Pending())
+      if (it->second->Pending() && it->second->RecordingAttemptAllowed())
       {
         if (bGetNext)
         {
