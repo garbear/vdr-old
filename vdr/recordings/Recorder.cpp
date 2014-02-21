@@ -75,16 +75,17 @@ cRecorder::~cRecorder()
 
 bool cRecorder::RunningLowOnDiskSpace(void)
 {
-  if (time(NULL) > m_lastDiskSpaceCheck + DISKCHECKINTERVAL) {
-     unsigned int total, used, free;
-     CDirectory::CalculateDiskSpace(m_fileName->Name(), total, used, free);
-     int Free = free;
-     m_lastDiskSpaceCheck = time(NULL);
-     if (Free < MINFREEDISKSPACE) {
-        dsyslog("low disk space (%d MB, limit is %d MB)", Free, MINFREEDISKSPACE);
-        return true;
-        }
-     }
+  if (time(NULL) > m_lastDiskSpaceCheck + DISKCHECKINTERVAL)
+  {
+    disk_space_t space;
+    CDirectory::CalculateDiskSpace(m_fileName->Name(), space);
+    m_lastDiskSpaceCheck = time(NULL);
+    if (space.free < MINFREEDISKSPACE)
+    {
+      dsyslog("low disk space (%d MB, limit is %d MB)", space.free, MINFREEDISKSPACE / MEGABYTE(1));
+      return true;
+    }
+  }
   return false;
 }
 

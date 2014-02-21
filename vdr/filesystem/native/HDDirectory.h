@@ -36,7 +36,7 @@ public:
   virtual bool Exists(const std::string &strPath);
   virtual bool Remove(const std::string &strPath);
   virtual bool Rename(const std::string &strPath, const std::string &strNewPath);
-  virtual bool DiskSpace(const std::string &strPath, unsigned int &size, unsigned int &used, unsigned int &free);
+  virtual bool DiskSpace(const std::string &strPath, disk_space_t& space);
 
 protected:
   /*!

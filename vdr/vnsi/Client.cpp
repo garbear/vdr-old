@@ -1485,12 +1485,11 @@ bool cVNSIClient::processTIMER_Update() /* OPCODE 85 */
 
 bool cVNSIClient::processRECORDINGS_GetDiskSpace() /* OPCODE 100 */
 {
-  int FreeMB;
-  int Percent = VideoDiskSpace(&FreeMB);
-  int Total   = (FreeMB / (100 - Percent)) * 100;
+  disk_space_t space;
+  unsigned int Percent = VideoDiskSpace(space);
 
-  m_resp->add_U32(Total);
-  m_resp->add_U32(FreeMB);
+  m_resp->add_U32((space.free + space.used) / MEGABYTE(1));
+  m_resp->add_U32(space.free / MEGABYTE(1));
   m_resp->add_U32(Percent);
 
   m_resp->finalise();

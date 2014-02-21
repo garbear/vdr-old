@@ -30,7 +30,7 @@ public:
   cRecording* FindByUID(uint32_t uid);
   void DelByName(const std::string& strFileName);
   void UpdateByName(const std::string& strFileName);
-  int TotalFileSizeMB(bool bDeletedRecordings = false);
+  size_t TotalFileSizeMB(bool bDeletedRecordings = false);
   double MBperMinute(void);
        ///< Returns the average data rate (in MB/min) of all recordings, or -1 if
        ///< this value is unknown.

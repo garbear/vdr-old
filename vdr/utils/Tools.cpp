@@ -465,7 +465,7 @@ bool RemoveEmptyDirectories(const std::string& strDirName, bool RemoveThis, cons
   return false;
 }
 
-int DirSizeMB(const std::string& strDirName)
+size_t DirSizeMB(const std::string& strDirName)
 {
   //XXX
   return 0;

@@ -79,6 +79,13 @@ enum DIR_FLAG
   READ_CACHE    = (1 << 2), // Force reading from the directory cache (if available)
 };
 
+typedef struct
+{
+  size_t size;
+  size_t used;
+  size_t free;
+} disk_space_t;
+
 /*!
  * \brief Interface to the directory on a file system
  */
@@ -135,12 +142,10 @@ public:
   /*!
    * Get disk space info for this directory
    * @param strPath The path to get the info for
-   * @param size Current size
-   * @param used Current bytes in use
-   * @param free Free bytes on this disk
+   * @param space Disk space information struct
    * @return True when fetched successfully
    */
-  virtual bool DiskSpace(const std::string &strPath, unsigned int &size, unsigned int &used, unsigned int &free) { return false; }
+  virtual bool DiskSpace(const std::string &strPath, disk_space_t& space) { return false; }
 
   /*!
   * \brief Removes the directory

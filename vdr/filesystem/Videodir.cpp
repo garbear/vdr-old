@@ -41,7 +41,7 @@ private:
 public:
   cVideoDirectory(void);
   ~cVideoDirectory();
-  int FreeMB(int *UsedMB = NULL);
+  bool DiskSpace(disk_space_t& space);
   const char *Name(void) { return name ? name : VideoDirectory; }
   const char *Stored(void) { return stored; }
   int Length(void) { return length; }
@@ -67,14 +67,10 @@ cVideoDirectory::~cVideoDirectory()
   free(adjusted);
 }
 
-int cVideoDirectory::FreeMB(int *UsedMB)
+bool cVideoDirectory::DiskSpace(disk_space_t& space)
 {
   string strPath = name ? name : VideoDirectory;
-  unsigned int total, used, free;
-  CDirectory::CalculateDiskSpace(strPath, total, used, free);
-  if (UsedMB)
-    *UsedMB = used;
-  return free;
+  return CDirectory::CalculateDiskSpace(strPath, space);
 }
 
 bool cVideoDirectory::Next(void)
@@ -136,14 +132,14 @@ CVideoFile *OpenVideoFile(const char *FileName, int Flags)
      cVideoDirectory Dir;
      if (Dir.IsDistributed()) {
         // Find the directory with the most free space:
-        int MaxFree = Dir.FreeMB();
+        disk_space_t maxSpace;
+        Dir.DiskSpace(maxSpace);
         while (Dir.Next()) {
-              unsigned int total, used, free;
-              CDirectory::CalculateDiskSpace(Dir.Name(), total, used, free);
-              int Free = free;
-              if (Free > MaxFree) {
+              disk_space_t space;
+              CDirectory::CalculateDiskSpace(Dir.Name(), space);
+              if (space.free > maxSpace.free) {
                  Dir.Store();
-                 MaxFree = Free;
+                 maxSpace.free = space.free;
                  }
               }
         if (Dir.Stored()) {
@@ -183,40 +179,52 @@ bool RemoveVideoFile(const std::string& strFileName)
   return CFile::Delete(strFileName);
 }
 
-bool VideoFileSpaceAvailable(int SizeMB)
+bool VideoFileSpaceAvailable(size_t iSizeBytes)
 {
   cVideoDirectory Dir;
-  if (Dir.IsDistributed()) {
-     if (Dir.FreeMB() >= SizeMB * 2) // base directory needs additional space
+  disk_space_t space;
+  if (Dir.IsDistributed())
+  {
+    Dir.DiskSpace(space);
+    if (space.free >= iSizeBytes * 2) // base directory needs additional space
+      return true;
+
+    while (Dir.Next())
+    {
+      Dir.DiskSpace(space);
+      if (space.free >= iSizeBytes)
         return true;
-     while (Dir.Next()) {
-           if (Dir.FreeMB() >= SizeMB)
-              return true;
-           }
-     return false;
-     }
-  return Dir.FreeMB() >= SizeMB;
+    }
+    return false;
+  }
+
+  Dir.DiskSpace(space);
+  return space.free >= iSizeBytes;
 }
 
-int VideoDiskSpace(int *FreeMB, int *UsedMB)
+unsigned int VideoDiskSpace(disk_space_t& space)
 {
-  int free = 0, used = 0;
-  int deleted = Recordings.TotalFileSizeMB(true);
+  memset(&space, 0, sizeof(disk_space_t));
+  size_t deleted = Recordings.TotalFileSizeMB(true);
   cVideoDirectory Dir;
-  do {
-     int u;
-     free += Dir.FreeMB(&u);
-     used += u;
-     } while (Dir.Next());
-  if (deleted > used)
-     deleted = used; // let's not get beyond 100%
-  free += deleted;
-  used -= deleted;
-  if (FreeMB)
-     *FreeMB = free;
-  if (UsedMB)
-     *UsedMB = used;
-  return (free + used) ? used * 100 / (free + used) : 0;
+  disk_space_t curDir;
+
+  do
+  {
+    Dir.DiskSpace(curDir);
+    space.free += curDir.free;
+    space.used += curDir.used;
+    space.size += curDir.size;
+  }
+  while (Dir.Next());
+
+  if (deleted > space.used)
+    deleted = space.used; // let's not get beyond 100%
+
+  space.free += deleted;
+  space.used -= deleted;
+
+  return (space.free + space.used) ? space.used * 100 / (space.free + space.used) : 0;
 }
 
 void RemoveEmptyVideoDirectories(const char *IgnoreFiles[])
@@ -246,35 +254,38 @@ bool IsOnVideoDirectoryFileSystem(const std::string& strFileName)
 
 int cVideoDiskUsage::state = 0;
 time_t cVideoDiskUsage::lastChecked = 0;
-int cVideoDiskUsage::usedPercent = 0;
-int cVideoDiskUsage::freeMB = 0;
-int cVideoDiskUsage::freeMinutes = 0;
+size_t cVideoDiskUsage::usedPercent = 0;
+size_t cVideoDiskUsage::freeMB = 0;
+size_t cVideoDiskUsage::freeMinutes = 0;
 
 bool cVideoDiskUsage::HasChanged(int &State)
 {
-  if (time(NULL) - lastChecked > DISKSPACECHEK) {
-     int FreeMB;
-     int UsedPercent = VideoDiskSpace(&FreeMB);
-     if (FreeMB != freeMB) {
-        usedPercent = UsedPercent;
-        freeMB = FreeMB;
-        double MBperMinute = Recordings.MBperMinute();
-        if (MBperMinute <= 0)
-           MBperMinute = MB_PER_MINUTE;
-        freeMinutes = int(double(FreeMB) / MBperMinute);
-        state++;
-        }
-     lastChecked = time(NULL);
-     }
-  if (State != state) {
-     State = state;
-     return true;
-     }
+  if (time(NULL) - lastChecked > DISKSPACECHEK)
+  {
+    disk_space_t space;
+    unsigned int UsedPercent = VideoDiskSpace(space);
+    if (space.free / MEGABYTE(1) != freeMB)
+    {
+      usedPercent = UsedPercent;
+      freeMB = space.free / MEGABYTE(1);
+      double MBperMinute = Recordings.MBperMinute();
+      if (MBperMinute <= 0)
+        MBperMinute = MB_PER_MINUTE;
+      freeMinutes = size_t(double(space.free / MEGABYTE(1)) / MBperMinute);
+      state++;
+    }
+    lastChecked = time(NULL);
+  }
+  if (State != state)
+  {
+    State = state;
+    return true;
+  }
   return false;
 }
 
-cString cVideoDiskUsage::String(void)
+std::string cVideoDiskUsage::String(void)
 {
   HasChanged(state);
-  return cString::sprintf("%s %d%%  -  %2d:%02d %s", tr("Disk"), usedPercent, freeMinutes / 60, freeMinutes % 60, tr("free"));
+  return StringUtils::Format("%s %d%%  -  %2zu:%02zu %s", tr("Disk"), usedPercent, freeMinutes / 60, freeMinutes % 60, tr("free"));
 }

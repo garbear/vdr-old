@@ -12,6 +12,7 @@
 
 #include <stdlib.h>
 #include "utils/Tools.h"
+#include "filesystem/Directory.h"
 
 class CVideoFile;
 
@@ -22,8 +23,8 @@ CVideoFile *OpenVideoFile(const char *FileName, int Flags);
 int CloseVideoFile(CVideoFile *File);
 bool RenameVideoFile(const std::string& strOldName, const std::string& strNewName);
 bool RemoveVideoFile(const std::string& strFileName);
-bool VideoFileSpaceAvailable(int SizeMB);
-int VideoDiskSpace(int *FreeMB = NULL, int *UsedMB = NULL); // returns the used disk space in percent
+bool VideoFileSpaceAvailable(size_t iSizeBytes);
+unsigned int VideoDiskSpace(disk_space_t& space); // returns the used disk space in percent
 void RemoveEmptyVideoDirectories(const char *IgnoreFiles[] = NULL);
 bool IsOnVideoDirectoryFileSystem(const std::string& strFileName);
 
@@ -31,9 +32,9 @@ class cVideoDiskUsage {
 private:
   static int state;
   static time_t lastChecked;
-  static int usedPercent;
-  static int freeMB;
-  static int freeMinutes;
+  static size_t usedPercent;
+  static size_t freeMB;
+  static size_t freeMinutes;
 public:
   static bool HasChanged(int &State);
     ///< Returns true if the usage of the video disk space has changed since the last
@@ -46,7 +47,7 @@ public:
     ///< every DISKSPACECHEK seconds. Calling ForceCheck() makes sure that the next call
     ///< to HasChanged() will check the disk usage immediately. This is useful in case
     ///< some files have been deleted and the result shall be displayed instantly.
-  static cString String(void);
+  static std::string String(void);
     ///< Returns a localized string of the form "Disk nn%  -  hh:mm free".
     ///< This function is mainly for use in skins that want to retain the display of the
     ///< free disk space in the menu title, as was the case until VDR version 1.7.27.

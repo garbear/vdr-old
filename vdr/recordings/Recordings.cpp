@@ -227,14 +227,14 @@ void cRecordings::UpdateByName(const std::string& strFileName)
      recording->ReadInfo();
 }
 
-int cRecordings::TotalFileSizeMB(bool bDeletedRecordings /* = false */)
+size_t cRecordings::TotalFileSizeMB(bool bDeletedRecordings /* = false */)
 {
-  int size = 0;
+  size_t size = 0;
   CThreadLock lock(this);
   std::vector<cRecording*>& recordings = bDeletedRecordings ? m_deletedRecordings : m_recordings;
   for (std::vector<cRecording*>::const_iterator it = recordings.begin(); it != recordings.end(); ++it)
   {
-    int FileSizeMB = (*it)->FileSizeMB();
+    size_t FileSizeMB = (*it)->FileSizeMB();
     if (FileSizeMB > 0 && (*it)->IsOnVideoDirectoryFileSystem())
       size += FileSizeMB;
   }
@@ -243,14 +243,14 @@ int cRecordings::TotalFileSizeMB(bool bDeletedRecordings /* = false */)
 
 double cRecordings::MBperMinute(void)
 {
-  int size = 0;
+  size_t size = 0;
   int length = 0;
   CThreadLock lock(this);
   for (std::vector<cRecording*>::iterator it = m_recordings.begin(); it != m_recordings.end(); ++it)
   {
     if ((*it)->IsOnVideoDirectoryFileSystem())
     {
-      int FileSizeMB = (*it)->FileSizeMB();
+      size_t FileSizeMB = (*it)->FileSizeMB();
       if (FileSizeMB > 0)
       {
         int LengthInSeconds = (*it)->LengthInSeconds();

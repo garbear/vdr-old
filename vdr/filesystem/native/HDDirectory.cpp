@@ -106,15 +106,15 @@ bool CHDDirectory::Rename(const std::string &strPath, const std::string &strNewP
   return status == 0;
 }
 
-bool CHDDirectory::DiskSpace(const std::string &strPath, unsigned int &size, unsigned int &used, unsigned int &free)
+bool CHDDirectory::DiskSpace(const std::string &strPath, disk_space_t& space)
 {
   struct statfs64 statFs;
   std::string strTranslatedPath = CSpecialProtocol::TranslatePath(strPath);
   if (statfs64(strTranslatedPath.c_str(), &statFs) == 0)
   {
-    size = statFs.f_blocks * statFs.f_bsize;
-    used = (statFs.f_blocks - statFs.f_bfree) * statFs.f_bsize;
-    free = statFs.f_bavail * statFs.f_bsize;
+    space.size = statFs.f_blocks * statFs.f_bsize;
+    space.used = (statFs.f_blocks - statFs.f_bfree) * statFs.f_bsize;
+    space.free = statFs.f_bavail * statFs.f_bsize;
     return true;
   }
   return false;

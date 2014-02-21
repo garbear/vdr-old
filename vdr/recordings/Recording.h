@@ -54,7 +54,7 @@ public:
        ///< If the number of frames is unknown, -1 will be returned.
   int LengthInSeconds(void);
        ///< Returns the length (in seconds) of this recording, or -1 in case of error.
-  int FileSizeMB(void);
+  size_t FileSizeMB(void);
        ///< Returns the total file size of this recording (in MB), or -1 if the file
        ///< size is unknown.
   bool IsNew(void) { return GetResume() <= 0; }
@@ -104,7 +104,7 @@ private:
   int             m_iResume;
   std::string     m_strFileName;
   std::string     m_strName;
-  int             m_iFileSizeMB;
+  ssize_t         m_iFileSizeMB;
   int             m_iNumFrames;
   int             m_iChannel;
   int             m_iInstanceId;

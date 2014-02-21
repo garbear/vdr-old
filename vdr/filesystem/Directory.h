@@ -47,7 +47,7 @@ public:
   static bool Remove(const std::string &strPath);
   static bool Rename(const std::string &strPath, const std::string &strNewPath);
 
-  static bool CalculateDiskSpace(const std::string &strPath, unsigned int &size, unsigned int &used, unsigned int &free);
+  static bool CalculateDiskSpace(const std::string &strPath, disk_space_t& space);
   static bool CanWrite(const std::string &strPath);
 
 private:

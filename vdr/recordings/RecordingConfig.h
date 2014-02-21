@@ -30,7 +30,7 @@
 
 #define SORTMODEFILE      ".sort"
 
-#define MINDISKSPACE 1024 // MB
+#define MINDISKSPACE    MEGABYTE(1024)
 
 #define REMOVECHECKDELTA   60 // seconds between checks for removing deleted files
 #define DELETEDLIFETIME   300 // seconds after which a deleted recording will be actually removed
@@ -59,7 +59,7 @@
 // is broken:
 #define MAXBROKENTIMEOUT 30000 // milliseconds
 
-#define MINFREEDISKSPACE    (512) // MB
+#define MINFREEDISKSPACE    MEGABYTE(512)
 #define DISKCHECKINTERVAL   100 // seconds
 
 #define VPSLOOKAHEADTIME      24 // hours within which VPS timers will make sure their events are up to date

@@ -703,11 +703,11 @@ int cRecording::LengthInSeconds(void)
   return -1;
 }
 
-int cRecording::FileSizeMB(void)
+size_t cRecording::FileSizeMB(void)
 {
   if (m_iFileSizeMB < 0)
   {
-    int fs = DirSizeMB(FileName());
+    size_t fs = DirSizeMB(FileName());
     if (time(NULL) - LastModifiedTime(cIndexFile::IndexFileName(FileName().c_str(), IsPesRecording())) < MININDEXAGE)
       return fs; // check again later for ongoing recordings
     m_iFileSizeMB = fs;

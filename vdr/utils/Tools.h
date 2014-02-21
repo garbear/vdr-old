@@ -171,7 +171,7 @@ bool RemoveEmptyDirectories(const std::string& strDirName, bool RemoveThis = fal
      ///< IgnoreFiles can be set to an array of file names that will be ignored when
      ///< considering whether a directory is empty. If IgnoreFiles is given, the array
      ///< must end with a NULL pointer.
-int DirSizeMB(const std::string& strDirName); ///< returns the total size of the files in the given directory, or -1 in case of an error
+size_t DirSizeMB(const std::string& strDirName); ///< returns the total size of the files in the given directory, or -1 in case of an error
 char *ReadLink(const char* FileName); ///< returns a new string allocated on the heap, which the caller must delete (or NULL in case of an error)
 bool SpinUpDisk(const std::string& strFileName);
 void TouchFile(const std::string& strFileName);
