@@ -910,7 +910,7 @@ bool cVNSIClient::processRecStream_GetIFrame() /* OPCODE 45 */
   m_resp->finalise();
   m_socket.write(m_resp->getPtr(), m_resp->getLen());
 
-  dsyslog("Wrote GNIF reply to client %llu %u %u", rfilePosition, rframeNumber, rframeLength);
+  dsyslog("Wrote GNIF reply to client %lu %u %u", rfilePosition, rframeNumber, rframeLength);
   return true;
 }
 
@@ -1362,7 +1362,7 @@ bool cVNSIClient::processTIMER_Add() /* OPCODE 83 */
     }
     else
     {
-      esyslog("Timer already defined: %d %s", t->Index() + 1, t->ToDescr().c_str());
+      esyslog("Timer already defined: %u %s", t->Index() + 1, t->ToDescr().c_str());
       m_resp->add_U32(VNSI_RET_DATALOCKED);
     }
 

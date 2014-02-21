@@ -67,8 +67,6 @@ private:
   size_t                     m_maxIndex;
   PLATFORM::CMutex           m_mutex;
   std::string                m_strFilename;
-
-  int LastTimerChannel;//XXX
 };
 
 #endif //__TIMERS_H

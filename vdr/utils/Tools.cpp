@@ -74,14 +74,17 @@ int BCD2INT(int x)
 
 ssize_t safe_read(int filedes, void *buffer, size_t size)
 {
-  for (;;) {
-      ssize_t p = read(filedes, buffer, size);
-      if (p < 0 && errno == EINTR) {
-         dsyslog("EINTR while reading from file handle %d - retrying", filedes);
-         continue;
-         }
-      return p;
-      }
+  for (;;)
+  {
+    ssize_t p = read(filedes, buffer, size);
+    if (p < 0 && errno == EINTR)
+    {
+      dsyslog("EINTR while reading from file handle %d - retrying", filedes);
+      continue;
+    }
+    return p;
+  }
+  return -1;
 }
 
 ssize_t safe_write(int filedes, const void *buffer, size_t size)
