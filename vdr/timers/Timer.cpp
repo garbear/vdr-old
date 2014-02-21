@@ -26,8 +26,6 @@ cTimer::cTimer(void)
 
   m_startTime               = 0;
   m_stopTime                = 0;
-  m_lastEPGEventCheck       = 0;
-  m_lastRecordingAttempt    = 0;
   m_bPending                = false;
   m_bInVpsMargin            = false;
   m_iTimerFlags             = tfNone;
@@ -49,8 +47,6 @@ cTimer::cTimer(ChannelPtr channel, time_t startTime, int iDurationSecs, time_t i
 {
   m_startTime               = 0;
   m_stopTime                = 0;
-  m_lastEPGEventCheck       = 0;
-  m_lastRecordingAttempt    = 0;
   m_bPending                = false;
   m_bInVpsMargin            = false;
   m_channel                 = channel;
@@ -73,8 +69,6 @@ cTimer::cTimer(const cEvent *Event)
 {
   m_startTime            = 0;
   m_stopTime             = 0;
-  m_lastEPGEventCheck    = 0;
-  m_lastRecordingAttempt = 0;
   m_bPending             = false;
   m_bInVpsMargin         = false;
   m_iTimerFlags          = tfActive;
@@ -129,7 +123,7 @@ cTimer& cTimer::operator= (const cTimer &Timer)
   {
      m_startTime               = Timer.m_startTime;
      m_stopTime                = Timer.m_stopTime;
-     m_lastEPGEventCheck       = 0;
+     m_lastEPGEventCheck.Reset();
      m_lastRecordingAttempt    = Timer.m_lastRecordingAttempt;
      m_bPending                = Timer.m_bPending;
      m_bInVpsMargin            = Timer.m_bInVpsMargin;
@@ -389,14 +383,14 @@ void cTimer::SetEventFromSchedule(cSchedules *Schedules)
 {
   cSchedulesLock SchedulesLock;
   if (!Schedules) {
-     m_lastEPGEventCheck = 0; // forces setting the event, even if the schedule hasn't been modified
+     m_lastEPGEventCheck.Reset(); // forces setting the event, even if the schedule hasn't been modified
      if (!(Schedules = SchedulesLock.Get()))
         return;
      }
   SchedulePtr Schedule = Schedules->GetSchedule(Channel());
   if (Schedule && Schedule->Events()->First()) {
      time_t now = time(NULL);
-     if (!m_lastEPGEventCheck || Schedule->Modified() >= m_lastEPGEventCheck) {
+     if (!m_lastEPGEventCheck.IsValid() || Schedule->Modified() >= m_lastEPGEventCheck) {
         m_lastEPGEventCheck = now;
         const cEvent *Event = NULL;
         if (HasFlags(tfVps) && Schedule->Events()->First()->Vps()) {
@@ -576,8 +570,8 @@ bool cTimer::StartRecording(void)
   if (Recording())
     return true;
 
-  time_t now = time(NULL);
-  if (m_lastRecordingAttempt && now - m_lastRecordingAttempt < RECORDING_START_INTERVAL_SECS)
+  CDateTime now = CDateTime::GetCurrentDateTime();
+  if (m_lastRecordingAttempt.IsValid() && (now - m_lastRecordingAttempt).GetSecondsTotal() < RECORDING_START_INTERVAL_SECS)
     return false;
 
   SetPending(true);
@@ -731,6 +725,6 @@ bool cTimer::CheckRecordingStatus(time_t Now)
 
 bool cTimer::RecordingAttemptAllowed(void) const
 {
-  return !m_lastRecordingAttempt ||
-      time(NULL) - m_lastRecordingAttempt > RECORDING_START_INTERVAL_SECS;
+  return !m_lastRecordingAttempt.IsValid() ||
+      (CDateTime::GetCurrentDateTime() - m_lastRecordingAttempt).GetSecondsTotal() > RECORDING_START_INTERVAL_SECS;
 }

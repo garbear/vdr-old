@@ -12,9 +12,6 @@ cSchedule::cSchedule(tChannelID ChannelID)
 {
   channelID   = ChannelID;
   hasRunning  = false;
-  modified    = 0;
-  presentSeen = 0;
-  saved       = 0;
 }
 
 cEvent *cSchedule::AddEvent(cEvent *Event)
@@ -214,7 +211,7 @@ void cSchedule::Cleanup(time_t Time)
   {
     if (!Event->HasTimer() && Event->EndTime() + g_setup.EPGLinger * 60 + 3600 < Time) // adding one hour for safety
     {
-      modified = time(NULL);
+      modified = CDateTime::GetCurrentDateTime();
       DelEvent(Event);
     }
     else

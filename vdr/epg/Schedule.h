@@ -2,6 +2,7 @@
 
 #include "Types.h"
 #include "Event.h"
+#include "utils/DateTime.h"
 #include <shared_ptr/shared_ptr.hpp>
 
 class cSchedules;
@@ -13,18 +14,18 @@ private:
   cHash<cEvent> eventsHashID;
   cHash<cEvent> eventsHashStartTime;
   bool hasRunning;
-  time_t modified;
-  time_t presentSeen;
-  time_t saved;
+  CDateTime modified;
+  CDateTime presentSeen;
+  CDateTime saved;
 public:
   cSchedule(tChannelID ChannelID);
   tChannelID ChannelID(void) const { return channelID; }
-  time_t Modified(void) const { return modified; }
-  time_t PresentSeen(void) const { return presentSeen; }
-  bool PresentSeenWithin(int Seconds) const { return time(NULL) - presentSeen < Seconds; }
-  void SetModified(void) { modified = time(NULL); }
+  CDateTime Modified(void) const { return modified; }
+  CDateTime PresentSeen(void) const { return presentSeen; }
+  bool PresentSeenWithin(int Seconds) const { return (CDateTime::GetCurrentDateTime() - presentSeen).GetSecondsTotal() < Seconds; }
+  void SetModified(void) { modified = CDateTime::GetCurrentDateTime(); }
   void SetSaved(void) { saved = modified; }
-  void SetPresentSeen(void) { presentSeen = time(NULL); }
+  void SetPresentSeen(void) { presentSeen = CDateTime::GetCurrentDateTime(); }
   void SetRunningStatus(cEvent *Event, int RunningStatus, cChannel *Channel = NULL);
   void ClrRunningStatus(cChannel *Channel = NULL);
   void ResetVersions(void);

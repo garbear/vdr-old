@@ -3,6 +3,7 @@
 #include <stddef.h>
 #include <limits.h>
 #include "channels/Channel.h"
+#include "utils/DateTime.h"
 
 enum eTimerFlags
 {
@@ -55,7 +56,7 @@ public:
 
   bool Recording(void) const                { return m_recorder != NULL; }
   bool Pending(void) const                  { return m_bPending; }
-  time_t LastRecordingAttempt(void) const   { return m_lastRecordingAttempt; }
+  CDateTime LastRecordingAttempt(void) const{ return m_lastRecordingAttempt; }
   bool RecordingAttemptAllowed(void) const;
   bool InVpsMargin(void) const              { return m_bInVpsMargin; }
   uint Flags(void) const                    { return m_iTimerFlags; }
@@ -115,8 +116,8 @@ public:
 private:
   time_t        m_startTime;               ///< the next timer start time
   time_t        m_stopTime;                ///< the next timer stop time
-  time_t        m_lastEPGEventCheck;       ///< last time we searched for a matching event
-  time_t        m_lastRecordingAttempt;    ///< last time we started a recording (so we don't spam when it fails)
+  CDateTime     m_lastEPGEventCheck;       ///< last time we searched for a matching event
+  CDateTime     m_lastRecordingAttempt;    ///< last time we started a recording (so we don't spam when it fails)
   bool          m_bPending;
   bool          m_bInVpsMargin;
   uint          m_iTimerFlags;             ///< flags for this timer. see eTimerFlags
