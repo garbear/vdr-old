@@ -29,7 +29,7 @@ public:
   /*!
    * @return the next timer that is scheduled to record now with the highest priority
    */
-  TimerPtr GetNextPendingTimer(time_t Now);
+  TimerPtr GetNextPendingTimer(const CDateTime& Now);
   TimerPtr GetMatch(const cEvent *Event, eTimerMatch *Match = NULL);
   TimerPtr GetNextActiveTimer(void);
   TimerPtr GetByIndex(size_t index);
@@ -58,7 +58,7 @@ public:
 private:
   cTimers(void);
 
-  void StartNewRecordings(time_t Now);
+  void StartNewRecordings(const CDateTime& Now);
 
   int                        m_iState;
   time_t                     m_lastSetEvents;

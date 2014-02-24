@@ -132,7 +132,7 @@ void cEvent::SetSeen(void)
 std::string cEvent::ToDescr(void) const
 {
   char vpsbuf[64] = "";
-  if (Vps())
+  if (HasVps())
     sprintf(vpsbuf, "(VPS: %s) ", GetVpsString().c_str());
   return StringUtils::Format("%s %s-%s %s'%s'", GetDateString().c_str(), GetTimeString().c_str(), GetEndTimeString().c_str(), vpsbuf, Title().c_str());
 }

@@ -53,7 +53,7 @@ TimerPtr cTimers::GetTimer(cTimer *Timer)
   return cTimer::EmptyTimer;
 }
 
-TimerPtr cTimers::GetNextPendingTimer(time_t Now)
+TimerPtr cTimers::GetNextPendingTimer(const CDateTime& Now)
 {
   static TimerPtr LastPending;
   TimerPtr t0;
@@ -368,9 +368,8 @@ bool cTimers::Save(const string &file /* = ""*/)
   return true;
 }
 
-void cTimers::StartNewRecordings(time_t Now)
+void cTimers::StartNewRecordings(const CDateTime& Now)
 {
-  //TODO
   TimerPtr Timer = GetNextPendingTimer(Now);
   if (Timer)
     Timer->StartRecording();
@@ -384,7 +383,7 @@ void cTimers::Process(void)
   SetEvents();
 
   // Must do all following calls with the exact same time!
-  time_t Now = time(0);
+  CDateTime Now = CDateTime::GetCurrentDateTime().GetAsUTCDateTime();
 
   // Process ongoing recordings:
   for (std::map<size_t, TimerPtr>::iterator it = m_timers.begin(); it != m_timers.end(); ++it)
@@ -394,8 +393,8 @@ void cTimers::Process(void)
   StartNewRecordings(Now);
 
   // Make sure timers "see" their channel early enough:
-  static time_t LastTimerCheck = 0;
-  if (Now - LastTimerCheck > TIMERCHECKDELTA)
+  static CDateTime LastTimerCheck;
+  if (!LastTimerCheck.IsValid() || (Now - LastTimerCheck).GetSecondsTotal() > TIMERCHECKDELTA)
   { // don't do this too often
     for (std::map<size_t, TimerPtr>::iterator it = m_timers.begin(); it != m_timers.end(); ++it)
       it->second->SwitchTransponder(Now);

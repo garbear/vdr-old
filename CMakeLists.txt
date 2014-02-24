@@ -189,6 +189,7 @@ set(VDR_SRCS
 	vdr/threads/SystemClock.cpp
 	vdr/timers/Timer.cpp
 	vdr/timers/Timers.cpp
+	vdr/timers/TimerTime.cpp
 	vdr/utils/CalendarUtils.cpp
 	vdr/utils/CharsetConverter.cpp
 	vdr/utils/CharSetConverterVDR.cpp

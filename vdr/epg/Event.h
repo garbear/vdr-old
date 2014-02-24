@@ -5,6 +5,7 @@
 
 #include "Components.h"
 #include "utils/Tools.h"
+#include "utils/DateTime.h"
 
 class TiXmlElement;
 
@@ -69,9 +70,12 @@ public:
   int ParentalRating(void) const { return parentalRating; }
   uint8_t StarRating(void) const { return starRating; }
   time_t StartTime(void) const { return startTime; }
+  CDateTime StartTimeAsDateTime(void) const { return CDateTime(startTime).GetAsUTCDateTime(); }
   time_t EndTime(void) const { return startTime + duration; }
+  CDateTime EndTimeAsDateTime(void) const { return CDateTime(startTime + duration).GetAsUTCDateTime(); }
   int Duration(void) const { return duration; }
-  time_t Vps(void) const { return vps; }
+  bool HasVps(void) const { return vps; }
+  CDateTime Vps(void) const { return CDateTime(vps).GetAsUTCDateTime(); }
   time_t Seen(void) const { return seen; }
   bool SeenWithin(int Seconds) const { return time(NULL) - seen < Seconds; }
   bool HasTimer(void) const;

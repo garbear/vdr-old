@@ -3,7 +3,7 @@
 #include <stddef.h>
 #include <limits.h>
 #include "channels/Channel.h"
-#include "utils/DateTime.h"
+#include "TimerTime.h"
 
 enum eTimerFlags
 {
@@ -22,18 +22,6 @@ enum eTimerMatch
   tmFull
 };
 
-enum eTimerDays
-{
-  tdNone      = 0,
-  tdMonday    = 1 << 0,
-  tdTuesday   = 1 << 1,
-  tdWednesday = 1 << 2,
-  tdThursday  = 1 << 3,
-  tdFriday    = 1 << 4,
-  tdSaturday  = 1 << 5,
-  tdSunday    = 1 << 6
-};
-
 class cEvent;
 class cSchedules;
 class TiXmlNode;
@@ -43,7 +31,7 @@ class cTimer
 {
 public:
   cTimer(void);
-  cTimer(ChannelPtr channel, time_t startTime, int iDurationSecs, time_t iFirstDay, uint32_t iWeekdaysMask, uint32_t iTimerFlags, uint32_t iPriority, uint32_t iLifetimeDays, const char *strRecordingFilename);
+  cTimer(ChannelPtr channel, const CTimerTime& time, uint32_t iTimerFlags, uint32_t iPriority, uint32_t iLifetimeDays, const char *strRecordingFilename);
   cTimer(const cEvent *Event);
   cTimer(const cTimer &Timer);
   virtual ~cTimer();
@@ -61,15 +49,14 @@ public:
   bool InVpsMargin(void) const              { return m_bInVpsMargin; }
   uint Flags(void) const                    { return m_iTimerFlags; }
   ChannelPtr Channel(void) const            { return m_channel; }
-  time_t Day(void) const                    { return m_iFirstDay; }
-  int WeekDays(void) const                  { return m_iWeekdaysMask; }
-  int Start(void) const                     { return m_iStartSecsSinceMidnight; }
-  int DurationSecs(void) const              { return m_iDurationSecs; }
+  time_t Day(void) const                    { return m_time.DayAsTime(); }
+  int WeekDays(void) const                  { return m_time.WeekDayMask(); }
+  CDateTime Start(void) const               { return m_time.FirstStart(); }
+  int DurationSecs(void) const              { return m_time.DurationSecs(); }
   int Priority(void) const                  { return m_iPriority; }
   int LifetimeDays(void) const              { return m_iLifetimeDays; }
   std::string RecordingFilename(void) const { return m_strRecordingFilename; }
-  time_t FirstDay(void) const               { return m_iWeekdaysMask ? m_iFirstDay : 0; }
-  const cEvent *Event(void) const           { return m_epgEvent; }
+  const cEvent *Event(void) const           { return m_time.EPGEvent(); }
 
   std::string ToDescr(void) const;
 
@@ -77,8 +64,7 @@ public:
   bool DeserialiseTimer(const TiXmlNode *node);
 
   bool IsRepeatingEvent(void) const;
-  bool DayMatches(time_t t) const;
-  bool Matches(time_t t = 0, bool Directly = false, int Margin = 0);
+  bool Matches(CDateTime checkTime = CDateTime::GetCurrentDateTime(), bool bDirectly = false, int iMarginSeconds = 0);
   eTimerMatch MatchesEvent(const cEvent *Event, int *Overlap = NULL);
   bool Expired(void) const;
   time_t StartTime(void) const;
@@ -93,9 +79,6 @@ public:
   void SetRecording(cRecorder* recorder);
   void SetPending(bool Pending);
   void SetInVpsMargin(bool InVpsMargin);
-  void SetDay(time_t Day);
-  void SetWeekDays(int WeekDays);
-  void SetStart(int Start);
   void SetDuration(int iDurationSecs);
   void SetPriority(int Priority);
   void SetLifetimeDays(int iLifetimeDays);
@@ -105,31 +88,24 @@ public:
   void SetIndex(size_t index) { m_index = index; }
 
   void Skip(void);
-  void OnOff(void);
 
   bool StartRecording(void);
-  bool CheckRecordingStatus(time_t Now);
-  void SwitchTransponder(time_t Now);
+  bool CheckRecordingStatus(const CDateTime& Now);
+  void SwitchTransponder(const CDateTime& Now);
 
   static int CompareTimers(const cTimer *a, const cTimer *b);
 
 private:
-  time_t        m_startTime;               ///< the next timer start time
-  time_t        m_stopTime;                ///< the next timer stop time
+  CTimerTime    m_time;
   CDateTime     m_lastEPGEventCheck;       ///< last time we searched for a matching event
   CDateTime     m_lastRecordingAttempt;    ///< last time we started a recording (so we don't spam when it fails)
   bool          m_bPending;
   bool          m_bInVpsMargin;
   uint          m_iTimerFlags;             ///< flags for this timer. see eTimerFlags
-  time_t        m_iFirstDay;               ///< midnight of the day this timer shall hit, or of the first day it shall hit in case of a repeating timer
-  uint32_t      m_iWeekdaysMask;           ///< bitmask, lowest bits: SSFTWTM  (the 'M' is the LSB)
-  uint32_t      m_iStartSecsSinceMidnight; ///< start of the recording in seconds after midnight on m_day
-  uint32_t      m_iDurationSecs;           ///< duration of the recording in seconds
   uint32_t      m_iPriority;               ///< lower priority is deleted first when we run out of disk space
   uint32_t      m_iLifetimeDays;           ///< recording is deleted after this many days if lower than MAXLIFETIME
   std::string   m_strRecordingFilename;    ///< filename of the recording or empty if not recording or recorded
   ChannelPtr    m_channel;                 ///< the channel to record
-  const cEvent* m_epgEvent;                ///< the EPG event to record (XXX shouldn't we get the start/end from this?)
   cRecorder*    m_recorder;                ///< the recorder that's being used while this timer is being recorded
   size_t        m_index; // XXX (re)move me
 };

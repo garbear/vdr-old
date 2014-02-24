@@ -15,6 +15,12 @@ int CTimeUtils::GetWDay(time_t t)
   return weekday == 0 ? 6 : weekday - 1; // we start with Monday==0!
 }
 
+int CTimeUtils::GetWDay(const CDateTime& time)
+{
+  int weekday = time.GetDayOfWeek();
+  return weekday == 0 ? 6 : weekday - 1; // we start with Monday==0!
+}
+
 time_t CTimeUtils::IncDay(time_t t, int Days)
 {
   struct tm tm_r;
@@ -153,4 +159,11 @@ std::string CTimeUtils::PrintDay(time_t Day, int WeekDays, bool SingleByteChars)
   }
   *b = 0;
   return buffer;
+}
+
+CDateTime CTimeUtils::GetDay(const CDateTime& time)
+{
+  CDateTime retval(time);
+  retval -= CDateTimeSpan(0, retval.GetHour(), retval.GetMinute(), retval.GetSecond());
+  return retval;
 }

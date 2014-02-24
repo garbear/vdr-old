@@ -1324,19 +1324,6 @@ bool cVNSIClient::processTIMER_Add() /* OPCODE 83 */
   uint32_t weekdays   = m_req->extract_U32();
   const char *file    = m_req->extract_String();
 
-  // handle instant timers
-  if(startTime == -1 || startTime == 0)
-  {
-    startTime = time(NULL);
-  }
-
-  struct tm tm_r;
-  struct tm *time = localtime_r(&startTime, &tm_r);
-  if (day <= 0)
-    day = CTimeUtils::SetTime(startTime, 0);
-  int start = time->tm_hour * 100 + time->tm_min;
-
-  cString buffer;
   ChannelPtr channel = cChannelManager::Get().GetByChannelUID(channelid);
   if(!channel)
   {
@@ -1347,7 +1334,7 @@ bool cVNSIClient::processTIMER_Add() /* OPCODE 83 */
   else
   {
     // XXX fix the protocol to use the duration
-    cTimer* timer = new cTimer(channel, start, stopTime - startTime, day, weekdays, flags, priority, lifetime, file);
+    cTimer* timer = new cTimer(channel, CTimerTime::FromVNSI(startTime, stopTime, day, weekdays), flags, priority, lifetime, file);
     delete[] file;
 
     TimerPtr t = cTimers::Get().GetTimer(timer);
@@ -1453,19 +1440,11 @@ bool cVNSIClient::processTIMER_Update() /* OPCODE 85 */
     uint32_t weekdays   = m_req->extract_U32();
     const char *file    = m_req->extract_String();
 
-    struct tm tm_r;
-    struct tm *time = localtime_r(&startTime, &tm_r);
-    if (day <= 0)
-      day = CTimeUtils::SetTime(startTime, 0);
-    int start = time->tm_hour * 100 + time->tm_min;
-    time = localtime_r(&stopTime, &tm_r);
-
-    cString buffer;
     ChannelPtr channel = cChannelManager::Get().GetByChannelUID(channelid);
     if(channel)
     {
       // XXX fix the protocol to use the duration
-      cTimer newData(channel, start, stopTime - startTime, day, weekdays, flags, priority, lifetime, file);
+      cTimer newData(channel, CTimerTime::FromVNSI(startTime, stopTime, day, weekdays), flags, priority, lifetime, file);
       timerData = newData;
     }
 
