@@ -155,7 +155,7 @@ bool cRecordingInfo::Read(const std::string& strFilename /* = "" */)
             m_ownEvent->SetEventID(StringUtils::IntVal(attr));
 
           if (const char* attr = elem->Attribute(RECORDING_XML_ATTR_EPG_START_TIME))
-            m_ownEvent->SetStartTime(StringUtils::IntVal(attr));
+            m_ownEvent->SetStartTime(CDateTime((time_t)StringUtils::IntVal(attr)));
 
           if (const char* attr = elem->Attribute(RECORDING_XML_ATTR_EPG_DURATION))
             m_ownEvent->SetDuration(StringUtils::IntVal(attr));
@@ -212,7 +212,7 @@ bool cRecordingInfo::Write(const std::string& strFilename /* = "" */) const
   {
     TiXmlElement epgElement(RECORDING_XML_ELM_EPG_EVENT);
     epgElement.SetAttribute(RECORDING_XML_ATTR_EPG_EVENT_ID,   m_event->EventID());
-    epgElement.SetAttribute(RECORDING_XML_ATTR_EPG_START_TIME, m_event->StartTime());
+    epgElement.SetAttribute(RECORDING_XML_ATTR_EPG_START_TIME, m_event->StartTimeAsTime());
     epgElement.SetAttribute(RECORDING_XML_ATTR_EPG_DURATION,   m_event->Duration());
     epgElement.SetAttribute(RECORDING_XML_ATTR_EPG_TABLE,      m_event->TableID());
     epgElement.SetAttribute(RECORDING_XML_ATTR_EPG_VERSION,    m_event->Version());

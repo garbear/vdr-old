@@ -221,18 +221,18 @@ eTimerMatch cTimer::MatchesEvent(const cEvent *Event, int *Overlap)
   if (HasFlags(tfActive) && m_channel->GetChannelID() == Event->ChannelID())
   {
     bool UseVps = HasFlags(tfVps) && Event->HasVps();
-    Matches(UseVps ? Event->Vps() : Event->StartTimeAsDateTime(), true);
+    Matches(UseVps ? Event->Vps() : Event->StartTime(), true);
     int overlap = 0;
     if (UseVps)
       overlap = (m_time.Start() == Event->Vps()) ? FULLMATCH + (Event->IsRunning() ? 200 : 100) : 0;
     if (!overlap)
     {
-      if (m_time.Start() <= Event->StartTimeAsDateTime() && Event->EndTimeAsDateTime() <= m_time.End())
+      if (m_time.Start() <= Event->StartTime() && Event->EndTime() <= m_time.End())
         overlap = FULLMATCH;
-      else if (m_time.End() <= Event->StartTimeAsDateTime() || Event->EndTimeAsDateTime() <= m_time.Start())
+      else if (m_time.End() <= Event->StartTime() || Event->EndTime() <= m_time.Start())
         overlap = 0;
       else
-        overlap = (::min(m_time.End(), Event->EndTimeAsDateTime()) - ::max(m_time.Start(), Event->StartTimeAsDateTime())).GetSecondsTotal() * FULLMATCH / ::max(Event->Duration(), 1);
+        overlap = (::min(m_time.End(), Event->EndTime()) - ::max(m_time.Start(), Event->StartTime())).GetSecondsTotal() * FULLMATCH / ::max(Event->Duration(), 1);
     }
     if (Overlap)
       *Overlap = overlap;
@@ -280,20 +280,20 @@ void cTimer::SetEventFromSchedule(cSchedules *Schedules)
      }
   SchedulePtr Schedule = Schedules->GetSchedule(Channel());
   if (Schedule && Schedule->Events()->First()) {
-     time_t now = time(NULL);
+    CDateTime now = CDateTime::GetCurrentDateTime().GetAsUTCDateTime();
      if (!m_lastEPGEventCheck.IsValid() || Schedule->Modified() >= m_lastEPGEventCheck) {
         m_lastEPGEventCheck = now;
         const cEvent *Event = NULL;
         if (HasFlags(tfVps) && Schedule->Events()->First()->HasVps()) {
-           if (m_time.EPGEvent() && m_time.EPGEvent()->StartTime() > 0) { // checks for "phased out" events
+           if (m_time.EPGEvent() && m_time.EPGEvent()->StartTime().IsValid()) { // checks for "phased out" events
               if (Recording())
                  return; // let the recording end first
-              if (now <= m_time.EPGEvent()->EndTime() || Matches(CDateTime::GetCurrentDateTime(), true))
+              if (now <= m_time.EPGEvent()->EndTime() || Matches(now, true))
                  return; // stay with the old event until the timer has completely expired
               }
            // VPS timers only match if their start time exactly matches the event's VPS time:
            for (const cEvent *e = Schedule->Events()->First(); e; e = Schedule->Events()->Next(e)) {
-               if (e->StartTime() && e->RunningStatus() != SI::RunningStatusNotRunning) { // skip outdated events
+               if (e->StartTime().IsValid() && e->RunningStatus() != SI::RunningStatusNotRunning) { // skip outdated events
                   int overlap = 0;
                   MatchesEvent(e, &overlap);
                   if (overlap > FULLMATCH) {
@@ -308,8 +308,8 @@ void cTimer::SetEventFromSchedule(cSchedules *Schedules)
            int Overlap = 0;
            // Set up the time frame within which to check events:
            Matches(0, true);
-           time_t TimeFrameBegin = StartTime() - EPGLIMITBEFORE;
-           time_t TimeFrameEnd   = StopTime()  + EPGLIMITAFTER;
+           CDateTime TimeFrameBegin = m_time.Start() - CDateTimeSpan(0, 0, 0, EPGLIMITBEFORE);
+           CDateTime TimeFrameEnd   = m_time.End()  + CDateTimeSpan(0, 0, 0, EPGLIMITAFTER);
            for (const cEvent *e = Schedule->Events()->First(); e; e = Schedule->Events()->Next(e)) {
                if (e->EndTime() < TimeFrameBegin)
                   continue; // skip events way before the timer starts
@@ -426,7 +426,7 @@ bool cTimer::StartRecording(void)
   if (Recording())
     return true;
 
-  CDateTime now = CDateTime::GetCurrentDateTime();
+  CDateTime now = CDateTime::GetCurrentDateTime().GetAsUTCDateTime();
   if (m_lastRecordingAttempt.IsValid() && (now - m_lastRecordingAttempt).GetSecondsTotal() < RECORDING_START_INTERVAL_SECS)
     return false;
 
@@ -519,8 +519,8 @@ void cTimer::SwitchTransponder(const CDateTime& Now)
       }
       else if (Event())
       {
-        InVpsMargin = Event()->StartTimeAsDateTime() <= Now && Now < Event()->EndTimeAsDateTime();
-        NeedsTransponder = (Event()->StartTimeAsDateTime() - Now).GetSecondsTotal() < VPSLOOKAHEADTIME * 3600 && !Event()->SeenWithin(VPSUPTODATETIME);
+        InVpsMargin = Event()->StartTime() <= Now && Now < Event()->EndTime();
+        NeedsTransponder = (Event()->StartTime() - Now).GetSecondsTotal() < VPSLOOKAHEADTIME * 3600 && !Event()->SeenWithin(VPSUPTODATETIME);
       }
       else
       {

@@ -67,7 +67,7 @@ private:
   PLATFORM::CMutex m_msgLock;
   static PLATFORM::CMutex m_timerLock;
 //  cVnsiOsdProvider *m_Osd;
-  std::map<int, time_t> m_epgUpdate;
+  std::map<int, CDateTime> m_epgUpdate;
 
 protected:
 

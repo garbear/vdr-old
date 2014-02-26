@@ -87,14 +87,14 @@ bool cSchedules::ClearAll(void)
 {
   cTimers::Get().ClearEvents();
   for (std::vector<SchedulePtr>::iterator it = m_schedules.begin(); it != m_schedules.end(); ++it)
-    (*it)->Cleanup(INT_MAX);
+    (*it)->Cleanup(CDateTime());
   m_bHasUnsavedData = false;
   return true;
 }
 
 void cSchedules::CleanTables(void)
 {
-  time_t now = time(NULL);
+  CDateTime now = CDateTime::GetCurrentDateTime().GetAsUTCDateTime();
   for (std::vector<SchedulePtr>::iterator it = m_schedules.begin(); it != m_schedules.end(); ++it)
     (*it)->Cleanup(now);
 }
@@ -269,11 +269,11 @@ SchedulePtr cSchedules::GetSchedule(ChannelPtr channel, bool bAddIfMissing)
   return schedule;
 }
 
-std::vector<SchedulePtr> cSchedules::GetUpdatedSchedules(const std::map<int, time_t>& lastUpdated, CChannelFilter& filter)
+std::vector<SchedulePtr> cSchedules::GetUpdatedSchedules(const std::map<int, CDateTime>& lastUpdated, CChannelFilter& filter)
 {
   std::vector<SchedulePtr> retval;
-  std::map<int, time_t>::iterator it;
-  std::map<int, time_t>::const_iterator previousIt;
+  std::map<int, CDateTime>::iterator it;
+  std::map<int, CDateTime>::const_iterator previousIt;
   for (std::vector<SchedulePtr>::iterator it = m_schedules.begin(); it != m_schedules.end(); ++it)
   {
     cEvent *lastEvent = (*it)->Events()->Last();

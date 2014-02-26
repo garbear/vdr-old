@@ -38,6 +38,7 @@ public:
   cRecording(const std::string& strFileName);
   virtual ~cRecording();
   time_t Start(void) const { return m_start; }
+  CDateTime Start2(void) const { return CDateTime(m_start).GetAsUTCDateTime(); } //XXX
   int Priority(void) const { return m_iPriority; }
   int LifetimeDays(void) const { return m_iLifetimeDays; }
   time_t Deleted(void) const { return m_deleted; }

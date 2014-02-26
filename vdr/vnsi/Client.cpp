@@ -283,7 +283,7 @@ void cVNSIClient::EpgChange()
       delete resp;
       return;
     }
-    m_epgUpdate[channelId.Hash()] = time(NULL);
+    m_epgUpdate[channelId.Hash()] = CDateTime::GetCurrentDateTime().GetAsUTCDateTime();
     resp->add_U32(channelId.Hash());
     resp->finalise();
     m_socket.write(resp->getPtr(), resp->getLen());
@@ -1495,8 +1495,8 @@ bool cVNSIClient::processRECORDINGS_GetList() /* OPCODE 102 */
   {
     const cEvent *event = (*it)->Info()->GetEvent();
 
-    time_t recordingStart    = 0;
-    int    recordingDuration = 0;
+    CDateTime recordingStart;
+    int       recordingDuration = 0;
     if (event)
     {
       recordingStart    = event->StartTime();
@@ -1512,13 +1512,15 @@ bool cVNSIClient::processRECORDINGS_GetList() /* OPCODE 102 */
 //      }
 //      else
 //      {
-        recordingStart = (*it)->Start();
+        recordingStart = (*it)->Start2();
 //      }
     }
-    dsyslog("GRI: RC: recordingStart=%lu recordingDuration=%i", recordingStart, recordingDuration);
+    dsyslog("GRI: RC: recordingStart=%s recordingDuration=%i", recordingStart.GetAsSaveString().c_str(), recordingDuration);
 
     // recording_time
-    m_resp->add_U32(recordingStart);
+    time_t tmStart;
+    recordingStart.GetAsTime(tmStart);
+    m_resp->add_U32(tmStart);
 
     // duration
     m_resp->add_U32(recordingDuration);
@@ -1708,8 +1710,9 @@ bool cVNSIClient::processEPG_GetForChannel() /* OPCODE 120 */
 
   channelUID = m_req->extract_U32();
 
-  uint32_t startTime      = m_req->extract_U32();
-  uint32_t duration       = m_req->extract_U32();
+  CDateTime startTime = CDateTime(m_req->extract_U32()).GetAsUTCDateTime();
+  uint32_t  duration  = m_req->extract_U32();
+  CDateTime endTime   = startTime + CDateTimeSpan(0, 0, 0, duration);
 
   ChannelPtr channel = cChannelManager::Get().GetByChannelUID(channelUID);
   if(!channel)
@@ -1724,7 +1727,7 @@ bool cVNSIClient::processEPG_GetForChannel() /* OPCODE 120 */
 
   cSchedulesLock MutexLock;
   cSchedules *Schedules = MutexLock.Get();
-  m_epgUpdate[channelUID] = 0;
+  m_epgUpdate[channelUID].Reset();
   if (!Schedules)
   {
     m_resp->add_U32(0);
@@ -1748,11 +1751,12 @@ bool cVNSIClient::processEPG_GetForChannel() /* OPCODE 120 */
 
   bool atLeastOneEvent = false;
 
-  uint32_t thisEventID;
-  uint32_t thisEventTime;
-  uint32_t thisEventDuration;
-  uint32_t thisEventContent;
-  uint32_t thisEventRating;
+  uint32_t    thisEventID;
+  CDateTime   thisEventStart;
+  CDateTime   thisEventEnd;
+  uint32_t    thisEventDuration;
+  uint32_t    thisEventContent;
+  uint32_t    thisEventRating;
   const char* thisEventTitle;
   const char* thisEventSubTitle;
   const char* thisEventDescription;
@@ -1763,26 +1767,27 @@ bool cVNSIClient::processEPG_GetForChannel() /* OPCODE 120 */
     thisEventTitle        = event->Title().c_str();
     thisEventSubTitle     = event->ShortText().c_str();
     thisEventDescription  = event->Description().c_str();
-    thisEventTime         = event->StartTime();
+    thisEventStart        = event->StartTime();
+    thisEventEnd          = event->EndTime();
     thisEventDuration     = event->Duration();
     thisEventContent      = event->Contents();
     thisEventRating       = event->ParentalRating();
 
     //in the past filter
-    if ((thisEventTime + thisEventDuration) < (uint32_t)time(NULL)) continue;
+    if (thisEventEnd < CDateTime::GetCurrentDateTime().GetAsUTCDateTime()) continue;
 
     //start time filter
-    if ((thisEventTime + thisEventDuration) <= startTime) continue;
+    if (thisEventEnd <= startTime) continue;
 
     //duration filter
-    if (duration != 0 && thisEventTime >= (startTime + duration)) continue;
+    if (duration != 0 && thisEventStart >= endTime) continue;
 
     if (!thisEventTitle)        thisEventTitle        = "";
     if (!thisEventSubTitle)     thisEventSubTitle     = "";
     if (!thisEventDescription)  thisEventDescription  = "";
 
     m_resp->add_U32(thisEventID);
-    m_resp->add_U32(thisEventTime);
+    m_resp->add_U32(event->StartTimeAsTime());
     m_resp->add_U32(thisEventDuration);
     m_resp->add_U32(thisEventContent);
     m_resp->add_U32(thisEventRating);

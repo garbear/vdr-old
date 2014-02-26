@@ -310,7 +310,7 @@ bool cEIT::HandleEitEvent(SI::EIT::Event *EitEvent)
     // If we don't have that event yet, we create a new one.
     // Otherwise we copy the information into the existing event anyway, because the data might have changed.
     m_pEvent = m_newEvent = new cEvent(EitEvent->getEventId());
-    m_newEvent->SetStartTime(m_StartTime);
+    m_newEvent->SetStartTime(CDateTime(m_StartTime).GetAsUTCDateTime());
     m_newEvent->SetDuration(m_iDuration);
     if (!m_bHandledExternally)
       m_Schedule->AddEvent(m_newEvent);

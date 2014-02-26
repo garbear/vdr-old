@@ -48,9 +48,9 @@ private:
   std::string m_strDescription; // Description of this event
   CEpgComponents *components;       // The stream components of this event
   uchar contents[MaxEventContents]; // Contents of this event
-  time_t startTime;        // Start time of this event
+  CDateTime m_startTime;        // Start time of this event
   int duration;            // Duration of this event in seconds
-  time_t vps;              // Video Programming Service timestamp (VPS, aka "Programme Identification Label", PIL)
+  CDateTime m_vps;              // Video Programming Service timestamp (VPS, aka "Programme Identification Label", PIL)
   time_t seen;             // When this event was last seen in the data stream
 public:
   cEvent(tEventID EventID);
@@ -69,13 +69,13 @@ public:
   uchar Contents(int i = 0) const { return (0 <= i && i < MaxEventContents) ? contents[i] : uchar(0); }
   int ParentalRating(void) const { return parentalRating; }
   uint8_t StarRating(void) const { return starRating; }
-  time_t StartTime(void) const { return startTime; }
-  CDateTime StartTimeAsDateTime(void) const { return CDateTime(startTime).GetAsUTCDateTime(); }
-  time_t EndTime(void) const { return startTime + duration; }
-  CDateTime EndTimeAsDateTime(void) const { return CDateTime(startTime + duration).GetAsUTCDateTime(); }
+  CDateTime StartTime(void) const { return m_startTime; }
+  time_t StartTimeAsTime(void) const { time_t retval; StartTime().GetAsTime(retval); return retval; }
+  CDateTime EndTime(void) const { return (m_startTime + CDateTimeSpan(0, 0, 0, duration)); }
+  time_t EndTimeAsTime(void) const { time_t retval; EndTime().GetAsTime(retval); return retval; }
   int Duration(void) const { return duration; }
-  bool HasVps(void) const { return vps; }
-  CDateTime Vps(void) const { return CDateTime(vps).GetAsUTCDateTime(); }
+  bool HasVps(void) const { return m_vps.IsValid(); }
+  CDateTime Vps(void) const { return m_vps; }
   time_t Seen(void) const { return seen; }
   bool SeenWithin(int Seconds) const { return time(NULL) - seen < Seconds; }
   bool HasTimer(void) const;
@@ -83,9 +83,6 @@ public:
   static const char *ContentToString(uchar Content);
   std::string GetParentalRatingString(void) const;
   std::string GetStarRatingString(void) const;
-  std::string GetDateString(void) const;
-  std::string GetTimeString(void) const;
-  std::string GetEndTimeString(void) const;
   std::string GetVpsString(void) const;
   void SetEventID(tEventID EventID);
   void SetTableID(uchar TableID);
@@ -98,9 +95,9 @@ public:
   void SetContents(uchar *Contents);
   void SetParentalRating(int ParentalRating);
   void SetStarRating(uint8_t StarRating) { starRating = StarRating; }
-  void SetStartTime(time_t StartTime);
+  void SetStartTime(const CDateTime& StartTime);
   void SetDuration(int Duration);
-  void SetVps(time_t Vps);
+  void SetVps(const CDateTime& Vps);
   void SetSeen(void);
   std::string ToDescr(void) const;
   bool Parse(const std::string& data);

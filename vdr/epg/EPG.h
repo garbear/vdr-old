@@ -51,7 +51,7 @@ public:
   void DelSchedule(SchedulePtr schedule);
   SchedulePtr GetSchedule(const tChannelID& ChannelID);
   SchedulePtr GetSchedule(ChannelPtr Channel, bool AddIfMissing = false);
-  std::vector<SchedulePtr> GetUpdatedSchedules(const std::map<int, time_t>& lastUpdated, CChannelFilter& filter);
+  std::vector<SchedulePtr> GetUpdatedSchedules(const std::map<int, CDateTime>& lastUpdated, CChannelFilter& filter);
 
   static SchedulePtr EmptySchedule;
 protected:

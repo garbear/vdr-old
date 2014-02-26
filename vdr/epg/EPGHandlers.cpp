@@ -107,7 +107,7 @@ void cEpgHandlers::SetStartTime(cEvent *Event, time_t StartTime)
       if (eh->SetStartTime(Event, StartTime))
          return;
       }
-  Event->SetStartTime(StartTime);
+  Event->SetStartTime(CDateTime(StartTime).GetAsUTCDateTime());
 }
 
 void cEpgHandlers::SetDuration(cEvent *Event, int Duration)
@@ -165,9 +165,14 @@ void cEpgHandlers::SortSchedule(SchedulePtr Schedule)
 
 void cEpgHandlers::DropOutdated(SchedulePtr Schedule, time_t SegmentStart, time_t SegmentEnd, uchar TableID, uchar Version)
 {
-  for (cEpgHandler *eh = First(); eh; eh = Next(eh)) {
-      if (eh->DropOutdated(Schedule, SegmentStart, SegmentEnd, TableID, Version))
-         return;
-      }
-  Schedule->DropOutdated(SegmentStart, SegmentEnd, TableID, Version);
+  CDateTime segmentStartUTC = CDateTime(SegmentStart).GetAsUTCDateTime();
+  CDateTime segmentEndUTC   = CDateTime(SegmentEnd).GetAsUTCDateTime();
+
+  for (cEpgHandler *eh = First(); eh; eh = Next(eh))
+  {
+    if (eh->DropOutdated(Schedule, segmentStartUTC, segmentEndUTC, TableID, Version))
+      return;
+  }
+
+  Schedule->DropOutdated(segmentStartUTC, segmentEndUTC, TableID, Version);
 }

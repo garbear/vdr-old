@@ -19,9 +19,7 @@ cEvent::cEvent(tEventID EventID)
   memset(contents, 0, sizeof(contents));
   parentalRating = 0;
   starRating = 0;
-  startTime = 0;
   duration = 0;
-  vps = 0;
   SetSeen();
 }
 
@@ -33,7 +31,7 @@ cEvent::~cEvent()
 int cEvent::Compare(const cListObject &ListObject) const
 {
   cEvent *e = (cEvent *)&ListObject;
-  return startTime - e->startTime;
+  return (m_startTime - e->m_startTime).GetSecondsTotal();
 }
 
 tChannelID cEvent::ChannelID(void) const
@@ -102,13 +100,13 @@ void cEvent::SetParentalRating(int ParentalRating)
   parentalRating = ParentalRating;
 }
 
-void cEvent::SetStartTime(time_t StartTime)
+void cEvent::SetStartTime(const CDateTime& StartTime)
 {
-  if (startTime != StartTime)
+  if (m_startTime != StartTime)
   {
     if (schedule)
       schedule->UnhashEvent(this);
-    startTime = StartTime;
+    m_startTime = StartTime;
     if (schedule)
       schedule->HashEvent(this);
   }
@@ -119,9 +117,9 @@ void cEvent::SetDuration(int Duration)
   duration = Duration;
 }
 
-void cEvent::SetVps(time_t Vps)
+void cEvent::SetVps(const CDateTime& Vps)
 {
-  vps = Vps;
+  m_vps = Vps;
 }
 
 void cEvent::SetSeen(void)
@@ -134,7 +132,7 @@ std::string cEvent::ToDescr(void) const
   char vpsbuf[64] = "";
   if (HasVps())
     sprintf(vpsbuf, "(VPS: %s) ", GetVpsString().c_str());
-  return StringUtils::Format("%s %s-%s %s'%s'", GetDateString().c_str(), GetTimeString().c_str(), GetEndTimeString().c_str(), vpsbuf, Title().c_str());
+  return StringUtils::Format("%s - %s %s '%s'", StartTime().GetAsDBDateTime().c_str(), EndTime().GetAsDBDateTime().c_str(), vpsbuf, Title().c_str());
 }
 
 bool cEvent::HasTimer(void) const
@@ -436,27 +434,9 @@ std::string cEvent::GetStarRatingString(void) const
   return critiques[starRating & 0x07];
 }
 
-std::string cEvent::GetDateString(void) const
-{
-  return CalendarUtils::DateString(startTime);
-}
-
-std::string cEvent::GetTimeString(void) const
-{
-  return CalendarUtils::TimeString(startTime);
-}
-
-std::string cEvent::GetEndTimeString(void) const
-{
-  return CalendarUtils::TimeString(startTime + duration);
-}
-
 std::string cEvent::GetVpsString(void) const
 {
-  char buf[25];
-  struct tm tm_r;
-  strftime(buf, sizeof(buf), "%d.%m. %R", localtime_r(&vps, &tm_r));
-  return buf;
+  return m_vps.GetAsSaveString();
 }
 
 bool cEvent::Parse(const std::string& data)
@@ -930,12 +910,12 @@ bool cEvent::Deserialise(cSchedule* schedule, const TiXmlNode *eventNode)
   if (id && start && duration && tableId && version)
   {
     tEventID EventID = (tEventID)StringUtils::IntVal(id);
-    time_t startTime = (time_t)StringUtils::IntVal(start);
+    CDateTime startTime = CDateTime((time_t)StringUtils::IntVal(start));
     event = schedule->GetEvent(EventID, startTime);
     if (!event)
     {
       event = new cEvent(EventID);
-      event->startTime = startTime;
+      event->m_startTime = startTime;
       bNewEvent = true;
     }
 
@@ -971,7 +951,7 @@ bool cEvent::Deserialise(cSchedule* schedule, const TiXmlNode *eventNode)
 
     const char* vps  = elem->Attribute(EPG_XML_ATTR_VPS);
     if (vps)
-      event->vps = (time_t)StringUtils::IntVal(vps);
+      event->m_vps = CDateTime((time_t)StringUtils::IntVal(vps));
 
     const TiXmlNode *contentsNode = elem->FirstChild(EPG_XML_ELM_CONTENTS);
     int iPtr(0);
@@ -1010,7 +990,7 @@ bool cEvent::Serialise(TiXmlElement* element) const
 {
   assert(element);
 
-  if (startTime + duration + g_setup.EPGLinger * 60 >= time(NULL))
+  if (EndTime() + CDateTimeSpan(0, 0, g_setup.EPGLinger, 0) >= CDateTime::GetCurrentDateTime().GetAsUTCDateTime())
   {
     TiXmlElement eventElement(EPG_XML_ELM_EVENT);
     TiXmlNode *eventNode = element->InsertEndChild(eventElement);
@@ -1019,8 +999,11 @@ bool cEvent::Serialise(TiXmlElement* element) const
     if (!eventNodeElement)
       return false;
 
+    time_t tmStart;
+    m_startTime.GetAsTime(tmStart);
+
     eventNodeElement->SetAttribute(EPG_XML_ATTR_EVENT_ID,   eventID);
-    eventNodeElement->SetAttribute(EPG_XML_ATTR_START_TIME, startTime);
+    eventNodeElement->SetAttribute(EPG_XML_ATTR_START_TIME, tmStart);
     eventNodeElement->SetAttribute(EPG_XML_ATTR_DURATION,   duration);
     eventNodeElement->SetAttribute(EPG_XML_ATTR_TABLE_ID,   tableID);
     eventNodeElement->SetAttribute(EPG_XML_ATTR_VERSION,    version);
@@ -1085,8 +1068,12 @@ bool cEvent::Serialise(TiXmlElement* element) const
       }
     }
 
-    if (vps)
-      eventNodeElement->SetAttribute(EPG_XML_ATTR_VPS, vps);
+    if (m_vps.IsValid())
+    {
+      time_t tmVps;
+      m_vps.GetAsTime(tmVps);
+      eventNodeElement->SetAttribute(EPG_XML_ATTR_VPS, tmVps);
+    }
   }
 
   return true;

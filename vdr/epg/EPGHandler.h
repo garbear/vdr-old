@@ -52,7 +52,7 @@ public:
           ///< can take a final look at it.
   virtual bool SortSchedule(SchedulePtr Schedule) { return false; }
           ///< Sorts the Schedule after the complete table has been processed.
-  virtual bool DropOutdated(SchedulePtr Schedule, time_t SegmentStart, time_t SegmentEnd, uchar TableID, uchar Version) { return false; }
+  virtual bool DropOutdated(SchedulePtr Schedule, const CDateTime& SegmentStart, const CDateTime& SegmentEnd, uchar TableID, uchar Version) { return false; }
           ///< Takes a look at all EPG events between SegmentStart and SegmentEnd and
           ///< drops outdated events.
   };

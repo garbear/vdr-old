@@ -36,26 +36,26 @@ void cSchedule::DelEvent(cEvent *Event)
 void cSchedule::HashEvent(cEvent *Event)
 {
   eventsHashID.Add(Event, Event->EventID());
-  if (Event->StartTime() > 0) // 'StartTime < 0' is apparently used with NVOD channels
-    eventsHashStartTime.Add(Event, Event->StartTime());
+  if (Event->StartTime().IsValid()) // 'StartTime < 0' is apparently used with NVOD channels
+    eventsHashStartTime.Add(Event, Event->StartTimeAsTime());
 }
 
 void cSchedule::UnhashEvent(cEvent *Event)
 {
   eventsHashID.Del(Event, Event->EventID());
-  if (Event->StartTime() > 0) // 'StartTime < 0' is apparently used with NVOD channels
-    eventsHashStartTime.Del(Event, Event->StartTime());
+  if (Event->StartTime().IsValid()) // 'StartTime < 0' is apparently used with NVOD channels
+    eventsHashStartTime.Del(Event, Event->StartTimeAsTime());
 }
 
 const cEvent *cSchedule::GetPresentEvent(void) const
 {
   const cEvent *pe = NULL;
-  time_t now = time(NULL);
+  CDateTime now = CDateTime::GetCurrentDateTime().GetAsUTCDateTime();
   for (cEvent *p = events.First(); p; p = events.Next(p))
   {
     if (p->StartTime() <= now)
       pe = p;
-    else if (p->StartTime() > now + 3600)
+    else if (p->StartTime() > now + CDateTimeSpan(0, 1, 0, 0))
       break;
     if (p->SeenWithin(RUNNINGSTATUSTIMEOUT)
         && p->RunningStatus() >= SI::RunningStatusPausing)
@@ -71,7 +71,7 @@ const cEvent *cSchedule::GetFollowingEvent(void) const
     p = events.Next(p);
   else
   {
-    time_t now = time(NULL);
+    CDateTime now = CDateTime::GetCurrentDateTime().GetAsUTCDateTime();
     for (p = events.First(); p; p = events.Next(p))
     {
       if (p->StartTime() >= now)
@@ -81,30 +81,18 @@ const cEvent *cSchedule::GetFollowingEvent(void) const
   return p;
 }
 
-cEvent *cSchedule::GetEvent(tEventID EventID, time_t StartTime)
+cEvent *cSchedule::GetEvent(tEventID EventID, CDateTime StartTime /* = CDateTime::GetCurrentDateTime() */)
 {
   // Returns the event info with the given StartTime or, if no actual StartTime
   // is given, the one with the given EventID.
-  if (StartTime > 0) // 'StartTime < 0' is apparently used with NVOD channels
-    return eventsHashStartTime.Get(StartTime);
+  if (StartTime.IsValid()) // 'StartTime < 0' is apparently used with NVOD channels
+  {
+    time_t tmStart;
+    StartTime.GetAsTime(tmStart);
+    return eventsHashStartTime.Get(tmStart);
+  }
   else
     return eventsHashID.Get(EventID);
-}
-
-const cEvent *cSchedule::GetEventAround(time_t Time) const
-{
-  const cEvent *pe = NULL;
-  time_t delta = ~0;
-  for (cEvent *p = events.First(); p; p = events.Next(p))
-  {
-    time_t dt = Time - p->StartTime();
-    if (dt >= 0 && dt < delta && p->EndTime() >= Time)
-    {
-      delta = dt;
-      pe = p;
-    }
-  }
-  return pe;
 }
 
 void cSchedule::SetRunningStatus(cEvent *Event, int RunningStatus, cChannel *Channel)
@@ -166,9 +154,9 @@ void cSchedule::Sort(void)
   }
 }
 
-void cSchedule::DropOutdated(time_t SegmentStart, time_t SegmentEnd, uchar TableID, uchar Version)
+void cSchedule::DropOutdated(const CDateTime& SegmentStart, const CDateTime& SegmentEnd, uchar TableID, uchar Version)
 {
-  if (SegmentStart > 0 && SegmentEnd > 0)
+  if (SegmentStart.IsValid() && SegmentEnd.IsValid())
   {
     for (cEvent *p = events.First(); p; p = events.Next(p))
     {
@@ -189,7 +177,7 @@ void cSchedule::DropOutdated(time_t SegmentStart, time_t SegmentEnd, uchar Table
               ClrRunningStatus();
             UnhashEvent(p);
             p->eventID = 0;
-            p->startTime = 0;
+            p->m_startTime.Reset();
           }
         }
         else
@@ -201,15 +189,15 @@ void cSchedule::DropOutdated(time_t SegmentStart, time_t SegmentEnd, uchar Table
 
 void cSchedule::Cleanup(void)
 {
-  Cleanup(time(NULL));
+  Cleanup(CDateTime::GetCurrentDateTime().GetAsUTCDateTime());
 }
 
-void cSchedule::Cleanup(time_t Time)
+void cSchedule::Cleanup(const CDateTime& Time)
 {
   cEvent *Event;
   while ((Event = events.First()) != NULL)
   {
-    if (!Event->HasTimer() && Event->EndTime() + g_setup.EPGLinger * 60 + 3600 < Time) // adding one hour for safety
+    if (!Event->HasTimer() && (!Time.IsValid() || (Event->EndTime() + CDateTimeSpan(0, 1, g_setup.EPGLinger, 0)) < Time)) // adding one hour for safety
     {
       modified = CDateTime::GetCurrentDateTime();
       DelEvent(Event);

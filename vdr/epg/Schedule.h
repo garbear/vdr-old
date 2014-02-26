@@ -30,8 +30,8 @@ public:
   void ClrRunningStatus(cChannel *Channel = NULL);
   void ResetVersions(void);
   void Sort(void);
-  void DropOutdated(time_t SegmentStart, time_t SegmentEnd, uchar TableID, uchar Version);
-  void Cleanup(time_t Time);
+  void DropOutdated(const CDateTime& SegmentStart, const CDateTime& SegmentEnd, uchar TableID, uchar Version);
+  void Cleanup(const CDateTime& Time);
   void Cleanup(void);
   cEvent *AddEvent(cEvent *Event);
   void DelEvent(cEvent *Event);
@@ -40,8 +40,7 @@ public:
   const cList<cEvent> *Events(void) const { return &events; }
   const cEvent *GetPresentEvent(void) const;
   const cEvent *GetFollowingEvent(void) const;
-  cEvent *GetEvent(tEventID EventID, time_t StartTime = 0);
-  const cEvent *GetEventAround(time_t Time) const;
+  cEvent *GetEvent(tEventID EventID, CDateTime StartTime = CDateTime::GetCurrentDateTime());
   bool Read(void);
   bool Save(void);
   bool Serialise(TiXmlNode *node) const;
