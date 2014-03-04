@@ -887,11 +887,6 @@ CDateTimeSpan CDateTime::GetTimezoneBias(void)
         break;
     }
   }
-#else
-  time_t t0 = time(0);
-  tm t;
-  localtime_r(&t0, &t);
-  timezoneBias = CDateTimeSpan(0, 0, -t.tm_gmtoff / 60, 0);
 #endif
 
   return timezoneBias;
