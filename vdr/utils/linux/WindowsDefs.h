@@ -30,6 +30,11 @@
 #define RtlZeroMemory(Destination,Length)  memset((Destination), 0, (Length))
 #define ZeroMemory RtlZeroMemory
 
+#define TIME_ZONE_ID_UNKNOWN   0
+#define TIME_ZONE_ID_STANDARD  1
+#define TIME_ZONE_ID_DAYLIGHT  2
+#define TIME_ZONE_ID_INVALID   ((DWORD)0xffffffff)
+
 #define VOID      void
 
 typedef int                BOOL;
@@ -73,5 +78,15 @@ typedef struct _SYSTEMTIME
   WORD wSecond;
   WORD wMilliseconds;
 } SYSTEMTIME, *PSYSTEMTIME, *LPSYSTEMTIME;
+
+typedef struct _TIME_ZONE_INFORMATION {
+  LONG       Bias;
+  WCHAR      StandardName[32];
+  SYSTEMTIME StandardDate;
+  LONG       StandardBias;
+  WCHAR      DaylightName[32];
+  SYSTEMTIME DaylightDate;
+  LONG       DaylightBias;
+} TIME_ZONE_INFORMATION, *PTIME_ZONE_INFORMATION, *LPTIME_ZONE_INFORMATION;
 
 #endif

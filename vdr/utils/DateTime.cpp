@@ -869,7 +869,6 @@ CDateTimeSpan CDateTime::GetTimezoneBias(void)
 {
   static CDateTimeSpan timezoneBias;
 
-#ifdef TARGET_WINDOWS
   if (!bGotTimezoneBias)
   {
     bGotTimezoneBias = true;
@@ -887,7 +886,6 @@ CDateTimeSpan CDateTime::GetTimezoneBias(void)
         break;
     }
   }
-#endif
 
   return timezoneBias;
 }
