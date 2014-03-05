@@ -30,45 +30,40 @@
 #define RtlZeroMemory(Destination,Length)  memset((Destination), 0, (Length))
 #define ZeroMemory RtlZeroMemory
 
-typedef void VOID;
-typedef bool BOOL;
+#define VOID      void
 
-typedef unsigned short WORD;
-typedef unsigned long DWORD;
+typedef int                BOOL;
+typedef unsigned short     WORD;
+typedef unsigned int       DWORD;
 
-typedef long long LONGLONG;
+typedef long long          LONGLONG;
 typedef unsigned long long ULONGLONG;
 
-typedef union _LARGE_INTEGER {
+typedef union _LARGE_INTEGER
+{
   struct {
     DWORD LowPart;
-    LONG  HighPart;
-  };
-  struct {
-    DWORD LowPart;
-    LONG  HighPart;
+    int32_t HighPart;
   } u;
   LONGLONG QuadPart;
 } LARGE_INTEGER, *PLARGE_INTEGER;
 
 typedef union _ULARGE_INTEGER {
   struct {
-    DWORD LowPart;
-    DWORD HighPart;
-  };
-  struct {
-    DWORD LowPart;
-    DWORD HighPart;
+      DWORD LowPart;
+      DWORD HighPart;
   } u;
   ULONGLONG QuadPart;
 } ULARGE_INTEGER, *PULARGE_INTEGER;
 
-typedef struct _FILETIME {
+typedef struct _FILETIME
+{
   DWORD dwLowDateTime;
   DWORD dwHighDateTime;
 } FILETIME, *PFILETIME, *LPFILETIME;
 
-typedef struct _SYSTEMTIME {
+typedef struct _SYSTEMTIME
+{
   WORD wYear;
   WORD wMonth;
   WORD wDayOfWeek;
