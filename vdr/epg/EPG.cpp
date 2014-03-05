@@ -94,7 +94,7 @@ bool cSchedules::ClearAll(void)
 
 void cSchedules::CleanTables(void)
 {
-  CDateTime now = CDateTime::GetCurrentDateTime().GetAsUTCDateTime();
+  CDateTime now = CDateTime::GetUTCDateTime();
   for (std::vector<SchedulePtr>::iterator it = m_schedules.begin(); it != m_schedules.end(); ++it)
     (*it)->Cleanup(now);
 }

@@ -206,7 +206,7 @@ void cTimer::SetRecordingFilename(const std::string& strFile)
 bool cTimer::Matches(CDateTime checkTime, bool bDirectly, int iMarginSeconds)
 {
   return HasFlags(tfActive) &&
-      m_time.Matches(checkTime.GetAsUTCDateTime(), bDirectly, iMarginSeconds);
+      m_time.Matches(checkTime, bDirectly, iMarginSeconds);
 }
 
 #define FULLMATCH 1000
@@ -280,7 +280,7 @@ void cTimer::SetEventFromSchedule(cSchedules *Schedules)
      }
   SchedulePtr Schedule = Schedules->GetSchedule(Channel());
   if (Schedule && Schedule->Events()->First()) {
-    CDateTime now = CDateTime::GetCurrentDateTime().GetAsUTCDateTime();
+    CDateTime now = CDateTime::GetUTCDateTime();
      if (!m_lastEPGEventCheck.IsValid() || Schedule->Modified() >= m_lastEPGEventCheck) {
         m_lastEPGEventCheck = now;
         const cEvent *Event = NULL;
@@ -426,7 +426,7 @@ bool cTimer::StartRecording(void)
   if (Recording())
     return true;
 
-  CDateTime now = CDateTime::GetCurrentDateTime().GetAsUTCDateTime();
+  CDateTime now = CDateTime::GetUTCDateTime();
   if (m_lastRecordingAttempt.IsValid() && (now - m_lastRecordingAttempt).GetSecondsTotal() < RECORDING_START_INTERVAL_SECS)
     return false;
 

@@ -383,7 +383,7 @@ void cTimers::Process(void)
   SetEvents();
 
   // Must do all following calls with the exact same time!
-  CDateTime Now = CDateTime::GetCurrentDateTime().GetAsUTCDateTime();
+  CDateTime Now = CDateTime::GetUTCDateTime();
 
   // Process ongoing recordings:
   for (std::map<size_t, TimerPtr>::iterator it = m_timers.begin(); it != m_timers.end(); ++it)

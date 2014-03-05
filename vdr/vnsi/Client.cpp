@@ -283,7 +283,7 @@ void cVNSIClient::EpgChange()
       delete resp;
       return;
     }
-    m_epgUpdate[channelId.Hash()] = CDateTime::GetCurrentDateTime().GetAsUTCDateTime();
+    m_epgUpdate[channelId.Hash()] = CDateTime::GetUTCDateTime();
     resp->add_U32(channelId.Hash());
     resp->finalise();
     m_socket.write(resp->getPtr(), resp->getLen());

@@ -50,7 +50,7 @@ void cSchedule::UnhashEvent(cEvent *Event)
 const cEvent *cSchedule::GetPresentEvent(void) const
 {
   const cEvent *pe = NULL;
-  CDateTime now = CDateTime::GetCurrentDateTime().GetAsUTCDateTime();
+  CDateTime now = CDateTime::GetUTCDateTime();
   for (cEvent *p = events.First(); p; p = events.Next(p))
   {
     if (p->StartTime() <= now)
@@ -71,7 +71,7 @@ const cEvent *cSchedule::GetFollowingEvent(void) const
     p = events.Next(p);
   else
   {
-    CDateTime now = CDateTime::GetCurrentDateTime().GetAsUTCDateTime();
+    CDateTime now = CDateTime::GetUTCDateTime();
     for (p = events.First(); p; p = events.Next(p))
     {
       if (p->StartTime() >= now)
@@ -189,7 +189,7 @@ void cSchedule::DropOutdated(const CDateTime& SegmentStart, const CDateTime& Seg
 
 void cSchedule::Cleanup(void)
 {
-  Cleanup(CDateTime::GetCurrentDateTime().GetAsUTCDateTime());
+  Cleanup(CDateTime::GetUTCDateTime());
 }
 
 void cSchedule::Cleanup(const CDateTime& Time)

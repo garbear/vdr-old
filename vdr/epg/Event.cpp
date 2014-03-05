@@ -990,7 +990,7 @@ bool cEvent::Serialise(TiXmlElement* element) const
 {
   assert(element);
 
-  if (EndTime() + CDateTimeSpan(0, 0, g_setup.EPGLinger, 0) >= CDateTime::GetCurrentDateTime().GetAsUTCDateTime())
+  if (EndTime() + CDateTimeSpan(0, 0, g_setup.EPGLinger, 0) >= CDateTime::GetUTCDateTime())
   {
     TiXmlElement eventElement(EPG_XML_ELM_EVENT);
     TiXmlNode *eventNode = element->InsertEndChild(eventElement);
