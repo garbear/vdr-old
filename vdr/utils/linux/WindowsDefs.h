@@ -36,6 +36,7 @@
 #define TIME_ZONE_ID_INVALID   ((DWORD)0xffffffff)
 
 #define VOID      void
+#define WCHAR     wchar_t
 
 typedef int                BOOL;
 typedef unsigned short     WORD;
