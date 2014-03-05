@@ -1710,7 +1710,7 @@ bool cVNSIClient::processEPG_GetForChannel() /* OPCODE 120 */
 
   channelUID = m_req->extract_U32();
 
-  CDateTime startTime = CDateTime(m_req->extract_U32()).GetAsUTCDateTime();
+  CDateTime startTime = CDateTime(m_req->extract_U32());
   uint32_t  duration  = m_req->extract_U32();
   CDateTime endTime   = startTime + CDateTimeSpan(0, 0, 0, duration);
 
