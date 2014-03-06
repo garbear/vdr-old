@@ -140,7 +140,7 @@ cSwReceiver::cSwReceiver(ChannelPtr Channel)
    m_bStopped(false),
    fuzzy(false),
    hits(0),
-   timeout(time(0) + TIMEOUT),
+   m_timeout(CDateTime::GetUTCDateTime() + CDateTimeSpan(0, 0, 0, TIMEOUT)),
    cni_8_30_1(0),
    cni_8_30_2(0),
    cni_X_26(0),
@@ -157,7 +157,7 @@ void cSwReceiver::Reset()
   buffer->Clear();
   cni_8_30_1 = cni_8_30_2 = cni_X_26 = cni_vps = cni_cr_idx = 0;
   hits = TsCount = 0;
-  timeout = time(0) + TIMEOUT;
+  m_timeout = CDateTime::GetUTCDateTime() + CDateTimeSpan(0, 0, 0, TIMEOUT);
   CreateThread();
 }
 
@@ -487,7 +487,7 @@ void* cSwReceiver::Process()
     {
       Sleep(10); // wait for new data.
     }
-    if (time(0) > timeout)
+    if (CDateTime::GetUTCDateTime() > m_timeout)
       m_bStopped = true;
   }
 

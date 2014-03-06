@@ -30,7 +30,6 @@ cTimers& cTimers::Get(void)
 cTimers::cTimers(void)
 {
   m_iState             = 0;
-  m_lastSetEvents     = 0;
   m_lastDeleteExpired = 0;
   m_maxIndex        = 0;
 }
@@ -117,7 +116,7 @@ TimerPtr cTimers::GetNextActiveTimer(void)
     timer = it->second;
     timer->Matches();
     if ((timer->HasFlags(tfActive)) &&
-        (!retval || (timer->StopTime() > time(NULL) && timer->Compare(*retval) < 0)))
+        (!retval || (timer->EndTime() > CDateTime::GetUTCDateTime() && timer->Compare(*retval) < 0)))
       retval = timer;
   }
   return retval;
@@ -208,13 +207,14 @@ bool cTimers::Modified(int &State)
 void cTimers::SetEvents(void)
 {
   CLockObject lock(m_mutex);
-  if (time(NULL) - m_lastSetEvents < 5)
+  CDateTime now = CDateTime::GetUTCDateTime();
+  if ((now - m_lastSetEvents).GetSecondsTotal() < 5)
      return;
   cSchedulesLock SchedulesLock(false, 100);
   cSchedules *Schedules = SchedulesLock.Get();
   if (Schedules)
   {
-    if (!m_lastSetEvents || Schedules->Modified() >= m_lastSetEvents)
+    if (!m_lastSetEvents.IsValid() || Schedules->Modified() >= m_lastSetEvents)
     {
       for (std::map<size_t, TimerPtr>::iterator it = m_timers.begin(); it != m_timers.end(); ++it)
       {
@@ -222,7 +222,7 @@ void cTimers::SetEvents(void)
       }
     }
   }
-  m_lastSetEvents = time(NULL);
+  m_lastSetEvents = now;
 }
 
 void cTimers::DeleteExpired(void)
@@ -249,12 +249,10 @@ void cTimers::DeleteExpired(void)
 
 int cTimer::CompareTimers(const cTimer *a, const cTimer *b)
 {
-  time_t t1 = a->StartTime();
-  time_t t2 = b->StartTime();
-  int r = t1 - t2;
-  if (r == 0)
-    r = b->m_iPriority - a->m_iPriority;
-  return r;
+  int diff = (a->StartTime() - b->StartTime()).GetSecondsTotal();
+  return (diff == 0) ?
+      b->m_iPriority - a->m_iPriority :
+      diff;
 }
 
 void cTimers::ClearEvents(void)

@@ -107,18 +107,16 @@ bool cTimer::operator==(const cTimer &Timer)
     return true;
 
   return (StartTime() == Timer.StartTime() &&
-          StopTime() == Timer.StopTime() &&
+          EndTime() == Timer.EndTime() &&
           m_channel->GetChannelID() == Timer.Channel()->GetChannelID());
 }
 
 int cTimer::Compare(const cTimer &Timer) const
 {
-  time_t t1 = StartTime();
-  time_t t2 = Timer.StartTime();
-  int r = t1 - t2;
-  if (r == 0)
-    r = Timer.m_iPriority - m_iPriority;
-  return r;
+  int diff = (StartTime() - Timer.StartTime()).GetSecondsTotal();
+  return (diff == 0) ?
+      Timer.m_iPriority - m_iPriority :
+      diff;
 }
 
 bool cTimer::SerialiseTimer(TiXmlNode *node) const
@@ -249,18 +247,18 @@ bool cTimer::Expired(void) const
 {
   return !IsRepeatingEvent() &&
       !Recording() &&
-      StopTime() + EXPIRELATENCY <= time(NULL) &&
+      EndTime() + CDateTimeSpan(0, 0, 0, EXPIRELATENCY) <= CDateTime::GetUTCDateTime() &&
       (!HasFlags(tfVps) || !m_time.EPGEvent() || !m_time.EPGEvent()->HasVps());
 }
 
-time_t cTimer::StartTime(void) const
+time_t cTimer::StartTimeAsTime(void) const
 {
   time_t time;
   m_time.Start().GetAsTime(time);
   return time;
 }
 
-time_t cTimer::StopTime(void) const
+time_t cTimer::EndTimeAsTime(void) const
 {
   time_t time;
   m_time.End().GetAsTime(time);
@@ -419,7 +417,7 @@ void cTimer::Skip(void)
 
 bool cTimer::StartRecording(void)
 {
-  static time_t LastNoDiskSpaceMessage = 0;
+  static CDateTime LastNoDiskSpaceMessage;
   disk_space_t space;
 
   // already recording
@@ -438,14 +436,14 @@ bool cTimer::StartRecording(void)
   VideoDiskSpace(space);
   if (space.free < MINFREEDISKSPACE)
   {
-    if (time(NULL) - LastNoDiskSpaceMessage > DISKCHECKINTERVAL)
+    if ((now - LastNoDiskSpaceMessage).GetSecondsTotal() > DISKCHECKINTERVAL)
     {
       isyslog("not enough disk space to start recording %s", ToDescr().c_str());
-      LastNoDiskSpaceMessage = time(NULL);
+      LastNoDiskSpaceMessage = now;
     }
     return false;
   }
-  LastNoDiskSpaceMessage = 0;
+  LastNoDiskSpaceMessage.Reset();
 
   ChannelPtr channel = Channel();
   if (channel)

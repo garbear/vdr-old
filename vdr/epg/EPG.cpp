@@ -50,7 +50,6 @@ cSchedules* cSchedulesLock::Get(void) const
 
 cSchedules::cSchedules(void)
 {
-  m_modified = 0;
   m_bHasUnsavedData = false;
 }
 
@@ -64,17 +63,21 @@ cSchedules& cSchedules::Get(void)
   return _instance;
 }
 
-time_t cSchedules::Modified(void)
+CDateTime cSchedules::Modified(void)
 {
   cSchedulesLock lock;
   cSchedules* schedules = lock.Get();
-  return schedules ? schedules->m_modified : 0;
+  CDateTime retval;
+  if (schedules)
+    retval = schedules->m_modified;
+
+  return retval;
 }
 
 void cSchedules::SetModified(SchedulePtr Schedule)
 {
   Schedule->SetModified();
-  m_modified = time(NULL);
+  m_modified = CDateTime::GetUTCDateTime();
 }
 
 void cSchedules::ResetVersions(void)

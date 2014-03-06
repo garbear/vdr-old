@@ -50,7 +50,6 @@ cSectionHandler::cSectionHandler(cDevice *Device)
   m_iStatusCount = 0;
   m_bOn = false;
   m_bWaitForLock = false;
-  m_lastIncompleteSection = 0;
   CreateThread();
 }
 
@@ -248,10 +247,10 @@ cSectionHandler::Process(void)
                     fi->ProcessData(pid, tid, buf, len);
                 }
               }
-              else if (time(NULL) - m_lastIncompleteSection > 10)
+              else if ((CDateTime::GetUTCDateTime() - m_lastIncompleteSection).GetSecondsTotal() > 10)
               { // log them only every 10 seconds
                 dsyslog("read incomplete section - len = %d, r = %d", len, r);
-                m_lastIncompleteSection = time(NULL);
+                m_lastIncompleteSection = CDateTime::GetUTCDateTime();
               }
             }
           }

@@ -51,7 +51,7 @@ private:
   CDateTime m_startTime;        // Start time of this event
   int duration;            // Duration of this event in seconds
   CDateTime m_vps;              // Video Programming Service timestamp (VPS, aka "Programme Identification Label", PIL)
-  time_t seen;             // When this event was last seen in the data stream
+  CDateTime seen;             // When this event was last seen in the data stream
 public:
   cEvent(tEventID EventID);
   ~cEvent();
@@ -76,8 +76,8 @@ public:
   int Duration(void) const { return duration; }
   bool HasVps(void) const { return m_vps.IsValid(); }
   CDateTime Vps(void) const { return m_vps; }
-  time_t Seen(void) const { return seen; }
-  bool SeenWithin(int Seconds) const { return time(NULL) - seen < Seconds; }
+  CDateTime Seen(void) const { return seen; }
+  bool SeenWithin(int Seconds) const { return (CDateTime::GetUTCDateTime() - seen).GetSecondsTotal() < Seconds; }
   bool HasTimer(void) const;
   bool IsRunning(bool OrAboutToStart = false) const;
   static const char *ContentToString(uchar Content);

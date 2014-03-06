@@ -24,6 +24,7 @@
 #include "EITScanner.h"
 #include "channels/Channel.h"
 #include "channels/ChannelManager.h"
+#include "utils/DateTime.h"
 
 #include <libsi/si.h>
 #include <libsi/si_ext.h>
@@ -80,8 +81,9 @@ cEitParser::cEitParser(cChannelManager& channelManager, int Source, u_char Tid, 
           // Premiere World
           if (ld->getLinkageType() == 0xB0)
           {
-            time_t now = time(NULL);
-            bool hit = SiEitEvent.getStartTime() <= now && now < SiEitEvent.getStartTime() + SiEitEvent.getDuration();
+            CDateTime now = CDateTime::GetUTCDateTime();
+            CDateTime eitStart = CDateTime(SiEitEvent.getStartTime()).GetAsUTCDateTime();
+            bool hit = eitStart <= now && now < eitStart + CDateTimeSpan(0, 0, 0, SiEitEvent.getDuration());
             if (hit)
             {
               char linkName[ld->privateData.getLength() + 1];

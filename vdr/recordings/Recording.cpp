@@ -395,7 +395,7 @@ cRecording::cRecording(TimerPtr Timer, const cEvent *Event)
   }
   // substitute characters that would cause problems in file names:
   StringUtils::Replace(m_strName, '\n', ' ');
-  m_start = Timer->StartTime();
+  m_start = Timer->StartTimeAsTime();
   m_iPriority = Timer->Priority();
   m_iLifetimeDays = Timer->LifetimeDays();
   // handle info:

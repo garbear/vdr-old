@@ -24,8 +24,7 @@
 
 #include "vdr/utils/CalendarUtils.h"
 #include "vdr/utils/UTF8Utils.h"
-
-#define VALID_TIME (31536000 * 2) // two years
+#include "vdr/utils/DateTime.h"
 
 // --- cEIT ------------------------------------------------------------------
 
@@ -39,8 +38,8 @@ private:
   bool          m_bHandledExternally;
   bool          m_bOnlyRunningStatus;
   bool          m_bModified;
-  time_t        m_SegmentStart;
-  time_t        m_SegmentEnd;
+  CDateTime     m_SegmentStart;
+  CDateTime     m_SegmentEnd;
   cSchedules*   m_Schedules;
   int           m_iSource;
   u_char        m_Tid;
@@ -48,12 +47,11 @@ private:
   SchedulePtr   m_Schedule;
   uchar         m_Version;
   ChannelPtr    m_channel;
-  struct tm     m_localTime;
   cEvent*       m_newEvent;
   cEvent*       m_rEvent;
   cEvent*       m_pEvent;
-  time_t        m_Now;
-  time_t        m_StartTime;
+  CDateTime     m_now;
+  CDateTime     m_StartTime;
   int           m_iDuration;
 
   int                           m_iLanguagePreferenceShort;
@@ -185,18 +183,13 @@ void cEIT::ParseSIDescriptor(SI::Descriptor* d)
   case SI::PDCDescriptorTag:
     {
       SI::PDCDescriptor *pd = (SI::PDCDescriptor *) d;
-      m_localTime.tm_isdst = -1; // makes sure mktime() will determine the correct DST setting
-      int month = m_localTime.tm_mon;
-      m_localTime.tm_mon = pd->getMonth() - 1;
-      m_localTime.tm_mday = pd->getDay();
-      m_localTime.tm_hour = pd->getHour();
-      m_localTime.tm_min = pd->getMinute();
-      m_localTime.tm_sec = 0;
-      if (month == 11 && m_localTime.tm_mon == 0) // current month is dec, but event is in jan
-        m_localTime.tm_year++;
-      else if (month == 0 && m_localTime.tm_mon == 11) // current month is jan, but event is in dec
-        m_localTime.tm_year--;
-      time_t vps = mktime(&m_localTime);
+      CDateTime vps = m_now;
+      vps.SetDateTime(vps.GetYear(), pd->getMonth(), pd->getDay(), pd->getHour(), pd->getMinute(), 0);
+      if (m_now.GetMonth() == 12 && vps.GetMonth() == 1) // current month is dec, but event is in jan
+        vps += CDateTimeSpan(1, 0, 0, 0);
+      else if (m_now.GetMonth() == 1 && vps.GetMonth() == 12) // current month is jan, but event is in dec
+        vps -= CDateTimeSpan(1, 0, 0, 0);
+
       cEpgHandlers::Get().SetVps(m_pEvent, vps);
     }
     break;
@@ -221,7 +214,7 @@ void cEIT::ParseSIDescriptor(SI::Descriptor* d)
           ld->getTransportStreamId(), ld->getServiceId());
       if (ld->getLinkageType() == 0xB0)
       { // Premiere World
-        bool hit = m_StartTime <= m_Now && m_Now < m_StartTime + m_iDuration;
+        bool hit = m_StartTime <= m_now && m_now < m_StartTime + CDateTimeSpan(0, 0, 0, m_iDuration);
         if (hit)
         {
           char linkName[ld->privateData.getLength() + 1];
@@ -285,16 +278,16 @@ bool cEIT::HandleEitEvent(SI::EIT::Event *EitEvent)
   if (cEpgHandlers::Get().HandleEitEvent(m_Schedule, EitEvent, m_Tid, m_Version))
     return true; // an EPG handler has done all of the processing
 
-  m_StartTime = EitEvent->getStartTime();
+  m_StartTime = CDateTime(EitEvent->getStartTime());
   m_iDuration = EitEvent->getDuration();
 
   // Drop bogus events - but keep NVOD reference events, where all bits of the start time field are set to 1, resulting in a negative number.
-  if (m_StartTime == 0 || (m_StartTime > 0 && m_iDuration == 0))
+  if (!m_StartTime.IsValid() || (m_StartTime.IsValid() && m_iDuration == 0))
     return false;
 
-  if (!m_SegmentStart)
+  if (!m_SegmentStart.IsValid())
     m_SegmentStart = m_StartTime;
-  m_SegmentEnd = m_StartTime + m_iDuration;
+  m_SegmentEnd = m_StartTime + CDateTimeSpan(0, 0, 0, m_iDuration);
 
   m_newEvent = NULL;
   m_rEvent   = NULL;
@@ -310,7 +303,7 @@ bool cEIT::HandleEitEvent(SI::EIT::Event *EitEvent)
     // If we don't have that event yet, we create a new one.
     // Otherwise we copy the information into the existing event anyway, because the data might have changed.
     m_pEvent = m_newEvent = new cEvent(EitEvent->getEventId());
-    m_newEvent->SetStartTime(CDateTime(m_StartTime).GetAsUTCDateTime());
+    m_newEvent->SetStartTime(m_StartTime);
     m_newEvent->SetDuration(m_iDuration);
     if (!m_bHandledExternally)
       m_Schedule->AddEvent(m_newEvent);
@@ -430,12 +423,10 @@ cEIT::cEIT(cSchedules *Schedules, int Source, u_char Tid, const u_char *Data, bo
   if (cEpgHandlers::Get().IgnoreChannel(*m_channel))
     return;
 
-  m_Now = time(NULL);
-  if (m_Now < VALID_TIME)
+  m_now = CDateTime::GetUTCDateTime();
+  if (!m_now.IsValid())
     return; // we need the current time for handling PDC descriptors
 
-  struct tm tm_r;
-  m_localTime          = *localtime_r(&m_Now, &tm_r); // this initializes the time zone in 't'
   m_bHandledExternally = cEpgHandlers::Get().HandledExternally(m_channel.get());
   m_Schedules          = Schedules;
   m_Schedule           = Schedules->GetSchedule(m_channel, true);
@@ -444,8 +435,6 @@ cEIT::cEIT(cSchedules *Schedules, int Source, u_char Tid, const u_char *Data, bo
   m_Data               = Data;
   m_bOnlyRunningStatus = OnlyRunningStatus;
   m_bModified          = false;
-  m_SegmentStart       = 0;
-  m_SegmentEnd         = 0;
   m_Version            = getVersionNumber();
 
   SI::EIT::Event SiEitEvent;
@@ -478,20 +467,21 @@ cEIT::cEIT(cSchedules *Schedules, int Source, u_char Tid, const u_char *Data, bo
 class cTDT : public SI::TDT {
 private:
   static PLATFORM::CMutex mutex;
-  static time_t lastAdj;
+  static CDateTime lastAdj;
 public:
   cTDT(const u_char *Data);
   };
 
 PLATFORM::CMutex cTDT::mutex;
-time_t cTDT::lastAdj = 0;
+CDateTime cTDT::lastAdj;
 
 cTDT::cTDT(const u_char *Data)
 :SI::TDT(Data, false)
 {
   CheckParse();
 
-#ifndef ANDROID
+  //XXX not adjusted to CDateTime yet
+#ifdef ADJUST_SYSTEM_TIME_FROM_DVB
   time_t dvbtim = getTime();
   time_t loctim = time(NULL);
 
@@ -504,8 +494,8 @@ cTDT::cTDT(const u_char *Data)
         else
            esyslog("ERROR while setting system time: %m");
         }
-     else if (time(NULL) - lastAdj > ADJ_DELTA) {
-        lastAdj = time(NULL);
+     else if ((CDateTime::GetUTCDateTime() - lastAdj).GetSecondsTotal() > ADJ_DELTA) {
+        lastAdj = CDateTime::GetUTCDateTime();
         timeval delta;
         delta.tv_sec = diff;
         delta.tv_usec = 0;
@@ -521,7 +511,7 @@ cTDT::cTDT(const u_char *Data)
 
 // --- cEitFilter ------------------------------------------------------------
 
-time_t cEitFilter::disableUntil = 0;
+CDateTime cEitFilter::disableUntil;
 
 cEitFilter::cEitFilter(void)
 {
@@ -531,16 +521,16 @@ cEitFilter::cEitFilter(void)
   Set(0x14, 0x70);        // TDT
 }
 
-void cEitFilter::SetDisableUntil(time_t Time)
+void cEitFilter::SetDisableUntil(const CDateTime& Time)
 {
   disableUntil = Time;
 }
 
 void cEitFilter::ProcessData(u_short Pid, u_char Tid, const u_char *Data, int Length)
 {
-  if (disableUntil) {
-     if (time(NULL) > disableUntil)
-        disableUntil = 0;
+  if (disableUntil.IsValid()) {
+     if (CDateTime::GetUTCDateTime() > disableUntil)
+        disableUntil.Reset();
      else
         return;
      }

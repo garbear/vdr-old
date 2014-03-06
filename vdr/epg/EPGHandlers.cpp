@@ -36,12 +36,13 @@ bool cEpgHandlers::HandledExternally(const cChannel *Channel)
   return false;
 }
 
-bool cEpgHandlers::IsUpdate(tEventID EventID, time_t StartTime, uchar TableID, uchar Version)
+bool cEpgHandlers::IsUpdate(tEventID EventID, const CDateTime& StartTime, uchar TableID, uchar Version)
 {
-  for (cEpgHandler *eh = First(); eh; eh = Next(eh)) {
-      if (eh->IsUpdate(EventID, StartTime, TableID, Version))
-         return true;
-      }
+  for (cEpgHandler *eh = First(); eh; eh = Next(eh))
+  {
+    if (eh->IsUpdate(EventID, StartTime, TableID, Version))
+      return true;
+  }
   return false;
 }
 
@@ -101,13 +102,14 @@ void cEpgHandlers::SetParentalRating(cEvent *Event, int ParentalRating)
   Event->SetParentalRating(ParentalRating);
 }
 
-void cEpgHandlers::SetStartTime(cEvent *Event, time_t StartTime)
+void cEpgHandlers::SetStartTime(cEvent *Event, const CDateTime& StartTime)
 {
-  for (cEpgHandler *eh = First(); eh; eh = Next(eh)) {
-      if (eh->SetStartTime(Event, StartTime))
-         return;
-      }
-  Event->SetStartTime(CDateTime(StartTime).GetAsUTCDateTime());
+  for (cEpgHandler *eh = First(); eh; eh = Next(eh))
+  {
+    if (eh->SetStartTime(Event, StartTime))
+      return;
+  }
+  Event->SetStartTime(StartTime);
 }
 
 void cEpgHandlers::SetDuration(cEvent *Event, int Duration)
@@ -119,12 +121,13 @@ void cEpgHandlers::SetDuration(cEvent *Event, int Duration)
   Event->SetDuration(Duration);
 }
 
-void cEpgHandlers::SetVps(cEvent *Event, time_t Vps)
+void cEpgHandlers::SetVps(cEvent *Event, const CDateTime& Vps)
 {
-  for (cEpgHandler *eh = First(); eh; eh = Next(eh)) {
-      if (eh->SetVps(Event, Vps))
-         return;
-      }
+  for (cEpgHandler *eh = First(); eh; eh = Next(eh))
+  {
+    if (eh->SetVps(Event, Vps))
+      return;
+  }
   Event->SetVps(Vps);
 }
 
@@ -163,16 +166,13 @@ void cEpgHandlers::SortSchedule(SchedulePtr Schedule)
   Schedule->Sort();
 }
 
-void cEpgHandlers::DropOutdated(SchedulePtr Schedule, time_t SegmentStart, time_t SegmentEnd, uchar TableID, uchar Version)
+void cEpgHandlers::DropOutdated(SchedulePtr Schedule, const CDateTime& SegmentStart, const CDateTime& SegmentEnd, uchar TableID, uchar Version)
 {
-  CDateTime segmentStartUTC = CDateTime(SegmentStart).GetAsUTCDateTime();
-  CDateTime segmentEndUTC   = CDateTime(SegmentEnd).GetAsUTCDateTime();
-
   for (cEpgHandler *eh = First(); eh; eh = Next(eh))
   {
-    if (eh->DropOutdated(Schedule, segmentStartUTC, segmentEndUTC, TableID, Version))
+    if (eh->DropOutdated(Schedule, SegmentStart, SegmentEnd, TableID, Version))
       return;
   }
 
-  Schedule->DropOutdated(segmentStartUTC, segmentEndUTC, TableID, Version);
+  Schedule->DropOutdated(SegmentStart, SegmentEnd, TableID, Version);
 }

@@ -14,6 +14,7 @@
 #include "Config.h"
 #include "utils/Tools.h"
 #include "utils/Observer.h"
+#include "utils/DateTime.h"
 #include "Timer.h"
 
 #include <vector>
@@ -61,7 +62,7 @@ private:
   void StartNewRecordings(const CDateTime& Now);
 
   int                        m_iState;
-  time_t                     m_lastSetEvents;
+  CDateTime                  m_lastSetEvents;
   time_t                     m_lastDeleteExpired;
   std::map<size_t, TimerPtr> m_timers;
   size_t                     m_maxIndex;

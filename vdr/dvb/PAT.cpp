@@ -28,7 +28,6 @@ cPatFilter::cPatFilter(void)
   pmtIndex = 0;
   pmtPid = 0;
   pmtSid = 0;
-  lastPmtScan = 0;
   numPmtEntries = 0;
   Set(0x00, 0x00);  // PAT
 }
@@ -39,7 +38,7 @@ void cPatFilter::SetStatus(bool On)
   pmtIndex = 0;
   pmtPid = 0;
   pmtSid = 0;
-  lastPmtScan = 0;
+  lastPmtScan.Reset();
   numPmtEntries = 0;
 }
 
@@ -70,11 +69,12 @@ void cPatFilter::ProcessData(u_short Pid, u_char Tid, const u_char *Data, int Le
 {
   if (Pid == 0x00) {
      if (Tid == 0x00) {
-        if (pmtPid && time(NULL) - lastPmtScan > PMT_SCAN_TIMEOUT) {
+       CDateTime now = CDateTime::GetUTCDateTime();
+        if (pmtPid && (now - lastPmtScan).GetSecondsTotal() > PMT_SCAN_TIMEOUT) {
            Del(pmtPid, 0x02);
            pmtPid = 0;
            pmtIndex++;
-           lastPmtScan = time(NULL);
+           lastPmtScan = now;
            }
         if (!pmtPid) {
            SI::PAT pat(Data, false);
@@ -104,7 +104,7 @@ void cPatFilter::ProcessData(u_short Pid, u_char Tid, const u_char *Data, int Le
      if (pmt.getServiceId() != pmtSid)
         return; // skip broken PMT records
      if (!PmtVersionChanged(pmtPid, pmt.getTableIdExtension(), pmt.getVersionNumber())) {
-        lastPmtScan = 0; // this triggers the next scan
+        lastPmtScan.Reset(); // this triggers the next scan
         return;
         }
      //XXX
@@ -348,7 +348,7 @@ void cPatFilter::ProcessData(u_short Pid, u_char Tid, const u_char *Data, int Le
         Channel->SetCaDescriptors(cCaDescriptorHandler::Get().AddCaDescriptors(CaDescriptors));
         Channel->NotifyObservers(ObservableMessageChannelChanged);
         }
-     lastPmtScan = 0; // this triggers the next scan
+     lastPmtScan.Reset(); // this triggers the next scan
 //     XXX Channels.Unlock();
      }
 }

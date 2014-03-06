@@ -594,13 +594,13 @@ bool cVNSIClient::process_Login() /* OPCODE 1 */
   isyslog("Welcome client '%s' with protocol version '%u'", clientName, m_protocolVersion);
 
   // Send the login reply
-  time_t timeNow        = time(NULL);
-  struct tm* timeStruct = localtime(&timeNow);
-  int timeOffset        = timeStruct->tm_gmtoff;
+  time_t timeNow;
+  CDateTime now = CDateTime::GetCurrentDateTime();
+  now.GetAsTime(timeNow);
 
   m_resp->add_U32(VNSI_PROTOCOLVERSION);
   m_resp->add_U32(timeNow);
-  m_resp->add_S32(timeOffset);
+  m_resp->add_S32(CDateTime::GetTimezoneBias().GetHours());
   m_resp->add_String("VDR-Network-Streaming-Interface (VNSI) Server");
   m_resp->add_String(VNSI_SERVER_VERSION);
   m_resp->finalise();
@@ -619,12 +619,12 @@ bool cVNSIClient::process_Login() /* OPCODE 1 */
 
 bool cVNSIClient::process_GetTime() /* OPCODE 2 */
 {
-  time_t timeNow        = time(NULL);
-  struct tm* timeStruct = localtime(&timeNow);
-  int timeOffset        = timeStruct->tm_gmtoff;
+  time_t timeNow;
+  CDateTime now = CDateTime::GetCurrentDateTime();
+  now.GetAsTime(timeNow);
 
   m_resp->add_U32(timeNow);
-  m_resp->add_S32(timeOffset);
+  m_resp->add_S32(CDateTime::GetTimezoneBias().GetHours());
   m_resp->finalise();
   m_socket.write(m_resp->getPtr(), m_resp->getLen());
   return true;
@@ -1263,8 +1263,8 @@ bool cVNSIClient::processTIMER_Get() /* OPCODE 81 */
       m_resp->add_U32(timer->LifetimeDays());
       m_resp->add_U32(timer->Channel()->Number());
       m_resp->add_U32(timer->Channel()->Hash());
-      m_resp->add_U32(timer->StartTime());
-      m_resp->add_U32(timer->StopTime());
+      m_resp->add_U32(timer->StartTimeAsTime());
+      m_resp->add_U32(timer->EndTimeAsTime());
       m_resp->add_U32(timer->Day());
       m_resp->add_U32(timer->WeekDays());
       m_resp->add_String(m_toUTF8.Convert(timer->RecordingFilename().c_str()));
@@ -1298,8 +1298,8 @@ bool cVNSIClient::processTIMER_GetList() /* OPCODE 82 */
     m_resp->add_U32((*it)->LifetimeDays());
     m_resp->add_U32((*it)->Channel()->Number());
     m_resp->add_U32((*it)->Channel()->Hash());
-    m_resp->add_U32((*it)->StartTime());
-    m_resp->add_U32((*it)->StopTime());
+    m_resp->add_U32((*it)->StartTimeAsTime());
+    m_resp->add_U32((*it)->EndTimeAsTime());
     m_resp->add_U32((*it)->Day());
     m_resp->add_U32((*it)->WeekDays());
     m_resp->add_String(m_toUTF8.Convert((*it)->RecordingFilename().c_str()));

@@ -253,14 +253,15 @@ bool IsOnVideoDirectoryFileSystem(const std::string& strFileName)
 #define MB_PER_MINUTE 25.75 // this is just an estimate!
 
 int cVideoDiskUsage::state = 0;
-time_t cVideoDiskUsage::lastChecked = 0;
+CDateTime cVideoDiskUsage::lastChecked = 0;
 size_t cVideoDiskUsage::usedPercent = 0;
 size_t cVideoDiskUsage::freeMB = 0;
 size_t cVideoDiskUsage::freeMinutes = 0;
 
 bool cVideoDiskUsage::HasChanged(int &State)
 {
-  if (time(NULL) - lastChecked > DISKSPACECHEK)
+  CDateTime now = CDateTime::GetUTCDateTime();
+  if ((now - lastChecked).GetSecondsTotal() > DISKSPACECHEK)
   {
     disk_space_t space;
     unsigned int UsedPercent = VideoDiskSpace(space);
@@ -274,7 +275,7 @@ bool cVideoDiskUsage::HasChanged(int &State)
       freeMinutes = size_t(double(space.free / MEGABYTE(1)) / MBperMinute);
       state++;
     }
-    lastChecked = time(NULL);
+    lastChecked = now;
   }
   if (State != state)
   {

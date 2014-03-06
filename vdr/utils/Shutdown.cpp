@@ -173,7 +173,7 @@ bool cShutdownHandler::ConfirmShutdown(bool Interactive)
 //     }
 
   TimerPtr timer = cTimers::Get().GetNextActiveTimer();
-  time_t Next = timer ? timer->StartTime() : 0;
+  time_t Next = timer ? timer->StartTimeAsTime() : 0;
   time_t Delta = timer ? Next - time(NULL) : 0;
 
 //XXX  if (cRecordControls::Active() || (Next && Delta <= 0)) {
@@ -217,7 +217,7 @@ bool cShutdownHandler::ConfirmRestart(bool Interactive)
      }
 
   TimerPtr timer = cTimers::Get().GetNextActiveTimer();
-  time_t Next  = timer ? timer->StartTime() : 0;
+  time_t Next  = timer ? timer->StartTimeAsTime() : 0;
   time_t Delta = timer ? Next - time(NULL) : 0;
 
 //XXX  if (cRecordControls::Active() || (Next && Delta <= 0)) {
@@ -238,7 +238,7 @@ bool cShutdownHandler::DoShutdown(bool Force)
   TimerPtr timer = cTimers::Get().GetNextActiveTimer();
 //XXX  cPlugin *Plugin = cPluginManager::GetNextWakeupPlugin();
 
-  time_t Next = timer ? timer->StartTime() : 0;
+  time_t Next = timer ? timer->StartTimeAsTime() : 0;
 //XXX  time_t NextPlugin = Plugin ? Plugin->WakeupTime() : 0;
 //  if (NextPlugin && (!Next || Next > NextPlugin)) {
 //     Next = NextPlugin;

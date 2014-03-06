@@ -12,6 +12,7 @@
 
 #include <stdlib.h>
 #include "utils/Tools.h"
+#include "utils/DateTime.h"
 #include "filesystem/Directory.h"
 
 class CVideoFile;
@@ -31,7 +32,7 @@ bool IsOnVideoDirectoryFileSystem(const std::string& strFileName);
 class cVideoDiskUsage {
 private:
   static int state;
-  static time_t lastChecked;
+  static CDateTime lastChecked;
   static size_t usedPercent;
   static size_t freeMB;
   static size_t freeMinutes;
@@ -42,7 +43,7 @@ public:
     ///< initialize State to -1, and it will be set to the current internal state
     ///< value of the video disk usage checker upon return. Future calls with the same
     ///< State variable can then quickly check for changes.
-  static void ForceCheck(void) { lastChecked = 0; }
+  static void ForceCheck(void) { lastChecked.Reset(); }
     ///< To avoid unnecessary load, the video disk usage is only actually checked
     ///< every DISKSPACECHEK seconds. Calling ForceCheck() makes sure that the next call
     ///< to HasChanged() will check the disk usage immediately. This is useful in case

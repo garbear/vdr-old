@@ -14,6 +14,7 @@
 #define __EPG_H
 
 #include "Schedule.h"
+#include "utils/DateTime.h"
 #include <vector>
 #include <map>
 
@@ -39,7 +40,7 @@ class cSchedules
 public:
   virtual ~cSchedules(void);
 
-  static time_t Modified(void);
+  static CDateTime Modified(void);
   void SetModified(SchedulePtr Schedule);
   void ResetVersions(void);
   bool ClearAll(void);
@@ -61,7 +62,7 @@ private:
   cSchedules(void);
 
   PLATFORM::CReadWriteLock  m_rwlock;
-  time_t                    m_modified;
+  CDateTime                 m_modified;
   std::vector<SchedulePtr>  m_schedules;
   bool                      m_bHasUnsavedData;
 };

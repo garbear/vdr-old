@@ -24,6 +24,7 @@
 #include "devices/Receiver.h"
 #include "platform/threads/threads.h"
 #include "Types.h"
+#include "utils/DateTime.h"
 
 class cRingBufferLinear;
 
@@ -64,7 +65,7 @@ private:
   bool m_bStopped;
   bool fuzzy;
   int hits;
-  int timeout;
+  CDateTime m_timeout;
   uint32_t TsCount;
   uint16_t cni_8_30_1;
   uint16_t cni_8_30_2;

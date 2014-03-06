@@ -124,7 +124,7 @@ void cEvent::SetVps(const CDateTime& Vps)
 
 void cEvent::SetSeen(void)
 {
-  seen = time(NULL);
+  seen = CDateTime::GetUTCDateTime();
 }
 
 std::string cEvent::ToDescr(void) const
@@ -527,6 +527,7 @@ static void EpgBugFixStat(int Number, tChannelID ChannelID)
   }
 }
 
+#if 0
 void ReportEpgBugFixStats(bool Force)
 {
   if (g_setup.EPGBugfixLevel > 0)
@@ -623,6 +624,8 @@ static void StripControlCharacters(char *s)
     }
   }
 }
+
+#endif
 
 void cEvent::FixEpgBugs(void)
 {

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "utils/Tools.h"
+#include "utils/DateTime.h"
 #include "Event.h"
 
 class cEpgHandler : public cListObject {
@@ -31,7 +32,7 @@ public:
           ///< source. Incoming EIT data is processed as usual, but any new EPG event
           ///< will not be added to the respective schedule. It's up to the EPG
           ///< handler to take care of this.
-  virtual bool IsUpdate(tEventID EventID, time_t StartTime, uchar TableID, uchar Version) { return false; }
+  virtual bool IsUpdate(tEventID EventID, const CDateTime& StartTime, uchar TableID, uchar Version) { return false; }
           ///< VDR can't perform the update check (version, tid) for externally handled events,
           ///< therefore the EPG handlers have to take care of this. Otherwise the parsing of
           ///< non-updates will waste a lot of resources.
@@ -41,9 +42,9 @@ public:
   virtual bool SetDescription(cEvent *Event, const std::string& strDescription) { return false; }
   virtual bool SetContents(cEvent *Event, uchar *Contents) { return false; }
   virtual bool SetParentalRating(cEvent *Event, int ParentalRating) { return false; }
-  virtual bool SetStartTime(cEvent *Event, time_t StartTime) { return false; }
+  virtual bool SetStartTime(cEvent *Event, const CDateTime& StartTime) { return false; }
   virtual bool SetDuration(cEvent *Event, int Duration) { return false; }
-  virtual bool SetVps(cEvent *Event, time_t Vps) { return false; }
+  virtual bool SetVps(cEvent *Event, const CDateTime& Vps) { return false; }
   virtual bool SetComponents(cEvent *Event, CEpgComponents *Components) { return false; }
   virtual bool FixEpgBugs(cEvent *Event) { return false; }
           ///< Fixes some known problems with EPG data.

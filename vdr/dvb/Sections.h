@@ -14,6 +14,7 @@
 #include "Filter.h"
 #include "channels/Channel.h"
 #include "utils/Tools.h"
+#include "utils/DateTime.h"
 #include "platform/threads/threads.h"
 
 class cDevice;
@@ -29,7 +30,7 @@ private:
   cDevice*                m_device;
   int                     m_iStatusCount;
   bool                    m_bOn, m_bWaitForLock;
-  time_t                  m_lastIncompleteSection;
+  CDateTime               m_lastIncompleteSection;
   cList<cFilter>          m_filters;
   cList<cFilterHandle>    m_filterHandles;
   PLATFORM::CMutex        m_mutex;

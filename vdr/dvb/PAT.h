@@ -12,12 +12,13 @@
 
 #include <stdint.h>
 #include "Filter.h"
+#include "utils/DateTime.h"
 
 #define MAXPMTENTRIES 64
 
 class cPatFilter : public cFilter {
 private:
-  time_t lastPmtScan;
+  CDateTime lastPmtScan;
   int pmtIndex;
   int pmtPid;
   int pmtSid;

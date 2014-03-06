@@ -67,8 +67,10 @@ public:
   bool Matches(CDateTime checkTime = CDateTime::GetCurrentDateTime(), bool bDirectly = false, int iMarginSeconds = 0);
   eTimerMatch MatchesEvent(const cEvent *Event, int *Overlap = NULL);
   bool Expired(void) const;
-  time_t StartTime(void) const;
-  time_t StopTime(void) const;
+  time_t StartTimeAsTime(void) const;
+  CDateTime StartTime(void) const { return m_time.Start(); }
+  time_t EndTimeAsTime(void) const;
+  CDateTime EndTime(void) const { return m_time.End(); }
   bool HasFlags(uint Flags) const;
   size_t Index(void) const { return m_index; }
 

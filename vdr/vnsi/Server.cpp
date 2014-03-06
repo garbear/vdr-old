@@ -203,7 +203,7 @@ void* cVNSIServer::Process(void)
   cTimers::Get().Modified(timerState);
 
   // last update of epg
-  time_t epgUpdate = cSchedules::Modified();
+  CDateTime epgUpdate = cSchedules::Modified();
 
   // delete old timeshift file
   std::string cmd;
@@ -298,14 +298,14 @@ void* cVNSIServer::Process(void)
       }
 
       // update epg
-      time_t epgModified(cSchedules::Modified());
-      if((epgModified > epgUpdate + 10) || time(NULL) > epgUpdate + 300)
+      CDateTime epgModified(cSchedules::Modified());
+      if((epgModified > epgUpdate + CDateTimeSpan(0, 0, 0, 10)) || CDateTime::GetUTCDateTime() > epgUpdate + CDateTimeSpan(0, 0, 0, 300))
       {
         for (ClientList::iterator i = m_clients.begin(); i != m_clients.end(); i++)
         {
          (*i)->EpgChange();
         }
-        epgUpdate = epgModified ? epgModified : time(NULL);
+        epgUpdate = epgModified.IsValid() ? epgModified : CDateTime::GetUTCDateTime();
       }
       continue;
     }

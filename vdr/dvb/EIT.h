@@ -11,15 +11,16 @@
 #define __EIT_H
 
 #include "Filter.h"
+#include "utils/DateTime.h"
 
 class cEitFilter : public cFilter {
 private:
-  static time_t disableUntil;
+  static CDateTime disableUntil;
 protected:
   virtual void ProcessData(u_short Pid, u_char Tid, const u_char *Data, int Length);
 public:
   cEitFilter(void);
-  static void SetDisableUntil(time_t Time);
+  static void SetDisableUntil(const CDateTime& Time);
   };
 
 #endif //__EIT_H
