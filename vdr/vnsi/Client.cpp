@@ -1059,7 +1059,6 @@ bool cVNSIClient::processCHANNELS_GetGroupMembers()
   bool automatic = group->Automatic();
   std::string name;
 
-  //XXX
   std::vector<ChannelPtr> channels = cChannelManager::Get().GetCurrent();
   for (std::vector<ChannelPtr>::const_iterator it = channels.begin(); it != channels.end(); ++it)
   {
@@ -1409,7 +1408,7 @@ bool cVNSIClient::processTIMER_Update() /* OPCODE 85 */
   uint32_t index  = m_req->extract_U32();
   bool active     = m_req->extract_U32();
 
-  TimerPtr timer = cTimers::Get().GetByIndex(index - 1);
+  TimerPtr timer = cTimers::Get().GetByIndex(index);
   if (!timer)
   {
     esyslog("Timer \"%u\" not defined", index);
