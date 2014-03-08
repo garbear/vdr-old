@@ -1639,27 +1639,27 @@ bool cVNSIClient::processRECORDINGS_Delete() /* OPCODE 104 */
   {
     dsyslog("deleting recording: %s", recording->Name().c_str());
 
-//    cRecordControl *rc = cRecordControls::GetRecordControl(recording->FileName());
-//    if (!rc)
-//    {
-//      if (recording->Delete())
-//      {
-//        // Copy svdrdeveldevelp's way of doing this, see if it works
-//        Recordings.DelByName(recording->FileName());
-//        isyslog("Recording \"%s\" deleted", recording->FileName());
-//        m_resp->add_U32(VNSI_RET_OK);
-//      }
-//      else
-//      {
-//        esyslog("Error while deleting recording!");
-//        m_resp->add_U32(VNSI_RET_ERROR);
-//      }
-//    }
-//    else
-//    {
-//      esyslog("Recording \"%s\" is in use by timer %d", recording->Name(), rc->Timer()->Index() + 1);
-//      m_resp->add_U32(VNSI_RET_DATALOCKED);
-//    }
+    TimerPtr tmrRecording = cTimers::Get().GetTimerForRecording(recording);
+    if (tmrRecording)
+    {
+      esyslog("Recording \"%s\" is in use by timer %d", recording->Name().c_str(), tmrRecording->Index() + 1);
+      m_resp->add_U32(VNSI_RET_DATALOCKED);
+    }
+    else
+    {
+      //XXX
+      if (recording->Delete())
+      {
+        // Copy svdrdeveldevelp's way of doing this, see if it works
+        Recordings.DelByName(recording->FileName());
+        m_resp->add_U32(VNSI_RET_OK);
+      }
+      else
+      {
+        esyslog("Error while deleting recording!");
+        m_resp->add_U32(VNSI_RET_ERROR);
+      }
+    }
   }
   else
   {

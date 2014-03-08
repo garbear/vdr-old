@@ -33,7 +33,7 @@
 
 using namespace std;
 
-int SysLogLevel = 2;
+int SysLogLevel = 3;
 
 #define MAXSYSLOGBUF 256
 #define LOG_STDOUT (1)

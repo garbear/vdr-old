@@ -28,6 +28,7 @@ cTimer::cTimer(void)
   m_iPriority     = g_setup.DefaultPriority;
   m_iLifetimeDays = g_setup.DefaultLifetime;
   m_recorder      = NULL;
+  m_recording     = NULL;
 
   Matches();
 }
@@ -44,6 +45,7 @@ cTimer::cTimer(ChannelPtr channel, const CTimerTime& time, uint32_t iTimerFlags,
   m_index                = 0;
   m_recorder             = NULL;
   m_time                 = time;
+  m_recording            = NULL;
 
   Matches();
 }
@@ -59,6 +61,7 @@ cTimer::cTimer(const cEvent *Event)
   m_time          = CTimerTime(Event);
   m_iPriority     = g_setup.DefaultPriority;
   m_iLifetimeDays = g_setup.DefaultLifetime;
+  m_recording     = NULL;
 
   std::string strTitle   = Event->Title();
   if (!strTitle.empty())
@@ -94,6 +97,7 @@ cTimer& cTimer::operator= (const cTimer &Timer)
      m_strRecordingFilename = Timer.m_strRecordingFilename;
      m_recorder             = Timer.m_recorder;
      m_time                 = Timer.m_time;
+     m_recording            = Timer.m_recording;
 
      Matches();
   }
@@ -351,9 +355,10 @@ void cTimer::SetEvent(const cEvent *Event)
   }
 }
 
-void cTimer::SetRecording(cRecorder* recorder)
+void cTimer::SetRecording(cRecorder* recorder, cRecording* recording)
 {
-  m_recorder = recorder;
+  m_recorder  = recorder;
+  m_recording = recording;
   if (m_recorder)
     SetFlags(tfRecording);
   else
@@ -475,8 +480,7 @@ bool cTimer::StartRecording(void)
 //          cStatus::MsgRecording(device, recording.Name(), recording.FileName(), true);
 //          if (!Timer && !cReplayControl::LastReplayed()) // an instant recording, maybe from cRecordControls::PauseLiveVideo()
 //                       cReplayControl::SetRecording(fileName);
-          Recordings.AddByName(recording.FileName());
-          SetRecording(recorder);
+          SetRecording(recorder, Recordings.AddByName(recording.FileName()));
         }
         else
         {
@@ -567,7 +571,7 @@ bool cTimer::CheckRecordingStatus(const CDateTime& Now)
     {
       SetPending(false);
       delete m_recorder;
-      SetRecording(NULL);
+      SetRecording(NULL, NULL);
 
       return false;
     }

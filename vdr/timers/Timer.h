@@ -5,6 +5,8 @@
 #include "channels/Channel.h"
 #include "TimerTime.h"
 
+class cRecording;
+
 enum eTimerFlags
 {
   tfNone      = 0,
@@ -78,7 +80,8 @@ public:
   void SetEventFromSchedule(cSchedules *Schedules = NULL);
   void ClearEvent(void);
   void SetEvent(const cEvent *Event);
-  void SetRecording(cRecorder* recorder);
+  void SetRecording(cRecorder* recorder, cRecording* recording);
+  cRecording* GetRecording(void) const { return m_recording; }
   void SetPending(bool Pending);
   void SetInVpsMargin(bool InVpsMargin);
   void SetDuration(int iDurationSecs);
@@ -109,5 +112,6 @@ private:
   std::string   m_strRecordingFilename;    ///< filename of the recording or empty if not recording or recorded
   ChannelPtr    m_channel;                 ///< the channel to record
   cRecorder*    m_recorder;                ///< the recorder that's being used while this timer is being recorded
+  cRecording*   m_recording;               ///< the recording that is currently running
   size_t        m_index; // XXX (re)move me
 };

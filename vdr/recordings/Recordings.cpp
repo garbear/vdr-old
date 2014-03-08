@@ -167,17 +167,20 @@ cRecording *cRecordings::GetByName(const std::string& strFileName)
   return NULL;
 }
 
-void cRecordings::AddByName(const std::string& strFileName, bool TriggerUpdate)
+cRecording* cRecordings::AddByName(const std::string& strFileName, bool TriggerUpdate)
 {
   CThreadLock lock(this);
   cRecording *recording = GetByName(strFileName);
-  if (!recording) {
-     recording = new cRecording(strFileName);
-     m_recordings.push_back(recording);
-     ChangeState();
-     if (TriggerUpdate)
-        TouchUpdate();
-     }
+  if (!recording)
+  {
+    recording = new cRecording(strFileName);
+    m_recordings.push_back(recording);
+    ChangeState();
+    if (TriggerUpdate)
+      TouchUpdate();
+  }
+
+  return recording;
 }
 
 cRecording* cRecordings::FindByUID(uint32_t uid)

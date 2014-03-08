@@ -25,8 +25,8 @@ public:
   void ChangeState(void) { state++; }
   bool StateChanged(int &State);
   void ResetResume(const std::string& ResumeFileName = "");
-  cRecording *GetByName(const std::string& strFileName);
-  void AddByName(const std::string& strFileName, bool TriggerUpdate = true);
+  cRecording* GetByName(const std::string& strFileName);
+  cRecording* AddByName(const std::string& strFileName, bool TriggerUpdate = true);
   cRecording* FindByUID(uint32_t uid);
   void DelByName(const std::string& strFileName);
   void UpdateByName(const std::string& strFileName);

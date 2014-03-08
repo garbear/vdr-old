@@ -37,6 +37,7 @@ public:
   cRecording(TimerPtr Timer, const cEvent *Event);
   cRecording(const std::string& strFileName);
   virtual ~cRecording();
+  bool operator==(const cRecording& other) const;
   time_t Start(void) const { return m_start; }
   CDateTime Start2(void) const { return CDateTime(m_start).GetAsUTCDateTime(); } //XXX
   int Priority(void) const { return m_iPriority; }
@@ -118,6 +119,7 @@ private:
   int             m_iLifetimeDays;
   time_t          m_deleted;
   int64_t         m_hash;
+  PLATFORM::CMutex m_mutex;
 };
 
 #endif //__RECORDING_H

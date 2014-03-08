@@ -479,6 +479,11 @@ cRecording::~cRecording()
   delete m_recordingInfo;
 }
 
+bool cRecording::operator==(const cRecording& other) const
+{
+  return m_strFileName.compare(other.m_strFileName) == 0;
+}
+
 char *cRecording::StripEpisodeName(char *s, bool Strip)
 {
   char *t = s, *s1 = NULL, *s2 = NULL;
@@ -510,6 +515,7 @@ char *cRecording::StripEpisodeName(char *s, bool Strip)
 
 int cRecording::GetResume(void)
 {
+  PLATFORM::CLockObject lock(m_mutex);
   if (m_iResume == RESUME_NOT_INITIALIZED) {
      cResumeFile ResumeFile(FileName(), m_bIsPesRecording);
      m_iResume = ResumeFile.Read();
@@ -519,6 +525,7 @@ int cRecording::GetResume(void)
 
 std::string cRecording::FileName(void)
 {
+  PLATFORM::CLockObject lock(m_mutex);
   if (m_strFileName.empty())
   {
     struct tm tm_r;
@@ -539,6 +546,7 @@ std::string cRecording::FileName(void)
 uint32_t cRecording::UID(void)
 {
   /** stored so the id doesn't change when the filename changes */
+  PLATFORM::CLockObject lock(m_mutex);
   if (m_hash < 0)
     m_hash = (int64_t)CCRC32::CRC32(FileName());
   return (uint32_t)m_hash;
@@ -546,6 +554,7 @@ uint32_t cRecording::UID(void)
 
 std::string cRecording::PrefixFileName(char Prefix)
 {
+  PLATFORM::CLockObject lock(m_mutex);
   std::string p = PrefixVideoFileName(FileName(), Prefix);
   if (!p.empty())
   {
@@ -557,6 +566,7 @@ std::string cRecording::PrefixFileName(char Prefix)
 
 int cRecording::HierarchyLevels(void) const
 {
+  PLATFORM::CLockObject lock(m_mutex);
   const char *s = m_strName.c_str();
   int level = 0;
   while (*++s)
@@ -569,6 +579,7 @@ int cRecording::HierarchyLevels(void) const
 
 bool cRecording::IsEdited(void) const
 {
+  PLATFORM::CLockObject lock(m_mutex);
   size_t pos = m_strName.find(FOLDERDELIMCHAR);
   return pos != std::string::npos &&
       pos + 1 < m_strName.size() &&
@@ -577,6 +588,7 @@ bool cRecording::IsEdited(void) const
 
 bool cRecording::IsOnVideoDirectoryFileSystem(void)
 {
+  PLATFORM::CLockObject lock(m_mutex);
   if (m_iIsOnVideoDirectoryFileSystem < 0)
      m_iIsOnVideoDirectoryFileSystem = ::IsOnVideoDirectoryFileSystem(FileName());
   return m_iIsOnVideoDirectoryFileSystem;
@@ -584,6 +596,7 @@ bool cRecording::IsOnVideoDirectoryFileSystem(void)
 
 void cRecording::ReadInfo(void)
 {
+  PLATFORM::CLockObject lock(m_mutex);
   m_recordingInfo->Read();
   m_iPriority        = m_recordingInfo->Priority();
   m_iLifetimeDays    = m_recordingInfo->Lifetime();
@@ -592,12 +605,14 @@ void cRecording::ReadInfo(void)
 
 bool cRecording::WriteInfo(void)
 {
+  PLATFORM::CLockObject lock(m_mutex);
   std::string InfoFileName = StringUtils::Format("%s%s", m_strFileName.c_str(), m_bIsPesRecording ? INFOFILESUFFIX ".vdr" : INFOFILESUFFIX);
   return m_recordingInfo->Write(InfoFileName);
 }
 
 void cRecording::SetStartTime(time_t Start)
 {
+  PLATFORM::CLockObject lock(m_mutex);
   m_start = Start;
   m_strFileName.clear();
 }
@@ -605,11 +620,12 @@ void cRecording::SetStartTime(time_t Start)
 bool cRecording::Delete(void)
 {
   bool result = true;
+  PLATFORM::CLockObject lock(m_mutex);
   std::string strNewName = FileName();
   std::string strExt = URLUtils::GetExtension(strNewName);
-  if (!strExt.empty() && strcmp(strExt.c_str(), RECEXT_) == 0)
+  if (!strExt.empty() && strcmp(strExt.substr(1).c_str(), RECEXT_) == 0)
   {
-    strNewName.erase(strNewName.size() - strExt.size());
+    strNewName.erase(strNewName.size() - strExt.size() + 1);
     strNewName.append(DELEXT_);
     if (CFile::Exists(strNewName))
     {
@@ -635,6 +651,7 @@ bool cRecording::Delete(void)
 
 bool cRecording::Remove(void)
 {
+  PLATFORM::CLockObject lock(m_mutex);
   // let's do a final safety check here:
   if (!StringUtils::EndsWith(FileName(), DELEXT_))
   {
@@ -648,6 +665,7 @@ bool cRecording::Remove(void)
 bool cRecording::Undelete(void)
 {
   bool result = true;
+  PLATFORM::CLockObject lock(m_mutex);
   std::string strNewName = FileName();
   std::string strExt = URLUtils::GetExtension(strNewName);
   if (!strExt.empty() && strcmp(strExt.c_str(), DELEXT_) == 0)
@@ -679,11 +697,13 @@ bool cRecording::Undelete(void)
 
 void cRecording::ResetResume(void)
 {
+  PLATFORM::CLockObject lock(m_mutex);
   m_iResume = RESUME_NOT_INITIALIZED;
 }
 
 int cRecording::NumFrames(void)
 {
+  PLATFORM::CLockObject lock(m_mutex);
   if (m_iNumFrames < 0)
   {
     int nf = cIndexFile::GetLength(FileName(), IsPesRecording());
@@ -705,6 +725,7 @@ int cRecording::LengthInSeconds(void)
 
 size_t cRecording::FileSizeMB(void)
 {
+  PLATFORM::CLockObject lock(m_mutex);
   if (m_iFileSizeMB < 0)
   {
     size_t fs = DirSizeMB(FileName());

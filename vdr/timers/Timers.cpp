@@ -408,3 +408,19 @@ size_t cTimers::Size(void)
   CLockObject lock(m_mutex);
   return m_timers.size();
 }
+
+TimerPtr cTimers::GetTimerForRecording(const cRecording* recording) const
+{
+  TimerPtr retval;
+  if (!recording)
+    return retval;
+
+  CLockObject lock(m_mutex);
+  for (std::map<size_t, TimerPtr>::const_iterator it = m_timers.begin(); !retval && it != m_timers.end(); ++it)
+  {
+    cRecording* tmrRecording = it->second->GetRecording();
+    if (tmrRecording && *tmrRecording == *recording)
+      retval = it->second;
+  }
+  return retval;
+}

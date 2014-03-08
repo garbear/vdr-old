@@ -56,6 +56,8 @@ public:
 
   void Process(void);
 
+  TimerPtr GetTimerForRecording(const cRecording* recording) const;
+
 private:
   cTimers(void);
 
