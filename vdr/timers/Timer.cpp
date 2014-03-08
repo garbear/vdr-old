@@ -566,7 +566,6 @@ bool cTimer::CheckRecordingStatus(const CDateTime& Now)
     if (!m_recorder->IsAttached() || !Matches(Now))
     {
       SetPending(false);
-      m_recorder->DetachDevice();
       delete m_recorder;
       SetRecording(NULL);
 
