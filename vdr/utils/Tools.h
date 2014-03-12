@@ -224,38 +224,6 @@ public:
   char *Read(FILE *f);
   };
 
-class cVDRFile {
-private:
-  static bool files[];
-  static int maxFiles;
-  int f;
-public:
-  cVDRFile(void);
-  ~cVDRFile();
-  operator int () { return f; }
-  bool Open(const char *FileName, int Flags, mode_t Mode = DEFFILEMODE);
-  bool Open(int FileDes);
-  void Close(void);
-  bool IsOpen(void) { return f >= 0; }
-  bool Ready(bool Wait = true);
-  static bool AnyFileReady(int FileDes = -1, int TimeoutMs = 1000);
-  static bool FileReady(int FileDes, int TimeoutMs = 1000);
-  static bool FileReadyForWriting(int FileDes, int TimeoutMs = 1000);
-  };
-
-class cSafeFile {
-private:
-  FILE *f;
-  char *fileName;
-  char *tempName;
-public:
-  cSafeFile(const char *FileName);
-  ~cSafeFile();
-  operator FILE* () { return f; }
-  bool Open(void);
-  bool Close(void);
-  };
-
 class cLockFile {
 private:
   std::string m_strFilename;

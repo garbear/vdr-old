@@ -137,6 +137,7 @@ cVideoBufferTimeshift::cVideoBufferTimeshift()
   m_ReadPtr = 0;
   m_WritePtr = 0;
   m_BytesConsumed = 0;
+  m_BufferSize = 0;
 }
 
 off_t cVideoBufferTimeshift::GetPosMin()
@@ -211,6 +212,7 @@ protected:
 cVideoBufferRAM::cVideoBufferRAM()
 {
   m_Buffer = 0;
+  m_BufferPtr = 0;
 }
 
 cVideoBufferRAM::~cVideoBufferRAM()
@@ -344,8 +346,8 @@ protected:
   virtual bool Init();
   virtual int ReadBytes(uint8_t *buf, off_t pos, unsigned int size);
   int m_ClientID;
-  cString m_Filename;
-  int m_Fd;
+  std::string m_Filename;
+  CFile m_file;
   uint8_t *m_ReadCache;
   unsigned int m_ReadCachePtr;
   unsigned int m_ReadCacheSize;
@@ -354,27 +356,27 @@ protected:
 
 cVideoBufferFile::cVideoBufferFile()
 {
-
+  m_ReadCache = NULL;
+  m_ReadCachePtr = 0;
+  m_ReadCacheSize = 0;
+  m_ReadCacheMaxSize = 0;
+  m_ClientID = 0;
 }
 
 cVideoBufferFile::cVideoBufferFile(int clientID)
 {
   m_ClientID = clientID;
-  m_Fd = 0;
   m_ReadCacheSize = 0;
-  m_ReadCache = 0;
+  m_ReadCache = NULL;
+  m_ReadCachePtr = 0;
+  m_ReadCacheMaxSize = 0;
 }
 
 cVideoBufferFile::~cVideoBufferFile()
 {
-  if (m_Fd)
-  {
-    close(m_Fd);
-    unlink(m_Filename);
-    m_Fd = 0;
-  }
-  if (m_ReadCache)
-    free(m_ReadCache);
+  m_file.Close();
+  CFile::Delete(m_Filename);
+  free(m_ReadCache);
 }
 
 bool cVideoBufferFile::Init()
@@ -388,34 +390,34 @@ bool cVideoBufferFile::Init()
 
   m_BufferSize = (off_t)cSettings::Get().m_TimeshiftBufferFileSize*1000*1000*1000;
 
-  struct stat sb;
   std::string strTimeshiftBufferDir = cSettings::Get().m_TimeshiftBufferDir;
-  if (!strTimeshiftBufferDir.empty() && stat(strTimeshiftBufferDir.c_str(), &sb) == 0 && S_ISDIR(sb.st_mode))
+  if (!strTimeshiftBufferDir.empty() && CDirectory::Exists(strTimeshiftBufferDir.c_str()))
   {
-    if (strTimeshiftBufferDir.at(strTimeshiftBufferDir.length() - 1) == '/')
-      m_Filename = cString::sprintf("%sTimeshift-%d.vnsi", strTimeshiftBufferDir.c_str(), m_ClientID);
+    if (StringUtils::EndsWith(strTimeshiftBufferDir, "/"))
+      m_Filename = StringUtils::Format("%sTimeshift-%d.vnsi", strTimeshiftBufferDir.c_str(), m_ClientID);
     else
-      m_Filename = cString::sprintf("%s/Timeshift-%d.vnsi", strTimeshiftBufferDir.c_str(), m_ClientID);
+      m_Filename = StringUtils::Format("%s/Timeshift-%d.vnsi", strTimeshiftBufferDir.c_str(), m_ClientID);
   }
   else
-    m_Filename = cString::sprintf("%s/Timeshift-%d.vnsi", VideoDirectory, m_ClientID);
-
-  m_Fd = open(m_Filename, O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
-  if (m_Fd == -1)
   {
-    esyslog("Could not open file: %s", (const char*)m_Filename);
+    m_Filename = m_Filename = StringUtils::Format("%s/Timeshift-%d.vnsi", VideoDirectory, m_ClientID);
+  }
+
+  if (m_file.OpenForWrite(m_Filename, true))
+  {
+    esyslog("Could not open file: %s", m_Filename.c_str());
     return false;
   }
-  m_WritePtr = lseek(m_Fd, m_BufferSize - 1, SEEK_SET);
+  m_WritePtr = m_file.Seek(m_BufferSize - 1, SEEK_SET);
   if (m_WritePtr == -1)
   {
-    esyslog("(Init) Could not seek file: %s", (const char*)m_Filename);
+    esyslog("(Init) Could not seek file: %s", m_Filename.c_str());
     return false;
   }
   char tmp = '0';
-  if (safe_write(m_Fd, &tmp, 1) < 0)
+  if (m_file.Write(&tmp, 1) < 0)
   {
-    esyslog("(Init) Could not write to file: %s", (const char*)m_Filename);
+    esyslog("(Init) Could not write to file: %s", m_Filename.c_str());
     return false;
   }
 
@@ -461,10 +463,11 @@ void cVideoBufferFile::Put(uint8_t *buf, unsigned int size)
     off_t ptr = m_WritePtr;
     while(bytes > 0)
     {
-      p = pwrite(m_Fd, buf, bytes, ptr);
+      m_file.Seek(ptr, SEEK_SET);
+      p = m_file.Write(buf, bytes);
       if (p < 0)
       {
-        esyslog("Could not write to file: %s", (const char*)m_Filename);
+        esyslog("Could not write to file: %s", m_Filename.c_str());
         return;
       }
       size -= p;
@@ -481,10 +484,11 @@ void cVideoBufferFile::Put(uint8_t *buf, unsigned int size)
   int p;
   while(bytes > 0)
   {
-    p = pwrite(m_Fd, buf, bytes, ptr);
+    m_file.Seek(ptr, SEEK_SET);
+    p = m_file.Write(buf, bytes);
     if (p < 0)
     {
-      esyslog("Could not write to file: %s", (const char*)m_Filename);
+      esyslog("Could not write to file: %s", m_Filename.c_str());
       return;
     }
     bytes -= p;
@@ -512,7 +516,8 @@ int cVideoBufferFile::ReadBytes(uint8_t *buf, off_t pos, unsigned int size)
   int p;
   for (;;)
   {
-    p = pread(m_Fd, buf, size, pos);
+    m_file.Seek(pos, SEEK_SET);
+    p = m_file.Read(buf, size);
     if (p < 0 && errno == EINTR)
     {
       continue;
@@ -552,12 +557,12 @@ int cVideoBufferFile::ReadBlock(uint8_t **buf, unsigned int size, time_t &endTim
       m_ReadCacheSize = ReadBytes(m_ReadCache, m_ReadPtr, m_ReadCacheMaxSize);
       if (m_ReadCacheSize < 0)
       {
-        esyslog("Could not read file: %s", (const char*)m_Filename);
+        esyslog("Could not read file: %s", m_Filename.c_str());
         return 0;
       }
       if (m_ReadCacheSize < m_Margin)
       {
-        esyslog("Could not read file (margin): %s , read: %d", (const char*)m_Filename, m_ReadCacheSize);
+        esyslog("Could not read file (margin): %s , read: %d", m_Filename.c_str(), m_ReadCacheSize);
         m_ReadCacheSize = 0;
         return 0;
       }
@@ -570,21 +575,21 @@ int cVideoBufferFile::ReadBlock(uint8_t **buf, unsigned int size, time_t &endTim
       m_ReadCacheSize = ReadBytes(m_ReadCache, m_ReadPtr, m_BufferSize - m_ReadPtr);
       if ((m_ReadCacheSize < m_Margin) && (m_ReadCacheSize != (m_BufferSize - m_ReadPtr)))
       {
-        esyslog("Could not read file (end): %s", (const char*)m_Filename);
+        esyslog("Could not read file (end): %s", m_Filename.c_str());
         m_ReadCacheSize = 0;
         return 0;
       }
       readBytes = ReadBytes(m_ReadCache + m_ReadCacheSize, 0, m_ReadCacheMaxSize - m_ReadCacheSize);
       if (readBytes < 0)
       {
-        esyslog("Could not read file (end): %s", (const char*)m_Filename);
+        esyslog("Could not read file (end): %s", m_Filename.c_str());
         m_ReadCacheSize = 0;
         return 0;
       }
       m_ReadCacheSize += readBytes;
       if (m_ReadCacheSize < m_Margin)
       {
-        esyslog("Could not read file (margin): %s", (const char*)m_Filename);
+        esyslog("Could not read file (margin): %s", m_Filename.c_str());
         m_ReadCacheSize = 0;
         return 0;
       }
@@ -642,6 +647,7 @@ cVideoBufferRecording::cVideoBufferRecording(cRecording *rec)
   m_Recording = rec;
   m_ReadCacheSize = 0;
   m_ReadCache = 0;
+  m_RecPlayer = NULL;
 }
 
 cVideoBufferRecording::~cVideoBufferRecording()
@@ -777,27 +783,22 @@ public:
   virtual void Put(uint8_t *buf, unsigned int size);
 
 protected:
-  cVideoBufferTest(cString filename);
+  cVideoBufferTest(const std::string& filename);
   virtual ~cVideoBufferTest();
   virtual bool Init();
   virtual off_t Available();
   off_t GetPosEnd();
 };
 
-cVideoBufferTest::cVideoBufferTest(cString filename)
+cVideoBufferTest::cVideoBufferTest(const std::string& filename)
 {
   m_Filename = filename;
-  m_Fd = 0;
   m_ReadCacheSize = 0;
 }
 
 cVideoBufferTest::~cVideoBufferTest()
 {
-  if (m_Fd)
-  {
-    close(m_Fd);
-    m_Fd = 0;
-  }
+  m_file.Close();
 }
 
 off_t cVideoBufferTest::GetPosMax()
@@ -808,9 +809,9 @@ off_t cVideoBufferTest::GetPosMax()
 
 off_t cVideoBufferTest::GetPosEnd()
 {
-  off_t cur = lseek(m_Fd, 0, SEEK_CUR);
-  off_t end = lseek(m_Fd, 0, SEEK_END);
-  lseek(m_Fd, cur, SEEK_SET);
+  int64_t cur = m_file.GetPosition();
+  off_t end = m_file.GetLength();
+  m_file.Seek(cur, SEEK_SET);
   return end;
 }
 
@@ -828,10 +829,9 @@ bool cVideoBufferTest::Init()
   if (!m_ReadCache)
     return false;
 
-  m_Fd = open(m_Filename, O_RDONLY);
-  if (m_Fd == -1)
+  if (!m_file.Open(m_Filename))
   {
-    esyslog("Could not open file: %s", (const char*)m_Filename);
+    esyslog("Could not open file: %s", m_Filename.c_str());
     return false;
   }
 
@@ -898,9 +898,9 @@ cVideoBuffer* cVideoBuffer::Create(int clientID, uint8_t timeshift)
     return NULL;
 }
 
-cVideoBuffer* cVideoBuffer::Create(cString filename)
+cVideoBuffer* cVideoBuffer::Create(const std::string& filename)
 {
-  isyslog("Open recording: %s", (const char*)filename);
+  isyslog("Open recording: %s", filename.c_str());
   cVideoBufferTest *buffer = new cVideoBufferTest(filename);
   if (!buffer->Init())
   {

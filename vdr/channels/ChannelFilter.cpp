@@ -66,6 +66,7 @@ bool CChannelFilter::IsRadio(const ChannelPtr channel)
 
 void CChannelFilter::Load()
 {
+  /*
   CLockObject lock(m_Mutex);
 
   cString filename;
@@ -159,10 +160,12 @@ void CChannelFilter::Load()
     }
     rfile.close();
   }
+  */
 }
 
 void CChannelFilter::StoreWhitelist(bool radio)
 {
+  /*
   CLockObject lock(m_Mutex);
 
   cString filename;
@@ -199,10 +202,12 @@ void CChannelFilter::StoreWhitelist(bool radio)
   }
 
   SortChannels();
+  */
 }
 
 void CChannelFilter::StoreBlacklist(bool radio)
 {
+  /*
   CLockObject lock(m_Mutex);
 
   cString filename;
@@ -235,6 +240,7 @@ void CChannelFilter::StoreBlacklist(bool radio)
     }
     wfile.close();
   }
+  */
 
   SortChannels();
 }
