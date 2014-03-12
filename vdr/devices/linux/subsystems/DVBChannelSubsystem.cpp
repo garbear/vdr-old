@@ -30,6 +30,7 @@
 #include "devices/subsystems/DeviceReceiverSubsystem.h"
 #include "channels/ChannelManager.h"
 #include "dvb/DiSEqC.h"
+#include "settings/Settings.h"
 
 #include <algorithm>
 #include <linux/dvb/frontend.h>
@@ -85,7 +86,7 @@ bool cDvbChannelSubsystem::ProvidesTransponder(const cChannel &channel) const
   if (dtp.Modulation() == PSK_8    && !GetDevice<cDvbDevice>()->m_dvbTuner.HasCapability(FE_CAN_TURBO_FEC) && dtp.System() == DVB_SYSTEM_1) return false; // TODO: Make this dtp.System() == SYS_DVBS
 
   if (!cSource::IsSat(channel.Source()) ||
-      (!g_setup.DiSEqC || Diseqcs.Get(Device()->CardIndex() + 1, channel.Source(), channel.FrequencyKHz(), dtp.Polarization(), NULL)))
+      (!cSettings::Get().m_bDiSEqC || Diseqcs.Get(Device()->CardIndex() + 1, channel.Source(), channel.FrequencyKHz(), dtp.Polarization(), NULL)))
     return true; // TODO: Previous this checked to see if any devices provided a transponder for the channel
   return false;
 }

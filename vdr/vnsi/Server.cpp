@@ -43,44 +43,17 @@
 #include "utils/Shutdown.h"
 #include "filesystem/Videodir.h"
 #include "recordings/Recordings.h"
+#include "settings/AllowedHosts.h"
 
 #include "Server.h"
 #include "Client.h"
 #include "settings/Settings.h"
 #include "channels/ChannelFilter.h"
 
-class cAllowedHosts : public cSVDRPhosts
-{
-public:
-  cAllowedHosts(const std::string& AllowedHostsFile)
-  {
-    if (!Load(AllowedHostsFile.c_str(), true, true))
-    {
-      esyslog("Invalid or missing %s. Adding 127.0.0.1 to list of allowed hosts.", AllowedHostsFile.c_str());
-      cSVDRPhost *localhost = new cSVDRPhost;
-      if (localhost->Parse("127.0.0.1"))
-        Add(localhost);
-      else
-        delete localhost;
-    }
-  }
-};
-
 cVNSIServer::cVNSIServer(int listenPort)
 {
   m_ServerPort  = listenPort;
   m_IdCnt       = 0;
-
-  std::string strConfigDirectory = cSettings::Get().m_ConfigDirectory;
-  if(!strConfigDirectory.empty())
-  {
-    m_AllowedHostsFile = *cString::sprintf("%s/" ALLOWED_HOSTS_FILE, strConfigDirectory.c_str());
-  }
-  else
-  {
-    esyslog("cVNSIServer: missing ConfigDirectory!");
-    m_AllowedHostsFile = "/video/" ALLOWED_HOSTS_FILE;
-  }
 
   //XXX disabled for now
 //  VNSIChannelFilter.Load();
@@ -150,10 +123,9 @@ void cVNSIServer::NewClientConnected(int fd)
     return;
   }
 
-  cAllowedHosts AllowedHosts(m_AllowedHostsFile);
-  if (!AllowedHosts.Acceptable(sin.sin_addr.s_addr))
+  if (!CAllowedHosts::Get().Acceptable(sin.sin_addr.s_addr))
   {
-    esyslog("Address not allowed to connect (%s)", m_AllowedHostsFile.c_str());
+    isyslog("Address not allowed to connect (%u)", sin.sin_addr.s_addr);
     close(fd);
     return;
   }

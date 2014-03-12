@@ -18,6 +18,8 @@
  *
  */
 #pragma once
+#include "utils/I18N.h"
+#include "utils/DateTime.h"
 
 #include <termios.h>
 #include <string>
@@ -34,7 +36,8 @@
 #define LISTEN_PORT_S    "34890"
 #define DISCOVERY_PORT    34890
 
-class cPluginManager;
+class TiXmlElement;
+class TiXmlNode;
 
 class cSettings
 {
@@ -44,34 +47,78 @@ public:
 
   bool LoadFromCmdLine(int argc, char *argv[]);
 
-  std::string    m_CacheDirectory;
-  std::string    m_ConfigDirectory;
-  bool           m_DaemonMode;
-  bool           m_DisplayHelp;
-  int            m_SysLogTarget;
-  std::string    m_LocaleDirectory;
-  std::string    m_ResourceDirectory;
-  std::string    m_VdrUser;
-  bool           m_UserDump;
-  bool           m_DisplayVersion;
-  std::string    m_VideoDirectory;
-  bool           m_StartedAsRoot;
-  bool           m_HasStdin;
-  struct termios m_savedTm;
+  bool Load(void);
+  bool Load(const std::string& strFilename);
+  bool Save(const std::string& strFilename);
+
+  //XXX guess we should port over xbmc's settings too :)
+  std::string         m_ConfigDirectory;
+  bool                m_DaemonMode;
+  int                 m_SysLogTarget;
+  bool                m_bSplitEditedFiles;
+  std::string         m_VideoDirectory;
+  std::string         m_EPGDirectory;
+  int                 m_EPGLanguages[I18N_MAX_LANGUAGES + 1];
+  CDateTime           m_nextWakeupTime;
 
   // Remote server settings
-  uint16_t       m_ListenPort;         // Port of remote server
-  uint16_t       m_StreamTimeout;      // timeout in seconds for stream data
+  uint16_t            m_ListenPort;         // Port of remote server
+  uint16_t            m_StreamTimeout;      // timeout in seconds for stream data
 
-  int            m_PmtTimeout;
-  int            m_TimeshiftMode;
-  int            m_TimeshiftBufferSize;
-  int            m_TimeshiftBufferFileSize;
-  std::string    m_TimeshiftBufferDir;
+  int                 m_PmtTimeout;
+  int                 m_TimeshiftMode;
+  int                 m_TimeshiftBufferSize;
+  int                 m_TimeshiftBufferFileSize;
+  std::string         m_TimeshiftBufferDir;
 
+  int                 m_iInstantRecordTime;
+  int                 m_iDefaultPriority;
+  int                 m_iDefaultLifetime;
+  bool                m_bRecordSubtitleName;
+  bool                m_bUseVps;
+  int                 m_iVpsMargin;
+
+  int                 m_iLnbSLOF;
+  int                 m_iLnbFreqLow;
+  int                 m_iLnbFreqHigh;
+  bool                m_bDiSEqC;
+
+  bool                m_bSetSystemTime;
+  int                 m_iTimeSource;
+  int                 m_iTimeTransponder;
+  int                 m_iUpdateChannels;
+  int                 m_iMaxVideoFileSizeMB;
+  int                 m_iResumeID;
+  std::string         m_strDeviceBondings;
+
+  int                 m_iStandardCompliance;
+  int                 m_iMarginStart;
+  int                 m_iMarginEnd;
+
+  int                 m_iEPGScanTimeout;
+  int                 m_iEPGBugfixLevel;
+  int                 m_iEPGLinger;
 private:
   cSettings();
   bool SetKeepCaps(bool On);
   bool SetUser(const std::string& UserName, bool UserDump);
   bool DropCaps(void);
+
+  bool GetSettingString(TiXmlElement* element, const char* nodeName, std::string& value);
+  bool GetSettingInt(TiXmlElement* element, const char* nodeName, int& value);
+  bool GetSettingDateTime(TiXmlElement* element, const char* nodeName, CDateTime& value);
+  bool GetSettingBool(TiXmlElement* element, const char* nodeName, bool& value);
+
+  bool SaveSetting(TiXmlNode* element, const char* nodeName, const std::string& value);
+  bool SaveSetting(TiXmlNode* element, const char* nodeName, int value);
+  bool SaveSetting(TiXmlNode* element, const char* nodeName, const CDateTime& value);
+  bool SaveSetting(TiXmlNode* element, const char* nodeName, bool value);
+
+  std::string StoreLanguages(int* Values);
+  bool ParseLanguages(const char *Value, int *Values);
+
+  bool           m_StartedAsRoot;
+  bool           m_HasStdin;
+  struct termios m_savedTm;
+  std::string    m_strFilename;
 };

@@ -19,12 +19,14 @@
  */
 
 #include "Settings.h"
+#include "SettingsDefinitions.h"
 #include "filesystem/Directory.h"
 #include "Config.h"
 #include "devices/Device.h"
 #include "recordings/Recording.h"
 #include "utils/Shutdown.h"
 #include "utils/Tools.h"
+#include "utils/XBMCTinyXML.h"
 #include "devices/DeviceManager.h"
 #include "recordings/RecordingCutter.h"
 #include "recordings/filesystem/IndexFile.h"
@@ -45,7 +47,6 @@
 
 // for easier orientation, this is column 80|
 #define MSG_HELP "Usage: vdr [OPTIONS]\n\n" \
-                 "            --cachedir=DIR save cache files in DIR (default: %s)\n" \
                  "  -c DIR,   --config=DIR   read config files from DIR (default: %s)\n" \
                  "  -d,       --daemon       run in daemon mode\n" \
                  "  -D NUM,   --device=NUM   use only the given DVB device (NUM = 0, 1, 2...)\n" \
@@ -61,8 +62,6 @@
                  "                           empty (as in \",,1\" to only set ENC), the defaults\n" \
                  "                           apply\n" \
                  "            --edit=REC     cut recording REC and exit\n" \
-                 "            --filesize=SIZE limit video files to SIZE bytes (default is %dM)\n" \
-                 "                           only useful in conjunction with --edit\n" \
                  "            --genindex=REC generate index for recording REC and exit\n" \
                  "  -g DIR,   --grab=DIR     write images from the SVDRP command GRAB into the\n" \
                  "                           given DIR; DIR must be the full path name of an\n" \
@@ -98,16 +97,11 @@
 
 cSettings::cSettings()
 {
-  m_DaemonMode = false;
-  m_DisplayHelp = false;
-  m_SysLogTarget = LOG_USER;
-#if defined(VDR_USER)
-  m_VdrUser = VDR_USER;
-#endif
-  m_UserDump = false;
-  m_DisplayVersion = false;
-  m_StartedAsRoot = false;
-  m_HasStdin = (tcgetpgrp(STDIN_FILENO) == getpid() || getppid() != (pid_t)1) && tcgetattr(STDIN_FILENO, &m_savedTm) == 0;
+  m_DaemonMode        = false;
+  m_SysLogTarget      = LOG_USER;
+  m_StartedAsRoot     = false;
+  m_bSplitEditedFiles = false;
+  m_HasStdin          = (tcgetpgrp(STDIN_FILENO) == getpid() || getppid() != (pid_t)1) && tcgetattr(STDIN_FILENO, &m_savedTm) == 0;
 
   m_ListenPort              = LISTEN_PORT;
   m_StreamTimeout           = 10;
@@ -115,11 +109,34 @@ cSettings::cSettings()
   m_TimeshiftMode           = 0;
   m_TimeshiftBufferSize     = 5;
   m_TimeshiftBufferFileSize = 6;
+  m_iInstantRecordTime      = DEFINSTRECTIME;
+  m_iLnbSLOF                = 11700;
+  m_iLnbFreqLow             =  9750;
+  m_iLnbFreqHigh            = 10600;
+  m_bDiSEqC                 = false;
+  m_bSetSystemTime          = false;
+  m_iTimeSource             = 0;
+  m_iTimeTransponder        = 0;
+  m_iStandardCompliance     = STANDARD_DVB;
+  m_iMarginStart            = 2;
+  m_iMarginEnd              = 10;
+  m_iEPGScanTimeout         = 5;
+  m_iEPGBugfixLevel         = 3;
+  m_iEPGLinger              = 0;
+  m_iDefaultPriority        = 50;
+  m_iDefaultLifetime        = MAXLIFETIME;
+  m_bRecordSubtitleName     = true;
+  m_bUseVps                 = false;
+  m_iVpsMargin              = 120;
+  m_iUpdateChannels         = 5;
+  m_iMaxVideoFileSizeMB     = MAXVIDEOFILESIZEDEFAULT;
+  m_iResumeID               = 0;
+  m_EPGLanguages[0]         = -1;
 
   // TODO: Load these paths from settings (assuming they are even used)
-  m_LocaleDirectory = "/usr/local/share/locale";
-  m_VideoDirectory = "special://home/video";
+  m_VideoDirectory  = "special://home/video";
   m_ConfigDirectory = "special://home/system";
+  m_EPGDirectory    = "special://home/epg";
 }
 
 cSettings::~cSettings()
@@ -128,11 +145,247 @@ cSettings::~cSettings()
     tcsetattr(STDIN_FILENO, TCSANOW, &m_savedTm);
 }
 
+bool cSettings::GetSettingString(TiXmlElement* element, const char* nodeName, std::string& value)
+{
+  if (const TiXmlNode *node = element->FirstChild(nodeName))
+  {
+    const TiXmlElement *elem = node->ToElement();
+    if (elem && elem->Attribute(SETTINGS_XML_ATTR_VALUE))
+    {
+      value = elem->Attribute(SETTINGS_XML_ATTR_VALUE);
+      return true;
+    }
+  }
+  return false;
+}
+
+bool cSettings::GetSettingInt(TiXmlElement* element, const char* nodeName, int& value)
+{
+  std::string strVal;
+  if (GetSettingString(element, nodeName, strVal))
+  {
+    value = StringUtils::IntVal(strVal);
+    return true;
+  }
+  return false;
+}
+
+bool cSettings::GetSettingDateTime(TiXmlElement* element, const char* nodeName, CDateTime& value)
+{
+  std::string strVal;
+  if (GetSettingString(element, nodeName, strVal))
+  {
+    value = CDateTime((time_t)StringUtils::IntVal(strVal));
+    return value.IsValid();
+  }
+  return false;
+}
+
+bool cSettings::GetSettingBool(TiXmlElement* element, const char* nodeName, bool& value)
+{
+  std::string strVal;
+  if (GetSettingString(element, nodeName, strVal))
+  {
+    value = StringUtils::IntVal(strVal) == 1;
+    return true;
+  }
+  return false;
+}
+
+bool cSettings::SaveSetting(TiXmlNode* element, const char* nodeName, const std::string& value)
+{
+  TiXmlElement channelElement(nodeName);
+  TiXmlNode* node = element->InsertEndChild(channelElement);
+  node->ToElement()->SetAttribute(SETTINGS_XML_ATTR_VALUE, value);
+  return true;
+}
+
+bool cSettings::SaveSetting(TiXmlNode* element, const char* nodeName, int value)
+{
+  TiXmlElement channelElement(nodeName);
+  TiXmlNode* node = element->InsertEndChild(channelElement);
+  node->ToElement()->SetAttribute(SETTINGS_XML_ATTR_VALUE, value);
+  return true;
+}
+
+bool cSettings::SaveSetting(TiXmlNode* element, const char* nodeName, const CDateTime& value)
+{
+  TiXmlElement channelElement(nodeName);
+  TiXmlNode* node = element->InsertEndChild(channelElement);
+  time_t tm;
+  value.GetAsTime(tm);
+  node->ToElement()->SetAttribute(SETTINGS_XML_ATTR_VALUE, tm);
+  return true;
+}
+
+bool cSettings::SaveSetting(TiXmlNode* element, const char* nodeName, bool value)
+{
+  TiXmlElement channelElement(nodeName);
+  TiXmlNode* node = element->InsertEndChild(channelElement);
+  node->ToElement()->SetAttribute(SETTINGS_XML_ATTR_VALUE, value);
+  return true;
+}
+
+bool cSettings::Load(void)
+{
+  if (!Load("special://home/system/config.xml") &&
+      !Load("special://vdr/system/config.xml"))
+  {
+    // create a new empty file
+    Save("special://home/system/config.xml");
+    return false;
+  }
+
+  return true;
+}
+
+bool cSettings::Load(const std::string& strFilename)
+{
+  CXBMCTinyXML xmlDoc;
+  if (!xmlDoc.LoadFile(strFilename.c_str()))
+  {
+    esyslog("failed to load '%s'", strFilename.c_str());
+    return false;
+  }
+
+  m_strFilename = strFilename;
+
+  TiXmlElement *root = xmlDoc.RootElement();
+  if (root == NULL)
+    return false;
+
+  if (!StringUtils::EqualsNoCase(root->ValueStr(), SETTINGS_XML_ROOT))
+  {
+    esyslog("failed to find root element '%s' in '%s'", SETTINGS_XML_ROOT, strFilename.c_str());
+    return false;
+  }
+
+  int iValue;
+  std::string strValue;
+
+  if (GetSettingInt(root, SETTINGS_XML_ELM_LISTEN_PORT, iValue) && iValue > 0)
+    m_ListenPort = iValue;
+
+  if (GetSettingInt(root, SETTINGS_XML_ELM_STREAM_TIMEOUT, iValue) && iValue > 0)
+    m_StreamTimeout = iValue;
+
+  GetSettingInt(root,      SETTINGS_XML_ELM_PMT_TIMEOUT,                m_PmtTimeout);
+  GetSettingInt(root,      SETTINGS_XML_ELM_INSTANT_RECORD_TIME,        m_iInstantRecordTime);
+  GetSettingInt(root,      SETTINGS_XML_ELM_DEFAULT_RECORDING_PRIORITY, m_iDefaultPriority);
+  GetSettingInt(root,      SETTINGS_XML_ELM_DEFAULT_RECORDING_LIFETIME, m_iDefaultLifetime);
+  GetSettingBool(root,     SETTINGS_XML_ELM_RECORD_SUBTITLE_NAME,       m_bRecordSubtitleName);
+  GetSettingBool(root,     SETTINGS_XML_ELM_USE_VPS,                    m_bUseVps);
+  GetSettingInt(root,      SETTINGS_XML_ELM_VPS_MARGIN,                 m_iVpsMargin);
+  GetSettingInt(root,      SETTINGS_XML_ELM_MAX_RECORDING_FILESIZE_MB,  m_iMaxVideoFileSizeMB);
+  GetSettingInt(root,      SETTINGS_XML_ELM_RESUME_ID,                  m_iResumeID);
+  GetSettingString(root,   SETTINGS_XML_ELM_DEVICE_BONDINGS,            m_strDeviceBondings);
+  GetSettingDateTime(root, SETTINGS_XML_ELM_NEXT_WAKEUP,                m_nextWakeupTime);
+
+  GetSettingInt(root,      SETTINGS_XML_ELM_LNB_SLOF,                   m_iLnbSLOF);
+  GetSettingInt(root,      SETTINGS_XML_ELM_LNB_FREQ_LOW,               m_iLnbFreqLow);
+  GetSettingInt(root,      SETTINGS_XML_ELM_LNB_FREQ_HIGH,              m_iLnbFreqHigh);
+  GetSettingBool(root,     SETTINGS_XML_ELM_DISEQC,                     m_bDiSEqC);
+
+  GetSettingBool(root,     SETTINGS_XML_ELM_SET_SYSTEM_TIME,            m_bSetSystemTime);
+  GetSettingInt(root,      SETTINGS_XML_ELM_TIME_TRANSPONDER,           m_iTimeTransponder);
+  if (GetSettingString(root, SETTINGS_XML_ELM_TIME_SOURCE, strValue))
+    m_iTimeSource = cSource::FromString(strValue);
+  GetSettingInt(root,      SETTINGS_XML_ELM_UPDATE_CHANNELS_LEVEL,      m_iUpdateChannels);
+
+  GetSettingInt(root,      SETTINGS_XML_ELM_STANDARD_COMPLIANCE,        m_iStandardCompliance);
+  GetSettingInt(root,      SETTINGS_XML_ELM_MARGIN_START,               m_iMarginStart);
+  GetSettingInt(root,      SETTINGS_XML_ELM_MARGIN_END,                 m_iMarginEnd);
+
+  GetSettingInt(root,      SETTINGS_XML_ELM_EPG_SCAN_TIMEOUT,           m_iEPGScanTimeout);
+  GetSettingInt(root,      SETTINGS_XML_ELM_EPG_BUGFIX_LEVEL,           m_iEPGBugfixLevel);
+  GetSettingInt(root,      SETTINGS_XML_ELM_EPG_LINGER_TIME,            m_iEPGLinger);
+  if (GetSettingString(root, SETTINGS_XML_ELM_EPG_LANGUAGES, strValue))
+    ParseLanguages(strValue.c_str(), m_EPGLanguages);
+
+  GetSettingInt(root,      SETTINGS_XML_ELM_TIMESHIFT_MODE,             m_TimeshiftMode);
+  GetSettingInt(root,      SETTINGS_XML_ELM_TIMESHIFT_BUFFER_SIZE,      m_TimeshiftBufferSize);
+  GetSettingInt(root,      SETTINGS_XML_ELM_TIMESHIFT_BUFFER_FILE_SIZE, m_TimeshiftBufferFileSize);
+  GetSettingString(root,   SETTINGS_XML_ELM_TIMESHIFT_BUFFER_FILE,      m_TimeshiftBufferDir);
+
+  return true;
+}
+
+bool cSettings::Save(const std::string& strFilename)
+{
+  CXBMCTinyXML xmlDoc;
+  TiXmlDeclaration *decl = new TiXmlDeclaration("1.0", "", "");
+  xmlDoc.LinkEndChild(decl);
+
+  TiXmlElement rootElement(SETTINGS_XML_ROOT);
+  TiXmlNode *root = xmlDoc.InsertEndChild(rootElement);
+  if (root == NULL)
+    return false;
+
+  SaveSetting(root, SETTINGS_XML_ELM_LISTEN_PORT, (int)m_ListenPort);
+  SaveSetting(root, SETTINGS_XML_ELM_STREAM_TIMEOUT, (int)m_StreamTimeout);
+  SaveSetting(root, SETTINGS_XML_ELM_PMT_TIMEOUT,                m_PmtTimeout);
+  SaveSetting(root, SETTINGS_XML_ELM_INSTANT_RECORD_TIME,        m_iInstantRecordTime);
+  SaveSetting(root, SETTINGS_XML_ELM_DEFAULT_RECORDING_PRIORITY, m_iDefaultPriority);
+  SaveSetting(root, SETTINGS_XML_ELM_DEFAULT_RECORDING_LIFETIME, m_iDefaultLifetime);
+  SaveSetting(root, SETTINGS_XML_ELM_RECORD_SUBTITLE_NAME,       m_bRecordSubtitleName);
+  SaveSetting(root, SETTINGS_XML_ELM_USE_VPS,                    m_bUseVps);
+  SaveSetting(root, SETTINGS_XML_ELM_VPS_MARGIN,                 m_iVpsMargin);
+  SaveSetting(root, SETTINGS_XML_ELM_MAX_RECORDING_FILESIZE_MB,  m_iMaxVideoFileSizeMB);
+  SaveSetting(root, SETTINGS_XML_ELM_RESUME_ID,                  m_iResumeID);
+  SaveSetting(root, SETTINGS_XML_ELM_DEVICE_BONDINGS,            m_strDeviceBondings);
+  SaveSetting(root, SETTINGS_XML_ELM_NEXT_WAKEUP,                m_nextWakeupTime);
+
+  SaveSetting(root, SETTINGS_XML_ELM_LNB_SLOF,                   m_iLnbSLOF);
+  SaveSetting(root, SETTINGS_XML_ELM_LNB_FREQ_LOW,               m_iLnbFreqLow);
+  SaveSetting(root, SETTINGS_XML_ELM_LNB_FREQ_HIGH,              m_iLnbFreqHigh);
+  SaveSetting(root, SETTINGS_XML_ELM_DISEQC,                     m_bDiSEqC);
+
+  SaveSetting(root, SETTINGS_XML_ELM_SET_SYSTEM_TIME,            m_bSetSystemTime);
+  SaveSetting(root, SETTINGS_XML_ELM_TIME_TRANSPONDER,           m_iTimeTransponder);
+  SaveSetting(root, SETTINGS_XML_ELM_TIME_SOURCE,                cSource::ToString(m_iTimeSource));
+  SaveSetting(root, SETTINGS_XML_ELM_UPDATE_CHANNELS_LEVEL,      m_iUpdateChannels);
+
+  SaveSetting(root, SETTINGS_XML_ELM_STANDARD_COMPLIANCE,        m_iStandardCompliance);
+  SaveSetting(root, SETTINGS_XML_ELM_MARGIN_START,               m_iMarginStart);
+  SaveSetting(root, SETTINGS_XML_ELM_MARGIN_END,                 m_iMarginEnd);
+
+  SaveSetting(root, SETTINGS_XML_ELM_EPG_SCAN_TIMEOUT,           m_iEPGScanTimeout);
+  SaveSetting(root, SETTINGS_XML_ELM_EPG_BUGFIX_LEVEL,           m_iEPGBugfixLevel);
+  SaveSetting(root, SETTINGS_XML_ELM_EPG_LINGER_TIME,            m_iEPGLinger);
+  SaveSetting(root, SETTINGS_XML_ELM_EPG_LANGUAGES,              StoreLanguages(m_EPGLanguages));
+
+  SaveSetting(root, SETTINGS_XML_ELM_TIMESHIFT_MODE,             m_TimeshiftMode);
+  SaveSetting(root, SETTINGS_XML_ELM_TIMESHIFT_BUFFER_SIZE,      m_TimeshiftBufferSize);
+  SaveSetting(root, SETTINGS_XML_ELM_TIMESHIFT_BUFFER_FILE_SIZE, m_TimeshiftBufferFileSize);
+  SaveSetting(root, SETTINGS_XML_ELM_TIMESHIFT_BUFFER_FILE,      m_TimeshiftBufferDir);
+
+  if (!strFilename.empty())
+    m_strFilename = strFilename;
+
+  assert(!m_strFilename.empty());
+
+  isyslog("saving configuration to '%s'", m_strFilename.c_str());
+  if (!xmlDoc.SafeSaveFile(m_strFilename))
+  {
+    esyslog("failed to save the configuration: could not write to '%s'", m_strFilename.c_str());
+    return false;
+  }
+  return true;
+}
+
 bool cSettings::LoadFromCmdLine(int argc, char *argv[])
 {
+  std::string strVdrUser;
+  bool        strUserDump = false;
+  bool        bDisplayHelp = false;
+  bool        bDisplayVersion = false;
+
+#if defined(VDR_USER)
+  strVdrUser = VDR_USER;
+#endif
+
   static struct option long_options[] =
     {
-      { "cachedir",  required_argument, NULL, 'c' | 0x100 },
       { "config",    required_argument, NULL, 'c' },
       { "daemon",    no_argument,       NULL, 'd' },
       { "device",    required_argument, NULL, 'D' },
@@ -148,7 +401,6 @@ bool cSettings::LoadFromCmdLine(int argc, char *argv[])
       { "log",       required_argument, NULL, 'l' },
       { "mute",      no_argument,       NULL, 'm' },
       { "record",    required_argument, NULL, 'r' },
-      { "resdir",    required_argument, NULL, 'r' | 0x100 },
       { "shutdown",  required_argument, NULL, 's' },
       { "split",     no_argument,       NULL, 's' | 0x100 },
       { "terminal",  required_argument, NULL, 't' },
@@ -166,10 +418,6 @@ bool cSettings::LoadFromCmdLine(int argc, char *argv[])
   {
     switch (c)
       {
-    // cachedir
-    case 'c' | 0x100:
-      m_CacheDirectory = optarg;
-      break;
     // config
     case 'c':
       m_ConfigDirectory = optarg;
@@ -203,7 +451,7 @@ bool cSettings::LoadFromCmdLine(int argc, char *argv[])
             fprintf(stderr, "vdr: invalid directory path length: %s\n", optarg);
             return false;
           }
-          DirectoryPathMax = n;
+          cRecording::DirectoryPathMax = n;
           if (!*s)
             break;
           if (*s != ',')
@@ -223,7 +471,7 @@ bool cSettings::LoadFromCmdLine(int argc, char *argv[])
             fprintf(stderr, "vdr: invalid directory name length: %s\n", optarg);
             return false;
           }
-          DirectoryNameMax = n;
+          cRecording::DirectoryNameMax = n;
           if (!*s)
             break;
           if (*s != ',')
@@ -241,7 +489,7 @@ bool cSettings::LoadFromCmdLine(int argc, char *argv[])
           fprintf(stderr, "vdr: invalid directory encoding: %s\n", optarg);
           return false;
         }
-        DirectoryEncoding = n;
+        cRecording::DirectoryEncoding = n;
         if (*s)
         {
           fprintf(stderr, "vdr: unexpected data: %s\n", optarg);
@@ -252,20 +500,12 @@ bool cSettings::LoadFromCmdLine(int argc, char *argv[])
     // edit
     case 'e' | 0x100:
       return CutRecording(optarg);
-    // filesize
-    case 'f' | 0x100:
-      g_setup.MaxVideoFileSize = StrToNum(optarg) / MEGABYTE(1);
-      if (g_setup.MaxVideoFileSize < MINVIDEOFILESIZE)
-        g_setup.MaxVideoFileSize = MINVIDEOFILESIZE;
-      if (g_setup.MaxVideoFileSize > MAXVIDEOFILESIZETS)
-        g_setup.MaxVideoFileSize = MAXVIDEOFILESIZETS;
-      break;
     // genindex
     case 'g' | 0x100:
       return GenerateIndex(optarg);
     // help
     case 'h':
-      m_DisplayHelp = true;
+      bDisplayHelp = true;
       break;
     // instance
     case 'i':
@@ -310,23 +550,9 @@ bool cSettings::LoadFromCmdLine(int argc, char *argv[])
         fprintf(stderr, "vdr: invalid log level: %s\n", optarg);
         return false;
       }
-    // localedir
-    case 'l' | 0x200:
-      if (access(optarg, R_OK | X_OK) == 0)
-        m_LocaleDirectory = optarg;
-      else
-      {
-        fprintf(stderr, "vdr: can't access locale directory: %s\n", optarg);
-        return false;
-      }
-      break;
     // record
     case 'r':
       cRecordingUserCommand::Get().SetCommand(optarg);
-      break;
-    // resdir
-    case 'r' | 0x100:
-      m_ResourceDirectory = optarg;
       break;
     // shutdown
     case 's':
@@ -334,26 +560,24 @@ bool cSettings::LoadFromCmdLine(int argc, char *argv[])
       break;
     // split
     case 's' | 0x100:
-      g_setup.SplitEditedFiles = 1;
+      m_bSplitEditedFiles = true;
       break;
     // user
     case 'u':
       if (*optarg)
-        m_VdrUser = optarg;
+        strVdrUser = optarg;
       break;
     // userdump
     case 'u' | 0x100:
-      m_UserDump = true;
+      strUserDump = true;
       break;
     // version
     case 'V':
-      m_DisplayVersion = true;
+      bDisplayVersion = true;
       break;
     // vfat
     case 'v' | 0x100:
-      DirectoryPathMax = 250;
-      DirectoryNameMax = 40;
-      DirectoryEncoding = true;
+      cRecording::SetFileLimits(RECORDING_FILE_LIMITS_MSDOS);
       break;
     // video
     case 'v':
@@ -367,9 +591,9 @@ bool cSettings::LoadFromCmdLine(int argc, char *argv[])
   }
 
   // Help and version info:
-  if (m_DisplayHelp || m_DisplayVersion)
+  if (bDisplayHelp || bDisplayVersion)
   {
-     if (m_DisplayHelp)
+     if (bDisplayHelp)
      {
         printf(MSG_HELP,
                "DEFAULTCACHEDIR",
@@ -385,8 +609,8 @@ bool cSettings::LoadFromCmdLine(int argc, char *argv[])
                );
      }
 
-    if (m_DisplayVersion)
-      printf("vdr (%s/%s) - The Video Disk Recorder\n", VDRVERSION, APIVERSION);
+    if (bDisplayVersion)
+      printf("vdr %s - The Video Disk Recorder\n", VDRVERSION);
 
     return false; // TODO: main() should return 0 instead of 2
   }
@@ -396,21 +620,21 @@ bool cSettings::LoadFromCmdLine(int argc, char *argv[])
     openlog("vdr", LOG_CONS, m_SysLogTarget); // LOG_PID doesn't work as expected under NPTL
 
   // Set user id in case we were started as root:
-  if (!m_VdrUser.empty() && geteuid() == 0)
+  if (!strVdrUser.empty() && geteuid() == 0)
   {
     m_StartedAsRoot = true;
-    if (strcmp(m_VdrUser.c_str(), "root"))
+    if (strcmp(strVdrUser.c_str(), "root"))
     {
       if (!SetKeepCaps(true))
         return false;
-      if (!SetUser(m_VdrUser, m_UserDump))
+      if (!SetUser(strVdrUser, strUserDump))
         return false;
       if (!SetKeepCaps(false))
         return false;
       if (!DropCaps())
         return false;
     }
-    isyslog("switched to user '%s'", m_VdrUser.c_str());
+    isyslog("switched to user '%s'", strVdrUser.c_str());
   }
 
   // Daemon mode:
@@ -501,4 +725,42 @@ cSettings& cSettings::Get(void)
 {
   static cSettings _instance;
   return _instance;
+}
+
+bool cSettings::ParseLanguages(const char *Value, int *Values)
+{
+  int n = 0;
+  while (Value && *Value && n < (int)I18nLanguages().size())
+  {
+    char buffer[4];
+    strn0cpy(buffer, Value, sizeof(buffer));
+    int i = I18nLanguageIndex(buffer);
+    if (i >= 0)
+      Values[n++] = i;
+    if ((Value = strchr(Value, ' ')) != NULL)
+      Value++;
+  }
+  Values[n] = -1;
+  return true;
+}
+
+std::string cSettings::StoreLanguages(int* Values)
+{
+  char buffer[I18nLanguages().size() * 4];
+  char *q = buffer;
+  for (int i = 0; i < (int)I18nLanguages().size(); i++)
+  {
+    if (Values[i] < 0)
+      break;
+    const char *s = I18nLanguageCode(Values[i]);
+    if (s)
+    {
+      if (q > buffer)
+        *q++ = ' ';
+      strncpy(q, s, 3);
+      q += 3;
+    }
+  }
+  *q = 0;
+  return buffer;
 }

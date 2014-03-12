@@ -28,17 +28,6 @@
 #define VDRVERSION  "2.0.4"
 #define VDRVERSNUM   20004  // Version * 10000 + Major * 100 + Minor
 
-// The plugin API's version number:
-
-#define APIVERSION  "2.0.0"
-#define APIVERSNUM   20000  // Version * 10000 + Major * 100 + Minor
-
-// When loading plugins, VDR searches them by their APIVERSION, which
-// may be smaller than VDRVERSION in case there have been no changes to
-// VDR header files since the last APIVERSION. This allows compiled
-// plugins to work with newer versions of the core VDR as long as no
-// VDR header files have changed.
-
 #define MAXPRIORITY       99
 #define MINPRIORITY       (-MAXPRIORITY)
 #define LIVEPRIORITY      0                  // priority used when selecting a device for live viewing
@@ -49,11 +38,6 @@
 
 #define TIMERMACRO_TITLE    "TITLE"
 #define TIMERMACRO_EPISODE  "EPISODE"
-
-#define MINOSDWIDTH   480
-#define MAXOSDWIDTH  1920
-#define MINOSDHEIGHT  324
-#define MAXOSDHEIGHT 1200
 
 #define MaxFileName NAME_MAX // obsolete - use NAME_MAX directly instead!
 #define MaxSkinName 16
@@ -87,17 +71,6 @@
 #define STANDARD_ANSISCTE  1
 
 typedef uint32_t in_addr_t; //XXX from /usr/include/netinet/in.h (apparently this is not defined on systems with glibc < 2.2)
-
-class cSVDRPhost : public cListObject {
-private:
-  struct in_addr addr;
-  in_addr_t mask;
-public:
-  cSVDRPhost(void);
-  bool Parse(const char *s);
-  bool IsLocalhost(void);
-  bool Accepts(in_addr_t Address);
-  };
 
 class cSatCableNumbers {
 private:
@@ -204,143 +177,6 @@ public:
        fprintf(stderr, "vdr: error while reading '%s'\n", fileName);
     return result;
   }
-
-  bool Save(void)
-  {
-    bool result = true;
-    T *l = (T *)this->First();
-    cSafeFile f(fileName);
-    if (f.Open()) {
-       while (l) {
-             if (!l->Save(f)) {
-                result = false;
-                break;
-                }
-             l = (T *)l->Next();
-             }
-       if (!f.Close())
-          result = false;
-       }
-    else
-       result = false;
-    return result;
-  }
-  };
-
-class cNestedItem : public cListObject {
-private:
-  char *text;
-  cList<cNestedItem> *subItems;
-public:
-  cNestedItem(const char *Text, bool WithSubItems = false);
-  virtual ~cNestedItem();
-  virtual int Compare(const cListObject &ListObject) const;
-  const char *Text(void) const { return text; }
-  cList<cNestedItem> *SubItems(void) { return subItems; }
-  void AddSubItem(cNestedItem *Item);
-  void SetText(const char *Text);
-  void SetSubItems(bool On);
-  };
-
-class cNestedItemList : public cList<cNestedItem> {
-private:
-  char *fileName;
-  bool Parse(FILE *f, cList<cNestedItem> *List, int &Line);
-  bool Write(FILE *f, cList<cNestedItem> *List, int Indent = 0);
-public:
-  cNestedItemList(void);
-  virtual ~cNestedItemList();
-  void Clear(void);
-  bool Load(const char *FileName);
-  bool Save(void);
-  };
-
-class cSVDRPhosts : public cConfig<cSVDRPhost> {
-public:
-  bool LocalhostOnly(void);
-  bool Acceptable(in_addr_t Address);
-  };
-
-extern cNestedItemList Folders;
-extern cNestedItemList Commands;
-extern cNestedItemList RecordingCommands;
-extern cSVDRPhosts SVDRPhosts;
-
-class cSetupLine : public cListObject {
-private:
-  char *plugin;
-  char *name;
-  char *value;
-public:
-  cSetupLine(void);
-  cSetupLine(const char *Name, const char *Value, const char *Plugin = NULL);
-  virtual ~cSetupLine();
-  virtual int Compare(const cListObject &ListObject) const;
-  const char *Plugin(void) { return plugin; }
-  const char *Name(void) { return name; }
-  const char *Value(void) { return value; }
-  bool Parse(const char *s);
-  bool Save(FILE *f);
-  };
-
-class cSetup : public cConfig<cSetupLine> {
-  friend class cPlugin; // needs to be able to call Store()
-private:
-  void StoreLanguages(const char *Name, int *Values);
-  bool ParseLanguages(const char *Value, int *Values);
-  bool Parse(const char *Name, const char *Value);
-  cSetupLine *Get(const char *Name, const char *Plugin = NULL);
-  void Store(const char *Name, const char *Value, const char *Plugin = NULL, bool AllowMultiple = false);
-  void Store(const char *Name, int Value, const char *Plugin = NULL);
-  void Store(const char *Name, double &Value, const char *Plugin = NULL);
-public:
-  // Also adjust cMenuSetup (menu.c) when adding parameters here!
-  int __BeginData__;
-  int MarkInstantRecord;
-  char NameInstantRecord[NAME_MAX + 1];
-  int InstantRecordTime;
-  int LnbSLOF;
-  int LnbFrequLo;
-  int LnbFrequHi;
-  int DiSEqC;
-  int SetSystemTime;
-  int TimeSource;
-  int TimeTransponder;
-  int StandardCompliance;
-  int MarginStart, MarginStop;
-  int EPGLanguages[I18N_MAX_LANGUAGES + 1];
-  int EPGScanTimeout;
-  int EPGBugfixLevel;
-  int EPGLinger;
-  int DefaultPriority, DefaultLifetime;
-  int PausePriority, PauseLifetime;
-  int UseSubtitle;
-  int UseVps;
-  int VpsMargin;
-  int AlwaysSortFoldersFirst;
-  int VideoDisplayFormat;//XXX remove?
-  int VideoFormat;//XXX remove?
-  int UpdateChannels;
-  int UseDolbyDigital;//XXX remove?
-  int MaxVideoFileSize;
-  int SplitEditedFiles;
-  int MinEventTimeout, MinUserInactivity;
-  time_t NextWakeupTime;
-  int ResumeID;//XXX remove?
-  int EmergencyExit;
-  int __EndData__;
-  std::string DeviceBondings;
-  std::string EPGDirectory;
-
-  static cSetup& Get(void);
-  cSetup& operator= (const cSetup &s);
-  bool Load(const char *FileName);
-  bool Save(void);
-
-private:
-  cSetup(void);
 };
-
-#define g_setup cSetup::Get()
 
 #endif //__CONFIG_H

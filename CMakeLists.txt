@@ -181,6 +181,7 @@ set(VDR_SRCS
 	vdr/scan/scanners/PATScanner.cpp
 	vdr/scan/scanners/PMTScanner.cpp
 	vdr/scan/scanners/SDTScanner.cpp
+	vdr/settings/AllowedHosts.cpp
 	vdr/settings/Settings.cpp
 	vdr/sources/ISourceParams.cpp
 	vdr/sources/Source.cpp

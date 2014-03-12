@@ -10,6 +10,7 @@
 #include "SDT.h"
 #include "channels/ChannelManager.h"
 #include "Config.h"
+#include "settings/Settings.h"
 #include "libsi/section.h"
 #include "libsi/descriptor.h"
 
@@ -84,7 +85,7 @@ void cSdtFilter::ProcessData(u_short Pid, u_char Tid, const u_char *Data, int Le
                         char *pp = compactspace(ProviderNameBuf);
                         if (channel) {
                            channel->SetId(sdt.getOriginalNetworkId(), sdt.getTransportStreamId(), SiSdtService.getServiceId());
-                           if (g_setup.UpdateChannels == 1 || g_setup.UpdateChannels >= 3)
+                           if (cSettings::Get().m_iUpdateChannels == 1 || cSettings::Get().m_iUpdateChannels >= 3)
                               channel->SetName(pn, ps, pp);
                            // Using SiSdtService.getFreeCaMode() is no good, because some
                            // tv stations set this flag even for non-encrypted channels :-(
@@ -93,7 +94,7 @@ void cSdtFilter::ProcessData(u_short Pid, u_char Tid, const u_char *Data, int Le
                            // channel->SetCa(SiSdtService.getFreeCaMode() ? 0xFFFF : 0);
                            channel->NotifyObservers(ObservableMessageChannelChanged);
                            }
-                        else if (*pn && g_setup.UpdateChannels >= 4) {
+                        else if (*pn && cSettings::Get().m_iUpdateChannels >= 4) {
                           ChannelPtr empty;
                            channel = Channel() ?
                                cChannelManager::Get().NewChannel(*Channel(), pn, ps, pp, sdt.getOriginalNetworkId(), sdt.getTransportStreamId(), SiSdtService.getServiceId()) :
@@ -122,7 +123,7 @@ void cSdtFilter::ProcessData(u_short Pid, u_char Tid, const u_char *Data, int Le
                  SI::NVODReferenceDescriptor::Service Service;
                  for (SI::Loop::Iterator it; nrd->serviceLoop.getNext(Service, it); ) {
                      ChannelPtr link = cChannelManager::Get().GetByChannelID(tChannelID(Source(), Service.getOriginalNetworkId(), Service.getTransportStream(), Service.getServiceId()));
-                     if (!link && g_setup.UpdateChannels >= 4) {
+                     if (!link && cSettings::Get().m_iUpdateChannels >= 4) {
                        ChannelPtr empty;
                         link = Channel() ?
                             cChannelManager::Get().NewChannel(*Channel(), "NVOD", "", "", Service.getOriginalNetworkId(), Service.getTransportStream(), Service.getServiceId()) :

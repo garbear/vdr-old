@@ -5,13 +5,14 @@
 #include "epg/Schedule.h"
 #include "utils/StringUtils.h"
 #include "utils/TimeUtils.h"
+#include "settings/Settings.h"
 
 #define EITPRESENTFOLLOWINGRATE 10 // max. seconds between two occurrences of the "EIT present/following table for the actual multiplex" (2s by the standard, using some more for safety)
 
 CTimerTime::CTimerTime(void) :
   m_firstStartTime(CDateTime::GetCurrentDateTime()),
   m_iWeekdaysMask(tdNone),
-  m_iDurationSecs(g_setup.InstantRecordTime ? g_setup.InstantRecordTime : DEFINSTRECTIME),
+  m_iDurationSecs(cSettings::Get().m_iInstantRecordTime ? cSettings::Get().m_iInstantRecordTime : DEFINSTRECTIME),
   m_event(NULL),
   m_bUseVPS(false)
 {
@@ -29,15 +30,15 @@ CTimerTime::CTimerTime(const CDateTime& firstStartTime, uint32_t iWeekdaysMask, 
 CTimerTime::CTimerTime(const cEvent* event) :
   m_firstStartTime(CDateTime::GetCurrentDateTime()),
   m_iWeekdaysMask(tdNone),
-  m_iDurationSecs(g_setup.InstantRecordTime ? g_setup.InstantRecordTime : DEFINSTRECTIME),
+  m_iDurationSecs(cSettings::Get().m_iInstantRecordTime ? cSettings::Get().m_iInstantRecordTime : DEFINSTRECTIME),
   m_event(event),
-  m_bUseVPS(event->HasVps() && g_setup.UseVps)
+  m_bUseVPS(event->HasVps() && cSettings::Get().m_bUseVps)
 {
-  m_firstStartTime = m_bUseVPS ? event->Vps() : event->StartTime() - CDateTimeSpan(0, 0, g_setup.MarginStart, 0);
+  m_firstStartTime = m_bUseVPS ? event->Vps() : event->StartTime() - CDateTimeSpan(0, 0, cSettings::Get().m_iMarginStart, 0);
   m_iDurationSecs = event->Duration();
 
   if (!m_bUseVPS)
-    m_iDurationSecs += (g_setup.MarginStart * 60) + (g_setup.MarginStop * 60);
+    m_iDurationSecs += (cSettings::Get().m_iMarginStart * 60) + (cSettings::Get().m_iMarginEnd * 60);
 }
 
 CTimerTime& CTimerTime::operator=(const CTimerTime &time)

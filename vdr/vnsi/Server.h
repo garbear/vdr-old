@@ -47,7 +47,6 @@ protected:
 
   int              m_ServerPort;
   int              m_ServerFD;
-  std::string      m_AllowedHostsFile;
   ClientList       m_clients;
   unsigned int     m_IdCnt;
   bool             m_bChannelsModified;

@@ -12,6 +12,7 @@
 #include "EITScan.h"
 #include "sources/linux/DVBSourceParams.h"
 #include "utils/Tools.h"
+#include "settings/Settings.h"
 
 #include <linux/dvb/frontend.h>
 #include <libsi/descriptor.h>
@@ -193,7 +194,7 @@ cNitFilter::ProcessData(u_short Pid, u_char Tid, const u_char *Data, int Length)
             }
             break;
           }
-          if (g_setup.UpdateChannels >= 5)
+          if (cSettings::Get().m_iUpdateChannels >= 5)
           {
             bool found = false;
             bool forceTransponderUpdate = false;
@@ -245,7 +246,7 @@ cNitFilter::ProcessData(u_short Pid, u_char Tid, const u_char *Data, int Length)
         break;
       case SI::S2SatelliteDeliverySystemDescriptorTag:
         {
-          if (g_setup.UpdateChannels >= 5)
+          if (cSettings::Get().m_iUpdateChannels >= 5)
           {
             std::vector<ChannelPtr> channels =
                 cChannelManager::Get().GetCurrent();
@@ -300,7 +301,7 @@ cNitFilter::ProcessData(u_short Pid, u_char Tid, const u_char *Data, int Length)
             }
             break;
           }
-          if (g_setup.UpdateChannels >= 5)
+          if (cSettings::Get().m_iUpdateChannels >= 5)
           {
             bool found = false;
             bool forceTransponderUpdate = false;
@@ -394,7 +395,7 @@ cNitFilter::ProcessData(u_short Pid, u_char Tid, const u_char *Data, int Length)
             }
             break;
           }
-          if (g_setup.UpdateChannels >= 5)
+          if (cSettings::Get().m_iUpdateChannels >= 5)
           {
             bool found = false;
             bool forceTransponderUpdate = false;
@@ -448,7 +449,7 @@ cNitFilter::ProcessData(u_short Pid, u_char Tid, const u_char *Data, int Length)
             {
           case SI::T2DeliverySystemDescriptorTag:
             {
-              if (g_setup.UpdateChannels >= 5)
+              if (cSettings::Get().m_iUpdateChannels >= 5)
               {
                 std::vector<ChannelPtr> channels =
                     cChannelManager::Get().GetCurrent();

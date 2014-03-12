@@ -17,6 +17,7 @@
 #include "sources/linux/DVBSourceParams.h"
 #include "utils/StringUtils.h"
 #include "dvb/DiSEqC.h"
+#include "settings/Settings.h"
 //#include "utils/Tools.h"
 
 #include <errno.h>
@@ -418,14 +419,14 @@ void cDvbTuner::UnBond()
 string cDvbTuner::GetBondingParams(const cChannel &channel) const
 {
   cDvbTransponderParams dtp(channel.Parameters());
-  if (g_setup.DiSEqC)
+  if (cSettings::Get().m_bDiSEqC)
   {
     if (const cDiseqc *diseqc = Diseqcs.Get(m_device->CardIndex() + 1, channel.Source(), channel.FrequencyKHz(), dtp.Polarization(), NULL))
       return diseqc->Commands();
   }
   else
   {
-    bool ToneOff = channel.FrequencyKHz() < g_setup.LnbSLOF;
+    bool ToneOff = channel.FrequencyKHz() < cSettings::Get().m_iLnbSLOF;
     bool VoltOff = dtp.Polarization() == 'V' || dtp.Polarization() == 'R';
     return StringUtils::Format("%c %c", ToneOff ? 't' : 'T', VoltOff ? 'v' : 'V');
   }
@@ -814,7 +815,7 @@ bool cDvbTuner::SetFrontend()
   if (m_frontendType == SYS_DVBS || m_frontendType == SYS_DVBS2)
   {
     unsigned int frequency = m_channel.FrequencyKHz();
-    if (g_setup.DiSEqC)
+    if (cSettings::Get().m_bDiSEqC)
     {
       if (const cDiseqc *diseqc = Diseqcs.Get(m_device->CardIndex() + 1, m_channel.Source(), frequency, dtp.Polarization(), &m_scr))
       {
@@ -841,14 +842,14 @@ bool cDvbTuner::SetFrontend()
     else
     {
       int tone = SEC_TONE_OFF;
-      if (frequency < (unsigned int)g_setup.LnbSLOF)
+      if (frequency < (unsigned int)cSettings::Get().m_iLnbSLOF)
       {
-        frequency -= g_setup.LnbFrequLo;
+        frequency -= cSettings::Get().m_iLnbFreqLow;
         tone = SEC_TONE_OFF;
       }
       else
       {
-        frequency -= g_setup.LnbFrequHi;
+        frequency -= cSettings::Get().m_iLnbFreqHigh;
         tone = SEC_TONE_ON;
       }
       int volt = (dtp.Polarization() == 'V' || dtp.Polarization() == 'R') ? SEC_VOLTAGE_13 : SEC_VOLTAGE_18;

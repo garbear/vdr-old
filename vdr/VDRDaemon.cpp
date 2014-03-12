@@ -30,6 +30,7 @@
 #include "recordings/Recordings.h"
 #include "timers/Timers.h"
 #include "settings/Settings.h"
+#include "settings/AllowedHosts.h"
 #include "utils/Shutdown.h"
 #include "vnsi/Server.h"
 #include "dvb/EITScan.h"
@@ -72,34 +73,16 @@ bool cVDRDaemon::LoadConfig(void)
   CDirectory::Create("special://home/system/");
   CDirectory::Create("special://home/video/");
 
-  if (!g_setup.Load("special://home/system/setup.conf"))
-    g_setup.Load("special://vdr/system/setup.conf");
-
-//  if (!Sources.Load("special://home/system/sources.conf"))
-//    Sources.Load("special://vdr/system/sources.conf");
-
-  if (!Diseqcs.Load("special://home/system/diseqc.conf"))
-    Diseqcs.Load("special://vdr/system/diseqc.conf");
-
-  if (!Scrs.Load("special://home/system/scr.conf"))
-    Scrs.Load("special://vdr/system/scr.conf");
-
-
+  cSettings::Get().Load();
   cChannelManager::Get().Load();
   cTimers::Get().Load();
+  CAllowedHosts::Get().Load();
 
-  //TODO
-  if (!Commands.Load("special://home/system/commands.conf"))
-    Commands.Load("special://vdr/system/commands.conf");
+//  if (!Diseqcs.Load("special://home/system/diseqc.conf"))
+//    Diseqcs.Load("special://vdr/system/diseqc.conf");
 
-  if (!RecordingCommands.Load("special://home/system/reccmds.conf"))
-    RecordingCommands.Load("special://vdr/system/reccmds.conf");
-
-  if (!SVDRPhosts.Load("special://home/system/svdrphosts.conf"))
-    SVDRPhosts.Load("special://vdr/system/svdrphosts.conf");
-
-  if (!Folders.Load("special://home/system/folders.conf"))
-    Folders.Load("special://vdr/system/folders.conf");
+//  if (!Scrs.Load("special://home/system/scr.conf"))
+//    Scrs.Load("special://vdr/system/scr.conf");
 
   return true;
 }

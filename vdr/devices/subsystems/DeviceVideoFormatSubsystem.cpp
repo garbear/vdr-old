@@ -32,30 +32,31 @@ cDeviceVideoFormatSubsystem::cDeviceVideoFormatSubsystem(cDevice *device)
 
 void cDeviceVideoFormatSubsystem::SetVideoDisplayFormat(eVideoDisplayFormat videoDisplayFormat)
 {
-  cSpuDecoder *spuDecoder = SPU()->GetSpuDecoder();
-  if (spuDecoder)
-  {
-    if (g_setup.VideoFormat)
-      spuDecoder->setScaleMode(cSpuDecoder::eSpuNormal);
-    else
-    {
-      switch (videoDisplayFormat)
-      {
-      case vdfPanAndScan:
-        spuDecoder->setScaleMode(cSpuDecoder::eSpuPanAndScan);
-        break;
-      case vdfLetterBox:
-        spuDecoder->setScaleMode(cSpuDecoder::eSpuLetterBox);
-        break;
-      case vdfCenterCutOut:
-        spuDecoder->setScaleMode(cSpuDecoder::eSpuNormal);
-        break;
-      default:
-        esyslog("ERROR: invalid value for VideoDisplayFormat '%d'", videoDisplayFormat);
-        break;
-      }
-    }
-  }
+  //XXX
+//  cSpuDecoder *spuDecoder = SPU()->GetSpuDecoder();
+//  if (spuDecoder)
+//  {
+//    if (g_setup.VideoFormat)
+//      spuDecoder->setScaleMode(cSpuDecoder::eSpuNormal);
+//    else
+//    {
+//      switch (videoDisplayFormat)
+//      {
+//      case vdfPanAndScan:
+//        spuDecoder->setScaleMode(cSpuDecoder::eSpuPanAndScan);
+//        break;
+//      case vdfLetterBox:
+//        spuDecoder->setScaleMode(cSpuDecoder::eSpuLetterBox);
+//        break;
+//      case vdfCenterCutOut:
+//        spuDecoder->setScaleMode(cSpuDecoder::eSpuNormal);
+//        break;
+//      default:
+//        esyslog("ERROR: invalid value for VideoDisplayFormat '%d'", videoDisplayFormat);
+//        break;
+//      }
+//    }
+//  }
 }
 
 void cDeviceVideoFormatSubsystem::GetVideoSize(int &width, int &height, double &videoAspect)

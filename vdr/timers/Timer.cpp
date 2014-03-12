@@ -15,6 +15,7 @@
 #include "utils/TimeUtils.h"
 #include "utils/UTF8Utils.h"
 #include "utils/XBMCTinyXML.h"
+#include "settings/Settings.h"
 
 TimerPtr cTimer::EmptyTimer;
 
@@ -25,8 +26,8 @@ cTimer::cTimer(void)
   m_iTimerFlags   = tfNone;
   m_channel       = cChannelManager::Get().GetByNumber(1 /* XXX */);
   m_index         = 0;
-  m_iPriority     = g_setup.DefaultPriority;
-  m_iLifetimeDays = g_setup.DefaultLifetime;
+  m_iPriority     = cSettings::Get().m_iDefaultPriority;
+  m_iLifetimeDays = cSettings::Get().m_iDefaultLifetime;
   m_recorder      = NULL;
   m_recording     = NULL;
 
@@ -59,8 +60,8 @@ cTimer::cTimer(const cEvent *Event)
   m_channel       = cChannelManager::Get().GetByChannelID(Event->ChannelID(), true);
   m_recorder      = NULL;
   m_time          = CTimerTime(Event);
-  m_iPriority     = g_setup.DefaultPriority;
-  m_iLifetimeDays = g_setup.DefaultLifetime;
+  m_iPriority     = cSettings::Get().m_iDefaultPriority;
+  m_iLifetimeDays = cSettings::Get().m_iDefaultLifetime;
   m_recording     = NULL;
 
   std::string strTitle   = Event->Title();
@@ -514,7 +515,7 @@ void cTimer::SwitchTransponder(const CDateTime& Now)
   {
     if (HasFlags(tfVps))
     {
-      if (Matches(Now, true, cSetup::Get().VpsMargin))
+      if (Matches(Now, true, cSettings::Get().m_iVpsMargin))
       {
         InVpsMargin = true;
         SetInVpsMargin(InVpsMargin);

@@ -19,6 +19,7 @@
 #include "filesystem/Videodir.h"
 #include "filesystem/Directory.h"
 #include "platform/threads/throttle.h"
+#include "settings/Settings.h"
 
 using namespace PLATFORM;
 
@@ -300,7 +301,7 @@ cCuttingThread::cCuttingThread(const std::string& strFromFileName, const std::st
         fromIndex = new cIndexFile(strFromFileName, false, isPesRecording);
         toIndex = new cIndexFile(strToFileName, true, isPesRecording);
         toMarks.Load(strToFileName.c_str(), framesPerSecond, isPesRecording); // doesn't actually load marks, just sets the file name
-        maxVideoFileSize = MEGABYTE(g_setup.MaxVideoFileSize);
+        maxVideoFileSize = MEGABYTE(cSettings::Get().m_iMaxVideoFileSizeMB);
         if (isPesRecording && maxVideoFileSize > MEGABYTE(MAXVIDEOFILESIZEPES))
            maxVideoFileSize = MEGABYTE(MAXVIDEOFILESIZEPES);
         CreateThread();
@@ -637,7 +638,7 @@ void* cCuttingThread::Process(void)
            BeginMark = fromMarks.GetNextBegin(EndMark);
            if (BeginMark) {
               // Split edited files:
-              if (g_setup.SplitEditedFiles) {
+              if (cSettings::Get().m_bSplitEditedFiles) {
                  if (!SwitchFile(true))
                     break;
                  }

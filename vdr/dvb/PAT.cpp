@@ -15,6 +15,7 @@
 #include "libsi/descriptor.h"
 #include "utils/I18N.h"
 #include "Config.h"
+#include "settings/Settings.h"
 #include "platform/threads/threads.h"
 
 #define PMT_SCAN_TIMEOUT  10 // seconds
@@ -252,7 +253,7 @@ void cPatFilter::ProcessData(u_short Pid, u_char Tid, const u_char *Data, int Le
                       }
                       break;
               case 0x80: // STREAMTYPE_USER_PRIVATE
-                      if (g_setup.StandardCompliance == STANDARD_ANSISCTE) { // DigiCipher II VIDEO (ANSI/SCTE 57)
+                      if (cSettings::Get().m_iStandardCompliance == STANDARD_ANSISCTE) { // DigiCipher II VIDEO (ANSI/SCTE 57)
                          Vpid = esPid;
                          Ppid = pmt.getPCRPid();
                          Vtype = 0x02; // compression based upon MPEG-2
@@ -261,7 +262,7 @@ void cPatFilter::ProcessData(u_short Pid, u_char Tid, const u_char *Data, int Le
                          }
                       // fall through
               case 0x81: // STREAMTYPE_USER_PRIVATE
-                      if (g_setup.StandardCompliance == STANDARD_ANSISCTE) { // ATSC A/53 AUDIO (ANSI/SCTE 57)
+                      if (cSettings::Get().m_iStandardCompliance == STANDARD_ANSISCTE) { // ATSC A/53 AUDIO (ANSI/SCTE 57)
                          char lang[MAXLANGCODE1] = { 0 };
                          SI::Descriptor *d;
                          for (SI::Loop::Iterator it; (d = stream.streamDescriptors.getNext(it)); ) {
@@ -286,7 +287,7 @@ void cPatFilter::ProcessData(u_short Pid, u_char Tid, const u_char *Data, int Le
                          }
                       // fall through
               case 0x82: // STREAMTYPE_USER_PRIVATE
-                      if (g_setup.StandardCompliance == STANDARD_ANSISCTE) { // STANDARD SUBTITLE (ANSI/SCTE 27)
+                      if (cSettings::Get().m_iStandardCompliance == STANDARD_ANSISCTE) { // STANDARD SUBTITLE (ANSI/SCTE 27)
                          //TODO
                          break;
                          }
@@ -340,7 +341,7 @@ void cPatFilter::ProcessData(u_short Pid, u_char Tid, const u_char *Data, int Le
                    }
                }
             }
-        if (g_setup.UpdateChannels >= 2) {
+        if (cSettings::Get().m_iUpdateChannels >= 2) {
            Channel->SetPids(Vpid, Ppid, Vtype, Apids, Atypes, ALangs, Dpids, Dtypes, DLangs, Spids, SLangs, Tpid);
            Channel->SetCaIds(CaDescriptors->CaIds().data());
            Channel->SetSubtitlingDescriptors(SubtitlingTypes, CompositionPageIds, AncillaryPageIds);

@@ -18,6 +18,7 @@
 #include "Config.h"
 #include "recordings/RecordingCutter.h"
 #include "I18N.h"
+#include "settings/Settings.h"
 //#include "interface.h"
 //#include "menu.h"
 //#include "plugin.h"
@@ -98,20 +99,16 @@ cShutdownHandler::~cShutdownHandler()
 
 void cShutdownHandler::RequestEmergencyExit(void)
 {
-  if (g_setup.EmergencyExit) {
-     esyslog("initiating emergency exit");
-     emergencyExitRequested = true;
-     Exit(1);
-     }
-  else
-     dsyslog("emergency exit request ignored according to setup");
+  esyslog("initiating emergency exit");
+  emergencyExitRequested = true;
+  Exit(1);
 }
 
 void cShutdownHandler::CheckManualStart(int ManualStart)
 {
-  time_t Delta = g_setup.NextWakeupTime ? g_setup.NextWakeupTime - time(NULL) : 0;
+  time_t Delta = cSettings::Get().m_nextWakeupTime.IsValid() ? (cSettings::Get().m_nextWakeupTime - CDateTime::GetUTCDateTime()).GetSecondsTotal() : 0;
 
-  if (!g_setup.NextWakeupTime || abs(Delta) > ManualStart) {
+  if (!cSettings::Get().m_nextWakeupTime.IsValid() || abs(Delta) > ManualStart) {
      // Apparently the user started VDR manually
      dsyslog("assuming manual start of VDR");
      // Set inactive after MinUserInactivity
@@ -132,32 +129,32 @@ void cShutdownHandler::SetShutdownCommand(const char *ShutdownCommand)
 
 void cShutdownHandler::CallShutdownCommand(time_t WakeupTime, int Channel, const char *File, bool UserShutdown)
 {
-  time_t Delta = WakeupTime ? WakeupTime - time(NULL) : 0;
-  cString cmd = cString::sprintf("%s %ld %ld %d \"%s\" %d", shutdownCommand, WakeupTime, Delta, Channel, *strescape(File, "\\\"$"), UserShutdown);
-  isyslog("executing '%s'", *cmd);
-  int Status = SystemExec(cmd, true);
-  if (!WIFEXITED(Status) || WEXITSTATUS(Status))
-     esyslog("SystemExec() failed with status %d", Status);
-  else {
-     g_setup.NextWakeupTime = WakeupTime; // Remember this wakeup time for comparison on reboot
-     g_setup.Save();
-     }
+//  time_t Delta = WakeupTime ? WakeupTime - time(NULL) : 0;
+//  cString cmd = cString::sprintf("%s %ld %ld %d \"%s\" %d", shutdownCommand, WakeupTime, Delta, Channel, *strescape(File, "\\\"$"), UserShutdown);
+//  isyslog("executing '%s'", *cmd);
+//  int Status = SystemExec(cmd, true);
+//  if (!WIFEXITED(Status) || WEXITSTATUS(Status))
+//     esyslog("SystemExec() failed with status %d", Status);
+//  else {
+//     g_setup.NextWakeupTime = WakeupTime; // Remember this wakeup time for comparison on reboot
+//     g_setup.Save();
+//     }
 }
 
 void cShutdownHandler::SetUserInactiveTimeout(int Seconds, bool Force)
 {
-  if (!g_setup.MinUserInactivity && !Force) {
-     activeTimeout = 0;
-     return;
-     }
-  if (Seconds >= 0)
-     activeTimeout = time(NULL) + Seconds;
-  else if (Seconds == -1)
-     activeTimeout = time(NULL) + g_setup.MinUserInactivity * 60;
-  else if (Seconds == -2)
-     activeTimeout = 0;
-  else if (Seconds == -3)
-     activeTimeout = 1;
+//  if (!g_setup.MinUserInactivity && !Force) {
+//     activeTimeout = 0;
+//     return;
+//     }
+//  if (Seconds >= 0)
+//     activeTimeout = time(NULL) + Seconds;
+//  else if (Seconds == -1)
+//     activeTimeout = time(NULL) + g_setup.MinUserInactivity * 60;
+//  else if (Seconds == -2)
+//     activeTimeout = 0;
+//  else if (Seconds == -3)
+//     activeTimeout = 1;
 }
 
 bool cShutdownHandler::ConfirmShutdown(bool Interactive)
@@ -172,9 +169,9 @@ bool cShutdownHandler::ConfirmShutdown(bool Interactive)
 //        return false;
 //     }
 
-  TimerPtr timer = cTimers::Get().GetNextActiveTimer();
-  time_t Next = timer ? timer->StartTimeAsTime() : 0;
-  time_t Delta = timer ? Next - time(NULL) : 0;
+//  TimerPtr timer = cTimers::Get().GetNextActiveTimer();
+//  time_t Next = timer ? timer->StartTimeAsTime() : 0;
+//  time_t Delta = timer ? Next - time(NULL) : 0;
 
 //XXX  if (cRecordControls::Active() || (Next && Delta <= 0)) {
 //     // VPS recordings in timer end margin may cause Delta <= 0
@@ -182,14 +179,14 @@ bool cShutdownHandler::ConfirmShutdown(bool Interactive)
 //        return false;
 //     }
 //  else
-    if (Next && Delta <= g_setup.MinEventTimeout * 60) {
-     // Timer within Min Event Timeout
-     if (!Interactive)
-        return false;
-     cString buf = cString::sprintf(tr("Recording in %ld minutes, shut down anyway?"), Delta / 60);
+//    if (Next && Delta <= g_setup.MinEventTimeout * 60) {
+//     // Timer within Min Event Timeout
+//     if (!Interactive)
+//        return false;
+//     cString buf = cString::sprintf(tr("Recording in %ld minutes, shut down anyway?"), Delta / 60);
 //XXX     if (!Interface->Confirm(buf))
 //        return false;
-     }
+//     }
 
 //XXX  if (cPluginManager::Active(Interactive ? tr("shut down anyway?") : NULL))
 //     return false;
@@ -234,37 +231,37 @@ bool cShutdownHandler::ConfirmRestart(bool Interactive)
 
 bool cShutdownHandler::DoShutdown(bool Force)
 {
-  time_t Now = time(NULL);
-  TimerPtr timer = cTimers::Get().GetNextActiveTimer();
+//  time_t Now = time(NULL);
+//  TimerPtr timer = cTimers::Get().GetNextActiveTimer();
 //XXX  cPlugin *Plugin = cPluginManager::GetNextWakeupPlugin();
 
-  time_t Next = timer ? timer->StartTimeAsTime() : 0;
+//  time_t Next = timer ? timer->StartTimeAsTime() : 0;
 //XXX  time_t NextPlugin = Plugin ? Plugin->WakeupTime() : 0;
 //  if (NextPlugin && (!Next || Next > NextPlugin)) {
 //     Next = NextPlugin;
 //     timer = NULL;
 //     }
-  time_t Delta = Next ? Next - Now : 0;
+//  time_t Delta = Next ? Next - Now : 0;
 
-  if (Next && Delta < g_setup.MinEventTimeout * 60) {
-     if (!Force)
-        return false;
-     Delta = g_setup.MinEventTimeout * 60;
-     Next = Now + Delta;
-     timer = cTimer::EmptyTimer;
-     dsyslog("reboot at %s", CalendarUtils::TimeToString(Next).c_str());
-     }
-
-  if (Next && timer) {
-     dsyslog("next timer event at %s", CalendarUtils::TimeToString(Next).c_str());
-     CallShutdownCommand(Next, timer->Channel()->Number(), timer->RecordingFilename().c_str(), Force);
-     }
+//  if (Next && Delta < g_setup.MinEventTimeout * 60) {
+//     if (!Force)
+//        return false;
+//     Delta = g_setup.MinEventTimeout * 60;
+//     Next = Now + Delta;
+//     timer = cTimer::EmptyTimer;
+//     dsyslog("reboot at %s", CalendarUtils::TimeToString(Next).c_str());
+//     }
+//
+//  if (Next && timer) {
+//     dsyslog("next timer event at %s", CalendarUtils::TimeToString(Next).c_str());
+//     CallShutdownCommand(Next, timer->Channel()->Number(), timer->RecordingFilename().c_str(), Force);
+//     }
 //XXX  else if (Next && Plugin) {
 //     CallShutdownCommand(Next, 0, Plugin->Name(), Force);
 //     dsyslog("next plugin wakeup at %s", CalendarUtils::TimeToString(Next).c_str());
 //     }
-  else
-     CallShutdownCommand(Next, 0, "", Force); // Next should always be 0 here. Just for safety, pass it.
+//  else
+//     CallShutdownCommand(Next, 0, "", Force); // Next should always be 0 here. Just for safety, pass it.
 
   return true;
 }

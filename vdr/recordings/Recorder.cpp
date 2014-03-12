@@ -15,6 +15,7 @@
 #include "filesystem/Directory.h"
 #include "filesystem/VideoFile.h"
 #include "utils/Shutdown.h"
+#include "settings/Settings.h"
 
 using namespace PLATFORM;
 
@@ -92,7 +93,7 @@ bool cRecorder::RunningLowOnDiskSpace(void)
 bool cRecorder::NextFile(void)
 {
   if (m_recordFile && m_frameDetector->IndependentFrame()) { // every file shall start with an independent frame
-     if (m_fileSize > MEGABYTE(off_t(g_setup.MaxVideoFileSize)) || RunningLowOnDiskSpace()) {
+     if (m_fileSize > MEGABYTE(off_t(cSettings::Get().m_iMaxVideoFileSizeMB)) || RunningLowOnDiskSpace()) {
         m_recordFile = m_fileName->NextFile();
         m_fileSize = 0;
         }

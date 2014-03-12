@@ -38,15 +38,16 @@
 #include "filesystem/Directory.h"
 #include "utils/UTF8Utils.h"
 #include "utils/url/URLUtils.h"
+#include "settings/Settings.h"
 
 #include <algorithm>
 
 using namespace PLATFORM;
 using namespace VDR;
 
-int DirectoryPathMax = PATH_MAX - 1;
-int DirectoryNameMax = NAME_MAX;
-bool DirectoryEncoding = false;
+int cRecording::DirectoryPathMax = PATH_MAX - 1;
+int cRecording::DirectoryNameMax = NAME_MAX;
+bool cRecording::DirectoryEncoding = false;
 int InstanceId = 0;
 
 // --- cRecording ------------------------------------------------------------
@@ -69,7 +70,7 @@ const char *InvalidChars = "\"\\/:*?|<>#";
 
 bool NeedsConversion(const char *p)
 {
-  return DirectoryEncoding &&
+  return cRecording::DirectoryEncoding &&
          (strchr(InvalidChars, *p) // characters that can't be part of a Windows file/directory name
           || *p == '.' && (!*(p + 1) || *(p + 1) == FOLDERDELIMCHAR)); // Windows can't handle '.' at the end of file/directory names
 }
@@ -385,7 +386,7 @@ cRecording::cRecording(TimerPtr Timer, const cEvent *Event)
       cTimers::Get().SetModified();
     }
   }
-  else if (Timer->IsRepeatingEvent() || !g_setup.UseSubtitle)
+  else if (Timer->IsRepeatingEvent() || !cSettings::Get().m_bRecordSubtitleName)
   {
     m_strName = Timer->RecordingFilename();
   }
@@ -753,4 +754,22 @@ int cRecording::ReadFrame(CVideoFile *f, uchar *b, int Length, int Max)
   if (r < 0)
      LOG_ERROR;
   return r;
+}
+
+void cRecording::SetFileLimits(const recording_file_limits_t limits)
+{
+  switch (limits)
+  {
+  case RECORDING_FILE_LIMITS_MSDOS:
+    DirectoryPathMax  = 250;
+    DirectoryNameMax  = 40;
+    DirectoryEncoding = true;
+    break;
+  case RECORDING_FILE_LIMITS_UNIX:
+  default:
+    DirectoryPathMax  = PATH_MAX - 1;
+    DirectoryNameMax  = NAME_MAX;
+    DirectoryEncoding = false;
+    break;
+  }
 }

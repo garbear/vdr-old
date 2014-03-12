@@ -7,6 +7,7 @@
 #include "utils/I18N.h"
 #include "utils/CalendarUtils.h"
 #include "utils/XBMCTinyXML.h"
+#include "settings/Settings.h"
 
 cEvent::cEvent(tEventID EventID)
 {
@@ -635,7 +636,7 @@ void cEvent::FixEpgBugs(void)
     EpgBugFixStat(12, ChannelID());
   }
 
-  if (g_setup.EPGBugfixLevel == 0)
+  if (cSettings::Get().m_iEPGBugfixLevel == 0)
      goto Final;
 
   // Some TV stations apparently have their own idea about how to fill in the
@@ -713,7 +714,7 @@ void cEvent::FixEpgBugs(void)
     }
   }
 
-  if (g_setup.EPGBugfixLevel <= 1)
+  if (cSettings::Get().m_iEPGBugfixLevel <= 1)
     goto Final;
 
   // Some channels apparently try to do some formatting in the texts,
@@ -758,7 +759,7 @@ void cEvent::FixEpgBugs(void)
   StringUtils::Replace(m_strShortText, '`', '\'');
   StringUtils::Replace(m_strDescription, '`', '\'');
 
-  if (g_setup.EPGBugfixLevel <= 2)
+  if (cSettings::Get().m_iEPGBugfixLevel <= 2)
      goto Final;
 
   // The stream components have a "description" field which some channels
@@ -993,7 +994,7 @@ bool cEvent::Serialise(TiXmlElement* element) const
 {
   assert(element);
 
-  if (EndTime() + CDateTimeSpan(0, 0, g_setup.EPGLinger, 0) >= CDateTime::GetUTCDateTime())
+  if (EndTime() + CDateTimeSpan(0, 0, cSettings::Get().m_iEPGLinger, 0) >= CDateTime::GetUTCDateTime())
   {
     TiXmlElement eventElement(EPG_XML_ELM_EVENT);
     TiXmlNode *eventNode = element->InsertEndChild(eventElement);

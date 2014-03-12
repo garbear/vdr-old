@@ -14,6 +14,7 @@
 #include "devices/DeviceManager.h"
 #include "devices/subsystems/DeviceChannelSubsystem.h"
 #include "devices/subsystems/DeviceReceiverSubsystem.h"
+#include "settings/Settings.h"
 
 #define SCAN_TRANSPONDER_TIMEOUT_MS (20 * 1000)
 
@@ -242,8 +243,8 @@ void cEITScanner::Process(void)
         SaveEPGData();
       }
 
-      m_nextFullScan.Init(g_setup.EPGScanTimeout * 1000 * 60);
-      dsyslog("EIT scan %s, next scan in %d minutes", bFailed ? "failed" : "finished", g_setup.EPGScanTimeout);
+      m_nextFullScan.Init(cSettings::Get().m_iEPGScanTimeout * 1000 * 60);
+      dsyslog("EIT scan %s, next scan in %d minutes", bFailed ? "failed" : "finished", cSettings::Get().m_iEPGScanTimeout);
       return;
     }
 

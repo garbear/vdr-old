@@ -28,6 +28,7 @@
 #include "dvb/DiSEqC.h"
 #include "sources/linux/DVBTransponderParams.h"
 #include "utils/Tools.h"
+#include "settings/Settings.h"
 
 #include <assert.h>
 
@@ -192,7 +193,7 @@ bool cScanTaskSatellite::ValidSatFrequency(unsigned int frequencyHz, const cChan
 
   unsigned int frequencyMHz = frequencyHz / 1000 / 1000;
 
-  if (cSetup::Get().DiSEqC)
+  if (cSettings::Get().m_bDiSEqC)
   {
     cDvbTransponderParams params(channel.Parameters());
     cDiseqc *diseqc = GetDiseqc(channel.Source(), channel.FrequencyHz(), params.Polarization());
@@ -204,10 +205,10 @@ bool cScanTaskSatellite::ValidSatFrequency(unsigned int frequencyHz, const cChan
   }
   else
   {
-    if (frequencyMHz < cSetup::Get().LnbSLOF)
-      frequencyMHz -= cSetup::Get().LnbFrequLo;
+    if (frequencyMHz < cSettings::Get().m_iLnbSLOF)
+      frequencyMHz -= cSettings::Get().m_iLnbFreqLow;
     else
-      frequencyMHz -= cSetup::Get().LnbFrequHi;
+      frequencyMHz -= cSettings::Get().m_iLnbFreqHigh;
   }
 
   return frequencyMHz >= 950 && frequencyMHz <= 2150;

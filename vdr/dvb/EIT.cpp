@@ -25,6 +25,7 @@
 #include "vdr/utils/CalendarUtils.h"
 #include "vdr/utils/UTF8Utils.h"
 #include "vdr/utils/DateTime.h"
+#include "settings/Settings.h"
 
 // --- cEIT ------------------------------------------------------------------
 
@@ -73,7 +74,7 @@ void cEIT::ParseSIDescriptor(SI::Descriptor* d)
     {
       SI::ExtendedEventDescriptor *eed = (SI::ExtendedEventDescriptor *) d;
 
-      if (I18nIsPreferredLanguage(g_setup.EPGLanguages, eed->languageCode, m_iLanguagePreferenceExt) || !m_ExtendedEventDescriptors)
+      if (I18nIsPreferredLanguage(cSettings::Get().m_EPGLanguages, eed->languageCode, m_iLanguagePreferenceExt) || !m_ExtendedEventDescriptors)
       {
         delete m_ExtendedEventDescriptors;
         m_ExtendedEventDescriptors = new SI::ExtendedEventDescriptors;
@@ -117,7 +118,7 @@ void cEIT::ParseSIDescriptor(SI::Descriptor* d)
   case SI::ShortEventDescriptorTag:
     {
       SI::ShortEventDescriptor *sed = (SI::ShortEventDescriptor *) d;
-      if (I18nIsPreferredLanguage(g_setup.EPGLanguages, sed->languageCode, m_iLanguagePreferenceShort) || !m_ShortEventDescriptor)
+      if (I18nIsPreferredLanguage(cSettings::Get().m_EPGLanguages, sed->languageCode, m_iLanguagePreferenceShort) || !m_ShortEventDescriptor)
       {
         delete m_ShortEventDescriptor;
         m_ShortEventDescriptor = sed;
@@ -226,13 +227,13 @@ void cEIT::ParseSIDescriptor(SI::Descriptor* d)
             //fprintf(stderr, "Linkage %s %4d %4d %5d %5d %5d %5d  %02X  '%s'\n", hit ? "*" : "", channel->Number(), link ? link->Number() : -1, SiEitEvent.getEventId(), ld->getOriginalNetworkId(), ld->getTransportStreamId(), ld->getServiceId(), ld->getLinkageType(), linkName);//XXX
             if (link)
             {
-              if (g_setup.UpdateChannels == 1 || g_setup.UpdateChannels >= 3)
+              if (cSettings::Get().m_iUpdateChannels == 1 || cSettings::Get().m_iUpdateChannels >= 3)
               {
                 link->SetName(linkName, "", "");
                 link->NotifyObservers(ObservableMessageChannelChanged);
               }
             }
-            else if (g_setup.UpdateChannels >= 4)
+            else if (cSettings::Get().m_iUpdateChannels >= 4)
             {
               ChannelPtr transponder = m_channel;
               if (m_channel->Tid() != ld->getTransportStreamId())
@@ -557,7 +558,7 @@ void cEitFilter::ProcessData(u_short Pid, u_char Tid, const u_char *Data, int Le
          }
          break;
     case 0x14: {
-         if (g_setup.SetSystemTime && g_setup.TimeSource == Source() && g_setup.TimeTransponder && ISTRANSPONDER(Transponder(), g_setup.TimeTransponder))
+         if (cSettings::Get().m_bSetSystemTime && cSettings::Get().m_iTimeSource == Source() && cSettings::Get().m_iTimeTransponder && ISTRANSPONDER(Transponder(), cSettings::Get().m_iTimeTransponder))
             cTDT TDT(Data);
          }
          break;

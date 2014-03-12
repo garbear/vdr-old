@@ -27,6 +27,7 @@
 #include "devices/subsystems/DeviceReceiverSubsystem.h"
 #include "devices/subsystems/DeviceVideoFormatSubsystem.h"
 #include "channels/ChannelManager.h"
+#include "settings/Settings.h"
 #include "utils/Tools.h"
 #include "Transfer.h"
 
@@ -58,7 +59,7 @@ size_t cDeviceManager::Initialise(void)
   dsyslog("initialising DVB devices");
 
   DeviceVector devices = cDvbDevice::FindDevices();
-  cDvbDevice::BondDevices(g_setup.DeviceBondings);
+  cDvbDevice::BondDevices(cSettings::Get().m_strDeviceBondings);
   dsyslog("%u DVB devices found", devices.size());
 
   for (DeviceVector::iterator it = devices.begin(); it != devices.end(); ++it)

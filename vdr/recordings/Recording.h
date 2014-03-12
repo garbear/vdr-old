@@ -25,10 +25,13 @@
 class cRecordingInfo;
 class CVideoFile;
 
-extern int DirectoryPathMax;
-extern int DirectoryNameMax;
-extern bool DirectoryEncoding;
 extern int InstanceId;
+
+typedef enum
+{
+  RECORDING_FILE_LIMITS_UNIX,
+  RECORDING_FILE_LIMITS_MSDOS,
+} recording_file_limits_t;
 
 class cRecording
 {
@@ -94,6 +97,12 @@ public:
         // specific representation (depending on ToFileSystem). The given string will
         // be modified and may be reallocated if more space is needed. The return
         // value points to the resulting string, which may be different from s.
+
+  static void SetFileLimits(const recording_file_limits_t limits);
+
+  static int      DirectoryPathMax;
+  static int      DirectoryNameMax;
+  static bool     DirectoryEncoding;
 
 private:
   cRecording(const cRecording&); // can't copy cRecording
