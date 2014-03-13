@@ -10,6 +10,8 @@
 #ifndef __TOOLS_H
 #define __TOOLS_H
 
+#include "filesystem/File.h"
+
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>

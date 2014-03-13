@@ -16,6 +16,7 @@
 #include "UTF8Utils.h"
 #include "StringUtils.h"
 #include "platform/threads/threads.h"
+#include "DateTime.h"
 
 #include <algorithm>
 #include <ctype.h>
@@ -839,7 +840,7 @@ bool cLockFile::Lock(int WaitSeconds)
 {
   if (!m_file.IsOpen() && !m_strFilename.empty())
   {
-    CDateTime Timeout = CDateTime::GetUTCDateTime() + CDateTime(0, 0, 0, WaitSeconds);
+    CDateTime Timeout = CDateTime::GetUTCDateTime() + CDateTimeSpan(0, 0, 0, WaitSeconds);
     do
     {
       m_file.OpenForWrite(m_strFilename, true);
