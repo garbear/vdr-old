@@ -52,16 +52,15 @@ bool cFileName::GetLastPatPmtVersions(int &PatVersion, int &PmtVersion)
     {
       // Search for a PAT packet from the end of the file:
       cPatPmtParser PatPmtParser;
-      //XXX
-      int fd = open((m_strFileName + m_strFileOffset).c_str(), O_RDONLY | O_LARGEFILE, DEFFILEMODE);
-      if (fd >= 0)
+      CFile file;
+      if (file.Open(m_strFileName + m_strFileOffset))
       {
-        off_t pos = lseek(fd, -TS_SIZE, SEEK_END);
+        off_t pos = file.Seek(-TS_SIZE, SEEK_END);
         while (pos >= 0)
         {
           // Read and parse the PAT/PMT:
           uchar buf[TS_SIZE];
-          while (read(fd, buf, sizeof(buf)) == sizeof(buf))
+          while (file.Read(buf, sizeof(buf)) == sizeof(buf))
           {
             if (buf[0] == TS_SYNC_BYTE)
             {
@@ -73,7 +72,6 @@ bool cFileName::GetLastPatPmtVersions(int &PatVersion, int &PmtVersion)
                 PatPmtParser.ParsePmt(buf, sizeof(buf));
                 if (PatPmtParser.GetVersions(PatVersion, PmtVersion))
                 {
-                  close(fd);
                   return true;
                 }
               }
@@ -83,9 +81,8 @@ bool cFileName::GetLastPatPmtVersions(int &PatVersion, int &PmtVersion)
             else
               return false;
           }
-          pos = lseek(fd, pos - TS_SIZE, SEEK_SET);
+          pos = file.Seek(pos - TS_SIZE, SEEK_SET);
         }
-        close(fd);
       }
       else
         break;

@@ -826,7 +826,6 @@ bool GetSubDirectories(const string &strDirectory, vector<string> &vecFileNames)
 
 cLockFile::cLockFile(const std::string& strDirectory)
 {
-  f = -1;
   if (CDirectory::CanWrite(strDirectory))
     m_strFilename = AddDirectory(strDirectory, LOCKFILENAME);
 }
@@ -838,48 +837,57 @@ cLockFile::~cLockFile()
 
 bool cLockFile::Lock(int WaitSeconds)
 {
-  //XXX
-  if (f < 0 && !m_strFilename.empty()) {
-     time_t Timeout = time(NULL) + WaitSeconds;
-     do {
-        f = open(m_strFilename.c_str(), O_WRONLY | O_CREAT | O_EXCL, DEFFILEMODE);
-        if (f < 0) {
-           if (errno == EEXIST) {
-              struct stat fs;
-              if (stat(m_strFilename.c_str(), &fs) == 0) {
-                 if (abs(time(NULL) - fs.st_mtime) > LOCKFILESTALETIME) {
-                    esyslog("ERROR: removing stale lock file '%s'", m_strFilename.c_str());
-                    if (remove(m_strFilename.c_str()) < 0) {
-                       LOG_ERROR_STR(m_strFilename.c_str());
-                       break;
-                       }
-                    continue;
-                    }
-                 }
-              else if (errno != ENOENT) {
-                 LOG_ERROR_STR(m_strFilename.c_str());
-                 break;
-                 }
+  if (!m_file.IsOpen() && !m_strFilename.empty())
+  {
+    CDateTime Timeout = CDateTime::GetUTCDateTime() + CDateTime(0, 0, 0, WaitSeconds);
+    do
+    {
+      m_file.OpenForWrite(m_strFilename, true);
+      if (!m_file.IsOpen())
+      {
+        if (CFile::Exists(m_strFilename))
+        {
+          struct stat64 fs;
+          if (CFile::Stat(m_strFilename, &fs) == 0)
+          {
+            if (abs(time(NULL) - fs.st_mtime) > LOCKFILESTALETIME)
+            {
+              esyslog("ERROR: removing stale lock file '%s'", m_strFilename.c_str());
+              if (!CFile::Delete(m_strFilename))
+              {
+                LOG_ERROR_STR(m_strFilename.c_str());
+                break;
               }
-           else {
-              LOG_ERROR_STR(m_strFilename.c_str());
-              break;
-              }
-           if (WaitSeconds)
-             PLATFORM::CEvent::Sleep(1000);
-           }
-        } while (f < 0 && time(NULL) < Timeout);
-     }
-  return f >= 0;
+              continue;
+            }
+          }
+          else
+          {
+            LOG_ERROR_STR(m_strFilename.c_str());
+            break;
+          }
+        }
+        else
+        {
+          LOG_ERROR_STR(m_strFilename.c_str());
+          break;
+        }
+        if (WaitSeconds)
+          PLATFORM::CEvent::Sleep(1000);
+      }
+    } while (!m_file.IsOpen() && CDateTime::GetUTCDateTime() < Timeout);
+  }
+
+  return m_file.IsOpen();
 }
 
 void cLockFile::Unlock(void)
 {
-  if (f >= 0) {
-     close(f);
-     remove(m_strFilename.c_str());
-     f = -1;
-     }
+  if (m_file.IsOpen())
+  {
+    m_file.Close();
+    CFile::Delete(m_strFilename);
+  }
 }
 
 // --- cListObject -----------------------------------------------------------

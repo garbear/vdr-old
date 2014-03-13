@@ -35,14 +35,14 @@ cDeviceImageGrabSubsystem::cDeviceImageGrabSubsystem(cDevice *device)
 bool cDeviceImageGrabSubsystem::GrabImageFile(const string &strFileName, bool bJpeg /* = true */, int quality /* = -1 */, int sizeX /* = -1 */, int sizeY /* = -1 */)
 {
   int result = 0;
-  int fd = open(strFileName.c_str(), O_WRONLY | O_CREAT | O_NOFOLLOW | O_TRUNC, DEFFILEMODE);
-  if (fd >= 0)
+  CFile file;
+  if (file.OpenForWrite(strFileName))
   {
     int ImageSize;
     uchar *image = GrabImage(ImageSize, bJpeg, quality, sizeX, sizeY);
     if (image)
     {
-      if (safe_write(fd, image, ImageSize) == ImageSize)
+      if (file.Write(image, ImageSize) == ImageSize)
         isyslog("grabbed image to %s", strFileName.c_str());
       else
       {
@@ -53,7 +53,6 @@ bool cDeviceImageGrabSubsystem::GrabImageFile(const string &strFileName, bool bJ
     }
     else
       result |= 1;
-    close(fd);
   }
   else
   {

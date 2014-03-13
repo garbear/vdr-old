@@ -227,7 +227,7 @@ public:
 class cLockFile {
 private:
   std::string m_strFilename;
-  int f;
+  CFile m_file;
 public:
   cLockFile(const std::string& strDirectory);
   ~cLockFile();
