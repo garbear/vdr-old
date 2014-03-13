@@ -11,6 +11,7 @@
 #define __TOOLS_H
 
 #include "filesystem/File.h"
+#include "SysLog.h"
 
 #include <dirent.h>
 #include <errno.h>
@@ -25,7 +26,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <syslog.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 
@@ -35,19 +35,9 @@
 #ifdef ANDROID
 #include "android_sort.h"
 #include "android_strchrnul.h"
-#define __attribute_format_arg__(x) __attribute__ ((__format_arg__ (x)))
 #endif
 
 typedef unsigned char uchar;
-
-extern int SysLogLevel;
-
-#define esyslog(a...) void( (SysLogLevel > 0) ? syslog_with_tid(LOG_ERR, a) : void() )
-#define isyslog(a...) void( (SysLogLevel > 1) ? syslog_with_tid(LOG_ERR, a) : void() )
-#define dsyslog(a...) void( (SysLogLevel > 2) ? syslog_with_tid(LOG_ERR, a) : void() )
-
-#define LOG_ERROR         esyslog("ERROR (%s,%d): %m", __FILE__, __LINE__)
-#define LOG_ERROR_STR(s)  esyslog("ERROR (%s,%d): %s: %m", __FILE__, __LINE__, s)
 
 #define SECSINDAY  86400
 
@@ -73,8 +63,6 @@ template<class T> inline int sgn(T a) { return a < 0 ? -1 : a > 0 ? 1 : 0; }
 #endif
 
 template<class T> inline T constrain(T v, T l, T h) { return v < l ? l : v > h ? h : v; }
-
-void syslog_with_tid(int priority, const char *format, ...) __attribute__ ((format (printf, 2, 3)));
 
 #define BCDCHARTOINT(x) (10 * ((x & 0xF0) >> 4) + (x & 0xF))
 int BCD2INT(int x);

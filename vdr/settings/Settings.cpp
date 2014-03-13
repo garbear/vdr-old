@@ -132,6 +132,8 @@ cSettings::cSettings()
   m_iMaxVideoFileSizeMB     = MAXVIDEOFILESIZEDEFAULT;
   m_iResumeID               = 0;
   m_EPGLanguages[0]         = -1;
+  m_SysLogLevel             = SYS_LOG_INFO;
+  m_SysLogType              = SYS_LOG_TYPE_CONSOLE;
 
   // TODO: Load these paths from settings (assuming they are even used)
   m_VideoDirectory  = "special://home/video";
@@ -307,6 +309,12 @@ bool cSettings::Load(const std::string& strFilename)
   GetSettingInt(root,      SETTINGS_XML_ELM_TIMESHIFT_BUFFER_FILE_SIZE, m_TimeshiftBufferFileSize);
   GetSettingString(root,   SETTINGS_XML_ELM_TIMESHIFT_BUFFER_FILE,      m_TimeshiftBufferDir);
 
+  if (GetSettingInt(root,  SETTINGS_XML_ELM_SYSLOG_TYPE,                iValue))
+    m_SysLogType = (sys_log_type_t)iValue;
+
+  if (GetSettingInt(root,  SETTINGS_XML_ELM_SYSLOG_LEVEL,               iValue))
+    m_SysLogLevel = (sys_log_level_t)iValue;
+
   return true;
 }
 
@@ -334,6 +342,8 @@ bool cSettings::Save(const std::string& strFilename)
   SaveSetting(root, SETTINGS_XML_ELM_RESUME_ID,                  m_iResumeID);
   SaveSetting(root, SETTINGS_XML_ELM_DEVICE_BONDINGS,            m_strDeviceBondings);
   SaveSetting(root, SETTINGS_XML_ELM_NEXT_WAKEUP,                m_nextWakeupTime);
+  SaveSetting(root, SETTINGS_XML_ELM_SYSLOG_TYPE,                m_SysLogType);
+  SaveSetting(root, SETTINGS_XML_ELM_SYSLOG_LEVEL,               m_SysLogLevel);
 
   SaveSetting(root, SETTINGS_XML_ELM_LNB_SLOF,                   m_iLnbSLOF);
   SaveSetting(root, SETTINGS_XML_ELM_LNB_FREQ_LOW,               m_iLnbFreqLow);
@@ -528,7 +538,7 @@ bool cSettings::LoadFromCmdLine(int argc, char *argv[])
           int l = atoi(optarg);
           if (0 <= l && l <= 3)
           {
-            SysLogLevel = l;
+            cSettings::Get().m_SysLogLevel = SYS_LOG_INFO;
             if (!p)
               break;
             if (is_number(p + 1))
@@ -616,8 +626,7 @@ bool cSettings::LoadFromCmdLine(int argc, char *argv[])
   }
 
   // Log file:
-  if (SysLogLevel > 0)
-    openlog("vdr", LOG_CONS, m_SysLogTarget); // LOG_PID doesn't work as expected under NPTL
+  CSysLog::Get().SetType(m_SysLogType);
 
   // Set user id in case we were started as root:
   if (!strVdrUser.empty() && geteuid() == 0)

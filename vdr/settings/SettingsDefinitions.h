@@ -35,6 +35,8 @@
 #define SETTINGS_XML_ELM_RESUME_ID                     "resume_id"
 #define SETTINGS_XML_ELM_DEVICE_BONDINGS               "device_bondings"
 #define SETTINGS_XML_ELM_NEXT_WAKEUP                   "next_wakeup"
+#define SETTINGS_XML_ELM_SYSLOG_TYPE                   "syslog_type"
+#define SETTINGS_XML_ELM_SYSLOG_LEVEL                  "syslog_level"
 
 #define SETTINGS_XML_ELM_INSTANT_RECORD_TIME           "instant_record_time"
 #define SETTINGS_XML_ELM_DEFAULT_RECORDING_PRIORITY    "default_record_prio"

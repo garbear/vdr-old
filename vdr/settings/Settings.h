@@ -90,6 +90,8 @@ public:
   int                 m_iMaxVideoFileSizeMB;
   int                 m_iResumeID;
   std::string         m_strDeviceBondings;
+  sys_log_level_t     m_SysLogLevel;
+  sys_log_type_t      m_SysLogType;
 
   int                 m_iStandardCompliance;
   int                 m_iMarginStart;
