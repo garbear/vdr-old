@@ -1,5 +1,4 @@
 #include "LogSyslog.h"
-#include "platform/threads/threads.h"
 #include "settings/Settings.h"
 #include <syslog.h>
 
@@ -30,5 +29,5 @@ void CLogSyslog::Log(sys_log_level_t level, const char* logline)
   default:
     return;
   }
-  syslog(priority, "[%ld] %s", PLATFORM::CThread::ThreadId(), logline);
+  syslog(priority, "%s", logline);
 }
