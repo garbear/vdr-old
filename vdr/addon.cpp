@@ -82,15 +82,16 @@ ADDON_STATUS ADDON_Create(void* hdl, void* props)
 
   CONTENT_PROPERTIES* cprops = (CONTENT_PROPERTIES*)props;
 
+  m_CurStatus = ADDON_STATUS_UNKNOWN;
   try
   {
     XBMC = new CHelper_libXBMC_addon;
     if (!XBMC || !XBMC->RegisterMe(hdl))
-      throw ADDON_STATUS_PERMANENT_FAILURE;
+      return ADDON_STATUS_PERMANENT_FAILURE;
 
     CLog::Get().SetPipe(new CLogXBMC);
     if (!vdr.Init())
-      throw ADDON_STATUS_UNKNOWN;
+      return ADDON_STATUS_UNKNOWN;
   }
   catch (const ADDON_STATUS &status)
   {
@@ -103,7 +104,7 @@ ADDON_STATUS ADDON_Create(void* hdl, void* props)
   g_strClientPath = cprops->strClientPath;
 
   ADDON_ReadSettings();
-  m_CurStatus     = vdr.Init() ? ADDON_STATUS_UNKNOWN : ADDON_STATUS_OK;
+  m_CurStatus     = ADDON_STATUS_OK;
 
   return m_CurStatus;
 }
