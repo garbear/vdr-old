@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Types.h"
 #include "utils/Tools.h"
 #include "utils/DateTime.h"
 #include "Event.h"

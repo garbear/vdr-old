@@ -20,6 +20,7 @@
  */
 #pragma once
 
+#include "Types.h"
 #include "devices/Device.h"
 #include "DVBLegacy.h"
 #include "DVBTuner.h"

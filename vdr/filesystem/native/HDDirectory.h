@@ -21,6 +21,7 @@
  */
 #pragma once
 
+#include "Types.h"
 #include "filesystem/IDirectory.h"
 
 class CHDDirectory : public IDirectory

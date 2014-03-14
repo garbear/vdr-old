@@ -20,6 +20,7 @@
  */
 #pragma once
 
+#include "Types.h"
 #include "utils/Tools.h"
 
 #include <string>

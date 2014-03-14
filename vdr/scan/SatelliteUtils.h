@@ -21,6 +21,7 @@
  */
 #pragma once
 
+#include "Types.h"
 #include "CountryUtils.h"
 #include "dvb/extended_frontend.h"
 

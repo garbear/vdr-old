@@ -21,6 +21,7 @@
  */
 #pragma once
 
+#include "Types.h"
 #include "URL.h"
 
 #include <string>

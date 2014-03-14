@@ -21,6 +21,7 @@
  */
 #pragma once
 
+#include "Types.h"
 #include "UrlOptions.h"
 
 #ifdef TARGET_WINDOWS

@@ -21,6 +21,7 @@
 #ifndef VNSI_DEMUXER_H264_H
 #define VNSI_DEMUXER_H264_H
 
+#include "Types.h"
 #include "Parser.h"
 
 class cBitstream;

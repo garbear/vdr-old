@@ -20,6 +20,7 @@
  */
 #pragma once
 
+#include "Types.h"
 #include "filesystem/IDirectory.h"
 #include "xbmc/libXBMC_addon.h"
 

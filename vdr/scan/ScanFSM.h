@@ -21,6 +21,7 @@
  */
 #pragma once
 
+#include "Types.h"
 #include "ScanConfig.h" // for eScanFlags
 #include "SWReceiver.h"
 #include "scanners/EITScanner.h"

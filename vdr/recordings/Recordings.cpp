@@ -4,6 +4,7 @@
 #include "filesystem/Videodir.h"
 #include "utils/url/URLUtils.h"
 #include "platform/threads/throttle.h"
+#include "utils/I18N.h"
 
 using namespace PLATFORM;
 

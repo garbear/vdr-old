@@ -10,6 +10,7 @@
 #ifndef __EIT_H
 #define __EIT_H
 
+#include "Types.h"
 #include "Filter.h"
 #include "utils/DateTime.h"
 

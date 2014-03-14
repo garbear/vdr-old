@@ -20,6 +20,7 @@
  */
 #pragma once
 
+#include "Types.h"
 #include <stddef.h>
 #include <sys/types.h>
 

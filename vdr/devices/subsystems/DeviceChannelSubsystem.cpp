@@ -35,6 +35,7 @@
 #include "utils/Status.h"
 #include "utils/Tools.h"
 #include "devices/Transfer.h"
+#include "utils/I18N.h"
 
 #include <time.h>
 

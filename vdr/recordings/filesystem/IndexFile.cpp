@@ -5,6 +5,7 @@
 #include "devices/Remux.h"
 #include "filesystem/Directory.h"
 #include "utils/Ringbuffer.h"
+#include "utils/I18N.h"
 
 using namespace PLATFORM;
 

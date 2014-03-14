@@ -20,6 +20,7 @@
  */
 #pragma once
 
+#include "Types.h"
 #include "DVBTransponderParams.h"
 #include "sources/ISourceParams.h"
 #include <string>

@@ -26,6 +26,7 @@
 #ifndef VNSI_RECEIVER_H
 #define VNSI_RECEIVER_H
 
+#include "Types.h"
 #include <linux/dvb/frontend.h>
 #include <linux/videodev2.h>
 #include "channels/ChannelManager.h"

@@ -20,6 +20,7 @@
  */
 #pragma once
 
+#include "Types.h"
 #include "devices/subsystems/DeviceSectionFilterSubsystem.h"
 
 class cDvbSectionFilterSubsystem : public cDeviceSectionFilterSubsystem

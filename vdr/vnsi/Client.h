@@ -26,6 +26,7 @@
 #ifndef VNSI_CLIENT_H
 #define VNSI_CLIENT_H
 
+#include "Types.h"
 #include "lib/platform/threads/threads.h"
 #include "utils/Tools.h"
 #include "devices/Receiver.h"

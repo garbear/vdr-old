@@ -21,6 +21,7 @@
 #ifndef VNSI_DEMUXER_SUBTITLE_H
 #define VNSI_DEMUXER_SUBTITLE_H
 
+#include "Types.h"
 #include "Parser.h"
 
 // --- cParserSubtitle -------------------------------------------------

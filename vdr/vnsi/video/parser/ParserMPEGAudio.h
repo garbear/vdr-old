@@ -21,6 +21,7 @@
 #ifndef VNSI_DEMUXER_MPEGAUDIO_H
 #define VNSI_DEMUXER_MPEGAUDIO_H
 
+#include "Types.h"
 #include "Parser.h"
 
 // --- cParserMPEG2Audio -------------------------------------------------

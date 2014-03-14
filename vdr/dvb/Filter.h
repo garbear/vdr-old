@@ -10,6 +10,7 @@
 #ifndef __FILTER_H
 #define __FILTER_H
 
+#include "Types.h"
 #include <sys/types.h>
 #include "channels/Channel.h"
 #include "utils/Tools.h"

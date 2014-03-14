@@ -10,21 +10,11 @@
 #ifndef __CONFIG_H
 #define __CONFIG_H
 
-#include <arpa/inet.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <time.h>
-#include <unistd.h>
-#include <string>
+#include "Types.h"
 #include "utils/StringUtils.h"
-#include "utils/I18N.h"
-#include "filesystem/File.h"
-//#include "font.h"
 #include "utils/Tools.h"
 
 // VDR's own version number:
-
 #define VDRVERSION  "2.0.4"
 #define VDRVERSNUM   20004  // Version * 10000 + Major * 100 + Minor
 
@@ -82,7 +72,7 @@ public:
   int Size(void) const { return size; }
   int *Array(void) { return array; }
   bool FromString(const char *s);
-  cString ToString(void);
+  std::string ToString(void);
   int FirstDeviceIndex(int DeviceIndex) const;
       ///< Returns the first device index (starting at 0) that uses the same
       ///< sat cable number as the device with the given DeviceIndex.

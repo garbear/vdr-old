@@ -20,6 +20,7 @@
  *
  */
 
+#include "Types.h"
 #include <stdint.h>
 #include <string>
 

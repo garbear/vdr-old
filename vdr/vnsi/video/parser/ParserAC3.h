@@ -21,6 +21,7 @@
 #ifndef VNSI_DEMUXER_AC3_H
 #define VNSI_DEMUXER_AC3_H
 
+#include "Types.h"
 #include "Parser.h"
 
 // --- cParserAC3 -------------------------------------------------

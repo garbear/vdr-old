@@ -21,6 +21,7 @@
  */
 #pragma once
 
+#include "Types.h"
 #if (defined HAVE_CONFIG_H) && (!defined TARGET_WINDOWS)
   #include "config.h"
 #endif

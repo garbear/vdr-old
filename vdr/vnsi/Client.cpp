@@ -26,6 +26,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <map>
+#include <netinet/in.h>
 
 #include "recordings/Recordings.h"
 #include "recordings/RecordingInfo.h"

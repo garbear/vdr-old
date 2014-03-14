@@ -10,27 +10,12 @@
 #ifndef __TOOLS_H
 #define __TOOLS_H
 
+#include "Types.h"
 #include "filesystem/File.h"
-#include "log/Log.h"
-
-#include <dirent.h>
-#include <errno.h>
-#include <fcntl.h>
 #include <float.h>
-#include <iconv.h>
-#include <math.h>
-#include <poll.h>
-#include <stdarg.h>
-#include <stddef.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-
 #include <string>
 #include <vector>
+#include <math.h>
 
 #ifdef ANDROID
 #include "android_sort.h"

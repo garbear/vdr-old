@@ -10,6 +10,7 @@
 #ifndef __EITSCAN_H
 #define __EITSCAN_H
 
+#include "Types.h"
 #include <time.h>
 #include "Config.h"
 #include "devices/Device.h"

@@ -22,7 +22,7 @@
  */
 #pragma once
 
-//#include "utils/StdString.h"
+#include "Types.h"
 #include "XBMCTinyXML.h"
 
 #include <stdint.h>

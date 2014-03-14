@@ -10,6 +10,7 @@
 #ifndef __TIMERS_H
 #define __TIMERS_H
 
+#include "Types.h"
 #include "channels/ChannelManager.h"
 #include "Config.h"
 #include "utils/Tools.h"

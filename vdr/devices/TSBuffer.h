@@ -21,6 +21,7 @@
  */
 #pragma once
 
+#include "Types.h"
 #include "platform/threads/threads.h"
 #include "utils/Tools.h"
 

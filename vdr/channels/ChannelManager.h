@@ -20,6 +20,7 @@
  */
 #pragma once
 
+#include "Types.h"
 #include "Channel.h"
 #include "utils/Observer.h"
 #include "platform/threads/mutex.h"

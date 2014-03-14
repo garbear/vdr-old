@@ -20,6 +20,7 @@
  */
 #pragma once
 
+#include "Types.h"
 #include "devices/subsystems/DeviceCommonInterfaceSubsystem.h"
 
 class cCiAdapter;

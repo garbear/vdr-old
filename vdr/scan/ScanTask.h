@@ -21,6 +21,7 @@
  */
 #pragma once
 
+#include "Types.h"
 #include "CountryUtils.h"
 #include "FrontendCapabilities.h"
 #include "ScanLimits.h"

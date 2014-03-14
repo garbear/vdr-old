@@ -61,12 +61,11 @@ bool cSatCableNumbers::FromString(const char *s)
   return true;
 }
 
-cString cSatCableNumbers::ToString(void)
+std::string cSatCableNumbers::ToString(void)
 {
-  cString s("");
-  for (int i = 0; i < size; i++) {
-      s = cString::sprintf("%s%d ", *s, array[i]);
-      }
+  std::string s("");
+  for (int i = 0; i < size; i++)
+    s = StringUtils::Format("%s%d ", s.c_str(), array[i]);
   return s;
 }
 

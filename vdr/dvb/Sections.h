@@ -10,6 +10,7 @@
 #ifndef __SECTIONS_H
 #define __SECTIONS_H
 
+#include "Types.h"
 #include <time.h>
 #include "Filter.h"
 #include "channels/Channel.h"

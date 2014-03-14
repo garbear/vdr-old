@@ -20,7 +20,8 @@
  */
 #pragma once
 
-#include "../../../devices/subsystems/DevicePIDSubsystem.h"
+#include "Types.h"
+#include "devices/subsystems/DevicePIDSubsystem.h"
 
 class cDvbPIDSubsystem : public cDevicePIDSubsystem
 {

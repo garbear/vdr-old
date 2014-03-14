@@ -20,6 +20,7 @@
  */
 #pragma once
 
+#include "Types.h"
 #include <platform/threads/mutex.h>
 
 /*!

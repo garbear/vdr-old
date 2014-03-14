@@ -21,6 +21,7 @@
  */
 #pragma once
 
+#include "Types.h"
 #include "CADescriptors.h"
 
 #include "platform/threads/mutex.h"

@@ -20,6 +20,7 @@
  */
 #pragma once
 
+#include "Types.h"
 #include "devices/subsystems/DeviceReceiverSubsystem.h"
 
 class cTSBuffer;

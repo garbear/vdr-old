@@ -10,6 +10,7 @@
 #ifndef __RECEIVER_H
 #define __RECEIVER_H
 
+#include "Types.h"
 #include "channels/ChannelManager.h"
 #include "platform/threads/mutex.h"
 #include "Config.h"

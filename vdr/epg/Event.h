@@ -3,6 +3,7 @@
 #define MAXEPGBUGFIXLEVEL 3
 #define VDR_RATINGS_PATCHED_V2
 
+#include "Types.h"
 #include "Components.h"
 #include "utils/Tools.h"
 #include "utils/DateTime.h"

@@ -21,7 +21,7 @@
  */
 #pragma once
 
-#include <platform/os.h>
+#include "Types.h"
 
 #ifdef TARGET_POSIX
 

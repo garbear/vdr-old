@@ -24,6 +24,7 @@
 #ifndef REGEXP_H
 #define REGEXP_H
 
+#include "Types.h"
 #include <string>
 #include <vector>
 

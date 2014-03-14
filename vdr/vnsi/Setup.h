@@ -21,6 +21,7 @@
 #ifndef VNSI_SETUP_H
 #define VNSI_SETUP_H
 
+#include "Types.h"
 class cMenuSetupVNSI : public cMenuSetupPage
 {
 private:

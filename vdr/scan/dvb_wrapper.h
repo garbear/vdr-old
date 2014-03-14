@@ -14,6 +14,7 @@
  */
 #pragma once
 
+#include "Types.h"
 #include "dvb/extended_frontend.h"
 
 #include <linux/dvb/frontend.h>

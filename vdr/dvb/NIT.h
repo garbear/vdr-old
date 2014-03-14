@@ -10,6 +10,7 @@
 #ifndef __NIT_H
 #define __NIT_H
 
+#include "Types.h"
 #include "Filter.h"
 
 // From UTF8Utils.h

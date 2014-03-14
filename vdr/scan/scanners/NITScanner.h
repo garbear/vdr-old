@@ -22,6 +22,7 @@
  */
 #pragma once
 
+#include "Types.h"
 #include "dvb/Filter.h"
 #include "Types.h"
 

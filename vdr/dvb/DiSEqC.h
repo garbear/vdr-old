@@ -10,6 +10,7 @@
 #ifndef __DISEQC_H
 #define __DISEQC_H
 
+#include "Types.h"
 #include "Config.h"
 #include "platform/threads/mutex.h"
 

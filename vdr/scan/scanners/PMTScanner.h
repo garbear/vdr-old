@@ -22,6 +22,7 @@
  */
 #pragma once
 
+#include "Types.h"
 #include "NITScanner.h" // for INVALID_CHANNEL
 #include "dvb/Filter.h"
 #include "Types.h"

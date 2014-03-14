@@ -20,6 +20,7 @@
 
 #pragma once
 
+#include "Types.h"
 #include <list>
 #include "parser/Parser.h"
 #include "channels/Channel.h"

@@ -27,6 +27,7 @@
 #ifndef VNSI_CXSOCKET_H
 #define VNSI_CXSOCKET_H
 
+#include "Types.h"
 #include "lib/platform/threads/mutex.h"
 //#include "utils/Tools.h"
 

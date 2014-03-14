@@ -12,6 +12,7 @@
 #ifndef __SHUTDOWN_H
 #define __SHUTDOWN_H
 
+#include "Types.h"
 #include <time.h>
 
 class cCountdown {

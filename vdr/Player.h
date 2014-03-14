@@ -10,6 +10,7 @@
 #ifndef __PLAYER_H
 #define __PLAYER_H
 
+#include "Types.h"
 #include "devices/subsystems/DevicePlayerSubsystem.h"
 #include "devices/subsystems/DeviceTrackSubsystem.h"
 #include "devices/subsystems/DeviceVideoFormatSubsystem.h"

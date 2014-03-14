@@ -20,6 +20,7 @@
  *
  */
 
+#include "Types.h"
 #include "dvb/Filter.h"
 #include "channels/Channel.h"
 

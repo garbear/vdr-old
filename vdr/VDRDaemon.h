@@ -20,6 +20,7 @@
  */
 #pragma once
 
+#include "Types.h"
 #include "SignalHandler.h"
 #include "channels/ChannelManager.h"
 

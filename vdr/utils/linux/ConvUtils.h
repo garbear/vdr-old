@@ -21,6 +21,7 @@
  */
 #pragma once
 
+#include "Types.h"
 #include "WindowsDefs.h" // UINT DWORD LPCSTR LPSTR LPBOOL ...
 
 LONGLONG Int32x32To64(LONG Multiplier, LONG Multiplicand);

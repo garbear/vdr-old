@@ -16,6 +16,7 @@
 #include "recordings/Recording.h"
 #include "utils/Shutdown.h"
 #include "utils/Tools.h"
+#include "utils/I18N.h"
 
 // Set these to 'true' for debug output:
 static bool DebugPatPmt = false;

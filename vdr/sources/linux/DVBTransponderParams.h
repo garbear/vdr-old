@@ -20,6 +20,7 @@
  */
 #pragma once
 
+#include "Types.h"
 #include "sources/ISourceParams.h"
 
 #include "dvb/extended_frontend.h"

@@ -21,9 +21,9 @@
  */
 #pragma once
 
+#include "Types.h"
 #include "CADescriptor.h"
 
-#include <shared_ptr/shared_ptr.hpp>
 #include <libsi/descriptor.h>
 #include <stdint.h>
 

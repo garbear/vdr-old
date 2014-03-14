@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Types.h"
 #include "channels/Channel.h"
 #include "channels/ChannelID.h"
 #include <stddef.h>

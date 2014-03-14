@@ -13,6 +13,7 @@
 #ifndef __EPG_H
 #define __EPG_H
 
+#include "Types.h"
 #include "Schedule.h"
 #include "utils/DateTime.h"
 #include <vector>

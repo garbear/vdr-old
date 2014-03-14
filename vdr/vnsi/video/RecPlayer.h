@@ -31,6 +31,7 @@
 #ifndef VNSI_RECPLAYER_H
 #define VNSI_RECPLAYER_H
 
+#include "Types.h"
 #include <stdio.h>
 #include "recordings/Recording.h"
 #include "utils/Tools.h"

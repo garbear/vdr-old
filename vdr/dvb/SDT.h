@@ -10,6 +10,7 @@
 #ifndef __SDT_H
 #define __SDT_H
 
+#include "Types.h"
 #include "Filter.h"
 #include "PAT.h"
 

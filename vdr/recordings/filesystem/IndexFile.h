@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Types.h"
 #include "filesystem/File.h"
 #include "utils/Tools.h"
 #include "ResumeFile.h"

@@ -20,7 +20,24 @@
  */
 #pragma once
 
+#include "platform/os.h"
+#include "utils/log/Log.h"
 #include <shared_ptr/shared_ptr.hpp>
+#include <dirent.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <float.h>
+#include <iconv.h>
+#include <math.h>
+#include <poll.h>
+#include <stdarg.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 class cChannel;
 typedef VDR::shared_ptr<cChannel> ChannelPtr;

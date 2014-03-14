@@ -20,6 +20,7 @@
  */
 #pragma once
 
+#include "Types.h"
 #include "devices/subsystems/DeviceChannelSubsystem.h"
 
 #include <linux/dvb/frontend.h>

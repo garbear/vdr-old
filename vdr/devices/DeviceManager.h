@@ -20,6 +20,7 @@
  */
 #pragma once
 
+#include "Types.h"
 #include "Device.h"
 #include "utils/Observer.h"
 

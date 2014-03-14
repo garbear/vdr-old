@@ -26,6 +26,7 @@
 #ifndef VNSI_SERVER_H
 #define VNSI_SERVER_H
 
+#include "Types.h"
 #include <list>
 #include "lib/platform/threads/threads.h"
 #include "utils/Observer.h"

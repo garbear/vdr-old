@@ -20,6 +20,7 @@
  */
 #pragma once
 
+#include "Types.h"
 #include "filesystem/IFile.h"
 #include "xbmc/xbmc_vfs_utils.hpp"
 

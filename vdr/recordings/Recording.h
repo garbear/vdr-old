@@ -10,6 +10,7 @@
 #ifndef __RECORDING_H
 #define __RECORDING_H
 
+#include "Types.h"
 #include <time.h>
 #include "RecordingConfig.h"
 #include "channels/ChannelManager.h"

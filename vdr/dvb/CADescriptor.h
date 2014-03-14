@@ -21,7 +21,7 @@
  */
 #pragma once
 
-#include <shared_ptr/shared_ptr.hpp>
+#include "Types.h"
 #include <stdint.h>
 #include <vector>
 

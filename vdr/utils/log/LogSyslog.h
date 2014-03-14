@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Types.h"
 #include "ILog.h"
 
 class CLogSyslog : public ILog

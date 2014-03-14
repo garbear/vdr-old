@@ -21,6 +21,7 @@
  */
 #pragma once
 
+#include "Types.h"
 #include "devices/Receiver.h"
 #include "platform/threads/threads.h"
 #include "Types.h"

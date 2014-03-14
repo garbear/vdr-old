@@ -10,6 +10,7 @@
 #ifndef __RECORDER_H
 #define __RECORDER_H
 
+#include "Types.h"
 #include "devices/Receiver.h"
 #include "Recording.h"
 #include "devices/Remux.h"

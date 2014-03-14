@@ -24,8 +24,8 @@
  * Device.h: The basic device interface
  */
 
-#include "platform/threads/threads.h"
 #include "Types.h"
+#include "platform/threads/threads.h"
 
 #include <list>
 #include <string>

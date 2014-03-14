@@ -27,6 +27,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
+#include <netinet/in.h>
 
 #include <asm/byteorder.h>
 

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Types.h"
 #include "DateTime.h"
 #include <stddef.h>
 #include <time.h>

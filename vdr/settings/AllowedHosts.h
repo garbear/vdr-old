@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Types.h"
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <string>

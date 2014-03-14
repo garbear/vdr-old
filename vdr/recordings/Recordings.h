@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Types.h"
 #include "Recording.h"
 
 class cRecordings : public PLATFORM::CThread

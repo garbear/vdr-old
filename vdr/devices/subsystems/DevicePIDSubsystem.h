@@ -20,6 +20,7 @@
  */
 #pragma once
 
+#include "Types.h"
 #include "devices/DeviceSubsystem.h"
 
 #define MAXPIDHANDLES      64 // the maximum number of different PIDs per device

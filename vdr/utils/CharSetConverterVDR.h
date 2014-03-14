@@ -20,6 +20,7 @@
  */
 #pragma once
 
+#include "Types.h"
 #include <iconv.h>
 #include <stddef.h>
 

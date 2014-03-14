@@ -20,6 +20,7 @@
  *
  */
 
+#include "Types.h"
 #include "devices/Device.h"
 #include "devices/Receiver.h"
 #include "channels/Channel.h"

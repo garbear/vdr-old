@@ -20,6 +20,7 @@
 
 #pragma once
 
+#include "Types.h"
 #include "lib/platform/threads/threads.h"
 #include "channels/Channel.h"
 #include "devices/Device.h"

@@ -21,6 +21,7 @@
 #ifndef VNSI_DEMUXER_MPEGVIDEO_H
 #define VNSI_DEMUXER_MPEGVIDEO_H
 
+#include "Types.h"
 #include <deque>
 #include "Parser.h"
 

@@ -22,7 +22,6 @@
 #include "Channel.h"
 #include "ChannelDefinitions.h"
 #include "utils/StringUtils.h"
-#include "utils/Tools.h"
 #include "utils/CRC32.h"
 #include "filesystem/File.h"
 //#include "utils/UTF8Utils.h"

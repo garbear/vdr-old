@@ -10,6 +10,7 @@
 #ifndef __PAT_H
 #define __PAT_H
 
+#include "Types.h"
 #include <stdint.h>
 #include "Filter.h"
 #include "utils/DateTime.h"

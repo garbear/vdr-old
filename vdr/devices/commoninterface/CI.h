@@ -21,6 +21,7 @@
  */
 #pragma once
 
+#include "Types.h"
 #include "channels/ChannelID.h"
 #include "utils/Tools.h"
 #include "platform/threads/threads.h"
