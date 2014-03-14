@@ -24,11 +24,21 @@
 #include "xbmc/libXBMC_addon.h"
 #include "xbmc/xbmc_addon_types.h"
 #include "xbmc/xbmc_content_types.h"
+#include "utils/log/ILog.h"
 
 #include <string>
 
 using namespace ADDON;
 using namespace std;
+
+class CLogXBMC : public ILog
+{
+public:
+  virtual ~CLogXBMC(void) {}
+
+  void Log(sys_log_level_t level, const char* logline);
+  sys_log_type_t Type(void) const { return SYS_LOG_TYPE_ADDON; }
+};
 
 CHelper_libXBMC_addon*   XBMC = NULL;
 string         g_strUserPath    = "";
@@ -36,6 +46,28 @@ string         g_strClientPath  = "";
 ADDON_STATUS   m_CurStatus      = ADDON_STATUS_UNKNOWN;
 
 cVDRDaemon     vdr;
+
+void CLogXBMC::Log(sys_log_level_t level, const char* logline)
+{
+  addon_log_t xbmcLogLevel;
+
+  switch (level)
+  {
+  case SYS_LOG_ERROR:
+    xbmcLogLevel = LOG_ERROR;
+    break;
+  case SYS_LOG_INFO:
+    xbmcLogLevel = LOG_INFO;
+    break;
+  case SYS_LOG_DEBUG:
+    xbmcLogLevel = LOG_DEBUG;
+    break;
+  default:
+    return;
+  }
+
+  XBMC->Log(xbmcLogLevel, logline);
+}
 
 extern "C" {
 
@@ -56,6 +88,7 @@ ADDON_STATUS ADDON_Create(void* hdl, void* props)
     if (!XBMC || !XBMC->RegisterMe(hdl))
       throw ADDON_STATUS_PERMANENT_FAILURE;
 
+    CLog::Get().SetPipe(new CLogXBMC);
     if (!vdr.Init())
       throw ADDON_STATUS_UNKNOWN;
   }
