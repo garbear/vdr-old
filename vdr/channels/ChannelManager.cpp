@@ -156,16 +156,15 @@ bool cChannelManager::Load(const std::string &file)
   CLockObject lock(m_mutex);
   Clear();
 
+  m_strFilename = file;
+
   CXBMCTinyXML xmlDoc;
   if (!xmlDoc.LoadFile(file.c_str()))
   {
-    //CLog::Log(LOGERROR, "CSettings: error loading settings definition from %s, Line %d\n%s", file.c_str(), xmlDoc.ErrorRow(), xmlDoc.ErrorDesc());
-    //cout << "Error loading channels from " << file << ", Line " << xmlDoc.ErrorRow() << endl;
-    //cout << xmlDoc.ErrorDesc() << endl;
+    esyslog("ChannelManager: Failed to load channels from %s, Line %d", file.c_str(), xmlDoc.ErrorRow());
+    esyslog("%s", xmlDoc.ErrorDesc());
     return false;
   }
-
-  m_strFilename = file;
 
   TiXmlElement *root = xmlDoc.RootElement();
   if (root == NULL)
