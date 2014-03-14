@@ -87,16 +87,17 @@ ADDON_STATUS ADDON_Create(void* hdl, void* props)
   {
     XBMC = new CHelper_libXBMC_addon;
     if (!XBMC || !XBMC->RegisterMe(hdl))
-      return ADDON_STATUS_PERMANENT_FAILURE;
+      throw ADDON_STATUS_PERMANENT_FAILURE;
 
     CLog::Get().SetPipe(new CLogXBMC);
     if (!vdr.Init())
-      return ADDON_STATUS_UNKNOWN;
+      throw ADDON_STATUS_UNKNOWN;
   }
   catch (const ADDON_STATUS &status)
   {
     delete XBMC;
     XBMC = NULL;
+    m_CurStatus = status;
     return status;
   }
 
