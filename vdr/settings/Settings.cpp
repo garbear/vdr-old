@@ -626,7 +626,7 @@ bool cSettings::LoadFromCmdLine(int argc, char *argv[])
   }
 
   // Log file:
-  CSysLog::Get().SetType(m_SysLogType);
+  CLog::Get().SetType(m_SysLogType);
 
   // Set user id in case we were started as root:
   if (!strVdrUser.empty() && geteuid() == 0)

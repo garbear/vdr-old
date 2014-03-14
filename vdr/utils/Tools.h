@@ -11,7 +11,7 @@
 #define __TOOLS_H
 
 #include "filesystem/File.h"
-#include "SysLog.h"
+#include "log/Log.h"
 
 #include <dirent.h>
 #include <errno.h>
