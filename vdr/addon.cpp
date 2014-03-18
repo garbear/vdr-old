@@ -89,9 +89,17 @@ ADDON_STATUS ADDON_Create(void* hdl, void* props)
     if (!XBMC || !XBMC->RegisterMe(hdl))
       throw ADDON_STATUS_PERMANENT_FAILURE;
 
+    g_strUserPath   = cprops->strUserPath;
+    g_strClientPath = cprops->strClientPath;
+
+    ADDON_ReadSettings();
+
     CLog::Get().SetPipe(new CLogXBMC);
     if (!vdr.Init())
       throw ADDON_STATUS_UNKNOWN;
+
+    m_CurStatus = ADDON_STATUS_OK;
+
   }
   catch (const ADDON_STATUS &status)
   {
@@ -100,12 +108,6 @@ ADDON_STATUS ADDON_Create(void* hdl, void* props)
     m_CurStatus = status;
     return status;
   }
-
-  g_strUserPath   = cprops->strUserPath;
-  g_strClientPath = cprops->strClientPath;
-
-  ADDON_ReadSettings();
-  m_CurStatus     = ADDON_STATUS_OK;
 
   return m_CurStatus;
 }
