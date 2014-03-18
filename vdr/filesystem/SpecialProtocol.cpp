@@ -244,6 +244,10 @@ string CSpecialProtocol::GetTemporaryPath()
 
 bool CSpecialProtocol::SetFileBasePath()
 {
+#ifdef TARGET_XBMC
+  return true;
+#endif
+
   string vdrPath = GetHomePath();
   if (vdrPath.empty())
   {
@@ -254,11 +258,7 @@ bool CSpecialProtocol::SetFileBasePath()
   /* Set vdr path */
   SetVDRPath(vdrPath);
 
-#ifdef TARGET_XBMC
-  SetHomePath(ADDON_PROFILE);
-#else
   SetHomePath(vdrPath); // TODO
-#endif
 
   string tempPath = GetTemporaryPath();
   if (tempPath.empty())
@@ -452,11 +452,13 @@ string CSpecialProtocol::TranslatePathConvertCase(const string& path)
 
 void CSpecialProtocol::LogPaths()
 {
+#ifndef TARGET_XBMC
   isyslog("special://" VDR_ROOT "/ is mapped to: %s", GetPath(VDR_ROOT).c_str());
   isyslog("special://" HOME_ROOT "/ is mapped to: %s", GetPath(HOME_ROOT).c_str());
   isyslog("special://" TEMP_ROOT "/ is mapped to: %s", GetPath(TEMP_ROOT).c_str());
   isyslog("special://" XBMCHOME_ROOT "/ is mapped to: %s", GetPath(XBMCHOME_ROOT).c_str());
   isyslog("special://" XBMCTEMP_ROOT "/ is mapped to: %s", GetPath(XBMCTEMP_ROOT).c_str());
+#endif
 }
 
 // private routines, to ensure we only set/get an appropriate path
