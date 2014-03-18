@@ -38,6 +38,9 @@ using namespace std;
 
 IDirectory *CDirectory::CreateLoader(const std::string &path)
 {
+#if TARGET_XBMC
+  return new cVFSDirectory();
+#else
   string translatedPath = CSpecialProtocol::TranslatePath(path);
   CURL url(translatedPath);
   string protocol = url.GetProtocol();
@@ -46,11 +49,8 @@ IDirectory *CDirectory::CreateLoader(const std::string &path)
   if (protocol == "file" || protocol.empty())
     return new CHDDirectory();
 
-#if TARGET_XBMC
-  return new cVFSDirectory();
-#endif
-
   return NULL;
+#endif
 }
 
 bool CDirectory::GetDirectory(const string &strPath, DirectoryListing &items, const string &strMask, int flags)

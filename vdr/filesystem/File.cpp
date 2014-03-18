@@ -52,18 +52,18 @@ CFile::~CFile()
 
 IFile *CFile::CreateLoader(const string &path)
 {
-  CURL url(path);
+#if TARGET_XBMC
+  return new cVFSFile();
+#else
+  string translatedPath = CSpecialProtocol::TranslatePath(path);
+  CURL url(translatedPath);
   string protocol = url.GetProtocol();
   StringUtils::ToLower(protocol); // TODO: have GetProtocol() canonicalize to lowercase
 
   if (protocol == "file" || protocol.empty())
     return new CHDFile();
-
-#if TARGET_XBMC
-  return new cVFSFile();
-#endif
-
   return NULL;
+#endif
 }
 
 bool CFile::Open(const string &url, unsigned int flags /* = 0 */)
@@ -71,8 +71,6 @@ bool CFile::Open(const string &url, unsigned int flags /* = 0 */)
   Close();
   // TODO: Evaluate if we should import SpecialProtocolFile from XBMC so that
   // we can remove calls to TranslatePath() at the beginning of most functions
-  string translatedPath = CSpecialProtocol::TranslatePath(url);
-
   m_flags = flags;
 
   /*
@@ -87,13 +85,13 @@ bool CFile::Open(const string &url, unsigned int flags /* = 0 */)
   }
   */
 
-  m_pFileImpl = CreateLoader(translatedPath);
+  m_pFileImpl = CreateLoader(url);
   if (!m_pFileImpl)
     return false;
 
   try
   {
-    if (!m_pFileImpl->Open(translatedPath, m_flags))
+    if (!m_pFileImpl->Open(url, m_flags))
     {
       SAFE_DELETE(m_pFileImpl);
       return false;
@@ -122,15 +120,14 @@ bool CFile::Open(const string &url, unsigned int flags /* = 0 */)
 bool CFile::OpenForWrite(const string &url, bool bOverWrite /* = false */)
 {
   Close();
-  string translatedPath = CSpecialProtocol::TranslatePath(url);
 
-  m_pFileImpl = CreateLoader(translatedPath);
+  m_pFileImpl = CreateLoader(url);
   if (!m_pFileImpl)
     return false;
 
   try
   {
-    if (!m_pFileImpl->OpenForWrite(translatedPath, bOverWrite))
+    if (!m_pFileImpl->OpenForWrite(url, bOverWrite))
     {
       SAFE_DELETE(m_pFileImpl);
       return false;
@@ -164,14 +161,12 @@ bool CFile::ReadLine(string &strLine)
 
 bool CFile::LoadFile(const string &url, vector<uint8_t> &outputBuffer)
 {
-  string translatedPath = CSpecialProtocol::TranslatePath(url);
-
   static const unsigned int MAX_FILE_SIZE = 0x7FFFFFFF; // TODO
   static const unsigned int MIN_CHUNK_SIZE = 64 * 1024U;
   static const unsigned int MAX_CHUNK_SIZEI = 2048 * 1024U;
 
   outputBuffer.clear();
-  if (!Open(translatedPath, READ_TRUNCATED))
+  if (!Open(url, READ_TRUNCATED))
     return false;
 
   /*
@@ -298,70 +293,56 @@ unsigned int CFile::GetChunkSize()
 
 bool CFile::Exists(const string &url)
 {
-  string translatedPath = CSpecialProtocol::TranslatePath(url);
-
-  std::auto_ptr<IFile> pFile(CreateLoader(translatedPath));
+  std::auto_ptr<IFile> pFile(CreateLoader(url));
   if (!pFile.get())
     return false;
-  return pFile->Exists(translatedPath);
+  return pFile->Exists(url);
 }
 
 int CFile::Stat(const string &url, struct __stat64 *buffer)
 {
-  string translatedPath = CSpecialProtocol::TranslatePath(url);
-
   if (buffer)
     memset(buffer, 0, sizeof(struct __stat64));
 
-  std::auto_ptr<IFile> pFile(CreateLoader(translatedPath));
+  std::auto_ptr<IFile> pFile(CreateLoader(url));
   if (!pFile.get())
     return -1;
-  return pFile->Stat(translatedPath, buffer);
+  return pFile->Stat(url, buffer);
 }
 
 bool CFile::Delete(const string &url)
 {
-  string translatedPath = CSpecialProtocol::TranslatePath(url);
-
-  std::auto_ptr<IFile> pFile(CreateLoader(translatedPath));
+  std::auto_ptr<IFile> pFile(CreateLoader(url));
   if (!pFile.get())
     return false;
-  return pFile->Delete(translatedPath);
+  return pFile->Delete(url);
 }
 
 bool CFile::Rename(const string &url, const string &urlnew)
 {
-  string translatedPath = CSpecialProtocol::TranslatePath(url);
-  string translatedPathNew = CSpecialProtocol::TranslatePath(urlnew);
-
-  std::auto_ptr<IFile> pFile(CreateLoader(translatedPath));
+  std::auto_ptr<IFile> pFile(CreateLoader(url));
   if (!pFile.get())
     return false;
-  return pFile->Rename(translatedPath, translatedPathNew);
+  return pFile->Rename(url, urlnew);
 }
 
 bool CFile::SetHidden(const string &url, bool hidden)
 {
-  string translatedPath = CSpecialProtocol::TranslatePath(url);
-
-  std::auto_ptr<IFile> pFile(CreateLoader(translatedPath));
+  std::auto_ptr<IFile> pFile(CreateLoader(url));
   if (!pFile.get())
     return false;
-  return pFile->SetHidden(translatedPath, false);
+  return pFile->SetHidden(url, false);
 }
 
 bool CFile::OnSameFileSystem(const string &strFile1, const string &strFile2)
 {
-  string translatedPath1 = CSpecialProtocol::TranslatePath(strFile1);
-  string translatedPath2 = CSpecialProtocol::TranslatePath(strFile2);
-
   struct __stat64 statStruct;
   CFile file;
-  file.Stat(translatedPath1, &statStruct);
+  file.Stat(strFile1, &statStruct);
   dev_t dev1 = statStruct.st_dev;
   if (dev1)
   {
-    file.Stat(translatedPath2, &statStruct);
+    file.Stat(strFile2, &statStruct);
     return dev1 == statStruct.st_dev;
   }
   return false;

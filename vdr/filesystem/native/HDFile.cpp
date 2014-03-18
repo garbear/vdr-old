@@ -24,6 +24,7 @@
 
 #include "HDFile.h"
 #include "utils/url/URL.h"
+#include "filesystem/SpecialProtocol.h"
 
 using namespace std;
 
@@ -42,10 +43,11 @@ bool CHDFile::Open(const string &url, unsigned int flags /* = 0 */)
 {
   Close();
 
+  std::string strTranslatedPath = CSpecialProtocol::TranslatePath(url);
   m_flags = flags;
 
   m_mode = ios::in;
-  m_file.open(url.c_str(), m_mode);
+  m_file.open(strTranslatedPath.c_str(), m_mode);
 
   return m_file.is_open();
 }
@@ -57,8 +59,10 @@ bool CHDFile::OpenForWrite(const string &url, bool bOverWrite /* = false */)
   if (!bOverWrite && Exists(url))
     return false;
 
+  std::string strTranslatedPath = CSpecialProtocol::TranslatePath(url);
+
   m_mode = ios::out;
-  m_file.open(url.c_str(), m_mode);
+  m_file.open(strTranslatedPath.c_str(), m_mode);
 
   return m_file.is_open();
 }
@@ -191,18 +195,21 @@ void CHDFile::Close()
 
 bool CHDFile::Exists(const string &url)
 {
-  ifstream file(url.c_str());
+  std::string strTranslatedPath = CSpecialProtocol::TranslatePath(url);
+  ifstream file(strTranslatedPath.c_str());
   return (bool)file;
 }
 
 int CHDFile::Stat(const string &url, struct __stat64 *buffer)
 {
-  return stat64(url.c_str(), buffer);
+  std::string strTranslatedPath = CSpecialProtocol::TranslatePath(url);
+  return stat64(strTranslatedPath.c_str(), buffer);
 }
 
 bool CHDFile::Delete(const string &url)
 {
-  string strFile(GetLocal(url));
+  std::string strTranslatedPath = CSpecialProtocol::TranslatePath(url);
+  string strFile(GetLocal(strTranslatedPath));
 
 #ifdef TARGET_WINDOWS
   //return ::DeleteFileW(CWIN32Util::ConvertPathToWin32Form(strFile).c_str()) ? true : false; // TODO
@@ -213,10 +220,12 @@ bool CHDFile::Delete(const string &url)
 
 bool CHDFile::Rename(const string &url, const string &urlnew)
 {
+  std::string strTranslatedPath    = CSpecialProtocol::TranslatePath(url);
+  std::string strTranslatedPathNew = CSpecialProtocol::TranslatePath(urlnew);
 #ifdef TARGET_WINDOWS
   //TODO
 #else
-  return rename(url.c_str(), urlnew.c_str()) == 0;
+  return rename(strTranslatedPath.c_str(), strTranslatedPathNew.c_str()) == 0;
 #endif
 }
 
