@@ -43,10 +43,6 @@ using namespace std;
 #define VDR_ROOT        "vdr"
 #define HOME_ROOT       "home"
 #define TEMP_ROOT       "temp"
-#define XBMCHOME_ROOT   "xbmc-home"
-#define XBMCTEMP_ROOT   "xbmc-temp"
-
-#define ADDON_PROFILE   "special://profile/addon_data/service.vdr/"
 
 #define TEMP_DIR_BASE   "vdrtempdir" // Base name for temp directory
 
@@ -268,9 +264,6 @@ bool CSpecialProtocol::SetFileBasePath()
   }
   SetTempPath(tempPath);
 
-  SetXBMCHomePath("special://home");
-  SetXBMCTempPath("special://temp");
-
   return true;
 }
 
@@ -287,16 +280,6 @@ void CSpecialProtocol::SetHomePath(const string &dir)
 void CSpecialProtocol::SetTempPath(const string &dir)
 {
   SetPath(TEMP_ROOT, dir);
-}
-
-void CSpecialProtocol::SetXBMCHomePath(const string &dir)
-{
-  SetPath(XBMCHOME_ROOT, dir);
-}
-
-void CSpecialProtocol::SetXBMCTempPath(const string &dir)
-{
-  SetPath(XBMCTEMP_ROOT, dir);
 }
 
 bool CSpecialProtocol::ComparePath(const string &path1, const string &path2)
@@ -367,9 +350,7 @@ string CSpecialProtocol::TranslatePath(const CURL &url)
   // From here on, we have our "real" special paths
   /*else*/ if (RootDir == VDR_ROOT || // TODO: this used to be an "else if"
            RootDir == HOME_ROOT ||
-           RootDir == TEMP_ROOT ||
-           RootDir == XBMCHOME_ROOT ||
-           RootDir == XBMCTEMP_ROOT)
+           RootDir == TEMP_ROOT)
   {
     string basePath = GetPath(RootDir);
     if (!basePath.empty())
@@ -456,8 +437,6 @@ void CSpecialProtocol::LogPaths()
   isyslog("special://" VDR_ROOT "/ is mapped to: %s", GetPath(VDR_ROOT).c_str());
   isyslog("special://" HOME_ROOT "/ is mapped to: %s", GetPath(HOME_ROOT).c_str());
   isyslog("special://" TEMP_ROOT "/ is mapped to: %s", GetPath(TEMP_ROOT).c_str());
-  isyslog("special://" XBMCHOME_ROOT "/ is mapped to: %s", GetPath(XBMCHOME_ROOT).c_str());
-  isyslog("special://" XBMCTEMP_ROOT "/ is mapped to: %s", GetPath(XBMCTEMP_ROOT).c_str());
 #endif
 }
 

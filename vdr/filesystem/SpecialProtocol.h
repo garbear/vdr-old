@@ -59,8 +59,6 @@ public:
   static void SetVDRPath(const std::string &path);
   static void SetHomePath(const std::string &path);
   static void SetTempPath(const std::string &path);
-  static void SetXBMCHomePath(const std::string &path);
-  static void SetXBMCTempPath(const std::string &path);
 
   static bool ComparePath(const std::string &path1, const std::string &path2);
   static void LogPaths();
