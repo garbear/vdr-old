@@ -45,8 +45,6 @@ protected:
     CSpecialProtocol::SetVDRPath(vdr);
     CSpecialProtocol::SetHomePath(home);
     CSpecialProtocol::SetTempPath(temp);
-    CSpecialProtocol::SetXBMCHomePath(xbmchome);
-    CSpecialProtocol::SetXBMCTempPath(xbmctemp);
   }
 
 private:
@@ -88,24 +86,6 @@ TEST_F(TestSpecialProtocol, SetTempPath)
   const char *ref = "/path/to/temp/";
 
   CSpecialProtocol::SetTempPath(ref);
-  EXPECT_STREQ(ref, CSpecialProtocol::TranslatePath(path).c_str());
-}
-
-TEST_F(TestSpecialProtocol, SetXBMCHomePath)
-{
-  const char *path = "special://xbmc-home";
-  const char *ref = "/path/to/xbmc-home/";
-
-  CSpecialProtocol::SetXBMCHomePath(ref);
-  EXPECT_STREQ(ref, CSpecialProtocol::TranslatePath(path).c_str());
-}
-
-TEST_F(TestSpecialProtocol, SetXBMCTempPath)
-{
-  const char *path = "special://xbmc-temp";
-  const char *ref = "/path/to/xbmc-temp/";
-
-  CSpecialProtocol::SetXBMCTempPath(ref);
   EXPECT_STREQ(ref, CSpecialProtocol::TranslatePath(path).c_str());
 }
 
