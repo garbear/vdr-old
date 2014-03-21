@@ -32,29 +32,32 @@
 #include <libsi/util.h>
 #include <string>
 
+using namespace SI;
 using namespace SI_EXT;
 using namespace std;
 
 namespace VDR
 {
 
-cNitScanner::cNitScanner(iNitScannerCallback* callback, bool bUseOtherTable /* = false */)
- : m_tableId(bUseOtherTable ? TABLE_ID_NIT_OTHER : TABLE_ID_NIT_ACTUAL),
+cNitScanner::cNitScanner(cDevice* device, iNitScannerCallback* callback, TableId tid /* = TableIdNIT */)
+ : cFilter(device),
+   m_tableId(tid),
    m_callback(callback)
  {
   assert(m_callback);
+  assert(tid == TableIdNIT || tid == TableIdNIT_other);
 
   // Network information section, actual or other network
   Set(PID_NIT, m_tableId, 0xFF);
 }
 
-void cNitScanner::ProcessData(u_short Pid, u_char Tid, const u_char * Data, int Length)
+void cNitScanner::ProcessData(u_short pid, u_char tid, const vector<uint8_t>& data)
 {
-  SI::NIT nit(Data, false);
+  SI::NIT nit(data.data(), false);
   if (!nit.CheckCRCAndParse() || !m_syncNit.Sync(nit.getVersionNumber(), nit.getSectionNumber(), nit.getLastSectionNumber()))
     return;
 
-  //HEXDUMP(Data, Length);
+  //HEXDUMP(data.data(), Length);
 
   SI::NIT::TransportStream ts;
 
@@ -105,8 +108,8 @@ void cNitScanner::ProcessData(u_short Pid, u_char Tid, const u_char * Data, int 
     // and support is only possible with patching libsi :-((
     //  -> has to be removed as soon libsi supports cell_frequency_link_descriptor
 
-    int    offset = 16 + (((*(Data + 8) << 8) & 0x0F00) | *(Data + 9));
-    int    stop   = ((*(Data + offset) << 8) & 0x0F00) | *(Data + offset + 1);
+    int    offset = 16 + (((*(data.data() + 8) << 8) & 0x0F00) | *(data.data() + 9));
+    int    stop   = ((*(data.data() + offset) << 8) & 0x0F00) | *(data.data() + offset + 1);
     int    cellFrequencies[255];
     int    NumCellFrequencies = 0;
 
@@ -115,29 +118,29 @@ void cNitScanner::ProcessData(u_short Pid, u_char Tid, const u_char * Data, int 
 
     while (offset < stop)
     {
-      int len = *(Data + offset + 1);
-      switch (*(Data + offset))
+      int len = *(data.data() + offset + 1);
+      switch (*(data.data() + offset))
       {
         // cell_frequency_list_descriptor, DVB-T only.
         case 0x6D:
         {
           dsyslog("   NIT: cell_frequency_list_descriptor -> NOT HANDLED BY LIBSI UP TO NOW :-((");
-          int descriptor_length = *(Data + ++ offset);
+          int descriptor_length = *(data.data() + ++ offset);
           while (descriptor_length >= 7)
           {
             descriptor_length -= 7;
             offset            += 2; // cell_id
-            int frequency_hi_hi = *(Data + ++ offset);
-            int frequency_hi_lo = *(Data + ++ offset);
-            int frequency_lo_hi = *(Data + ++ offset);
-            int frequency_lo_lo = *(Data + ++ offset);
+            int frequency_hi_hi = *(data.data() + ++ offset);
+            int frequency_hi_lo = *(data.data() + ++ offset);
+            int frequency_lo_hi = *(data.data() + ++ offset);
+            int frequency_lo_lo = *(data.data() + ++ offset);
             cellFrequencies[NumCellFrequencies++] = 10 * ((HILO(frequency_hi) << 16) | HILO(frequency_lo));
 
             // subcell_info_loop_length -> skipped
-            if (*(Data + ++ offset))
+            if (*(data.data() + ++ offset))
             {
-              descriptor_length -= *(Data + offset);
-              offset            += *(Data + offset);
+              descriptor_length -= *(data.data() + offset);
+              offset            += *(data.data() + offset);
             }
           }
           offset++;
@@ -191,7 +194,7 @@ void cNitScanner::ProcessData(u_short Pid, u_char Tid, const u_char * Data, int 
             params.SetRollOff(RollOff);
 
             if (transponder->SetTransponderData(Source, Frequencies[n], SymbolRate, params, true))
-              m_callback->NitFoundTransponder(transponder, m_tableId == TABLE_ID_NIT_OTHER, ts.getOriginalNetworkId(), ts.getTransportStreamId());
+              m_callback->NitFoundTransponder(transponder, m_tableId == TableIdNIT_other, ts.getOriginalNetworkId(), ts.getTransportStreamId());
           }
           break;
         }
@@ -235,7 +238,7 @@ void cNitScanner::ProcessData(u_short Pid, u_char Tid, const u_char * Data, int 
             params.SetSystem((eSystemType)SYS_DVBC_ANNEX_AC); // TODO: ???
 
             if (transponder->SetTransponderData(Source, Frequencies[n], SymbolRate, params, true))
-              m_callback->NitFoundTransponder(transponder, m_tableId == TABLE_ID_NIT_OTHER, ts.getOriginalNetworkId(), ts.getTransportStreamId());
+              m_callback->NitFoundTransponder(transponder, m_tableId == TableIdNIT_other, ts.getOriginalNetworkId(), ts.getTransportStreamId());
           }
           break;
         }
@@ -268,7 +271,7 @@ void cNitScanner::ProcessData(u_short Pid, u_char Tid, const u_char * Data, int 
             params.SetHierarchy(Hierarchy);
 
             if (transponder->SetTransponderData(Source, Frequencies[n], 27500, params, true))
-              m_callback->NitFoundTransponder(transponder, m_tableId == TABLE_ID_NIT_OTHER, ts.getOriginalNetworkId(), ts.getTransportStreamId());
+              m_callback->NitFoundTransponder(transponder, m_tableId == TableIdNIT_other, ts.getOriginalNetworkId(), ts.getTransportStreamId());
           }
 ///
  //         for (int n = 0; n < NumCellFrequencies; n++)

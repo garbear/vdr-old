@@ -24,7 +24,7 @@
 
 #include "Types.h"
 #include "NITScanner.h" // for INVALID_CHANNEL
-#include "dvb/Filter.h"
+#include "dvb/filters/Filter.h"
 #include "Types.h"
 
 namespace VDR
@@ -33,11 +33,11 @@ namespace VDR
 class cPmtScanner : public cFilter
 {
 public:
-  cPmtScanner(ChannelPtr channel, u_short Sid, u_short PmtPid);
+  cPmtScanner(cDevice* device, ChannelPtr channel, u_short Sid, u_short PmtPid);
   virtual ~cPmtScanner() { }
 
 protected:
-  virtual void ProcessData(u_short Pid, u_char Tid, const u_char * Data, int Length);
+  virtual void ProcessData(u_short pid, u_char tid, const std::vector<uint8_t>& data);
 
 private:
   bool PmtVersionChanged(int PmtPid, int Sid, int Version);

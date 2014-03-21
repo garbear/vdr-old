@@ -83,10 +83,10 @@ bool cVideoInput::Open(ChannelPtr channel, int priority, cVideoBuffer *videoBuff
     {
       dsyslog("Creating new live Receiver");
       m_SeenPmt   = false;
-      m_PatFilter = new cLivePatFilter(this, m_Channel);
+      m_PatFilter = new cLivePatFilter(m_Device.get(), this, m_Channel);
       m_Receiver  = new cLiveReceiver(m_Device, this, m_Channel, m_Priority);
       m_Device->Receiver()->AttachReceiver(m_Receiver);
-      m_Device->SectionFilter()->AttachFilter(m_PatFilter);
+      m_PatFilter->Enable(true);
       CreateThread();
       return true;
     }
@@ -143,7 +143,7 @@ void cVideoInput::Close()
     if (patFilter)
     {
       dsyslog("Detaching Live Filter");
-      device->SectionFilter()->Detach(patFilter);
+      patFilter->Enable(false);
     }
     else
     {

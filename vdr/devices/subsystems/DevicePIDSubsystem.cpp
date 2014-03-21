@@ -85,7 +85,7 @@ bool cDevicePIDSubsystem::AddPid(int pid, ePidType pidType /* = ptOther */, int 
       {
         // It's a special PID that may have to be switched into "tap" mode
         PrintPIDs("A");
-        if (!SetPid(m_pidHandles[n], n, true))
+        if (!SetPid(m_pidHandles[n], (ePidType)n, true))
         {
           esyslog("ERROR: can't set PID %d on device %d", pid, Device()->CardIndex() + 1);
           if (pidType <= ptTeletext)
@@ -120,7 +120,7 @@ bool cDevicePIDSubsystem::AddPid(int pid, ePidType pidType /* = ptOther */, int 
       m_pidHandles[n].streamType = StreamType;
       m_pidHandles[n].used = 1;
       PrintPIDs("C");
-      if (!SetPid(m_pidHandles[n], n, true))
+      if (!SetPid(m_pidHandles[n], (ePidType)n, true))
       {
         esyslog("ERROR: can't set PID %d on device %d", pid, Device()->CardIndex() + 1);
         if (pidType <= ptTeletext)
@@ -158,7 +158,7 @@ void cDevicePIDSubsystem::DelPid(int pid, ePidType pidType /* = ptOther */)
       PrintPIDs("D");
       if (--m_pidHandles[n].used < 2)
       {
-        SetPid(m_pidHandles[n], n, false);
+        SetPid(m_pidHandles[n], (ePidType)n, false);
         if (m_pidHandles[n].used == 0)
         {
           m_pidHandles[n].handle = -1;

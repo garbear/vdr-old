@@ -29,7 +29,9 @@
 #include <libsi/descriptor.h>
 #include <libsi/section.h>
 
+using namespace SI;
 using namespace SI_EXT;
+using namespace std;
 
 namespace VDR
 {
@@ -38,12 +40,16 @@ namespace VDR
 #define Utf8BufSize(s)  ((s) * 4)
 #endif
 
-cSdtScanner::cSdtScanner(iSdtScannerCallback* callback, bool bUseOtherTable /* = false */)
- : m_callback(callback),
-   m_tableId(bUseOtherTable ? TABLE_ID_SDT_OTHER : TABLE_ID_SDT_ACTUAL)
+cSdtScanner::cSdtScanner(cDevice* device, iSdtScannerCallback* callback, TableId tableId)
+ : cFilter(device),
+   m_callback(callback),
+   m_tableId(tableId)
 {
   assert(m_callback);
+  assert(tableId == TableIdSDT || tableId == TableIdSDT_other);
+
   m_sectionSyncer.Reset();
+
   Set(PID_SDT, m_tableId, 0xFF); // SDT
 }
 
@@ -52,12 +58,12 @@ cSdtScanner::~cSdtScanner()
   Del(PID_SDT, m_tableId);
 }
 
-void cSdtScanner::ProcessData(u_short Pid, u_char Tid, const u_char * Data, int Length)
+void cSdtScanner::ProcessData(u_short pid, u_char tid, const vector<uint8_t>& data)
 {
   if (!(Source() && Transponder()))
     return;
 
-  SI::SDT sdt(Data, false);
+  SI::SDT sdt(data.data(), false);
   if (!sdt.CheckCRCAndParse())
     return;
 
@@ -66,7 +72,7 @@ void cSdtScanner::ProcessData(u_short Pid, u_char Tid, const u_char * Data, int 
 
   dsyslog("   Transponder %d", Transponder());
 
-  //HEXDUMP(Data, Length);
+  //HEXDUMP(data.data(), Length);
 
   SI::SDT::Service SiSdtService;
   for (SI::Loop::Iterator it; sdt.serviceLoop.getNext(SiSdtService, it);)

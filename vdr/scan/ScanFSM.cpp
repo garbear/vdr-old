@@ -108,11 +108,11 @@ template <> int cScanFsm::Event<eDetachReceiver>()
 
 template <> int cScanFsm::Event<eScanNit>()
 {
-  cNitScanner nitScanner(this, true);
-  cNitScanner nitOtherScanner(this, false);
+  cNitScanner nitScanner(m_device, this, SI::TableIdNIT);
+  cNitScanner nitScannerOtherNetworks(m_device, this,  SI::TableIdNIT_other);
 
-  m_device->SectionFilter()->AttachFilter(&nitScanner);
-  m_device->SectionFilter()->AttachFilter(&nitOtherScanner);
+  nitScanner.Enable(true);
+  nitScannerOtherNetworks.Enable(true);
 
   bool aborted = false;
   if (m_abortableJob)
@@ -120,17 +120,14 @@ template <> int cScanFsm::Event<eScanNit>()
   else
     usleep(NIT_SCAN_TIMEOUT_MS * 1000);
 
-  m_device->SectionFilter()->Detach(&nitScanner);
-  m_device->SectionFilter()->Detach(&nitOtherScanner);
-
   return aborted ? eStop : eScanPat;
 }
 
 template <> int cScanFsm::Event<eScanPat>()
 {
-  cPatScanner patScanner(this);
+  cPatScanner patScanner(m_device, this);
 
-  m_device->SectionFilter()->AttachFilter(&patScanner);
+  patScanner.Enable(true);
 
   bool aborted = false;
   if (m_abortableJob)
@@ -138,14 +135,7 @@ template <> int cScanFsm::Event<eScanPat>()
   else
     usleep(PAT_SCAN_TIMEOUT_MS * 1000);
 
-  m_device->SectionFilter()->Detach(&patScanner);
-
   // Clean up PMT scanners created in PatFoundChannel()
-  for (std::vector<cPmtScanner*>::iterator it = m_pmtScanners.begin(); it != m_pmtScanners.end(); ++it)
-  {
-    m_device->SectionFilter()->Detach(*it);
-    delete *it;
-  }
   m_pmtScanners.clear();
 
   return aborted ? eStop : eScanSdt;
@@ -153,17 +143,15 @@ template <> int cScanFsm::Event<eScanPat>()
 
 template <> int cScanFsm::Event<eScanSdt>()
 {
-  cSdtScanner sdtScanner(this);
+  cSdtScanner sdtScanner(m_device, this, SI::TableIdSDT);
 
-  m_device->SectionFilter()->AttachFilter(&sdtScanner);
+  sdtScanner.Enable(true);
 
   bool aborted = false;
   if (m_abortableJob)
     aborted = m_abortableJob->WaitForAbort(SDT_SCAN_TIMEOUT_MS);
   else
     usleep(SDT_SCAN_TIMEOUT_MS * 1000);
-
-  m_device->SectionFilter()->Detach(&sdtScanner);
 
   return aborted ? eStop : eAddChannels;
 }
@@ -281,7 +269,7 @@ template <> int cScanFsm::Event<eScanEit>()
   else
     usleep(EIT_SCAN_TIMEOUT_MS * 1000);
 
-  m_device->SectionFilter()->Detach(&eitScanner);
+  m_device->SectionFilter()->DetachFilter(&eitScanner);
 
   return aborted ? eStop : eDetachReceiver;
   */
@@ -327,9 +315,9 @@ void cScanFsm::PatFoundChannel(ChannelPtr channel, int pid)
     dsyslog("      Added channel with service ID %d", channel->Sid());
 
     // TODO: Need a lock for m_pmtScanners
-    cPmtScanner* pmtScanner = new cPmtScanner(channel, channel->Sid(), pid);
+    cPmtScanner* pmtScanner = new cPmtScanner(m_device, channel, channel->Sid(), pid);
+    pmtScanner->Enable(true);
     m_pmtScanners.push_back(pmtScanner);
-    m_device->SectionFilter()->AttachFilter(pmtScanner);
   }
 }
 

@@ -51,14 +51,14 @@ public:
   void DoWork(fe_modulation modulation, unsigned int iChannel, eDvbcSymbolRate symbolRate, eOffsetType freqOffset, cSynchronousAbort* abortableJob = NULL);
   void DoWork(const ChannelPtr& channel, cSynchronousAbort* abortableJob = NULL);
 
+  static unsigned int ChannelToFrequency(unsigned int channel, eChannelList channelList);
+
 protected:
   /*!
    * \brief Create a channel object with the given parameters. Must be implemented
    *        by subclasses.
    */
   virtual ChannelPtr GetChannel(fe_modulation modulation, unsigned int iChannel, eDvbcSymbolRate symbolRate, eOffsetType freqOffset) = 0;
-
-  static unsigned int ChannelToFrequency(unsigned int channel, eChannelList channelList);
 
 protected:
   cFrontendCapabilities m_caps;

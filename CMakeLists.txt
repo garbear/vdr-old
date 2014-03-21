@@ -130,13 +130,13 @@ set(VDR_SRCS
 	vdr/dvb/CADescriptorHandler.cpp
 	vdr/dvb/CADescriptors.cpp
 	vdr/dvb/DiSEqC.cpp
-	vdr/dvb/Filter.cpp
-	vdr/dvb/EIT.cpp
 	vdr/dvb/EITScan.cpp
-	vdr/dvb/NIT.cpp
-	vdr/dvb/PAT.cpp
-	vdr/dvb/SDT.cpp
-	vdr/dvb/Sections.cpp
+	vdr/dvb/filters/EIT.cpp
+	vdr/dvb/filters/Filter.cpp
+	vdr/dvb/filters/FilterData.cpp
+	vdr/dvb/filters/NIT.cpp
+	vdr/dvb/filters/PAT.cpp
+	vdr/dvb/filters/SDT.cpp
 	vdr/epg/Component.cpp
 	vdr/epg/Components.cpp
 	vdr/epg/EPG.cpp

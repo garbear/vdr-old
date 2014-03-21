@@ -22,13 +22,12 @@
 
 #include "CI.h"
 #include "channels/Channel.h"
+#include "Config.h"
 #include "devices/Device.h"
 #include "devices/subsystems/DeviceCommonInterfaceSubsystem.h"
 #include "devices/subsystems/DeviceReceiverSubsystem.h"
-
-#include "Config.h"
 #include "dvb/CADescriptorHandler.h"
-#include "dvb/PAT.h"
+#include "dvb/filters/PAT.h"
 #include "utils/Tools.h"
 
 #include <ctype.h>

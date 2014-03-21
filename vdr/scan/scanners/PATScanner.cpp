@@ -28,31 +28,34 @@
 #include <libsi/si_ext.h>
 #include <libsi/section.h>
 
+using namespace SI;
 using namespace SI_EXT;
+using namespace std;
 
 namespace VDR
 {
 
-cPatScanner::cPatScanner(iPatScannerCallback* callback)
- : m_callback(callback)
+cPatScanner::cPatScanner(cDevice* device, iPatScannerCallback* callback)
+ : cFilter(device),
+   m_callback(callback)
 {
   assert(m_callback);
 
-  Set(PID_PAT, TABLE_ID_PAT);
+  Set(PID_PAT, TableIdPAT);
 }
 
 cPatScanner::~cPatScanner()
 {
-  Del(PID_PAT, TABLE_ID_PAT);
+  Del(PID_PAT, TableIdPAT);
 }
 
-void cPatScanner::ProcessData(u_short Pid, u_char Tid, const u_char * Data, int Length)
+void cPatScanner::ProcessData(u_short pid, u_char tid, const vector<uint8_t>& data)
 {
-  SI::PAT tsPAT(Data, false);
+  SI::PAT tsPAT(data.data(), false);
   if (!tsPAT.CheckCRCAndParse())
     return;
 
-  //HEXDUMP(Data, Length);
+  //HEXDUMP(data.data(), Length);
 
   SI::PAT::Association assoc;
   for (SI::Loop::Iterator it; tsPAT.associationLoop.getNext(assoc, it);)

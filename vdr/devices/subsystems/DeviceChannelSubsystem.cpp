@@ -31,7 +31,6 @@
 #include "devices/DeviceManager.h"
 #include "channels/ChannelManager.h"
 #include "Player.h"
-#include "dvb/Sections.h"
 #include "utils/Status.h"
 #include "utils/Tools.h"
 #include "devices/Transfer.h"
@@ -148,11 +147,8 @@ eSetChannelResult cDeviceChannelSubsystem::SetChannel(ChannelPtr channel)
     //cChannelManager::Get().Lock(false); // TODO
 
     // Stop section handling:
-    if (SectionFilter()->m_sectionHandler)
-    {
-      SectionFilter()->m_sectionHandler->SetStatus(false);
-      SectionFilter()->m_sectionHandler->SetChannel(cChannel::EmptyChannel);
-    }
+    SectionFilter()->StopSectionHandler();
+    SectionFilter()->SetChannel(cChannel::EmptyChannel);
 
     // Tell the camSlot about the channel switch and add all PIDs of this
     // channel to it, for possible later decryption:
@@ -162,11 +158,8 @@ eSetChannelResult cDeviceChannelSubsystem::SetChannel(ChannelPtr channel)
     if (SetChannelDevice(*channel))
     {
       // Start section handling:
-      if (SectionFilter()->m_sectionHandler)
-      {
-        SectionFilter()->m_sectionHandler->SetChannel(channel);
-        SectionFilter()->m_sectionHandler->SetStatus(true);
-      }
+      SectionFilter()->SetChannel(channel);
+      SectionFilter()->StartSectionHandler();
 
       // Start decrypting any PIDs that might have been set in SetChannelDevice():
       if (CommonInterface()->m_camSlot)

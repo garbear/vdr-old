@@ -23,7 +23,7 @@
 #pragma once
 
 #include "Types.h"
-#include "dvb/Filter.h"
+#include "dvb/filters/Filter.h"
 
 namespace VDR
 {
@@ -33,11 +33,11 @@ class cChannelManager;
 class cEitScanner : public cFilter
 {
 public:
-  cEitScanner(cChannelManager channelManager);
+  cEitScanner(cDevice* device, cChannelManager& channelManager);
   virtual ~cEitScanner();
 
 protected:
-  virtual void ProcessData(u_short Pid, u_char Tid, const u_char *Data, int Length);
+  virtual void ProcessData(u_short pid, u_char tid, const std::vector<uint8_t>& data);
 
 private:
   cChannelManager& m_channelManager;

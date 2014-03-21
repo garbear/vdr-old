@@ -24,9 +24,12 @@
 //#include "../../../../sections.h"
 #include "utils/Tools.h"
 
+#include <errno.h>
 #include <linux/dvb/dmx.h>
 #include <string>
+#include <string.h>
 #include <sys/ioctl.h>
+//#include <sys/poll.h>
 #include <unistd.h>
 
 using namespace std;
@@ -34,41 +37,123 @@ using namespace std;
 namespace VDR
 {
 
+#define READ_BUFFER_SIZE  4096 // From cSectionHandler
+
+// Class cDvbFilterHandle
+
+class cDvbFilterHandle : public cFilterHandle
+{
+public:
+  cDvbFilterHandle(const cFilterData& filterData, int handle)
+      : cFilterHandle(filterData),
+        m_handle(handle)
+  {
+  }
+
+  virtual ~cDvbFilterHandle()
+  {
+    close(m_handle);
+  }
+
+  int GetHandle() const { return m_handle; }
+
+private:
+  int m_handle;
+};
+
+// Class cDvbSectionFilterSubsystem
+
 cDvbSectionFilterSubsystem::cDvbSectionFilterSubsystem(cDevice *device)
  : cDeviceSectionFilterSubsystem(device)
 {
 }
 
-int cDvbSectionFilterSubsystem::OpenFilter(u_short pid, u_char tid, u_char mask)
+dmx_sct_filter_params ToFilterParams(const cFilterData& filterData)
+{
+  dmx_sct_filter_params sctFilterParams = { };
+  sctFilterParams.pid = filterData.Pid();
+  sctFilterParams.timeout = 0; // seconds to wait for section to be loaded, 0 == no timeout
+  sctFilterParams.flags = DMX_IMMEDIATE_START;
+  sctFilterParams.filter.filter[0] = filterData.Tid();
+  sctFilterParams.filter.mask[0] = filterData.Mask();
+  return sctFilterParams;
+}
+
+FilterHandlePtr cDvbSectionFilterSubsystem::OpenFilter(const cFilterData& filterData)
 {
   string fileName = cDvbDevice::DvbName(DEV_DVB_DEMUX, GetDevice<cDvbDevice>()->Adapter(), GetDevice<cDvbDevice>()->Frontend());
-  int f = open(fileName.c_str(), O_RDWR | O_NONBLOCK);
-  if (f >= 0)
-  {
-    dmx_sct_filter_params sctFilterParams;
-    memset(&sctFilterParams, 0, sizeof(sctFilterParams));
-    sctFilterParams.pid = pid;
-    sctFilterParams.timeout = 0;
-    sctFilterParams.flags = DMX_IMMEDIATE_START;
-    sctFilterParams.filter.filter[0] = tid;
-    sctFilterParams.filter.mask[0] = mask;
 
-    if (ioctl(f, DMX_SET_FILTER, &sctFilterParams) >= 0)
-      return f;
+  int fd = open(fileName.c_str(), O_RDWR | O_NONBLOCK);
+  if (fd >= 0)
+  {
+    dmx_sct_filter_params sctFilterParams = ToFilterParams(filterData);
+
+    if (ioctl(fd, DMX_SET_FILTER, &sctFilterParams) >= 0)
+      return FilterHandlePtr(new cDvbFilterHandle(filterData, fd));
     else
     {
-      esyslog("ERROR: can't set filter (pid=%d, tid=%02X, mask=%02X): %m", pid, tid, mask);
-      close(f);
+      esyslog("ERROR: can't set filter (pid=%d, tid=%02X, mask=0x%02X): %s",
+          filterData.Pid(), filterData.Tid(), filterData.Mask(), strerror(errno));
+      close(fd);
     }
   }
   else
     esyslog("ERROR: can't open filter handle on '%s'", fileName.c_str());
-  return -1;
+
+  return FilterHandlePtr();
 }
 
-void cDvbSectionFilterSubsystem::CloseFilter(int handle)
+bool cDvbSectionFilterSubsystem::ReadFilter(const FilterHandlePtr& handle, std::vector<uint8_t>& data)
 {
-  close(handle);
+  cDvbFilterHandle* dvbHandle = dynamic_cast<cDvbFilterHandle*>(handle.get());
+  if (dvbHandle)
+  {
+    uint8_t buffer[READ_BUFFER_SIZE];
+    ssize_t read = safe_read(dvbHandle->GetHandle(), buffer, sizeof(buffer));
+    if (read > 0)
+    {
+      data.assign(buffer, buffer + read);
+      return true;
+    }
+  }
+  return false;
+}
+
+FilterHandlePtr cDvbSectionFilterSubsystem::Poll(const std::vector<FilterHandlePtr>& filterHandles)
+{
+  vector<pollfd> vecPfds;
+  vecPfds.reserve(filterHandles.size());
+
+  for (vector<FilterHandlePtr>::const_iterator it = filterHandles.begin(); it != filterHandles.end(); ++it)
+  {
+    cDvbFilterHandle* handle = dynamic_cast<cDvbFilterHandle*>(it->get());
+    if (!handle)
+    {
+      // Fail hard and fast if vector contains invalid handle
+      esyslog("cDvbSectionFilterSubsystem: Encountered empty handle!");
+      return FilterHandlePtr();
+    }
+
+    pollfd pfd;
+    pfd.fd = handle->GetHandle();
+    pfd.events = POLLIN;
+    pfd.revents = 0;
+    vecPfds.push_back(pfd);
+  }
+
+  if (!vecPfds.empty())
+  {
+    const unsigned int timeoutMs = 1000;
+    if (poll(vecPfds.data(), vecPfds.size(), timeoutMs) > 0)
+    {
+      for (unsigned int i = 0; i < vecPfds.size(); i++)
+      {
+        if (vecPfds[i].revents & POLLIN)
+          return filterHandles[i];
+      }
+    }
+  }
+  return FilterHandlePtr();
 }
 
 }

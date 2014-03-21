@@ -87,7 +87,7 @@ public: // TODO
    * \param type Indicates some special types of PIDs, which the device may need
    *        to set in a specific way.
    */
-  virtual bool SetPid(cPidHandle &handle, int type, bool bOn) { return false; }
+  virtual bool SetPid(cPidHandle &handle, ePidType type, bool bOn) { return false; }
 
 private:
   void PrintPIDs(const char *s);

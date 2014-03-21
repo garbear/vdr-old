@@ -1,6 +1,6 @@
 /*
- *      Copyright (C) 2013 Garrett Brown
- *      Copyright (C) 2013 Lars Op den Kamp
+ *      Copyright (C) 2013-2014 Garrett Brown
+ *      Copyright (C) 2013-2014 Lars Op den Kamp
  *      Portions Copyright (C) 2000, 2003, 2006, 2008, 2013 Klaus Schmidinger
  *
  *  This Program is free software; you can redistribute it and/or modify
@@ -21,22 +21,32 @@
 #pragma once
 
 #include "Types.h"
-#include "devices/subsystems/DeviceSectionFilterSubsystem.h"
+#include "channels/Channel.h"
 
-#include <stdint.h>
-#include <vector>
+#include <sys/types.h>
 
 namespace VDR
 {
-class cDvbSectionFilterSubsystem : public cDeviceSectionFilterSubsystem
+class cFilterData
 {
 public:
-  cDvbSectionFilterSubsystem(cDevice *device);
-  virtual ~cDvbSectionFilterSubsystem() { }
+  cFilterData(void);
+  cFilterData(u_short pid, u_char tid, u_char mask, bool bSticky);
 
-protected:
-  virtual FilterHandlePtr OpenFilter(const cFilterData& filterData);
-  virtual bool ReadFilter(const FilterHandlePtr& handle, std::vector<uint8_t>& data);
-  virtual FilterHandlePtr Poll(const std::vector<FilterHandlePtr>& filterHandles);
+  u_short Pid() const { return m_pid; }
+  u_char Tid() const { return m_tid; }
+  u_char Mask() const { return m_mask; }
+  bool Sticky() const { return m_bSticky; }
+
+  bool operator==(const cFilterData& rhs) const;
+  bool Equals(u_short pid, u_char tid, u_char mask) const;
+  bool Matches(u_short pid, u_char tid) const;
+
+private:
+  u_short m_pid;
+  u_char  m_tid;
+  u_char  m_mask;
+  bool    m_bSticky;
 };
+
 }

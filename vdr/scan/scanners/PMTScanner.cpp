@@ -31,27 +31,30 @@
 #include <libsi/descriptor.h>
 #include <libsi/section.h>
 
+using namespace SI;
 using namespace SI_EXT;
+using namespace std;
 
 namespace VDR
 {
 
-cPmtScanner::cPmtScanner(ChannelPtr channel, u_short Sid, u_short PmtPid)
- : pmtPid(PmtPid),
+cPmtScanner::cPmtScanner(cDevice* device, ChannelPtr channel, u_short Sid, u_short PmtPid)
+ : cFilter(device),
+   pmtPid(PmtPid),
    pmtSid(Sid),
    Channel(channel),
    numPmtEntries(0)
 {
-  Set(pmtPid, TABLE_ID_PMT);     // PMT
+  Set(pmtPid, TableIdPMT);     // PMT
 }
 
-void cPmtScanner::ProcessData(u_short Pid, u_char Tid, const u_char * Data, int Length)
+void cPmtScanner::ProcessData(u_short pid, u_char tid, const vector<uint8_t>& data)
 {
-  SI::PMT pmt(Data, false);
+  SI::PMT pmt(data.data(), false);
   if (!pmt.CheckCRCAndParse() || (pmt.getServiceId() != pmtSid))
     return;
 
-  //HEXDUMP(Data, Length);
+  //HEXDUMP(data.data(), Length);
 
   if (Channel->Sid() != pmtSid)
   {
@@ -254,7 +257,7 @@ void cPmtScanner::ProcessData(u_short Pid, u_char Tid, const u_char * Data, int 
     }
   }
 
-  Del(pmtPid, TABLE_ID_PMT);
+  Del(pmtPid, TableIdPMT);
 
   if (Vpid || Apids[0] || Dpids[0] || Tpid)
   {
@@ -264,7 +267,7 @@ void cPmtScanner::ProcessData(u_short Pid, u_char Tid, const u_char * Data, int 
   }
   else
   {
-    dsyslog("   PMT: PmtPid=%.5d Sid=%d is invalid (no audio/video)", Pid, pmt.getServiceId());
+    dsyslog("   PMT: PmtPid=%.5d Sid=%d is invalid (no audio/video)", pid, pmt.getServiceId());
     Channel->SetId(Channel->Nid(), Channel->Tid(), Channel->Sid(), INVALID_CHANNEL);
   }
 

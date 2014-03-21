@@ -32,6 +32,7 @@
 #include <libsi/descriptor.h>
 
 using namespace SI_EXT;
+using namespace std;
 
 namespace VDR
 {
@@ -128,24 +129,25 @@ cEitParser::cEitParser(cChannelManager& channelManager, int Source, u_char Tid, 
   }
 }
 
-cEitScanner::cEitScanner(cChannelManager channelManager)
- : m_channelManager(channelManager)
+cEitScanner::cEitScanner(cDevice* device, cChannelManager& channelManager)
+ : cFilter(device),
+   m_channelManager(channelManager)
 {
-  Set(PID_EIT, TABLE_ID_EIT_ACTUAL_PRESENT,        0xFE);  // actual(0x4E)/other(0x4F) TS, present/following
-  Set(PID_EIT, TABLE_ID_EIT_ACTUAL_SCHEDULE_START, 0xF0);  // actual TS, schedule(0x50)/schedule for future days(0x5X)
-  Set(PID_EIT, TABLE_ID_EIT_OTHER_SCHEDULE_START,  0xF0);  // other  TS, schedule(0x60)/schedule for future days(0x6X)
+  Set(PID_EIT, SI::TableIdEIT_presentFollowing,        0xFE);  // actual(0x4E)/other(0x4F) TS, present/following
+  Set(PID_EIT, SI::TableIdEIT_schedule_first, 0xF0);  // actual TS, schedule(0x50)/schedule for future days(0x5X)
+  Set(PID_EIT, SI::TableIdEIT_schedule_Other_first,  0xF0);  // other  TS, schedule(0x60)/schedule for future days(0x6X)
 }
 
 cEitScanner::~cEitScanner()
 {
-  Del(PID_EIT, TABLE_ID_EIT_ACTUAL_PRESENT);
-  Del(PID_EIT, TABLE_ID_EIT_ACTUAL_SCHEDULE_START);
-  Del(PID_EIT, TABLE_ID_EIT_OTHER_SCHEDULE_START);
+  Del(PID_EIT, SI::TableIdEIT_presentFollowing);
+  Del(PID_EIT, SI::TableIdEIT_schedule_first);
+  Del(PID_EIT, SI::TableIdEIT_schedule_Other_first);
 }
 
-void cEitScanner::ProcessData(u_short Pid, u_char Tid, const u_char *Data, int Length)
+void cEitScanner::ProcessData(u_short pid, u_char tid, const vector<uint8_t>& data)
 {
-  cEitParser EitParser(m_channelManager, Source(), Tid, Data);
+  cEitParser EitParser(m_channelManager, Source(), tid, data.data());
 }
 
 }

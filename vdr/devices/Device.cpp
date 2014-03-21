@@ -102,6 +102,7 @@ cDevice::cDevice(const cSubsystems &subsystems)
 
 cDevice::~cDevice()
 {
+  SectionFilter()->StopSectionHandler();
   m_subsystems.Free(); // TODO: Remove me if we switch cSubsystems to use shared_ptrs
 }
 
@@ -124,61 +125,59 @@ void *cDevice::Process()
     {
       // Read data from the DVR device:
       uchar *b = NULL;
-      if (Receiver()->GetTSPacket(b))
+      if (!Receiver()->GetTSPacket(b))
+        break;
+
+      if (!b)
+        continue;
+
+      int Pid = TsPid(b);
+
+      // Check whether the TS packets are scrambled:
+      bool DetachReceivers = false;
+      bool DescramblingOk = false;
+      int CamSlotNumber = 0;
+      if (CommonInterface()->m_startScrambleDetection)
       {
-        if (b)
+        cCamSlot *cs = CommonInterface()->CamSlot();
+        CamSlotNumber = cs ? cs->SlotNumber() : 0;
+        if (CamSlotNumber)
         {
-          int Pid = TsPid(b);
-
-          // Check whether the TS packets are scrambled:
-          bool DetachReceivers = false;
-          bool DescramblingOk = false;
-          int CamSlotNumber = 0;
-          if (CommonInterface()->m_startScrambleDetection)
+          bool Scrambled = b[3] & TS_SCRAMBLING_CONTROL;
+          int t = time(NULL) - CommonInterface()->m_startScrambleDetection;
+          if (Scrambled)
           {
-            cCamSlot *cs = CommonInterface()->CamSlot();
-            CamSlotNumber = cs ? cs->SlotNumber() : 0;
-            if (CamSlotNumber)
-            {
-              bool Scrambled = b[3] & TS_SCRAMBLING_CONTROL;
-              int t = time(NULL) - CommonInterface()->m_startScrambleDetection;
-              if (Scrambled)
-              {
-                if (t > TS_SCRAMBLING_TIMEOUT)
-                  DetachReceivers = true;
-              }
-              else if (t > TS_SCRAMBLING_TIME_OK)
-              {
-                DescramblingOk = true;
-                CommonInterface()->m_startScrambleDetection = 0;
-              }
-            }
+            if (t > TS_SCRAMBLING_TIMEOUT)
+              DetachReceivers = true;
           }
-
-          // Distribute the packet to all attached receivers:
-          Lock();
-          cDeviceReceiverSubsystem* receiver = Receiver();
-          for (std::list<cReceiver*>::iterator it = receiver->m_receivers.begin(); it != receiver->m_receivers.end(); ++it)
+          else if (t > TS_SCRAMBLING_TIME_OK)
           {
-//            dsyslog("received packet: pid=%d scrambled=%d check receiver %p", Pid, b[3] & TS_SCRAMBLING_CONTROL?1:0, Receiver()->m_receivers[i]);
-            if ((*it)->WantsPid(Pid))
-            {
-              if (DetachReceivers)
-              {
-                ChannelCamRelations.SetChecked((*it)->ChannelID(), CamSlotNumber);
-                Receiver()->Detach((*it));
-              }
-              else
-                (*it)->Receive(b, TS_SIZE);
-              if (DescramblingOk)
-                ChannelCamRelations.SetDecrypt((*it)->ChannelID(), CamSlotNumber);
-            }
+            DescramblingOk = true;
+            CommonInterface()->m_startScrambleDetection = 0;
           }
-          Unlock();
         }
       }
-      else
-        break;
+
+      // Distribute the packet to all attached receivers:
+      Lock();
+      for (std::list<cReceiver*>::iterator it = Receiver()->m_receivers.begin(); it != Receiver()->m_receivers.end(); ++it)
+      {
+        cReceiver* receiver = *it;
+//        dsyslog("received packet: pid=%d scrambled=%d check receiver %p", Pid, b[3] & TS_SCRAMBLING_CONTROL?1:0, receiver);
+        if (receiver->WantsPid(Pid))
+        {
+          if (DetachReceivers)
+          {
+            ChannelCamRelations.SetChecked(receiver->ChannelID(), CamSlotNumber);
+            Receiver()->Detach(receiver);
+          }
+          else
+            receiver->Receive(b, TS_SIZE);
+          if (DescramblingOk)
+            ChannelCamRelations.SetDecrypt(receiver->ChannelID(), CamSlotNumber);
+        }
+      }
+      Unlock();
     }
     Receiver()->CloseDvr();
   }

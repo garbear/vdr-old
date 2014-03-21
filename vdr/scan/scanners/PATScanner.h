@@ -23,9 +23,10 @@
 #pragma once
 
 #include "Types.h"
-#include "dvb/Filter.h"
+#include "dvb/filters/Filter.h"
 
 #include <sys/types.h>
+#include <vector>
 
 namespace VDR
 {
@@ -40,11 +41,11 @@ public:
 class cPatScanner : public cFilter
 {
 public:
-  cPatScanner(iPatScannerCallback* callback);
+  cPatScanner(cDevice* device, iPatScannerCallback* callback);
   virtual ~cPatScanner();
 
 protected:
-  virtual void ProcessData(u_short Pid, u_char Tid, const u_char * Data, int Length);
+  virtual void ProcessData(u_short pid, u_char tid, const std::vector<uint8_t>& data);
 
 private:
   iPatScannerCallback* m_callback;

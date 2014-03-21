@@ -41,6 +41,6 @@ public:
    * \param type Indicates some special types of PIDs, which the device may need
    *        to set in a specific way.
    */
-  virtual bool SetPid(cPidHandle &handle, int type, bool bOn);
+  virtual bool SetPid(cPidHandle &handle, ePidType type, bool bOn);
 };
 }

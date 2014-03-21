@@ -16,15 +16,20 @@
 
 namespace VDR
 {
-class cEitFilter : public cFilter {
-private:
-  static CDateTime disableUntil;
-protected:
-  virtual void ProcessData(u_short Pid, u_char Tid, const u_char *Data, int Length);
+class cEitFilter : public cFilter
+{
 public:
-  cEitFilter(void);
-  static void SetDisableUntil(const CDateTime& Time);
-  };
+  cEitFilter(cDevice* device);
+  virtual ~cEitFilter(void) { }
+
+protected:
+  virtual void ProcessData(u_short pid, u_char tid, const std::vector<uint8_t>& data);
+  static void SetDisableUntil(const CDateTime& time);
+
+private:
+  static CDateTime m_disableUntil;
+};
+
 }
 
 #endif //__EIT_H

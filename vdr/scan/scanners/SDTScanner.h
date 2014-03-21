@@ -23,7 +23,9 @@
 #pragma once
 
 #include "Types.h"
-#include "dvb/Filter.h"
+#include "dvb/filters/Filter.h"
+
+#include <libsi/si.h>
 
 namespace VDR
 {
@@ -46,15 +48,15 @@ public:
 class cSdtScanner : public cFilter
 {
 public:
-  cSdtScanner(iSdtScannerCallback* callback, bool bUseOtherTable = false);
+  cSdtScanner(cDevice* device, iSdtScannerCallback* callback, SI::TableId tableId);
   virtual ~cSdtScanner();
 
 protected:
-  virtual void ProcessData(u_short Pid, u_char Tid, const u_char * Data, int Length);
+  virtual void ProcessData(u_short pid, u_char tid, const std::vector<uint8_t>& data);
 
 private:
   iSdtScannerCallback* m_callback;
-  int                  m_tableId;
+  SI::TableId          m_tableId;
   cSectionSyncer       m_sectionSyncer;
 };
 

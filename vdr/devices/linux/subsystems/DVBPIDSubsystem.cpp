@@ -35,7 +35,7 @@ cDvbPIDSubsystem::cDvbPIDSubsystem(cDevice *device)
 {
 }
 
-bool cDvbPIDSubsystem::SetPid(cPidHandle &handle, int type, bool bOn)
+bool cDvbPIDSubsystem::SetPid(cPidHandle &handle, ePidType type, bool bOn)
 {
   if (handle.pid)
   {

@@ -1,6 +1,6 @@
 /*
- *      Copyright (C) 2013 Garrett Brown
- *      Copyright (C) 2013 Lars Op den Kamp
+ *      Copyright (C) 2013-2014 Garrett Brown
+ *      Copyright (C) 2013-2014 Lars Op den Kamp
  *      Portions Copyright (C) 2000, 2003, 2006, 2008, 2013 Klaus Schmidinger
  *
  *  This Program is free software; you can redistribute it and/or modify
@@ -18,25 +18,41 @@
  *  <http://www.gnu.org/licenses/>.
  *
  */
-#pragma once
 
-#include "Types.h"
-#include "devices/subsystems/DeviceSectionFilterSubsystem.h"
-
-#include <stdint.h>
-#include <vector>
+#include "FilterData.h"
 
 namespace VDR
 {
-class cDvbSectionFilterSubsystem : public cDeviceSectionFilterSubsystem
-{
-public:
-  cDvbSectionFilterSubsystem(cDevice *device);
-  virtual ~cDvbSectionFilterSubsystem() { }
 
-protected:
-  virtual FilterHandlePtr OpenFilter(const cFilterData& filterData);
-  virtual bool ReadFilter(const FilterHandlePtr& handle, std::vector<uint8_t>& data);
-  virtual FilterHandlePtr Poll(const std::vector<FilterHandlePtr>& filterHandles);
-};
+cFilterData::cFilterData(void)
+ : m_pid(0),
+   m_tid(0),
+   m_mask(0),
+   m_bSticky(false)
+{
+}
+
+cFilterData::cFilterData(u_short pid, u_char tid, u_char mask, bool bSticky)
+: m_pid(pid),
+  m_tid(tid),
+  m_mask(mask),
+  m_bSticky(bSticky)
+{
+}
+
+bool cFilterData::operator==(const cFilterData& rhs) const
+{
+  return Equals(rhs.m_pid, rhs.m_tid, rhs.m_mask);
+}
+
+bool cFilterData::Equals(u_short pid, u_char tid, u_char mask) const
+{
+  return m_pid == pid && m_tid == tid && m_mask == mask;
+}
+
+bool cFilterData::Matches(u_short pid, u_char tid) const
+{
+  return m_pid == pid && m_tid == (tid & m_mask);
+}
+
 }

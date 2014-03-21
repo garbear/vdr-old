@@ -16,11 +16,13 @@
 #include <sys/time.h>
 #include "epg/EPG.h"
 #include "epg/EPGHandlers.h"
+#include "channels/Channel.h"
 #include "channels/ChannelManager.h"
 #include "utils/I18N.h"
 #include "libsi/section.h"
 #include "libsi/descriptor.h"
 #include "libsi/dish.h"
+#include "libsi/si_ext.h"
 
 #include "vdr/utils/CalendarUtils.h"
 #include "vdr/utils/UTF8Utils.h"
@@ -35,6 +37,7 @@ namespace VDR
 class cEIT : public SI::EIT {
 public:
   cEIT(cSchedules *Schedules, int Source, u_char Tid, const u_char *Data, bool OnlyRunningStatus = false);
+
 private:
   bool HandleEitEvent(SI::EIT::Event *EitEvent);
   void ParseSIDescriptor(SI::Descriptor* d);
@@ -515,58 +518,68 @@ cTDT::cTDT(const u_char *Data)
 
 // --- cEitFilter ------------------------------------------------------------
 
-CDateTime cEitFilter::disableUntil;
+CDateTime cEitFilter::m_disableUntil;
 
-cEitFilter::cEitFilter(void)
+cEitFilter::cEitFilter(cDevice* device)
+ : cFilter(device)
 {
-  Set(0x12, 0x00, 0x00);
-  Set(0x0300, 0x00, 0x00); // Dish Network EEPG
-  Set(0x0441, 0x00, 0x00); // Bell ExpressVU EEPG 
-  Set(0x14, 0x70);        // TDT
+  Set(SI_EXT::PID_EIT, SI::TableIdPAT, 0x00);
+  Set(0x0300, SI::TableIdPAT, 0x00); // Dish Network EEPG
+  Set(0x0441, SI::TableIdPAT, 0x00); // Bell ExpressVU EEPG
+  Set(SI_EXT::PID_TDT, SI::TableIdTDT);
 }
 
-void cEitFilter::SetDisableUntil(const CDateTime& Time)
+void cEitFilter::SetDisableUntil(const CDateTime& time)
 {
-  disableUntil = Time;
+  m_disableUntil = time;
 }
 
-void cEitFilter::ProcessData(u_short Pid, u_char Tid, const u_char *Data, int Length)
+void cEitFilter::ProcessData(u_short pid, u_char tid, const std::vector<uint8_t>& data)
 {
-  if (disableUntil.IsValid()) {
-     if (CDateTime::GetUTCDateTime() > disableUntil)
-        disableUntil.Reset();
-     else
-        return;
-     }
-  switch (Pid) {
+  if (m_disableUntil.IsValid())
+  {
+    if (CDateTime::GetUTCDateTime() > m_disableUntil)
+      m_disableUntil.Reset();
+    else
+      return;
+  }
+  switch (pid)
+  {
     case 0x0300:
     case 0x0441:
-    case 0x12: {
-         if (Tid >= 0x4E) {
-            cSchedulesLock SchedulesLock(true, 10);
-            cSchedules *Schedules = SchedulesLock.Get();
-            if (Schedules)
-               cEIT EIT(Schedules, Source(), Tid, Data);
-            else {
-               // If we don't get a write lock, let's at least get a read lock, so
-               // that we can set the running status and 'seen' timestamp (well, actually
-               // with a read lock we shouldn't be doing that, but it's only integers that
-               // get changed, so it should be ok)
-               cSchedulesLock SchedulesLock;
-               cSchedules *Schedules = SchedulesLock.Get();
-               if (Schedules)
-                  cEIT EIT(Schedules, Source(), Tid, Data, true);
-               }
-            }
-         }
-         break;
-    case 0x14: {
-         if (cSettings::Get().m_bSetSystemTime && cSettings::Get().m_iTimeSource == Source() && cSettings::Get().m_iTimeTransponder && ISTRANSPONDER(Transponder(), cSettings::Get().m_iTimeTransponder))
-            cTDT TDT(Data);
-         }
-         break;
-    default: ;
+    case SI_EXT::PID_EIT:
+    {
+      if (tid >= SI::TableIdEIT_presentFollowing)
+      {
+        cSchedulesLock schedulesLock(true, 10);
+        cSchedules* schedules = schedulesLock.Get();
+        if (schedules)
+          cEIT EIT(schedules, Source(), tid, data.data());
+        else
+        {
+          // If we don't get a write lock, let's at least get a read lock, so
+          // that we can set the running status and 'seen' timestamp (well, actually
+          // with a read lock we shouldn't be doing that, but it's only integers that
+          // get changed, so it should be ok)
+          cSchedulesLock schedulesLock;
+          cSchedules* schedules = schedulesLock.Get();
+          if (schedules)
+            cEIT EIT(schedules, Source(), tid, data.data(), true);
+        }
+      }
     }
+    break;
+
+    case SI_EXT::PID_TDT:
+    {
+      if (cSettings::Get().m_bSetSystemTime && cSettings::Get().m_iTimeSource == Source() && cSettings::Get().m_iTimeTransponder && ISTRANSPONDER(Transponder(), cSettings::Get().m_iTimeTransponder))
+        cTDT TDT(data.data());
+    }
+    break;
+
+    default:
+      break;
+  }
 }
 
 }

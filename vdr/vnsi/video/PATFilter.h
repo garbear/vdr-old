@@ -21,8 +21,8 @@
  */
 
 #include "Types.h"
-#include "dvb/Filter.h"
 #include "channels/Channel.h"
+#include "dvb/filters/Filter.h"
 
 namespace VDR
 {
@@ -38,10 +38,10 @@ private:
   ChannelPtr      m_Channel;
   cVideoInput    *m_VideoInput;
 
-  virtual void ProcessData(u_short Pid, u_char Tid, const u_char *Data, int Length);
+  virtual void ProcessData(u_short pid, u_char tid, const std::vector<uint8_t>& data);
 
 public:
-  cLivePatFilter(cVideoInput *VideoInput, ChannelPtr Channel);
+  cLivePatFilter(cDevice* device, cVideoInput *VideoInput, ChannelPtr Channel);
 };
 
 }

@@ -23,8 +23,8 @@
 #pragma once
 
 #include "Types.h"
-#include "dvb/Filter.h"
-#include "Types.h"
+#include "dvb/filters/Filter.h"
+#include "libsi/si.h"
 
 #include <sys/types.h>
 
@@ -40,14 +40,16 @@ public:
   virtual ~iNitScannerCallback() { }
 };
 
+class cDevice;
+
 class cNitScanner : public cFilter
 {
 public:
-  cNitScanner(iNitScannerCallback* callback, bool bUseOtherTable = false);
+  cNitScanner(cDevice* device, iNitScannerCallback* callback, SI::TableId tid = SI::TableIdNIT);
   virtual ~cNitScanner() { }
 
 protected:
-  virtual void ProcessData(u_short Pid, u_char Tid, const u_char * Data, int Length);
+  virtual void ProcessData(u_short pid, u_char tid, const std::vector<uint8_t>& data);
 
 private:
   int                  m_tableId;

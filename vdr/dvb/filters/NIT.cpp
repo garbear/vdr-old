@@ -9,17 +9,21 @@
 
 #include "NIT.h"
 #include "channels/ChannelManager.h"
-#include "EITScan.h"
+#include "dvb/EITScan.h"
 #include "sources/linux/DVBSourceParams.h"
 #include "utils/Tools.h"
 #include "settings/Settings.h"
 
+#include <algorithm>
 #include <linux/dvb/frontend.h>
 #include <libsi/descriptor.h>
+#include <libsi/si.h>
 #include <libsi/si_ext.h>
 #include <libsi/section.h>
 
+using namespace SI;
 using namespace SI_EXT;
+using namespace std;
 
 namespace VDR
 {
@@ -28,52 +32,53 @@ namespace VDR
 #define ARRAY_SIZE(x)  (sizeof(x) / sizeof((x)[0]))
 #endif
 
-cNitFilter::cNitFilter(void)
+cNitFilter::cNitFilter(cDevice* device)
+ : cFilter(device),
+   m_networkId(0)
 {
-  numNits = 0;
-  networkId = 0;
-  Set(PID_NIT, TABLE_ID_NIT_ACTUAL);
+  Set(PID_NIT, TableIdNIT);
 }
 
-void
-cNitFilter::SetStatus(bool On)
+void cNitFilter::Enable(bool bEnabled)
 {
-  cFilter::SetStatus(On);
-  numNits = 0;
-  networkId = 0;
-  sectionSyncer.Reset();
+  cFilter::Enable(bEnabled);
+  m_networkId = 0;
+  m_nits.clear();
+  m_sectionSyncer.Reset();
 }
 
-void
-cNitFilter::ProcessData(u_short Pid, u_char Tid, const u_char *Data, int Length)
+void cNitFilter::ProcessData(u_short pid, u_char tid, const std::vector<uint8_t>& data)
 {
-  SI::NIT nit(Data, false);
+  SI::NIT nit(data.data(), false);
   if (!nit.CheckCRCAndParse())
     return;
+
   // Some broadcasters send more than one NIT, with no apparent way of telling which
   // one is the right one to use. This is an attempt to find the NIT that contains
   // the transponder it was transmitted on and use only that one:
-  int ThisNIT = -1;
-  if (!networkId)
+  bool bFound = false;
+  vector<cNit>::iterator thisNit = m_nits.end();
+  if (!m_networkId)
   {
-    for (int i = 0; i < numNits; i++)
+    for (vector<cNit>::iterator it = m_nits.begin(); it != m_nits.end(); ++it)
     {
-      if (nits[i].networkId == nit.getNetworkId())
+      if (it->networkId == nit.getNetworkId())
       {
         if (nit.getSectionNumber() == 0)
         {
           // all NITs have passed by
-          for (int j = 0; j < numNits; j++)
+          //for (int j = 0; j < m_numNits; j++)
+          for (vector<cNit>::const_iterator it2 = m_nits.begin(); it2 != m_nits.end(); ++it2)
           {
-            if (nits[j].hasTransponder)
+            if (it2->hasTransponder)
             {
-              networkId = nits[j].networkId;
-              //printf("taking NIT with network ID %d\n", networkId);
+              m_networkId = it2->networkId;
+              //printf("taking NIT with network ID %d\n", m_networkId);
               //XXX what if more than one NIT contains this transponder???
               break;
             }
           }
-          if (!networkId)
+          if (!m_networkId)
           {
             //printf("none of the NITs contains transponder %d\n", Transponder());
             return;
@@ -81,47 +86,49 @@ cNitFilter::ProcessData(u_short Pid, u_char Tid, const u_char *Data, int Length)
         }
         else
         {
-          ThisNIT = i;
+          bFound = true;
+          thisNit = it;
           break;
         }
       }
     }
-    if (!networkId && ThisNIT < 0 && numNits < MAXNITS)
+
+    if (!m_networkId && bFound)
     {
       if (nit.getSectionNumber() == 0)
       {
-        *nits[numNits].name = 0;
+        cNit newNit = { };
         SI::Descriptor *d;
         for (SI::Loop::Iterator it; (d = nit.commonDescriptors.getNext(it));)
         {
           switch (d->getDescriptorTag())
-            {
+          {
           case SI::NetworkNameDescriptorTag:
-            {
-              SI::NetworkNameDescriptor *nnd = (SI::NetworkNameDescriptor *) d;
-              nnd->name.getText(nits[numNits].name, MAXNETWORKNAME);
-            }
+          {
+            SI::NetworkNameDescriptor *nnd = (SI::NetworkNameDescriptor *) d;
+            nnd->name.getText(newNit.name, MAXNETWORKNAME);
             break;
+          }
           default:
-            ;
-            }
+            break;
+          }
           delete d;
         }
-        nits[numNits].networkId = nit.getNetworkId();
-        nits[numNits].hasTransponder = false;
-        //printf("NIT[%d] %5d '%s'\n", numNits, nits[numNits].networkId, nits[numNits].name);
-        ThisNIT = numNits;
-        numNits++;
+        newNit.networkId = nit.getNetworkId();
+        newNit.hasTransponder = false;
+        dsyslog("NIT[%u] %5d '%s'\n", m_nits.size(), newNit.networkId, newNit.name);
+        m_nits.push_back(newNit);
+        thisNit = m_nits.end() - 1;
       }
     }
   }
-  else if (networkId != nit.getNetworkId())
+  else if (m_networkId != nit.getNetworkId())
     return; // ignore all other NITs
-  else if (!sectionSyncer.Sync(nit.getVersionNumber(), nit.getSectionNumber(),
-      nit.getLastSectionNumber()))
+  else if (!m_sectionSyncer.Sync(nit.getVersionNumber(), nit.getSectionNumber(), nit.getLastSectionNumber()))
     return;
 //  XXX if (!Channels.Lock(true, 10))
 //     return;
+
   SI::NIT::TransportStream ts;
   for (SI::Loop::Iterator it; nit.transportStreamLoop.getNext(ts, it);)
   {
@@ -184,13 +191,14 @@ cNitFilter::ProcessData(u_short Pid, u_char Tid, const u_char *Data, int Length)
           static fe_rolloff RollOffs[] = { ROLLOFF_35, ROLLOFF_25, ROLLOFF_20, ROLLOFF_AUTO };
           dtp.SetRollOff( sd->getModulationSystem() ? RollOffs[sd->getRollOff()] : ROLLOFF_AUTO);
           int SymbolRate = BCD2INT(sd->getSymbolRate()) / 10;
-          if (ThisNIT >= 0)
+
+          if (thisNit != m_nits.end())
           {
             for (int n = 0; n < NumFrequencies; n++)
             {
               if (ISTRANSPONDER(cChannel::Transponder(iFrequencyMHz, dtp.Polarization()), Transponder()))
               {
-                nits[ThisNIT].hasTransponder = true;
+                thisNit->hasTransponder = true;
                 //printf("has transponder %d\n", Transponder());
                 break;
               }
@@ -289,15 +297,15 @@ cNitFilter::ProcessData(u_short Pid, u_char Tid, const u_char *Data, int Length)
           dtp.SetCoderateH(CodeRates[sd->getFecInner()]);
           static fe_modulation Modulations[] =
             { QPSK, QAM_16, QAM_32, QAM_64, QAM_128, QAM_256, QAM_AUTO };
-          dtp.SetModulation(Modulations[min(sd->getModulation(), 6)]);
+          dtp.SetModulation(Modulations[std::min(sd->getModulation(), 6)]);
           int SymbolRate = BCD2INT(sd->getSymbolRate()) / 10;
-          if (ThisNIT >= 0)
+          if (thisNit != m_nits.end())
           {
             for (int n = 0; n < NumFrequencies; n++)
             {
               if (ISTRANSPONDER(FrequenciesHz[n] / 1000, Transponder()))
               {
-                nits[ThisNIT].hasTransponder = true;
+                thisNit->hasTransponder = true;
                 //printf("has transponder %d\n", Transponder());
                 break;
               }
@@ -385,13 +393,13 @@ cNitFilter::ProcessData(u_short Pid, u_char Tid, const u_char *Data, int Length)
             { TRANSMISSION_MODE_2K, TRANSMISSION_MODE_8K, TRANSMISSION_MODE_4K,
                 TRANSMISSION_MODE_AUTO };
           dtp.SetTransmission(TransmissionModes[sd->getTransmissionMode()]);
-          if (ThisNIT >= 0)
+          if (thisNit != m_nits.end())
           {
             for (int n = 0; n < NumFrequencies; n++)
             {
               if (ISTRANSPONDER(FrequenciesHz[n] / 1000000, Transponder()))
               {
-                nits[ThisNIT].hasTransponder = true;
+                thisNit->hasTransponder = true;
                 //printf("has transponder %d\n", Transponder());
                 break;
               }

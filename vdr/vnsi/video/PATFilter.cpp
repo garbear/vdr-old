@@ -27,10 +27,13 @@
 #include <libsi/section.h>
 #include <libsi/descriptor.h>
 
+using namespace std;
+
 namespace VDR
 {
 
-cLivePatFilter::cLivePatFilter(cVideoInput *VideoInput, ChannelPtr Channel)
+cLivePatFilter::cLivePatFilter(cDevice* device, cVideoInput *VideoInput, ChannelPtr Channel)
+ : cFilter(device)
 {
   dsyslog("cStreamdevPatFilter(\"%s\")", Channel->Name().c_str());
   m_Channel     = Channel;
@@ -41,13 +44,13 @@ cLivePatFilter::cLivePatFilter(cVideoInput *VideoInput, ChannelPtr Channel)
   Set(0x00, 0x00);  // PAT
 }
 
-void cLivePatFilter::ProcessData(u_short Pid, u_char Tid, const u_char *Data, int Length)
+void cLivePatFilter::ProcessData(u_short pid, u_char tid, const vector<uint8_t>& data)
 {
-  if (Pid == 0x00)
+  if (pid == 0x00)
   {
-    if (Tid == 0x00)
+    if (tid == 0x00)
     {
-      SI::PAT pat(Data, false);
+      SI::PAT pat(data.data(), false);
       if (!pat.CheckCRCAndParse())
         return;
       SI::PAT::Association assoc;
@@ -64,7 +67,7 @@ void cLivePatFilter::ProcessData(u_short Pid, u_char Tid, const u_char *Data, in
               if (m_pmtPid != prevPmtPid)
               {
                 m_pmtSid = assoc.getServiceId();
-                Add(m_pmtPid, 0x02);
+                Set(m_pmtPid, 0x02);
                 m_pmtVersion = -1;
                 break;
               }
@@ -75,10 +78,10 @@ void cLivePatFilter::ProcessData(u_short Pid, u_char Tid, const u_char *Data, in
       }
     }
   }
-  else if (Pid == m_pmtPid && Tid == SI::TableIdPMT && Source()
+  else if (pid == m_pmtPid && tid == SI::TableIdPMT && Source()
       && Transponder())
   {
-    SI::PMT pmt(Data, false);
+    SI::PMT pmt(data.data(), false);
     if (!pmt.CheckCRCAndParse())
       return;
     if (pmt.getServiceId() != m_pmtSid)
