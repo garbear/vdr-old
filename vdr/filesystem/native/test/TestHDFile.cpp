@@ -29,6 +29,9 @@
 
 using namespace std;
 
+namespace VDR
+{
+
 class CHDFileTest : public CHDFile
 {
 public:
@@ -227,4 +230,6 @@ TEST(HDFile, SetHidden)
 TEST(HDFile, GetLocal)
 {
   //CHDFileTest
+}
+
 }

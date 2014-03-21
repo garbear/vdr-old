@@ -27,6 +27,9 @@
 
 using namespace std;
 
+namespace VDR
+{
+
 TEST(TestXMLUtils, GetHex)
 {
   CXBMCTinyXML a;
@@ -322,4 +325,6 @@ TEST(TestXMLUtils, SetLong)
 
   ref = 1000;
   EXPECT_EQ(ref, val);
+}
+
 }

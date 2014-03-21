@@ -24,6 +24,9 @@
 
 #include <gtest/gtest.h>
 
+namespace VDR
+{
+
 TEST(CountryUtils, GetFrontendType)
 {
   eFrontendType frontendType = eFT_ATSC;
@@ -52,4 +55,6 @@ TEST(CountryUtils, GetBaseOffset)
 {
   int offset = 0;
   EXPECT_TRUE(CountryUtils::GetBaseOffset(95, ATSC_QAM, offset) && offset == -477000000);
+}
+
 }

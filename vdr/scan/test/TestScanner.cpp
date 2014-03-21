@@ -27,6 +27,9 @@
 
 #include <gtest/gtest.h>
 
+namespace VDR
+{
+
 TEST(Scanner, Start)
 {
   DeviceVector devices = cDvbDevice::FindDevices();
@@ -54,4 +57,6 @@ TEST(Scanner, Start)
       EXPECT_NE(0, cChannelManager::Get().ChannelCount());
     }
   }
+}
+
 }

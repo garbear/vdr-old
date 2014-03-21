@@ -33,6 +33,9 @@ using namespace std;
 // Make this longer than cVDRDaemon takes to clean up
 #define MAX_WAIT_CLEANUP  2000 // ms
 
+namespace VDR
+{
+
 TEST(VDRDaemonTest, Init)
 {
   cVDRDaemon vdr;
@@ -68,3 +71,5 @@ TEST(VDRDaemonTest, Signals)
   CSignalHandler::Get().ResetSignalReceivers();
 }
 */
+
+}

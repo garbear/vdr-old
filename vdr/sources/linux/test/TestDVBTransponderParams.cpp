@@ -26,6 +26,9 @@
 
 using namespace std;
 
+namespace VDR
+{
+
 /*
  * Ensure the object is constructed with the expected default values. This will
  * ensure further tests on an object with default values.
@@ -156,4 +159,6 @@ TEST(DvbTransponderParams, Deserialize)
     EXPECT_EQ(ROLLOFF_AUTO,           params.RollOff());
     EXPECT_EQ(0,                      params.StreamId());
   }
+}
+
 }

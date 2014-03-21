@@ -28,6 +28,9 @@
 
 using namespace std;
 
+namespace VDR
+{
+
 TEST(TestXBMCTinyXML, ParseFromString)
 {
   bool retval = false;
@@ -74,3 +77,5 @@ TEST(TestXBMCTinyXML, ParseFromFileHandle)
   EXPECT_TRUE(retval);
 }
 */
+
+}

@@ -28,6 +28,9 @@
 
 using namespace std;
 
+namespace VDR
+{
+
 TEST(TestStringUtils, Format)
 {
   string refstr = "test 25 2.7 ff FF";
@@ -404,4 +407,6 @@ TEST(TestStringUtils, Paramify)
 
   string result = StringUtils::Paramify(input);
   EXPECT_STREQ(ref, result.c_str());
+}
+
 }

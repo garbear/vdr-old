@@ -30,6 +30,9 @@ using ::testing::Test;
 using ::testing::WithParamInterface;
 using ::testing::ValuesIn;
 
+namespace VDR
+{
+
 struct TestURLGetWithoutUserDetailsData
 {
   std::string input;
@@ -67,3 +70,5 @@ const TestURLGetWithoutUserDetailsData values[] = {
   };
 
 INSTANTIATE_TEST_CASE_P(URL, TestURLGetWithoutUserDetails, ValuesIn(values));
+
+}

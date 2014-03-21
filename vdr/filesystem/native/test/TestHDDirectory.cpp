@@ -30,6 +30,9 @@
 
 using namespace std;
 
+namespace VDR
+{
+
 TEST(HDDirectory, GetDirectory)
 {
   // Populate a test directory
@@ -86,3 +89,5 @@ TEST(HDDirectory, Rename)
 {
 }
 */
+
+}

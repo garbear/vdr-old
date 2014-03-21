@@ -24,6 +24,9 @@
 #include <string>
 #include <vector>
 
+namespace VDR
+{
+
 class CFile;
 
 class CVDRTestUtils
@@ -105,3 +108,5 @@ private:
 #define VDR_DELETETEMPFILE(a)         CVDRTestUtils::Instance().DeleteTempFile(a)
 #define VDR_TEMPFILEPATH(a)           CVDRTestUtils::Instance().TempFilePath(a)
 #define VDR_CREATECORRUPTEDFILE(a, b) CVDRTestUtils::Instance().CreateCorruptedFile(a, b)
+
+}

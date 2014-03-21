@@ -24,6 +24,9 @@
 
 #include <gtest/gtest.h>
 
+namespace VDR
+{
+
 TEST(ScanConfig, GetCniCode)
 {
   EXPECT_EQ(6900000, cScanConfig::TranslateSymbolRate(eSR_6900000));
@@ -41,4 +44,6 @@ TEST(ScanConfig, GetCniCode)
   EXPECT_EQ(6952000, cScanConfig::TranslateSymbolRate(eSR_6952000));
   EXPECT_EQ(5156000, cScanConfig::TranslateSymbolRate(eSR_5156000));
   EXPECT_EQ(5483000, cScanConfig::TranslateSymbolRate(eSR_5483000));
+}
+
 }

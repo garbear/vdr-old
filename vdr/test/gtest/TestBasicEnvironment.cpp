@@ -23,7 +23,7 @@
 #include "TestBasicEnvironment.h"
 #include "TestUtils.h"
 #include "filesystem/Directory.h"
-//#include "filesystem/File.h"
+#include "filesystem/File.h"
 #include "filesystem/SpecialProtocol.h"
 #include "lib/platform/os.h"
 //#include "powermanagement/PowerManager.h"
@@ -37,6 +37,9 @@
 #include <string>
 
 using namespace std;
+
+namespace VDR
+{
 
 void TestBasicEnvironment::SetUp()
 {
@@ -90,4 +93,6 @@ void TestBasicEnvironment::SetUpError()
 {
   fprintf(stderr, "Setup of basic environment failed.\n");
   exit(EXIT_FAILURE);
+}
+
 }

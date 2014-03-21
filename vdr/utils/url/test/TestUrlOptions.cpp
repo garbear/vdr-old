@@ -24,6 +24,9 @@
 
 #include "gtest/gtest.h"
 
+namespace VDR
+{
+
 TEST(TestUrlOptions, Clear)
 {
   const char *key = "foo";
@@ -209,4 +212,6 @@ TEST(TestUrlOptions, GetOptionsString)
   CUrlOptions urlOptions(ref);
   std::string value = urlOptions.GetOptionsString();
   EXPECT_STREQ(ref, value.c_str());
+}
+
 }

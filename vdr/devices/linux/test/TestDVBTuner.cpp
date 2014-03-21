@@ -34,6 +34,9 @@ using namespace std;
 
 #define CHANNELS_XML    "special://vdr/vdr/channels/test/channels.xml"
 
+namespace VDR
+{
+
 TEST(DvbTuner, cDvbTuner)
 {
   DeviceVector devices = cDvbDevice::FindDevices();
@@ -180,4 +183,6 @@ TEST(DvbTuner, Locked)
     EXPECT_TRUE(tuner.IsTunedTo(*channel));
     EXPECT_TRUE(tuner.Locked(10 * 1000)); // 10s
   }
+}
+
 }

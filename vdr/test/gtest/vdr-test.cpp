@@ -29,6 +29,8 @@
 #include <cstdio>
 #include <cstdlib>
 
+using namespace VDR;
+
 class NullLogger //: public XbmcCommons::ILogger // TODO
 {
 public:

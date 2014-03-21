@@ -35,6 +35,9 @@
 #include <ctime>
 #endif
 
+namespace VDR
+{
+
 class CTempFile : public CFile
 {
 public:
@@ -348,4 +351,6 @@ std::string CVDRTestUtils::getNewLineCharacters() const
 #else
   return "\n";
 #endif
+}
+
 }

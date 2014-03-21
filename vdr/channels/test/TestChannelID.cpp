@@ -23,6 +23,9 @@
 
 #include "gtest/gtest.h"
 
+namespace VDR
+{
+
 TEST(ChannelID, ChannelID)
 {
   EXPECT_EQ(tChannelID(), tChannelID::InvalidID);
@@ -65,4 +68,6 @@ TEST(ChannelID, ChannelID)
   // TODO: More ser/des tests
 
   // TODO: Test ClrPolarization() once its functionality is understood
+}
+
 }

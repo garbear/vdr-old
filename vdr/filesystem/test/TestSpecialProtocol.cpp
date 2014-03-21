@@ -28,6 +28,9 @@
 
 using namespace std;
 
+namespace VDR
+{
+
 class TestSpecialProtocol : public testing::Test
 {
 protected:
@@ -138,3 +141,5 @@ TEST_F(TestSpecialProtocol, TranslatePathConvertCase)
 {
 }
 */
+
+}

@@ -23,6 +23,9 @@
 
 #include "gtest/gtest.h"
 
+namespace VDR
+{
+
 class TestBasicEnvironment : public testing::Environment
 {
 public:
@@ -32,3 +35,5 @@ public:
 private:
   void SetUpError();
 };
+
+}

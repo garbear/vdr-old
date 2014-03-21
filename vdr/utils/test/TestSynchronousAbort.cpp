@@ -27,6 +27,9 @@
 
 using namespace PLATFORM;
 
+namespace VDR
+{
+
 #define JIFFY_MS  100 // A small amount of time
 
 // --- cAbortableJob -----------------------------------------------------------
@@ -128,4 +131,6 @@ TEST(SynchronousAbort, Abort)
   // Now wait for it to finish
   abortableJob.Abort(true);
   EXPECT_TRUE(abortableJob.IsAborted());
+}
+
 }

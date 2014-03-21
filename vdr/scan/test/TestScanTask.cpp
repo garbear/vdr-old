@@ -30,6 +30,9 @@
 
 #define CHANNELS_XML    "special://vdr/vdr/channels/test/channels.xml"
 
+namespace VDR
+{
+
 // Scan a known channel
 TEST(ScanTask, cScanTaskATSC)
 {
@@ -53,4 +56,6 @@ TEST(ScanTask, cScanTaskATSC)
       EXPECT_NE(0, cChannelManager::Get().ChannelCount());
     }
   }
+}
+
 }

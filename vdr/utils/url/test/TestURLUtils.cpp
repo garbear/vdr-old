@@ -29,6 +29,9 @@
 
 using namespace std;
 
+namespace VDR
+{
+
 /*
 TEST(TestURLUtils, GetExtension)
 {
@@ -682,3 +685,4 @@ TEST(TestURLUtils, UpdateUrlEncoding)
   EXPECT_STRCASEEQ(newUrl.c_str(), oldUrl.c_str());
 }
 
+}

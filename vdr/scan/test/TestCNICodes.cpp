@@ -24,6 +24,9 @@
 
 #include <gtest/gtest.h>
 
+namespace VDR
+{
+
 TEST(CniCodes, GetCniCode)
 {
   {
@@ -45,4 +48,6 @@ TEST(CniCodes, GetCniCode)
 TEST(CniCodes, GetCniCodeCount)
 {
   EXPECT_EQ(1191, CniCodes::GetCniCodeCount());
+}
+
 }

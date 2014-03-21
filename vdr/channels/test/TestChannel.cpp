@@ -30,6 +30,9 @@
 
 using namespace std;
 
+namespace VDR
+{
+
 TEST(Channel, Construction)
 {
   cChannel channel;
@@ -329,4 +332,6 @@ TEST(Channel, Transponder)
   EXPECT_EQ(cChannel::Transponder(frequency, POLARIZATION_VERTICAL), frequency + 200 * 1000);
   EXPECT_EQ(cChannel::Transponder(frequency, POLARIZATION_CIRCULAR_LEFT), frequency + 300 * 1000);
   EXPECT_EQ(cChannel::Transponder(frequency, POLARIZATION_CIRCULAR_RIGHT), frequency + 400 * 1000);
+}
+
 }

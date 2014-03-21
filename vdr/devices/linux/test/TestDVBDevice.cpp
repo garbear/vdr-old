@@ -30,6 +30,9 @@
 
 using namespace std;
 
+namespace VDR
+{
+
 TEST(DvbDevice, Initialize)
 {
   DeviceVector devices = cDvbDevice::FindDevices();
@@ -98,4 +101,6 @@ TEST(DvbDevice, TranslateDeliverySystems)
   deliverySystems.push_back(SYS_TURBO);
   deliverySystems.push_back(SYS_ATSC);
   EXPECT_STREQ("DVB-C,TURBO,ATSC", cDvbDevice::TranslateDeliverySystems(deliverySystems).c_str());
+}
+
 }

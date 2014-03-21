@@ -27,6 +27,9 @@
 #define CHANNELS_XML    "special://vdr/vdr/channels/test/channels.xml"
 #define CHANNELS2_XML   "special://temp/channels.xml"
 
+namespace VDR
+{
+
 TEST(ChannelManager, ChannelManager)
 {
   {
@@ -34,4 +37,6 @@ TEST(ChannelManager, ChannelManager)
     EXPECT_TRUE(channels.Load(CHANNELS_XML));
     EXPECT_TRUE(channels.Save(CHANNELS2_XML));
   }
+}
+
 }

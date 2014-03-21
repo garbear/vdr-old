@@ -25,6 +25,9 @@
 
 #include "utils/RegExp.h"
 
+namespace VDR
+{
+
 TEST(TestRegExp, RegFind)
 {
   CRegExp regex;
@@ -127,4 +130,6 @@ TEST(TestRegExp, operatorEqual)
   EXPECT_STREQ("Test", match.c_str());
   EXPECT_TRUE(regexcopy.GetNamedSubPattern("second", match));
   EXPECT_STREQ("string", match.c_str());
+}
+
 }
