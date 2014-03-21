@@ -176,25 +176,6 @@ enum pid_codes {
   PID_DIT                                      = 0x1E,
   PID_SIT                                      = 0x1F,
   };
-enum table_codes {
-  TABLE_ID_PAT                                 = 0x0,  // program allocation table                                  (mandatory)
-  TABLE_ID_CAT                                 = 0x1,  // conditional access section                                (mandatory)
-  TABLE_ID_PMT                                 = 0x2,  // program map section                                       (mandatory)
-  TABLE_ID_TSDT                                = 0x3,  // transport stream description section                      (mandatory)
-  TABLE_ID_NIT_ACTUAL                          = 0x40, // network information section, *actual* network             (mandatory)
-  TABLE_ID_NIT_OTHER                           = 0x41, // network information section, *other*  network             (optional)
-  TABLE_ID_SDT_ACTUAL                          = 0x42, // service description section, *actual* transport stream    (mandatory)
-  TABLE_ID_SDT_OTHER                           = 0x46, // service description section, *other*  transport stream    (optional)
-  TABLE_ID_BAT                                 = 0x4A, // bouquet association section                               (optional)
-  TABLE_ID_EIT_ACTUAL_PRESENT                  = 0x4E, // Event Information Section  (actual ts, present/following) (mandatory)
-  TABLE_ID_EIT_OTHER_PRESENT                   = 0x4F, // Event Information Section  (other ts,  present/following) (optional)
-  TABLE_ID_EIT_ACTUAL_SCHEDULE_START           = 0x50, // Event Information Section  (actual ts, schedule)          (optional)
-  TABLE_ID_EIT_ACTUAL_SCHEDULE_STOP            = 0x5F, // Event Information Section  (actual ts, schedule)          (optional)
-  TABLE_ID_EIT_OTHER_SCHEDULE_START            = 0x60, // Event Information Section  (other ts,  schedule)          (optional)
-  TABLE_ID_EIT_OTHER_SCHEDULE_STOP             = 0x6F, // Event Information Section  (other ts,  schedule)          (optional)
-  TABLE_ID_SIT                                 = 0x7F, // service information section                               (optional)
-  TABLE_ID_CIT_PREM                            = 0xA0, // premiere content information section                      (optional, undefined in 13818/300468)
-  };
 enum _stream_type {
   STREAMTYPE_UNDEFINED                         = 0x0,  // ITU-T | ISO/IEC Reserved
   STREAMTYPE_11172_VIDEO                       = 0x1,  // ISO/IEC 11172 Video
@@ -225,11 +206,6 @@ enum _stream_type {
   STREAMTYPE_14496_H264_VIDEO                  = 0x1B, // 0x1A-0x7F -> ITU-T Rec. H.222.0 | ISO/IEC 13818-1 Reserved
   STREAMTYPE_13818_USR_PRIVATE_80              = 0x80, // 0x80-0xFF User Private
   STREAMTYPE_13818_USR_PRIVATE_81              = 0x81,
-  };
-enum DescriptorTag {
-  EnhancedAC3DescriptorTag                     = 0x7A,
-  DTSDescriptorTag                             = 0x7B,
-  AACDescriptorTag                             = 0x7C,
   };
 enum stream_content_code {
   MPEG_2_video                                 = 0x1, 
