@@ -22,6 +22,7 @@
 #include "VDRDaemon.h"
 
 #include "xbmc/libXBMC_addon.h"
+#include "xbmc/xbmc_service_dll.h"
 #include "xbmc/xbmc_addon_types.h"
 #include "xbmc/xbmc_content_types.h"
 #include "xbmc/xbmc_service_dll.h"
@@ -44,12 +45,11 @@ public:
   sys_log_type_t Type(void) const { return SYS_LOG_TYPE_ADDON; }
 };
 
-CHelper_libXBMC_addon*   XBMC = NULL;
-string         g_strUserPath    = "";
-string         g_strClientPath  = "";
-ADDON_STATUS   m_CurStatus      = ADDON_STATUS_UNKNOWN;
-
-cVDRDaemon     vdr;
+CHelper_libXBMC_addon* XBMC             = NULL;
+string                 g_strUserPath    = "";
+string                 g_strClientPath  = "";
+ADDON_STATUS           m_CurStatus      = ADDON_STATUS_UNKNOWN;
+cVDRDaemon             vdr;
 
 void CLogXBMC::Log(sys_log_level_t level, const char* logline)
 {
@@ -98,12 +98,7 @@ ADDON_STATUS ADDON_Create(void* hdl, void* props)
 
     ADDON_ReadSettings();
 
-    CLog::Get().SetPipe(new CLogXBMC);
-    if (!vdr.Init())
-      throw ADDON_STATUS_UNKNOWN;
-
     m_CurStatus = ADDON_STATUS_OK;
-
   }
   catch (const ADDON_STATUS &status)
   {
@@ -147,10 +142,41 @@ ADDON_STATUS ADDON_SetSetting(const char *settingName, const void *settingValue)
 
 void ADDON_Stop()
 {
-  vdr.Stop();
+  StopService();
 }
 
 void ADDON_FreeSettings()
+{
+}
+
+const char* GetServiceAPIVersion(void)
+{
+  return XBMC_SERVICE_API_VERSION;
+}
+
+const char* GetMininumServiceAPIVersion(void)
+{
+  return XBMC_SERVICE_MIN_API_VERSION;
+}
+
+bool StartService(void)
+{
+  CLog::Get().SetPipe(new CLogXBMC);
+  if (!vdr.Init())
+  {
+    m_CurStatus = ADDON_STATUS_LOST_CONNECTION;//XXX
+    return false;
+  }
+  return true;
+}
+
+bool StopService(void)
+{
+  vdr.Stop();
+  return true;
+}
+
+void ADDON_Announce(const char *flag, const char *sender, const char *message, const void *data)
 {
 }
 
