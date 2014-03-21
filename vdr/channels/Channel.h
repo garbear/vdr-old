@@ -45,7 +45,11 @@ public:
 //#include "thread.h"
 //#include "tools.h"
 
-#define ISTRANSPONDER(f1, f2)  (abs((f1) - (f2)) < 4) //XXX
+#ifndef ABS
+#define ABS(x)  ((x) >= 0 ? (x) : -(x))
+#endif
+
+#define ISTRANSPONDER(f1, f2)  (ABS((f1) - (f2)) < 4) //XXX
 
 #define CHANNELMOD_NONE     0x00
 #define CHANNELMOD_ALL      0xFF
