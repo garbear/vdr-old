@@ -26,6 +26,8 @@
 
 #include <string>
 
+namespace VDR
+{
 class cDeviceImageGrabSubsystem : protected cDeviceSubsystem
 {
 public:
@@ -59,3 +61,4 @@ public:
    */
   bool GrabImageFile(const std::string &strFileName, bool bJpeg = true, int quality = -1, int sizeX = -1, int sizeY = -1);
 };
+}

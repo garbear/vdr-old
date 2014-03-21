@@ -9,6 +9,9 @@
 #include "utils/XBMCTinyXML.h"
 #include "settings/Settings.h"
 
+namespace VDR
+{
+
 cEvent::cEvent(tEventID EventID)
 {
   schedule = NULL;
@@ -1081,4 +1084,6 @@ bool cEvent::Serialise(TiXmlElement* element) const
   }
 
   return true;
+}
+
 }

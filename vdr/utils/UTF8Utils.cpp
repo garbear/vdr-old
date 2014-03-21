@@ -23,6 +23,9 @@
 #include "CharSetConverterVDR.h"
 #include "Tools.h"
 
+namespace VDR
+{
+
 // Mask Test
 #define MT(s, m, v) ((*(s) & (m)) == (v))
 
@@ -196,4 +199,6 @@ int cUtf8Utils::Utf8FromArray(const uint *a, char *s, int Size, int Max)
   if (NumChars < Size)
     *s = 0;
   return NumChars;
+}
+
 }

@@ -28,6 +28,9 @@
 
 #include <unistd.h>
 
+namespace VDR
+{
+
 cDeviceSectionFilterSubsystem::cDeviceSectionFilterSubsystem(cDevice *device)
  : cDeviceSubsystem(device),
    m_sectionHandler(NULL),
@@ -88,4 +91,6 @@ void cDeviceSectionFilterSubsystem::Detach(cFilter *filter)
 {
   if (m_sectionHandler)
     m_sectionHandler->Detach(filter);
+}
+
 }

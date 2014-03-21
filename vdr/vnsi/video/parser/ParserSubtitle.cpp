@@ -23,6 +23,9 @@
 
 #include "ParserSubtitle.h"
 
+namespace VDR
+{
+
 cParserSubtitle::cParserSubtitle(int pID, cTSStream *stream, sPtsWrap *ptsWrap, bool observePtsWraps)
  : cParser(pID, stream, ptsWrap, observePtsWraps)
 {
@@ -58,4 +61,6 @@ void cParserSubtitle::Parse(sStreamPacket *pkt)
 
     m_PesBufferPtr = 0;
   }
+}
+
 }

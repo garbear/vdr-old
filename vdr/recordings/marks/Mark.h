@@ -5,10 +5,12 @@
 #include "utils/Tools.h"
 #include "platform/threads/mutex.h"
 
+class TiXmlNode;
+
+namespace VDR
+{
 extern double MarkFramesPerSecond;
 extern PLATFORM::CMutex MutexMarkFramesPerSecond;
-
-class TiXmlNode;
 
 class cMark : public cListObject
 {
@@ -42,3 +44,4 @@ private:
   int         m_iPosition;
   std::string m_strComment;
 };
+}

@@ -38,6 +38,9 @@
 
 using namespace std;
 
+namespace VDR
+{
+
 #define TS_SCRAMBLING_TIMEOUT     3 // seconds to wait until a TS becomes unscrambled
 #define TS_SCRAMBLING_TIME_OK    10 // seconds before a Channel/CAM combination is marked as known to decrypt
 
@@ -180,4 +183,6 @@ void *cDevice::Process()
     Receiver()->CloseDvr();
   }
   return NULL;
+}
+
 }

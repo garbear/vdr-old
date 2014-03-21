@@ -3,6 +3,8 @@
 #include "Types.h"
 #include "Recording.h"
 
+namespace VDR
+{
 class cRecordings : public PLATFORM::CThread
 {
 public:
@@ -70,3 +72,4 @@ private:
 };
 
 extern cRecordings Recordings;
+}

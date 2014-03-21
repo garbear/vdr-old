@@ -25,6 +25,9 @@
 #include "vdr/utils/CalendarUtils.h"
 #include "vdr/utils/UTF8Utils.h"
 
+namespace VDR
+{
+
 #define EPGDATAWRITEDELTA   600 // seconds between writing the epg.data file
 
 // --- cSchedulesLock --------------------------------------------------------
@@ -300,4 +303,6 @@ std::vector<SchedulePtr> cSchedules::GetUpdatedSchedules(const std::map<int, CDa
   }
 
   return retval;
+}
+
 }

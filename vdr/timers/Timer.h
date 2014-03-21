@@ -6,6 +6,10 @@
 #include "channels/Channel.h"
 #include "TimerTime.h"
 
+class TiXmlNode;
+
+namespace VDR
+{
 class cRecording;
 
 enum eTimerFlags
@@ -27,7 +31,6 @@ enum eTimerMatch
 
 class cEvent;
 class cSchedules;
-class TiXmlNode;
 class cRecorder;
 
 class cTimer
@@ -116,3 +119,4 @@ private:
   cRecording*   m_recording;               ///< the recording that is currently running
   size_t        m_index; // XXX (re)move me
 };
+}

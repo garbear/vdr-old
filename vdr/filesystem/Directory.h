@@ -27,6 +27,8 @@
 #include <string>
 #include <vector>
 
+namespace VDR
+{
 class CDirectory
 {
 public:
@@ -54,3 +56,4 @@ public:
 private:
   static IDirectory *CreateLoader(const std::string &path);
 };
+}

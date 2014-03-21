@@ -24,7 +24,8 @@
 #include "Types.h"
 #include <string>
 
-
+namespace VDR
+{
 class CCharsetDetection
 {
 public:
@@ -64,3 +65,4 @@ private:
 
   static const size_t m_XmlDeclarationMaxLength;
 };
+}

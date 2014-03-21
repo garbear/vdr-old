@@ -18,6 +18,9 @@
 #include "settings/Settings.h"
 #include "platform/threads/threads.h"
 
+namespace VDR
+{
+
 #define PMT_SCAN_TIMEOUT  10 // seconds
 
 using namespace std;
@@ -352,4 +355,6 @@ void cPatFilter::ProcessData(u_short Pid, u_char Tid, const u_char *Data, int Le
      lastPmtScan.Reset(); // this triggers the next scan
 //     XXX Channels.Unlock();
      }
+}
+
 }

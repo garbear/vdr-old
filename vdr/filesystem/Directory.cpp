@@ -36,6 +36,9 @@
 
 using namespace std;
 
+namespace VDR
+{
+
 IDirectory *CDirectory::CreateLoader(const std::string &path)
 {
 #if TARGET_XBMC
@@ -191,4 +194,6 @@ bool CDirectory::CanWrite(const string &strPath)
     return false; // Not a directory
   }
   return false;
+}
+
 }

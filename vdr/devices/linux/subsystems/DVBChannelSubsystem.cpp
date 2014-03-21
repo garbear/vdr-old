@@ -37,6 +37,9 @@
 
 using namespace std;
 
+namespace VDR
+{
+
 cDvbChannelSubsystem::cDvbChannelSubsystem(cDevice *device)
  : cDeviceChannelSubsystem(device)
 {
@@ -210,4 +213,6 @@ bool cDvbChannelSubsystem::SetChannelDevice(const cChannel &channel)
   if (GetDevice<cDvbDevice>()->m_dvbTuner.IsOpen())
     GetDevice<cDvbDevice>()->m_dvbTuner.SetChannel(channel);
   return true;
+}
+
 }

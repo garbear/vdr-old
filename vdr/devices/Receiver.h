@@ -16,6 +16,8 @@
 #include "Config.h"
 #include <set>
 
+namespace VDR
+{
 class cDevice;
 class cDevicePIDSubsystem;
 
@@ -88,5 +90,7 @@ public:
                ///< should repeatedly check whether it is still attached, and if
                ///< it isn't, delete it (or take any other appropriate measures).
   };
+
+}
 
 #endif //__RECEIVER_H

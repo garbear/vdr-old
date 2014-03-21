@@ -25,6 +25,9 @@
 #include "sources/ISourceParams.h"
 #include <string>
 
+namespace VDR
+{
+
 class cChannel;
 
 class cDvbSourceParams : public iSourceParams
@@ -46,3 +49,5 @@ private:
   cDvbTransponderParams m_dtp;
   int                   m_srate;
 };
+
+}

@@ -27,6 +27,9 @@
 #include <sys/ioctl.h>
 #include <unistd.h>
 
+namespace VDR
+{
+
 cDvbPIDSubsystem::cDvbPIDSubsystem(cDevice *device)
  : cDevicePIDSubsystem(device)
 {
@@ -82,4 +85,6 @@ bool cDvbPIDSubsystem::SetPid(cPidHandle &handle, int type, bool bOn)
     }
   }
   return true;
+}
+
 }

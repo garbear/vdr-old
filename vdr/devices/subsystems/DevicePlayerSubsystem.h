@@ -27,6 +27,8 @@
 #include <vector>
 #include <sys/types.h>
 
+namespace VDR
+{
 enum ePlayMode
 {
   pmNone,           // audio/video from decoder
@@ -347,3 +349,4 @@ private:
   cTsToPes       m_tsToPesSubtitle;
   bool           m_bIsPlayingVideo;
 };
+}

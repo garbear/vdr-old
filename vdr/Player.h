@@ -17,6 +17,9 @@
 #include "recordings/Recording.h"
 #include "recordings/marks/Mark.h"
 
+namespace VDR
+{
+
 class cDevice;
 
 class cPlayer {
@@ -137,5 +140,7 @@ public:
          ///< visible. If Hidden is true, the control will be returned even if it is
          ///< currently hidden.
   };
+
+}
 
 #endif //__PLAYER_H

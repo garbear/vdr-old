@@ -16,6 +16,8 @@
 #include "devices/Device.h"
 #include "channels/ChannelManager.h"
 
+namespace VDR
+{
 class cTransponderList;
 
 class cScanData
@@ -72,5 +74,6 @@ private:
 };
 
 extern cEITScanner EITScanner;
+}
 
 #endif //__EITSCAN_H

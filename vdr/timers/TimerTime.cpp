@@ -7,6 +7,9 @@
 #include "utils/TimeUtils.h"
 #include "settings/Settings.h"
 
+namespace VDR
+{
+
 #define EITPRESENTFOLLOWINGRATE 10 // max. seconds between two occurrences of the "EIT present/following table for the actual multiplex" (2s by the standard, using some more for safety)
 
 CTimerTime::CTimerTime(void) :
@@ -167,4 +170,6 @@ std::string CTimerTime::GetTimeDescription(void) const
 {
   CDateTime end = m_firstStartTime + CDateTimeSpan(0, 0, 0, m_iDurationSecs);
   return StringUtils::Format("%02u%02u-%02u%02u", m_firstStartTime.GetHour(), m_firstStartTime.GetMinute(), end.GetHour(), end.GetMinute());
+}
+
 }

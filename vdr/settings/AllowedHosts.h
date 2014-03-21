@@ -6,6 +6,9 @@
 #include <string>
 #include <vector>
 
+namespace VDR
+{
+
 class CAllowedHost
 {
 public:
@@ -42,3 +45,5 @@ private:
   std::string                m_strFilename;
   std::vector<CAllowedHost*> m_hosts;
 };
+
+}

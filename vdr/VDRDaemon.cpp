@@ -37,6 +37,9 @@
 
 #include <signal.h> // or #include <bits/signum.h>
 
+namespace VDR
+{
+
 #define MANUALSTART          600 // seconds the next timer must be in the future to assume manual start
 #define CHANNELSAVEDELTA     600 // seconds before saving channels.conf after automatic modifications
 #define DEVICEREADYTIMEOUT    30 // seconds to wait until all devices are ready
@@ -169,4 +172,6 @@ bool cVDRDaemon::WaitForShutdown(uint32_t iTimeout /* = 0 */)
   if (IsRunning())
     return m_exitEvent.Wait(iTimeout);
   return true;
+}
+
 }

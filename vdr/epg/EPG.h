@@ -19,6 +19,8 @@
 #include <vector>
 #include <map>
 
+namespace VDR
+{
 class CChannelFilter;
 
 class cSchedulesLock
@@ -69,5 +71,5 @@ private:
 };
 
 void ReportEpgBugFixStats(bool Force = false);
-
+}
 #endif //__EPG_H

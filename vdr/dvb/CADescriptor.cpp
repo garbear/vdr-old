@@ -24,6 +24,9 @@
 
 #include <libsi/si.h>
 
+namespace VDR
+{
+
 cCaDescriptor::cCaDescriptor(int caSystem, int caPid, int esPid, int length, const uint8_t* data)
  : m_caSystem(caSystem),
    m_esPid(esPid)
@@ -41,4 +44,6 @@ cCaDescriptor::cCaDescriptor(int caSystem, int caPid, int esPid, int length, con
 bool cCaDescriptor::operator== (const cCaDescriptor &arg) const
 {
   return m_esPid == arg.m_esPid && m_data == arg.m_data;
+}
+
 }

@@ -28,6 +28,9 @@
 #include "PlatformDefs.h" //for strcasecmp
 #endif
 
+namespace VDR
+{
+
 class CURL
 {
 public:
@@ -345,4 +348,6 @@ void XMLUtils::SetPath(TiXmlNode* pRootNode, const char *strTag, const std::stri
     TiXmlText value(strValue);
     pNewNode->InsertEndChild(value);
   }
+}
+
 }

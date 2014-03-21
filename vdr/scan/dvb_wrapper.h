@@ -20,6 +20,9 @@
 #include <linux/dvb/frontend.h>
 #include <linux/dvb/version.h>
 
+namespace VDR
+{
+
 // API independent enums
 enum eCableSatCodeRates {
  eCoderateAuto = 0,
@@ -149,3 +152,5 @@ fe_code_rate_t          TerrCodeRates(eTerrCodeRates cr);
 fe_guard_interval_t     TerrGuardIntervals(eTerrGuardIntervals gi);
 fe_transmit_mode_t      TerrTransmissionModes(eTerrTransmissionModes tm);
 fe_spectral_inversion_t CableTerrInversions(eCableTerrInversions in);
+
+}

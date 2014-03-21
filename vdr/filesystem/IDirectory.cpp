@@ -28,6 +28,9 @@
 
 using namespace std;
 
+namespace VDR
+{
+
 class AsynchronousFetch : public CDirectoryFetchJob
 {
 public:
@@ -71,4 +74,6 @@ void IDirectory::CancelDirectory()
   if (!m_fetchJob)
     return;
   m_fetchJob->Abort(-1);
+}
+
 }

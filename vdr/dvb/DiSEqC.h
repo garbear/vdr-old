@@ -14,6 +14,8 @@
 #include "Config.h"
 #include "platform/threads/mutex.h"
 
+namespace VDR
+{
 class cScr : public cListObject {
 private:
   int devices;
@@ -111,5 +113,6 @@ public:
   };
 
 extern cDiseqcs Diseqcs;
+}
 
 #endif //__DISEQC_H

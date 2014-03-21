@@ -24,6 +24,9 @@
 #include "Types.h"
 #include "Parser.h"
 
+namespace VDR
+{
+
 class cBitstream;
 
 // --- cParserH264 -------------------------------------------------
@@ -113,5 +116,7 @@ public:
   virtual void Reset();
 };
 
+
+}
 
 #endif // VNSI_DEMUXER_H264_H

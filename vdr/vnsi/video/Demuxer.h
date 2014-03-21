@@ -26,6 +26,9 @@
 #include "channels/Channel.h"
 #include "devices/Remux.h"
 
+namespace VDR
+{
+
 struct sStreamPacket;
 class cTSStream;
 class cVideoBuffer;
@@ -88,3 +91,5 @@ protected:
   bool m_SetRefTime;
   time_t m_refTime, m_endTime, m_wrapTime;
 };
+
+}

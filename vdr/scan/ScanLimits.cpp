@@ -24,8 +24,11 @@
 #include "ScanTask.h"
 
 using namespace PLATFORM;
-using namespace SATELLITE;
+using namespace VDR::SATELLITE;
 using namespace std;
+
+namespace VDR
+{
 
 #define DEFAULT_CHANNEL_COUNT  134 // Scan 134 channels by default
 
@@ -107,4 +110,6 @@ cScanLimitsATSC::cScanLimitsATSC(fe_modulation atscModulation)
   m_freqOffsets.push_back(NO_OFFSET);
   m_freqOffsets.push_back(POS_OFFSET);
   m_freqOffsets.push_back(NEG_OFFSET);
+}
+
 }

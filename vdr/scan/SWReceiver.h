@@ -27,6 +27,9 @@
 #include "Types.h"
 #include "utils/DateTime.h"
 
+namespace VDR
+{
+
 class cRingBufferLinear;
 
 class cSwReceiver : public cReceiver, public PLATFORM::CThread
@@ -75,3 +78,5 @@ private:
   uint16_t cni_cr_idx;
   char fuzzy_network[48];
 };
+
+}

@@ -1,5 +1,7 @@
 #pragma once
 
+namespace VDR
+{
 typedef enum
 {
   SYS_LOG_NONE = 0,
@@ -23,3 +25,4 @@ public:
   virtual void Log(sys_log_level_t type, const char* logline) = 0;
   virtual sys_log_type_t Type(void) const = 0;
 };
+}

@@ -20,6 +20,9 @@
  */
 #pragma once
 
+namespace VDR
+{
+
 // Simple template-based finite state machine. Based on FSM by Gerhard Reitmayr
 // <https://github.com/GerhardR/fsm>
 
@@ -238,3 +241,4 @@ public:
  *   sm.Work(); // Turn light on
  * }
  */
+}

@@ -28,6 +28,9 @@
 
 using namespace std;
 
+namespace VDR
+{
+
 CUrlOptions::CUrlOptions()
   : m_strLead("")
 { }
@@ -201,4 +204,6 @@ bool CUrlOptions::GetOption(const std::string &key, UrlOptionValue_t &value) con
 
   value = option->second;
   return true;
+}
+
 }

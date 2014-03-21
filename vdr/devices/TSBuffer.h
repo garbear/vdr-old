@@ -27,6 +27,9 @@
 
 #include <stdint.h>
 
+namespace VDR
+{
+
 // Derived cDevice classes that can receive channels will have to provide
 // Transport Stream (TS) packets one at a time. cTSBuffer implements a
 // simple buffer that allows the device to read a larger amount of data
@@ -53,3 +56,5 @@ private:
   bool               m_bDelivered;
   cRingBufferLinear *m_ringBuffer;
 };
+
+}

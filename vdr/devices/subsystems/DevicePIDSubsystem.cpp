@@ -26,6 +26,9 @@
 #include "devices/Device.h"
 #include "utils/Tools.h"
 
+namespace VDR
+{
+
 #ifndef ARRAY_SIZE
 #define ARRAY_SIZE(x)  (sizeof(x) / sizeof(x[0]))
 #endif
@@ -179,4 +182,6 @@ void cDevicePIDSubsystem::PrintPIDs(const char *s)
     q += sprintf(q, " %s%4d %d", i == ptOther ? "* " : "", m_pidHandles[i].pid, m_pidHandles[i].used);
   dsyslog("%s", b);
 #endif
+}
+
 }

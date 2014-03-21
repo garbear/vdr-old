@@ -28,6 +28,8 @@
 #include <string>
 #include <vector>
 
+
+
 // pcre.h includes stdlib.h. Because stdlib.h is include-guarded, we need to
 // make sure the first inclusion is in the global namespace instead of namespace
 // PCRE. Update this list as pcre.h includes more headers.
@@ -48,6 +50,8 @@ typedef struct real_pcre_jit_stack pcre_jit_stack;
   #endif // ! _DEBUG
 #endif // TARGET_WINDOWS
 
+namespace VDR
+{
 
 class CRegExp
 {
@@ -176,6 +180,7 @@ private:
 };
 
 typedef std::vector<CRegExp> VECCREGEXP;
+}
 
 #endif
 

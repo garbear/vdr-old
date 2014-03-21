@@ -25,6 +25,9 @@
 #include "devices/Receiver.h"
 #include "channels/Channel.h"
 
+namespace VDR
+{
+
 class cVideoInput;
 
 class cLiveReceiver: public cReceiver
@@ -40,3 +43,5 @@ protected:
   DevicePtr    m_device;
   cVideoInput *m_VideoInput;
 };
+
+}

@@ -21,6 +21,9 @@
 #include "Setup.h"
 #include "VNSICommand.h"
 
+namespace VDR
+{
+
 int PmtTimeout = 5;
 int TimeshiftMode = 0;
 int TimeshiftBufferSize = 5;
@@ -69,4 +72,6 @@ void cMenuSetupVNSI::Store(void)
   SetupStore(CONFNAME_TIMESHIFTBUFFERFILESIZE, TimeshiftBufferFileSize = newTimeshiftBufferFileSize);
 
   SetupStore(CONFNAME_TIMESHIFTBUFFERDIR, strn0cpy(TimeshiftBufferDir, newTimeshiftBufferDir, sizeof(TimeshiftBufferDir)));
+}
+
 }

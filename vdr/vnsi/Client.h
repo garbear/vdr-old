@@ -39,6 +39,8 @@
 #include <map>
 #include <string>
 
+namespace VDR
+{
 class cChannel;
 class cDevice;
 class cLiveStreamer;
@@ -47,6 +49,7 @@ class cResponsePacket;
 class cRecPlayer;
 class cCmdControl;
 //class cVnsiOsdProvider;
+
 
 class cVNSIClient : public PLATFORM::CThread
                   , public Observer
@@ -179,5 +182,7 @@ private:
   const char* OpcodeToString(uint8_t opcode);
   const char* ChannelToString(uint8_t channel);
 };
+
+}
 
 #endif // VNSI_CLIENT_H

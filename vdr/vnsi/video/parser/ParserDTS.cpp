@@ -23,6 +23,9 @@
 
 #include "ParserDTS.h"
 
+namespace VDR
+{
+
 cParserDTS::cParserDTS(int pID, cTSStream *stream, sPtsWrap *ptsWrap, bool observePtsWraps)
  : cParser(pID, stream, ptsWrap, observePtsWraps)
 {
@@ -34,5 +37,7 @@ cParserDTS::~cParserDTS()
 
 void cParserDTS::Parse(sStreamPacket *pkt)
 {
+
+}
 
 }

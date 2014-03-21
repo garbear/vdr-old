@@ -22,6 +22,9 @@
 
 #include "ParserTeletext.h"
 
+namespace VDR
+{
+
 cParserTeletext::cParserTeletext(int pID, cTSStream *stream, sPtsWrap *ptsWrap, bool observePtsWraps)
  : cParser(pID, stream, ptsWrap, observePtsWraps)
 {
@@ -55,4 +58,6 @@ void cParserTeletext::Parse(sStreamPacket *pkt)
 
     m_PesBufferPtr = 0;
   }
+}
+
 }

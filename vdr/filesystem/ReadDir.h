@@ -25,6 +25,9 @@
 #include <limits.h>
 #include <stddef.h>
 
+namespace VDR
+{
+
 class cReadDir
 {
 public:
@@ -45,3 +48,5 @@ private:
     char b[offsetof(struct dirent, d_name) + NAME_MAX + 1];
   } u;
 };
+
+}

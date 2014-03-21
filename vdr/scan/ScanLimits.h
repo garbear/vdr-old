@@ -29,6 +29,9 @@
 #include <linux/dvb/frontend.h>
 #include <vector>
 
+namespace VDR
+{
+
 class cScanTask;
 
 class cScanLimits : public cSynchronousAbort
@@ -71,3 +74,5 @@ public:
   // atscModulation: either VSB_8 (VSB over-the-air) or QAM_256 (QAM Annex B cable TV)
   cScanLimitsATSC(fe_modulation atscModulation);
 };
+
+}

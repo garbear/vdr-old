@@ -51,6 +51,9 @@
 
 using namespace std;
 
+namespace VDR
+{
+
 const char* ADDON_GUID_RE = "^(\\{){0,1}[0-9a-fA-F]{8}\\-[0-9a-fA-F]{4}\\-[0-9a-fA-F]{4}\\-[0-9a-fA-F]{4}\\-[0-9a-fA-F]{12}(\\}){0,1}$";
 
 /* empty string for use in returns by ref */
@@ -896,4 +899,6 @@ double StringUtils::DoubleVal(const std::string &str, double iDefault /* = 0 */)
       return n;
   }
   return iDefault;
+}
+
 }

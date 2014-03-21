@@ -28,8 +28,9 @@
 #include <stdio.h>
 
 using namespace std;
-using namespace VDR;
 
+namespace VDR
+{
 const tChannelID tChannelID::InvalidID;
 
 tChannelID::tChannelID()
@@ -177,4 +178,6 @@ uint32_t tChannelID::Hash(void) const
 {
   string channelid = Serialize();
   return CCRC32::CRC32(channelid);
+}
+
 }

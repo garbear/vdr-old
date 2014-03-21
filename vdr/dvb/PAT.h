@@ -15,6 +15,8 @@
 #include "Filter.h"
 #include "utils/DateTime.h"
 
+namespace VDR
+{
 #define MAXPMTENTRIES 64
 
 class cPatFilter : public cFilter {
@@ -43,5 +45,6 @@ int GetCaDescriptors(int Source, int Transponder, int ServiceId, const int *CaSy
          ///< available), or -1 if BufSize was too small to hold all CA descriptors.
          ///< The return value tells whether these CA descriptors are to be used
          ///< for the individual streams.
+}
 
 #endif //__PAT_H

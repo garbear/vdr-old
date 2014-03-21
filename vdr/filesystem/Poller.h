@@ -24,6 +24,8 @@
 #include "Types.h"
 #include <sys/poll.h>
 
+namespace VDR
+{
 class cPoller
 {
 public:
@@ -39,3 +41,4 @@ private:
   pollfd m_pfd[MaxPollFiles];
   int    m_numFileHandles;
 };
+}

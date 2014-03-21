@@ -17,6 +17,9 @@
 using namespace std;
 using namespace PLATFORM;
 
+namespace VDR
+{
+
 cReceiver::cReceiver(ChannelPtr Channel /* = cChannel::EmptyChannel */, int Priority)
 {
   m_device = NULL;
@@ -210,4 +213,6 @@ void cReceiver::RemoveFromPIDSubsystem(cDevicePIDSubsystem* pidSys) const
 
   for (set<int>::const_iterator it = m_pids.begin(); it != m_pids.end(); ++it)
     pidSys->DelPid(*it);
+}
+
 }

@@ -5,6 +5,8 @@
 #include "utils/DateTime.h"
 #include "Event.h"
 
+namespace VDR
+{
 class cEpgHandler : public cListObject {
 public:
   cEpgHandler(void);
@@ -58,3 +60,4 @@ public:
           ///< Takes a look at all EPG events between SegmentStart and SegmentEnd and
           ///< drops outdated events.
   };
+}

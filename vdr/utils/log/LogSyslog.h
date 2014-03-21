@@ -3,6 +3,8 @@
 #include "Types.h"
 #include "ILog.h"
 
+namespace VDR
+{
 class CLogSyslog : public ILog
 {
 public:
@@ -12,3 +14,4 @@ public:
   void Log(sys_log_level_t level, const char* logline);
   sys_log_type_t Type(void) const { return SYS_LOG_TYPE_SYSLOG; }
 };
+}

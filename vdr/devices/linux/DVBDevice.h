@@ -33,6 +33,8 @@
 #include <string>
 #include <vector>
 
+namespace VDR
+{
 //#define MAXDVBDEVICES      8
 #define MAXDELIVERYSYSTEMS 8
 
@@ -181,3 +183,4 @@ public: // TODO
 public: // TODO
   static PLATFORM::CMutex m_bondMutex;
 };
+}

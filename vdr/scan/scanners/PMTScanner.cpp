@@ -33,6 +33,9 @@
 
 using namespace SI_EXT;
 
+namespace VDR
+{
+
 cPmtScanner::cPmtScanner(ChannelPtr channel, u_short Sid, u_short PmtPid)
  : pmtPid(PmtPid),
    pmtSid(Sid),
@@ -266,4 +269,6 @@ void cPmtScanner::ProcessData(u_short Pid, u_char Tid, const u_char * Data, int 
   }
 
   return;
+}
+
 }

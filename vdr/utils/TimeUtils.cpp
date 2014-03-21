@@ -2,6 +2,9 @@
 #include "utils/I18N.h"
 #include "utils/UTF8Utils.h"
 
+namespace VDR
+{
+
 int CTimeUtils::GetMDay(time_t t)
 {
   struct tm tm_r;
@@ -166,4 +169,6 @@ CDateTime CTimeUtils::GetDay(const CDateTime& time)
   CDateTime retval(time);
   retval -= CDateTimeSpan(0, retval.GetHour(), retval.GetMinute(), retval.GetSecond());
   return retval;
+}
+
 }

@@ -24,6 +24,8 @@
 #include "platform/threads/threads.h"
 #include <vector>
 
+namespace VDR
+{
 class Observable;
 
 typedef enum
@@ -82,7 +84,7 @@ protected:
   virtual void UnregisterObservable(Observable *obs);
 
   std::vector<Observable *> m_observables;     /*!< all observables that are watched */
-  PLATFORM::CMutex          m_obsCritSection;  /*!< mutex */
+  ::PLATFORM::CMutex        m_obsCritSection;  /*!< mutex */
 };
 
 class Observable
@@ -143,5 +145,6 @@ protected:
 
   bool                    m_bObservableChanged; /*!< true when the observable is marked as changed, false otherwise */
   std::vector<Observer *> m_observers;          /*!< all observers */
-  PLATFORM::CMutex        m_obsCritSection;     /*!< mutex */
+  ::PLATFORM::CMutex      m_obsCritSection;     /*!< mutex */
 };
+}

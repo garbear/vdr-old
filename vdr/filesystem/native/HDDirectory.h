@@ -24,6 +24,8 @@
 #include "Types.h"
 #include "filesystem/IDirectory.h"
 
+namespace VDR
+{
 class CHDDirectory : public IDirectory
 {
 public:
@@ -51,3 +53,4 @@ protected:
    */
   //virtual CDirectoryFetchJob *GetJob(const std::string &strPath, IDirectoryCallback *callback);
 };
+}

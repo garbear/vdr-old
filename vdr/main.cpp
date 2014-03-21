@@ -26,6 +26,8 @@
 #include <signal.h>
 #include <unistd.h>
 
+using namespace VDR;
+
 int main(int argc, char *argv[])
 {
   cVDRDaemon vdr;

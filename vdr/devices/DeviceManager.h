@@ -26,6 +26,9 @@
 
 #include <vector>
 
+namespace VDR
+{
+
 class cChannel;
 
 class cDeviceManager : public Observer
@@ -184,3 +187,5 @@ private:
   unsigned int m_nextCardIndex; // Card index to give to the next new device
   unsigned int m_useDevice; // Stupid device-use flags
 };
+
+}

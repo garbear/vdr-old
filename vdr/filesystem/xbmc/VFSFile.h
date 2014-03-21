@@ -24,6 +24,8 @@
 #include "filesystem/IFile.h"
 #include "xbmc/xbmc_vfs_utils.hpp"
 
+namespace VDR
+{
 class cVFSFile : public IFile
 {
 public:
@@ -59,3 +61,4 @@ public:
 private:
   VFSFile m_file;
 };
+}

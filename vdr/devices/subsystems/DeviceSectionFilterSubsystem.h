@@ -25,6 +25,8 @@
 
 #include <sys/types.h>
 
+namespace VDR
+{
 class Buffer;
 class cFilter;
 class cSectionHandler;
@@ -94,3 +96,4 @@ private:
   cSdtFilter      *m_sdtFilter;
   cNitFilter      *m_nitFilter;
 };
+}

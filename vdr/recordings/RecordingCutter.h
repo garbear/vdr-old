@@ -14,6 +14,8 @@
 #include "utils/Tools.h"
 #include "platform/threads/threads.h"
 
+namespace VDR
+{
 class cCuttingThread;
 
 class cCutter {
@@ -36,5 +38,6 @@ public:
   };
 
 bool CutRecording(const char *FileName);
+}
 
 #endif //__CUTTER_H

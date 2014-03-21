@@ -23,6 +23,8 @@
 #include "Types.h"
 #include "devices/DeviceSubsystem.h"
 
+namespace VDR
+{
 enum eVideoSystem
 {
   vsPAL,
@@ -88,3 +90,4 @@ public:
    */
   virtual void GetOsdSize(int &width, int &height, double &pixelAspect);
 };
+}

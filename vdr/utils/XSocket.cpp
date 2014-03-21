@@ -50,6 +50,9 @@
 
 using namespace PLATFORM;
 
+namespace VDR
+{
+
 cxSocket::~cxSocket()
 {
   close();
@@ -201,4 +204,6 @@ char *cxSocket::ip2txt(uint32_t ip, unsigned int port, char *str)
 	      porth);
   }
   return str;
+}
+
 }

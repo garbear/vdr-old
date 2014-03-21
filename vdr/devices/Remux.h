@@ -15,6 +15,9 @@
 #include "channels/Channel.h"
 #include "utils/Tools.h"
 
+namespace VDR
+{
+
 enum ePesHeader {
   phNeedMoreData = -1,
   phInvalid = 0,
@@ -512,5 +515,7 @@ public:
       ///< Returns the number of frames per second, or 0 if this information is not
       ///< available.
   };
+
+}
 
 #endif // __REMUX_H

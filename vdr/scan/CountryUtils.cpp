@@ -23,8 +23,11 @@
 #include "CountryUtils.h"
 #include "utils/StringUtils.h"
 
-using namespace COUNTRY;
+using namespace VDR::COUNTRY;
 using namespace std;
+
+namespace VDR
+{
 
 #ifndef ARRAY_SIZE
 #define ARRAY_SIZE(x)  (sizeof(x) / sizeof((x)[0]))
@@ -708,4 +711,6 @@ bool CountryUtils::GetFullNameFromId(eCountry countryId, string& fullName)
     }
   }
   return false;
+}
+
 }

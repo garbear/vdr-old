@@ -24,6 +24,8 @@
 #include <string>
 #include <stdint.h>
 
+namespace VDR
+{
 struct tChannelID
 {
 public:
@@ -58,3 +60,4 @@ private:
   int m_sid; // Service ID
   int m_rid;
 };
+}

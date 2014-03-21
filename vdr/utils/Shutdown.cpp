@@ -28,6 +28,9 @@
 
 #include "vdr/utils/CalendarUtils.h"
 
+namespace VDR
+{
+
 cShutdownHandler ShutdownHandler;
 
 cCountdown::cCountdown(void)
@@ -264,4 +267,6 @@ bool cShutdownHandler::DoShutdown(bool Force)
 //     CallShutdownCommand(Next, 0, "", Force); // Next should always be 0 here. Just for safety, pass it.
 
   return true;
+}
+
 }

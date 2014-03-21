@@ -15,6 +15,9 @@
 
 #include "vdr/utils/UTF8Utils.h"
 
+namespace VDR
+{
+
 // IMPORTANT NOTE: in the 'sscanf()' calls there is a blank after the '%d'
 // format characters in order to allow any number of blanks after a numeric
 // value!
@@ -80,4 +83,6 @@ int cSatCableNumbers::FirstDeviceIndex(int DeviceIndex) const
         }
      }
   return -1;
+}
+
 }

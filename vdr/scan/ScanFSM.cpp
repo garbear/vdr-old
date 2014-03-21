@@ -24,7 +24,10 @@
 
 #include <assert.h>
 
-using namespace SCAN_FSM;
+using namespace VDR::SCAN_FSM;
+
+namespace VDR
+{
 
 #define ABSOLUTE_DIFFERENCE(f1, f2)  ((f1) >= (f2) ? (f1) - (f2) : (f2) - (f1))
 
@@ -571,4 +574,6 @@ ChannelPtr cScanFsm::GetByTransponder(ChannelVector& channels, const cChannel& t
     }
   }
   return cChannel::EmptyChannel;
+}
+
 }

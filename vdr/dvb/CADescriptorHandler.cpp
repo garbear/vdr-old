@@ -22,6 +22,9 @@
 
 #include "CADescriptorHandler.h"
 
+namespace VDR
+{
+
 cCaDescriptorHandler& cCaDescriptorHandler::Get()
 {
   static cCaDescriptorHandler handler;
@@ -60,4 +63,6 @@ int cCaDescriptorHandler::GetCaDescriptors(int source, int transponder, int serv
   }
 
   return 0;
+}
+
 }

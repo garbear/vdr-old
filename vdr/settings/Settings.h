@@ -27,6 +27,12 @@
 #include <stdint.h>
 #include <limits.h>
 
+class TiXmlElement;
+class TiXmlNode;
+
+namespace VDR
+{
+
 #define MAXDEVICES 64
 
 // default settings
@@ -36,9 +42,6 @@
 #define LISTEN_PORT       34890
 #define LISTEN_PORT_S    "34890"
 #define DISCOVERY_PORT    34890
-
-class TiXmlElement;
-class TiXmlNode;
 
 class cSettings
 {
@@ -125,3 +128,5 @@ private:
   struct termios m_savedTm;
   std::string    m_strFilename;
 };
+
+}

@@ -14,6 +14,8 @@
 #include "Filter.h"
 #include "utils/DateTime.h"
 
+namespace VDR
+{
 class cEitFilter : public cFilter {
 private:
   static CDateTime disableUntil;
@@ -23,5 +25,6 @@ public:
   cEitFilter(void);
   static void SetDisableUntil(const CDateTime& Time);
   };
+}
 
 #endif //__EIT_H

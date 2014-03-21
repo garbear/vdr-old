@@ -26,6 +26,9 @@
 
 #include <algorithm>
 
+namespace VDR
+{
+
 /* XML declaration can be virtually any size (with many-many whitespaces) 
  * but for in real world we don't need to process megabytes of data
  * so limit search for XML declaration to reasonable value */
@@ -267,3 +270,4 @@ bool CCharsetDetection::GuessXmlEncoding(const char* const xmlContent, const siz
   return true;
 }
 
+}

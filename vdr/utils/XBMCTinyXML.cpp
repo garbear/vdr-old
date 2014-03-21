@@ -33,6 +33,9 @@
 
 using namespace std;
 
+namespace VDR
+{
+
 #define MAX_ENTITY_LENGTH 8 // size of largest entity "&#xNNNN;"
 #define BUFFER_SIZE 4096
 
@@ -265,4 +268,6 @@ bool CXBMCTinyXML::Test()
     }
   }
   return false;
+}
+
 }

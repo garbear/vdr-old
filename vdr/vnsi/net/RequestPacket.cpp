@@ -34,6 +34,9 @@
 #include "Config.h"
 #include "RequestPacket.h"
 
+namespace VDR
+{
+
 cRequestPacket::cRequestPacket(uint32_t requestID, uint32_t opcode, uint8_t* data, uint32_t dataLength)
  : userData(data), userDataLength(dataLength), opCode(opcode), requestID(requestID)
 {
@@ -138,4 +141,6 @@ uint8_t* cRequestPacket::getData()
 {
   ownBlock = false;
   return userData;
+}
+
 }

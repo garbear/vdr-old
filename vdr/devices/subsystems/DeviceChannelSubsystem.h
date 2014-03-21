@@ -25,6 +25,8 @@
 #include "channels/Channel.h"
 #include "Config.h" // For IDLEPRIORITY
 
+namespace VDR
+{
 enum eSetChannelResult
 {
   scrOk,
@@ -177,3 +179,4 @@ private:
 
   time_t     m_occupiedTimeout;
 };
+}

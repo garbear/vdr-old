@@ -7,6 +7,8 @@
 #include <string>
 #include <stdint.h>
 
+namespace VDR
+{
 class CTimeUtils
 {
 public:
@@ -21,3 +23,4 @@ public:
   static bool ParseDay(const char *s, time_t &Day, uint32_t &WeekDays);
   static std::string PrintDay(time_t Day, int WeekDays, bool SingleByteChars);
 };
+}

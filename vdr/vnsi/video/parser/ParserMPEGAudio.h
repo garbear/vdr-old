@@ -24,6 +24,9 @@
 #include "Types.h"
 #include "Parser.h"
 
+namespace VDR
+{
+
 // --- cParserMPEG2Audio -------------------------------------------------
 
 class cParserMPEG2Audio : public cParser
@@ -46,5 +49,6 @@ public:
   virtual void Parse(sStreamPacket *pkt);
 };
 
+}
 
 #endif // VNSI_DEMUXER_MPEGAUDIO_H

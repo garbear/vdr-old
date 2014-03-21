@@ -30,6 +30,9 @@
 
 using namespace SI_EXT;
 
+namespace VDR
+{
+
 cPatScanner::cPatScanner(iPatScannerCallback* callback)
  : m_callback(callback)
 {
@@ -66,4 +69,6 @@ void cPatScanner::ProcessData(u_short Pid, u_char Tid, const u_char * Data, int 
 
     m_callback->PatFoundChannel(ch, assoc.getPid());
   }
+}
+
 }

@@ -23,6 +23,9 @@
 #include "FrontendCapabilities.h"
 #include "utils/Tools.h"
 
+namespace VDR
+{
+
 cFrontendCapabilities::cFrontendCapabilities(fe_caps caps, fe_spectral_inversion fallback)
  : caps_inversion(INVERSION_AUTO),
    caps_qam(QAM_AUTO),
@@ -67,4 +70,6 @@ cFrontendCapabilities::cFrontendCapabilities(fe_caps caps, fe_spectral_inversion
     dsyslog("DVB S2 not supported");
     caps_s2 = false;
   }
+}
+
 }

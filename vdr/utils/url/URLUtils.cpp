@@ -46,6 +46,9 @@
 
 using namespace std;
 
+namespace VDR
+{
+
 string URLUtils::AddFileToFolder(const string& strFolder, const string& strFile)
 {
   if (IsURL(strFolder))
@@ -1310,3 +1313,4 @@ string URLUtils::resolvePath(const string &path)
   return realPath;
 }
 
+}

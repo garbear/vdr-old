@@ -23,6 +23,8 @@
 #include "filesystem/ResumeFile.h"
 #include "marks/Mark.h"
 
+namespace VDR
+{
 class cRecordingInfo;
 class CVideoFile;
 
@@ -131,5 +133,6 @@ private:
   int64_t         m_hash;
   PLATFORM::CMutex m_mutex;
 };
+}
 
 #endif //__RECORDING_H

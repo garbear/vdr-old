@@ -24,6 +24,9 @@
 #include <signal.h>
 #include <stddef.h>
 
+namespace VDR
+{
+
 CSignalHandler &CSignalHandler::Get()
 {
   static CSignalHandler instance;
@@ -72,4 +75,6 @@ void CSignalHandler::OnSignal(int signum)
   std::map<int, ISignalReceiver*>::iterator it = m_callbacks.find(signum);
   if (it != m_callbacks.end())
     it->second->OnSignal(signum);
+}
+
 }

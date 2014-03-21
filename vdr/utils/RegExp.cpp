@@ -31,6 +31,9 @@
 
 #include "pcre.h"
 
+namespace VDR
+{
+
 #ifndef PCRE_UCP
 #define PCRE_UCP 0
 #endif // PCRE_UCP
@@ -488,4 +491,6 @@ bool CRegExp::IsJitSupported(void)
   }
 
   return m_JitSupported == 1;
+}
+
 }

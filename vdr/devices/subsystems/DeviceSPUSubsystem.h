@@ -25,6 +25,8 @@
 
 #include <stddef.h>
 
+namespace VDR
+{
 class cSpuDecoder;
 
 class cDeviceSPUSubsystem : protected cDeviceSubsystem
@@ -39,3 +41,4 @@ public:
    */
   virtual cSpuDecoder *GetSpuDecoder() { return NULL; }
 };
+}

@@ -40,6 +40,9 @@
 #include "Demuxer.h"
 #include "VideoInput.h"
 
+namespace VDR
+{
+
 #define STREAMER_NO_FRONTEND_FOUND (-2)
 
 class cxSocket;
@@ -102,5 +105,7 @@ public:
   bool IsMPEGPS() { return m_IsMPEGPS; }
   bool SeekTime(int64_t time, uint32_t &serial);
 };
+
+}
 
 #endif  // VNSI_RECEIVER_H

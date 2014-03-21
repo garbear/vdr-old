@@ -25,6 +25,9 @@
 
 #include <unistd.h>
 
+namespace VDR
+{
+
 cDvbReceiverSubsystem::cDvbReceiverSubsystem(cDevice *device)
  : cDeviceReceiverSubsystem(device),
    m_tsBuffer(NULL),
@@ -74,4 +77,6 @@ void cDvbReceiverSubsystem::DetachAllReceivers()
   } while (d && d !=  GetDevice<cDvbDevice>() && GetDevice<cDvbDevice>()->m_bNeedsDetachBondedReceivers);
 
   GetDevice<cDvbDevice>()->m_bNeedsDetachBondedReceivers = false;
+}
+
 }

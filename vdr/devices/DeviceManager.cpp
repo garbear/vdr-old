@@ -36,6 +36,9 @@
 using namespace std;
 using namespace PLATFORM;
 
+namespace VDR
+{
+
 cDeviceManager::cDeviceManager()
  : m_devicesReady(0),
    m_bAllDevicesReady(false),
@@ -295,4 +298,6 @@ size_t cDeviceManager::NumDevices()
 {
   CLockObject lock(m_mutex);
   return m_devices.size();
+}
+
 }

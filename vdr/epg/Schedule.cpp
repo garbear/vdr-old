@@ -7,6 +7,9 @@
 #include "utils/XBMCTinyXML.h"
 #include "settings/Settings.h"
 
+namespace VDR
+{
+
 #define RUNNINGSTATUSTIMEOUT 30 // seconds before the running status is considered unknown
 
 cSchedule::cSchedule(tChannelID ChannelID)
@@ -301,4 +304,6 @@ bool cSchedule::Serialise(TiXmlNode *node) const
   }
 
   return true;
+}
+
 }

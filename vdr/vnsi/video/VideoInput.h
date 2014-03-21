@@ -26,6 +26,9 @@
 #include "devices/Device.h"
 #include "utils/Observer.h"
 
+namespace VDR
+{
+
 class cLivePatFilter;
 class cLiveReceiver;
 class cVideoBuffer;
@@ -60,3 +63,5 @@ protected:
   bool                       m_PmtChange;
   bool                       m_SeenPmt;
 };
+
+}

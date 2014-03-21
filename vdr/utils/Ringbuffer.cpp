@@ -16,6 +16,9 @@
 #include "Tools.h"
 #include "filesystem/VideoFile.h"
 
+namespace VDR
+{
+
 // --- cRingBuffer -----------------------------------------------------------
 
 #define OVERFLOWREPORTDELTA 5 // seconds between reports
@@ -497,4 +500,6 @@ int cRingBufferFrame::Available(void)
   int av = currentFill;
   Unlock();
   return av;
+}
+
 }

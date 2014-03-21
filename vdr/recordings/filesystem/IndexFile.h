@@ -6,6 +6,8 @@
 #include "ResumeFile.h"
 #include "platform/threads/threads.h"
 
+namespace VDR
+{
 struct tIndexTs;
 class cIndexFileGenerator;
 
@@ -51,3 +53,4 @@ private:
 
 bool GenerateIndex(const char *FileName);
 
+}

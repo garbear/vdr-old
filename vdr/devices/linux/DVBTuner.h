@@ -29,6 +29,8 @@
 #include <string>
 #include <time.h>
 
+namespace VDR
+{
 class cDvbDevice;
 class cDvbTransponderParams;
 class cDiseqc;
@@ -140,3 +142,4 @@ private:
 
   static PLATFORM::CMutex     m_bondMutex;
 };
+}

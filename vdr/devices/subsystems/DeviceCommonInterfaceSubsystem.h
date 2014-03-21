@@ -25,6 +25,8 @@
 
 #include <time.h>
 
+namespace VDR
+{
 class cCamSlot;
 
 class cDeviceCommonInterfaceSubsystem : protected cDeviceSubsystem
@@ -64,3 +66,4 @@ public: // TODO
   cCamSlot *m_camSlot;
   time_t    m_startScrambleDetection;
 };
+}

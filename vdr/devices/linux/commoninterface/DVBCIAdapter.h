@@ -24,6 +24,8 @@
 #include "Types.h"
 #include "devices/commoninterface/CI.h"
 
+namespace VDR
+{
 class cDvbCiAdapter : public cCiAdapter
 {
 public:
@@ -44,3 +46,4 @@ private:
   cDevice *m_device;
   int      m_fd;
 };
+}

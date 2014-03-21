@@ -45,6 +45,9 @@
 ? bytes = rest of packet. depends on packet
 */
 
+namespace VDR
+{
+
 cResponsePacket::cResponsePacket()
 {
   buffer = NULL;
@@ -252,4 +255,6 @@ bool cResponsePacket::checkExtend(uint32_t by)
   buffer = newBuf;
   bufSize += by;
   return true;
+}
+
 }

@@ -23,6 +23,9 @@
 #include "Poller.h"
 #include "utils/Tools.h"
 
+namespace VDR
+{
+
 cPoller::cPoller(int fileHandle, bool bOut)
  : m_numFileHandles(0)
 {
@@ -63,4 +66,6 @@ bool cPoller::Poll(int timeoutMs)
     }
   }
   return false;
+}
+
 }

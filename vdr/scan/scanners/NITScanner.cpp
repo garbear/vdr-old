@@ -35,6 +35,9 @@
 using namespace SI_EXT;
 using namespace std;
 
+namespace VDR
+{
+
 cNitScanner::cNitScanner(iNitScannerCallback* callback, bool bUseOtherTable /* = false */)
  : m_tableId(bUseOtherTable ? TABLE_ID_NIT_OTHER : TABLE_ID_NIT_ACTUAL),
    m_callback(callback)
@@ -337,4 +340,6 @@ void cNitScanner::ProcessData(u_short Pid, u_char Tid, const u_char * Data, int 
       DELETENULL(d);
     }
   }
+}
+
 }

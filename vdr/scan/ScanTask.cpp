@@ -34,6 +34,9 @@
 
 using namespace std;
 
+namespace VDR
+{
+
 cScanTask::cScanTask(cDevice* device, const cFrontendCapabilities& caps)
  : m_device(device),
    m_caps(caps),
@@ -303,4 +306,6 @@ ChannelPtr cScanTaskATSC::GetChannel(fe_modulation modulation, unsigned int iCha
   channel->SetId(0, 0, 0, 0);
 
   return channel;
+}
+
 }

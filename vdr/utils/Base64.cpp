@@ -21,6 +21,9 @@
 
 #include "Base64.h"
 
+namespace VDR
+{
+
 #define PADDING '='
 
 const std::string Base64::m_characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -138,4 +141,6 @@ std::string Base64::Decode(const std::string &input)
   Decode(input, output);
 
   return output;
+}
+
 }

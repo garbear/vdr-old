@@ -16,6 +16,9 @@
 
 using namespace PLATFORM;
 
+namespace VDR
+{
+
 // --- cFilterHandle----------------------------------------------------------
 
 class cFilterHandle : public cListObject {
@@ -260,4 +263,6 @@ cSectionHandler::Process(void)
   }
 
   return NULL;
+}
+
 }

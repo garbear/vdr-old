@@ -27,6 +27,9 @@
 #include <libsi/section.h>
 #include <libsi/descriptor.h>
 
+namespace VDR
+{
+
 cLivePatFilter::cLivePatFilter(cVideoInput *VideoInput, ChannelPtr Channel)
 {
   dsyslog("cStreamdevPatFilter(\"%s\")", Channel->Name().c_str());
@@ -390,4 +393,6 @@ void cLivePatFilter::ProcessData(u_short Pid, u_char Tid, const u_char *Data, in
       }
     }
   }
+}
+
 }

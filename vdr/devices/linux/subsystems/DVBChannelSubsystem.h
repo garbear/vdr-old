@@ -25,6 +25,8 @@
 
 #include <linux/dvb/frontend.h>
 
+namespace VDR
+{
 class cChannel;
 class cDvbTuner;
 
@@ -55,3 +57,4 @@ public:
 protected:
   virtual bool SetChannelDevice(const cChannel &channel);
 };
+}

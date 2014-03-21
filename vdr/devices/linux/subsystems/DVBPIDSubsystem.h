@@ -23,6 +23,8 @@
 #include "Types.h"
 #include "devices/subsystems/DevicePIDSubsystem.h"
 
+namespace VDR
+{
 class cDvbPIDSubsystem : public cDevicePIDSubsystem
 {
 public:
@@ -41,3 +43,4 @@ public:
    */
   virtual bool SetPid(cPidHandle &handle, int type, bool bOn);
 };
+}

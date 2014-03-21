@@ -27,6 +27,8 @@
 #include "platform/threads/mutex.h"
 #include <stdint.h>
 
+namespace VDR
+{
 class cCaDescriptorHandler
 {
 public:
@@ -47,3 +49,4 @@ private:
   CaDescriptorsVector m_caDescriptors;
   PLATFORM::CMutex    m_mutex;
 };
+}

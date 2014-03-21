@@ -27,6 +27,9 @@
 
 using namespace std;
 
+namespace VDR
+{
+
 cDeviceImageGrabSubsystem::cDeviceImageGrabSubsystem(cDevice *device)
  : cDeviceSubsystem(device)
 {
@@ -60,4 +63,6 @@ bool cDeviceImageGrabSubsystem::GrabImageFile(const string &strFileName, bool bJ
     result |= 1;
   }
   return result == 0;
+}
+
 }

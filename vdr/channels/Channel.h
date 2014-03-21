@@ -24,8 +24,14 @@
 #include "ChannelID.h"
 #include "sources/linux/DVBTransponderParams.h"
 #include "sources/Source.h"
-//#include "timers.h"
+#include "utils/Observer.h"
+#include <string>
+#include <vector>
 
+class TiXmlNode;
+
+namespace VDR
+{
 #define CHANNEL_NAME_UNKNOWN  "???"
 
 // TODO
@@ -38,10 +44,6 @@ public:
 //#include "config.h"
 //#include "thread.h"
 //#include "tools.h"
-
-#include "utils/Observer.h"
-#include <string>
-#include <vector>
 
 #define ISTRANSPONDER(f1, f2)  (abs((f1) - (f2)) < 4) //XXX
 
@@ -72,7 +74,6 @@ public:
 #define CA_ENCRYPTED_MAX 0xFFFF
 
 class cChannel;
-class TiXmlNode;
 
 class cLinkChannel : public cListObject
 {
@@ -268,3 +269,4 @@ private:
   cChannel                *m_refChannel;
   uint32_t                 m_channelHash;
 };
+}

@@ -27,6 +27,9 @@
 
 using namespace std;
 
+namespace VDR
+{
+
 const char *VideoDirectory = "special://home/video"; // TODO
 
 void SetVideoDirectory(const char *Directory)
@@ -289,4 +292,6 @@ std::string cVideoDiskUsage::String(void)
 {
   HasChanged(state);
   return StringUtils::Format("%s %d%%  -  %2zu:%02zu %s", tr("Disk"), usedPercent, freeMinutes / 60, freeMinutes % 60, tr("free"));
+}
+
 }

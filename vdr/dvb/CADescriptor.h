@@ -25,6 +25,8 @@
 #include <stdint.h>
 #include <vector>
 
+namespace VDR
+{
 class cCaDescriptor
 {
 public:
@@ -45,3 +47,4 @@ private:
 
 typedef VDR::shared_ptr<cCaDescriptor> CaDescriptorPtr;
 typedef std::vector<CaDescriptorPtr>   CaDescriptorVector;
+}

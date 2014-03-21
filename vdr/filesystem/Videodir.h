@@ -16,6 +16,9 @@
 #include "utils/DateTime.h"
 #include "filesystem/Directory.h"
 
+namespace VDR
+{
+
 class CVideoFile;
 
 extern const char *VideoDirectory;
@@ -67,5 +70,7 @@ public:
     ///< There is no guarantee that this value will actually be met.
     ///< The caller should call HasChanged() first, to make sure the value is up to date.
   };
+
+}
 
 #endif //__VIDEODIR_H

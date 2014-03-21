@@ -25,6 +25,9 @@
 using namespace PLATFORM;
 using namespace std;
 
+namespace VDR
+{
+
 CDirectoryFetchJob::CDirectoryFetchJob(IDirectory *dir, const string &strPath, IDirectoryCallback *callback)
  : m_dir(dir),
    m_strPath(strPath),
@@ -62,4 +65,6 @@ void CDirectoryFetchJob::SetProgress(unsigned int progress)
 {
   CLockObject lock(m_progressMutex);
   m_progress = progress;
+}
+
 }

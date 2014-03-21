@@ -5,6 +5,8 @@
 #include <stddef.h>
 #include <string>
 
+namespace VDR
+{
 class cRecordingUserCommand
 {
 public:
@@ -18,3 +20,4 @@ private:
   cRecordingUserCommand(void) {}
   std::string m_strCommand;
 };
+}

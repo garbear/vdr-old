@@ -15,6 +15,9 @@
 #include "Receiver.h"
 #include "Remux.h"
 
+namespace VDR
+{
+
 class cTransfer : public cReceiver, public cPlayer {
 private:
   cPatPmtGenerator patPmtGenerator;
@@ -38,4 +41,5 @@ public:
   virtual void Hide(void) {}
   };
 
+}
 #endif //__TRANSFER_H

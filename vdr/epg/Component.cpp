@@ -2,6 +2,9 @@
 
 using namespace std;
 
+namespace VDR
+{
+
 CEpgComponent::CEpgComponent(void)
 {
   m_stream      = 0;
@@ -74,4 +77,6 @@ void CEpgComponent::SetLanguage(const std::string& lang)
 void CEpgComponent::SetDescription(const std::string& desc)
 {
   m_strDescription = desc;
+}
+
 }

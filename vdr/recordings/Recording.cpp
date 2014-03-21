@@ -43,7 +43,9 @@
 #include <algorithm>
 
 using namespace PLATFORM;
-using namespace VDR;
+
+namespace VDR
+{
 
 int cRecording::DirectoryPathMax = PATH_MAX - 1;
 int cRecording::DirectoryNameMax = NAME_MAX;
@@ -591,7 +593,7 @@ bool cRecording::IsOnVideoDirectoryFileSystem(void)
 {
   PLATFORM::CLockObject lock(m_mutex);
   if (m_iIsOnVideoDirectoryFileSystem < 0)
-     m_iIsOnVideoDirectoryFileSystem = ::IsOnVideoDirectoryFileSystem(FileName());
+     m_iIsOnVideoDirectoryFileSystem = VDR::IsOnVideoDirectoryFileSystem(FileName());
   return m_iIsOnVideoDirectoryFileSystem;
 }
 
@@ -772,4 +774,6 @@ void cRecording::SetFileLimits(const recording_file_limits_t limits)
     DirectoryEncoding = false;
     break;
   }
+}
+
 }

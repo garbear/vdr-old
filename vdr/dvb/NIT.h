@@ -13,6 +13,8 @@
 #include "Types.h"
 #include "Filter.h"
 
+namespace VDR
+{
 // From UTF8Utils.h
 #define Utf8BufSize(s) ((s) * 4)
 
@@ -39,5 +41,6 @@ public:
   cNitFilter(void);
   virtual void SetStatus(bool On);
   };
+}
 
 #endif //__NIT_H

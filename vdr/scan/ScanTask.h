@@ -31,6 +31,9 @@
 #include <linux/dvb/frontend.h>
 #include <vector>
 
+namespace VDR
+{
+
 class cChannel;
 class cDiseqc;
 class cDevice;
@@ -120,3 +123,5 @@ protected:
 private:
   eChannelList m_channelList;
 };
+
+}

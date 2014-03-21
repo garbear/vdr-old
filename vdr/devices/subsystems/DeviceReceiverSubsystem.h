@@ -25,6 +25,8 @@
 #include "utils/Tools.h"
 #include "platform/threads/threads.h"
 
+namespace VDR
+{
 class cReceiver;
 
 class cDeviceReceiverSubsystem : protected cDeviceSubsystem
@@ -95,3 +97,4 @@ private:
 public: // TODO
   std::list<cReceiver*> m_receivers;
 };
+}

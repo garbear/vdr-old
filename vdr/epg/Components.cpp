@@ -2,6 +2,9 @@
 
 using namespace std;
 
+namespace VDR
+{
+
 void CEpgComponents::SetComponent(int Index, const char *s)
 {
   CEpgComponent* component = Component(Index, true);
@@ -61,4 +64,6 @@ CEpgComponent* CEpgComponents::Component(int Index, bool bCreate /* = false */)
   }
 
   return NULL;
+}
+
 }

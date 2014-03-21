@@ -63,6 +63,8 @@
 #undef DECLARATION
 #undef TYPECOUNT
 
+namespace VDR
+{
 class CXBMCTinyXML : public TiXmlDocument
 {
 public:
@@ -91,3 +93,4 @@ protected:
   std::string m_SuggestedCharset;
   std::string m_UsedCharset;
 };
+}

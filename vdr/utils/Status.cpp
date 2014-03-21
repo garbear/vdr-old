@@ -9,6 +9,9 @@
 
 #include "Status.h"
 
+namespace VDR
+{
+
 // --- cStatus ---------------------------------------------------------------
 
 cList<cStatus> cStatus::statusMonitors;
@@ -123,4 +126,6 @@ void cStatus::MsgOsdProgramme(time_t PresentTime, const char *PresentTitle, cons
 {
   for (cStatus *sm = statusMonitors.First(); sm; sm = statusMonitors.Next(sm))
       sm->OsdProgramme(PresentTime, PresentTitle, PresentSubtitle, FollowingTime, FollowingTitle, FollowingSubtitle);
+}
+
 }

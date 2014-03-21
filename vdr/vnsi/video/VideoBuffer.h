@@ -25,6 +25,9 @@
 #include <stdlib.h>
 #include "utils/Tools.h"
 
+namespace VDR
+{
+
 #define VIDEOBUFFER_NO_DATA (-1)
 #define VIDEOBUFFER_EOF     (-2)
 
@@ -57,3 +60,5 @@ protected:
   time_t m_bufferEndTime;
   time_t m_bufferWrapTime;
 };
+
+}

@@ -27,6 +27,9 @@
 #include "platform/threads/mutex.h"
 #include "platform/threads/threads.h"
 
+namespace VDR
+{
+
 class cVNSIServer;
 class cEpgDataReader;
 
@@ -91,11 +94,13 @@ private:
    * when stopped via Stop(). The exit event is triggered when the event loop
    * terminates, which allows users to block until WaitForShutdown() returns.
    */
-  PLATFORM::CEvent m_sleepEvent;
-  PLATFORM::CEvent m_exitEvent;
+  ::PLATFORM::CEvent m_sleepEvent;
+  ::PLATFORM::CEvent m_exitEvent;
 
   int              m_exitCode;
   cVNSIServer*     m_server;
   cEpgDataReader*  m_EpgDataReader;
   bool             m_bConfigLoaded;
 };
+
+}

@@ -24,6 +24,9 @@
 #include "Types.h"
 #include <linux/dvb/frontend.h>
 
+namespace VDR
+{
+
 class cFrontendCapabilities
 {
 public:
@@ -37,3 +40,5 @@ public:
   fe_code_rate          caps_fec;
   bool                  caps_s2;
 };
+
+}

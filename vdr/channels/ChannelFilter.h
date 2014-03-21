@@ -26,6 +26,8 @@
 #include "lib/platform/threads/mutex.h"
 #include "channels/ChannelManager.h"
 
+namespace VDR
+{
 class CChannelProvider
 {
 public:
@@ -54,3 +56,4 @@ public:
 };
 
 extern CChannelFilter VNSIChannelFilter;
+}

@@ -24,6 +24,9 @@
 using namespace std;
 using namespace PLATFORM;
 
+namespace VDR
+{
+
 Observer::~Observer(void)
 {
   StopObserving();
@@ -156,4 +159,6 @@ void Observable::SendMessage(Observable& obs, const ObservableMessage message)
       }
     }
   }
+}
+
 }

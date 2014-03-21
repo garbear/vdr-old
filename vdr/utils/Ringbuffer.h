@@ -15,6 +15,8 @@
 #include "platform/threads/throttle.h"
 #include "Tools.h"
 
+namespace VDR
+{
 class CVideoFile;
 
 class cRingBuffer {
@@ -152,5 +154,6 @@ public:
   void Drop(cFrame *Frame);
     // Drops the Frame that has just been fetched with Get().
   };
+}
 
 #endif // __RINGBUFFER_H

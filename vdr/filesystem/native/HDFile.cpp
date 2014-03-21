@@ -28,6 +28,9 @@
 
 using namespace std;
 
+namespace VDR
+{
+
 CHDFile::CHDFile()
  : m_mode((std::ios_base::openmode)0),
    m_flags(0)
@@ -260,4 +263,6 @@ std::string CHDFile::GetLocal(const CURL &url)
   */
 
   return path;
+}
+
 }

@@ -8,6 +8,9 @@
 
 using namespace PLATFORM;
 
+namespace VDR
+{
+
 cRecordings Recordings;
 
 std::string cRecordings::m_strUpdateFileName;
@@ -445,4 +448,6 @@ size_t cRecordings::Size(void) const
 std::vector<cRecording*> cRecordings::Recordings(void) const
 {
   return m_recordings;
+}
+
 }

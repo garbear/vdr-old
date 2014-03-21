@@ -34,6 +34,9 @@
 
 using namespace PLATFORM;
 
+namespace VDR
+{
+
 class cVideoBufferSimple : public cVideoBuffer
 {
 friend class cVideoBuffer;
@@ -958,4 +961,6 @@ time_t cVideoBuffer::GetRefTime()
   time_t t;
   time(&t);
   return t;
+}
+
 }

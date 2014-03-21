@@ -31,6 +31,8 @@
 #include <string>
 #include <vector>
 
+namespace VDR
+{
 class cDeviceChannelSubsystem;
 class cDeviceCommonInterfaceSubsystem;
 class cDeviceImageGrabSubsystem;
@@ -180,3 +182,4 @@ private:
   bool   m_bInitialised;
   size_t m_cardIndex;
 };
+}

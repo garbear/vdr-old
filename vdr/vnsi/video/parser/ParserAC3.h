@@ -24,6 +24,9 @@
 #include "Types.h"
 #include "Parser.h"
 
+namespace VDR
+{
+
 // --- cParserAC3 -------------------------------------------------
 
 class cParserAC3 : public cParser
@@ -47,5 +50,7 @@ public:
   virtual void Reset();
 };
 
+
+}
 
 #endif // VNSI_DEMUXER_AC3_H

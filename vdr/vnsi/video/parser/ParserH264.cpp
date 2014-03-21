@@ -24,6 +24,9 @@
 #include "ParserH264.h"
 #include "Bitstream.h"
 
+namespace VDR
+{
+
 static const int h264_lev2cpbsize[][2] =
 {
   {10, 175},
@@ -586,4 +589,6 @@ bool cParserH264::IsFirstVclNal(h264_private::VCL_NAL &vcl)
       return true;
   }
   return false;
+}
+
 }

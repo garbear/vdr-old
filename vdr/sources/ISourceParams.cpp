@@ -25,6 +25,9 @@
 
 using namespace std;
 
+namespace VDR
+{
+
 iSourceParams::iSourceParams(char source, const string &strDescription)
  : m_source(source)
 {
@@ -44,4 +47,6 @@ iSourceParams::iSourceParams(char source, const string &strDescription)
   }
   else
     esyslog("ERROR: invalid source '%c'", m_source);
+}
+
 }

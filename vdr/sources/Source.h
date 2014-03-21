@@ -25,6 +25,9 @@
 
 #include <string>
 
+namespace VDR
+{
+
 class cSource// : public cListObject
 {
 public:
@@ -74,3 +77,5 @@ private:
 // TODO: I need a home!
 //#include <map>
 //std::map<int, cSource> gSources;
+
+}

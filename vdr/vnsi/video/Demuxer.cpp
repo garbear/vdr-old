@@ -29,6 +29,9 @@
 
 using namespace PLATFORM;
 
+namespace VDR
+{
+
 cVNSIDemuxer::cVNSIDemuxer() :
     m_OldPmtVersion(-1),
     m_WaitIFrame(true),
@@ -651,3 +654,4 @@ uint16_t cVNSIDemuxer::GetError()
   return ret;
 }
 
+}

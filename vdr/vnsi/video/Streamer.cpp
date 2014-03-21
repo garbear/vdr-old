@@ -39,6 +39,8 @@
 #include "recordings/Recordings.h"
 #include "settings/Settings.h"
 
+namespace VDR
+{
 
 // --- cLiveStreamer -------------------------------------------------
 
@@ -630,4 +632,6 @@ bool cLiveStreamer::SeekTime(int64_t time, uint32_t &serial)
   bool ret = m_Demuxer.SeekTime(time);
   serial = m_Demuxer.GetSerial();
   return ret;
+}
+
 }

@@ -24,7 +24,10 @@
 #include "Types.h"
 #include "WindowsDefs.h" // UINT DWORD LPCSTR LPSTR LPBOOL ...
 
+namespace VDR
+{
 LONGLONG Int32x32To64(LONG Multiplier, LONG Multiplicand);
 DWORD GetLastError();
 VOID  SetLastError(DWORD dwErrCode);
 DWORD GetTimeZoneInformation(LPTIME_ZONE_INFORMATION lpTimeZoneInformation);
+}

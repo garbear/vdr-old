@@ -13,6 +13,9 @@
 #define RECORDFILESUFFIXTS      "/%05d.ts"
 #define RECORDFILESUFFIXLEN 20 // some additional bytes for safety...
 
+namespace VDR
+{
+
 cFileName::cFileName(const std::string& strFileName, bool Record, bool Blocking, bool IsPesRecording)
 {
   m_file = NULL;
@@ -183,4 +186,6 @@ CVideoFile *cFileName::SetOffset(int Number, off_t Offset)
 CVideoFile *cFileName::NextFile(void)
 {
   return SetOffset(m_iFileNumber + 1);
+}
+
 }

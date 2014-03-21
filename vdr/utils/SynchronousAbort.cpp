@@ -21,6 +21,9 @@
 
 #include "SynchronousAbort.h"
 
+namespace VDR
+{
+
 void cSynchronousAbort::Abort(bool bWait)
 {
   m_bAborting = true;
@@ -43,4 +46,6 @@ void cSynchronousAbort::Finished()
   m_finishedEvent.Broadcast();
   if (m_bAborting)
     m_bAborted = true; // In case Abort(false) was called
+}
+
 }

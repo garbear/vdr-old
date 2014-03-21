@@ -23,6 +23,8 @@
 #include "Types.h"
 #include <platform/threads/mutex.h>
 
+namespace VDR
+{
 /*!
  * \brief Base class for jobs requiring a blocking Abort() call
  */
@@ -60,3 +62,4 @@ private:
   volatile bool    m_bAborting; // Abort() has been called
   volatile bool    m_bAborted; // Job was aborted and Finish() has been called by subclass
 };
+}

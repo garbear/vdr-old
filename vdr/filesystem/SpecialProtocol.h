@@ -28,6 +28,9 @@
 #include <map>
 #include <string>
 
+namespace VDR
+{
+
 /*
  * Static class for path translation from our special:// URIs
  *
@@ -85,3 +88,5 @@ private:
 #define PATH_SEPARATOR_CHAR '/'
 #define PATH_SEPARATOR_STRING "/"
 #endif
+
+}

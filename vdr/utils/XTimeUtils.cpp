@@ -36,6 +36,9 @@
 #include <sys/times.h>
 #include <sched.h>
 
+namespace VDR
+{
+
 #define WIN32_TIME_OFFSET ((unsigned long long)(369 * 365 + 89) * 24 * 3600 * 10000000)
 
 /*
@@ -242,3 +245,4 @@ void GetSystemTimeAsFileTime(LPFILETIME lpSystemTimeAsFileTime)
 
 #endif
 
+}

@@ -42,6 +42,9 @@
 using namespace std;
 using namespace PLATFORM;
 
+namespace VDR
+{
+
 #ifdef WORDS_BIGENDIAN
   #define ENDIAN_SUFFIX "BE"
 #else
@@ -958,3 +961,5 @@ void CCharsetConverter::SettingOptionsCharsetsFiller(const CSetting* setting, st
     list.push_back(make_pair(vecCharsets[i], g_charsetConverter.getCharsetNameByLabel(vecCharsets[i])));
 }
 */
+
+}

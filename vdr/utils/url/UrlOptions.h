@@ -36,6 +36,8 @@
 #include "utils/Variant.h"
 #endif
 
+namespace VDR
+{
 
 class CUrlOptions
 {
@@ -75,3 +77,5 @@ protected:
   UrlOptions m_options;
   std::string m_strLead;
 };
+
+}

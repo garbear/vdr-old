@@ -27,6 +27,9 @@
 #include <linux/dvb/frontend.h>
 #include <platform/threads/threads.h>
 
+namespace VDR
+{
+
 class cDevice;
 class cScanLimits;
 class cSynchronousAbort;
@@ -51,3 +54,5 @@ private:
   PLATFORM::CMutex   m_mutex;
   cSynchronousAbort* m_abortableJob;
 };
+
+}

@@ -5,6 +5,8 @@
 #include "libsi/section.h"
 #include <map>
 
+namespace VDR
+{
 class CEpgComponent
 {
 public:
@@ -30,3 +32,4 @@ private:
   std::string m_strLanguage;
   std::string m_strDescription;
 };
+}

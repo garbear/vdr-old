@@ -39,6 +39,8 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
+namespace VDR
+{
 class cChannel;
 typedef VDR::shared_ptr<cChannel> ChannelPtr;
 
@@ -50,3 +52,4 @@ typedef VDR::shared_ptr<cSchedule> SchedulePtr;
 
 class cTimer;
 typedef VDR::shared_ptr<cTimer> TimerPtr;
+}

@@ -29,6 +29,9 @@
 #include <cwchar>
 #include <errno.h>
 
+namespace VDR
+{
+
 LONGLONG Int32x32To64(LONG Multiplier, LONG Multiplicand)
 {
   LONGLONG result = Multiplier;
@@ -62,6 +65,8 @@ DWORD GetTimeZoneInformation(LPTIME_ZONE_INFORMATION lpTimeZoneInformation)
   swprintf(lpTimeZoneInformation->DaylightName, 31, L"%s", tzname[1]);
 
   return TIME_ZONE_ID_UNKNOWN;
+}
+
 }
 
 #endif // TARGET_POSIX

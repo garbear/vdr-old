@@ -3,6 +3,9 @@
 #include "Types.h"
 #include "File.h"
 
+namespace VDR
+{
+
 class CVideoFile
 {
 public:
@@ -32,3 +35,5 @@ private:
   size_t m_written;
   size_t m_totwritten;
 };
+
+}

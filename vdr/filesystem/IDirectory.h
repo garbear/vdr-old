@@ -25,6 +25,8 @@
 #include <string>
 #include <vector>
 
+namespace VDR
+{
 // TODO
 class CDirectoryFileLabel
 {
@@ -189,3 +191,4 @@ private:
 
   CDirectoryFetchJob *m_fetchJob;
 };
+}

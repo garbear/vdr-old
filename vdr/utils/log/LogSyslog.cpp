@@ -2,6 +2,9 @@
 #include "settings/Settings.h"
 #include <syslog.h>
 
+namespace VDR
+{
+
 CLogSyslog::CLogSyslog(void)
 {
   openlog("vdr", LOG_CONS, cSettings::Get().m_SysLogTarget); // LOG_PID doesn't work as expected under NPTL
@@ -30,4 +33,6 @@ void CLogSyslog::Log(sys_log_level_t level, const char* logline)
     return;
   }
   syslog(priority, "%s", logline);
+}
+
 }

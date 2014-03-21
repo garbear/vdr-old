@@ -6,6 +6,8 @@
 #include "Component.h"
 #include <map>
 
+namespace VDR
+{
 class CEpgComponents
 {
 #define COMPONENT_ADD_NEW (-1)
@@ -25,3 +27,4 @@ public:
 private:
   std::map<int, CEpgComponent> m_components;
 };
+}

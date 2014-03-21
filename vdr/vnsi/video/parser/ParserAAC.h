@@ -25,6 +25,9 @@
 #include "Parser.h"
 #include "Bitstream.h"
 
+namespace VDR
+{
+
 // --- cParserAAC -------------------------------------------------
 
 class cParserAAC : public cParser
@@ -54,5 +57,7 @@ public:
   virtual void Parse(sStreamPacket *pkt);
   virtual void Reset();
 };
+
+}
 
 #endif // VNSI_DEMUXER_AAC_H

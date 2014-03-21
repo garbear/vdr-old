@@ -28,6 +28,11 @@
 
 using namespace std;
 
+extern int _nl_msg_cat_cntr;
+
+namespace VDR
+{
+
 // TRANSLATORS: The name of the language, as written natively
 const char *LanguageName = trNOOP("LanguageName$English");
 // TRANSLATORS: The 3-letter code of the language
@@ -100,7 +105,6 @@ static const char *SkipContext(const char *s)
 static void SetEnvLanguage(const char *Locale)
 {
   setenv("LANGUAGE", Locale, 1);
-  extern int _nl_msg_cat_cntr;
   ++_nl_msg_cat_cntr;
 }
 
@@ -302,4 +306,6 @@ bool I18nIsPreferredLanguage(int *PreferredLanguages, const char *LanguageCode, 
      return true; // if we don't find a preferred one, we take the first one
      }
   return found;
+}
+
 }

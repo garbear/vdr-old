@@ -34,6 +34,9 @@
 
 using namespace std;
 
+namespace VDR
+{
+
 #ifndef SAFE_DELETE
 #define SAFE_DELETE(p)  do { delete (p); (p) = NULL; } while (0)
 #endif
@@ -346,4 +349,6 @@ bool CFile::OnSameFileSystem(const string &strFile1, const string &strFile2)
     return dev1 == statStruct.st_dev;
   }
   return false;
+}
+
 }

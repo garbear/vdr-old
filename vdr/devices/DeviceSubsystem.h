@@ -26,6 +26,9 @@
 #include <assert.h>
 #include <typeinfo>
 
+namespace VDR
+{
+
 class cDeviceChannelSubsystem;
 class cDeviceCommonInterfaceSubsystem;
 class cDeviceImageGrabSubsystem;
@@ -99,3 +102,4 @@ private:
 
   cDevice* const m_device;
 };
+}

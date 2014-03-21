@@ -4,6 +4,8 @@
 #include "ILog.h"
 #include "platform/threads/mutex.h"
 
+namespace VDR
+{
 #ifdef ANDROID
 #define __attribute_format_arg__(x) __attribute__ ((__format_arg__ (x)))
 #endif
@@ -40,3 +42,4 @@ private:
   ILog*         m_logpipe;
   PLATFORM::CMutex m_mutex;
 };
+}

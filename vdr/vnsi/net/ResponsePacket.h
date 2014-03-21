@@ -29,6 +29,9 @@
  * This code is taken from VOMP for VDR plugin.
  */
 
+namespace VDR
+{
+
 class cResponsePacket
 {
 public:
@@ -74,3 +77,5 @@ private:
   const static uint32_t headerLengthOSD       = 36;
   const static uint32_t userDataLenPosOSD     = 32;
 };
+
+}

@@ -50,6 +50,9 @@
 #include "settings/Settings.h"
 #include "channels/ChannelFilter.h"
 
+namespace VDR
+{
+
 cVNSIServer::cVNSIServer(int listenPort)
 {
   m_ServerPort  = listenPort;
@@ -296,4 +299,6 @@ void* cVNSIServer::Process(void)
   cChannelManager::Get().UnregisterObserver(this);
 
   return NULL;
+}
+
 }

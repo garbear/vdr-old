@@ -26,6 +26,9 @@
 #include <linux/dvb/ca.h>
 #include <sys/ioctl.h>
 
+namespace VDR
+{
+
 cDvbCiAdapter::cDvbCiAdapter(cDevice *device, int fd)
  : m_device(device),
    m_fd(fd)
@@ -127,4 +130,6 @@ bool cDvbCiAdapter::Assign(DevicePtr device, bool query /* = false */)
   if (device)
      return device.get() == m_device;
   return true;
+}
+
 }

@@ -38,6 +38,9 @@
 
 #include <vector>
 
+namespace VDR
+{
+
 class cIndexFile;
 
 class cSegment
@@ -81,5 +84,7 @@ private:
   bool        m_pesrecording;
   bool        m_inProgress;
 };
+
+}
 
 #endif // VNSI_RECPLAYER_H

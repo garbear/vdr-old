@@ -23,6 +23,8 @@
 #include "Types.h"
 #include "devices/subsystems/DeviceCommonInterfaceSubsystem.h"
 
+namespace VDR
+{
 class cCiAdapter;
 
 class cDvbCommonInterfaceSubsystem : public cDeviceCommonInterfaceSubsystem
@@ -37,3 +39,4 @@ public:
 public:
   cCiAdapter *m_ciAdapter;
 };
+}

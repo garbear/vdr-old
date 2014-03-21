@@ -11,6 +11,8 @@
 #include "subsystems/DeviceReceiverSubsystem.h"
 #include "platform/threads/mutex.h"
 
+namespace VDR
+{
 // --- cTransfer -------------------------------------------------------------
 
 cTransfer::cTransfer(ChannelPtr Channel)
@@ -69,4 +71,6 @@ cTransferControl::cTransferControl(cDevice *ReceiverDevice, ChannelPtr Channel)
 cTransferControl::~cTransferControl()
 {
   delete m_transfer;
+}
+
 }

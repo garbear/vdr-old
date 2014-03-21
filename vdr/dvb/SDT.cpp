@@ -16,6 +16,9 @@
 
 #include "vdr/utils/UTF8Utils.h"
 
+namespace VDR
+{
+
 // --- cSdtFilter ------------------------------------------------------------
 
 cSdtFilter::cSdtFilter(cPatFilter *PatFilter)
@@ -147,4 +150,6 @@ void cSdtFilter::ProcessData(u_short Pid, u_char Tid, const u_char *Data, int Le
   }
 
 //XXX  Channels.Unlock();
+}
+
 }

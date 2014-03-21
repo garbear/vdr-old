@@ -22,7 +22,7 @@
 
 #include <limits>
 
-namespace XbmcThreads
+namespace VDR
 {
   /**
    * This function returns the system clock's number of milliseconds but with

@@ -3,6 +3,8 @@
 #include "Types.h"
 #include "utils/DateTime.h"
 
+namespace VDR
+{
 enum eTimerDays
 {
   tdNone      = 0,
@@ -61,3 +63,4 @@ private:
   const cEvent* m_event;
   bool          m_bUseVPS;
 };
+}

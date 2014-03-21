@@ -41,6 +41,9 @@
 
 //#include "XBDateTime.h"
 
+namespace VDR
+{
+
 class StringUtils
 {
 public:
@@ -147,3 +150,4 @@ public:
 
   static double DoubleVal(const std::string &str, double iDefault = 0);
 };
+}

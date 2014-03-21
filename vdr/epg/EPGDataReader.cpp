@@ -1,6 +1,9 @@
 #include "EPGDataReader.h"
 #include "EPG.h"
 
+namespace VDR
+{
+
 cEpgDataReader::cEpgDataReader(void)
 {
 }
@@ -12,4 +15,6 @@ void* cEpgDataReader::Process(void)
   if (schedules)
     schedules->Read();
   return NULL;
+}
+
 }

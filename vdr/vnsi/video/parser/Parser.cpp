@@ -33,6 +33,9 @@
 #include "ParserSubtitle.h"
 #include "ParserTeletext.h"
 
+namespace VDR
+{
+
 #define PTS_MASK 0x1ffffffffLL
 //#define PTS_MASK 0x7ffffLL
 
@@ -712,4 +715,6 @@ void cTSStream::SetSubtitlingDescriptor(unsigned char SubtitlingType, uint16_t C
   m_subtitlingType    = SubtitlingType;
   m_compositionPageId = CompositionPageId;
   m_ancillaryPageId   = AncillaryPageId;
+}
+
 }

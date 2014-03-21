@@ -25,6 +25,9 @@
 #include "dvb/SPU.h"
 #include "utils/Tools.h"
 
+namespace VDR
+{
+
 cDeviceVideoFormatSubsystem::cDeviceVideoFormatSubsystem(cDevice *device)
  : cDeviceSubsystem(device)
 {
@@ -71,4 +74,6 @@ void cDeviceVideoFormatSubsystem::GetOsdSize(int &width, int &height, double &pi
   width = 720;
   height = 480;
   pixelAspect = 1.0;
+}
+
 }

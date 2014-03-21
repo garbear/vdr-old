@@ -21,6 +21,9 @@
 using namespace std;
 using namespace PLATFORM;
 
+namespace VDR
+{
+
 cTimers& cTimers::Get(void)
 {
   static cTimers _instance;
@@ -423,4 +426,6 @@ TimerPtr cTimers::GetTimerForRecording(const cRecording* recording) const
       retval = it->second;
   }
   return retval;
+}
+
 }

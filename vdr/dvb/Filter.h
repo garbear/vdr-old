@@ -15,6 +15,8 @@
 #include "channels/Channel.h"
 #include "utils/Tools.h"
 
+namespace VDR
+{
 class cSectionSyncer {
 private:
   int lastVersion;
@@ -85,5 +87,6 @@ protected:
   void Del(u_short Pid, u_char Tid, u_char Mask = 0xFF);
        ///< Deletes the given filter data from this filter.
   };
+}
 
 #endif //__FILTER_H

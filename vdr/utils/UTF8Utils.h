@@ -24,6 +24,8 @@
 #include <stddef.h>
 #include <sys/types.h>
 
+namespace VDR
+{
 // When allocating buffer space, make sure we reserve enough space to hold
 // a string in UTF-8 representation:
 
@@ -98,3 +100,4 @@ public:
 
   static uint SystemToUtf8[128];
 };
+}

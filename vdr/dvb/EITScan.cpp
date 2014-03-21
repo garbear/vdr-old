@@ -16,6 +16,9 @@
 #include "devices/subsystems/DeviceReceiverSubsystem.h"
 #include "settings/Settings.h"
 
+namespace VDR
+{
+
 #define SCAN_TRANSPONDER_TIMEOUT_MS (20 * 1000)
 
 class cTransponderList
@@ -255,4 +258,6 @@ void cEITScanner::Process(void)
     else
       m_nextTransponderScan.Init(SCAN_TRANSPONDER_TIMEOUT_MS);
   }
+}
+
 }

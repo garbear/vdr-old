@@ -5,6 +5,8 @@
 #include "utils/DateTime.h"
 #include <shared_ptr/shared_ptr.hpp>
 
+namespace VDR
+{
 class cSchedules;
 
 class cSchedule : public cListObject  {
@@ -45,3 +47,4 @@ public:
   bool Save(void);
   bool Serialise(TiXmlNode *node) const;
   };
+}

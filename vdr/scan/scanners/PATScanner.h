@@ -27,6 +27,9 @@
 
 #include <sys/types.h>
 
+namespace VDR
+{
+
 class iPatScannerCallback
 {
 public:
@@ -46,3 +49,5 @@ protected:
 private:
   iPatScannerCallback* m_callback;
 };
+
+}

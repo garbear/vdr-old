@@ -40,6 +40,9 @@
 
 using namespace std;
 
+namespace VDR
+{
+
 #define VDR_ROOT        "vdr"
 #define HOME_ROOT       "home"
 #define TEMP_ROOT       "temp"
@@ -451,4 +454,6 @@ string CSpecialProtocol::GetPath(const string &key)
   map<string, string>::iterator it = m_pathMap.find(key);
   assert(it != m_pathMap.end());
   return it->second;
+}
+
 }

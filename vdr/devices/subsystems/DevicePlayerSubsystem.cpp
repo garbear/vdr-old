@@ -37,6 +37,9 @@
 
 using namespace std;
 
+namespace VDR
+{
+
 // The minimum number of unknown PS1 packets to consider this a "pre 1.3.19 private stream":
 #define MIN_PRE_1_3_19_PRIVATESTREAM  10
 
@@ -475,4 +478,6 @@ int cDevicePlayerSubsystem::PlayTsAudio(const vector<uchar> &data)
 int cDevicePlayerSubsystem::PlayTsSubtitle(const vector<uchar> &data)
 {
   return -1; //XXX remove this method
+}
+
 }

@@ -23,9 +23,14 @@
 
 #include <stddef.h>
 
+namespace VDR
+{
+
 cDeviceCommonInterfaceSubsystem::cDeviceCommonInterfaceSubsystem(cDevice *device)
  : cDeviceSubsystem(device),
    m_camSlot(NULL),
    m_startScrambleDetection(0)
 {
+}
+
 }

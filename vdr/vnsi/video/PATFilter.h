@@ -24,6 +24,9 @@
 #include "dvb/Filter.h"
 #include "channels/Channel.h"
 
+namespace VDR
+{
+
 class cVideoInput;
 
 class cLivePatFilter : public cFilter
@@ -40,3 +43,5 @@ private:
 public:
   cLivePatFilter(cVideoInput *VideoInput, ChannelPtr Channel);
 };
+
+}

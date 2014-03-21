@@ -23,6 +23,8 @@
 #include "Types.h"
 #include "devices/subsystems/DeviceSectionFilterSubsystem.h"
 
+namespace VDR
+{
 class cDvbSectionFilterSubsystem : public cDeviceSectionFilterSubsystem
 {
 public:
@@ -32,3 +34,4 @@ public:
   virtual int OpenFilter(u_short pid, u_char tid, u_char mask);
   virtual void CloseFilter(int handle);
 };
+}

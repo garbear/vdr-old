@@ -24,6 +24,8 @@
 #include <iconv.h>
 #include <stddef.h>
 
+namespace VDR
+{
 class cCharSetConv
 {
 public:
@@ -60,3 +62,4 @@ private:
   size_t length;
   static char *systemCharacterTable;
 };
+}

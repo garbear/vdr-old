@@ -56,7 +56,9 @@
 
 using namespace std;
 using namespace PLATFORM;
-using namespace VDR; // for shared_ptr
+
+namespace VDR
+{
 
 #define MAXFRONTENDCMDS 16
 
@@ -509,4 +511,6 @@ string cDvbDevice::TranslateDeliverySystems(const vector<fe_delivery_system>& de
       vecDeliverySystemNames.push_back(DeliverySystemNames[ds]);
   }
   return StringUtils::Join(vecDeliverySystemNames, ",");
+}
+
 }

@@ -31,6 +31,9 @@
 #include <Windows.h>
 #endif
 
+namespace VDR
+{
+
 #define SECONDS_PER_DAY 86400UL
 #define SECONDS_PER_HOUR 3600UL
 #define SECONDS_PER_MINUTE 60UL
@@ -821,7 +824,7 @@ void CDateTime::GetAsTm(tm& time) const
 
 void CDateTime::GetAsTimeStamp(FILETIME& time) const
 {
-  ::LocalFileTimeToFileTime(&m_time, &time);
+  LocalFileTimeToFileTime(&m_time, &time);
 }
 
 std::string CDateTime::GetAsDBDate() const
@@ -1066,4 +1069,6 @@ int CDateTime::MonthStringToMonthNum(const std::string& month)
   i++;
 
   return i;
+}
+
 }

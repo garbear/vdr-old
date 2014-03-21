@@ -20,6 +20,8 @@
 
 #include <vector>
 
+namespace VDR
+{
 class cEvent;
 class cRecording;
 
@@ -72,5 +74,6 @@ private:
   PLATFORM::CMutex           m_mutex;
   std::string                m_strFilename;
 };
+}
 
 #endif //__TIMERS_H

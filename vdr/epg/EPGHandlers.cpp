@@ -2,6 +2,9 @@
 #include "EPGHandler.h"
 #include "Schedule.h"
 
+namespace VDR
+{
+
 cEpgHandlers& cEpgHandlers::Get(void)
 {
   static cEpgHandlers _instance;
@@ -175,4 +178,6 @@ void cEpgHandlers::DropOutdated(SchedulePtr Schedule, const CDateTime& SegmentSt
   }
 
   Schedule->DropOutdated(SegmentStart, SegmentEnd, TableID, Version);
+}
+
 }

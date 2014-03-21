@@ -29,6 +29,8 @@
 #include <vector>
 #include <stdio.h>
 
+namespace VDR
+{
 #define MIME_TYPE_NONE     "none/none"
 
 class CFile
@@ -90,3 +92,4 @@ private:
   bool          m_bOpenForWrite;
   //CFileStreamBuffer* m_pBuffer;
 };
+}

@@ -43,6 +43,9 @@
 
 using namespace PLATFORM;
 
+namespace VDR
+{
+
 // Set these to 'true' for debug output:
 static bool DumpTPDUDataTransfer = false;
 static bool DebugProtocol = false;
@@ -2180,4 +2183,6 @@ void cChannelCamRelations::ClrDecrypt(tChannelID ChannelID, int CamSlotNumber)
   cChannelCamRelation *ccr = GetEntry(ChannelID);
   if (ccr)
      ccr->ClrDecrypt(CamSlotNumber);
+}
+
 }

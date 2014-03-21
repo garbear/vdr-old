@@ -29,6 +29,8 @@
 
 #include <fstream>
 
+namespace VDR
+{
 class CURL;
 
 class CHDFile : public IFile
@@ -69,3 +71,4 @@ protected:
   std::ios_base::openmode m_mode;
   int                     m_flags;
 };
+}

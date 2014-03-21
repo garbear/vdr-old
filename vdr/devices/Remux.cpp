@@ -18,6 +18,9 @@
 #include "utils/Tools.h"
 #include "utils/I18N.h"
 
+namespace VDR
+{
+
 // Set these to 'true' for debug output:
 static bool DebugPatPmt = false;
 static bool DebugFrames = false;
@@ -1482,4 +1485,5 @@ int cFrameDetector::Analyze(const uchar *Data, int Length)
            break;
         }
   return Processed;
+}
 }

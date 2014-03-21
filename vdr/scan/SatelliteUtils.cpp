@@ -24,8 +24,11 @@
 
 #include <assert.h>
 
-using namespace SATELLITE;
+using namespace VDR::SATELLITE;
 using namespace std;
+
+namespace VDR
+{
 
 #ifndef ARRAY_SIZE
 #define ARRAY_SIZE(x)  (sizeof(x) / sizeof((x)[0]))
@@ -2061,4 +2064,6 @@ unsigned int SatelliteUtils::GetTransponderCount(eSatellite satelliteId)
 {
   const cSat& sat = GetSatellite(satelliteId);
   return sat.item_count;
+}
+
 }

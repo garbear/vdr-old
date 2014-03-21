@@ -29,6 +29,9 @@
 
 using namespace std;
 
+namespace VDR
+{
+
 #define DEBUG_CA_DESCRIPTORS  1
 
 cCaDescriptors::cCaDescriptors(int source, int transponder, int serviceId)
@@ -128,4 +131,6 @@ const vector<int>& cCaDescriptors::CaIds(void)
   *(m_caIds.data() + m_caIds.size()) = 0;
 
   return m_caIds;
+}
+
 }

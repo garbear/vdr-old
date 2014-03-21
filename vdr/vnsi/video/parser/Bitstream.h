@@ -27,6 +27,9 @@
 
 #include "Types.h"
 
+namespace VDR
+{
+
 class cBitstream
 {
 private:
@@ -50,5 +53,7 @@ public:
   int          length() { return m_len; }
   bool         isError() { return m_error; }
 };
+
+}
 
 #endif // VNSI_BITSTREAM_H

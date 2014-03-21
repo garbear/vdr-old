@@ -31,6 +31,9 @@
 
 using namespace std;
 
+namespace VDR
+{
+
 cDeviceTrackSubsystem::cDeviceTrackSubsystem(cDevice *device)
  : cDeviceSubsystem(device),
    m_bKeepTracks(false), // used in ClrAvailableTracks()!
@@ -179,4 +182,6 @@ void cDeviceTrackSubsystem::EnsureAudioTrack(bool bForce /* = false */)
 void cDeviceTrackSubsystem::EnsureSubtitleTrack()
 {
   // XXX remove this method
+}
+
 }

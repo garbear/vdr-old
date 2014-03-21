@@ -33,6 +33,9 @@
 
 using namespace SI_EXT;
 
+namespace VDR
+{
+
 // --- cEitParser ------------------------------------------------------------------
 
 class cEitParser : public SI::EIT
@@ -143,4 +146,6 @@ cEitScanner::~cEitScanner()
 void cEitScanner::ProcessData(u_short Pid, u_char Tid, const u_char *Data, int Length)
 {
   cEitParser EitParser(m_channelManager, Source(), Tid, Data);
+}
+
 }

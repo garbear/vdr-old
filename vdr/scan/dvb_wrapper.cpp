@@ -10,6 +10,9 @@
 
 #include "dvb_wrapper.h"
 
+namespace VDR
+{
+
 #if (DVB_API_VERSION < 5)
   #if ((DVB_API_VERSION == 3) && (DVB_API_VERSION_MINOR == 3))
      #error "*************************************************"
@@ -176,4 +179,6 @@ fe_spectral_inversion_t CableTerrInversions(eCableTerrInversions in) {
     case eInversionAuto: return INVERSION_AUTO;
     default            : return INVERSION_AUTO;
     }
+}
+
 }

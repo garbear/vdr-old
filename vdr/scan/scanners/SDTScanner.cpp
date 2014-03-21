@@ -31,6 +31,9 @@
 
 using namespace SI_EXT;
 
+namespace VDR
+{
+
 #ifndef Utf8BufSize
 #define Utf8BufSize(s)  ((s) * 4)
 #endif
@@ -162,4 +165,6 @@ void cSdtScanner::ProcessData(u_short Pid, u_char Tid, const u_char * Data, int 
       DELETENULL(d);
     }
   }
+}
+
 }

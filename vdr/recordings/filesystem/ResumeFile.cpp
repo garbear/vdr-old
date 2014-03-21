@@ -6,6 +6,9 @@
 
 #define RESUMEFILESUFFIX  "/resume%s%s"
 
+namespace VDR
+{
+
 cResumeFile::cResumeFile(const std::string& strFileName, bool IsPesRecording)
 {
   m_bIsPesRecording = IsPesRecording;
@@ -92,4 +95,6 @@ void cResumeFile::Delete(void)
     else if (CFile::Exists(m_strFileName))
       LOG_ERROR_STR(m_strFileName.c_str());
   }
+}
+
 }

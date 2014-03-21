@@ -27,6 +27,11 @@
 
 #include <string>
 
+class TiXmlNode;
+
+namespace VDR
+{
+
 // TODO: Remove this enum and store system directly using fe_delivery_system
 enum eSystemType
 {
@@ -42,8 +47,6 @@ enum eDvbType
   DVB_SAT,
   DVB_ATSC,
 };
-
-class TiXmlNode;
 
 class cDvbTransponderParams
 {
@@ -127,3 +130,5 @@ private:
   fe_rolloff            m_rollOff;
   unsigned int          m_streamId;
 };
+
+}

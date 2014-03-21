@@ -27,6 +27,9 @@
 #include "vdr/utils/DateTime.h"
 #include "settings/Settings.h"
 
+namespace VDR
+{
+
 // --- cEIT ------------------------------------------------------------------
 
 class cEIT : public SI::EIT {
@@ -564,4 +567,6 @@ void cEitFilter::ProcessData(u_short Pid, u_char Tid, const u_char *Data, int Le
          break;
     default: ;
     }
+}
+
 }

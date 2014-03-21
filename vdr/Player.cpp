@@ -14,6 +14,9 @@
 using namespace std;
 using namespace PLATFORM;
 
+namespace VDR
+{
+
 // --- cPlayer ---------------------------------------------------------------
 
 cPlayer::cPlayer(ePlayMode PlayMode)
@@ -217,4 +220,6 @@ void cPlayer::DeviceStillPicture(const vector<uchar> &data)
 uint64_t cPlayer::DeviceGetSTC(void)
 {
   return device ? device->Player()->GetSTC() : -1;
+}
+
 }

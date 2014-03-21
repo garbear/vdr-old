@@ -17,6 +17,8 @@
 #include "utils/Ringbuffer.h"
 #include "platform/threads/threads.h"
 
+namespace VDR
+{
 class cFileName;
 class cIndexFile;
 class cRecordingInfo;
@@ -51,5 +53,6 @@ private:
   time_t             m_lastDiskSpaceCheck;
   cRecordingInfo*    m_recordingInfo;
 };
+}
 
 #endif //__RECORDER_H

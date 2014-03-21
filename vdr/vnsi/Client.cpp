@@ -53,6 +53,8 @@
 
 using namespace PLATFORM;
 
+namespace VDR
+{
 
 CMutex cVNSIClient::m_timerLock;
 
@@ -2189,4 +2191,6 @@ const char* cVNSIClient::ChannelToString(uint8_t channel)
   default:
     return "<unknown>";
   }
+}
+
 }

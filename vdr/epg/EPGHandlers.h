@@ -7,6 +7,8 @@
 #include <libsi/section.h>
 #include <time.h>
 
+namespace VDR
+{
 class cEpgHandler;
 class cChannel;
 class cEvent;
@@ -33,3 +35,4 @@ public:
   void SortSchedule(SchedulePtr Schedule);
   void DropOutdated(SchedulePtr Schedule, const CDateTime& SegmentStart, const CDateTime& SegmentEnd, uchar TableID, uchar Version);
   };
+}

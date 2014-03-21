@@ -24,6 +24,9 @@
 #include "Types.h"
 #include "Parser.h"
 
+namespace VDR
+{
+
 // --- cParserTeletext -------------------------------------------------
 
 class cParserTeletext : public cParser
@@ -38,5 +41,7 @@ public:
 
   virtual void Parse(sStreamPacket *pkt);
 };
+
+}
 
 #endif // VNSI_DEMUXER_TELETEXT_H

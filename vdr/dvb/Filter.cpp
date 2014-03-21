@@ -10,6 +10,9 @@
 #include "Filter.h"
 #include "Sections.h"
 
+namespace VDR
+{
+
 // --- cSectionSyncer --------------------------------------------------------
 
 cSectionSyncer::cSectionSyncer(void)
@@ -157,4 +160,6 @@ void cFilter::Del(u_short Pid, u_char Tid, u_char Mask)
          return;
          }
       }
+}
+
 }

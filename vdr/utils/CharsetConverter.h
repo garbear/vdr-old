@@ -31,6 +31,8 @@
 #include <string>
 #include <vector>
 
+namespace VDR
+{
 class CSetting;
 
 class CCharsetConverter //: public ISettingCallback
@@ -181,3 +183,4 @@ private:
   static const int m_Utf8CharMinSize, m_Utf8CharMaxSize;
   class CInnerConverter;
 };
+}

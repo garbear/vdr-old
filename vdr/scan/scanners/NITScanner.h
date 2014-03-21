@@ -28,6 +28,9 @@
 
 #include <sys/types.h>
 
+namespace VDR
+{
+
 #define INVALID_CHANNEL  0x4000 // TODO: Is this needed?
 
 class iNitScannerCallback
@@ -51,3 +54,5 @@ private:
   iNitScannerCallback* m_callback;
   cSectionSyncer       m_syncNit;
 };
+
+}

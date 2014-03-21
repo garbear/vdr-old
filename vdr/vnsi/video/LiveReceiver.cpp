@@ -23,6 +23,9 @@
 #include "VideoInput.h"
 #include "devices/subsystems/DeviceReceiverSubsystem.h"
 
+namespace VDR
+{
+
 cLiveReceiver::cLiveReceiver(DevicePtr device, cVideoInput *VideoInput, ChannelPtr Channel, int Priority) :
   cReceiver(Channel, Priority),
   m_device(device),
@@ -47,4 +50,6 @@ void cLiveReceiver::Activate(bool On)
 {
   m_VideoInput->Attach(On);
   dsyslog("%s live receiver", On ? "activate" : "deactivate");
+}
+
 }

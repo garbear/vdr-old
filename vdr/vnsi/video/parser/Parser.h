@@ -26,6 +26,9 @@
 #include "devices/Device.h"
 #include <queue>
 
+namespace VDR
+{
+
 #define DVD_TIME_BASE 1000000
 #define DVD_NOPTS_VALUE    (-1LL<<52) // should be possible to represent in both double and __int64
 
@@ -246,5 +249,7 @@ public:
 
   static int64_t Rescale(int64_t a, int64_t b, int64_t c);
 };
+
+}
 
 #endif // VNSI_DEMUXER_H

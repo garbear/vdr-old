@@ -4,6 +4,9 @@
 #include "utils/StringUtils.h"
 #include "platform/threads/mutex.h"
 
+namespace VDR
+{
+
 double MarkFramesPerSecond = DEFAULTFRAMESPERSECOND;
 PLATFORM::CMutex MutexMarkFramesPerSecond;
 
@@ -103,4 +106,6 @@ int cMark::HMSFToIndex(const char *HMSF, double FramesPerSecond)
   if (n >= 3)
     return int(round((h * 3600 + m * 60 + s) * FramesPerSecond)) + f - 1;
   return 0;
+}
+
 }

@@ -24,6 +24,8 @@
 #include <string>
 #include <time.h>
 
+namespace VDR
+{
 class CalendarUtils
 {
 public:
@@ -74,3 +76,4 @@ public:
    */
   static std::string TimeString(time_t t);
 };
+}

@@ -28,6 +28,9 @@
 #include <stdint.h>
 #include <string>
 
+namespace VDR
+{
+
 struct __sat_transponder
 {
   fe_delivery_system_t modulation_system;
@@ -144,3 +147,5 @@ public:
   static const __sat_transponder& GetTransponder(SATELLITE::eSatellite satelliteId, unsigned int iChannelNumber);
   static unsigned int GetTransponderCount(SATELLITE::eSatellite satelliteId);
 };
+
+}

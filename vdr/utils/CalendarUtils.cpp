@@ -26,6 +26,9 @@
 
 using namespace std;
 
+namespace VDR
+{
+
 string CalendarUtils::WeekDayName(int WeekDay)
 {
   if (WeekDay == 0)
@@ -131,4 +134,6 @@ string CalendarUtils::TimeString(time_t t)
   struct tm tm_r;
   strftime(buf, sizeof(buf), "%R", localtime_r(&t, &tm_r));
   return buf;
+}
+
 }

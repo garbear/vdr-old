@@ -23,6 +23,8 @@
 #include "Types.h"
 #include <string>
 
+namespace VDR
+{
 class cChannel;
 
 /*!
@@ -62,3 +64,4 @@ private:
 // TODO: I need a home!
 //#include <map>
 //std::map<char, iSourceParams*> gSourceParams;
+}

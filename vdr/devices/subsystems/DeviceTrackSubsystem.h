@@ -28,6 +28,8 @@
 #include <string>
 #include <vector>
 
+namespace VDR
+{
 enum eTrackType
 {
   ttNone,
@@ -165,3 +167,4 @@ private:
 public: // TODO
   int          m_pre_1_3_19_PrivateStream;
 };
+}

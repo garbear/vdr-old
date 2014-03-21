@@ -23,6 +23,9 @@
 
 #include "xbmc/libXBMC_addon.h"
 
+namespace VDR
+{
+
 extern ADDON::CHelper_libXBMC_addon *XBMC;
 
 cVFSFile::cVFSFile()
@@ -109,4 +112,6 @@ bool cVFSFile::Delete(const std::string &url)
   if (!XBMC)
     return false;
   return XBMC->DeleteFile(url.c_str());
+}
+
 }

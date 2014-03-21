@@ -24,6 +24,9 @@
 #include "Types.h"
 #include "Parser.h"
 
+namespace VDR
+{
+
 // --- cParserDTS -------------------------------------------------
 
 class cParserDTS : public cParser
@@ -37,5 +40,6 @@ public:
   virtual void Parse(sStreamPacket *pkt);
 };
 
+}
 
 #endif // VNSI_DEMUXER_DTS_H

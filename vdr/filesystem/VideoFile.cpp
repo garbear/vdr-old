@@ -5,6 +5,9 @@
 
 //#define USE_FADVISE
 
+namespace VDR
+{
+
 #define WRITE_BUFFER KILOBYTE(800)
 
 CVideoFile::CVideoFile(void) :
@@ -212,4 +215,6 @@ CVideoFile *CVideoFile::Create(const char *FileName, int Flags, mode_t Mode)
     File = NULL;
   }
   return File;
+}
+
 }

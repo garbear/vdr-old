@@ -28,6 +28,8 @@
 
 #include <string>
 
+namespace VDR
+{
 class CDirectoryFetchJob : public PLATFORM::CThread
 {
 public:
@@ -85,3 +87,4 @@ private:
   IDirectoryCallback *m_callback;
   PLATFORM::CMutex    m_progressMutex;
 };
+}

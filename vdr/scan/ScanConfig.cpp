@@ -24,6 +24,9 @@
 
 #include <assert.h>
 
+namespace VDR
+{
+
 cScanConfig::cScanConfig()
  : dvbType(DVB_TERR),
    dvbtInversion(INVERSION_OFF),
@@ -79,4 +82,6 @@ eDvbcSymbolRate cScanConfig::TranslateSymbolRate(unsigned int sr)
     case 5483000: return eSR_5483000;
     default:      return eSR_AUTO;
   }
+}
+
 }

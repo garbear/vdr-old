@@ -29,6 +29,9 @@
 
 using namespace std;
 
+namespace VDR
+{
+
 #ifndef ARRAY_SIZE
 #define ARRAY_SIZE(x)  (sizeof(x) / sizeof((x)[0]))
 #endif
@@ -456,4 +459,6 @@ const char *cDvbTransponderParams::TranslateModulation(fe_modulation modulation)
       return _ModulationValues[i].userString;
   }
   return "";
+}
+
 }

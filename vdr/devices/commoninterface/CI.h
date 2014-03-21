@@ -30,6 +30,8 @@
 #include <stdint.h>
 #include <stdio.h>
 
+namespace VDR
+{
 #define MAX_CAM_SLOTS_PER_ADAPTER     8 // maximum possible value is 255
 
 #define MAX_CONNECTIONS_PER_CAM_SLOT  8 // maximum possible value is 254
@@ -301,3 +303,4 @@ public:
   };
 
 extern cChannelCamRelations ChannelCamRelations;
+}

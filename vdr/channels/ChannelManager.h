@@ -30,6 +30,8 @@
 #include <string>
 #include <vector>
 
+namespace VDR
+{
 enum eLastModifiedType
 {
   CHANNELSMOD_NONE = 0, // Assigned values are for compatibility
@@ -183,7 +185,7 @@ public:
 
 private:
   typedef std::map<int, ChannelVector> ChannelSidMap;
-  PLATFORM::CMutex m_mutex;
+  ::PLATFORM::CMutex m_mutex;
 
   ChannelVector m_channels;
   ChannelSidMap m_channelSids; // Index channels by SID for fast lookups in GetBy*() methods
@@ -194,3 +196,4 @@ private:
 
   std::string   m_strFilename;
 };
+}

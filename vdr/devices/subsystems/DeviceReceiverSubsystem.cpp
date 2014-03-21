@@ -33,6 +33,9 @@
 
 using namespace std;
 
+namespace VDR
+{
+
 // activate the following line if you need it - actually the driver should be fixed!
 #define WAIT_FOR_TUNER_LOCK 0
 
@@ -154,4 +157,6 @@ void cDeviceReceiverSubsystem::DetachAllReceivers()
   PLATFORM::CLockObject lock(m_mutexReceiver);
   for (std::list<cReceiver*>::iterator it = m_receivers.begin(); it != m_receivers.end(); it = m_receivers.begin())
     Detach(*it);
+}
+
 }

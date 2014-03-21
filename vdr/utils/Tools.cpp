@@ -34,6 +34,9 @@
 
 using namespace std;
 
+namespace VDR
+{
+
 #ifdef ANDROID
 #include "android_getline.h"
 
@@ -1153,4 +1156,6 @@ int SystemExec(const char *Command, bool Detached)
     _exit(0);
   }
   return 0;
+}
+
 }

@@ -34,6 +34,9 @@
 
 using namespace std;
 
+namespace VDR
+{
+
 CHDDirectory::CHDDirectory()
 {
 }
@@ -120,3 +123,4 @@ bool CHDDirectory::DiskSpace(const std::string &strPath, disk_space_t& space)
   return false;
 }
 
+}

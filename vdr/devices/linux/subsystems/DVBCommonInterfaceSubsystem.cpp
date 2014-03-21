@@ -24,6 +24,9 @@
 
 #include <stddef.h>
 
+namespace VDR
+{
+
 cDvbCommonInterfaceSubsystem::cDvbCommonInterfaceSubsystem(cDevice *device)
  : cDeviceCommonInterfaceSubsystem(device),
    m_ciAdapter(NULL)
@@ -33,4 +36,6 @@ cDvbCommonInterfaceSubsystem::cDvbCommonInterfaceSubsystem(cDevice *device)
 cDvbCommonInterfaceSubsystem::~cDvbCommonInterfaceSubsystem()
 {
   delete m_ciAdapter;
+}
+
 }

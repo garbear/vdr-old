@@ -8,6 +8,9 @@
 
 using namespace PLATFORM;
 
+namespace VDR
+{
+
 bool cMarks::Load(const std::string& strRecordingFileName, double FramesPerSecond, bool IsPesRecording)
 {
   recordingFileName = strRecordingFileName;
@@ -230,4 +233,6 @@ int cMarks::GetNumSequences(void)
     }
   }
   return NumSequences;
+}
+
 }

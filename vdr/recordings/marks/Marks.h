@@ -4,6 +4,8 @@
 #include "Mark.h"
 #include "Config.h"
 
+namespace VDR
+{
 class cMarks
 {
 public:
@@ -41,3 +43,4 @@ private:
   time_t              lastChange;
   std::vector<cMark*> m_marks;
 };
+}

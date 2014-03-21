@@ -25,6 +25,9 @@
 #include "Types.h"
 #include "dvb/Filter.h"
 
+namespace VDR
+{
+
 class iSdtScannerCallback
 {
 public:
@@ -54,3 +57,5 @@ private:
   int                  m_tableId;
   cSectionSyncer       m_sectionSyncer;
 };
+
+}

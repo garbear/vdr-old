@@ -5,6 +5,8 @@
 #include "channels/ChannelID.h"
 #include <stddef.h>
 
+namespace VDR
+{
 class cEvent;
 class CEpgComponents;
 class CFile;
@@ -48,3 +50,4 @@ private:
   int           m_iLifetime;
   mutable std::string m_strFilename; //XXX
 };
+}

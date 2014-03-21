@@ -24,6 +24,9 @@
 #include "Types.h"
 #include "Parser.h"
 
+namespace VDR
+{
+
 // --- cParserSubtitle -------------------------------------------------
 
 class cParserSubtitle : public cParser
@@ -35,5 +38,7 @@ public:
   virtual void Parse(sStreamPacket *pkt);
 };
 
+
+}
 
 #endif // VNSI_DEMUXER_SUBTITLE_H

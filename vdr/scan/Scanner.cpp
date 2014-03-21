@@ -32,8 +32,11 @@
 #include <assert.h>
 
 using namespace PLATFORM;
-using namespace SATELLITE;
+using namespace VDR::SATELLITE;
 using namespace std;
+
+namespace VDR
+{
 
 cScanner::cScanner(cDevice* device, const cScanConfig& setup)
  : m_device(device),
@@ -135,4 +138,6 @@ void cScanner::Stop(bool bWait /* = false */)
   }
   if (abortableJob)
     abortableJob->Abort(bWait);
+}
+
 }

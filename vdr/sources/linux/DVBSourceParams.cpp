@@ -24,6 +24,9 @@
 
 using namespace std;
 
+namespace VDR
+{
+
 cDvbSourceParams::cDvbSourceParams(char source, const string &strDescription)
  : iSourceParams(source, strDescription),
    m_srate(0)
@@ -41,4 +44,6 @@ void cDvbSourceParams::GetData(cChannel &channel) const
   channel.SetTransponderData(channel.Source(), channel.FrequencyHz(), m_srate, m_dtp, true);
   // TODO: Overload index operators possibly
   //channel[frequency][source] = TransponderData
+}
+
 }

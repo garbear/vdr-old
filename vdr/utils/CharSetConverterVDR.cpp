@@ -23,6 +23,9 @@
 #include "UTF8Utils.h"
 #include "Tools.h"
 
+namespace VDR
+{
+
 char *cCharSetConv::systemCharacterTable = NULL;
 
 cCharSetConv::cCharSetConv(const char *FromCode, const char *ToCode)
@@ -136,4 +139,6 @@ const char *cCharSetConv::Convert(const char *From, char *To, size_t ToLength)
     return Converted;
   }
   return From;
+}
+
 }

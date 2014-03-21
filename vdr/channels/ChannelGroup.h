@@ -26,6 +26,8 @@
 #include <map>
 #include "platform/threads/mutex.h"
 
+namespace VDR
+{
 class CChannelGroup
 {
 public:
@@ -68,3 +70,4 @@ private:
   std::map<std::string, CChannelGroup> m_groups;
   PLATFORM::CMutex                     m_mutex;
 };
+}

@@ -45,6 +45,9 @@
 #include <sys/syslog.h>
 #include <unistd.h>
 
+namespace VDR
+{
+
 // for easier orientation, this is column 80|
 #define MSG_HELP "Usage: vdr [OPTIONS]\n\n" \
                  "  -c DIR,   --config=DIR   read config files from DIR (default: %s)\n" \
@@ -772,4 +775,6 @@ std::string cSettings::StoreLanguages(int* Values)
   }
   *q = 0;
   return buffer;
+}
+
 }

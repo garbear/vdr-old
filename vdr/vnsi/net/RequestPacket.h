@@ -25,6 +25,9 @@
  *
  */
 
+namespace VDR
+{
+
 class cRequestPacket
 {
 public:
@@ -68,3 +71,5 @@ private:
 
   bool ownBlock;
 };
+
+}

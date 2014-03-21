@@ -36,6 +36,9 @@
 
 using namespace PLATFORM;
 
+namespace VDR
+{
+
 cVideoInput::cVideoInput()
 {
   m_PatFilter = NULL;
@@ -211,4 +214,6 @@ void* cVideoInput::Process()
   }
 
   return NULL;
+}
+
 }

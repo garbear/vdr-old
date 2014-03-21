@@ -7,6 +7,9 @@
 
 #define MAXSYSLOGBUF (256)
 
+namespace VDR
+{
+
 CLog::CLog(ILog* pipe) :
     m_logpipe(pipe)
 {
@@ -62,4 +65,6 @@ void CLog::SetPipe(ILog* pipe)
   PLATFORM::CLockObject lock(m_mutex);
   delete m_logpipe;
   m_logpipe = pipe;
+}
+
 }

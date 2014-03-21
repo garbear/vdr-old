@@ -26,6 +26,9 @@
 
 #include <stdint.h>
 
+namespace VDR
+{
+
 // Country and Network Identification codes
 class CniCodes
 {
@@ -46,3 +49,5 @@ public:
   static const cCniCode& GetCniCode(unsigned int index);
   static unsigned int    GetCniCodeCount();
 };
+
+}

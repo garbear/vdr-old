@@ -25,6 +25,9 @@
 #include "Types.h"
 #include "dvb/Filter.h"
 
+namespace VDR
+{
+
 class cChannelManager;
 
 class cEitScanner : public cFilter
@@ -39,3 +42,5 @@ protected:
 private:
   cChannelManager& m_channelManager;
 };
+
+}

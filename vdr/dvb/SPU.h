@@ -15,6 +15,8 @@
 #include "Types.h"
 #include <inttypes.h>
 
+namespace VDR
+{
 // --- cSpuDecoder -----------------------------------------------------------
 
 class cSpuDecoder {
@@ -39,5 +41,6 @@ class cSpuDecoder {
     virtual bool IsVisible(void) = 0;
     virtual void processSPU(uint32_t pts, uint8_t * buf, bool AllowedShow = true) = 0;
 };
+}
 
 #endif                          // __SPU_VDR_H

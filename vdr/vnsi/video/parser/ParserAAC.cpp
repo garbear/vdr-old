@@ -23,6 +23,9 @@
 
 #include "ParserAAC.h"
 
+namespace VDR
+{
+
 static int aac_sample_rates[16] =
 {
   96000, 88200, 64000, 48000, 44100, 32000,
@@ -272,4 +275,6 @@ void cParserAAC::Reset()
 {
   cParser::Reset();
   m_Configured = false;
+}
+
 }

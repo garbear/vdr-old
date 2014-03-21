@@ -39,6 +39,9 @@
 
 using namespace std;
 
+namespace VDR
+{
+
 string URLEncodeInline(const string& strData)
 {
   string buffer = strData;
@@ -717,4 +720,6 @@ char CURL::GetDirectorySeparator()
   else
 #endif
     return '/';
+}
+
 }

@@ -15,6 +15,8 @@
 #include "Types.h"
 #include <time.h>
 
+namespace VDR
+{
 class cCountdown {
 private:
   time_t timeout;      ///< 5-minute countdown timer
@@ -112,5 +114,6 @@ public:
   };
 
 extern cShutdownHandler ShutdownHandler;
+}
 
 #endif

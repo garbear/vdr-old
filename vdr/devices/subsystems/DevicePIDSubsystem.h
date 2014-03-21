@@ -23,6 +23,8 @@
 #include "Types.h"
 #include "devices/DeviceSubsystem.h"
 
+namespace VDR
+{
 #define MAXPIDHANDLES      64 // the maximum number of different PIDs per device
 
 enum ePidType
@@ -93,3 +95,4 @@ private:
 public: // TODO
   cPidHandle m_pidHandles[MAXPIDHANDLES];
 };
+}

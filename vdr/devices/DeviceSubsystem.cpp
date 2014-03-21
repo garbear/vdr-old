@@ -22,6 +22,8 @@
 #include "DeviceSubsystem.h"
 #include "Device.h"
 
+namespace VDR
+{
 cDeviceChannelSubsystem         *cDeviceSubsystem::Channel() const         { return m_device->Channel(); }
 cDeviceCommonInterfaceSubsystem *cDeviceSubsystem::CommonInterface() const { return m_device->CommonInterface(); }
 cDeviceImageGrabSubsystem       *cDeviceSubsystem::ImageGrab() const       { return m_device->ImageGrab(); }
@@ -32,3 +34,4 @@ cDeviceSectionFilterSubsystem   *cDeviceSubsystem::SectionFilter() const   { ret
 cDeviceSPUSubsystem             *cDeviceSubsystem::SPU() const             { return m_device->SPU(); }
 cDeviceTrackSubsystem           *cDeviceSubsystem::Track() const           { return m_device->Track(); }
 cDeviceVideoFormatSubsystem     *cDeviceSubsystem::VideoFormat() const     { return m_device->VideoFormat(); }
+}

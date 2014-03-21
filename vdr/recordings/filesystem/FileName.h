@@ -5,6 +5,8 @@
 #include <stdio.h>
 #include <string>
 
+namespace VDR
+{
 class CVideoFile;
 
 class cFileName
@@ -29,3 +31,4 @@ private:
   bool        m_bBlocking;
   bool        m_bIsPesRecording;
 };
+}

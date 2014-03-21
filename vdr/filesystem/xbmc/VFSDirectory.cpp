@@ -26,7 +26,9 @@
 #include <vector>
 
 using namespace std;
-//using namespace ADDON;
+
+namespace VDR
+{
 
 extern ADDON::CHelper_libXBMC_addon *XBMC;
 
@@ -79,4 +81,6 @@ bool cVFSDirectory::Rename(const std::string &strPath, const std::string &strNew
   if (!m_XBMC)
     return IDirectory::Rename(strPath, strNewPath);
   return false; // Not implemented in libXBMC API.
+}
+
 }

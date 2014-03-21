@@ -35,6 +35,8 @@
 #include <stddef.h>
 #include <stdio.h>
 
+namespace VDR
+{
 class cPoller;
 
 class cxSocket
@@ -57,5 +59,6 @@ class cxSocket
   ssize_t write(const void *buffer, size_t size, int timeout_ms = -1, bool more_data = false);
   static char *ip2txt(uint32_t ip, unsigned int port, char *str);
 };
+}
 
 #endif // VNSI_CXSOCKET_H

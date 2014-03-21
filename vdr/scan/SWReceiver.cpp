@@ -31,6 +31,9 @@
 using namespace PLATFORM;
 using namespace std;
 
+namespace VDR
+{
+
 #define TS_DBG  0
 #define PES_DBG 0
 #define CNI_DBG 0
@@ -658,4 +661,6 @@ void cSwReceiver::UpdatefromName(const char * name)
   hits++;
   if (++hits > MAXHITS)
     m_bStopped = true;
+}
+
 }

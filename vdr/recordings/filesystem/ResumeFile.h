@@ -3,6 +3,8 @@
 #include "Types.h"
 #include <string>
 
+namespace VDR
+{
 class cResumeFile
 {
 public:
@@ -15,3 +17,4 @@ private:
   std::string m_strFileName;
   bool        m_bIsPesRecording;
 };
+}

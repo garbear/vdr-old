@@ -37,8 +37,9 @@
 #include <tinyxml.h>
 
 using namespace std;
-using namespace VDR;
 
+namespace VDR
+{
 #ifndef ARRAY_SIZE
 #define ARRAY_SIZE(x)  (sizeof(x) / sizeof(x[0]))
 #endif
@@ -1404,4 +1405,6 @@ bool cChannel::HasSchedule(void) const
 SchedulePtr cChannel::Schedule(void) const
 {
   return m_schedule;
+}
+
 }

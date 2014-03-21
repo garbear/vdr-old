@@ -26,6 +26,8 @@
 
 #include <string>
 
+namespace VDR
+{
 class cVFSDirectory : public IDirectory
 {
 public:
@@ -80,3 +82,4 @@ public:
 private:
   ADDON::CHelper_libXBMC_addon* m_XBMC;
 };
+}

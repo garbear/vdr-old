@@ -27,6 +27,9 @@
 using namespace std;
 using namespace PLATFORM;
 
+namespace VDR
+{
+
 #define DVBS_TUNE_TIMEOUT  9000 //ms
 #define DVBS_LOCK_TIMEOUT  2000 //ms
 #define DVBC_TUNE_TIMEOUT  9000 //ms
@@ -947,4 +950,6 @@ bool cDvbTuner::SetFrontend()
     return false;
   }
   return true;
+}
+
 }

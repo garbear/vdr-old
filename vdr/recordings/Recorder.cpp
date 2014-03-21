@@ -19,6 +19,9 @@
 
 using namespace PLATFORM;
 
+namespace VDR
+{
+
 // --- cRecorder -------------------------------------------------------------
 
 cRecorder::cRecorder(const std::string& strFileName, ChannelPtr Channel, int Priority)
@@ -182,4 +185,6 @@ void* cRecorder::Process(void)
            }
         }
   return NULL;
+}
+
 }

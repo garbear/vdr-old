@@ -27,6 +27,9 @@
 #include "dvb/Filter.h"
 #include "Types.h"
 
+namespace VDR
+{
+
 class cPmtScanner : public cFilter
 {
 public:
@@ -44,3 +47,5 @@ private:
   ChannelPtr Channel;
   int        numPmtEntries;
 };
+
+}

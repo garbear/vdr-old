@@ -4,6 +4,8 @@
 #include "ILog.h"
 #include "platform/threads/mutex.h"
 
+namespace VDR
+{
 class CLogConsole : public ILog
 {
 public:
@@ -15,3 +17,4 @@ public:
 private:
   PLATFORM::CMutex m_mutex;
 };
+}

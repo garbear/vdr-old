@@ -15,6 +15,8 @@
 #include "Player.h"
 #include "utils/Tools.h"
 
+namespace VDR
+{
 enum eTimerChange { tcMod, tcAdd, tcDel };
 
 class cDevice;
@@ -104,5 +106,6 @@ public:
   static void MsgOsdChannel(const char *Text);
   static void MsgOsdProgramme(time_t PresentTime, const char *PresentTitle, const char *PresentSubtitle, time_t FollowingTime, const char *FollowingTitle, const char *FollowingSubtitle);
   };
+}
 
 #endif //__STATUS_H

@@ -21,6 +21,9 @@
 
 using namespace SI_EXT;
 
+namespace VDR
+{
+
 #ifndef ARRAY_SIZE
 #define ARRAY_SIZE(x)  (sizeof(x) / sizeof((x)[0]))
 #endif
@@ -515,4 +518,6 @@ cNitFilter::ProcessData(u_short Pid, u_char Tid, const u_char *Data, int Length)
     }
   }
   //XXX Channels.Unlock();
+}
+
 }

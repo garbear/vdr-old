@@ -39,6 +39,9 @@
 
 #include <time.h>
 
+namespace VDR
+{
+
 #define MAXOCCUPIEDTIMEOUT  99U // max. time (in seconds) a device may be occupied
 
 #ifndef SAFE_DELETE
@@ -107,7 +110,7 @@ unsigned int cDeviceChannelSubsystem::Occupied() const
 
 void cDeviceChannelSubsystem::SetOccupied(unsigned int seconds)
 {
-  m_occupiedTimeout = time(NULL) + ::min(seconds, MAXOCCUPIEDTIMEOUT);
+  m_occupiedTimeout = time(NULL) + min(seconds, MAXOCCUPIEDTIMEOUT);
 }
 
 bool cDeviceChannelSubsystem::HasProgramme() const
@@ -178,4 +181,6 @@ eSetChannelResult cDeviceChannelSubsystem::SetChannel(ChannelPtr channel)
     cStatus::MsgChannelSwitch(Device(), channel->Number()); // only report status if channel switch successful
 
   return Result;
+}
+
 }

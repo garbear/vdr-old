@@ -24,6 +24,9 @@
 #include "ParserMPEGAudio.h"
 #include "Bitstream.h"
 
+namespace VDR
+{
+
 const uint16_t FrequencyTable[3] = { 44100, 48000, 32000 };
 const uint16_t BitrateTable[2][3][15] =
 {
@@ -142,4 +145,6 @@ int cParserMPEG2Audio::FindHeaders(uint8_t *buf, int buf_size)
     return -1;
   }
   return 0;
+}
+
 }

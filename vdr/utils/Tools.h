@@ -22,6 +22,8 @@
 #include "android_strchrnul.h"
 #endif
 
+namespace VDR
+{
 typedef unsigned char uchar;
 
 #define SECSINDAY  86400
@@ -308,5 +310,7 @@ public:
 // with stdin connected to /dev/null.
 
 int SystemExec(const char *Command, bool Detached = false);
+
+}
 
 #endif //__TOOLS_H

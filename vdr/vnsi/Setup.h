@@ -22,6 +22,10 @@
 #define VNSI_SETUP_H
 
 #include "Types.h"
+
+namespace VDR
+{
+
 class cMenuSetupVNSI : public cMenuSetupPage
 {
 private:
@@ -36,5 +40,7 @@ protected:
 public:
   cMenuSetupVNSI(void);
 };
+
+}
 
 #endif // VNSI_SETUP_H

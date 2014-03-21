@@ -26,6 +26,9 @@
 #include <inttypes.h>
 #include "Bitstream.h"
 
+namespace VDR
+{
+
 cBitstream::cBitstream(uint8_t *data, int bits)
 {
   m_data   = data;
@@ -144,4 +147,6 @@ void cBitstream::putBits(int val, int num)
 
     m_offset++;
   }
+}
+
 }

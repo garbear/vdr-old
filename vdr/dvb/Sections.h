@@ -18,6 +18,8 @@
 #include "utils/DateTime.h"
 #include "platform/threads/threads.h"
 
+namespace VDR
+{
 class cDevice;
 class cChannel;
 class cFilterHandle;
@@ -50,5 +52,6 @@ public:
   void SetChannel(ChannelPtr Channel);
   void SetStatus(bool On);
   };
+}
 
 #endif //__SECTIONS_H

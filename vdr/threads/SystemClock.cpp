@@ -30,7 +30,7 @@
 #endif
 #include "SystemClock.h"
 
-namespace XbmcThreads
+namespace VDR
 {
   unsigned int SystemClockMillis()
   {

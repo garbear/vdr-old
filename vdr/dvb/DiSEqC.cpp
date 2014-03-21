@@ -13,6 +13,9 @@
 
 using namespace PLATFORM;
 
+namespace VDR
+{
+
 static bool ParseDeviceNumbers(const char *s, int &Devices)
 {
   if (*s && s[strlen(s) - 1] == ':') {
@@ -294,4 +297,6 @@ const cDiseqc *cDiseqcs::Get(int Device, int Source, int Frequency, char Polariz
          }
       }
   return NULL;
+}
+
 }

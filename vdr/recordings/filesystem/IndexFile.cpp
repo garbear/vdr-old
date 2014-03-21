@@ -9,6 +9,9 @@
 
 using namespace PLATFORM;
 
+namespace VDR
+{
+
 #define INDEXFILESUFFIX     "/index"
 
 // The maximum time to wait before giving up while catching up on an index file:
@@ -537,4 +540,6 @@ bool GenerateIndex(const char *FileName)
   else
      fprintf(stderr, "'%s' is not a directory\n", FileName);
   return false;
+}
+
 }

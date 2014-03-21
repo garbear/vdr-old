@@ -24,7 +24,10 @@
 
 #include <assert.h>
 
-using namespace COUNTRY;
+using namespace VDR::COUNTRY;
+
+namespace VDR
+{
 
 #ifndef ARRAY_SIZE
 #define ARRAY_SIZE(x)  (sizeof(x) / sizeof((x)[0]))
@@ -1238,4 +1241,6 @@ const CniCodes::cCniCode& CniCodes::GetCniCode(unsigned int index)
 unsigned int CniCodes::GetCniCodeCount()
 {
   return ARRAY_SIZE(cniCodes);
+}
+
 }

@@ -14,6 +14,9 @@
 #include "utils/StringUtils.h"
 #include "utils/Tools.h"
 
+namespace VDR
+{
+
 // VDR's own version number:
 #define VDRVERSION  "2.0.4"
 #define VDRVERSNUM   20004  // Version * 10000 + Major * 100 + Minor
@@ -168,5 +171,7 @@ public:
     return result;
   }
 };
+
+}
 
 #endif //__CONFIG_H

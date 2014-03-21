@@ -23,6 +23,8 @@
 #include "Types.h"
 #include "devices/subsystems/DeviceReceiverSubsystem.h"
 
+namespace VDR
+{
 class cTSBuffer;
 
 class cDvbReceiverSubsystem : public cDeviceReceiverSubsystem
@@ -44,3 +46,4 @@ private:
   // The DVR device (will be opened and closed as needed)
   int m_fd_dvr;
 };
+}

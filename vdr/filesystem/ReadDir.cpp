@@ -24,6 +24,9 @@
 #include <dirent.h>
 #include <string.h>
 
+namespace VDR
+{
+
 cReadDir::cReadDir(const char *Directory)
  : result(NULL)
 {
@@ -47,4 +50,6 @@ struct dirent *cReadDir::Next()
     }
   }
   return NULL;
+}
+
 }

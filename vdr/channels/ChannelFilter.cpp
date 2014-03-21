@@ -29,6 +29,9 @@
 
 using namespace PLATFORM;
 
+namespace VDR
+{
+
 CChannelProvider::CChannelProvider()
   :m_name(""), m_caid(0)
 {
@@ -340,3 +343,4 @@ void CChannelFilter::SortChannels()
 }
 
 CChannelFilter VNSIChannelFilter;
+}

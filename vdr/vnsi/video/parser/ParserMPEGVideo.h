@@ -25,6 +25,9 @@
 #include <deque>
 #include "Parser.h"
 
+namespace VDR
+{
+
 class cBitstream;
 
 // --- cParserMPEG2Video -------------------------------------------------
@@ -60,5 +63,7 @@ public:
   virtual void Parse(sStreamPacket *pkt);
   virtual void Reset();
 };
+
+}
 
 #endif // VNSI_DEMUXER_MPEGVIDEO_H

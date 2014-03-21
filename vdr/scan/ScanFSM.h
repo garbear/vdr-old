@@ -40,6 +40,9 @@
 
 #include <libsi/si_ext.h>
 
+namespace VDR
+{
+
 #define LOCK_TIMEOUT_MS       4000
 #define NIT_SCAN_TIMEOUT_MS  12000
 #define PAT_SCAN_TIMEOUT_MS   4000 // (increased from 1000ms in wirbelscan)
@@ -114,3 +117,5 @@ private:
   ChannelVector             m_newChannels;
   PLATFORM::CMutex          m_mutex;
 };
+
+}

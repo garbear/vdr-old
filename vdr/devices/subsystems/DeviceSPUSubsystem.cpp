@@ -21,7 +21,12 @@
 
 #include "DeviceSPUSubsystem.h"
 
+namespace VDR
+{
+
 cDeviceSPUSubsystem::cDeviceSPUSubsystem(cDevice *device)
  : cDeviceSubsystem(device)
 {
+}
+
 }

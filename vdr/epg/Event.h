@@ -10,6 +10,9 @@
 
 class TiXmlElement;
 
+namespace VDR
+{
+
 enum { MaxEventContents = 4 };
 
 enum eEventContentGroup {
@@ -106,3 +109,4 @@ public:
   static bool Deserialise(cSchedule* schedule, const TiXmlNode *eventNode);
   bool Serialise(TiXmlElement* element) const;
   };
+}

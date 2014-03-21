@@ -24,6 +24,9 @@
 using namespace std;
 using namespace PLATFORM;
 
+namespace VDR
+{
+
 CChannelGroups& CChannelGroups::Get(bool bRadio)
 {
   static CChannelGroups radio;
@@ -85,4 +88,6 @@ CChannelGroup& CChannelGroup::operator=(const CChannelGroup& other)
   }
 
   return *this;
+}
+
 }

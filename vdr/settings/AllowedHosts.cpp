@@ -6,6 +6,8 @@
 #include <string.h>
 #include <stdlib.h>
 
+namespace VDR
+{
 
 CAllowedHost* CAllowedHost::FromString(const std::string& value)
 {
@@ -148,4 +150,6 @@ bool CAllowedHosts::Save(const std::string& strFilename)
 {
   //TODO
   return false;
+}
+
 }

@@ -26,6 +26,9 @@
 
 using namespace std;
 
+namespace VDR
+{
+
 #define MPEG_PICTURE_START      0x00000100
 #define MPEG_SEQUENCE_START     0x000001b3
 #define MPEG_SEQUENCE_EXTENSION 0x000001b5
@@ -275,4 +278,6 @@ bool cParserMPEG2Video::Parse_MPEG2Video_PicStart(uint8_t *buf)
     m_vbvDelay = vbvDelay;
 
   return true;
+}
+
 }

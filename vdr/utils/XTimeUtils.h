@@ -26,6 +26,8 @@
 
 #include <lib/platform/os.h>
 
+namespace VDR
+{
 VOID GetLocalTime(LPSYSTEMTIME);
 
 void WINAPI Sleep(DWORD dwMilliSeconds);
@@ -39,3 +41,4 @@ VOID   GetSystemTimeAsFileTime(LPFILETIME lpSystemTimeAsFileTime);
 
 BOOL  FileTimeToTimeT(const FILETIME* lpLocalFileTime, time_t *pTimeT);
 BOOL  TimeTToFileTime(time_t timeT, FILETIME* lpLocalFileTime);
+}

@@ -14,6 +14,8 @@
 #include "Filter.h"
 #include "PAT.h"
 
+namespace VDR
+{
 class cSdtFilter : public cFilter {
 private:
   cSectionSyncer sectionSyncer;
@@ -24,5 +26,6 @@ public:
   cSdtFilter(cPatFilter *PatFilter);
   virtual void SetStatus(bool On);
   };
+}
 
 #endif //__SDT_H

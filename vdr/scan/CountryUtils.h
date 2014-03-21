@@ -25,6 +25,9 @@
 #include <linux/dvb/frontend.h>
 #include <string>
 
+namespace VDR
+{
+
 enum eFrontendType
 {
   eFT_DVB,
@@ -126,3 +129,5 @@ public:
   static bool GetShortNameFromId(COUNTRY::eCountry countryId, std::string& shortName);
   static bool GetFullNameFromId(COUNTRY::eCountry countryId, std::string& fullName);
 };
+
+}

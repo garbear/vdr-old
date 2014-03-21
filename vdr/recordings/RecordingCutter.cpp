@@ -23,6 +23,9 @@
 
 using namespace PLATFORM;
 
+namespace VDR
+{
+
 // --- cPacketBuffer ---------------------------------------------------------
 
 class cPacketBuffer {
@@ -781,4 +784,6 @@ bool CutRecording(const char *FileName)
   else
      fprintf(stderr, "'%s' is not a directory\n", FileName);
   return false;
+}
+
 }

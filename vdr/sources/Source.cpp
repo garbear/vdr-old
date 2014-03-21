@@ -27,6 +27,9 @@
 
 using namespace std;
 
+namespace VDR
+{
+
 cSource::cSource()
  : m_code(stNone)
 {
@@ -128,4 +131,6 @@ int cSource::FromData(eSourceType sourceType, int position /* = 0 */, eSatellite
     code |= (position & st_Pos);;
   }
   return code;
+}
+
 }

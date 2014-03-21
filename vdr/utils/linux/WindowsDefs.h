@@ -25,6 +25,8 @@
 
 #ifdef TARGET_POSIX
 
+namespace VDR
+{
 #define WINAPI
 
 #define RtlZeroMemory(Destination,Length)  memset((Destination), 0, (Length))
@@ -89,5 +91,7 @@ typedef struct _TIME_ZONE_INFORMATION {
   SYSTEMTIME DaylightDate;
   LONG       DaylightBias;
 } TIME_ZONE_INFORMATION, *PTIME_ZONE_INFORMATION, *LPTIME_ZONE_INFORMATION;
+
+}
 
 #endif

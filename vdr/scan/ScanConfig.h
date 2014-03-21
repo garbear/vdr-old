@@ -24,8 +24,12 @@
 #include "Types.h"
 #include "CountryUtils.h"
 #include "SatelliteUtils.h"
+#include "sources/linux/DVBTransponderParams.h"
 
 #include <linux/dvb/frontend.h>
+
+namespace VDR
+{
 
 // TODO: Needs a better home. Currently lives in DVBTransponderParams.h
 /*
@@ -92,3 +96,5 @@ public:
   SATELLITE::eSatellite satelliteIndex;
   fe_modulation         atscModulation; // Either VSB over-the-air (VSB_8) or QAM Annex B cable TV (QAM_256)
 };
+
+}

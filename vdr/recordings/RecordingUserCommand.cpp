@@ -2,6 +2,9 @@
 #include "utils/Tools.h"
 #include "utils/StringUtils.h"
 
+namespace VDR
+{
+
 cRecordingUserCommand& cRecordingUserCommand::Get(void)
 {
   static cRecordingUserCommand _instance;
@@ -25,4 +28,6 @@ void cRecordingUserCommand::InvokeCommand(const std::string& strState, const std
     isyslog("executing '%s'", cmd.c_str());
     SystemExec(cmd.c_str());
   }
+}
+
 }

@@ -31,6 +31,9 @@
 
 using namespace std;
 
+namespace VDR
+{
+
 cDvbSectionFilterSubsystem::cDvbSectionFilterSubsystem(cDevice *device)
  : cDeviceSectionFilterSubsystem(device)
 {
@@ -66,4 +69,6 @@ int cDvbSectionFilterSubsystem::OpenFilter(u_short pid, u_char tid, u_char mask)
 void cDvbSectionFilterSubsystem::CloseFilter(int handle)
 {
   close(handle);
+}
+
 }

@@ -31,6 +31,9 @@
 #include "lib/platform/threads/threads.h"
 #include "utils/Observer.h"
 
+namespace VDR
+{
+
 class cVNSIClient;
 
 class cVNSIServer : public PLATFORM::CThread, public Observer
@@ -53,5 +56,7 @@ protected:
   bool             m_bChannelsModified;
   PLATFORM::CMutex m_mutex;
 };
+
+}
 
 #endif // VNSI_SERVER_H

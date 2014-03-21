@@ -24,6 +24,9 @@
 #include "ParserAC3.h"
 #include "Bitstream.h"
 
+namespace VDR
+{
+
 #define AC3_HEADER_SIZE 7
 
 /** Channel mode (audio coding mode) */
@@ -246,4 +249,6 @@ int cParserAC3::FindHeaders(uint8_t *buf, int buf_size)
 void cParserAC3::Reset()
 {
   cParser::Reset();
+}
+
 }

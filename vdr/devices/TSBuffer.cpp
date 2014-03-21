@@ -24,6 +24,9 @@
 #include "filesystem/Poller.h"
 #include "utils/Ringbuffer.h"
 
+namespace VDR
+{
+
 // Copied from Remux.h (TODO)
 #define TS_SYNC_BYTE          0x47
 #define TS_SIZE               188
@@ -105,4 +108,6 @@ uchar* cTSBuffer::Get()
     return p;
   }
   return NULL;
+}
+
 }

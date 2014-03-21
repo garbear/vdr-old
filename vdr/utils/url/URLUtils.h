@@ -27,6 +27,9 @@
 #include <string>
 #include <vector>
 
+namespace VDR
+{
+
 /*
  * URLUtils: tools to modify URLs
  */
@@ -157,3 +160,5 @@ public:
 private:
   static std::string resolvePath(const std::string &path);
 };
+
+}

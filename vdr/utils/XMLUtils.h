@@ -29,6 +29,8 @@
 #include <string>
 #include <vector>
 
+namespace VDR
+{
 class CDateTime;
 
 class XMLUtils
@@ -77,4 +79,4 @@ public:
 
   static const int path_version = 1;
 };
-
+}

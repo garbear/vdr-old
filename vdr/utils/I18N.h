@@ -17,6 +17,8 @@
 #include <string>
 #include <vector>
 
+namespace VDR
+{
 #define I18N_DEFAULT_LOCALE "en_US"
 #define I18N_MAX_LOCALE_LEN 16       // for buffers that hold en_US etc.
 #define I18N_MAX_LANGUAGES  256      // for buffers that hold all available languages
@@ -90,5 +92,6 @@ bool I18nIsPreferredLanguage(int *PreferredLanguages, const char *LanguageCode, 
 #endif
 
 #define trNOOP(s) (s)
+}
 
 #endif //__I18N_H

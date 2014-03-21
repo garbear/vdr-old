@@ -26,6 +26,8 @@
 #include <stdint.h>
 #include <string>
 
+namespace VDR
+{
 class Base64
 {
 public:
@@ -41,3 +43,4 @@ public:
 private:
   static const std::string m_characters;
 };
+}

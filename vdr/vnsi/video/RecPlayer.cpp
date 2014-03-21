@@ -38,6 +38,9 @@
 
 using namespace std;
 
+namespace VDR
+{
+
 cRecPlayer::cRecPlayer(cRecording* rec, bool inProgress)
 {
   m_file          = NULL;
@@ -328,4 +331,6 @@ bool cRecPlayer::getNextIFrame(uint32_t frameNumber, uint32_t direction, uint64_
   *rframeLength = (uint32_t)iframeLength;
 
   return true;
+}
+
 }

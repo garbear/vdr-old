@@ -32,6 +32,9 @@
 using namespace ADDON;
 using namespace std;
 
+namespace VDR
+{
+
 class CLogXBMC : public ILog
 {
 public:
@@ -149,6 +152,8 @@ void ADDON_Stop()
 
 void ADDON_FreeSettings()
 {
+}
+
 }
 
 } // extern "C"

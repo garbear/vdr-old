@@ -6,6 +6,9 @@
 #include "Config.h"
 #include "utils/XBMCTinyXML.h"
 
+namespace VDR
+{
+
 cRecordingInfo::cRecordingInfo(ChannelPtr channel, const cEvent *Event)
 {
   m_channel          = channel;
@@ -258,4 +261,6 @@ void cRecordingInfo::SetTitle(const std::string& strTitle)
 {
   if (m_ownEvent)
     m_ownEvent->SetTitle(strTitle);
+}
+
 }
