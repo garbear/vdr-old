@@ -52,14 +52,16 @@ int cPlayer::PlayPes(const vector<uchar> &data, bool VideoOnly /* = false */)
 
 int cPlayer::PlayTs(const uchar *Data, int Length, bool VideoOnly /* = false */)
 {
-  vector<uchar> data;
   if (Data && Length)
   {
-    data.reserve(Length);
-    for (int ptr = 0; ptr < Length; ptr++)
-      data.push_back(Data[ptr]);
+    vector<uchar> data(Data, Data + Length);
+    return PlayTs(data, VideoOnly);
   }
-  return PlayTs(data, VideoOnly);
+  else
+  {
+    vector<uchar> empty;
+    return PlayTs(empty, VideoOnly);
+  }
 }
 
 int cPlayer::PlayTs(const vector<uchar> &data, bool VideoOnly /* = false */)
