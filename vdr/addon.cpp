@@ -82,7 +82,10 @@ void ADDON_ReadSettings(void)
 ADDON_STATUS ADDON_Create(void* hdl, void* props)
 {
   if (!hdl || !props)
+  {
+    printf("ADDON_Create(%p, %p): invalid params\n", hdl, props);
     return ADDON_STATUS_UNKNOWN;
+  }
 
   CONTENT_PROPERTIES* cprops = (CONTENT_PROPERTIES*)props;
 
@@ -91,7 +94,10 @@ ADDON_STATUS ADDON_Create(void* hdl, void* props)
   {
     XBMC = new CHelper_libXBMC_addon;
     if (!XBMC || !XBMC->RegisterMe(hdl))
+    {
+      printf("ADDON_Create(%p, %p): failed to register\n", hdl, props);
       throw ADDON_STATUS_PERMANENT_FAILURE;
+    }
 
     g_strUserPath   = cprops->strUserPath;
     g_strClientPath = cprops->strClientPath;
@@ -99,9 +105,11 @@ ADDON_STATUS ADDON_Create(void* hdl, void* props)
     ADDON_ReadSettings();
 
     m_CurStatus = ADDON_STATUS_OK;
+    printf("addon created!\n");
   }
   catch (const ADDON_STATUS &status)
   {
+    printf("ADDON_Create(%p, %p): exception thrown\n", hdl, props);
     delete XBMC;
     XBMC = NULL;
     m_CurStatus = status;
@@ -118,6 +126,7 @@ ADDON_STATUS ADDON_GetStatus()
 
 void ADDON_Destroy()
 {
+  printf("destroying addon\n");
   vdr.Stop();
   m_CurStatus = ADDON_STATUS_UNKNOWN;
 }
@@ -161,17 +170,21 @@ const char* GetMininumServiceAPIVersion(void)
 
 bool StartService(void)
 {
+  printf("starting service!\n");
   CLog::Get().SetPipe(new CLogXBMC);
   if (!vdr.Init())
   {
+    printf("failed to start service\n");
     m_CurStatus = ADDON_STATUS_LOST_CONNECTION;//XXX
     return false;
   }
+  printf("service started\n");
   return true;
 }
 
 bool StopService(void)
 {
+  printf("stopping service\n");
   vdr.Stop();
   return true;
 }

@@ -68,7 +68,8 @@ extern "C" {
 #endif
   typedef struct SRV_PROPS
   {
-    int dummy;
+    const char* strUserPath;           /*!< @brief path to the user profile */
+    const char* strClientPath;         /*!< @brief path to this add-on */
   } SRV_PROPS;
 
   typedef struct ServiceDLL
