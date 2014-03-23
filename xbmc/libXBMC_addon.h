@@ -1,7 +1,7 @@
 #pragma once
 /*
- *      Copyright (C) 2005-2010 Team XBMC
- *      http://www.xbmc.org
+ *      Copyright (C) 2005-2013 Team XBMC
+ *      http://xbmc.org
  *
  *  This Program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -160,6 +160,10 @@ namespace ADDON
         dlsym(m_libXBMC_addon, "XBMC_queue_notification");
       if (XBMC_queue_notification == NULL) { fprintf(stderr, "Unable to assign function %s\n", dlerror()); return false; }
 
+      XBMC_wake_on_lan = (bool (*)(void* HANDLE, void *CB, const char *mac))
+        dlsym(m_libXBMC_addon, "XBMC_wake_on_lan");
+      if (XBMC_wake_on_lan == NULL) { fprintf(stderr, "Unable to assign function %s\n", dlerror()); return false; }
+
       XBMC_unknown_to_utf8 = (char* (*)(void* HANDLE, void* CB, const char* str))
         dlsym(m_libXBMC_addon, "XBMC_unknown_to_utf8");
       if (XBMC_unknown_to_utf8 == NULL) { fprintf(stderr, "Unable to assign function %s\n", dlerror()); return false; }
@@ -236,6 +240,10 @@ namespace ADDON
         dlsym(m_libXBMC_addon, "XBMC_delete_file");
       if (XBMC_delete_file == NULL) { fprintf(stderr, "Unable to assign function %s\n", dlerror()); return false; }
 
+      XBMC_rename_file = (bool (*)(void* HANDLE, void* CB, const char *strFileName, const char* strFileNameNew))
+        dlsym(m_libXBMC_addon, "XBMC_rename_file");
+      if (XBMC_rename_file == NULL) { fprintf(stderr, "Unable to assign function %s\n", dlerror()); return false; }
+
       XBMC_can_open_directory = (bool (*)(void* HANDLE, void* CB, const char* strURL))
         dlsym(m_libXBMC_addon, "XBMC_can_open_directory");
       if (XBMC_can_open_directory == NULL) { fprintf(stderr, "Unable to assign function %s\n", dlerror()); return false; }
@@ -307,6 +315,16 @@ namespace ADDON
       vsprintf (buffer, format, args);
       va_end (args);
       return XBMC_queue_notification(m_Handle, m_Callbacks, type, buffer);
+    }
+
+    /*!
+     * @brief Send WakeOnLan magic packet.
+     * @param mac Network address of the host to wake.
+     * @return True if the magic packet was successfully sent, false otherwise.
+     */
+    bool WakeOnLan(const char* mac)
+    {
+      return XBMC_wake_on_lan(m_Handle, m_Callbacks, mac);
     }
 
     /*!
@@ -510,6 +528,17 @@ namespace ADDON
     }
 
     /*!
+     * @brief Renames a file.
+     * @param strFileName The filename to rename.
+     * @param strFileNameNew The new filename.
+     * @return The file was successfully renamed.
+     */
+    bool RenameFile(const char *strFileName, const char* strFileNameNew)
+    {
+      return XBMC_rename_file(m_Handle, m_Callbacks, strFileName, strFileNameNew);
+    }
+
+    /*!
      * @brief Checks whether a directory can be opened.
      * @param strUrl The URL of the directory to check.
      * @return True when it can be opened, false otherwise.
@@ -583,6 +612,7 @@ namespace ADDON
     void (*XBMC_log)(void *HANDLE, void* CB, const addon_log_t loglevel, const char *msg);
     bool (*XBMC_get_setting)(void *HANDLE, void* CB, const char* settingName, void *settingValue);
     void (*XBMC_queue_notification)(void *HANDLE, void* CB, const queue_msg_t type, const char *msg);
+    bool (*XBMC_wake_on_lan)(void *HANDLE, void* CB, const char* mac);
     char* (*XBMC_unknown_to_utf8)(void *HANDLE, void* CB, const char* str);
     char* (*XBMC_get_localized_string)(void *HANDLE, void* CB, int dwCode);
     char* (*XBMC_get_dvd_menu_language)(void *HANDLE, void* CB);
@@ -602,6 +632,7 @@ namespace ADDON
     bool (*XBMC_file_exists)(void *HANDLE, void* CB, const char *strFileName, bool bUseCache);
     int (*XBMC_stat_file)(void *HANDLE, void* CB, const char *strFileName, struct __stat64* buffer);
     bool (*XBMC_delete_file)(void *HANDLE, void* CB, const char *strFileName);
+    bool (*XBMC_rename_file)(void *HANDLE, void* CB, const char *strFileName, const char *strFileNameNew);
     bool (*XBMC_can_open_directory)(void *HANDLE, void* CB, const char* strURL);
     bool (*XBMC_create_directory)(void *HANDLE, void* CB, const char* strPath);
     bool (*XBMC_directory_exists)(void *HANDLE, void* CB, const char* strPath);
