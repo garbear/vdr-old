@@ -20,7 +20,7 @@
  */
 
 #include "VFSFile.h"
-
+#include "filesystem/SpecialProtocol.h"
 #include "xbmc/libXBMC_addon.h"
 
 namespace VDR
@@ -35,12 +35,14 @@ cVFSFile::cVFSFile()
 
 bool cVFSFile::Open(const std::string &url, unsigned int flags /* = 0 */)
 {
-  return m_file.Open(url, flags);
+  std::string strTranslatedPath = CSpecialProtocol::TranslatePath(url);
+  return m_file.Open(strTranslatedPath, flags);
 }
 
 bool cVFSFile::OpenForWrite(const std::string &url, bool bOverWrite /* = false */)
 {
-  return m_file.OpenForWrite(url, bOverWrite);
+  std::string strTranslatedPath = CSpecialProtocol::TranslatePath(url);
+  return m_file.OpenForWrite(strTranslatedPath, bOverWrite);
 }
 
 int64_t cVFSFile::Read(void *lpBuf, uint64_t uiBufSize)
@@ -97,21 +99,27 @@ bool cVFSFile::Exists(const std::string &url)
 {
   if (!XBMC)
     return false;
-  return XBMC->FileExists(url.c_str(), true);
+
+  std::string strTranslatedPath = CSpecialProtocol::TranslatePath(url);
+  return XBMC->FileExists(strTranslatedPath.c_str(), true);
 }
 
 int cVFSFile::Stat(const std::string &url, struct __stat64 *buffer)
 {
   if (!XBMC)
     return IFile::Stat(url, buffer);
-  return XBMC->StatFile(url.c_str(), buffer);
+
+  std::string strTranslatedPath = CSpecialProtocol::TranslatePath(url);
+  return XBMC->StatFile(strTranslatedPath.c_str(), buffer);
 }
 
 bool cVFSFile::Delete(const std::string &url)
 {
   if (!XBMC)
     return false;
-  return XBMC->DeleteFile(url.c_str());
+
+  std::string strTranslatedPath = CSpecialProtocol::TranslatePath(url);
+  return XBMC->DeleteFile(strTranslatedPath.c_str());
 }
 
 }

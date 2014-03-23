@@ -22,6 +22,7 @@
 #include "VFSDirectory.h"
 #include "xbmc/xbmc_content_types.h"
 #include "xbmc/xbmc_file_utils.hpp"
+#include "filesystem/SpecialProtocol.h"
 
 #include <vector>
 
@@ -40,7 +41,9 @@ cVFSDirectory::cVFSDirectory()
 bool cVFSDirectory::GetDirectory(const string &strPath, DirectoryListing &items)
 {
   CONTENT_ADDON_FILELIST *directory = NULL;
-  if (m_XBMC->GetDirectory(strPath.c_str(), &directory) && directory)
+  std::string strTranslatedPath = CSpecialProtocol::TranslatePath(strPath);
+
+  if (m_XBMC->GetDirectory(strTranslatedPath.c_str(), &directory) && directory)
   {
     AddonFileItemList list(*directory);
     m_XBMC->FreeDirectory(directory);
@@ -59,27 +62,36 @@ bool cVFSDirectory::Create(const std::string &strPath)
 {
   if (!m_XBMC)
     return IDirectory::Create(strPath);
-  return m_XBMC->CreateDirectory(strPath.c_str());
+
+  std::string strTranslatedPath = CSpecialProtocol::TranslatePath(strPath);
+  return m_XBMC->CreateDirectory(strTranslatedPath.c_str());
 }
 
 bool cVFSDirectory::Exists(const std::string &strPath)
 {
   if (!m_XBMC)
     return IDirectory::Exists(strPath);
-  return m_XBMC->DirectoryExists(strPath.c_str());
+
+  std::string strTranslatedPath = CSpecialProtocol::TranslatePath(strPath);
+  return m_XBMC->DirectoryExists(strTranslatedPath.c_str());
 }
 
 bool cVFSDirectory::Remove(const std::string &strPath)
 {
   if (!m_XBMC)
     return IDirectory::Remove(strPath);
-  return m_XBMC->RemoveDirectory(strPath.c_str());
+
+  std::string strTranslatedPath = CSpecialProtocol::TranslatePath(strPath);
+  return m_XBMC->RemoveDirectory(strTranslatedPath.c_str());
 }
 
 bool cVFSDirectory::Rename(const std::string &strPath, const std::string &strNewPath)
 {
   if (!m_XBMC)
     return IDirectory::Rename(strPath, strNewPath);
+
+  //XXX
+  esyslog("NOT IMPLEMENTED: %s: %s -> %s", __PRETTY_FUNCTION__, strPath.c_str(), strNewPath.c_str());
   return false; // Not implemented in libXBMC API.
 }
 
