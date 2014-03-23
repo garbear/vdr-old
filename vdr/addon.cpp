@@ -105,7 +105,6 @@ ADDON_STATUS ADDON_Create(void* hdl, void* props)
     ADDON_ReadSettings();
 
     m_CurStatus = ADDON_STATUS_OK;
-    printf("addon created!\n");
   }
   catch (const ADDON_STATUS &status)
   {
