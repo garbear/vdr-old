@@ -360,10 +360,10 @@ bool cTimers::Save(const string &file /* = ""*/)
 
   assert(!m_strFilename.empty());
 
-  isyslog("saving channel configuration to '%s'", m_strFilename.c_str());
+  isyslog("saving timers to '%s'", m_strFilename.c_str());
   if (!xmlDoc.SafeSaveFile(m_strFilename))
   {
-    esyslog("failed to save the channel configuration: could not write to '%s'", m_strFilename.c_str());
+    esyslog("failed to save timers: could not write to '%s'", m_strFilename.c_str());
     return false;
   }
   return true;
