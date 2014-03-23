@@ -135,7 +135,7 @@ cSettings::cSettings()
   m_iMaxVideoFileSizeMB     = MAXVIDEOFILESIZEDEFAULT;
   m_iResumeID               = 0;
   m_EPGLanguages[0]         = -1;
-  m_SysLogLevel             = SYS_LOG_INFO;
+  m_SysLogLevel             = SYS_LOG_DEBUG;
   m_SysLogType              = SYS_LOG_TYPE_CONSOLE;
 
   // TODO: Load these paths from settings (assuming they are even used)
