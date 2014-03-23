@@ -72,6 +72,7 @@ bool cVDRDaemon::LoadConfig(void)
   CSpecialProtocol::LogPaths();
 
   // Create directories
+  CDirectory::Create("special://home/");
   CDirectory::Create("special://home/epg/");
   CDirectory::Create("special://home/system/");
   CDirectory::Create("special://home/video/");
