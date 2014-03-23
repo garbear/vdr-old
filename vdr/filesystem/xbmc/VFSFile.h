@@ -56,7 +56,7 @@ public:
   virtual bool Exists(const std::string &url);
   virtual int Stat(const std::string &url, struct __stat64 *buffer);
   virtual bool Delete(const std::string &url);
-  virtual bool Rename(const std::string &url, const std::string &urlnew) { return false; }
+  virtual bool Rename(const std::string &url, const std::string &urlnew);
 
 private:
   VFSFile m_file;

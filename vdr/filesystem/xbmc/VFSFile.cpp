@@ -122,4 +122,14 @@ bool cVFSFile::Delete(const std::string &url)
   return XBMC->DeleteFile(strTranslatedPath.c_str());
 }
 
+bool cVFSFile::Rename(const std::string &url, const std::string &urlnew)
+{
+  if (!XBMC)
+    return false;
+
+  std::string strTranslatedPath    = CSpecialProtocol::TranslatePath(url);
+  std::string strTranslatedPathNew = CSpecialProtocol::TranslatePath(urlnew);
+  return XBMC->RenameFile(strTranslatedPath.c_str(), strTranslatedPathNew.c_str());
+}
+
 }
