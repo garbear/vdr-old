@@ -170,21 +170,17 @@ const char* GetMininumServiceAPIVersion(void)
 
 bool StartService(void)
 {
-  printf("starting service!\n");
   CLog::Get().SetPipe(new CLogXBMC);
   if (!vdr.Init())
   {
-    printf("failed to start service\n");
     m_CurStatus = ADDON_STATUS_LOST_CONNECTION;//XXX
     return false;
   }
-  printf("service started\n");
   return true;
 }
 
 bool StopService(void)
 {
-  printf("stopping service\n");
   vdr.Stop();
   return true;
 }

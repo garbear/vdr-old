@@ -39,11 +39,15 @@ using namespace std;
 namespace VDR
 {
 
-IDirectory *CDirectory::CreateLoader(const std::string &path)
+IDirectory *CDirectory::CreateLoader(const std::string &path, bool bForceLocal /* = false */)
 {
+  if (!bForceLocal)
+  {
 #if TARGET_XBMC
   return new cVFSDirectory();
-#else
+#endif
+  }
+
   string translatedPath = CSpecialProtocol::TranslatePath(path);
   CURL url(translatedPath);
   string protocol = url.GetProtocol();
@@ -53,14 +57,13 @@ IDirectory *CDirectory::CreateLoader(const std::string &path)
     return new CHDDirectory();
 
   return NULL;
-#endif
 }
 
-bool CDirectory::GetDirectory(const string &strPath, DirectoryListing &items, const string &strMask, int flags)
+bool CDirectory::GetDirectory(const string &strPath, DirectoryListing &items, const string &strMask, int flags, bool bForceLocal /* = false */)
 {
   try
   {
-    auto_ptr<IDirectory> pDirectory(CreateLoader(strPath));
+    auto_ptr<IDirectory> pDirectory(CreateLoader(strPath, bForceLocal));
     if (!pDirectory.get())
       return false;
     pDirectory->SetFlags(flags);

@@ -38,7 +38,8 @@ public:
   static bool GetDirectory(const std::string &strPath,
                            DirectoryListing &items,
                            const std::string &strMask = "",
-                           int flags = DEFAULTS);
+                           int flags = DEFAULTS,
+                           bool bForceLocal = false);
   // Need to manually delete IDirectory object (TODO: fix this)
   static IDirectory *GetDirectory(const std::string &strPath,
                            IDirectoryCallback *callback,
@@ -54,6 +55,6 @@ public:
   static bool CanWrite(const std::string &strPath);
 
 private:
-  static IDirectory *CreateLoader(const std::string &path);
+  static IDirectory *CreateLoader(const std::string &path, bool bForceLocal = false);
 };
 }

@@ -159,7 +159,7 @@ DeviceVector cDvbDevice::FindDevices()
 
   // Enumerate /dev/dvb
   DirectoryListing items;
-  if (CDirectory::GetDirectory(DEV_DVB_BASE, items))
+  if (CDirectory::GetDirectory(DEV_DVB_BASE, items, "", DEFAULTS, true))
   {
     for (DirectoryListing::const_iterator itemIt = items.begin(); itemIt != items.end(); ++itemIt)
     {
@@ -178,7 +178,7 @@ DeviceVector cDvbDevice::FindDevices()
 
       // Enumerate /dev/dvb/adapterN
       DirectoryListing adapterDirItems;
-      if (!CDirectory::GetDirectory(URLUtils::AddFileToFolder(DEV_DVB_BASE, adapterName), adapterDirItems))
+      if (!CDirectory::GetDirectory(URLUtils::AddFileToFolder(DEV_DVB_BASE, adapterName), adapterDirItems, "", DEFAULTS, true))
         continue;
 
       for (DirectoryListing::const_iterator itemIt2 = adapterDirItems.begin(); itemIt2 != adapterDirItems.end(); ++itemIt2)
@@ -193,6 +193,7 @@ DeviceVector cDvbDevice::FindDevices()
         if (frontend == INVALID)
           continue;
 
+        dsyslog("found adapter %ld frontend %ld", adapter, frontend);
         devices.push_back(DevicePtr(new cDvbDevice(adapter, frontend)));
       }
     }
