@@ -30,6 +30,10 @@
 #include <time64.h>
 #endif
 
+#ifdef ANDROID
+#include "android/timegm.h"
+#endif
+
 #include <errno.h>
 #include <time.h>
 #include <unistd.h>
