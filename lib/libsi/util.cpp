@@ -14,7 +14,7 @@
 #include "util.h"
 
 #ifdef ANDROID
-#include "android_timegm.h"
+#include "../../vdr/utils/android/timegm.h"
 #endif
 
 namespace SI {
