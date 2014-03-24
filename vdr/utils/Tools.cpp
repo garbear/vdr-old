@@ -30,7 +30,9 @@
 #include <unistd.h>
 #include <utime.h>
 #include <string.h>
+#ifndef ANDROID
 #include <wait.h>
+#endif
 
 using namespace std;
 
@@ -1111,6 +1113,7 @@ cList<cHashObject> *cHashBase::GetList(unsigned int Id) const
 
 int SystemExec(const char *Command, bool Detached)
 {
+#ifndef ANDROID
   pid_t pid;
 
   if ((pid = fork()) < 0)
@@ -1156,6 +1159,10 @@ int SystemExec(const char *Command, bool Detached)
     _exit(0);
   }
   return 0;
+#else
+  // disabled on android
+  return -1;
+#endif
 }
 
 }
