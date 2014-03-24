@@ -39,9 +39,10 @@ void CLogSyslog::Log(sys_log_level_t level, const char* logline)
   syslog(priority, "%s", logline);
 }
 
-}
 #else
 CLogSyslog::CLogSyslog(void) {}
 CLogSyslog::~CLogSyslog(void) {}
 void CLogSyslog::Log(sys_log_level_t level, const char* logline) {}
 #endif
+
+}
