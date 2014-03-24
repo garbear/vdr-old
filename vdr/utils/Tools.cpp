@@ -328,7 +328,7 @@ std::string AddDirectory(const std::string& strDirName, const std::string& strFi
 
 double atod(const char *s)
 {
-  static lconv *loc = localeconv();
+  static const lconv *loc = localeconv();
   if (*loc->decimal_point != DECIMAL_POINT_C) {
      char buf[strlen(s) + 1];
      char *p = buf;
@@ -349,7 +349,7 @@ double atod(const char *s)
 
 cString dtoa(double d, const char *Format)
 {
-  static lconv *loc = localeconv();
+  static const lconv *loc = localeconv();
   char buf[16];
   snprintf(buf, sizeof(buf), Format, d);
   if (*loc->decimal_point != DECIMAL_POINT_C)
