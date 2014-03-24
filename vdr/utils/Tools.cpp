@@ -834,7 +834,7 @@ bool cLockFile::Lock(int WaitSeconds)
           struct stat64 fs;
           if (CFile::Stat(m_strFilename, &fs) == 0)
           {
-            if (abs(time(NULL) - fs.st_mtime) > LOCKFILESTALETIME)
+            if (abs((long)(time(NULL) - fs.st_mtime)) > LOCKFILESTALETIME)
             {
               esyslog("ERROR: removing stale lock file '%s'", m_strFilename.c_str());
               if (!CFile::Delete(m_strFilename))
