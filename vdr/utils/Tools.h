@@ -18,8 +18,8 @@
 #include <math.h>
 
 #ifdef ANDROID
-#include "android_sort.h"
-#include "android_strchrnul.h"
+#include "android/sort.h"
+#include "android/strchrnul.h"
 #endif
 
 namespace VDR
