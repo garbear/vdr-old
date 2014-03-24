@@ -1,12 +1,14 @@
 #include "LogSyslog.h"
 #include "settings/Settings.h"
-#include <syslog.h>
 
 #ifndef ANDROID
+#include <syslog.h>
+#endif
 
 namespace VDR
 {
 
+#ifndef ANDROID
 CLogSyslog::CLogSyslog(void)
 {
   openlog("vdr", LOG_CONS, cSettings::Get().m_SysLogTarget); // LOG_PID doesn't work as expected under NPTL
@@ -38,5 +40,8 @@ void CLogSyslog::Log(sys_log_level_t level, const char* logline)
 }
 
 }
-
+#else
+CLogSyslog::CLogSyslog(void) {}
+CLogSyslog::~CLogSyslog(void) {}
+void CLogSyslog::Log(sys_log_level_t level, const char* logline) {}
 #endif
