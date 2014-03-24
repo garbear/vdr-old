@@ -42,8 +42,11 @@
 #include <sys/capability.h>
 #endif
 #include <sys/prctl.h>
-#include <sys/syslog.h>
 #include <unistd.h>
+
+#ifndef ANDROID
+#include <sys/syslog.h>
+#endif
 
 namespace VDR
 {
@@ -530,6 +533,7 @@ bool cSettings::LoadFromCmdLine(int argc, char *argv[])
       }
       fprintf(stderr, "vdr: invalid instance id: %s\n", optarg);
       return false;
+#ifndef ANDROID
     // log
     case 'l':
       {
@@ -563,6 +567,9 @@ bool cSettings::LoadFromCmdLine(int argc, char *argv[])
         fprintf(stderr, "vdr: invalid log level: %s\n", optarg);
         return false;
       }
+#else
+      cSettings::Get().m_SysLogLevel = SYS_LOG_INFO;
+#endif
     // record
     case 'r':
       cRecordingUserCommand::Get().SetCommand(optarg);
