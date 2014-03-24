@@ -40,7 +40,7 @@ namespace VDR
 {
 
 #ifdef ANDROID
-#include "android_getline.h"
+#include "android/getline.h"
 
 #define POSIX_FADV_RANDOM   1
 #define POSIX_FADV_DONTNEED 1
