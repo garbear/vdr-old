@@ -104,7 +104,9 @@ namespace VDR
 cSettings::cSettings()
 {
   m_DaemonMode        = false;
+#ifndef ANDROID
   m_SysLogTarget      = LOG_USER;
+#endif
   m_StartedAsRoot     = false;
   m_bSplitEditedFiles = false;
   m_HasStdin          = (tcgetpgrp(STDIN_FILENO) == getpid() || getppid() != (pid_t)1) && tcgetattr(STDIN_FILENO, &m_savedTm) == 0;

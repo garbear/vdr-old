@@ -3,6 +3,8 @@
 #include "Types.h"
 #include "ILog.h"
 
+#ifndef ANDROID
+
 namespace VDR
 {
 class CLogSyslog : public ILog
@@ -15,3 +17,5 @@ public:
   sys_log_type_t Type(void) const { return SYS_LOG_TYPE_SYSLOG; }
 };
 }
+
+#endif

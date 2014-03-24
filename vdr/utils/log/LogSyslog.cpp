@@ -2,6 +2,8 @@
 #include "settings/Settings.h"
 #include <syslog.h>
 
+#ifndef ANDROID
+
 namespace VDR
 {
 
@@ -36,3 +38,5 @@ void CLogSyslog::Log(sys_log_level_t level, const char* logline)
 }
 
 }
+
+#endif
