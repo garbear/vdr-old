@@ -35,8 +35,6 @@ CHECK_LIBRARY_EXISTS(fribidi fribidi_log2vis "fribidi/fribidi.h" HAVE_FRIBIDI) #
 
 if(NOT IS_ANDROID)
   CHECK_LIBRARY_EXISTS(cap cap_set_proc "sys/capability.h" HAVE_CAP)
-else()
-  SET(LIBDL_USE_STATIC 1)
 endif()
 
 if(NOT HAVE_PCRE)
