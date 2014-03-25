@@ -9,4 +9,4 @@ set(LIBHTS_SRCS
 )
 
 set(LIBHTS_LIBRARY libhts)
-add_library(${LIBHTS_LIBRARY} SHARED ${LIBHTS_SRCS})
+add_library(${LIBHTS_LIBRARY} STATIC ${LIBHTS_SRCS})

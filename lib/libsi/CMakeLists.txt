@@ -10,4 +10,4 @@ set(LIBSI_SRCS
 )
 
 set(LIBSI_LIBRARY libsi)
-add_library(${LIBSI_LIBRARY} SHARED ${LIBSI_SRCS})
+add_library(${LIBSI_LIBRARY} STATIC ${LIBSI_SRCS})
