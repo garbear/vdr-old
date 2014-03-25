@@ -11,7 +11,11 @@ ADD_SUBDIRECTORY(lib/libsi)
 ADD_SUBDIRECTORY(lib/libhts)
 ADD_SUBDIRECTORY(lib/platform)
 
-SET(IS_ANDROID $ENV{ANDROID})
+IF("${OS}" STREQUAL "android")
+SET(IS_ANDROID 1)
+ELSE()
+SET(IS_ANDROID 0)
+ENDIF()
 
 add_definitions(-DTARGET_LINUX -DTARGET_POSIX)
 
@@ -57,11 +61,11 @@ endif()
 # TODO: CHECK_LIBRARY_EXISTS
 list(APPEND LIBS tinyxml)
 
-list(APPEND LIBS libsi)
+list(APPEND LIBS si)
 
-list(APPEND LIBS libhts)
+list(APPEND LIBS hts)
 
-list(APPEND LIBS libplatform)
+list(APPEND LIBS platform)
 
 add_definitions(-DTARGET_LINUX -DTARGET_POSIX)
 

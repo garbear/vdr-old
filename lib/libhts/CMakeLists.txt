@@ -8,5 +8,5 @@ set(LIBHTS_SRCS
 	htsstr.c
 )
 
-set(LIBHTS_LIBRARY libhts)
+set(LIBHTS_LIBRARY hts)
 add_library(${LIBHTS_LIBRARY} STATIC ${LIBHTS_SRCS})

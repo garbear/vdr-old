@@ -7,5 +7,5 @@ set(LIBPLATFORM_SRCS
 
 include_directories(${CMAKE_SOURCE_DIR})
 
-set(LIBPLATFORM_LIBRARY libplatform)
+set(LIBPLATFORM_LIBRARY platform)
 add_library(${LIBPLATFORM_LIBRARY} STATIC ${LIBPLATFORM_SRCS})

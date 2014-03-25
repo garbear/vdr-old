@@ -9,5 +9,5 @@ set(LIBSI_SRCS
 	dish.cpp
 )
 
-set(LIBSI_LIBRARY libsi)
+set(LIBSI_LIBRARY si)
 add_library(${LIBSI_LIBRARY} STATIC ${LIBSI_SRCS})
