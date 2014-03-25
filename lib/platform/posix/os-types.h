@@ -119,6 +119,9 @@ typedef LONG HRESULT;
   #define fstat64 fstat
 #else
   #define __stat64 stat64
+  #ifdef ANDROID
+  #define statfs64 statfs
+  #endif
 #endif
 
 #include <string.h>
