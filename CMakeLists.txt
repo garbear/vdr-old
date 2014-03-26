@@ -32,6 +32,7 @@ CHECK_LIBRARY_EXISTS(rt clock_gettime "time.h" HAVE_RT)
 CHECK_LIBRARY_EXISTS(pthread pthread_create "pthread.h" HAVE_PTHREAD)
 CHECK_LIBRARY_EXISTS(pcre pcre_compile "pcre.h" HAVE_PCRE)
 CHECK_LIBRARY_EXISTS(fribidi fribidi_log2vis "fribidi/fribidi.h" HAVE_FRIBIDI) # TODO: Fails
+CHECK_LIBRARY_EXISTS(iconv iconv_open "iconv.h" HAVE_ICONV)
 
 if(NOT IS_ANDROID)
   CHECK_LIBRARY_EXISTS(cap cap_set_proc "sys/capability.h" HAVE_CAP)
@@ -59,6 +60,9 @@ if(HAVE_FRIBIDI)
   list(APPEND LIBS fribidi)
 else()                      # TODO
   list(APPEND LIBS fribidi) # TODO
+endif()
+if(HAVE_ICONV)
+  list(APPEND LIBS iconv)
 endif()
 # TODO: CHECK_LIBRARY_EXISTS
 list(APPEND LIBS tinyxml)
