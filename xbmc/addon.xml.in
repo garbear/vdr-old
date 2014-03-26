@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<addon
+  id="service.vdr"
+  version="1.0.1"
+  name="VDR Service"
+  provider-name="Team XBMC">
+  <requires>
+    <c-pluff version="0.1"/>
+    <import addon="xbmc.servicedll" version="0.1.0"/>
+  </requires>
+  <extension
+    point="xbmc.servicedll"
+    library_linux="XBMC_VDR.so"
+    library_osx="XBMC_VDR.so"
+    library_wingl="XBMC_VDR.dll"
+    library_windx="XBMC_VDR.dll"
+    library_android="libXBMC_VDR.so" />
+  <extension point="xbmc.addon.metadata">
+    <summary lang="en">VDR service add-on</summary>
+    <description lang="en">VDR service add-on</description>
+    <disclaimer lang="en">Work in progress</disclaimer>
+    <platform>@PLATFORM@</platform>
+  </extension>
+</addon>
