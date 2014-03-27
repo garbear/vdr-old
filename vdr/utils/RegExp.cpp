@@ -21,6 +21,8 @@
  */
 
 #include "RegExp.h"
+
+#if defined(HAVE_PCRE)
 //#include "log.h"
 //#include "StdString.h"
 #include "StringUtils.h"
@@ -494,3 +496,5 @@ bool CRegExp::IsJitSupported(void)
 }
 
 }
+
+#endif

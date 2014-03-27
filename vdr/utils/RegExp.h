@@ -25,6 +25,8 @@
 #define REGEXP_H
 
 #include "Types.h"
+
+#if defined(HAVE_PCRE)
 #include <string>
 #include <vector>
 
@@ -184,3 +186,4 @@ typedef std::vector<CRegExp> VECCREGEXP;
 
 #endif
 
+#endif

@@ -237,6 +237,7 @@ bool CXBMCTinyXML::InternalParse(const std::string& rawdata, TiXmlEncoding encod
     return (TiXmlDocument::Parse(rawdata.c_str(), NULL, encoding) != NULL); // nothing to fix, process data directly
 
   std::string data(rawdata);
+#if defined(HAVE_PCRE)
   CRegExp re(false, false, "^&(amp|lt|gt|quot|apos|#x[a-fA-F0-9]{1,4}|#[0-9]{1,5});.*");
   do
   {
@@ -244,6 +245,7 @@ bool CXBMCTinyXML::InternalParse(const std::string& rawdata, TiXmlEncoding encod
       data.insert(pos + 1, "amp;");
     pos = data.find('&', pos + 1);
   } while (pos != std::string::npos);
+#endif
 
   return (TiXmlDocument::Parse(data.c_str(), NULL, encoding) != NULL);
 }

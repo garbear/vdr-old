@@ -7,6 +7,9 @@ include(CheckLibraryExists)
 ADD_SUBDIRECTORY(lib/gtest)
 enable_testing()
 
+# disable regex support for now
+SET(USE_REGEX 0)
+
 ADD_SUBDIRECTORY(lib/libsi)
 ADD_SUBDIRECTORY(lib/libhts)
 ADD_SUBDIRECTORY(lib/platform)
@@ -30,17 +33,25 @@ include_directories(${CMAKE_SOURCE_DIR}/lib/libhts)
 
 CHECK_LIBRARY_EXISTS(rt clock_gettime "time.h" HAVE_RT)
 CHECK_LIBRARY_EXISTS(pthread pthread_create "pthread.h" HAVE_PTHREAD)
-CHECK_LIBRARY_EXISTS(pcre pcre_compile "pcre.h" HAVE_PCRE)
+
 CHECK_LIBRARY_EXISTS(fribidi fribidi_log2vis "fribidi/fribidi.h" HAVE_FRIBIDI) # TODO: Fails
 CHECK_LIBRARY_EXISTS(iconv iconv_open "iconv.h" HAVE_ICONV)
 
-if(NOT IS_ANDROID)
-  CHECK_LIBRARY_EXISTS(cap cap_set_proc "sys/capability.h" HAVE_CAP)
+if(USE_REGEX)
+  CHECK_LIBRARY_EXISTS(pcre pcre_compile "pcre.h" HAVE_PCRE)
+
+  if(NOT HAVE_PCRE)
+    ADD_SUBDIRECTORY(lib/pcre)
+    set(HAVE_PCRE 1)
+  endif()
+
+  add_definitions(-DHAVE_PCRE)
+else()
+  SET(HAVE_PCRE 0)
 endif()
 
-if(NOT HAVE_PCRE)
-  ADD_SUBDIRECTORY(lib/pcre)
-  set(HAVE_PCRE 1)
+if(NOT IS_ANDROID)
+  CHECK_LIBRARY_EXISTS(cap cap_set_proc "sys/capability.h" HAVE_CAP)
 endif()
 
 if(HAVE_CAP)
