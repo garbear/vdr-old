@@ -1,0 +1,6 @@
+// Los Angeles, channel 7 (177MHz)
+Transport stream ID: 0x0127 (295)
+PAT associations:
+PID: 48, SID: 1
+PID: 64, SID: 2
+PID: 80, SID: 3
