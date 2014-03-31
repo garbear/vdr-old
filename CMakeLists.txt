@@ -72,10 +72,12 @@ if(HAVE_FRIBIDI)
 else()                      # TODO
   list(APPEND LIBS fribidi) # TODO
 endif()
-if(HAVE_ICONV)
+#if(HAVE_ICONV)
   list(APPEND LIBS iconv)
-endif()
+#endif()
 # TODO: CHECK_LIBRARY_EXISTS
+list(APPEND LIBS intl)
+
 list(APPEND LIBS tinyxml)
 
 list(APPEND LIBS si)
