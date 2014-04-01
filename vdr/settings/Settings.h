@@ -58,7 +58,7 @@ public:
   //XXX guess we should port over xbmc's settings too :)
   std::string         m_ConfigDirectory;
   bool                m_DaemonMode;
-#ifndef ANDROID
+#if !defined(TARGET_ANDROID)
   int                 m_SysLogTarget;
 #endif
   bool                m_bSplitEditedFiles;

@@ -17,15 +17,6 @@
 #include <vector>
 #include <math.h>
 
-#ifdef ANDROID
-#include "android/sort.h"
-#include "android/strchrnul.h"
-
-// Android does not declare mkdtemp even though it's implemented.
-extern "C" char *mkdtemp(char *path);
-
-#endif
-
 namespace VDR
 {
 typedef unsigned char uchar;

@@ -30,7 +30,7 @@
 #include <unistd.h>
 #include <utime.h>
 #include <string.h>
-#ifndef ANDROID
+#if !defined(TARGET_ANDROID)
 #include <wait.h>
 #endif
 
@@ -39,7 +39,7 @@ using namespace std;
 namespace VDR
 {
 
-#ifdef ANDROID
+#if defined(TARGET_ANDROID)
 #include "android/getline.h"
 
 #define POSIX_FADV_RANDOM   1
@@ -495,7 +495,7 @@ char *ReadLink(const char *FileName)
 {
   if (!FileName)
      return NULL;
-#ifdef ANDROID
+#if defined(TARGET_ANDROID)
   char *TargetName = realpath(FileName, NULL);
 #else
   char *TargetName = canonicalize_file_name(FileName);
@@ -1113,7 +1113,7 @@ cList<cHashObject> *cHashBase::GetList(unsigned int Id) const
 
 int SystemExec(const char *Command, bool Detached)
 {
-#ifndef ANDROID
+#if !defined(TARGET_ANDROID)
   pid_t pid;
 
   if ((pid = fork()) < 0)

@@ -1,14 +1,14 @@
 #include "LogSyslog.h"
 #include "settings/Settings.h"
 
-#ifndef ANDROID
+#if !defined(TARGET_ANDROID)
 #include <syslog.h>
 #endif
 
 namespace VDR
 {
 
-#ifndef ANDROID
+#if !defined(TARGET_ANDROID)
 CLogSyslog::CLogSyslog(void)
 {
   openlog("vdr", LOG_CONS, cSettings::Get().m_SysLogTarget); // LOG_PID doesn't work as expected under NPTL

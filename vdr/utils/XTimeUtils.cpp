@@ -28,9 +28,6 @@
 
 #if defined(TARGET_ANDROID)
 #include <time64.h>
-#endif
-
-#ifdef ANDROID
 #include "android/timegm.h"
 #endif
 

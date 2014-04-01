@@ -39,6 +39,15 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
+#if defined(TARGET_ANDROID)
+#include "utils/android/sort.h"
+#include "utils/android/strchrnul.h"
+
+// Android does not declare mkdtemp even though it's implemented.
+extern "C" char *mkdtemp(char *path);
+
+#endif
+
 namespace VDR
 {
 class cChannel;

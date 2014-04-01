@@ -44,7 +44,7 @@
 #include <sys/prctl.h>
 #include <unistd.h>
 
-#ifndef ANDROID
+#if !defined(TARGET_ANDROID)
 #include <sys/syslog.h>
 #endif
 
@@ -104,7 +104,7 @@ namespace VDR
 cSettings::cSettings()
 {
   m_DaemonMode        = false;
-#ifndef ANDROID
+#if !defined(TARGET_ANDROID)
   m_SysLogTarget      = LOG_USER;
 #endif
   m_StartedAsRoot     = false;
@@ -535,7 +535,7 @@ bool cSettings::LoadFromCmdLine(int argc, char *argv[])
       }
       fprintf(stderr, "vdr: invalid instance id: %s\n", optarg);
       return false;
-#ifndef ANDROID
+#if !defined(TARGET_ANDROID)
     // log
     case 'l':
       {
