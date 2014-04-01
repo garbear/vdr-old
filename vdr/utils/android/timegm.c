@@ -62,7 +62,7 @@ time_t timegm(struct tm *tm)
    // Calculate days
    days = tm->tm_mday - 1;
    for (i = 0; i < month; i++)
-      days += days_apart[i];
+      days += days_per_month[i];
    const int leap = (month >= 2 && IS_LEAPYEAR(year));
    days += disparity(1970, year) + (leap ? 1 : 0);
 
