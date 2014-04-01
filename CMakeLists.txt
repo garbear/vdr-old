@@ -81,8 +81,6 @@ list(APPEND LIBS hts)
 
 list(APPEND LIBS platform)
 
-add_definitions(-DTARGET_LINUX -DTARGET_POSIX)
-
 # Enable gtest
 enable_testing()
 
