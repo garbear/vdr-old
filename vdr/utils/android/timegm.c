@@ -39,7 +39,7 @@ inline long days_apart(long y1, long y2)
 
 time_t timegm(struct tm *tm)
 {
-   unsigned long year, month, days, hours, minutes;
+   unsigned long year, month, days, hours, minutes, i;
 
    // Calculate year
    year = tm->tm_year + 1900;
@@ -61,7 +61,7 @@ time_t timegm(struct tm *tm)
 
    // Calculate days
    days = tm->tm_mday - 1;
-   for (unsigned int i = 0; i < month; i++)
+   for (i = 0; i < month; i++)
       days += days_apart[i];
    const int leap = (month >= 2 && IS_LEAPYEAR(year));
    days += disparity(1970, year) + (leap ? 1 : 0);
