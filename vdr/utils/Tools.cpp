@@ -730,37 +730,6 @@ bool cBitStream::SetLength(int Length)
   return true;
 }
 
-// --- cReadLine -------------------------------------------------------------
-
-cReadLine::cReadLine(void)
-{
-  size = 0;
-  buffer = NULL;
-}
-
-cReadLine::~cReadLine()
-{
-  free(buffer);
-}
-
-char *cReadLine::Read(FILE *f)
-{
-  int n = getline(&buffer, &size, f);
-  if (n > 0) {
-     n--;
-     if (buffer[n] == '\n') {
-        buffer[n] = 0;
-        if (n > 0) {
-           n--;
-           if (buffer[n] == '\r')
-              buffer[n] = 0;
-           }
-        }
-     return buffer;
-     }
-  return NULL;
-}
-
 bool GetSubDirectories(const string &strDirectory, vector<string> &vecFileNames)
 {
   vecFileNames.clear();

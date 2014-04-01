@@ -94,7 +94,6 @@ else()
 
     add_definitions(-DTARGET_LINUX -DTARGET_POSIX -DTARGET_ANDROID)
     set(ANDROID_HELPER_SRCS
-	    vdr/utils/android/getline.c
 	    vdr/utils/android/sort.c
 	    vdr/utils/android/strchrnul.c
 	    vdr/utils/android/timegm.c

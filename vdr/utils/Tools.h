@@ -186,16 +186,6 @@ public:
   uint64_t Elapsed(void);
   };
 
-class cReadLine {
-private:
-  size_t size;
-  char *buffer;
-public:
-  cReadLine(void);
-  ~cReadLine();
-  char *Read(FILE *f);
-  };
-
 class cLockFile {
 private:
   std::string m_strFilename;
