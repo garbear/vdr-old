@@ -20,8 +20,6 @@ ELSE()
 SET(IS_ANDROID 0)
 ENDIF()
 
-add_definitions(-DTARGET_LINUX -DTARGET_POSIX)
-
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/FindLibdl.cmake")
 
 include_directories(${CMAKE_SOURCE_DIR})
