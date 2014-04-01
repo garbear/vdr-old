@@ -26,11 +26,6 @@
 #include "threads/Atomics.h"
 #endif
 
-#if defined(TARGET_ANDROID)
-#include <time64.h>
-#include "android/timegm.h"
-#endif
-
 #include <errno.h>
 #include <time.h>
 #include <unistd.h>
@@ -127,11 +122,7 @@ BOOL   SystemTimeToFileTime(const SYSTEMTIME* lpSystemTime,  LPFILETIME lpFileTi
   CAtomicSpinLock lock(timegm_lock);
 #endif
 
-#if defined(TARGET_ANDROID)
-  time64_t t = timegm64(&sysTime);
-#else
-  time_t t = timegm(&sysTime);
-#endif
+  vdr_time_t t = vdr_time_gm(&sysTime);
 
   LARGE_INTEGER result;
   result.QuadPart = (long long) t * 10000000 + (long long) lpSystemTime->wMilliseconds * 10000;

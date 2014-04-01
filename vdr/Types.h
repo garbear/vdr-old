@@ -40,12 +40,16 @@
 #include <sys/types.h>
 
 #if defined(TARGET_ANDROID)
-#include "utils/android/sort.h"
-#include "utils/android/strchrnul.h"
-
-// Android does not declare mkdtemp even though it's implemented.
-extern "C" char *mkdtemp(char *path);
-
+#include <time64.h>
+#include "utils/android/android_replacements.h"
+typedef time64_t vdr_time_t;
+#define vdr_time_gm(x) timegm64(x)
+#define vdr_realpath(x) realpath(x, NULL)
+#else
+#include <wait.h>
+typedef time_t vdr_time_t;
+#define vdr_time_gm(x)  timegm(x)
+#define vdr_realpath(x) canonicalize_file_name(x)
 #endif
 
 namespace VDR

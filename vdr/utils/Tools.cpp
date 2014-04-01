@@ -30,23 +30,11 @@
 #include <unistd.h>
 #include <utime.h>
 #include <string.h>
-#if !defined(TARGET_ANDROID)
-#include <wait.h>
-#endif
 
 using namespace std;
 
 namespace VDR
 {
-
-#if defined(TARGET_ANDROID)
-#include "android/getline.h"
-
-#define POSIX_FADV_RANDOM   1
-#define POSIX_FADV_DONTNEED 1
-#define POSIX_FADV_WILLNEED 1
-#define posix_fadvise(a,b,c,d) (-1)
-#endif
 
 int BCD2INT(int x)
 {
@@ -495,11 +483,8 @@ char *ReadLink(const char *FileName)
 {
   if (!FileName)
      return NULL;
-#if defined(TARGET_ANDROID)
-  char *TargetName = realpath(FileName, NULL);
-#else
-  char *TargetName = canonicalize_file_name(FileName);
-#endif
+
+  char *TargetName = vdr_realpath(FileName);
   if (!TargetName) {
      if (errno == ENOENT) // file doesn't exist
         TargetName = strdup(FileName);

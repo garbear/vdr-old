@@ -250,14 +250,12 @@ int cRecPlayer::getBlock(unsigned char* buffer, uint64_t position, int amount)
     return 0;
   }
 
-#if !defined(TARGET_ANDROID)
   if (!m_inProgress)
   {
-    //XXX
     // Tell linux not to bother keeping the data in the FS cache
+//    XXX move to fs abstraction layer
 //    posix_fadvise(m_file, filePosition, bytes_read, POSIX_FADV_DONTNEED);
   }
-#endif
 
   return bytes_read;
 }
