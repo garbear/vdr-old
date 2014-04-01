@@ -8,7 +8,6 @@
 // Android does not declare mkdtemp even though it's implemented.
 extern "C" char *mkdtemp(char *path);
 
-#include "getline.h"
 #include "sort.h"
 #include "strchrnul.h"
 #include "timegm.h"
