@@ -72,11 +72,6 @@ if(HAVE_FRIBIDI)
 else()                      # TODO
   list(APPEND LIBS fribidi) # TODO
 endif()
-#if(HAVE_ICONV)
-  list(APPEND LIBS iconv)
-#endif()
-# TODO: CHECK_LIBRARY_EXISTS
-list(APPEND LIBS intl)
 
 list(APPEND LIBS tinyxml)
 
@@ -97,6 +92,12 @@ if("${IS_ANDROID}" STREQUAL "")
     set(ANDROID_HELPER_SRCS "")
     add_definitions(-DTARGET_LINUX -DTARGET_POSIX)
 else ("${IS_ANDROID}" STREQUAL "")
+    #if(HAVE_ICONV)
+        list(APPEND LIBS iconv)
+    #endif()
+    # TODO: CHECK_LIBRARY_EXISTS
+    list(APPEND LIBS intl)
+
     add_definitions(-DTARGET_LINUX -DTARGET_POSIX -DTARGET_ANDROID)
     set(ANDROID_HELPER_SRCS
 	    vdr/utils/android/getline.c
