@@ -82,12 +82,10 @@ list(APPEND LIBS platform)
 # Enable gtest
 enable_testing()
 
-SET(IS_ANDROID $ENV{ANDROID})
-
-if("${IS_ANDROID}" STREQUAL "")
+if(NOT IS_ANDROID)
     set(ANDROID_HELPER_SRCS "")
     add_definitions(-DTARGET_LINUX -DTARGET_POSIX)
-else ("${IS_ANDROID}" STREQUAL "")
+else()
     #if(HAVE_ICONV)
         list(APPEND LIBS iconv)
     #endif()
@@ -101,7 +99,7 @@ else ("${IS_ANDROID}" STREQUAL "")
 	    vdr/utils/android/strchrnul.c
 	    vdr/utils/android/timegm.c
 )
-endif("${IS_ANDROID}" STREQUAL "")
+endif()
 
 set(VDR_FS_SRC_NATIVE
 	vdr/filesystem/native/HDFile.cpp
