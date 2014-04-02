@@ -8,6 +8,9 @@ set(LIBSI_SRCS
 	descriptor.cpp
 	dish.cpp
 )
+IF("${OS}" STREQUAL "android")
+add_definitions(-DTARGET_ANDROID)
+ENDIF()
 
 set(LIBSI_LIBRARY si)
 add_library(${LIBSI_LIBRARY} STATIC ${LIBSI_SRCS})
