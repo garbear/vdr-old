@@ -96,8 +96,7 @@ else()
     set(ANDROID_HELPER_SRCS
 	    vdr/utils/android/sort.c
 	    vdr/utils/android/strchrnul.c
-	    vdr/utils/android/timegm.c
-)
+    )
 endif()
 
 set(VDR_FS_SRC_NATIVE

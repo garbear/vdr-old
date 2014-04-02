@@ -13,10 +13,6 @@
 #include <string.h>
 #include "util.h"
 
-#ifdef ANDROID
-#include "../../vdr/utils/android/timegm.h"
-#endif
-
 namespace SI {
 
 /*---------------------------- CharArray ----------------------------*/
@@ -191,7 +187,7 @@ void Parsable::CheckParse() {
 }
 
 //taken and adapted from libdtv, (c) Rolf Hakenes and VDR, (c) Klaus Schmidinger
-time_t DVBTime::getTime(unsigned char date_hi, unsigned char date_lo, unsigned char time_hour, unsigned char time_minute, unsigned char time_second) {
+si_time_t DVBTime::getTime(unsigned char date_hi, unsigned char date_lo, unsigned char time_hour, unsigned char time_minute, unsigned char time_second) {
    u_int16_t mjd = date_hi << 8 | date_lo;
    struct tm t;
 
@@ -211,10 +207,10 @@ time_t DVBTime::getTime(unsigned char date_hi, unsigned char date_lo, unsigned c
    t.tm_isdst = -1;
    t.tm_gmtoff = 0;
 
-   return timegm(&t);
+   return si_time_gm(&t);
 }
 
-time_t DVBTime::getDuration(unsigned char time_hour, unsigned char time_minute, unsigned char time_second) {
+si_time_t DVBTime::getDuration(unsigned char time_hour, unsigned char time_minute, unsigned char time_second) {
    return
      bcdToDec(time_second)
    + bcdToDec(time_minute) * 60
