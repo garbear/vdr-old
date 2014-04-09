@@ -39,8 +39,14 @@ namespace VDR
 #define MAXDELIVERYSYSTEMS 8
 
 #define DEV_VIDEO         "/dev/video"
+
+#if defined(TARGET_ANDROID)
+#define DEV_DVB_BASE      "/dev"
+#define DEV_DVB_ADAPTER   "dvb"
+#else
 #define DEV_DVB_BASE      "/dev/dvb"
 #define DEV_DVB_ADAPTER   "adapter"
+#endif
 #define DEV_DVB_OSD       "osd"
 #define DEV_DVB_FRONTEND  "frontend"
 #define DEV_DVB_DVR       "dvr"
@@ -163,6 +169,8 @@ private:
    * \return A fully-allocated cSubsystems struct. Must be freed by calling cSubsystems::Free()
    */
   static cSubsystems CreateSubsystems(cDvbDevice* device);
+
+  DeviceVector FindDevicesMdev(void);
 
   // Delivery systems translation table
   static const char*   DeliverySystemNames[];

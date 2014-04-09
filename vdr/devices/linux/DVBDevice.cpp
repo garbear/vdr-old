@@ -148,12 +148,61 @@ vector<string> cDvbDevice::GetModulationsFromCaps(fe_caps_t caps)
   return modulations;
 }
 
+DeviceVector cDvbDevice::FindDevicesMdev(void)
+{
+  DeviceVector devices;
+
+  // Enumerate /dev
+  DirectoryListing items;
+  if (CDirectory::GetDirectory(DEV_DVB_BASE, items, "", DEFAULTS, true))
+  {
+    for (DirectoryListing::const_iterator itemIt = items.begin(); itemIt != items.end(); ++itemIt)
+    {
+      string adapterName = itemIt->Name();
+
+      // Adapter node must begin with "dvb"
+      if (!StringUtils::StartsWith(adapterName, DEV_DVB_ADAPTER))
+        continue;
+
+      const int INVALID = -1;
+
+      vector<string> splitString;
+      StringUtils::Split(adapterName, ".", splitString);
+      if (splitString.size() != 2)
+        continue;
+
+      // Get adapter index from directory name (e.g. "dvb0")
+      long adapter = StringUtils::IntVal(splitString[0].substr(strlen(DEV_DVB_ADAPTER)), INVALID);
+      if (adapter == INVALID)
+        continue;
+
+      // Frontend node must begin with "frontend"
+      if (!StringUtils::StartsWith(splitString[1], DEV_DVB_FRONTEND))
+        continue;
+
+      // Get frontend index from directory name (e.g. "frontend0")
+      long frontend = StringUtils::IntVal(splitString[1].substr(strlen(DEV_DVB_FRONTEND)), INVALID);
+      if (frontend == INVALID)
+        continue;
+
+      dsyslog("found adapter %ld frontend %ld", adapter, frontend);
+      devices.push_back(DevicePtr(new cDvbDevice(adapter, frontend)));
+    }
+  }
+
+  return devices;
+}
+
 DeviceVector cDvbDevice::FindDevices()
 {
   //gSourceParams['A'] = cDvbSourceParams('A', "ATSC");
   //gSourceParams['C'] = cDvbSourceParams('C', "DVB-C");
   //gSourceParams['S'] = cDvbSourceParams('S', "DVB-S");
   //gSourceParams['T'] = cDvbSourceParams('T', "DVB-T");
+
+#if defined(TARGET_ANDROID)
+  return FindDevicesMdev();
+#endif
 
   DeviceVector devices;
 
@@ -415,7 +464,11 @@ void cDvbDevice::UnBondDevices()
 
 string cDvbDevice::DvbName(const char *name, unsigned int adapter, unsigned int frontend)
 {
+#if defined(TARGET_ANDROID)
+  return StringUtils::Format("%s/%s%d.%s%d", DEV_DVB_BASE, DEV_DVB_ADAPTER, adapter, name, frontend);
+#else
   return StringUtils::Format("%s/%s%d/%s%d", DEV_DVB_BASE, DEV_DVB_ADAPTER, adapter, name, frontend);
+#endif
 }
 
 int cDvbDevice::DvbOpen(const char *name, int mode) const
