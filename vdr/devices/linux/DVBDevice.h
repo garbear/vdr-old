@@ -170,7 +170,7 @@ private:
    */
   static cSubsystems CreateSubsystems(cDvbDevice* device);
 
-  DeviceVector FindDevicesMdev(void);
+  static DeviceVector FindDevicesMdev(void);
 
   // Delivery systems translation table
   static const char*   DeliverySystemNames[];
