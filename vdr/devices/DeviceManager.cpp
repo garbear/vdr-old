@@ -115,14 +115,14 @@ DevicePtr cDeviceManager::GetDevice(const cChannel &channel, int priority, bool 
   int NumUsableSlots = 0;
   bool InternalCamNeeded = false;
   CLockObject lock(m_mutex);
-  if (channel.Ca() >= CA_ENCRYPTED_MIN)
+  if (channel.GetCaId(0) >= CA_ENCRYPTED_MIN)
   {
     for (cCamSlot *CamSlot = CamSlots.First(); CamSlot; CamSlot = CamSlots.Next(CamSlot))
     {
       SlotPriority[CamSlot->Index()] = MAXPRIORITY + 1; // assumes it can't be used
       if (CamSlot->ModuleStatus() == msReady)
       {
-        if (CamSlot->ProvidesCa(channel.Caids()))
+        if (CamSlot->ProvidesCa(channel.GetCaIds()))
         {
           if (!ChannelCamRelations.CamChecked(channel.GetChannelID(), CamSlot->SlotNumber()))
           {
@@ -151,7 +151,7 @@ DevicePtr cDeviceManager::GetDevice(const cChannel &channel, int priority, bool 
     for (int i = 0; i < m_devices.size(); i++)
     {
       m_devices[i]->AssertValid();
-      if (channel.Ca() && channel.Ca() <= CA_DVB_MAX && channel.Ca() != m_devices[i]->CardIndex() + 1)
+      if (channel.GetCaId(0) && channel.GetCaId(0) <= CA_DVB_MAX && channel.GetCaId(0) != m_devices[i]->CardIndex() + 1)
         continue; // a specific card was requested, but not this one
       bool HasInternalCam = m_devices[i]->CommonInterface()->HasInternalCam();
       if (InternalCamNeeded && !HasInternalCam)

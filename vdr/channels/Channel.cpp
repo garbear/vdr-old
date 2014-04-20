@@ -31,7 +31,6 @@
 #include "libsi/si.h" // For AC3DescriptorTag
 
 #include <algorithm>
-#include <ctype.h> // For toupper
 #include <stdio.h>
 #include <string.h>
 #include <tinyxml.h>
@@ -40,6 +39,7 @@ using namespace std;
 
 namespace VDR
 {
+
 #ifndef ARRAY_SIZE
 #define ARRAY_SIZE(x)  (sizeof(x) / sizeof(x[0]))
 #endif
@@ -51,77 +51,51 @@ namespace VDR
 #define STRDIFF 0x01
 #define VALDIFF 0x02
 
+bool operator==(const VideoStream& lhs, const VideoStream& rhs)
+{
+  return lhs.vpid  == rhs.vpid  &&
+         lhs.vtype == rhs.vtype &&
+         lhs.ppid  == rhs.ppid;
+}
+
+bool operator==(const AudioStream& lhs, const AudioStream& rhs)
+{
+  return lhs.apid  == rhs.apid  &&
+         lhs.atype == rhs.atype &&
+         lhs.alang == rhs.alang;
+}
+
+bool operator==(const DataStream& lhs, const DataStream& rhs)
+{
+  return lhs.dpid  == rhs.dpid  &&
+         lhs.dtype == rhs.dtype &&
+         lhs.dlang == rhs.dlang;
+}
+
+bool operator==(const SubtitleStream& lhs, const SubtitleStream& rhs)
+{
+  return lhs.spid  == rhs.spid &&
+         lhs.slang == rhs.slang;
+}
+
+bool operator==(const TeletextStream& lhs, const TeletextStream& rhs)
+{
+  return lhs.tpid == rhs.tpid;
+}
+
+bool ISTRANSPONDER(int frequencyMHz1, int frequencyMHz2)
+{
+  return std::abs(frequencyMHz1 - frequencyMHz2) < 4;
+}
+
 ChannelPtr cChannel::EmptyChannel;
 
-static int IntArraysDiffer(const int *a, const int *b, const char na[][MAXLANGCODE2] = NULL, const char nb[][MAXLANGCODE2] = NULL)
-{
-  int result = 0;
-  for (int i = 0; a[i] || b[i]; i++)
-  {
-    if (!a[i] || !b[i])
-    {
-      result |= VALDIFF;
-      break;
-    }
-    if (na && nb && strcmp(na[i], nb[i]) != 0)
-      result |= STRDIFF;
-    if (a[i] != b[i])
-      result |= VALDIFF;
-  }
-  return result;
-}
-
-static int IntArrayToString(char *s, const int *a, int Base = 10, const char n[][MAXLANGCODE2] = NULL, const int *t = NULL)
-{
-  char *q = s;
-  int i = 0;
-  while (a[i] || i == 0)
-  {
-    q += sprintf(q, Base == 16 ? "%s%X" : "%s%d", i ? "," : "", a[i]);
-    const char *Delim = "=";
-    if (a[i])
-    {
-      if (n && *n[i])
-      {
-        q += sprintf(q, "%s%s", Delim, n[i]);
-        Delim = "";
-      }
-      if (t && t[i])
-        q += sprintf(q, "%s@%d", Delim, t[i]);
-    }
-
-    if (!a[i])
-      break;
-    i++;
-  }
-
-  *q = 0;
-  return q - s;
-}
-
-static string IntArrayToString(const int array[], bool hex = false, const char langs[][MAXLANGCODE2] = NULL, const int *types = NULL)
-{
-  string s;
-  unsigned int i = 0;
-  do
-  {
-    if (i)
-      s += ",";
-    s += StringUtils::Format(hex ? "%X" : "%d", array[i]);
-    if (array[i] && langs && (langs[i][0] != '\0' || (types && types[i] != 0)))
-    {
-      s += "=";
-      s += langs[i];
-      if (types && types[i])
-        s += "@" + StringUtils::Format("%d", types[i]);
-    }
-  } while (array[i++]);
-
-  return s;
-}
-
 cChannel::cChannel()
- : m_channelData(), // value-initialize
+ : m_nid(0),
+   m_tid(0),
+   m_sid(0),
+   m_rid(0),
+   m_channelData(), // value-initialize
    m_modification(CHANNELMOD_NONE),
    m_schedule(NULL),
    //m_linkChannels(NULL), // TODO
@@ -173,8 +147,29 @@ cChannel& cChannel::operator=(const cChannel &channel)
   m_shortName   = channel.m_shortName;
   m_provider    = channel.m_provider;
   m_portalName  = channel.m_portalName;
+
+  m_nid = channel.m_nid;
+  m_tid = channel.m_tid;
+  m_sid = channel.m_sid;
+  m_rid = channel.m_rid;
+
+  m_videoStreams    = channel.m_videoStreams;
+  m_audioStreams    = channel.m_audioStreams;
+  m_dataStreams    = channel.m_dataStreams;
+  m_subtitleStreams = channel.m_subtitleStreams;
+  m_teletextStreams = channel.m_teletextStreams;
+
+  m_caIds = channel.m_caIds;
+  m_caDescriptors = channel.m_caDescriptors;
+
   m_channelData = channel.m_channelData;
   m_parameters  = channel.m_parameters;
+
+  // m_modification
+  // m_schedule
+  // m_linkChannels
+  // m_refChannel
+  // m_channelHash
 
   SetChanged();
 
@@ -186,12 +181,179 @@ ChannelPtr cChannel::Clone() const
   return ChannelPtr(new cChannel(*this));
 }
 
-string cChannel::ShortName(bool bOrName /* = false */) const
+const VideoStream& cChannel::GetVideoStream() const
 {
-  if (bOrName && m_shortName.empty())
-    return Name();
+  // Channel can have only 1 video stream
+  assert(m_videoStreams.size() <= 1);
 
-  return m_shortName;
+  static VideoStream empty = { };
+  return !m_videoStreams.empty() ? m_videoStreams[0] : empty;
+}
+
+const AudioStream& cChannel::GetAudioStream(unsigned int index) const
+{
+  static AudioStream empty = { };
+  return index < m_audioStreams.size() ? m_audioStreams[index] : empty;
+}
+
+const DataStream& cChannel::GetDataStream(unsigned int index) const
+{
+  static DataStream empty = { };
+  return index < m_dataStreams.size() ? m_dataStreams[index] : empty;
+}
+
+const SubtitleStream& cChannel::GetSubtitleStream(unsigned int index) const
+{
+  static SubtitleStream empty = { };
+  return index < m_subtitleStreams.size() ? m_subtitleStreams[index] : empty;
+}
+
+const TeletextStream& cChannel::GetTeletextStream() const
+{
+  // Channel can have only 1 teletext stream
+  assert(m_teletextStreams.size() <= 1);
+
+  static TeletextStream empty = { };
+  return !m_teletextStreams.empty() ? m_teletextStreams[0] : empty;
+}
+
+uint16_t cChannel::GetCaId(unsigned int i) const
+{
+  return i < m_caIds.size() ? m_caIds[i] : 0;
+}
+
+void cChannel::SetName(const string &strName, const string &strShortName, const string &strProvider)
+{
+  bool nn = (m_name != strName);
+  bool ns = (m_shortName != strShortName);
+  bool np = (m_provider != strProvider);
+  if (nn || ns || np)
+  {
+    if (Number())
+    {
+      /* TODO
+      dsyslog("changing name of channel %d from '%s,%s;%s' to '%s,%s;%s'",
+          Number(), m_name.c_str(), m_shortName.c_str(), m_provider.c_str(),
+          strName.c_str(), strShortName.c_str(), strProvider.c_str());
+      */
+      m_modification |= CHANNELMOD_NAME;
+      SetChanged();
+    }
+    if (nn)
+    {
+      m_name = strName;
+      SetChanged();
+    }
+    if (ns)
+    {
+      m_shortName = strShortName;
+      SetChanged();
+    }
+    if (np)
+    {
+      m_provider = strProvider;
+      SetChanged();
+    }
+  }
+}
+
+void cChannel::SetPortalName(const string &strPortalName)
+{
+  if (!strPortalName.empty() && m_portalName != strPortalName)
+  {
+    if (Number())
+    {
+      //dsyslog("changing portal name of channel %d from '%s' to '%s'", Number(), m_portalName.c_str(), strPortalName.c_str());
+      m_modification |= CHANNELMOD_NAME;
+      SetChanged();
+    }
+    m_portalName = strPortalName;
+  }
+}
+
+void cChannel::SetId(uint16_t nid, uint16_t tid, uint16_t sid, uint16_t rid /* = 0 */)
+{
+  if (m_nid != nid || m_tid != tid || m_sid != sid || m_rid != rid)
+  {
+    if (Number())
+    {
+      //dsyslog("changing id of channel %d from %d-%d-%d-%d to %d-%d-%d-%d", Number(), m_nid, m_tid, m_sid, m_rid, nid, tid, sid, rid);
+      m_modification |= CHANNELMOD_ID;
+      //Channels.UnhashChannel(this); // TODO
+    }
+    m_nid = nid;
+    m_tid = tid;
+    m_sid = sid;
+    m_rid = rid;
+    if (Number())
+      ;//Channels.HashChannel(this); // TODO
+    m_schedule = cSchedules::EmptySchedule;
+    SetChanged();
+  }
+}
+
+void cChannel::SetStreams(const vector<VideoStream>& videoStreams,
+                          const vector<AudioStream>& audioStreams,
+                          const vector<DataStream>& dataStreams,
+                          const vector<SubtitleStream>& subtitleStreams,
+                          const vector<TeletextStream>& teletextStreams)
+{
+  eChannelMod mod = CHANNELMOD_NONE;
+  if (m_videoStreams    != videoStreams ||
+      m_audioStreams    != audioStreams ||
+      m_dataStreams     != dataStreams ||
+      m_subtitleStreams != subtitleStreams ||
+      m_teletextStreams != teletextStreams)
+  {
+    //TODO: check if PIDs or languages changed
+    mod = (eChannelMod)(CHANNELMOD_PIDS | CHANNELMOD_LANGS);
+  }
+
+  if (mod != CHANNELMOD_NONE)
+  {
+    if (Number())
+      ;//dsyslog("changing pids of channel %d from %d+%d=%d:%s:%s:%d to %d+%d=%d:%s:%s:%d", Number(), m_channelData.vpid, m_channelData.ppid, m_channelData.vtype, OldApidsBuf, OldSpidsBuf, m_channelData.tpid, vpid, ppid, vtype, NewApidsBuf, NewSpidsBuf, tpid);
+
+    m_videoStreams    = videoStreams;
+    m_audioStreams    = audioStreams;;
+    m_dataStreams     = dataStreams;
+    m_subtitleStreams = subtitleStreams;
+    m_teletextStreams = teletextStreams;
+
+    m_modification |= mod;
+    SetChanged();
+  }
+}
+
+void cChannel::SetSubtitlingDescriptors(const vector<SubtitleStream>& subtitleStreams)
+{
+  // TODO: From inspection, it appears that the list of subtitle streams should
+  // be obtained with GetSubtitleStreams(), the subtitlingType, compositionPageId
+  // and ancillaryPageId fields should be filled in, then the completed array
+  // handed to SetSubtitlingDescriptors().
+  if (m_subtitleStreams != subtitleStreams)
+  {
+    m_subtitleStreams = subtitleStreams;
+    SetChanged();
+  }
+}
+
+void cChannel::SetCaDescriptors(const CaDescriptorVector& caDescriptors)
+{
+  // TODO: Why is this check performed?
+  if (!m_caDescriptors.empty() && m_caDescriptors[0]->CaSystem() <= CA_USER_MAX)
+    return; // special values will not be overwritten
+
+  if (m_caDescriptors != caDescriptors)
+  {
+    if (Number())
+      ;//dsyslog("changing caids of channel %d from %s to %s", Number(), OldCaIdsBuf, NewCaIdsBuf);
+
+    m_caDescriptors = caDescriptors;
+
+    m_modification |= CHANNELMOD_CA;
+    SetChanged();
+  }
 }
 
 bool cChannel::SerialiseChannel(TiXmlNode *node) const
@@ -203,16 +365,133 @@ bool cChannel::SerialiseChannel(TiXmlNode *node) const
   if (channelElement == NULL)
     return false;
 
-  channelElement->SetAttribute(CHANNEL_XML_ATTR_NAME,       m_name);
-  channelElement->SetAttribute(CHANNEL_XML_ATTR_SHORTNAME,  m_shortName);
-  channelElement->SetAttribute(CHANNEL_XML_ATTR_PROVIDER,   m_provider);
-  channelElement->SetAttribute(CHANNEL_XML_ATTR_FREQUENCY,  m_channelData.iFrequencyHz);
-  channelElement->SetAttribute(CHANNEL_XML_ATTR_SOURCE,     cSource::ToString(m_channelData.source));
-  channelElement->SetAttribute(CHANNEL_XML_ATTR_SRATE,      m_channelData.srate);
-  channelElement->SetAttribute(CHANNEL_XML_ATTR_VPID,       m_channelData.vpid);
-  channelElement->SetAttribute(CHANNEL_XML_ATTR_PPID,       m_channelData.ppid);
-  channelElement->SetAttribute(CHANNEL_XML_ATTR_VTYPE,      m_channelData.vtype);
-  channelElement->SetAttribute(CHANNEL_XML_ATTR_TPID,       m_channelData.tpid);
+  channelElement->SetAttribute(CHANNEL_XML_ATTR_NAME,      m_name);
+  channelElement->SetAttribute(CHANNEL_XML_ATTR_SHORTNAME, m_shortName);
+  channelElement->SetAttribute(CHANNEL_XML_ATTR_PROVIDER,  m_provider);
+  // m_portalName
+
+  channelElement->SetAttribute(CHANNEL_XML_ATTR_NID, m_nid);
+  channelElement->SetAttribute(CHANNEL_XML_ATTR_TID, m_tid);
+  channelElement->SetAttribute(CHANNEL_XML_ATTR_SID, m_sid);
+  channelElement->SetAttribute(CHANNEL_XML_ATTR_RID, m_rid);
+
+  channelElement->SetAttribute(CHANNEL_XML_ATTR_VPID,  !m_videoStreams.empty() ? m_videoStreams[0].vpid  : 0);
+  channelElement->SetAttribute(CHANNEL_XML_ATTR_PPID,  !m_videoStreams.empty() ? m_videoStreams[0].ppid  : 0);
+  channelElement->SetAttribute(CHANNEL_XML_ATTR_VTYPE, !m_videoStreams.empty() ? m_videoStreams[0].vtype : 0);
+
+  if (!m_audioStreams.empty())
+  {
+    TiXmlElement apidsElement(CHANNEL_XML_ELM_APIDS);
+    TiXmlNode *apidsNode = channelElement->InsertEndChild(apidsElement);
+    if (apidsNode)
+    {
+      for (vector<AudioStream>::const_iterator it = m_audioStreams.begin(); it != m_audioStreams.end(); ++it)
+      {
+        const AudioStream& audioStream = *it;
+        TiXmlElement apidElement(CHANNEL_XML_ELM_APID);
+        TiXmlNode *apidNode = apidsNode->InsertEndChild(apidElement);
+        if (apidNode)
+        {
+          TiXmlElement *apidElem = apidNode->ToElement();
+          if (apidElem)
+          {
+            TiXmlText *apidText = new TiXmlText(StringUtils::Format("%d", audioStream.apid));
+            if (apidText)
+            {
+              apidElem->LinkEndChild(apidText);
+              apidElem->SetAttribute(CHANNEL_XML_ATTR_ALANG, audioStream.alang);
+              apidElem->SetAttribute(CHANNEL_XML_ATTR_ATYPE, audioStream.atype);
+            }
+          }
+        }
+      }
+    }
+  }
+
+  if (!m_dataStreams.empty())
+  {
+    TiXmlElement apidsElement(CHANNEL_XML_ELM_APIDS);
+    TiXmlNode *apidsNode = channelElement->InsertEndChild(apidsElement);
+    if (apidsNode)
+    {
+      for (vector<DataStream>::const_iterator it = m_dataStreams.begin(); it != m_dataStreams.end(); ++it)
+      {
+        const DataStream& dataStream = *it;
+        TiXmlElement apidElement(CHANNEL_XML_ELM_APID);
+        TiXmlNode *apidNode = apidsNode->InsertEndChild(apidElement);
+        if (apidNode)
+        {
+          TiXmlElement *apidElem = apidNode->ToElement();
+          if (apidElem)
+          {
+            TiXmlText *apidText = new TiXmlText(StringUtils::Format("%d", dataStream.dpid));
+            if (apidText)
+            {
+              apidElem->LinkEndChild(apidText);
+              apidElem->SetAttribute(CHANNEL_XML_ATTR_ALANG, dataStream.dlang);
+              apidElem->SetAttribute(CHANNEL_XML_ATTR_ATYPE, dataStream.dtype);
+            }
+          }
+        }
+      }
+    }
+  }
+
+  if (!m_subtitleStreams.empty())
+  {
+    TiXmlElement apidsElement(CHANNEL_XML_ELM_APIDS);
+    TiXmlNode *apidsNode = channelElement->InsertEndChild(apidsElement);
+    if (apidsNode)
+    {
+      for (vector<SubtitleStream>::const_iterator it = m_subtitleStreams.begin(); it != m_subtitleStreams.end(); ++it)
+      {
+        const SubtitleStream& subtitleStream = *it;
+        TiXmlElement apidElement(CHANNEL_XML_ELM_APID);
+        TiXmlNode *apidNode = apidsNode->InsertEndChild(apidElement);
+        if (apidNode)
+        {
+          TiXmlElement *apidElem = apidNode->ToElement();
+          if (apidElem)
+          {
+            TiXmlText *apidText = new TiXmlText(StringUtils::Format("%d", subtitleStream.spid));
+            if (apidText)
+            {
+              apidElem->LinkEndChild(apidText);
+              apidElem->SetAttribute(CHANNEL_XML_ATTR_ALANG, subtitleStream.slang);
+              // TODO: Should we also store subtitlingType, compositionPageId and ancillaryPageId?
+            }
+          }
+        }
+      }
+    }
+  }
+
+  channelElement->SetAttribute(CHANNEL_XML_ATTR_TPID, !m_teletextStreams.empty() ? m_teletextStreams[0].tpid : 0);
+
+  if (!m_caIds.empty())
+  {
+    TiXmlElement caidsElement(CHANNEL_XML_ELM_CAIDS);
+    TiXmlNode *caidsNode = channelElement->InsertEndChild(caidsElement);
+    if (caidsNode)
+    {
+      for (vector<uint16_t>::const_iterator it = m_caIds.begin(); it != m_caIds.end(); ++it)
+      {
+        uint16_t caId = *it;
+        TiXmlElement caidElement(CHANNEL_XML_ELM_CAID);
+        TiXmlNode *caidNode = caidsNode->InsertEndChild(caidElement);
+        if (caidNode)
+        {
+          TiXmlElement *caidElem = caidNode->ToElement();
+          if (caidElem)
+          {
+            TiXmlText *caidText = new TiXmlText(StringUtils::Format("%u", caId));
+            if (caidText)
+              caidElem->LinkEndChild(caidText);
+          }
+        }
+      }
+    }
+  }
 
   TiXmlElement transponderElement(CHANNEL_XML_ELM_PARAMETERS);
   TiXmlNode *transponderNode = channelElement->InsertEndChild(transponderElement);
@@ -231,137 +510,13 @@ bool cChannel::SerialiseChannel(TiXmlNode *node) const
       return false;
   }
 
-  if (m_channelData.apids[0])
-  {
-    TiXmlElement apidsElement(CHANNEL_XML_ELM_APIDS);
-    TiXmlNode *apidsNode = channelElement->InsertEndChild(apidsElement);
-    if (apidsNode)
-    {
-      for (unsigned int i = 0; m_channelData.apids[i]; i++)
-      {
-        TiXmlElement apidElement(CHANNEL_XML_ELM_APID);
-        TiXmlNode *apidNode = apidsNode->InsertEndChild(apidElement);
-        if (apidNode)
-        {
-          TiXmlElement *apidElem = apidNode->ToElement();
-          if (apidElem)
-          {
-            TiXmlText *apidText = new TiXmlText(StringUtils::Format("%d", m_channelData.apids[i]));
-            if (apidText)
-            {
-              apidElem->LinkEndChild(apidText);
-              apidElem->SetAttribute(CHANNEL_XML_ATTR_ALANG, m_channelData.alangs[i]);
-              apidElem->SetAttribute(CHANNEL_XML_ATTR_ATYPE, m_channelData.atypes[i]);
-            }
-          }
-        }
-      }
-    }
-  }
-
-  if (m_channelData.dpids[0])
-  {
-    TiXmlElement dpidsElement(CHANNEL_XML_ELM_DPIDS);
-    TiXmlNode *dpidsNode = channelElement->InsertEndChild(dpidsElement);
-    if (dpidsNode)
-    {
-      for (unsigned int i = 0; m_channelData.dpids[i]; i++)
-      {
-        TiXmlElement dpidElement(CHANNEL_XML_ELM_DPID);
-        TiXmlNode *dpidNode = dpidsNode->InsertEndChild(dpidElement);
-        if (dpidNode)
-        {
-          TiXmlElement *dpidElem = dpidNode->ToElement();
-          if (dpidElem)
-          {
-            TiXmlText *dpidText = new TiXmlText(StringUtils::Format("%d", m_channelData.dpids[i]));
-            if (dpidText)
-            {
-              dpidElem->LinkEndChild(dpidText);
-              dpidElem->SetAttribute(CHANNEL_XML_ATTR_DLANG, m_channelData.dlangs[i]);
-              dpidElem->SetAttribute(CHANNEL_XML_ATTR_DTYPE, m_channelData.dtypes[i]);
-            }
-          }
-        }
-      }
-    }
-  }
-
-  if (m_channelData.spids[0])
-  {
-    TiXmlElement spidsElement(CHANNEL_XML_ELM_SPIDS);
-    TiXmlNode *spidsNode = channelElement->InsertEndChild(spidsElement);
-    if (spidsNode)
-    {
-      for (unsigned int i = 0; m_channelData.spids[i]; i++)
-      {
-        TiXmlElement spidElement(CHANNEL_XML_ELM_SPID);
-        TiXmlNode *spidNode = spidsNode->InsertEndChild(spidElement);
-        if (spidNode)
-        {
-          TiXmlElement *spidElem = spidNode->ToElement();
-          if (spidElem)
-          {
-            TiXmlText *spidText = new TiXmlText(StringUtils::Format("%d", m_channelData.spids[i]));
-            if (spidText)
-            {
-              spidElem->LinkEndChild(spidText);
-              spidElem->SetAttribute(CHANNEL_XML_ATTR_SLANG, m_channelData.slangs[i]);
-            }
-          }
-        }
-      }
-    }
-  }
-
-  if (m_channelData.caids[0])
-  {
-    TiXmlElement caidsElement(CHANNEL_XML_ELM_CAIDS);
-    TiXmlNode *caidsNode = channelElement->InsertEndChild(caidsElement);
-    if (caidsNode)
-    {
-      for (unsigned int i = 0; m_channelData.caids[i] != 0; i++)
-      {
-        TiXmlElement caidElement(CHANNEL_XML_ELM_CAID);
-        TiXmlNode *caidNode = caidsNode->InsertEndChild(caidElement);
-        if (caidNode)
-        {
-          TiXmlElement *caidElem = caidNode->ToElement();
-          if (caidElem)
-          {
-            TiXmlText *caidText = new TiXmlText(StringUtils::Format("%d", m_channelData.caids[i]));
-            if (caidText)
-              caidElem->LinkEndChild(caidText);
-          }
-        }
-      }
-    }
-  }
-
-  channelElement->SetAttribute(CHANNEL_XML_ATTR_SID, m_channelData.sid);
-  channelElement->SetAttribute(CHANNEL_XML_ATTR_NID, m_channelData.nid);
-  channelElement->SetAttribute(CHANNEL_XML_ATTR_TID, m_channelData.tid);
-  channelElement->SetAttribute(CHANNEL_XML_ATTR_RID, m_channelData.rid);
-
+  channelElement->SetAttribute(CHANNEL_XML_ATTR_FREQUENCY, m_channelData.iFrequencyHz);
+  channelElement->SetAttribute(CHANNEL_XML_ATTR_SOURCE,    cSource::ToString(m_channelData.source));
+  channelElement->SetAttribute(CHANNEL_XML_ATTR_SRATE,     m_channelData.srate);
   return true;
 }
 
-bool cChannel::SerialiseSep(TiXmlNode *node) const
-{
-  if (node == NULL)
-    return false;
-
-  TiXmlElement *separatorElement = node->ToElement();
-  if (separatorElement == NULL)
-    return false;
-
-  separatorElement->SetAttribute(CHANNEL_XML_ATTR_NAME,       m_name);
-  separatorElement->SetAttribute(CHANNEL_XML_ATTR_NUMBER,     m_channelData.number);
-
-  return true;
-}
-
-bool cChannel::Deserialise(const TiXmlNode *node, bool bSeparator /* = false */)
+bool cChannel::Deserialise(const TiXmlNode *node)
 {
   if (node == NULL)
     return false;
@@ -370,179 +525,175 @@ bool cChannel::Deserialise(const TiXmlNode *node, bool bSeparator /* = false */)
   if (elem == NULL)
     return false;
 
-  if (bSeparator)
-  {
-    // <separator> element
-    const char *name = elem->Attribute(CHANNEL_XML_ATTR_NAME);
-    if (name != NULL)
-      m_name = name;
+  const char *name = elem->Attribute(CHANNEL_XML_ATTR_NAME);
+  if (name != NULL)
+    m_name = name;
 
-    const char *number = elem->Attribute(CHANNEL_XML_ATTR_NUMBER);
-    if (number != NULL)
-      m_channelData.number = StringUtils::IntVal(number);
+  const char *shortName = elem->Attribute(CHANNEL_XML_ATTR_SHORTNAME);
+  if (shortName != NULL)
+    m_shortName = shortName;
+
+  const char *provider = elem->Attribute(CHANNEL_XML_ATTR_PROVIDER);
+  if (provider != NULL)
+    m_provider = provider;
+
+  const char *nid = elem->Attribute(CHANNEL_XML_ATTR_NID);
+  if (nid != NULL)
+    m_nid = StringUtils::IntVal(nid);
+
+  const char *tid = elem->Attribute(CHANNEL_XML_ATTR_TID);
+  if (tid != NULL)
+    m_tid = StringUtils::IntVal(tid);
+
+  const char *sid = elem->Attribute(CHANNEL_XML_ATTR_SID);
+  if (sid != NULL)
+    m_sid = StringUtils::IntVal(sid);
+
+  const char *rid = elem->Attribute(CHANNEL_XML_ATTR_RID);
+  if (rid != NULL)
+    m_rid = StringUtils::IntVal(rid);
+
+  m_videoStreams.clear(); // TODO: Move to cChannel::Reset()
+  const char *vpid  = elem->Attribute(CHANNEL_XML_ATTR_VPID);
+  const char *ppid  = elem->Attribute(CHANNEL_XML_ATTR_PPID);
+  const char *vtype = elem->Attribute(CHANNEL_XML_ATTR_VTYPE);
+  if (vpid != NULL && ppid != NULL && vtype != NULL)
+  {
+    VideoStream vs;
+    vs.vpid  = StringUtils::IntVal(vpid);
+    vs.ppid  = StringUtils::IntVal(ppid);
+    vs.vtype = StringUtils::IntVal(vtype);
+    m_videoStreams.push_back(vs);
+  }
+
+  m_audioStreams.clear(); // TODO: Move to cChannel::Reset()
+  const TiXmlNode *apidsNode = elem->FirstChild(CHANNEL_XML_ELM_APIDS);
+  if (apidsNode)
+  {
+    const TiXmlNode *apidNode = apidsNode->FirstChild(CHANNEL_XML_ELM_APID);
+    for (unsigned int i = 0; apidNode; i++, apidNode = apidNode->NextSibling(CHANNEL_XML_ELM_APID))
+    {
+      const TiXmlElement *apidElem = apidNode->ToElement();
+      if (apidElem != NULL)
+      {
+        AudioStream as = { };
+
+        as.apid = StringUtils::IntVal(apidElem->GetText());
+
+        const char *alang = apidElem->Attribute(CHANNEL_XML_ATTR_ALANG);
+        if (alang != NULL)
+          as.alang = alang;
+
+        const char *atype = apidElem->Attribute(CHANNEL_XML_ATTR_ATYPE);
+        if (atype != NULL)
+          as.atype = StringUtils::IntVal(atype);
+
+        m_audioStreams.push_back(as);
+      }
+    }
+  }
+
+  m_dataStreams.clear(); // TODO: Move to cChannel::Reset()
+  const TiXmlNode *dpidsNode = elem->FirstChild(CHANNEL_XML_ELM_DPIDS);
+  if (dpidsNode)
+  {
+    const TiXmlNode *dpidNode = dpidsNode->FirstChild(CHANNEL_XML_ELM_DPID);
+    for (unsigned int i = 0; dpidNode; i++, dpidNode = dpidNode->NextSibling(CHANNEL_XML_ELM_DPID))
+    {
+      const TiXmlElement *dpidElem = dpidNode->ToElement();
+      if (dpidElem != NULL)
+      {
+        DataStream ds = { };
+
+        ds.dpid = StringUtils::IntVal(dpidElem->GetText());
+
+        const char *dlang = dpidElem->Attribute(CHANNEL_XML_ATTR_DLANG);
+        if (dlang != NULL)
+          ds.dlang = dlang;
+
+        const char *dtype = dpidElem->Attribute(CHANNEL_XML_ATTR_DTYPE);
+        if (dtype != NULL)
+          ds.dtype = StringUtils::IntVal(dtype);
+
+        m_dataStreams.push_back(ds);
+      }
+    }
+  }
+
+  m_subtitleStreams.clear(); // TODO: Move to cChannel::Reset()
+  const TiXmlNode *spidsNode = elem->FirstChild(CHANNEL_XML_ELM_SPIDS);
+  if (spidsNode)
+  {
+    const TiXmlNode *spidNode = spidsNode->FirstChild(CHANNEL_XML_ELM_SPID);
+    for (unsigned int i = 0; spidNode; i++, spidNode = spidNode->NextSibling(CHANNEL_XML_ELM_SPID))
+    {
+      const TiXmlElement *spidElem = spidNode->ToElement();
+      if (spidElem != NULL)
+      {
+        SubtitleStream ss = { };
+
+        ss.spid = StringUtils::IntVal(spidElem->GetText());
+
+        const char *slang = spidElem->Attribute(CHANNEL_XML_ATTR_SLANG);
+        if (slang != NULL)
+          ss.slang = slang;
+
+        m_subtitleStreams.push_back(ss);
+      }
+    }
+  }
+
+  m_teletextStreams.clear(); // TODO: Move to cChannel::Reset()
+  const char *tpid = elem->Attribute(CHANNEL_XML_ATTR_TPID);
+  if (tpid != NULL)
+  {
+    TeletextStream ts;
+    ts.tpid = StringUtils::IntVal(tpid);
+    m_teletextStreams.push_back(ts);
+  }
+
+  m_caIds.clear(); // TODO: Move to cChannel::Reset()
+  const TiXmlNode *caidsNode = elem->FirstChild(CHANNEL_XML_ELM_CAIDS);
+  if (caidsNode)
+  {
+    const TiXmlNode *caidNode = caidsNode->FirstChild(CHANNEL_XML_ELM_CAID);
+    for (unsigned int i = 0; caidNode; i++, caidNode = caidNode->NextSibling(CHANNEL_XML_ELM_CAID))
+    {
+      const TiXmlElement *caidElem = caidNode->ToElement();
+      if (caidElem != NULL)
+        m_caIds.push_back(StringUtils::IntVal(caidElem->GetText()));
+    }
+  }
+
+  const char *frequency = elem->Attribute(CHANNEL_XML_ATTR_FREQUENCY);
+  if (frequency != NULL)
+    m_channelData.iFrequencyHz = StringUtils::IntVal(frequency);
+
+  const char *source = elem->Attribute(CHANNEL_XML_ATTR_SOURCE);
+  if (source != NULL)
+    m_channelData.source = cSource::FromString(source);
+
+  const char *srate = elem->Attribute(CHANNEL_XML_ATTR_SRATE);
+  if (srate != NULL)
+    m_channelData.srate = StringUtils::IntVal(srate);
+
+  m_parameters.Reset(); // TODO: Move to cChannel::Reset()
+  const TiXmlNode *transponderNode = elem->FirstChild(CHANNEL_XML_ELM_PARAMETERS);
+  if (transponderNode)
+  {
+    if (!m_parameters.Deserialise(transponderNode))
+      return false;
   }
   else
   {
-    // <channel> element
-    const char *name = elem->Attribute(CHANNEL_XML_ATTR_NAME);
-    if (name != NULL)
-      m_name = name;
-
-    const char *shortName = elem->Attribute(CHANNEL_XML_ATTR_SHORTNAME);
-    if (shortName != NULL)
-      m_shortName = shortName;
-
-    const char *provider = elem->Attribute(CHANNEL_XML_ATTR_PROVIDER);
-    if (provider != NULL)
-      m_provider = provider;
-
-    const char *frequency = elem->Attribute(CHANNEL_XML_ATTR_FREQUENCY);
-    if (frequency != NULL)
-      m_channelData.iFrequencyHz = StringUtils::IntVal(frequency);
-
-    const char *source = elem->Attribute(CHANNEL_XML_ATTR_SOURCE);
-    if (source != NULL)
-      m_channelData.source = cSource::FromString(source);
-
-    const char *srate = elem->Attribute(CHANNEL_XML_ATTR_SRATE);
-    if (srate != NULL)
-      m_channelData.srate = StringUtils::IntVal(srate);
-
-    const char *vpid = elem->Attribute(CHANNEL_XML_ATTR_VPID);
-    if (vpid != NULL)
-      m_channelData.vpid = StringUtils::IntVal(vpid);
-
-    const char *ppid = elem->Attribute(CHANNEL_XML_ATTR_PPID);
-    if (ppid != NULL)
-      m_channelData.ppid = StringUtils::IntVal(ppid);
-
-    const char *vtype = elem->Attribute(CHANNEL_XML_ATTR_VTYPE);
-    if (vtype != NULL)
-      m_channelData.vtype = StringUtils::IntVal(vtype);
-
-    const char *tpid = elem->Attribute(CHANNEL_XML_ATTR_TPID);
-    if (tpid != NULL)
-      m_channelData.tpid = StringUtils::IntVal(tpid);
-
-    m_parameters.Reset();
-    const TiXmlNode *transponderNode = elem->FirstChild(CHANNEL_XML_ELM_PARAMETERS);
-    if (transponderNode)
+    // Backwards compatibility: look for parameters attribute
+    const char *parameters = elem->Attribute(CHANNEL_XML_ATTR_PARAMETERS);
+    if (parameters != NULL)
     {
-      if (!m_parameters.Deserialise(transponderNode))
+      string strParameters(parameters);
+      if (!m_parameters.Deserialise(strParameters))
         return false;
     }
-    else
-    {
-      // Backwards compatibility: look for parameters attribute
-      const char *parameters = elem->Attribute(CHANNEL_XML_ATTR_PARAMETERS);
-      if (parameters != NULL)
-      {
-        string strParameters(parameters);
-        if (!m_parameters.Deserialise(strParameters))
-          return false;
-      }
-    }
-
-    const TiXmlNode *apidsNode = elem->FirstChild(CHANNEL_XML_ELM_APIDS);
-    if (apidsNode)
-    {
-      const TiXmlNode *apidNode = apidsNode->FirstChild(CHANNEL_XML_ELM_APID);
-      unsigned int i = 0;
-      while (apidNode && i < ARRAY_SIZE(m_channelData.apids))
-      {
-        const TiXmlElement *apidElem = apidNode->ToElement();
-        if (apidElem != NULL)
-        {
-          m_channelData.apids[i] = StringUtils::IntVal(apidElem->GetText());
-          const char *alang = apidElem->Attribute(CHANNEL_XML_ATTR_ALANG);
-          if (alang != NULL)
-            strncpy(m_channelData.alangs[i], alang, sizeof(m_channelData.alangs[i]));
-          else
-            m_channelData.alangs[i][0] = '\0';
-          const char *atype = apidElem->Attribute(CHANNEL_XML_ATTR_ATYPE);
-          m_channelData.atypes[i] = StringUtils::IntVal(atype ? atype : "");
-        }
-        apidNode = apidNode->NextSibling(CHANNEL_XML_ELM_APID);
-        i++;
-      }
-    }
-
-    const TiXmlNode *dpidsNode = elem->FirstChild(CHANNEL_XML_ELM_DPIDS);
-    if (dpidsNode)
-    {
-      const TiXmlNode *dpidNode = dpidsNode->FirstChild(CHANNEL_XML_ELM_DPID);
-      unsigned int i = 0;
-      while (dpidNode && i < ARRAY_SIZE(m_channelData.dpids))
-      {
-        const TiXmlElement *dpidElem = dpidNode->ToElement();
-        if (dpidElem != NULL)
-        {
-          m_channelData.dpids[i] = StringUtils::IntVal(dpidElem->GetText());
-          const char *dlang = dpidElem->Attribute(CHANNEL_XML_ATTR_DLANG);
-          if (dlang != NULL)
-            strncpy(m_channelData.dlangs[i], dlang, sizeof(m_channelData.dlangs[i]));
-          else
-            m_channelData.dlangs[i][0] = '\0';
-          const char *dtype = dpidElem->Attribute(CHANNEL_XML_ATTR_DTYPE);
-          m_channelData.dtypes[i] = StringUtils::IntVal(dtype ? dtype : "");
-        }
-        dpidNode = dpidNode->NextSibling(CHANNEL_XML_ELM_DPID);
-        i++;
-      }
-    }
-
-    const TiXmlNode *spidsNode = elem->FirstChild(CHANNEL_XML_ELM_SPIDS);
-    if (spidsNode)
-    {
-      const TiXmlNode *spidNode = spidsNode->FirstChild(CHANNEL_XML_ELM_SPID);
-      unsigned int i = 0;
-      while (spidNode && i < ARRAY_SIZE(m_channelData.spids))
-      {
-        const TiXmlElement *spidElem = spidNode->ToElement();
-        if (spidElem != NULL)
-        {
-          m_channelData.spids[i] = StringUtils::IntVal(spidElem->GetText());
-          const char *slang = spidElem->Attribute(CHANNEL_XML_ATTR_SLANG);
-          if (slang != NULL)
-            strncpy(m_channelData.slangs[i], slang, sizeof(m_channelData.slangs[i]));
-          else
-            m_channelData.slangs[i][0] = '\0';
-        }
-        spidNode = spidNode->NextSibling(CHANNEL_XML_ELM_SPID);
-        i++;
-      }
-    }
-
-    const TiXmlNode *caidsNode = elem->FirstChild(CHANNEL_XML_ELM_CAIDS);
-    if (caidsNode)
-    {
-      const TiXmlNode *caidNode = caidsNode->FirstChild(CHANNEL_XML_ELM_CAID);
-      unsigned int i = 0;
-      while (caidNode && i < ARRAY_SIZE(m_channelData.caids))
-      {
-        const TiXmlElement *caidElem = caidNode->ToElement();
-        if (caidElem != NULL)
-          m_channelData.caids[i] = StringUtils::IntVal(caidElem->GetText());
-        caidNode = caidNode->NextSibling(CHANNEL_XML_ELM_CAID);
-        i++;
-      }
-    }
-
-    const char *sid = elem->Attribute(CHANNEL_XML_ATTR_SID);
-    if (sid != NULL)
-      m_channelData.sid = StringUtils::IntVal(sid);
-
-    const char *nid = elem->Attribute(CHANNEL_XML_ATTR_NID);
-    if (nid != NULL)
-      m_channelData.nid = StringUtils::IntVal(nid);
-
-    const char *tid = elem->Attribute(CHANNEL_XML_ATTR_TID);
-    if (tid != NULL)
-      m_channelData.tid = StringUtils::IntVal(tid);
-
-    const char *rid = elem->Attribute(CHANNEL_XML_ATTR_RID);
-    if (rid != NULL)
-      m_channelData.rid = StringUtils::IntVal(rid);
   }
 
   m_channelHash = GetChannelID().Hash();
@@ -551,29 +702,16 @@ bool cChannel::Deserialise(const TiXmlNode *node, bool bSeparator /* = false */)
 
 bool cChannel::DeserialiseConf(const string &str)
 {
+  if (str.empty())
+    return false;
+
   bool ok = true;
-  const char *s = str.c_str();
-  if (*s == ':')
-  {
-    m_channelData.groupSep = true;
-    if (*++s == '@' && *++s)
-    {
-      char *p = NULL;
-      errno = 0;
-      int n = strtol(s, &p, 10);
-      if (!errno && p != s && n > 0)
-      {
-        m_channelData.number = n;
-        s = p;
-      }
-    }
-    m_name = s;
-    StringUtils::TrimLeft(m_name);
-    StringUtils::Replace(m_name, '|', ':');
-  }
+
+  if (str[0] == ':')
+    return false; // Group separator
   else
   {
-    m_channelData.groupSep = false;
+    const char *s = str.c_str();
     string strnamebuf;
     string strsourcebuf;
     string strparambuf;
@@ -732,12 +870,12 @@ bool cChannel::DeserialiseConf(const string &str)
       fields++;
       if ((pos = strcopy.find(':')) != string::npos)
       {
-        m_channelData.sid = StringUtils::IntVal(strcopy.substr(0, pos));
+        m_sid = StringUtils::IntVal(strcopy.substr(0, pos));
         strcopy = strcopy.substr(pos + 1);
       }
       else
       {
-        m_channelData.sid = StringUtils::IntVal(strcopy);
+        m_sid = StringUtils::IntVal(strcopy);
         strcopy.clear();
       }
     }
@@ -747,12 +885,12 @@ bool cChannel::DeserialiseConf(const string &str)
       fields++;
       if ((pos = strcopy.find(':')) != string::npos)
       {
-        m_channelData.nid = StringUtils::IntVal(strcopy.substr(0, pos));
+        m_nid = StringUtils::IntVal(strcopy.substr(0, pos));
         strcopy = strcopy.substr(pos + 1);
       }
       else
       {
-        m_channelData.nid = StringUtils::IntVal(strcopy);
+        m_nid = StringUtils::IntVal(strcopy);
         strcopy.clear();
       }
     }
@@ -762,12 +900,12 @@ bool cChannel::DeserialiseConf(const string &str)
       fields++;
       if ((pos = strcopy.find(':')) != string::npos)
       {
-        m_channelData.tid = StringUtils::IntVal(strcopy.substr(0, pos));
+        m_tid = StringUtils::IntVal(strcopy.substr(0, pos));
         strcopy = strcopy.substr(pos + 1);
       }
       else
       {
-        m_channelData.tid = StringUtils::IntVal(strcopy);
+        m_tid = StringUtils::IntVal(strcopy);
         strcopy.clear();
       }
     }
@@ -777,12 +915,12 @@ bool cChannel::DeserialiseConf(const string &str)
       fields++;
       if ((pos = strcopy.find(':')) != string::npos)
       {
-        m_channelData.rid = StringUtils::IntVal(strcopy.substr(0, pos));
+        m_rid = StringUtils::IntVal(strcopy.substr(0, pos));
         strcopy = strcopy.substr(pos + 1);
       }
       else
       {
-        m_channelData.rid = StringUtils::IntVal(strcopy);
+        m_rid = StringUtils::IntVal(strcopy);
         strcopy.clear();
       }
     }
@@ -797,6 +935,7 @@ bool cChannel::DeserialiseConf(const string &str)
 
     if (fields >= 9)
     {
+      /*
       if (fields == 9)
       {
         // allow reading of old format
@@ -810,14 +949,16 @@ bool cChannel::DeserialiseConf(const string &str)
         m_channelData.caids[1] = 0;
         m_channelData.tpid = 0;
       }
+      */
 
-      m_channelData.vpid = m_channelData.ppid = 0;
-      m_channelData.vtype = 0;
-      m_channelData.apids[0] = 0;
-      m_channelData.atypes[0] = 0;
-      m_channelData.dpids[0] = 0;
-      m_channelData.dtypes[0] = 0;
-      m_channelData.spids[0] = 0;
+      // TODO: Move to cChannel::Reset()
+      m_videoStreams.clear();
+      m_audioStreams.clear();
+      m_dataStreams.clear();
+      m_subtitleStreams.clear();
+      m_teletextStreams.clear();
+      m_caIds.clear();
+      m_caDescriptors.clear();
 
       ok = false;
 
@@ -826,25 +967,36 @@ bool cChannel::DeserialiseConf(const string &str)
         m_parameters.Deserialise(parambuf);
         ok = (m_channelData.source = cSource::FromString(sourcebuf)) >= 0;
 
+        VideoStream vs;
+
         char *p;
         if ((p = strchr(vpidbuf, '=')) != NULL)
         {
           *p++ = 0;
-          if (sscanf(p, "%d", &m_channelData.vtype) != 1)
+          unsigned int vtype;
+          if (sscanf(p, "%u", &vtype) != 1)
             return false;
+          vs.vtype = vtype;
         }
         if ((p = strchr(vpidbuf, '+')) != NULL)
         {
           *p++ = 0;
-          if (sscanf(p, "%d", &m_channelData.ppid) != 1)
+          unsigned int ppid;
+          if (sscanf(p, "%u", &ppid) != 1)
             return false;
+          vs.ppid = ppid;
         }
-        if (sscanf(vpidbuf, "%d", &m_channelData.vpid) != 1)
+        unsigned int vpid;
+        if (sscanf(vpidbuf, "%u", &vpid) != 1)
           return false;
-        if (!m_channelData.ppid)
-          m_channelData.ppid = m_channelData.vpid;
-        if (m_channelData.vpid && !m_channelData.vtype)
-          m_channelData.vtype = 2; // default is MPEG-2
+        vs.vpid = vpid;
+
+        if (!vs.ppid)
+          vs.ppid = vs.vpid;
+        if (vs.vpid && !vs.vtype)
+          vs.vtype = 2; // default is MPEG-2
+
+        m_videoStreams.push_back(vs);
 
         char *dpidbuf = strchr(apidbuf, ';');
         if (dpidbuf)
@@ -855,9 +1007,12 @@ bool cChannel::DeserialiseConf(const string &str)
         char *strtok_next;
         while ((q = strtok_r(p, ",", &strtok_next)) != NULL)
         {
-          if (NumApids < MAXAPIDS)
+          AudioStream as = { };
+
+          as.apid = strtol(q, NULL, 10);
+          if (as.apid != 0)
           {
-            m_channelData.atypes[NumApids] = 4; // backwards compatibility
+            as.atype = 4; // backwards compatibility
             char *l = strchr(q, '=');
             if (l)
             {
@@ -866,24 +1021,14 @@ bool cChannel::DeserialiseConf(const string &str)
               if (t)
               {
                 *t++ = 0;
-                m_channelData.atypes[NumApids] = strtol(t, NULL, 10);
+                as.atype = strtol(t, NULL, 10);
               }
-              strn0cpy(m_channelData.alangs[NumApids], l, MAXLANGCODE2);
+              as.alang = l;
             }
-            else
-              *m_channelData.alangs[NumApids] = 0;
-
-            if ((m_channelData.apids[NumApids] = strtol(q, NULL, 10)) != 0)
-              NumApids++;
+            m_audioStreams.push_back(as);
           }
-          else
-            ;//esyslog("ERROR: too many APIDs!"); // no need to set ok to 'false'
-
           p = NULL;
         }
-
-        m_channelData.apids[NumApids] = 0;
-        m_channelData.atypes[NumApids] = 0;
 
         if (dpidbuf)
         {
@@ -893,9 +1038,12 @@ bool cChannel::DeserialiseConf(const string &str)
           char *strtok_next;
           while ((q = strtok_r(p, ",", &strtok_next)) != NULL)
           {
-            if (NumDpids < MAXDPIDS)
+            DataStream ds = { };
+
+            ds.dpid = strtol(q, NULL, 10);
+            if (ds.dpid != 0)
             {
-              m_channelData.dtypes[NumDpids] = SI::AC3DescriptorTag; // backwards compatibility
+              ds.dtype = SI::AC3DescriptorTag; // backwards compatibility
               char *l = strchr(q, '=');
               if (l)
               {
@@ -904,26 +1052,16 @@ bool cChannel::DeserialiseConf(const string &str)
                 if (t)
                 {
                   *t++ = 0;
-                  m_channelData.dtypes[NumDpids] = strtol(t, NULL, 10);
+                  ds.dtype = strtol(t, NULL, 10);
                 }
-                strn0cpy(m_channelData.dlangs[NumDpids], l, MAXLANGCODE2);
+                ds.dlang = l;
               }
-              else
-                *m_channelData.dlangs[NumDpids] = 0;
-
-              if ((m_channelData.dpids[NumDpids] = strtol(q, NULL, 10)) != 0)
-                NumDpids++;
+              m_dataStreams.push_back(ds);
             }
-            else
-              ;//esyslog("ERROR: too many DPIDs!"); // no need to set ok to 'false'
-
             p = NULL;
           }
-          m_channelData.dpids[NumDpids] = 0;
-          m_channelData.dtypes[NumDpids] = 0;
         }
 
-        int NumSpids = 0;
         if ((p = strchr(tpidbuf, ';')) != NULL)
         {
           *p++ = 0;
@@ -931,29 +1069,27 @@ bool cChannel::DeserialiseConf(const string &str)
           char *strtok_next;
           while ((q = strtok_r(p, ",", &strtok_next)) != NULL)
           {
-            if (NumSpids < MAXSPIDS)
+            SubtitleStream ss = { };
+
+            ss.spid = strtol(q, NULL, 10);
+            char *l = strchr(q, '=');
+            if (l)
             {
-              char *l = strchr(q, '=');
-              if (l)
-              {
-                *l++ = 0;
-                strn0cpy(m_channelData.slangs[NumSpids], l, MAXLANGCODE2);
-              }
-              else
-                *m_channelData.slangs[NumSpids] = 0;
-
-              m_channelData.spids[NumSpids++] = strtol(q, NULL, 10);
+              *l++ = 0;
+              ss.slang = l;
             }
-            else
-              ;//esyslog("ERROR: too many SPIDs!"); // no need to set ok to 'false'
 
-            p = NULL;
+            m_subtitleStreams.push_back(ss);
           }
-          m_channelData.spids[NumSpids] = 0;
         }
 
-        if (sscanf(tpidbuf, "%d", &m_channelData.tpid) != 1)
+        unsigned int tpid;
+        if (sscanf(tpidbuf, "%u", &tpid) != 1)
           return false;
+
+        TeletextStream ts;
+        ts.tpid = tpid;
+        m_teletextStreams.push_back(ts);
 
         if (caidbuf)
         {
@@ -963,17 +1099,14 @@ bool cChannel::DeserialiseConf(const string &str)
           char *strtok_next;
           while ((q = strtok_r(p, ",", &strtok_next)) != NULL)
           {
-            if (NumCaIds < MAXCAIDS)
-            {
-              m_channelData.caids[NumCaIds++] = strtol(q, NULL, 16) & 0xFFFF;
-              if (NumCaIds == 1 && m_channelData.caids[0] <= CA_USER_MAX)
-                break;
-            }
-            else
-              ;//esyslog("ERROR: too many CA ids!"); // no need to set ok to 'false'
+            uint16_t caId = strtol(q, NULL, 16) & 0xFFFF;
+            m_caIds.push_back(caId);
+
+            if (!m_caIds.empty() && m_caIds[0] <= CA_USER_MAX)
+              break;
+
             p = NULL;
           }
-          m_channelData.caids[NumCaIds] = 0;
         }
       }
 
@@ -1012,7 +1145,7 @@ bool cChannel::DeserialiseConf(const string &str)
   return ok;
 }
 
-int cChannel::Transponder() const
+int cChannel::TransponderFrequency() const
 {
   int transponderFreq = FrequencyKHz();
   while (transponderFreq > 20000) // XXX
@@ -1039,10 +1172,10 @@ unsigned int cChannel::Transponder(unsigned int frequency, fe_polarization polar
 
 tChannelID cChannel::GetChannelID() const
 {
-  if (m_channelData.nid || m_channelData.tid)
-    return tChannelID(m_channelData.source, m_channelData.nid, m_channelData.tid, m_channelData.sid, m_channelData.rid);
+  if (m_nid || m_tid)
+    return tChannelID(m_channelData.source, m_nid, m_tid, m_sid, m_rid);
   else
-    return tChannelID(m_channelData.source, m_channelData.nid, Transponder(), m_channelData.sid, m_channelData.rid);
+    return tChannelID(m_channelData.source, m_nid, TransponderFrequency(), m_sid, m_rid);
 }
 
 bool cChannel::HasTimer(const vector<cTimer2> &timers) const // TODO" cTimer2
@@ -1055,9 +1188,9 @@ bool cChannel::HasTimer(const vector<cTimer2> &timers) const // TODO" cTimer2
   return false;
 }
 
-int cChannel::Modification(int mask /* = CHANNELMOD_ALL */)
+eChannelMod cChannel::Modification(eChannelMod mask /* = CHANNELMOD_ALL */)
 {
-  int result = m_modification & mask;
+  eChannelMod result = (eChannelMod)(m_modification & mask);
   m_modification = CHANNELMOD_NONE;
   return result;
 }
@@ -1106,225 +1239,6 @@ bool cChannel::SetTransponderData(int source, int iFrequencyHz, int srate, const
   return false;
 }
 
-void cChannel::SetId(int nid, int tid, int sid, int rid /* = 0 */)
-{
-  if (m_channelData.nid != nid || m_channelData.tid != tid || m_channelData.sid != sid || m_channelData.rid != rid)
-  {
-    if (Number())
-    {
-      //dsyslog("changing id of channel %d from %d-%d-%d-%d to %d-%d-%d-%d", Number(), m_channelData.nid, m_channelData.tid, m_channelData.sid, m_channelData.rid, nid, tid, sid, rid);
-      m_modification |= CHANNELMOD_ID;
-      //Channels.UnhashChannel(this); // TODO
-    }
-    m_channelData.nid = nid;
-    m_channelData.tid = tid;
-    m_channelData.sid = sid;
-    m_channelData.rid = rid;
-    if (Number())
-      ;//Channels.HashChannel(this); // TODO
-    m_schedule = cSchedules::EmptySchedule;
-    SetChanged();
-  }
-}
-
-void cChannel::SetName(const string &strName, const string &strShortName, const string &strProvider)
-{
-  if (!strName.empty())
-  {
-    bool nn = (m_name != strName);
-    bool ns = (m_shortName != strShortName);
-    bool np = (m_provider != strProvider);
-    if (nn || ns || np)
-    {
-      if (Number())
-      {
-        /* TODO
-        dsyslog("changing name of channel %d from '%s,%s;%s' to '%s,%s;%s'",
-            Number(), m_name.c_str(), m_shortName.c_str(), m_provider.c_str(),
-            strName.c_str(), strShortName.c_str(), strProvider.c_str());
-        */
-        m_modification |= CHANNELMOD_NAME;
-        SetChanged();
-      }
-      if (nn)
-      {
-        m_name = strName;
-        SetChanged();
-      }
-      if (ns)
-      {
-        m_shortName = strShortName;
-        SetChanged();
-      }
-      if (np)
-      {
-        m_provider = strProvider;
-        SetChanged();
-      }
-    }
-  }
-}
-
-void cChannel::SetPortalName(const string &strPortalName)
-{
-  if (!strPortalName.empty() && m_portalName != strPortalName)
-  {
-    if (Number())
-    {
-      //dsyslog("changing portal name of channel %d from '%s' to '%s'", Number(), m_portalName.c_str(), strPortalName.c_str());
-      m_modification |= CHANNELMOD_NAME;
-      SetChanged();
-    }
-    m_portalName = strPortalName;
-  }
-}
-
-void cChannel::SetPids(int vpid, int ppid, int vtype, int *apids, int *atypes, char aLangs[][MAXLANGCODE2],
-                                                      int *dpids, int *dtypes, char dLangs[][MAXLANGCODE2],
-                                                      int *spids, char sLangs[][MAXLANGCODE2], int tpid)
-{
-  int mod = CHANNELMOD_NONE;
-  if (m_channelData.vpid != vpid || m_channelData.ppid != ppid || m_channelData.vtype != vtype || m_channelData.tpid != tpid)
-    mod |= CHANNELMOD_PIDS;
-
-  int m = IntArraysDiffer(m_channelData.apids, apids, m_channelData.alangs, aLangs) |
-          IntArraysDiffer(m_channelData.atypes, atypes) |
-          IntArraysDiffer(m_channelData.dpids, dpids, m_channelData.dlangs, dLangs) |
-          IntArraysDiffer(m_channelData.dtypes, dtypes) | IntArraysDiffer(m_channelData.spids, spids, m_channelData.slangs, sLangs);
-
-  if (m & STRDIFF)
-    mod |= CHANNELMOD_LANGS;
-
-  if (m & VALDIFF)
-    mod |= CHANNELMOD_PIDS;
-
-  if (mod)
-  {
-    const int BufferSize = (MAXAPIDS + MAXDPIDS) * (5 + 1 + MAXLANGCODE2 + 5) + 10; // 5 digits plus delimiting ',' or ';' plus optional '=cod+cod@type', +10: paranoia
-    char OldApidsBuf[BufferSize];
-    char NewApidsBuf[BufferSize];
-    char *q = OldApidsBuf;
-    q += IntArrayToString(q, m_channelData.apids, 10, m_channelData.alangs, m_channelData.atypes);
-    if (m_channelData.dpids[0])
-    {
-      *q++ = ';';
-      q += IntArrayToString(q, m_channelData.dpids, 10, m_channelData.dlangs, m_channelData.dtypes);
-    }
-
-    *q = 0;
-    q = NewApidsBuf;
-    q += IntArrayToString(q, apids, 10, aLangs, atypes);
-    if (dpids[0])
-    {
-      *q++ = ';';
-      q += IntArrayToString(q, dpids, 10, dLangs, dtypes);
-    }
-
-    *q = 0;
-    const int SBufferSize = MAXSPIDS * (5 + 1 + MAXLANGCODE2) + 10; // 5 digits plus delimiting ',' or ';' plus optional '=cod', +10: paranoia
-    char OldSpidsBuf[SBufferSize];
-    char NewSpidsBuf[SBufferSize];
-
-    q = OldSpidsBuf;
-    q += IntArrayToString(q, m_channelData.spids, 10, m_channelData.slangs);
-    *q = 0;
-    q = NewSpidsBuf;
-    q += IntArrayToString(q, spids, 10, sLangs);
-    *q = 0;
-    if (Number())
-      ;//dsyslog("changing pids of channel %d from %d+%d=%d:%s:%s:%d to %d+%d=%d:%s:%s:%d", Number(), m_channelData.vpid, m_channelData.ppid, m_channelData.vtype, OldApidsBuf, OldSpidsBuf, m_channelData.tpid, vpid, ppid, vtype, NewApidsBuf, NewSpidsBuf, tpid);
-
-    m_channelData.vpid = vpid;
-    m_channelData.ppid = ppid;
-    m_channelData.vtype = vtype;
-
-    for (int i = 0; i < MAXAPIDS; i++)
-    {
-      m_channelData.apids[i] = apids[i];
-      m_channelData.atypes[i] = atypes[i];
-      strn0cpy(m_channelData.alangs[i], aLangs[i], MAXLANGCODE2);
-    }
-    m_channelData.apids[MAXAPIDS] = 0;
-
-    for (int i = 0; i < MAXDPIDS; i++)
-    {
-      m_channelData.dpids[i] = dpids[i];
-      m_channelData.dtypes[i] = dtypes[i];
-      strn0cpy(m_channelData.dlangs[i], dLangs[i], MAXLANGCODE2);
-    }
-    m_channelData.dpids[MAXDPIDS] = 0;
-
-    for (int i = 0; i < MAXSPIDS; i++)
-    {
-      m_channelData.spids[i] = spids[i];
-      strn0cpy(m_channelData.slangs[i], sLangs[i], MAXLANGCODE2);
-    }
-    m_channelData.spids[MAXSPIDS] = 0;
-
-    m_channelData.tpid = tpid;
-    m_modification |= mod;
-    SetChanged();
-  }
-}
-
-void cChannel::SetSubtitlingDescriptors(uchar *subtitlingTypes, uint16_t *compositionPageIds, uint16_t *ancillaryPageIds)
-{
-  if (subtitlingTypes)
-  {
-    for (int i = 0; i < MAXSPIDS; i++)
-      m_channelData.subtitlingTypes[i] = subtitlingTypes[i];
-  }
-
-  if (compositionPageIds)
-  {
-    for (int i = 0; i < MAXSPIDS; i++)
-      m_channelData.compositionPageIds[i] = compositionPageIds[i];
-  }
-
-  if (ancillaryPageIds)
-  {
-    for (int i = 0; i < MAXSPIDS; i++)
-      m_channelData.ancillaryPageIds[i] = ancillaryPageIds[i];
-  }
-
-  if (subtitlingTypes || compositionPageIds || ancillaryPageIds)
-    SetChanged();
-}
-
-void cChannel::SetCaIds(const int *caIds)
-{
-  if (m_channelData.caids[0] && m_channelData.caids[0] <= CA_USER_MAX)
-    return; // special values will not be overwritten
-
-  if (IntArraysDiffer(m_channelData.caids, caIds))
-  {
-    char OldCaIdsBuf[MAXCAIDS * 5 + 10]; // 5: 4 digits plus delimiting ',', 10: paranoia
-    char NewCaIdsBuf[MAXCAIDS * 5 + 10];
-    IntArrayToString(OldCaIdsBuf, m_channelData.caids, 16);
-    IntArrayToString(NewCaIdsBuf, caIds, 16);
-    if (Number())
-      ;//dsyslog("changing caids of channel %d from %s to %s", Number(), OldCaIdsBuf, NewCaIdsBuf);
-    for (int i = 0; i <= MAXCAIDS; i++) // <= to copy the terminating 0
-    {
-      m_channelData.caids[i] = caIds[i];
-      if (!caIds[i])
-        break;
-    }
-    m_modification |= CHANNELMOD_CA;
-    SetChanged();
-  }
-}
-
-void cChannel::SetCaDescriptors(int level)
-{
-  if (level > 0)
-  {
-    m_modification |= CHANNELMOD_CA;
-    SetChanged();
-    if (Number() && level > 1)
-      ;//dsyslog("changing ca descriptors of channel %d", Number());
-  }
-}
 /*
 void cChannel::SetLinkChannels(cLinkChannels *linkChannels)
 {

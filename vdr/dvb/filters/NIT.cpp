@@ -215,11 +215,11 @@ void cNitFilter::ProcessData(u_short pid, u_char tid, const std::vector<uint8_t>
                 it != channels.end(); ++it)
             {
               ChannelPtr Channel = (*it);
-              if (!Channel->GroupSep() && Channel->Source() == Source
-                  && Channel->Nid() == ts.getOriginalNetworkId()
-                  && Channel->Tid() == ts.getTransportStreamId())
+              if (Channel->Source()    == Source
+                  && Channel->GetNid() == ts.getOriginalNetworkId()
+                  && Channel->GetTid() == ts.getTransportStreamId())
               {
-                int transponder = Channel->Transponder();
+                int transponder = Channel->TransponderFrequency();
                 found = true;
                 if (!ISTRANSPONDER(cChannel::Transponder(iFrequencyMHz, dtp.Polarization()), transponder))
                 {
@@ -265,9 +265,9 @@ void cNitFilter::ProcessData(u_short pid, u_char tid, const std::vector<uint8_t>
                 it != channels.end(); ++it)
             {
               ChannelPtr Channel = (*it);
-              if (!Channel->GroupSep() && cSource::IsSat(Channel->Source())
-                  && Channel->Nid() == ts.getOriginalNetworkId()
-                  && Channel->Tid() == ts.getTransportStreamId())
+              if (cSource::IsSat(Channel->Source())
+                  && Channel->GetNid() == ts.getOriginalNetworkId()
+                  && Channel->GetTid() == ts.getTransportStreamId())
               {
                 SI::S2SatelliteDeliverySystemDescriptor *sd =
                     (SI::S2SatelliteDeliverySystemDescriptor *) d;
@@ -322,11 +322,11 @@ void cNitFilter::ProcessData(u_short pid, u_char tid, const std::vector<uint8_t>
                 it != channels.end(); ++it)
             {
               ChannelPtr Channel = (*it);
-              if (!Channel->GroupSep() && Channel->Source() == Source
-                  && Channel->Nid() == ts.getOriginalNetworkId()
-                  && Channel->Tid() == ts.getTransportStreamId())
+              if (Channel->Source()    == Source
+                  && Channel->GetNid() == ts.getOriginalNetworkId()
+                  && Channel->GetTid() == ts.getTransportStreamId())
               {
-                int transponder = Channel->Transponder();
+                int transponder = Channel->TransponderFrequency();
                 found = true;
                 if (!ISTRANSPONDER(iFrequencyHz / 1000, transponder))
                 {
@@ -416,11 +416,11 @@ void cNitFilter::ProcessData(u_short pid, u_char tid, const std::vector<uint8_t>
                 it != channels.end(); ++it)
             {
               ChannelPtr Channel = (*it);
-              if (!Channel->GroupSep() && Channel->Source() == Source
-                  && Channel->Nid() == ts.getOriginalNetworkId()
-                  && Channel->Tid() == ts.getTransportStreamId())
+              if (Channel->Source()    == Source
+                  && Channel->GetNid() == ts.getOriginalNetworkId()
+                  && Channel->GetTid() == ts.getTransportStreamId())
               {
-                int transponder = Channel->Transponder();
+                int transponder = Channel->TransponderFrequency();
                 found = true;
                 if (!ISTRANSPONDER(iFrequencyHz / 1000000, transponder))
                 {
@@ -469,9 +469,9 @@ void cNitFilter::ProcessData(u_short pid, u_char tid, const std::vector<uint8_t>
                 {
                   ChannelPtr Channel = (*it);
                   int Source = cSource::FromData(cSource::stTerr);
-                  if (!Channel->GroupSep() && Channel->Source() == Source
-                      && Channel->Nid() == ts.getOriginalNetworkId()
-                      && Channel->Tid() == ts.getTransportStreamId())
+                  if (Channel->Source()    == Source
+                      && Channel->GetNid() == ts.getOriginalNetworkId()
+                      && Channel->GetTid() == ts.getTransportStreamId())
                   {
                     SI::T2DeliverySystemDescriptor *td =
                         (SI::T2DeliverySystemDescriptor *) d;

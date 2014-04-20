@@ -40,60 +40,43 @@ cReceiver::~cReceiver()
   }
 }
 
-bool cReceiver::AddPid(int Pid)
+void cReceiver::AddPid(uint16_t pid)
 {
   CLockObject lock(m_mutex);
 
-  set<int>::const_iterator it = m_pids.find(Pid);
+  set<uint16_t>::const_iterator it = m_pids.find(pid);
   if (it == m_pids.end())
   {
-    dsyslog("adding PID %d", Pid);
-    m_pids.insert(Pid);
+    dsyslog("adding PID %u", pid);
+    m_pids.insert(pid);
+  }
+}
+
+void cReceiver::AddPids(const set<uint16_t>& pids)
+{
+  CLockObject lock(m_mutex);
+
+  for (set<uint16_t>::const_iterator it = pids.begin(); it != pids.end(); ++it)
+    AddPid(*it);
+}
+
+void cReceiver::UpdatePids(const set<uint16_t>& pids)
+{
+  CLockObject lock(m_mutex);
+
+  for (set<uint16_t>::const_iterator it = pids.begin(); it != pids.end(); ++it)
+  {
+    if (m_pids.find(*it) == m_pids.end())
+      dsyslog("adding PID %u", *it);
   }
 
-  return true;
-}
-
-bool cReceiver::AddPids(set<int> pids)
-{
-  CLockObject lock(m_mutex);
-
-  for (set<int>::const_iterator it = pids.begin(); it != pids.end(); ++it)
-    if (!AddPid(*it))
-      return false;
-  return true;
-}
-
-bool cReceiver::UpdatePids(set<int> pids)
-{
-  CLockObject lock(m_mutex);
-
-  for (set<int>::const_iterator it = m_pids.begin(); it != m_pids.end(); ++it)
+  for (set<uint16_t>::const_iterator it = m_pids.begin(); it != m_pids.end(); ++it)
   {
     if (pids.find(*it) == pids.end())
-    {
-      dsyslog("removing PID %d", *it);
-      m_pids.erase(it);
-      it = m_pids.begin();
-    }
+      dsyslog("removing PID %u", *it);
   }
 
-  return AddPids(pids);
-}
-
-bool cReceiver::AddPids(const int *Pids)
-{
-  if (Pids)
-  {
-    CLockObject lock(m_mutex);
-
-    while (*Pids)
-    {
-      if (!AddPid(*Pids++))
-        return false;
-    }
-  }
-  return true;
+  m_pids = pids;
 }
 
 tChannelID cReceiver::ChannelID(void) const
@@ -103,23 +86,20 @@ tChannelID cReceiver::ChannelID(void) const
   return m_channelID;
 }
 
-inline void AppendToSet(set<int>& newPids, const int* pids)
+void cReceiver::SetPids(const cChannel& Channel)
 {
-  while (*pids)
-    newPids.insert(*pids++);
-}
-
-bool cReceiver::SetPids(const cChannel& Channel)
-{
-  set<int> newPids;
-  newPids.insert(Channel.Vpid());
-  if (Channel.Ppid() != Channel.Vpid())
-    newPids.insert(Channel.Ppid());
-  AppendToSet(newPids, Channel.Apids());
-  AppendToSet(newPids, Channel.Dpids());
-  AppendToSet(newPids, Channel.Spids());
-  if (Channel.Tpid())
-    newPids.insert(Channel.Tpid());
+  set<uint16_t> newPids;
+  newPids.insert(Channel.GetVideoStream().vpid);
+  if (Channel.GetVideoStream().ppid != Channel.GetVideoStream().vpid)
+    newPids.insert(Channel.GetVideoStream().ppid);
+  for (vector<AudioStream>::const_iterator it = Channel.GetAudioStreams().begin(); it != Channel.GetAudioStreams().end(); ++it)
+    newPids.insert(it->apid);
+  for (vector<DataStream>::const_iterator it = Channel.GetDataStreams().begin(); it != Channel.GetDataStreams().end(); ++it)
+    newPids.insert(it->dpid);
+  for (vector<SubtitleStream>::const_iterator it = Channel.GetSubtitleStreams().begin(); it != Channel.GetSubtitleStreams().end(); ++it)
+    newPids.insert(it->spid);
+  if (Channel.GetTeletextStream().tpid)
+    newPids.insert(Channel.GetTeletextStream().tpid);
 
   CLockObject lock(m_mutex);
 
@@ -128,20 +108,18 @@ bool cReceiver::SetPids(const cChannel& Channel)
     dsyslog("set PIDs for channel '%s'", Channel.Name().c_str());
     m_channelID = Channel.GetChannelID();
     m_pids.clear();
-    return AddPids(newPids);
+    AddPids(newPids);
   }
   else
   {
     dsyslog("updating PIDs for channel '%s'", Channel.Name().c_str());
-    return UpdatePids(newPids);
+    UpdatePids(newPids);
   }
-
-  return true;
 }
 
 bool cReceiver::WantsPid(int Pid)
 {
-  set<int>::const_iterator it = m_pids.find(Pid);
+  set<uint16_t>::const_iterator it = m_pids.find(Pid);
   return it != m_pids.end();
 }
 
@@ -192,11 +170,11 @@ bool cReceiver::AddToPIDSubsystem(cDevicePIDSubsystem* pidSys) const
 
   CLockObject lock(m_mutex);
 
-  for (set<int>::const_iterator it = m_pids.begin(); it != m_pids.end(); ++it)
+  for (set<uint16_t>::const_iterator it = m_pids.begin(); it != m_pids.end(); ++it)
   {
     if (!pidSys->AddPid(*it))
     {
-      for (set<int>::const_iterator it2 = m_pids.begin(); *it2 != *it; ++it2)
+      for (set<uint16_t>::const_iterator it2 = m_pids.begin(); *it2 != *it; ++it2)
         pidSys->DelPid(*it2);
       return false;
     }
@@ -211,7 +189,7 @@ void cReceiver::RemoveFromPIDSubsystem(cDevicePIDSubsystem* pidSys) const
 
   CLockObject lock(m_mutex);
 
-  for (set<int>::const_iterator it = m_pids.begin(); it != m_pids.end(); ++it)
+  for (set<uint16_t>::const_iterator it = m_pids.begin(); it != m_pids.end(); ++it)
     pidSys->DelPid(*it);
 }
 

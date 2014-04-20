@@ -52,7 +52,7 @@ cScanData::Source(void) const
 int
 cScanData::Transponder(void) const
 {
-  return m_channel->Transponder();
+  return m_channel->TransponderFrequency();
 }
 
 // --- cScanList -------------------------------------------------------------
@@ -72,12 +72,12 @@ cScanList::AddTransponders(const cChannelManager& channels)
 void
 cScanList::AddTransponder(ChannelPtr Channel)
 {
-  if (Channel->Source() && Channel->Transponder())
+  if (Channel->Source() && Channel->TransponderFrequency())
   {
     for (std::vector<cScanData>::const_iterator it = m_list.begin(); it != m_list.end(); ++it)
     {
       if ((*it).Source() == Channel->Source() &&
-          ISTRANSPONDER((*it).Transponder(), Channel->Transponder()))
+          ISTRANSPONDER((*it).Transponder(), Channel->TransponderFrequency()))
         return;
     }
     m_list.push_back(cScanData(Channel));
@@ -119,7 +119,7 @@ cTransponderList::AddTransponder(ChannelPtr Channel)
 {
   for (std::vector<ChannelPtr>::iterator it = m_channels.begin(); it != m_channels.end(); ++it)
   {
-    if ((*it)->Source() == Channel->Source() && (*it)->Transponder() == Channel->Transponder())
+    if ((*it)->Source() == Channel->Source() && (*it)->TransponderFrequency() == Channel->TransponderFrequency())
       return;
   }
   m_channels.push_back(Channel);
@@ -190,7 +190,7 @@ bool cEITScanner::ScanDevice(DevicePtr device)
     ChannelPtr Channel = ScanData->GetChannel();
     if (Channel &&
         /** not encrypted or able to decrypt */
-        (!Channel->Ca() || Channel->Ca() == device->CardIndex() || Channel->Ca() >= CA_ENCRYPTED_MIN) &&
+        (!Channel->GetCaId(0) || Channel->GetCaId(0) == device->CardIndex() || Channel->GetCaId(0) >= CA_ENCRYPTED_MIN) &&
         /** provided by this device */
         device->Channel()->ProvidesTransponder(*Channel) &&
         /** XXX priority? */
@@ -198,7 +198,7 @@ bool cEITScanner::ScanDevice(DevicePtr device)
         /** allowed to switch */
         (device->Channel()->MaySwitchTransponder(*Channel) || device->Channel()->ProvidesTransponderExclusively(*Channel)))
     {
-      dsyslog("EIT scan: device %d  source  %-8s tp %5d", device->CardIndex(), cSource::ToString(Channel->Source()).c_str(), Channel->Transponder());
+      dsyslog("EIT scan: device %d  source  %-8s tp %5d", device->CardIndex(), cSource::ToString(Channel->Source()).c_str(), Channel->TransponderFrequency());
       bSwitched = device->Channel()->SwitchChannel(Channel);
       ScanData->SetScanned();
     }

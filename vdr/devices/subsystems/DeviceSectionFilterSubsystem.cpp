@@ -129,7 +129,7 @@ int cDeviceSectionFilterSubsystem::GetSource(void)
 int cDeviceSectionFilterSubsystem::GetTransponder(void)
 {
   CLockObject lock(m_mutex);
-  return IsRunning() ? m_channel->Transponder() : 0;
+  return IsRunning() ? m_channel->TransponderFrequency() : 0;
 }
 
 ChannelPtr cDeviceSectionFilterSubsystem::GetChannel(void)

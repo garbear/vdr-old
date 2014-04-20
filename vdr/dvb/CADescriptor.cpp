@@ -27,21 +27,21 @@
 namespace VDR
 {
 
-cCaDescriptor::cCaDescriptor(int caSystem, int caPid, int esPid, int length, const uint8_t* data)
+cCaDescriptor::cCaDescriptor(uint16_t caSystem, uint16_t caPid, uint16_t esPid, const std::vector<uint8_t>& privateData)
  : m_caSystem(caSystem),
    m_esPid(esPid)
 {
-  m_data.reserve(length + 6);
+  m_data.reserve(privateData.size() + 6);
   m_data[0] = SI::CaDescriptorTag;
-  m_data[1] = length + 4;
+  m_data[1] = privateData.size() + 4;
   m_data[2] = (m_caSystem >> 8) & 0xFF;
   m_data[3] =  m_caSystem       & 0xFF;
   m_data[4] = ((caPid   >> 8) & 0x1F) | 0xE0;
   m_data[5] =   caPid         & 0xFF;
-  m_data.insert(m_data.begin() + 6, data, data + length);
+  m_data.insert(m_data.begin() + 6, privateData.begin(), privateData.end());
 }
 
-bool cCaDescriptor::operator== (const cCaDescriptor &arg) const
+bool cCaDescriptor::operator==(const cCaDescriptor &arg) const
 {
   return m_esPid == arg.m_esPid && m_data == arg.m_data;
 }

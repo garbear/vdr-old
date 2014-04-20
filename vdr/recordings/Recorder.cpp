@@ -38,14 +38,14 @@ cRecorder::cRecorder(const std::string& strFileName, ChannelPtr Channel, int Pri
   m_ringBuffer->SetTimeouts(0, 100);
   m_ringBuffer->SetIoThrottle();
 
-  int Pid = Channel->Vpid();
-  int Type = Channel->Vtype();
-  if (!Pid && Channel->Apid(0)) {
-     Pid = Channel->Apid(0);
+  uint16_t Pid = Channel->GetVideoStream().vpid;
+  uint16_t Type = Channel->GetVideoStream().vtype;
+  if (!Pid && Channel->GetAudioStream(0).apid) {
+     Pid = Channel->GetAudioStream(0).apid;
      Type = 0x04;
      }
-  if (!Pid && Channel->Dpid(0)) {
-     Pid = Channel->Dpid(0);
+  if (!Pid && Channel->GetDataStream(0).dpid) {
+     Pid = Channel->GetDataStream(0).dpid;
      Type = 0x06;
      }
   m_frameDetector = new cFrameDetector(Pid, Type);

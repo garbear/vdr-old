@@ -6,6 +6,10 @@
 #include "Config.h"
 #include "utils/XBMCTinyXML.h"
 
+#include <string>
+
+using namespace std;
+
 namespace VDR
 {
 
@@ -29,14 +33,14 @@ cRecordingInfo::cRecordingInfo(ChannelPtr channel, const cEvent *Event)
       Components = new CEpgComponents;
     for (int i = 0; i < MAXAPIDS; i++)
     {
-      const char *s = m_channel->Alang(i);
-      if (*s)
+      string alang = m_channel->GetAudioStream(i).alang;
+      if (!alang.empty())
       {
         CEpgComponent *Component = Components->GetComponent(i, 2, 3);
         if (!Component)
-          Components->SetComponent(COMPONENT_ADD_NEW, 2, 3, s, NULL);
-        else if (strlen(s) > strlen(Component->Language().c_str()))
-          Component->SetLanguage(s);
+          Components->SetComponent(COMPONENT_ADD_NEW, 2, 3, alang.c_str(), NULL);
+        else
+          Component->SetLanguage(alang);
       }
     }
     // There's no "multiple languages" for Dolby Digital tracks, but
@@ -44,29 +48,29 @@ cRecordingInfo::cRecordingInfo(ChannelPtr channel, const cEvent *Event)
     // information at all:
     for (int i = 0; i < MAXDPIDS; i++)
     {
-      const char *s = m_channel->Dlang(i);
-      if (*s)
+      string dlang = m_channel->GetDataStream(i).dlang;
+      if (!dlang.empty())
       {
         CEpgComponent *Component = Components->GetComponent(i, 4, 0); // AC3 component according to the DVB standard
         if (!Component)
           Component = Components->GetComponent(i, 2, 5); // fallback "Dolby" component according to the "Premiere pseudo standard"
         if (!Component)
-          Components->SetComponent(COMPONENT_ADD_NEW, 2, 5, s, NULL);
-        else if (strlen(s) > strlen(Component->Language().c_str()))
-          Component->SetLanguage(s);
+          Components->SetComponent(COMPONENT_ADD_NEW, 2, 5, dlang.c_str(), NULL);
+        else
+          Component->SetLanguage(dlang);
       }
     }
     // The same applies to subtitles:
     for (int i = 0; i < MAXSPIDS; i++)
     {
-      const char *s = m_channel->Slang(i);
-      if (*s)
+      string slang = m_channel->GetSubtitleStream(i).slang;
+      if (!slang.empty())
       {
         CEpgComponent *Component = Components->GetComponent(i, 3, 3);
         if (!Component)
-          Components->SetComponent(COMPONENT_ADD_NEW, 3, 3, s, NULL);
-        else if (strlen(s) > strlen(Component->Language().c_str()))
-          Component->SetLanguage(s);
+          Components->SetComponent(COMPONENT_ADD_NEW, 3, 3, slang.c_str(), NULL);
+        else
+          Component->SetLanguage(slang);
       }
     }
     if (Components != m_event->Components())

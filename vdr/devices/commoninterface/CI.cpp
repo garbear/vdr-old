@@ -41,6 +41,7 @@
 #include <unistd.h>
 
 using namespace PLATFORM;
+using namespace std;
 
 namespace VDR
 {
@@ -1871,14 +1872,14 @@ int cCamSlot::Priority(void)
   return d != cDevice::EmptyDevice ? d->Receiver()->Priority() : IDLEPRIORITY;
 }
 
-bool cCamSlot::ProvidesCa(const int *CaSystemIds)
+bool cCamSlot::ProvidesCa(const vector<uint16_t>& CaSystemIds)
 {
   CLockObject lock(mutex);
   cCiConditionalAccessSupport *cas = (cCiConditionalAccessSupport *)GetSessionByResourceId(RI_CONDITIONAL_ACCESS_SUPPORT);
   if (cas) {
      for (const int *ids = cas->GetCaSystemIds(); ids && *ids; ids++) {
-         for (const int *id = CaSystemIds; *id; id++) {
-             if (*id == *ids)
+        for (vector<uint16_t>::const_iterator it = CaSystemIds.begin(); it != CaSystemIds.end(); ++it) {
+             if (*it == *ids)
                 return true;
              }
          }
@@ -1928,19 +1929,19 @@ void cCamSlot::SetPid(int Pid, bool Active)
 void cCamSlot::AddChannel(const cChannel& Channel)
 {
   CLockObject lock(mutex);
-  if (source != Channel.Source() || transponder != Channel.Transponder())
+  if (source != Channel.Source() || transponder != Channel.TransponderFrequency())
     StopDecrypting();
   source = Channel.Source();
-  transponder = Channel.Transponder();
-  if (Channel.Ca() >= CA_ENCRYPTED_MIN)
+  transponder = Channel.TransponderFrequency();
+  if (Channel.GetCaId(0) >= CA_ENCRYPTED_MIN)
   {
-    AddPid(Channel.Sid(), Channel.Vpid(), STREAM_TYPE_VIDEO);
-    for (const int *Apid = Channel.Apids(); *Apid; Apid++)
-      AddPid(Channel.Sid(), *Apid, STREAM_TYPE_AUDIO);
-    for (const int *Dpid = Channel.Dpids(); *Dpid; Dpid++)
-      AddPid(Channel.Sid(), *Dpid, STREAM_TYPE_PRIVATE);
-    for (const int *Spid = Channel.Spids(); *Spid; Spid++)
-      AddPid(Channel.Sid(), *Spid, STREAM_TYPE_PRIVATE);
+    AddPid(Channel.GetSid(), Channel.GetVideoStream().vpid, STREAM_TYPE_VIDEO);
+    for (vector<AudioStream>::const_iterator it = Channel.GetAudioStreams().begin(); it != Channel.GetAudioStreams().end(); ++it)
+      AddPid(Channel.GetSid(), it->apid, STREAM_TYPE_AUDIO);
+    for (vector<DataStream>::const_iterator it = Channel.GetDataStreams().begin(); it != Channel.GetDataStreams().end(); ++it)
+      AddPid(Channel.GetSid(), it->dpid, STREAM_TYPE_PRIVATE);
+    for (vector<SubtitleStream>::const_iterator it = Channel.GetSubtitleStreams().begin(); it != Channel.GetSubtitleStreams().end(); ++it)
+      AddPid(Channel.GetSid(), it->spid, STREAM_TYPE_PRIVATE);
   }
 }
 
@@ -1948,23 +1949,26 @@ void cCamSlot::AddChannel(const cChannel& Channel)
 
 bool cCamSlot::CanDecrypt(const cChannel *Channel)
 {
-  if (Channel->Ca() < CA_ENCRYPTED_MIN)
+  if (Channel->GetCaId(0) < CA_ENCRYPTED_MIN)
      return true; // channel not encrypted
   if (!IsDecrypting())
      return true; // any CAM can decrypt at least one channel
   CLockObject lock(mutex);
   cCiConditionalAccessSupport *cas = (cCiConditionalAccessSupport *)GetSessionByResourceId(RI_CONDITIONAL_ACCESS_SUPPORT);
   if (cas && cas->RepliesToQuery()) {
-     cCiCaPmt CaPmt(CPCI_QUERY, Channel->Source(), Channel->Transponder(), Channel->Sid(), GetCaSystemIds());
+     cCiCaPmt CaPmt(CPCI_QUERY, Channel->Source(), Channel->TransponderFrequency(), Channel->GetSid(), GetCaSystemIds());
      CaPmt.SetListManagement(CPLM_ADD); // WORKAROUND: CPLM_ONLY doesn't work with Alphacrypt 3.09 (deletes existing CA_PMTs)
-     CaPmt.AddPid(Channel->Vpid(), STREAM_TYPE_VIDEO);
-     for (const int *Apid = Channel->Apids(); *Apid; Apid++)
-         CaPmt.AddPid(*Apid, STREAM_TYPE_AUDIO);
-     for (const int *Dpid = Channel->Dpids(); *Dpid; Dpid++)
-         CaPmt.AddPid(*Dpid, STREAM_TYPE_PRIVATE);
-     for (const int *Spid = Channel->Spids(); *Spid; Spid++)
-         CaPmt.AddPid(*Spid, STREAM_TYPE_PRIVATE);
+
+     CaPmt.AddPid(Channel->GetVideoStream().vpid, STREAM_TYPE_VIDEO);
+     for (vector<AudioStream>::const_iterator it = Channel->GetAudioStreams().begin(); it != Channel->GetAudioStreams().end(); ++it)
+       CaPmt.AddPid(it->apid, STREAM_TYPE_AUDIO);
+     for (vector<DataStream>::const_iterator it = Channel->GetDataStreams().begin(); it != Channel->GetDataStreams().end(); ++it)
+       CaPmt.AddPid(it->dpid, STREAM_TYPE_PRIVATE);
+     for (vector<SubtitleStream>::const_iterator it = Channel->GetSubtitleStreams().begin(); it != Channel->GetSubtitleStreams().end(); ++it)
+       CaPmt.AddPid(it->spid, STREAM_TYPE_PRIVATE);
+
      cas->SendPMT(&CaPmt);
+
      cTimeMs Timeout(QUERY_REPLY_TIMEOUT);
      do {
         if (processed.Wait(mutex, bProcessed, QUERY_REPLY_WAIT))

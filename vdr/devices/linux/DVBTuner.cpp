@@ -341,7 +341,7 @@ void *cDvbTuner::Process()
         m_lastDiseqc = NULL;
         if (time(NULL) - m_lastTimeoutReport > 60) // let's not get too many of these
         {
-          isyslog("frontend %d/%d timed out while tuning to channel %d, tp %d", Adapter(), Frontend(), m_channel.Number(), m_channel.Transponder());
+          isyslog("frontend %d/%d timed out while tuning to channel %d, tp %d", Adapter(), Frontend(), m_channel.Number(), m_channel.TransponderFrequency());
           m_lastTimeoutReport = time(NULL);
         }
         continue;
@@ -363,7 +363,7 @@ void *cDvbTuner::Process()
       {
         if (LostLock)
         {
-          isyslog("frontend %d/%d regained lock on channel %d, tp %d", Adapter(), Frontend(), m_channel.Number(), m_channel.Transponder());
+          isyslog("frontend %d/%d regained lock on channel %d, tp %d", Adapter(), Frontend(), m_channel.Number(), m_channel.TransponderFrequency());
           LostLock = false;
         }
         SetTunerStatus(tsLocked);
@@ -374,7 +374,7 @@ void *cDvbTuner::Process()
       else if (m_tunerStatus == tsLocked)
       {
         LostLock = true;
-        isyslog("frontend %d/%d lost lock on channel %d, tp %d", Adapter(), Frontend(), m_channel.Number(), m_channel.Transponder());
+        isyslog("frontend %d/%d lost lock on channel %d, tp %d", Adapter(), Frontend(), m_channel.Number(), m_channel.TransponderFrequency());
         SetTunerStatus(tsTuned);
         Timer.Set(m_lockTimeout);
         m_lastTimeoutReport = 0;
@@ -490,7 +490,7 @@ bool cDvbTuner::IsTunedTo(const cChannel &channel) const
 {
   if (m_tunerStatus == tsIdle)
     return false; // not tuned to
-  if (m_channel.Source() != channel.Source() || m_channel.Transponder() != channel.Transponder())
+  if (m_channel.Source() != channel.Source() || m_channel.TransponderFrequency() != channel.TransponderFrequency())
     return false; // sufficient mismatch
 
   // Polarization is already checked as part of the Transponder.

@@ -29,6 +29,7 @@
 
 #include <stdint.h>
 #include <stdio.h>
+#include <vector>
 
 namespace VDR
 {
@@ -239,7 +240,7 @@ public:
   int Priority(void);
        ///< Returns the priority if the device this slot is currently assigned
        ///< to, or IDLEPRIORITY if it is not assigned to any device.
-  bool ProvidesCa(const int *CaSystemIds);
+  bool ProvidesCa(const std::vector<uint16_t>& CaSystemIds);
        ///< Returns true if the CAM in this slot provides one of the given
        ///< CaSystemIds. This doesn't necessarily mean that it will be
        ///< possible to actually decrypt such a programme, since CAMs

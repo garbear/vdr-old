@@ -971,7 +971,7 @@ bool cVNSIClient::processCHANNELS_GetChannels() /* OPCODE 63 */
       continue;
 
     // skip invalid channels
-    if (channel->Sid() == 0)
+    if (channel->GetSid() == 0)
       continue;
 
     // check filter
@@ -982,10 +982,10 @@ bool cVNSIClient::processCHANNELS_GetChannels() /* OPCODE 63 */
     m_resp->add_String(m_toUTF8.Convert(channel->Name().c_str()));
     m_resp->add_String(m_toUTF8.Convert(channel->Provider().c_str()));
     m_resp->add_U32(channel->Hash());
-    m_resp->add_U32(channel->Ca(0));
+    m_resp->add_U32(channel->GetCaId(0));
     caid_idx = 0;
     caids = "caids:";
-    while((caid = channel->Ca(caid_idx)) != 0)
+    while((caid = channel->GetCaId(caid_idx)) != 0)
     {
       caids = cString::sprintf("%s%d;", (const char*)caids, caid);
       caid_idx++;
@@ -1067,16 +1067,8 @@ bool cVNSIClient::processCHANNELS_GetGroupMembers()
   {
     ChannelPtr channel = *it;
 
-    if(automatic && !channel->GroupSep())
+    if(automatic)
       name = channel->Provider();
-    else
-    {
-      if(channel->GroupSep())
-      {
-        name = channel->Name();
-        continue;
-      }
-    }
 
     if(name.empty())
       continue;
@@ -1112,7 +1104,7 @@ bool cVNSIClient::processCHANNELS_GetCaids()
   {
     int caid;
     int idx = 0;
-    while((caid = channel->Ca(idx)) != 0)
+    while((caid = channel->GetCaId(idx)) != 0)
     {
       m_resp->add_U32(caid);
       idx++;

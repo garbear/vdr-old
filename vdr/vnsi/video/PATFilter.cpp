@@ -381,6 +381,7 @@ void cLivePatFilter::ProcessData(u_short pid, u_char tid, const vector<uint8_t>&
       dsyslog("Pat/Pmt Filter received pmt change");
       if (m_Channel)
       {
+        /* TODO
         m_Channel->Modification();
         m_Channel->SetPids(Vpid, Ppid, Vtype, Apids, Atypes, ALangs, Dpids,
             Dtypes, DLangs, Spids, SLangs, Tpid);
@@ -389,6 +390,7 @@ void cLivePatFilter::ProcessData(u_short pid, u_char tid, const vector<uint8_t>&
         m_Channel->NotifyObservers(ObservableMessageChannelHasPMT);
         if (m_Channel->Modification(CHANNELMOD_PIDS))
           m_Channel->NotifyObservers(ObservableMessageChannelPMTChanged);
+        */
       }
       else
       {

@@ -41,13 +41,13 @@ CChannelProvider::CChannelProvider()
 CChannelProvider::CChannelProvider(std::string name, int caid)
   :m_name(name), m_caid(caid)
 {
-};
+}
 
 bool CChannelProvider::operator==(const CChannelProvider &rhs)
 {
   if (rhs.m_caid != m_caid)
     return false;
-  if (rhs.m_name.compare(m_name) != 0)
+  if (rhs.m_name != m_name)
     return false;
   return true;
 }
@@ -58,10 +58,10 @@ bool CChannelFilter::IsRadio(const ChannelPtr channel)
   bool isRadio = false;
 
   // assume channels without VPID & APID are video channels
-  if (channel->Vpid() == 0 && channel->Apid(0) == 0)
+  if (channel->GetVideoStream().vpid == 0 && channel->GetAudioStream(0).apid == 0)
     isRadio = false;
   // channels without VPID are radio channels (channels with VPID 1 are encrypted radio channels)
-  else if (channel->Vpid() == 0 || channel->Vpid() == 1)
+  else if (channel->GetVideoStream().vpid == 0 || channel->GetVideoStream().vpid == 1)
     isRadio = true;
 
   return isRadio;
@@ -263,7 +263,7 @@ bool CChannelFilter::IsWhitelist(const ChannelPtr channel)
   if(providers->empty())
     return true;
 
-  if (channel->Ca(0) == 0)
+  if (channel->GetCaId(0) == 0)
   {
     provider.m_caid = 0;
     p_it = std::find(providers->begin(), providers->end(), provider);
@@ -275,7 +275,7 @@ bool CChannelFilter::IsWhitelist(const ChannelPtr channel)
 
   int caid;
   int idx = 0;
-  while((caid = channel->Ca(idx)) != 0)
+  while((caid = channel->GetCaId(idx)) != 0) // TODO: Switch to const_iterator
   {
     provider.m_caid = caid;
     p_it = std::find(providers->begin(), providers->end(), provider);
@@ -290,9 +290,6 @@ bool CChannelFilter::IsWhitelist(const ChannelPtr channel)
 bool CChannelFilter::PassFilter(const ChannelPtr channel)
 {
   CLockObject lock(m_Mutex);
-
-  if(channel->GroupSep())
-    return true;
 
   if (!IsWhitelist(channel))
     return false;

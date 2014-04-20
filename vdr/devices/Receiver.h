@@ -14,6 +14,8 @@
 #include "channels/ChannelManager.h"
 #include "platform/threads/mutex.h"
 #include "Config.h"
+
+#include <stdint.h>
 #include <set>
 
 namespace VDR
@@ -24,11 +26,11 @@ class cDevicePIDSubsystem;
 class cReceiver {
   friend class cDevice;
 private:
-  PLATFORM::CMutex m_mutex;
-  tChannelID       m_channelID;
-  cDevice*         m_device;
-  std::set<int>    m_pids;
-  int              m_priority;
+  PLATFORM::CMutex   m_mutex;
+  tChannelID         m_channelID;
+  cDevice*           m_device;
+  std::set<uint16_t> m_pids;
+  int                m_priority;
 
 protected:
   void Detach(void);
@@ -66,14 +68,12 @@ public:
                ///< that this cReceiver may be detached at any time in favor of a timer recording
                ///< or live viewing (without blocking the cDevice it is attached to).
   virtual ~cReceiver();
-  bool AddPid(int Pid);
-               ///< Adds the given Pid to the list of PIDs of this receiver.
-  bool AddPids(std::set<int> pids);
-  bool UpdatePids(std::set<int> pids);
-  bool AddPids(const int *Pids);
-               ///< Adds the given zero terminated list of Pids to the list of PIDs of this
-               ///< receiver.
-  bool SetPids(const cChannel& Channel);
+  void AddPid(uint16_t pid);
+               ///< Adds the given pid to the list of PIDs of this receiver.
+  void AddPids(const std::set<uint16_t>& pids);
+               ///< Adds the given list of pids to the list of PIDs of this receiver.
+  void UpdatePids(const std::set<uint16_t>& pids);
+  void SetPids(const cChannel& Channel);
                ///< Sets the PIDs of this receiver to those of the given Channel,
                ///< replacing any previously stored PIDs. If Channel is NULL, all
                ///< PIDs will be cleared. Parameters in the Setup may control whether

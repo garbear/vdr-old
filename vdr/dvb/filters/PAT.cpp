@@ -153,8 +153,9 @@ void cPatFilter::ProcessData(u_short pid, u_char tid, const std::vector<uint8_t>
     ChannelPtr Channel = cChannelManager::Get().GetByServiceID(Source(), Transponder(), pmt.getServiceId());
     if (Channel)
     {
+      /* TODO
       SI::CaDescriptor *d;
-      CaDescriptorsPtr CaDescriptors = CaDescriptorsPtr(new cCaDescriptors(Channel->Source(), Channel->Transponder(), Channel->Sid()));
+      CaDescriptorsPtr CaDescriptors = CaDescriptorsPtr(new cCaDescriptors(Channel->Source(), Channel->Transponder(), Channel->Get()));
       // Scan the common loop:
       for (SI::Loop::Iterator it; (d = (SI::CaDescriptor*)pmt.commonDescriptors.getNext(it, SI::CaDescriptorTag)); )
       {
@@ -425,6 +426,7 @@ void cPatFilter::ProcessData(u_short pid, u_char tid, const std::vector<uint8_t>
       }
       Channel->SetCaDescriptors(cCaDescriptorHandler::Get().AddCaDescriptors(CaDescriptors));
       Channel->NotifyObservers(ObservableMessageChannelChanged);
+      */
     }
     m_lastPmtScan.Reset(); // this triggers the next scan
 //    XXX Channels.Unlock();

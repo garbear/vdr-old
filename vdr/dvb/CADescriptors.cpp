@@ -70,7 +70,9 @@ void cCaDescriptors::AddCaId(int CaId)
 
 void cCaDescriptors::AddCaDescriptor(SI::CaDescriptor* d, int esPid)
 {
-  CaDescriptorPtr nca = CaDescriptorPtr(new cCaDescriptor(d->getCaType(), d->getCaPid(), esPid, d->privateData.getLength(), d->privateData.getData()));
+  std::vector<uint8_t> privateData;
+  privateData.assign(d->privateData.getData(), d->privateData.getData() + d->privateData.getLength());
+  CaDescriptorPtr nca = CaDescriptorPtr(new cCaDescriptor(d->getCaType(), d->getCaPid(), esPid, privateData));
   for (CaDescriptorVector::const_iterator it = m_caDescriptors.begin(); it != m_caDescriptors.end(); ++it)
   {
     if (**it == *nca)

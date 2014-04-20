@@ -162,8 +162,9 @@ template <> int cScanFsm::Event<eAddChannels>()
   {
     const ChannelPtr& channel = *channelIt;
 
+    /*
     if (!channel->Vpid() && ! channel->Apid(0) && ! channel->Dpid(0) &&
-        !channel->Tpid() && ! channel->Ca() &&
+        !channel->Tpid() && ! channel->GetCaId(0) &&
         channel->Name() == CHANNEL_NAME_UNKNOWN)
     {
       continue;
@@ -231,10 +232,10 @@ template <> int cScanFsm::Event<eAddChannels>()
       // Include all channels for now
       eScanFlags scanFlags = (eScanFlags)(SCAN_TV | SCAN_RADIO | SCAN_FTA | SCAN_SCRAMBLED | SCAN_HD);
 
-      if (channel->Ca() && !(scanFlags & SCAN_SCRAMBLED))
+      if (channel->GetCaId(0) && !(scanFlags & SCAN_SCRAMBLED))
         continue; // Channel is scrambled
 
-      if (!channel->Ca() && !(scanFlags & SCAN_FTA))
+      if (!channel->GetCaId(0) && !(scanFlags & SCAN_FTA))
         continue; // FTA channel
 
       if (!channel->Vpid() && (channel->Apid(0) || channel->Dpid(0)) && ! (scanFlags & SCAN_RADIO))
@@ -248,6 +249,7 @@ template <> int cScanFsm::Event<eAddChannels>()
 
       m_channelManager->AddChannel(channel->Clone()); // TODO: Can we add the channel directly?
     }
+    */
   }
 
   m_channelManager->ReNumber();
@@ -280,7 +282,7 @@ void cScanFsm::NitFoundTransponder(ChannelPtr transponder, bool bOtherTable, int
 {
   if (!IsKnownInitialTransponder(*transponder, true))
   {
-    dsyslog("   Add transponder: NID = %d, TID = %d", transponder->Nid(), transponder->Tid());
+    dsyslog("   Add transponder: NID = %d, TID = %d", transponder->GetNid(), transponder->GetTid());
     m_transponders.push_back(transponder);
   }
   else
@@ -293,11 +295,11 @@ void cScanFsm::NitFoundTransponder(ChannelPtr transponder, bool bOtherTable, int
       if (IsDifferentTransponderDeepScan(*transponder, *updateTransponder, false))
         updateTransponder->SetTransponderData(transponder->Source(), transponder->FrequencyHz(), transponder->Srate(), transponder->Parameters(), true);
 
-      if ((originalNid != updateTransponder->Nid()) ||
-          (originalTid != updateTransponder->Tid()))
+      if ((originalNid != updateTransponder->GetNid()) ||
+          (originalTid != updateTransponder->GetTid()))
       {
         updateTransponder->SetId(originalNid, originalTid, 0, 0);
-        dsyslog("   Update transponder: NID = %d, TID = %d", updateTransponder->Nid(), updateTransponder->Tid());
+        dsyslog("   Update transponder: NID = %d, TID = %d", updateTransponder->GetNid(), updateTransponder->GetTid());
       }
     }
   }
@@ -307,15 +309,15 @@ void cScanFsm::PatFoundChannel(ChannelPtr channel, int pid)
 {
   ChannelPtr scanned = GetScannedTransponderByParams(*channel);
   if (scanned)
-    channel->SetId(scanned->Nid(), channel->Tid(), channel->Sid()); // Use scanned channel's NID
+    channel->SetId(scanned->GetNid(), channel->GetTid(), channel->GetSid()); // Use scanned channel's NID
 
   if (!GetByTransponder(m_newChannels, *channel))
   {
     m_newChannels.push_back(channel);
-    dsyslog("      Added channel with service ID %d", channel->Sid());
+    dsyslog("      Added channel with service ID %d", channel->GetSid());
 
     // TODO: Need a lock for m_pmtScanners
-    cPmtScanner* pmtScanner = new cPmtScanner(m_device, channel, channel->Sid(), pid);
+    cPmtScanner* pmtScanner = new cPmtScanner(m_device, channel, channel->GetSid(), pid);
     pmtScanner->Enable(true);
     m_pmtScanners.push_back(pmtScanner);
   }
@@ -355,7 +357,7 @@ ChannelPtr cScanFsm::SdtGetByService(int source, int tid, int sid)
   for (ChannelVector::iterator channelIt = m_newChannels.begin(); channelIt != m_newChannels.end(); ++channelIt)
   {
     ChannelPtr& channel = *channelIt;
-    if (channel->Source() == source && channel->Tid() == tid && channel->Sid() == sid)
+    if (channel->Source() == source && channel->GetTid() == tid && channel->GetSid() == sid)
       return channel;
   }
   return cChannel::EmptyChannel;
@@ -383,8 +385,6 @@ bool cScanFsm::IsKnownInitialTransponder(const cChannel& newChannel, bool bAutoA
   for (ChannelVector::const_iterator it = list.begin(); it != list.end(); ++it)
   {
     const cChannel& channel = **it;
-    if (channel.GroupSep())
-      continue;
 
     if (newChannel.IsTerr())
     {
@@ -393,14 +393,14 @@ bool cScanFsm::IsKnownInitialTransponder(const cChannel& newChannel, bool bAutoA
     }
     if (newChannel.IsCable())
     {
-      if (newChannel.Ca() != 0xA1)
+      if (newChannel.GetCaId(0) != 0xA1)
       {
         if ((channel.Source() == newChannel.Source()) && IsNearlySameFrequency(channel, newChannel))
           return true;
       }
       else
       {
-        if ((channel.Ca() == newChannel.Ca())         &&
+        if ((channel.GetCaId(0) == newChannel.GetCaId(0))         &&
             (channel.Source() == newChannel.Source()) &&
             IsNearlySameFrequency(channel, newChannel, 50))
         {
@@ -555,8 +555,8 @@ ChannelPtr cScanFsm::GetByTransponder(ChannelVector& channels, const cChannel& t
     ChannelPtr& channel = *channelIt;
     if (IsNearlySameFrequency(*channel, transponder, maxdelta) &&
         channel->Source() == transponder.Source()              &&
-        channel->Tid()    == transponder.Tid()                 &&
-        channel->Sid()    == transponder.Sid())
+        channel->GetTid() == transponder.GetTid()           &&
+        channel->GetSid() == transponder.GetSid())
     {
       return channel;
     }

@@ -29,6 +29,11 @@
 #include "vdr/utils/DateTime.h"
 #include "settings/Settings.h"
 
+// From UTF8Utils.h
+#ifndef Utf8BufSize
+#define Utf8BufSize(s) ((s) * 4)
+#endif
+
 namespace VDR
 {
 
@@ -203,7 +208,7 @@ void cEIT::ParseSIDescriptor(SI::Descriptor* d)
   case SI::TimeShiftedEventDescriptorTag:
     {
       SI::TimeShiftedEventDescriptor *tsed = (SI::TimeShiftedEventDescriptor *) d;
-      SchedulePtr rSchedule = m_Schedules->GetSchedule(tChannelID(m_iSource, m_channel->Nid(), m_channel->Tid(), tsed->getReferenceServiceId()));
+      SchedulePtr rSchedule = m_Schedules->GetSchedule(tChannelID(m_iSource, m_channel->GetNid(), m_channel->GetTid(), tsed->getReferenceServiceId()));
       if (!rSchedule)
         break;
       m_rEvent = rSchedule->GetEvent(tsed->getReferenceEventId());
@@ -242,7 +247,7 @@ void cEIT::ParseSIDescriptor(SI::Descriptor* d)
             else if (cSettings::Get().m_iUpdateChannels >= 4)
             {
               ChannelPtr transponder = m_channel;
-              if (m_channel->Tid() != ld->getTransportStreamId())
+              if (m_channel->GetTid() != ld->getTransportStreamId())
                 transponder = cChannelManager::Get().GetByTransponderID(linkID);
               link = cChannelManager::Get().NewChannel(*transponder, linkName, "", "", ld->getOriginalNetworkId(), ld->getTransportStreamId(), ld->getServiceId());
               //patFilter->Trigger();

@@ -15,6 +15,11 @@
 #include "settings/Settings.h"
 #include "utils/UTF8Utils.h"
 
+// From UTF8Utils.h
+#ifndef Utf8BufSize
+#define Utf8BufSize(s) ((s) * 4)
+#endif
+
 namespace VDR
 {
 

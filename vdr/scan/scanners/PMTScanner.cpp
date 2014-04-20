@@ -56,14 +56,14 @@ void cPmtScanner::ProcessData(u_short pid, u_char tid, const vector<uint8_t>& da
 
   //HEXDUMP(data.data(), Length);
 
-  if (Channel->Sid() != pmtSid)
+  if (Channel->GetSid() != pmtSid)
   {
-    dsyslog("ERROR: Channel->Sid(%d) != pmtSid(%d)", Channel->Sid(), pmtSid);
+    dsyslog("ERROR: Channel->Sid(%d) != pmtSid(%d)", Channel->GetSid(), pmtSid);
     return;
   }
 
   SI::CaDescriptor * d;
-  CaDescriptorsPtr CaDescriptors = CaDescriptorsPtr(new cCaDescriptors(Channel->Source(), Channel->Transponder(), Channel->Sid()));
+  CaDescriptorsPtr CaDescriptors = CaDescriptorsPtr(new cCaDescriptors(Channel->Source(), Channel->TransponderFrequency(), Channel->GetSid()));
 
   // Scan the common loop:
   for (SI::Loop::Iterator it; (d = (SI::CaDescriptor *) pmt.commonDescriptors.getNext(it, SI::CaDescriptorTag));)
@@ -94,6 +94,7 @@ void cPmtScanner::ProcessData(u_short pid, u_char tid, const vector<uint8_t>& da
   for (SI::Loop::Iterator it; pmt.streamLoop.getNext(stream, it);)
   {
     StreamType = stream.getStreamType();
+    /* TODO
     switch (StreamType)
     {
       case STREAMTYPE_11172_VIDEO:
@@ -250,6 +251,7 @@ void cPmtScanner::ProcessData(u_short pid, u_char tid, const vector<uint8_t>& da
       default:
         break;
     }
+    */
     for (SI::Loop::Iterator it; (d = (SI::CaDescriptor*)stream.streamDescriptors.getNext(it, SI::CaDescriptorTag));)
     {
       CaDescriptors->AddCaDescriptor(d, true);
@@ -259,6 +261,7 @@ void cPmtScanner::ProcessData(u_short pid, u_char tid, const vector<uint8_t>& da
 
   Del(pmtPid, TableIdPMT);
 
+  /* TODO
   if (Vpid || Apids[0] || Dpids[0] || Tpid)
   {
     Channel->SetPids(Vpid, Vpid ? Ppid : 0, Vpid ? Vtype : 0, Apids, Atypes, ALangs, Dpids, Dtypes, DLangs, Spids, SLangs, Tpid);
@@ -268,8 +271,9 @@ void cPmtScanner::ProcessData(u_short pid, u_char tid, const vector<uint8_t>& da
   else
   {
     dsyslog("   PMT: PmtPid=%.5d Sid=%d is invalid (no audio/video)", pid, pmt.getServiceId());
-    Channel->SetId(Channel->Nid(), Channel->Tid(), Channel->Sid(), INVALID_CHANNEL);
+    Channel->SetId(Channel->Nid(), Channel->Tid(), Channel->GetSid(), INVALID_CHANNEL);
   }
+  */
 
   return;
 }

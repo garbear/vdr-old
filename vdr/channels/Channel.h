@@ -22,9 +22,12 @@
 
 #include "Types.h"
 #include "ChannelID.h"
+#include "dvb/CADescriptor.h"
 #include "sources/linux/DVBTransponderParams.h"
 #include "sources/Source.h"
 #include "utils/Observer.h"
+
+#include <stdint.h>
 #include <string>
 #include <vector>
 
@@ -32,6 +35,43 @@ class TiXmlNode;
 
 namespace VDR
 {
+
+struct VideoStream
+{
+  uint16_t vpid;  // Video stream packet ID
+  uint16_t vtype; // Video stream type
+  uint16_t ppid;  // Program clock reference packet ID
+};
+
+struct AudioStream
+{
+  uint16_t    apid;  // Audio stream packet ID
+  uint16_t    atype; // Audio stream type
+  std::string alang; // Audio stream language
+};
+
+struct DataStream
+{
+  uint16_t    dpid;  // Data stream packet ID
+  uint16_t    dtype; // Data stream type
+  std::string dlang; // Data stream language
+};
+
+struct SubtitleStream
+{
+  uint16_t    spid;              // Subtitle stream packet ID
+  std::string slang;             // Subtitle stream language
+  uint8_t     subtitlingType;    // Subtitling type (optional)
+  uint16_t    compositionPageId; // Composition page ID (optional)
+  uint16_t    ancillaryPageId;   // Ancillary page ID (optional)
+};
+
+struct TeletextStream
+{
+  int tpid; // Teletext stream packet ID
+};
+
+
 #define CHANNEL_NAME_UNKNOWN  "???"
 
 // TODO
@@ -45,21 +85,20 @@ public:
 //#include "thread.h"
 //#include "tools.h"
 
-#ifndef ABS
-#define ABS(x)  ((x) >= 0 ? (x) : -(x))
-#endif
+bool ISTRANSPONDER(int frequencyMHz1, int frequencyMHz2); // XXX: Units?
 
-#define ISTRANSPONDER(f1, f2)  (ABS((f1) - (f2)) < 4) //XXX
-
-#define CHANNELMOD_NONE     0x00
-#define CHANNELMOD_ALL      0xFF
-#define CHANNELMOD_NAME     0x01
-#define CHANNELMOD_PIDS     0x02
-#define CHANNELMOD_ID       0x04
-#define CHANNELMOD_CA       0x10
-#define CHANNELMOD_TRANSP   0x20
-#define CHANNELMOD_LANGS    0x40
-#define CHANNELMOD_RETUNE   (CHANNELMOD_PIDS | CHANNELMOD_CA | CHANNELMOD_TRANSP)
+enum eChannelMod
+{
+  CHANNELMOD_NONE   = 0x00,
+  CHANNELMOD_ALL    = 0xFF,
+  CHANNELMOD_NAME   = 0x01,
+  CHANNELMOD_PIDS   = 0x02,
+  CHANNELMOD_ID     = 0x04,
+  CHANNELMOD_CA     = 0x10,
+  CHANNELMOD_TRANSP = 0x20,
+  CHANNELMOD_LANGS  = 0x40,
+  CHANNELMOD_RETUNE = (CHANNELMOD_PIDS | CHANNELMOD_CA | CHANNELMOD_TRANSP)
+};
 
 #define MAXAPIDS 32 // audio
 #define MAXDPIDS 16 // dolby (AC3 + DTS)
@@ -76,8 +115,6 @@ public:
 #define CA_USER_MAX      0x00FF
 #define CA_ENCRYPTED_MIN 0x0100
 #define CA_ENCRYPTED_MAX 0xFFFF
-
-class cChannel;
 
 class cLinkChannel : public cListObject
 {
@@ -98,36 +135,10 @@ typedef std::vector<cLinkChannel*> cLinkChannels;
 
 struct tChannelData
 {
-  int      iFrequencyHz; // MHz
-  int      source;
-  int      srate;
-  int      vpid;
-  int      ppid;
-  int      vtype;
-
-  int      apids[MAXAPIDS + 1]; // list is zero-terminated
-  int      atypes[MAXAPIDS + 1]; // list is zero-terminated
-  char     alangs[MAXAPIDS][MAXLANGCODE2];
-
-  int      dpids[MAXDPIDS + 1]; // list is zero-terminated
-  int      dtypes[MAXAPIDS + 1]; // list is zero-terminated
-  char     dlangs[MAXDPIDS][MAXLANGCODE2];
-
-  int      spids[MAXSPIDS + 1]; // list is zero-terminated
-  char     slangs[MAXSPIDS][MAXLANGCODE2];
-
-  uchar    subtitlingTypes[MAXSPIDS];
-  uint16_t compositionPageIds[MAXSPIDS];
-  uint16_t ancillaryPageIds[MAXSPIDS];
-
-  int      tpid;
-  int      caids[MAXCAIDS + 1]; // list is zero-terminated
-  int      nid;
-  int      tid;
-  int      sid;
-  int      rid;
+  int          iFrequencyHz; // MHz
+  int          source;
+  int          srate;
   unsigned int number;    // Sequence number assigned on load // TODO: Doesn't belong in tChannelData
-  bool     groupSep;      // TODO: Doesn't belong in tChannelData
 };
 
 class cSchedule;
@@ -149,14 +160,51 @@ public:
 
   ChannelPtr Clone() const;
 
-  std::string Name() const { return m_name; }
-  std::string ShortName(bool bOrName = false) const;
-  const std::string &Provider() const { return m_provider; }
-  const std::string &PortalName() const { return m_portalName; }
+  const std::string& Name()       const { return m_name; }
+  const std::string& ShortName()  const { return m_shortName; }
+  const std::string& Provider()   const { return m_provider; }
+  const std::string& PortalName() const { return m_portalName; }
 
-  bool SerialiseChannel(TiXmlNode *node) const; // Serialize as a channel (TODO)
-  bool SerialiseSep(TiXmlNode *node) const; // Serialize as a group separator (TODO)
-  bool Deserialise(const TiXmlNode *node, bool bSeparator = false);
+  uint16_t GetNid() const { return m_nid; }
+  uint16_t GetTid() const { return m_tid; }
+  uint16_t GetSid() const { return m_sid; }
+  uint16_t GetRid() const { return m_rid; }
+
+  const VideoStream&                 GetVideoStream()                      const;
+  const AudioStream&                 GetAudioStream(unsigned int index)    const;
+  const DataStream&                  GetDataStream(unsigned int index)     const;
+  const SubtitleStream&              GetSubtitleStream(unsigned int index) const;
+  const TeletextStream&              GetTeletextStream()                   const;
+  uint16_t                           GetCaId(unsigned int i)               const;
+
+  const std::vector<AudioStream>&    GetAudioStreams()    const { return m_audioStreams; }
+  const std::vector<DataStream>&     GetDataStreams()     const { return m_dataStreams; }
+  const std::vector<SubtitleStream>& GetSubtitleStreams() const { return m_subtitleStreams; }
+  const CaDescriptorVector&          GetCaDescriptors()   const { return m_caDescriptors; }
+  const std::vector<uint16_t>&       GetCaIds()           const { return m_caIds; }
+
+  void SetName(const std::string &strName,
+               const std::string &strShortName,
+               const std::string &strProvider);
+
+  void SetPortalName(const std::string &strPortalName);
+
+  void SetId(uint16_t nid, uint16_t tid, uint16_t sid, uint16_t rid = 0);
+
+  void SetStreams(const std::vector<VideoStream>& videoStreams, // Previously SetPids()
+                  const std::vector<AudioStream>& audioStreams,
+                  const std::vector<DataStream>& dataStreams,
+                  const std::vector<SubtitleStream>& subtitleStreams,
+                  const std::vector<TeletextStream>& teletextStreams);
+
+  void SetSubtitlingDescriptors(const std::vector<SubtitleStream>& subtitleStreams);
+
+  void SetCaDescriptors(const CaDescriptorVector& caDescriptors);
+
+  void SetCaIds(const std::vector<uint16_t>& caIds) { m_caIds = caIds; }
+
+  bool SerialiseChannel(TiXmlNode *node) const;
+  bool Deserialise(const TiXmlNode *node);
   bool DeserialiseConf(const std::string &str);
 
   /*!
@@ -174,7 +222,7 @@ public:
   /*!
    * \brief Returns the transponder frequency in MHz, plus the polarization in case of sat
    */
-  int Transponder() const;
+  int TransponderFrequency() const;
 
   /*!
    * \brief Builds the transponder from the given frequency and polarization
@@ -187,34 +235,10 @@ public:
    */
   static unsigned int Transponder(unsigned int frequency, fe_polarization polarization);
 
-  int Source()                      const { return m_channelData.source; }
-  int Srate()                       const { return m_channelData.srate; }
-  int Vpid()                        const { return m_channelData.vpid; }
-  int Ppid()                        const { return m_channelData.ppid; }
-  int Vtype()                       const { return m_channelData.vtype; }
-  const int *Apids()                const { return m_channelData.apids; }
-  const int *Dpids()                const { return m_channelData.dpids; }
-  const int *Spids()                const { return m_channelData.spids; }
-  int Apid(unsigned int i)          const { return (i < MAXAPIDS) ? m_channelData.apids[i] : 0; }
-  int Dpid(unsigned int i)          const { return (i < MAXDPIDS) ? m_channelData.dpids[i] : 0; }
-  int Spid(unsigned int i)          const { return (i < MAXSPIDS) ? m_channelData.spids[i] : 0; }
-  const char *Alang(unsigned int i) const { return (i < MAXAPIDS) ? m_channelData.alangs[i] : ""; }
-  const char *Dlang(unsigned int i) const { return (i < MAXDPIDS) ? m_channelData.dlangs[i] : ""; }
-  const char *Slang(unsigned int i) const { return (i < MAXSPIDS) ? m_channelData.slangs[i] : ""; }
-  int Atype(unsigned int i)         const { return (i < MAXAPIDS) ? m_channelData.atypes[i] : 0; }
-  int Dtype(unsigned int i)         const { return (i < MAXDPIDS) ? m_channelData.dtypes[i] : 0; }
-  uchar SubtitlingType(unsigned int i)       const { return (i < MAXSPIDS) ? m_channelData.subtitlingTypes[i] : (uchar)0; }
-  uint16_t CompositionPageId(unsigned int i) const { return (i < MAXSPIDS) ? m_channelData.compositionPageIds[i] : (uint16_t)0; }
-  uint16_t AncillaryPageId(unsigned int i)   const { return (i < MAXSPIDS) ? m_channelData.ancillaryPageIds[i] : (uint16_t)0; }
-  int Tpid()                        const { return m_channelData.tpid; }
-  const int *Caids()                const { return m_channelData.caids; }
-  int Ca(unsigned int index = 0)    const { return index < MAXCAIDS ? m_channelData.caids[index] : 0; }
-  int Nid()                         const { return m_channelData.nid; }
-  int Tid()                         const { return m_channelData.tid; }
-  int Sid()                         const { return m_channelData.sid; }
-  int Rid()                         const { return m_channelData.rid; }
+  int Source() const                                 { return m_channelData.source; }
+  int Srate() const                                  { return m_channelData.srate; }
+
   unsigned int Number()             const { return m_channelData.number; }
-  bool GroupSep()                   const { return m_channelData.groupSep; }
 
   bool IsAtsc()                     const { return cSource::IsAtsc(m_channelData.source); }
   bool IsCable()                    const { return cSource::IsCable(m_channelData.source); }
@@ -235,42 +259,48 @@ public:
   bool HasTimer(void) const { return false; } //TODO
   bool HasTimer(const std::vector<cTimer2> &timers) const; // TODO: cTimer2
 
-  int Modification(int mask = CHANNELMOD_ALL);
+  eChannelMod Modification(eChannelMod mask = CHANNELMOD_ALL);
 
   void CopyTransponderData(const cChannel &channel);
 
   bool SetTransponderData(int source, int frequency, int srate, const cDvbTransponderParams& parameters, bool bQuiet = false);
-  void SetId(int nid, int tid, int sid, int rid = 0);
-  void SetName(const std::string &strName, const std::string &strShortName, const std::string &strProvider);
-  void SetPortalName(const std::string &strPortalName);
-  void SetPids(int vpid, int ppid, int vtype, int *apids, int *atypes, char aLangs[][MAXLANGCODE2],
-                                              int *dpids, int *dtypes, char dLangs[][MAXLANGCODE2],
-                                              int *spids, char sLangs[][MAXLANGCODE2], int tpid);
-  void SetCaIds(const int *caIds); // list must be zero-terminated
-  void SetCaDescriptors(int level);
   //void SetLinkChannels(cLinkChannels *linkChannels);
   void SetRefChannel(cChannel *refChannel) { m_refChannel = refChannel; }
-  void SetSubtitlingDescriptors(uchar *subtitlingTypes, uint16_t *compositionPageIds, uint16_t *ancillaryPageIds);
 
   void SetSchedule(SchedulePtr schedule);
   bool HasSchedule(void) const;
   SchedulePtr Schedule(void) const;
 
   uint32_t Hash(void) const;
+
 private:
-  std::string              m_name;
-  std::string              m_shortName;
-  std::string              m_provider;
-  std::string              m_portalName;
+  std::string m_name;
+  std::string m_shortName;
+  std::string m_provider;
+  std::string m_portalName;
 
-  tChannelData             m_channelData;
+  uint16_t m_nid; // Network ID
+  uint16_t m_tid; // Transport stream ID
+  uint16_t m_sid; // Service ID
+  uint16_t m_rid; // ???WTF???
 
-  cDvbTransponderParams    m_parameters;
-  int                      m_modification;
-  SchedulePtr              m_schedule;
-  //cLinkChannels           *m_linkChannels;
-  cLinkChannels            m_linkChannels;
-  cChannel                *m_refChannel;
-  uint32_t                 m_channelHash;
+  std::vector<VideoStream>    m_videoStreams; // May not contain more than 1 stream
+  std::vector<AudioStream>    m_audioStreams;
+  std::vector<DataStream>     m_dataStreams;
+  std::vector<SubtitleStream> m_subtitleStreams;
+  std::vector<TeletextStream> m_teletextStreams; // May not contain more than 1 stream
+
+  std::vector<uint16_t>       m_caIds; // TODO: Replace me by m_caDescriptors
+  CaDescriptorVector          m_caDescriptors;
+
+  tChannelData          m_channelData;
+  cDvbTransponderParams m_parameters;
+  int                   m_modification;
+  SchedulePtr           m_schedule;
+  //cLinkChannels*        m_linkChannels;
+  cLinkChannels         m_linkChannels;
+  cChannel*             m_refChannel;
+  uint32_t              m_channelHash;
 };
+
 }

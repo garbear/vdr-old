@@ -18,6 +18,9 @@
 #include "utils/Tools.h"
 #include "utils/I18N.h"
 
+#include <algorithm>
+#include <vector>
+
 namespace VDR
 {
 
@@ -427,16 +430,36 @@ int cPatPmtGenerator::MakeCRC(uchar *Target, const uchar *Data, int Length)
 void cPatPmtGenerator::GeneratePmtPid(ChannelPtr Channel)
 {
   bool Used[MAXPID] = { false };
-#define SETPID(p) { if ((p) >= 0 && (p) < MAXPID) Used[p] = true; }
-#define SETPIDS(l) { const int *p = l; while (*p) { SETPID(*p); p++; } }
-  SETPID(Channel->Vpid());
-  SETPID(Channel->Ppid());
-  SETPID(Channel->Tpid());
-  SETPIDS(Channel->Apids());
-  SETPIDS(Channel->Dpids());
-  SETPIDS(Channel->Spids());
+
+  if (Channel->GetVideoStream().vpid < MAXPID)
+    Used[Channel->GetVideoStream().vpid] = true;
+
+  if (Channel->GetVideoStream().ppid < MAXPID)
+    Used[Channel->GetVideoStream().ppid] = true;
+
+  if (Channel->GetTeletextStream().tpid < MAXPID)
+    Used[Channel->GetTeletextStream().tpid] = true;
+
+  for (std::vector<AudioStream>::const_iterator it = Channel->GetAudioStreams().begin(); it != Channel->GetAudioStreams().end(); ++it)
+  {
+    if (it->apid < MAXPID)
+      Used[it->apid] = true;
+  }
+
+  for (std::vector<DataStream>::const_iterator it = Channel->GetDataStreams().begin(); it != Channel->GetDataStreams().end(); ++it)
+  {
+    if (it->dpid < MAXPID)
+      Used[it->dpid] = true;
+  }
+
+  for (std::vector<SubtitleStream>::const_iterator it = Channel->GetSubtitleStreams().begin(); it != Channel->GetSubtitleStreams().end(); ++it)
+  {
+    if (it->spid < MAXPID)
+      Used[it->spid] = true;
+  }
+
   for (pmtPid = P_PMT_PID; Used[pmtPid]; pmtPid++)
-      ;
+    ;
 }
 
 void cPatPmtGenerator::GeneratePat(void)
@@ -475,8 +498,8 @@ void cPatPmtGenerator::GeneratePmt(ChannelPtr Channel)
   memset(buf, 0xFF, sizeof(buf));
   numPmtPackets = 0;
   if (Channel) {
-     int Vpid = Channel->Vpid();
-     int Ppid = Channel->Ppid();
+     int Vpid = Channel->GetVideoStream().vpid;
+     int Ppid = Channel->GetVideoStream().ppid;
      uchar *p = buf;
      int i = 0;
      p[i++] = 0x02; // table id
@@ -494,21 +517,26 @@ void cPatPmtGenerator::GeneratePmt(ChannelPtr Channel)
      p[i++] = 0x00; // program info length lo
 
      if (Vpid)
-        i += MakeStream(buf + i, Channel->Vtype(), Vpid);
-     for (int n = 0; Channel->Apid(n); n++) {
-         i += MakeStream(buf + i, Channel->Atype(n), Channel->Apid(n));
-         const char *Alang = Channel->Alang(n);
-         i += MakeLanguageDescriptor(buf + i, Alang);
-         }
-     for (int n = 0; Channel->Dpid(n); n++) {
-         i += MakeStream(buf + i, 0x06, Channel->Dpid(n));
-         i += MakeAC3Descriptor(buf + i, Channel->Dtype(n));
-         i += MakeLanguageDescriptor(buf + i, Channel->Dlang(n));
-         }
-     for (int n = 0; Channel->Spid(n); n++) {
-         i += MakeStream(buf + i, 0x06, Channel->Spid(n));
-         i += MakeSubtitlingDescriptor(buf + i, Channel->Slang(n), Channel->SubtitlingType(n), Channel->CompositionPageId(n), Channel->AncillaryPageId(n));
-         }
+        i += MakeStream(buf + i, Channel->GetVideoStream().vtype, Vpid);
+
+     for (std::vector<AudioStream>::const_iterator it = Channel->GetAudioStreams().begin(); it != Channel->GetAudioStreams().end(); ++it)
+     {
+       i += MakeStream(buf + i, it->atype, it->apid);
+       i += MakeLanguageDescriptor(buf + i, it->alang.c_str());
+     }
+
+     for (std::vector<DataStream>::const_iterator it = Channel->GetDataStreams().begin(); it != Channel->GetDataStreams().end(); ++it)
+     {
+       i += MakeStream(buf + i, 0x06, it->dpid);
+       i += MakeAC3Descriptor(buf + i, it->dtype);
+       i += MakeLanguageDescriptor(buf + i, it->dlang.c_str());
+     }
+
+     for (std::vector<SubtitleStream>::const_iterator it = Channel->GetSubtitleStreams().begin(); it != Channel->GetSubtitleStreams().end(); ++it)
+     {
+       i += MakeStream(buf + i, 0x06, it->spid);
+       i += MakeSubtitlingDescriptor(buf + i, it->slang.c_str(), it->subtitlingType, it->compositionPageId, it->ancillaryPageId);
+     }
 
      int sl = i - SectionLength - 2 + 4; // -2 = SectionLength storage, +4 = length of CRC
      buf[SectionLength] |= (sl >> 8) & 0x0F;
@@ -1453,11 +1481,11 @@ int cFrameDetector::Analyze(const uchar *Data, int Length)
                        uint32_t Delta = ptsValues[0] / framesPerPayloadUnit;
                        // determine frame info:
                        if (isVideo) {
-                          if (abs(Delta - 3600) <= 1)
+                          if (std::abs((int)Delta - 3600) <= 1)
                              framesPerSecond = 25.0;
                           else if (Delta % 3003 == 0)
                              framesPerSecond = 30.0 / 1.001;
-                          else if (abs(Delta - 1800) <= 1)
+                          else if (std::abs((int)Delta - 1800) <= 1)
                              framesPerSecond = 50.0;
                           else if (Delta == 1501)
                              framesPerSecond = 60.0 / 1.001;

@@ -127,7 +127,7 @@ private:
   int                         m_tuneTimeout;
   int                         m_lockTimeout;
   time_t                      m_lastTimeoutReport;
-  cChannel                    m_channel;
+  cChannel                    m_channel; // TODO: Convert to ChannelPtr
   const cDiseqc*              m_lastDiseqc;
   const cScr*                 m_scr;
   bool                        m_bLnbPowerTurnedOn;

@@ -122,26 +122,6 @@ public:
   ChannelVector GetByTransponder(int iSource, int iTransponder);
 
   /*!
-   * \brief Get next channel group (TODO)
-   */
-  int GetNextGroup(unsigned int index) const;
-
-  /*!
-   * \brief Get previous channel group (TODO)
-   */
-  int GetPrevGroup(unsigned int index) const;
-
-  /*!
-   * \brief Get next normal channel (not group) (TODO)
-   */
-  int GetNextNormal(unsigned int index) const;
-
-  /*!
-   * \brief Get previous normal channel (not group) (TODO)
-   */
-  int GetPrevNormal(unsigned int index) const;
-
-  /*!
    * \brief The documentation claims: "Recalculate 'number' based on channel type" (TODO)
    */
   void ReNumber();
@@ -158,16 +138,6 @@ public:
    * \brief Return the number of the highest channel (I think - TODO)
    */
   unsigned int MaxNumber() const { return m_maxNumber; }
-
-  /*!
-   * \brief Calculates and returns the maximum length of all channel names (excluding group separators)
-   */
-  unsigned int MaxChannelNameLength();
-
-  /*!
-   * \brief Calculates and returns the maximum length of all channel short names (excluding group separators)
-   */
-  unsigned int MaxShortChannelNameLength();
 
   void SetModified(void);
 

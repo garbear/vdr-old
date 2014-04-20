@@ -110,11 +110,11 @@ bool cDvbChannelSubsystem::ProvidesChannel(const cChannel &channel, int priority
       {
         if (GetDevice<cDvbDevice>()->m_dvbTuner.IsTunedTo(channel))
         {
-          if ((channel.Vpid() && !PID()->HasPid(channel.Vpid())) ||
-              (channel.Apid(0) && !PID()->HasPid(channel.Apid(0))) ||
-              (channel.Dpid(0) && !PID()->HasPid(channel.Dpid(0))))
+          if ((channel.GetVideoStream().vpid && !PID()->HasPid(channel.GetVideoStream().vpid)) ||
+              (channel.GetAudioStream(0).apid && !PID()->HasPid(channel.GetAudioStream(0).apid)) ||
+              (channel.GetDataStream(0).dpid && !PID()->HasPid(channel.GetDataStream(0).dpid)))
           {
-            if (CommonInterface()->CamSlot() && channel.Ca() >= CA_ENCRYPTED_MIN)
+            if (CommonInterface()->CamSlot() && channel.GetCaId(0) >= CA_ENCRYPTED_MIN)
             {
               if (CommonInterface()->CamSlot()->CanDecrypt(&channel))
                 result = true;

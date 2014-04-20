@@ -46,12 +46,7 @@ string ChannelString(const ChannelPtr &channel, int number)
 {
   string retval;
   if (channel)
-  {
-    if (channel->GroupSep())
-      retval = StringUtils::Format("%s", channel->Name().c_str());
-    else
-      retval = StringUtils::Format("%d%s  %s", channel->Number(), number ? "-" : "", channel->Name().c_str());
-  }
+    retval = StringUtils::Format("%d%s  %s", channel->Number(), number ? "-" : "", channel->Name().c_str());
   else if (number)
     retval = StringUtils::Format("%d-", number);
   else
@@ -225,12 +220,11 @@ bool cChannelManager::LoadConf(const string& strFilename)
 
       ChannelPtr l = ChannelPtr(new cChannel);
       if (l->DeserialiseConf(strLine))
-      {
         AddChannel(l);
-      }
       else
       {
-        esyslog("Error loading config file %s, line %d", strFilename.c_str(), line);
+        if (strLine[0] != ':') // Group separators start with :
+          esyslog("Error loading config file %s, line %d", strFilename.c_str(), line);
       }
 
       line++;
@@ -264,18 +258,9 @@ bool cChannelManager::Save(const string &file /* = ""*/)
   for (ChannelVector::const_iterator itChannel = m_channels.begin(); itChannel != m_channels.end(); ++itChannel)
   {
     const ChannelPtr &channel = *itChannel;
-    if (channel->GroupSep())
-    {
-      TiXmlElement sepElement(CHANNEL_XML_ELM_SEPARATOR);
-      TiXmlNode *sepNode = root->InsertEndChild(sepElement);
-      channel->SerialiseSep(sepNode);
-    }
-    else
-    {
-      TiXmlElement channelElement(CHANNEL_XML_ELM_CHANNEL);
-      TiXmlNode *channelNode = root->InsertEndChild(channelElement);
-      channel->SerialiseChannel(channelNode);
-    }
+    TiXmlElement channelElement(CHANNEL_XML_ELM_CHANNEL);
+    TiXmlNode *channelNode = root->InsertEndChild(channelElement);
+    channel->SerialiseChannel(channelNode);
   }
 
   if (!file.empty())
@@ -299,14 +284,13 @@ ChannelPtr cChannelManager::GetByNumber(int number, int skipGap /* = 0 */)
   for (ChannelVector::iterator itChannel = m_channels.begin(); itChannel != m_channels.end(); ++itChannel)
   {
     ChannelPtr &channel = *itChannel;
-    if (!channel->GroupSep())
-    {
-      if (channel->Number() == number)
-        return channel;
-      else if (skipGap && channel->Number() > number)
-        return skipGap > 0 ? channel : previous;
-      previous = channel;
-    }
+
+    if (channel->Number() == number)
+      return channel;
+    else if (skipGap && channel->Number() > number)
+      return skipGap > 0 ? channel : previous;
+
+    previous = channel;
   }
   return cChannel::EmptyChannel;
 }
@@ -323,7 +307,7 @@ ChannelPtr cChannelManager::GetByServiceID(int serviceID, int source, int transp
     const ChannelVector &channelVec = it->second;
     for (ChannelVector::const_iterator itChannel = channelVec.begin(); itChannel != channelVec.end(); ++itChannel)
     {
-      if ((*itChannel)->Sid() == serviceID && (*itChannel)->Source() == source && ISTRANSPONDER((*itChannel)->Transponder(), transponder))
+      if ((*itChannel)->GetSid() == serviceID && (*itChannel)->Source() == source && ISTRANSPONDER((*itChannel)->TransponderFrequency(), transponder))
         return (*itChannel);
     }
   }
@@ -338,7 +322,7 @@ ChannelPtr cChannelManager::GetByServiceID(const ChannelVector& channels, int se
 
   for (ChannelVector::const_iterator itChannel = channels.begin(); itChannel != channels.end(); ++itChannel)
   {
-    if ((*itChannel)->Sid() == serviceID && (*itChannel)->Source() == source && ISTRANSPONDER((*itChannel)->Transponder(), transponder))
+    if ((*itChannel)->GetSid() == serviceID && (*itChannel)->Source() == source && ISTRANSPONDER((*itChannel)->TransponderFrequency(), transponder))
       return (*itChannel);
   }
   return cChannel::EmptyChannel;
@@ -354,7 +338,7 @@ ChannelPtr cChannelManager::GetByChannelID(const tChannelID &channelID, bool bTr
     for (ChannelVector::iterator itChannel = channelVec.begin(); itChannel != channelVec.end(); ++itChannel)
     {
       ChannelPtr &channel = *itChannel;
-      if (channel->Sid() == serviceID && channel->GetChannelID() == channelID)
+      if (channel->GetSid() == serviceID && channel->GetChannelID() == channelID)
         return channel;
     }
 
@@ -367,7 +351,7 @@ ChannelPtr cChannelManager::GetByChannelID(const tChannelID &channelID, bool bTr
         ChannelPtr &channel = *itChannel;
         tChannelID myChannelID = channel->GetChannelID();
         myChannelID.ClrRid();
-        if (channel->Sid() == serviceID && myChannelID == otherChannelID)
+        if (channel->GetSid() == serviceID && myChannelID == otherChannelID)
           return channel;
       }
     }
@@ -380,7 +364,7 @@ ChannelPtr cChannelManager::GetByChannelID(const tChannelID &channelID, bool bTr
         ChannelPtr &channel = *itChannel;
         tChannelID myChannelID = channel->GetChannelID();
         myChannelID.ClrPolarization();
-        if (channel->Sid() == serviceID && myChannelID == otherChannelID)
+        if (channel->GetSid() == serviceID && myChannelID == otherChannelID)
           return channel;
       }
     }
@@ -397,7 +381,7 @@ ChannelPtr cChannelManager::GetByChannelID(int nid, int tid, int sid)
     for (ChannelVector::iterator itChannel = channelVec.begin(); itChannel != channelVec.end(); ++itChannel)
     {
       ChannelPtr &channel = *itChannel;
-      if (channel->Sid() == sid && channel->Tid() == tid && channel->Nid() == nid)
+      if (channel->GetSid() == sid && channel->GetTid() == tid && channel->GetNid() == nid)
         return channel;
     }
   }
@@ -413,76 +397,10 @@ ChannelPtr cChannelManager::GetByTransponderID(tChannelID channelID)
   for (ChannelVector::iterator itChannel = m_channels.begin(); itChannel != m_channels.end(); ++itChannel)
   {
     ChannelPtr &channel = *itChannel;
-    if (channel->Nid() == nid && channel->Tid() == tid && channel->Source() == source)
+    if (channel->GetNid() == nid && channel->GetTid() == tid && channel->Source() == source)
       return channel;
   }
   return cChannel::EmptyChannel;
-}
-
-ChannelVector cChannelManager::GetByTransponder(int iSource, int iTransponder)
-{
-  ChannelVector channels;
-  for (ChannelVector::iterator itChannel = m_channels.begin(); itChannel != m_channels.end(); ++itChannel)
-  {
-    ChannelPtr &channel = *itChannel;
-    if (channel->Transponder() == iTransponder && channel->Source() == iSource)
-      channels.push_back(channel);
-  }
-  return channels;
-}
-
-int cChannelManager::GetNextGroup(unsigned int index) const
-{
-  CLockObject lock(m_mutex);
-  for (unsigned int i = index + 1; i < m_channels.size(); i++)
-  {
-    const ChannelPtr &channel = m_channels[i];
-    if (channel->GroupSep() && !channel->Name().empty())
-      return i;
-  }
-  return -1;
-}
-
-int cChannelManager::GetPrevGroup(unsigned int index) const
-{
-  if (index == 0)
-    return -1;
-
-  CLockObject lock(m_mutex);
-  for (int i = index - 1; i >= 0; i--)
-  {
-    const ChannelPtr &channel = m_channels[i];
-    if (channel->GroupSep() && !channel->Name().empty())
-      return i;
-  }
-  return -1;
-}
-
-int cChannelManager::GetNextNormal(unsigned int index) const
-{
-  CLockObject lock(m_mutex);
-  for (unsigned int i = index + 1; i < m_channels.size(); i++)
-  {
-    const ChannelPtr &channel = m_channels[i];
-    if (!channel->GroupSep())
-      return i;
-  }
-  return -1;
-}
-
-int cChannelManager::GetPrevNormal(unsigned int index) const
-{
-  if (index == 0)
-    return -1;
-
-  CLockObject lock(m_mutex);
-  for (int i = index - 1; i >= 0; i--)
-  {
-    const ChannelPtr &channel = m_channels[i];
-    if (!channel->GroupSep())
-      return i;
-  }
-  return -1;
 }
 
 void cChannelManager::ReNumber()
@@ -495,14 +413,9 @@ void cChannelManager::ReNumber()
   for (ChannelVector::const_iterator itChannel = m_channels.begin(); itChannel != m_channels.end(); ++itChannel)
   {
     const ChannelPtr &channel = *itChannel;
-    if (channel->GroupSep())
-      number = std::max(channel->Number(), number);
-    else
-    {
-      m_channelSids[channel->Sid()].push_back(channel);
-      m_maxNumber = number;
-      channel->SetNumber(number++);
-    }
+    m_channelSids[channel->GetSid()].push_back(channel);
+    m_maxNumber = number;
+    channel->SetNumber(number++);
   }
 }
 
@@ -515,40 +428,10 @@ bool cChannelManager::HasUniqueChannelID(const ChannelPtr &newChannel, const Cha
   for (ChannelVector::const_iterator itChannel = m_channels.begin(); itChannel != m_channels.end(); ++itChannel)
   {
     const ChannelPtr &channel = *itChannel;
-    if (!channel->GroupSep() && channel != oldChannel && channel->GetChannelID() == newChannelID)
+    if (channel != oldChannel && channel->GetChannelID() == newChannelID)
       return false;
   }
   return true;
-}
-
-unsigned int cChannelManager::MaxChannelNameLength()
-{
-  CLockObject lock(m_mutex);
-  if (!m_maxChannelNameLength)
-  {
-    for (ChannelVector::const_iterator itChannel = m_channels.begin(); itChannel != m_channels.end(); ++itChannel)
-    {
-      const ChannelPtr &channel = *itChannel;
-      if (!channel->GroupSep())
-        m_maxChannelNameLength = std::max(cUtf8Utils::Utf8StrLen(channel->Name().c_str()), (unsigned)m_maxChannelNameLength);
-    }
-  }
-  return m_maxChannelNameLength;
-}
-
-unsigned int cChannelManager::MaxShortChannelNameLength()
-{
-  CLockObject lock(m_mutex);
-  if (!m_maxShortChannelNameLength)
-  {
-    for (ChannelVector::const_iterator itChannel = m_channels.begin(); itChannel != m_channels.end(); ++itChannel)
-    {
-      const ChannelPtr &channel = *itChannel;
-      if (!channel->GroupSep())
-        m_maxShortChannelNameLength = std::max(cUtf8Utils::Utf8StrLen(channel->ShortName(true).c_str()), (unsigned)m_maxShortChannelNameLength);
-    }
-  }
-  return m_maxShortChannelNameLength;
 }
 
 void cChannelManager::SetModified(void)
@@ -563,7 +446,7 @@ void cChannelManager::SetModified(void)
 
 ChannelPtr cChannelManager::NewChannel(const cChannel& transponder, const string& name, const string& shortName, const string& provider, int nid, int tid, int sid, int rid /* = 0 */)
 {
-  dsyslog("creating new channel '%s,%s;%s' on %s transponder %d with id %d-%d-%d-%d", name.c_str(), shortName.c_str(), provider.c_str(), cSource::ToString(transponder.Source()).c_str(), transponder.Transponder(), nid, tid, sid, rid);
+  dsyslog("creating new channel '%s,%s;%s' on %s transponder %d with id %d-%d-%d-%d", name.c_str(), shortName.c_str(), provider.c_str(), cSource::ToString(transponder.Source()).c_str(), transponder.TransponderFrequency(), nid, tid, sid, rid);
   ChannelPtr newChannel = ChannelPtr(new cChannel);
   if (newChannel)
   {
@@ -617,12 +500,10 @@ void cChannelManager::CreateChannelGroups(bool automatic)
     ChannelPtr channel = *it;
     bool isRadio = CChannelFilter::IsRadio(channel);
 
-    if(automatic && !channel->GroupSep())
+    if (automatic)
       groupname = channel->Provider();
-    else if(!automatic && channel->GroupSep())
-      groupname = channel->Name();
 
-    if(groupname.empty())
+    if (groupname.empty())
       continue;
 
     if (!CChannelGroups::Get(isRadio).HasGroup(groupname))
