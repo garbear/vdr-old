@@ -640,7 +640,7 @@ void cEvent::FixEpgBugs(void)
   }
 
   if (cSettings::Get().m_iEPGBugfixLevel == 0)
-     goto Final;
+    goto Final;
 
   // Some TV stations apparently have their own idea about how to fill in the
   // EPG data. Let's fix their bugs as good as we can:
@@ -689,7 +689,7 @@ void cEvent::FixEpgBugs(void)
   // Title
   // Title
   //
-  if (!m_strShortText.empty() && strcmp(m_strTitle.c_str(), m_strShortText.c_str()) == 0)
+  if (!m_strShortText.empty() && m_strTitle == m_strShortText)
   {
     m_strShortText.clear();
     EpgBugFixStat(3, ChannelID());
@@ -737,15 +737,14 @@ void cEvent::FixEpgBugs(void)
   {
     if (m_strShortText.size() > MAX_USEFUL_EPISODE_LENGTH)
     {
-      m_strDescription = m_strShortText;
-      m_strShortText.clear();
+      m_strDescription.swap(m_strShortText);
       EpgBugFixStat(6, ChannelID());
     }
   }
 
   // Some channels put the same information into ShortText and Description.
   // In that case we delete one of them:
-  if (!m_strShortText.empty() && !m_strDescription.empty() && strcmp(m_strShortText.c_str(), m_strDescription.c_str()) == 0)
+  if (!m_strShortText.empty() && !m_strDescription.empty() && m_strShortText == m_strDescription)
   {
     if (m_strShortText.size() > MAX_USEFUL_EPISODE_LENGTH)
       m_strShortText.clear();
@@ -763,7 +762,7 @@ void cEvent::FixEpgBugs(void)
   StringUtils::Replace(m_strDescription, '`', '\'');
 
   if (cSettings::Get().m_iEPGBugfixLevel <= 2)
-     goto Final;
+    goto Final;
 
   // The stream components have a "description" field which some channels
   // apparently have no idea of how to set correctly:
@@ -773,14 +772,13 @@ void cEvent::FixEpgBugs(void)
     {
       CEpgComponent *p = components->Component(i);
       switch (p->Stream())
-        {
+      {
       case 0x01:
         { // video
           if (!p->Description().empty())
           {
-            const char* description = p->Description().c_str();
-            if (strcasecmp(description, "Video") == 0
-                || strcasecmp(description, "Bildformat") == 0)
+            if (StringUtils::EqualsNoCase(p->Description(), "Video") ||
+                StringUtils::EqualsNoCase(p->Description(), "Bildformat"))
             {
               // Yes, we know it's video - that's what the 'stream' code
               // is for! But _which_ video is it?
@@ -821,7 +819,7 @@ void cEvent::FixEpgBugs(void)
               p->SetDescription("HD >16:9");
               break;
             default:
-              ;
+              break;
               }
             EpgBugFixStat(9, ChannelID());
           }
@@ -831,8 +829,7 @@ void cEvent::FixEpgBugs(void)
         { // audio
           if (!p->Description().empty())
           {
-            const char* description = p->Description().c_str();
-            if (strcasecmp(description, "Audio") == 0)
+            if (StringUtils::EqualsNoCase(p->Description(), "Audio"))
             {
               // Yes, we know it's audio - that's what the 'stream' code
               // is for! But _which_ audio is it?
@@ -843,20 +840,20 @@ void cEvent::FixEpgBugs(void)
           if (p->Description().empty())
           {
             switch (p->Type())
-              {
+            {
             case 0x05:
               p->SetDescription("Dolby Digital");
               break;
             default:
-              ; // all others will just display the language
-              }
+              break; // all others will just display the language
+            }
             EpgBugFixStat(11, ChannelID());
           }
         }
         break;
       default:
-        ;
-        }
+        break;
+      }
     }
   }
 

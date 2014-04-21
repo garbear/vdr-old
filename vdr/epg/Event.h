@@ -8,6 +8,9 @@
 #include "utils/Tools.h"
 #include "utils/DateTime.h"
 
+#include <shared_ptr/shared_ptr.hpp>
+#include <vector>
+
 class TiXmlElement;
 
 namespace VDR
@@ -31,6 +34,10 @@ enum eEventContentGroup {
   };
 
 enum eDumpMode { dmAll, dmPresent, dmFollowing, dmAtTime };
+
+class cEvent;
+typedef VDR::shared_ptr<cEvent> EventPtr;
+typedef std::vector<EventPtr>   EventVector;
 
 class cSchedule;
 
