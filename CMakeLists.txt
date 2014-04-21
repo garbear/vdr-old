@@ -146,7 +146,6 @@ set(VDR_SRCS
 	vdr/devices/subsystems/DeviceVideoFormatSubsystem.cpp
 	vdr/dvb/CADescriptor.cpp
 	vdr/dvb/CADescriptorHandler.cpp
-	vdr/dvb/CADescriptors.cpp
 	vdr/dvb/DiSEqC.cpp
 	vdr/dvb/EITScan.cpp
 	vdr/dvb/filters/EIT.cpp

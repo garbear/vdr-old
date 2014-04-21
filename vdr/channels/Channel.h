@@ -50,7 +50,7 @@ struct AudioStream
   std::string alang; // Audio stream language
 };
 
-struct DataStream
+struct DataStream // dolby (AC3 + DTS)
 {
   uint16_t    dpid;  // Data stream packet ID
   uint8_t     dtype; // Data stream type
@@ -100,11 +100,6 @@ enum eChannelMod
   CHANNELMOD_RETUNE = (CHANNELMOD_PIDS | CHANNELMOD_CA | CHANNELMOD_TRANSP)
 };
 
-#define MAXAPIDS 32 // audio
-#define MAXDPIDS 16 // dolby (AC3 + DTS)
-#define MAXSPIDS 32 // subtitles
-#define MAXCAIDS 12 // conditional access
-
 #define MAXLANGCODE1 4 // a 3 letter language code, zero terminated
 #define MAXLANGCODE2 8 // up to two 3 letter language codes, separated by '+' and zero terminated
 
@@ -126,12 +121,11 @@ private:
   ChannelPtr m_channel;
 };
 
-/*
 class cLinkChannels : public cList<cLinkChannel>
 {
 };
-*/
-typedef std::vector<cLinkChannel*> cLinkChannels;
+
+//typedef std::vector<cLinkChannel*> cLinkChannels;
 
 struct tChannelData
 {
@@ -170,18 +164,18 @@ public:
   uint16_t GetSid() const { return m_sid; }
   uint16_t GetRid() const { return m_rid; }
 
-  const VideoStream&                 GetVideoStream()                      const;
+  const VideoStream&                 GetVideoStream()                      const { return m_videoStream; }
   const AudioStream&                 GetAudioStream(unsigned int index)    const;
   const DataStream&                  GetDataStream(unsigned int index)     const;
   const SubtitleStream&              GetSubtitleStream(unsigned int index) const;
-  const TeletextStream&              GetTeletextStream()                   const;
+  const TeletextStream&              GetTeletextStream()                   const { return m_teletextStream; }
   uint16_t                           GetCaId(unsigned int i)               const;
 
   const std::vector<AudioStream>&    GetAudioStreams()    const { return m_audioStreams; }
   const std::vector<DataStream>&     GetDataStreams()     const { return m_dataStreams; }
   const std::vector<SubtitleStream>& GetSubtitleStreams() const { return m_subtitleStreams; }
   const CaDescriptorVector&          GetCaDescriptors()   const { return m_caDescriptors; }
-  const std::vector<uint16_t>&       GetCaIds()           const { return m_caIds; }
+  std::vector<uint16_t>              GetCaIds()           const;
 
   void SetName(const std::string &strName,
                const std::string &strShortName,
@@ -191,17 +185,15 @@ public:
 
   void SetId(uint16_t nid, uint16_t tid, uint16_t sid, uint16_t rid = 0);
 
-  void SetStreams(const std::vector<VideoStream>& videoStreams, // Previously SetPids()
+  void SetStreams(const VideoStream& videoStream,
                   const std::vector<AudioStream>& audioStreams,
                   const std::vector<DataStream>& dataStreams,
                   const std::vector<SubtitleStream>& subtitleStreams,
-                  const std::vector<TeletextStream>& teletextStreams);
+                  const TeletextStream& teletextStream);
 
   void SetSubtitlingDescriptors(const std::vector<SubtitleStream>& subtitleStreams);
 
   void SetCaDescriptors(const CaDescriptorVector& caDescriptors);
-
-  void SetCaIds(const std::vector<uint16_t>& caIds) { m_caIds = caIds; }
 
   bool SerialiseChannel(TiXmlNode *node) const;
   bool Deserialise(const TiXmlNode *node);
@@ -249,10 +241,10 @@ public:
   void SetNumber(unsigned int number) { m_channelData.number = number; }
 
   const cDvbTransponderParams& Parameters() const { return m_parameters; }
-  const cLinkChannels& LinkChannels()       const { return m_linkChannels; }
+  //const cLinkChannels& LinkChannels()       const { return m_linkChannels; }
   const cChannel* RefChannel()              const { return m_refChannel; }
 
-  void SetLinkChannels(cLinkChannels& channels) { m_linkChannels = channels; }
+  //void SetLinkChannels(cLinkChannels& channels) { m_linkChannels = channels; }
 
   tChannelID GetChannelID() const;
 
@@ -264,7 +256,7 @@ public:
   void CopyTransponderData(const cChannel &channel);
 
   bool SetTransponderData(int source, int frequency, int srate, const cDvbTransponderParams& parameters, bool bQuiet = false);
-  //void SetLinkChannels(cLinkChannels *linkChannels);
+  void SetLinkChannels(cLinkChannels *linkChannels);
   void SetRefChannel(cChannel *refChannel) { m_refChannel = refChannel; }
 
   void SetSchedule(SchedulePtr schedule);
@@ -282,23 +274,21 @@ private:
   uint16_t m_nid; // Network ID
   uint16_t m_tid; // Transport stream ID
   uint16_t m_sid; // Service ID
-  uint16_t m_rid; // ???WTF???
+  uint16_t m_rid; // ???
 
-  std::vector<VideoStream>    m_videoStreams; // May not contain more than 1 stream
-  std::vector<AudioStream>    m_audioStreams;
-  std::vector<DataStream>     m_dataStreams;
-  std::vector<SubtitleStream> m_subtitleStreams;
-  std::vector<TeletextStream> m_teletextStreams; // May not contain more than 1 stream
-
-  std::vector<uint16_t>       m_caIds; // TODO: Replace me by m_caDescriptors
-  CaDescriptorVector          m_caDescriptors;
+  VideoStream                 m_videoStream;
+  std::vector<AudioStream>    m_audioStreams;    // Max 32
+  std::vector<DataStream>     m_dataStreams;     // Max 16
+  std::vector<SubtitleStream> m_subtitleStreams; // Max 32
+  TeletextStream              m_teletextStream;
+  CaDescriptorVector          m_caDescriptors;   // Max 12
 
   tChannelData          m_channelData;
   cDvbTransponderParams m_parameters;
   int                   m_modification;
   SchedulePtr           m_schedule;
-  //cLinkChannels*        m_linkChannels;
-  cLinkChannels         m_linkChannels;
+  cLinkChannels*        m_linkChannels;
+  //cLinkChannels         m_linkChannels;
   cChannel*             m_refChannel;
   uint32_t              m_channelHash;
 };

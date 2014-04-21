@@ -576,8 +576,6 @@ bool cCiApplicationInformation::EnterMenu(void)
 
 // --- cCiCaPmt --------------------------------------------------------------
 
-#define MAXCASYSTEMIDS 64
-
 // Ca Pmt List Management:
 
 #define CPLM_MORE    0x00
@@ -604,30 +602,27 @@ private:
   int source;
   int transponder;
   int programNumber;
-  int caSystemIds[MAXCASYSTEMIDS + 1]; // list is zero terminated!
+  std::vector<uint16_t> m_caSystemIds; // Max CA system IDs: 64
   void AddCaDescriptors(int Length, const uint8_t *Data);
 public:
-  cCiCaPmt(uint8_t CmdId, int Source, int Transponder, int ProgramNumber, const int *CaSystemIds);
+  cCiCaPmt(uint8_t CmdId, int Source, int Transponder, int ProgramNumber, const std::vector<uint16_t>& caSystemIds = std::vector<uint16_t>());
   uint8_t CmdId(void) { return cmdId; }
   void SetListManagement(uint8_t ListManagement);
   uint8_t ListManagement(void) { return capmt[0]; }
   void AddPid(int Pid, uint8_t StreamType);
   };
 
-cCiCaPmt::cCiCaPmt(uint8_t CmdId, int Source, int Transponder, int ProgramNumber, const int *CaSystemIds)
+cCiCaPmt::cCiCaPmt(uint8_t CmdId, int Source, int Transponder, int ProgramNumber, const vector<uint16_t>& caSystemIds /* = vector<uint16_t>() */)
 {
   cmdId = CmdId;
   source = Source;
   transponder = Transponder;
   programNumber = ProgramNumber;
-  int i = 0;
-  if (CaSystemIds) {
-     for (; CaSystemIds[i]; i++)
-         caSystemIds[i] = CaSystemIds[i];
-     }
-  caSystemIds[i] = 0;
-  uint8_t caDescriptors[512];
-  int caDescriptorsLength = cCaDescriptorHandler::Get().GetCaDescriptors(source, transponder, programNumber, caSystemIds, sizeof(caDescriptors), caDescriptors, 0);
+  m_caSystemIds = caSystemIds;
+
+  vector<uint8_t> caDescriptors; // Max descriptors: 512
+  unsigned int caDescriptorsLength = cCaDescriptorHandler::Get().GetCaDescriptors(source, transponder, programNumber, m_caSystemIds, caDescriptors, 0);
+
   length = 0;
   capmt[length++] = CPLM_ONLY;
   capmt[length++] = (ProgramNumber >> 8) & 0xFF;
@@ -636,7 +631,8 @@ cCiCaPmt::cCiCaPmt(uint8_t CmdId, int Source, int Transponder, int ProgramNumber
   esInfoLengthPos = length;
   capmt[length++] = 0x00; // program_info_length H (at program level)
   capmt[length++] = 0x00; // program_info_length L
-  AddCaDescriptors(caDescriptorsLength, caDescriptors);
+
+  AddCaDescriptors(caDescriptorsLength, caDescriptors.data());
 }
 
 void cCiCaPmt::SetListManagement(uint8_t ListManagement)
@@ -647,8 +643,9 @@ void cCiCaPmt::SetListManagement(uint8_t ListManagement)
 void cCiCaPmt::AddPid(int Pid, uint8_t StreamType)
 {
   if (Pid) {
-     uint8_t caDescriptors[512];
-     int caDescriptorsLength = cCaDescriptorHandler::Get().GetCaDescriptors(source, transponder, programNumber, caSystemIds, sizeof(caDescriptors), caDescriptors, Pid);
+     vector<uint8_t> caDescriptors; // Max descriptors: 512
+     unsigned int caDescriptorsLength = cCaDescriptorHandler::Get().GetCaDescriptors(source, transponder, programNumber, m_caSystemIds, caDescriptors, Pid);
+
      //XXX buffer overflow check???
      capmt[length++] = StreamType;
      capmt[length++] = (Pid >> 8) & 0xFF;
@@ -656,7 +653,8 @@ void cCiCaPmt::AddPid(int Pid, uint8_t StreamType)
      esInfoLengthPos = length;
      capmt[length++] = 0x00; // ES_info_length H (at ES level)
      capmt[length++] = 0x00; // ES_info_length L
-     AddCaDescriptors(caDescriptorsLength, caDescriptors);
+
+     AddCaDescriptors(caDescriptorsLength, caDescriptors.data());
      }
 }
 
@@ -701,14 +699,13 @@ void cCiCaPmt::AddCaDescriptors(int Length, const uint8_t *Data)
 class cCiConditionalAccessSupport : public cCiSession {
 private:
   int state;
-  int numCaSystemIds;
-  int caSystemIds[MAXCASYSTEMIDS + 1]; // list is zero terminated!
+  std::vector<uint16_t> m_caSystemIds; // Max CA system IDs: 512
   bool repliesToQuery;
   cTimeMs timer;
 public:
   cCiConditionalAccessSupport(uint16_t SessionId, cCiTransportConnection *Tc);
   virtual void Process(int Length = 0, const uint8_t *Data = NULL);
-  const int *GetCaSystemIds(void) { return caSystemIds; }
+  const std::vector<uint16_t>& GetCaSystemIds(void) { return m_caSystemIds; }
   void SendPMT(cCiCaPmt *CaPmt);
   bool RepliesToQuery(void) { return repliesToQuery; }
   bool Ready(void) { return state >= 4; }
@@ -721,7 +718,6 @@ cCiConditionalAccessSupport::cCiConditionalAccessSupport(uint16_t SessionId, cCi
 {
   dbgprotocol("Slot %d: new Conditional Access Support (session id %d)\n", Tc->CamSlot()->SlotNumber(), SessionId);
   state = 0; // inactive
-  caSystemIds[numCaSystemIds = 0] = 0;
   repliesToQuery = false;
 }
 
@@ -732,7 +728,6 @@ void cCiConditionalAccessSupport::Process(int Length, const uint8_t *Data)
      switch (Tag) {
        case AOT_CA_INFO: {
             dbgprotocol("Slot %d: <== Ca Info (%d)", Tc()->CamSlot()->SlotNumber(), SessionId());
-            numCaSystemIds = 0;
             int l = 0;
             const uint8_t *d = GetData(Data, l);
             while (l > 1) {
@@ -740,14 +735,8 @@ void cCiConditionalAccessSupport::Process(int Length, const uint8_t *Data)
                   dbgprotocol(" %04X", id);
                   d += 2;
                   l -= 2;
-                  if (numCaSystemIds < MAXCASYSTEMIDS)
-                     caSystemIds[numCaSystemIds++] = id;
-                  else {
-                     esyslog("ERROR: CAM %d: too many CA system IDs!", Tc()->CamSlot()->SlotNumber());
-                     break;
-                     }
+                  m_caSystemIds.push_back(id);
                   }
-            caSystemIds[numCaSystemIds] = 0;
             dbgprotocol("\n");
             if (state == 1) {
                timer.Set(QUERY_WAIT_TIME); // WORKAROUND: Alphacrypt 3.09 doesn't reply to QUERY immediately after reset
@@ -819,7 +808,7 @@ void cCiConditionalAccessSupport::Process(int Length, const uint8_t *Data)
      state = 1; // enquired ca info
      }
   else if (state == 2 && timer.TimedOut()) {
-     cCiCaPmt CaPmt(CPCI_QUERY, 0, 0, 0, NULL);
+     cCiCaPmt CaPmt(CPCI_QUERY, 0, 0, 0);
      SendPMT(&CaPmt);
      timer.Set(QUERY_REPLY_TIMEOUT);
      state = 3; // waiting for reply
@@ -1825,14 +1814,14 @@ void cCamSlot::SendCaPmt(uint8_t CmdId)
   CLockObject lock(mutex);
   cCiConditionalAccessSupport *cas = (cCiConditionalAccessSupport *)GetSessionByResourceId(RI_CONDITIONAL_ACCESS_SUPPORT);
   if (cas) {
-     const int *CaSystemIds = cas->GetCaSystemIds();
-     if (CaSystemIds && *CaSystemIds) {
+     const vector<uint16_t>& caSystemIds = cas->GetCaSystemIds();
+     if (!caSystemIds.empty()) {
         if (caProgramList.Count()) {
            for (int Loop = 1; Loop <= 2; Loop++) {
                for (cCiCaProgramData *p = caProgramList.First(); p; p = caProgramList.Next(p)) {
                    if (p->modified || resendPmt) {
                       bool Active = false;
-                      cCiCaPmt CaPmt(CmdId, source, transponder, p->programNumber, CaSystemIds);
+                      cCiCaPmt CaPmt(CmdId, source, transponder, p->programNumber, caSystemIds);
                       for (cCiCaPidData *q = p->pidList.First(); q; q = p->pidList.Next(q)) {
                           if (q->active) {
                              CaPmt.AddPid(q->pid, q->streamType);
@@ -1852,18 +1841,25 @@ void cCamSlot::SendCaPmt(uint8_t CmdId)
            resendPmt = false;
            }
         else {
-           cCiCaPmt CaPmt(CmdId, 0, 0, 0, NULL);
+           cCiCaPmt CaPmt(CmdId, 0, 0, 0);
            cas->SendPMT(&CaPmt);
            }
         }
      }
 }
 
-const int *cCamSlot::GetCaSystemIds(void)
+vector<uint16_t> cCamSlot::GetCaSystemIds(void)
 {
   CLockObject lock(mutex);
+
+  // Return value
+  vector<uint16_t> caSystemIds;
+
   cCiConditionalAccessSupport *cas = (cCiConditionalAccessSupport *)GetSessionByResourceId(RI_CONDITIONAL_ACCESS_SUPPORT);
-  return cas ? cas->GetCaSystemIds() : NULL;
+  if (cas)
+    caSystemIds = cas->GetCaSystemIds();
+
+  return caSystemIds;
 }
 
 int cCamSlot::Priority(void)
@@ -1872,18 +1868,18 @@ int cCamSlot::Priority(void)
   return d != cDevice::EmptyDevice ? d->Receiver()->Priority() : IDLEPRIORITY;
 }
 
-bool cCamSlot::ProvidesCa(const vector<uint16_t>& CaSystemIds)
+bool cCamSlot::ProvidesCa(const vector<uint16_t>& caSystemIds)
 {
   CLockObject lock(mutex);
   cCiConditionalAccessSupport *cas = (cCiConditionalAccessSupport *)GetSessionByResourceId(RI_CONDITIONAL_ACCESS_SUPPORT);
-  if (cas) {
-     for (const int *ids = cas->GetCaSystemIds(); ids && *ids; ids++) {
-        for (vector<uint16_t>::const_iterator it = CaSystemIds.begin(); it != CaSystemIds.end(); ++it) {
-             if (*it == *ids)
-                return true;
-             }
-         }
+  if (cas)
+  {
+    for (vector<uint16_t>::const_iterator it = cas->GetCaSystemIds().begin(); it != cas->GetCaSystemIds().end(); ++it)
+    {
+      if (std::find(caSystemIds.begin(), caSystemIds.end(), *it) != caSystemIds.end())
+        return true;
      }
+  }
   return false;
 }
 

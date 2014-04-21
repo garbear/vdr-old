@@ -83,6 +83,12 @@ bool operator==(const TeletextStream& lhs, const TeletextStream& rhs)
   return lhs.tpid == rhs.tpid;
 }
 
+bool operator!=(const VideoStream&    lhs, const VideoStream& rhs)    { return !(lhs == rhs); }
+bool operator!=(const AudioStream&    lhs, const AudioStream& rhs)    { return !(lhs == rhs); }
+bool operator!=(const DataStream&     lhs, const DataStream& rhs)     { return !(lhs == rhs); }
+bool operator!=(const SubtitleStream& lhs, const SubtitleStream& rhs) { return !(lhs == rhs); }
+bool operator!=(const TeletextStream& lhs, const TeletextStream& rhs) { return !(lhs == rhs); }
+
 bool ISTRANSPONDER(int frequencyMHz1, int frequencyMHz2)
 {
   return std::abs(frequencyMHz1 - frequencyMHz2) < 4;
@@ -153,14 +159,13 @@ cChannel& cChannel::operator=(const cChannel &channel)
   m_sid = channel.m_sid;
   m_rid = channel.m_rid;
 
-  m_videoStreams    = channel.m_videoStreams;
+  m_videoStream     = channel.m_videoStream;
   m_audioStreams    = channel.m_audioStreams;
-  m_dataStreams    = channel.m_dataStreams;
+  m_dataStreams     = channel.m_dataStreams;
   m_subtitleStreams = channel.m_subtitleStreams;
-  m_teletextStreams = channel.m_teletextStreams;
+  m_teletextStream  = channel.m_teletextStream;
 
-  m_caIds = channel.m_caIds;
-  m_caDescriptors = channel.m_caDescriptors;
+  m_caDescriptors   = channel.m_caDescriptors;
 
   m_channelData = channel.m_channelData;
   m_parameters  = channel.m_parameters;
@@ -181,15 +186,6 @@ ChannelPtr cChannel::Clone() const
   return ChannelPtr(new cChannel(*this));
 }
 
-const VideoStream& cChannel::GetVideoStream() const
-{
-  // Channel can have only 1 video stream
-  assert(m_videoStreams.size() <= 1);
-
-  static VideoStream empty = { };
-  return !m_videoStreams.empty() ? m_videoStreams[0] : empty;
-}
-
 const AudioStream& cChannel::GetAudioStream(unsigned int index) const
 {
   static AudioStream empty = { };
@@ -208,18 +204,20 @@ const SubtitleStream& cChannel::GetSubtitleStream(unsigned int index) const
   return index < m_subtitleStreams.size() ? m_subtitleStreams[index] : empty;
 }
 
-const TeletextStream& cChannel::GetTeletextStream() const
-{
-  // Channel can have only 1 teletext stream
-  assert(m_teletextStreams.size() <= 1);
-
-  static TeletextStream empty = { };
-  return !m_teletextStreams.empty() ? m_teletextStreams[0] : empty;
-}
-
 uint16_t cChannel::GetCaId(unsigned int i) const
 {
-  return i < m_caIds.size() ? m_caIds[i] : 0;
+  return i < m_caDescriptors.size() ? m_caDescriptors[i]->CaSystem() : 0;
+}
+
+vector<uint16_t> cChannel::GetCaIds() const
+{
+  vector<uint16_t> caIds;
+  caIds.reserve(m_caDescriptors.size());
+
+  for (vector<CaDescriptorPtr>::const_iterator it = m_caDescriptors.begin(); it != m_caDescriptors.end(); ++it)
+    caIds.push_back((*it)->CaSystem());
+
+  return caIds;
 }
 
 void cChannel::SetName(const string &strName, const string &strShortName, const string &strProvider)
@@ -292,18 +290,18 @@ void cChannel::SetId(uint16_t nid, uint16_t tid, uint16_t sid, uint16_t rid /* =
   }
 }
 
-void cChannel::SetStreams(const vector<VideoStream>& videoStreams,
+void cChannel::SetStreams(const VideoStream& videoStream,
                           const vector<AudioStream>& audioStreams,
                           const vector<DataStream>& dataStreams,
                           const vector<SubtitleStream>& subtitleStreams,
-                          const vector<TeletextStream>& teletextStreams)
+                          const TeletextStream& teletextStream)
 {
   eChannelMod mod = CHANNELMOD_NONE;
-  if (m_videoStreams    != videoStreams ||
+  if (m_videoStream     != videoStream ||
       m_audioStreams    != audioStreams ||
       m_dataStreams     != dataStreams ||
       m_subtitleStreams != subtitleStreams ||
-      m_teletextStreams != teletextStreams)
+      m_teletextStream  != teletextStream)
   {
     //TODO: check if PIDs or languages changed
     mod = (eChannelMod)(CHANNELMOD_PIDS | CHANNELMOD_LANGS);
@@ -314,11 +312,11 @@ void cChannel::SetStreams(const vector<VideoStream>& videoStreams,
     if (Number())
       ;//dsyslog("changing pids of channel %d from %d+%d=%d:%s:%s:%d to %d+%d=%d:%s:%s:%d", Number(), m_channelData.vpid, m_channelData.ppid, m_channelData.vtype, OldApidsBuf, OldSpidsBuf, m_channelData.tpid, vpid, ppid, vtype, NewApidsBuf, NewSpidsBuf, tpid);
 
-    m_videoStreams    = videoStreams;
+    m_videoStream     = videoStream;
     m_audioStreams    = audioStreams;;
     m_dataStreams     = dataStreams;
     m_subtitleStreams = subtitleStreams;
-    m_teletextStreams = teletextStreams;
+    m_teletextStream  = teletextStream;
 
     m_modification |= mod;
     SetChanged();
@@ -375,9 +373,9 @@ bool cChannel::SerialiseChannel(TiXmlNode *node) const
   channelElement->SetAttribute(CHANNEL_XML_ATTR_SID, m_sid);
   channelElement->SetAttribute(CHANNEL_XML_ATTR_RID, m_rid);
 
-  channelElement->SetAttribute(CHANNEL_XML_ATTR_VPID,  !m_videoStreams.empty() ? m_videoStreams[0].vpid  : 0);
-  channelElement->SetAttribute(CHANNEL_XML_ATTR_PPID,  !m_videoStreams.empty() ? m_videoStreams[0].ppid  : 0);
-  channelElement->SetAttribute(CHANNEL_XML_ATTR_VTYPE, !m_videoStreams.empty() ? m_videoStreams[0].vtype : 0);
+  channelElement->SetAttribute(CHANNEL_XML_ATTR_VPID,  m_videoStream.vpid);
+  channelElement->SetAttribute(CHANNEL_XML_ATTR_PPID,  m_videoStream.ppid);
+  channelElement->SetAttribute(CHANNEL_XML_ATTR_VTYPE, m_videoStream.vtype);
 
   if (!m_audioStreams.empty())
   {
@@ -466,17 +464,17 @@ bool cChannel::SerialiseChannel(TiXmlNode *node) const
     }
   }
 
-  channelElement->SetAttribute(CHANNEL_XML_ATTR_TPID, !m_teletextStreams.empty() ? m_teletextStreams[0].tpid : 0);
+  channelElement->SetAttribute(CHANNEL_XML_ATTR_TPID, m_teletextStream.tpid);
 
-  if (!m_caIds.empty())
+  if (!m_caDescriptors.empty())
   {
     TiXmlElement caidsElement(CHANNEL_XML_ELM_CAIDS);
     TiXmlNode *caidsNode = channelElement->InsertEndChild(caidsElement);
     if (caidsNode)
     {
-      for (vector<uint16_t>::const_iterator it = m_caIds.begin(); it != m_caIds.end(); ++it)
+      for (vector<CaDescriptorPtr>::const_iterator it = m_caDescriptors.begin(); it != m_caDescriptors.end(); ++it)
       {
-        uint16_t caId = *it;
+        uint16_t caId = (*it)->CaSystem();
         TiXmlElement caidElement(CHANNEL_XML_ELM_CAID);
         TiXmlNode *caidNode = caidsNode->InsertEndChild(caidElement);
         if (caidNode)
@@ -553,18 +551,17 @@ bool cChannel::Deserialise(const TiXmlNode *node)
   if (rid != NULL)
     m_rid = StringUtils::IntVal(rid);
 
-  m_videoStreams.clear(); // TODO: Move to cChannel::Reset()
+  VideoStream vs = { };
   const char *vpid  = elem->Attribute(CHANNEL_XML_ATTR_VPID);
   const char *ppid  = elem->Attribute(CHANNEL_XML_ATTR_PPID);
   const char *vtype = elem->Attribute(CHANNEL_XML_ATTR_VTYPE);
   if (vpid != NULL && ppid != NULL && vtype != NULL)
   {
-    VideoStream vs;
     vs.vpid  = StringUtils::IntVal(vpid);
     vs.ppid  = StringUtils::IntVal(ppid);
     vs.vtype = StringUtils::IntVal(vtype);
-    m_videoStreams.push_back(vs);
   }
+  m_videoStream = vs;
 
   m_audioStreams.clear(); // TODO: Move to cChannel::Reset()
   const TiXmlNode *apidsNode = elem->FirstChild(CHANNEL_XML_ELM_APIDS);
@@ -643,16 +640,15 @@ bool cChannel::Deserialise(const TiXmlNode *node)
     }
   }
 
-  m_teletextStreams.clear(); // TODO: Move to cChannel::Reset()
+  TeletextStream ts = { };
   const char *tpid = elem->Attribute(CHANNEL_XML_ATTR_TPID);
   if (tpid != NULL)
   {
-    TeletextStream ts;
     ts.tpid = StringUtils::IntVal(tpid);
-    m_teletextStreams.push_back(ts);
   }
+  m_teletextStream = ts;
 
-  m_caIds.clear(); // TODO: Move to cChannel::Reset()
+  m_caDescriptors.clear(); // TODO: Move to cChannel::Reset()
   const TiXmlNode *caidsNode = elem->FirstChild(CHANNEL_XML_ELM_CAIDS);
   if (caidsNode)
   {
@@ -661,7 +657,10 @@ bool cChannel::Deserialise(const TiXmlNode *node)
     {
       const TiXmlElement *caidElem = caidNode->ToElement();
       if (caidElem != NULL)
-        m_caIds.push_back(StringUtils::IntVal(caidElem->GetText()));
+      {
+        uint16_t caSystemId = StringUtils::IntVal(caidElem->GetText());
+        m_caDescriptors.push_back(CaDescriptorPtr(new cCaDescriptor(caSystemId)));
+      }
     }
   }
 
@@ -952,12 +951,11 @@ bool cChannel::DeserialiseConf(const string &str)
       */
 
       // TODO: Move to cChannel::Reset()
-      m_videoStreams.clear();
+      m_videoStream = VideoStream();
       m_audioStreams.clear();
       m_dataStreams.clear();
       m_subtitleStreams.clear();
-      m_teletextStreams.clear();
-      m_caIds.clear();
+      m_teletextStream = TeletextStream();
       m_caDescriptors.clear();
 
       ok = false;
@@ -996,7 +994,7 @@ bool cChannel::DeserialiseConf(const string &str)
         if (vs.vpid && !vs.vtype)
           vs.vtype = 2; // default is MPEG-2
 
-        m_videoStreams.push_back(vs);
+        m_videoStream = vs;
 
         char *dpidbuf = strchr(apidbuf, ';');
         if (dpidbuf)
@@ -1089,7 +1087,7 @@ bool cChannel::DeserialiseConf(const string &str)
 
         TeletextStream ts;
         ts.tpid = tpid;
-        m_teletextStreams.push_back(ts);
+        m_teletextStream = ts;
 
         if (caidbuf)
         {
@@ -1100,9 +1098,9 @@ bool cChannel::DeserialiseConf(const string &str)
           while ((q = strtok_r(p, ",", &strtok_next)) != NULL)
           {
             uint16_t caId = strtol(q, NULL, 16) & 0xFFFF;
-            m_caIds.push_back(caId);
+            m_caDescriptors.push_back(CaDescriptorPtr(new cCaDescriptor(caId)));
 
-            if (!m_caIds.empty() && m_caIds[0] <= CA_USER_MAX)
+            if (!m_caDescriptors.empty() && m_caDescriptors[0]->CaSystem() <= CA_USER_MAX)
               break;
 
             p = NULL;
@@ -1239,7 +1237,6 @@ bool cChannel::SetTransponderData(int source, int iFrequencyHz, int srate, const
   return false;
 }
 
-/*
 void cChannel::SetLinkChannels(cLinkChannels *linkChannels)
 {
   if (!m_linkChannels && !linkChannels)
@@ -1299,7 +1296,6 @@ void cChannel::SetLinkChannels(cLinkChannels *linkChannels)
   if (Number())
     dsyslog("%s", buffer);
 }
-*/
 
 uint32_t cChannel::Hash(void) const
 {

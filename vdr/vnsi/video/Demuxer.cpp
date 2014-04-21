@@ -562,12 +562,13 @@ void cVNSIDemuxer::UpdateStreamsFromChannel(void)
 
 void cVNSIDemuxer::UpdateChannelPIDsFromPMT(void)
 {
-  std::vector<VideoStream>    videoStreams;
-  std::vector<AudioStream>    audioStreams;
-  std::vector<DataStream>     dataStreams;
-  std::vector<SubtitleStream> subtitleStreams;
-  std::vector<TeletextStream> teletextStreams;
 
+  VideoStream vs;
+  vs.vpid  = m_PatPmtParser.Vpid();
+  vs.vtype = m_PatPmtParser.Ppid();
+  vs.ppid  = m_PatPmtParser.Vtype();
+
+  std::vector<AudioStream>    audioStreams;
   const int *aPids = m_PatPmtParser.Apids();
   for (unsigned int index = 0; *aPids; aPids++, index++)
   {
@@ -578,6 +579,7 @@ void cVNSIDemuxer::UpdateChannelPIDsFromPMT(void)
     audioStreams.push_back(as);
   }
 
+  std::vector<DataStream>     dataStreams;
   const int *dPids = m_PatPmtParser.Dpids();
   for (unsigned int index = 0; *dPids; dPids++, index++)
   {
@@ -588,6 +590,7 @@ void cVNSIDemuxer::UpdateChannelPIDsFromPMT(void)
     dataStreams.push_back(ds);
   }
 
+  std::vector<SubtitleStream> subtitleStreams;
   const int *sPids = m_PatPmtParser.Spids();
   for (unsigned int index = 0; *sPids; sPids++, index++)
   {
@@ -597,17 +600,10 @@ void cVNSIDemuxer::UpdateChannelPIDsFromPMT(void)
     subtitleStreams.push_back(ss);
   }
 
-  VideoStream vs;
-  vs.vpid  = m_PatPmtParser.Vpid();
-  vs.vtype = m_PatPmtParser.Ppid();
-  vs.ppid  = m_PatPmtParser.Vtype();
-  videoStreams.push_back(vs);
-
   TeletextStream ts;
   ts.tpid = m_CurrentChannel->GetTeletextStream().tpid;
-  teletextStreams.push_back(ts);
 
-  m_CurrentChannel->SetStreams(videoStreams, audioStreams, dataStreams, subtitleStreams, teletextStreams);
+  m_CurrentChannel->SetStreams(vs, audioStreams, dataStreams, subtitleStreams, ts);
 }
 
 bool cVNSIDemuxer::GetTimeAtPos(off_t *pos, int64_t *time)

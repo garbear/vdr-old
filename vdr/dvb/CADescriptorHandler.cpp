@@ -22,8 +22,24 @@
 
 #include "CADescriptorHandler.h"
 
+using namespace std;
+
 namespace VDR
 {
+
+bool operator<(const DescriptorId& lhs, const DescriptorId& rhs)
+{
+  if (lhs.source      < rhs.source) return true;
+  if (lhs.source      > rhs.source) return false;
+
+  if (lhs.transponder < rhs.transponder) return true;
+  if (lhs.transponder > rhs.transponder) return false;
+
+  if (lhs.serviceId   < rhs.serviceId) return true;
+  if (lhs.serviceId   > rhs.serviceId) return false;
+
+  return false;
+}
 
 cCaDescriptorHandler& cCaDescriptorHandler::Get()
 {
@@ -31,35 +47,70 @@ cCaDescriptorHandler& cCaDescriptorHandler::Get()
   return handler;
 }
 
-int cCaDescriptorHandler::AddCaDescriptors(const CaDescriptorsPtr& caDescriptors)
+bool cCaDescriptorHandler::AddCaDescriptors(int source, int transponder, int serviceId,
+    const CaDescriptorVector& caDescriptors)
 {
   PLATFORM::CLockObject lock(m_mutex);
 
-  for (CaDescriptorsVector::iterator itCaDes = m_caDescriptors.begin(); itCaDes != m_caDescriptors.end(); ++itCaDes)
-  {
-    if ((*itCaDes)->Is(*caDescriptors))
-    {
-      if (**itCaDes == *caDescriptors)
-        return 0;
+  DescriptorId descriptorId = { source, transponder, serviceId };
 
-      m_caDescriptors.erase(itCaDes);
-      m_caDescriptors.push_back(caDescriptors);
-      return 2;
-    }
+  CaDescriptorCollection::iterator it = m_caDescriptors.find(descriptorId);
+  if (it != m_caDescriptors.end())
+  {
+    // If descriptors are unmodified, return false (no change)
+    if (it->second == caDescriptors)
+      return false;
+
+    it->second = caDescriptors;
+  }
+  else
+  {
+    m_caDescriptors[descriptorId] = caDescriptors;
   }
 
-  m_caDescriptors.push_back(caDescriptors);
-  return caDescriptors->Empty() ? 0 : 1;
+  // Modifications were made
+  return true;
 }
 
-int cCaDescriptorHandler::GetCaDescriptors(int source, int transponder, int serviceId, const int* caSystemIds, int bufSize, uint8_t* data, int esPid)
+int cCaDescriptorHandler::GetCaDescriptors(int source, int transponder, uint16_t serviceId,
+    const vector<uint16_t>& caSystemIds, vector<uint8_t>& data, int esPid /* = -1 */)
 {
+  if (caSystemIds.empty())
+    return 0;
+
   PLATFORM::CLockObject lock(m_mutex);
 
-  for (CaDescriptorsVector::const_iterator itCa = m_caDescriptors.begin(); itCa != m_caDescriptors.end(); ++itCa)
+  DescriptorId descriptorId = { source, transponder, serviceId };
+
+  CaDescriptorCollection::iterator it = m_caDescriptors.find(descriptorId);
+  if (it != m_caDescriptors.end())
   {
-    if ((*itCa)->Is(source, transponder, serviceId))
-      return (*itCa)->GetCaDescriptors(caSystemIds, bufSize, data, esPid);
+    const CaDescriptorVector& caDescriptors = it->second;
+
+    unsigned int length = 0;
+    for (CaDescriptorVector::const_iterator it = caDescriptors.begin(); it != caDescriptors.end(); ++it)
+    {
+      const CaDescriptorPtr& descriptor = *it;
+
+      // Filter by esPid (if provided)
+      if (esPid >= 0 && descriptor->EsPid() != esPid)
+        continue;
+
+      bool bFound = false;
+      for (vector<uint16_t>::const_iterator it2 = caSystemIds.begin(); it2 != caSystemIds.end(); ++it2)
+      {
+        uint16_t caSystemId = *it2;
+        if (descriptor->CaSystem() == caSystemId)
+        {
+          bFound = true;
+          break;
+        }
+      }
+
+      if (bFound)
+        data.insert(data.end(), descriptor->Data().begin(), descriptor->Data().end());
+    }
+    return length;
   }
 
   return 0;

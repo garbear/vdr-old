@@ -22,6 +22,7 @@
 #pragma once
 
 #include "Types.h"
+#include "libsi/descriptor.h"
 
 #include <stdint.h>
 #include <vector>
@@ -31,17 +32,20 @@ namespace VDR
 class cCaDescriptor
 {
 public:
+  cCaDescriptor(uint16_t caSystem);
   cCaDescriptor(uint16_t caSystem, uint16_t caPid, uint16_t esPid, const std::vector<uint8_t>& privateData);
+  cCaDescriptor(const SI::CaDescriptor& caDescriptor, uint16_t esPid);
   virtual ~cCaDescriptor(void) { }
 
   bool operator==(const cCaDescriptor& arg) const;
 
-  uint16_t CaSystem(void) const { return m_caSystem; }
-  uint16_t EsPid(void) const    { return m_esPid; }
-
-  const std::vector<uint8_t>& Data(void) const { return m_data; }
+  uint16_t                    CaSystem(void) const { return m_caSystem; }
+  uint16_t                    EsPid(void)    const { return m_esPid; }
+  const std::vector<uint8_t>& Data(void)     const { return m_data; }
 
 private:
+  void SetData(uint16_t caSystem, uint16_t caPid, const std::vector<uint8_t>& privateData);
+
   uint16_t             m_caSystem; // Conditional access type
   uint16_t             m_esPid;    // Elementary stream packet ID, or 0 if not stream-specific
   std::vector<uint8_t> m_data;

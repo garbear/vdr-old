@@ -186,7 +186,7 @@ private:
   int source;
   int transponder;
   cList<cCiCaProgramData> caProgramList;
-  const int *GetCaSystemIds(void);
+  std::vector<uint16_t> GetCaSystemIds(void);
   void SendCaPmt(uint8_t CmdId);
   void NewConnection(void);
   void DeleteAllConnections(void);
@@ -240,7 +240,7 @@ public:
   int Priority(void);
        ///< Returns the priority if the device this slot is currently assigned
        ///< to, or IDLEPRIORITY if it is not assigned to any device.
-  bool ProvidesCa(const std::vector<uint16_t>& CaSystemIds);
+  bool ProvidesCa(const std::vector<uint16_t>& caSystemIds);
        ///< Returns true if the CAM in this slot provides one of the given
        ///< CaSystemIds. This doesn't necessarily mean that it will be
        ///< possible to actually decrypt such a programme, since CAMs

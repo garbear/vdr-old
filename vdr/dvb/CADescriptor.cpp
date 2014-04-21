@@ -24,18 +24,43 @@
 
 #include <libsi/si.h>
 
+using namespace std;
+
 namespace VDR
 {
 
-cCaDescriptor::cCaDescriptor(uint16_t caSystem, uint16_t caPid, uint16_t esPid, const std::vector<uint8_t>& privateData)
+cCaDescriptor::cCaDescriptor(uint16_t caSystem)
+ : m_caSystem(caSystem),
+   m_esPid(0)
+{
+  vector<uint8_t> privateData;
+  SetData(caSystem, 0, privateData);
+}
+
+cCaDescriptor::cCaDescriptor(uint16_t caSystem, uint16_t caPid, uint16_t esPid, const vector<uint8_t>& privateData)
  : m_caSystem(caSystem),
    m_esPid(esPid)
+{
+  SetData(caSystem, caPid, privateData);
+}
+
+cCaDescriptor::cCaDescriptor(const SI::CaDescriptor& caDescriptor, uint16_t esPid)
+: m_caSystem(caDescriptor.getCaType()),
+  m_esPid(esPid)
+{
+  vector<uint8_t> privateData;
+  privateData.assign(caDescriptor.privateData.getData(),
+                     caDescriptor.privateData.getData() + caDescriptor.privateData.getLength());
+  SetData(caDescriptor.getCaType(), caDescriptor.getCaPid(), privateData);
+}
+
+void cCaDescriptor::SetData(uint16_t caSystem, uint16_t caPid, const vector<uint8_t>& privateData)
 {
   m_data.reserve(privateData.size() + 6);
   m_data[0] = SI::CaDescriptorTag;
   m_data[1] = privateData.size() + 4;
-  m_data[2] = (m_caSystem >> 8) & 0xFF;
-  m_data[3] =  m_caSystem       & 0xFF;
+  m_data[2] = (caSystem >> 8) & 0xFF;
+  m_data[3] =  caSystem       & 0xFF;
   m_data[4] = ((caPid   >> 8) & 0x1F) | 0xE0;
   m_data[5] =   caPid         & 0xFF;
   m_data.insert(m_data.begin() + 6, privateData.begin(), privateData.end());

@@ -1,6 +1,7 @@
 #include "RecordingInfo.h"
 #include "Recording.h"
 #include "RecordingDefinitions.h"
+#include "devices/Remux.h" // For MAX*PIDS
 #include "epg/Event.h"
 #include "epg/Components.h"
 #include "Config.h"

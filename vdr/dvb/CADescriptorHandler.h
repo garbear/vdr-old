@@ -22,31 +22,45 @@
 #pragma once
 
 #include "Types.h"
-#include "CADescriptors.h"
+#include "CADescriptor.h"
 
+#include <map>
 #include "platform/threads/mutex.h"
 #include <stdint.h>
+#include <vector>
 
 namespace VDR
 {
+// TODO: Should this be defined in CADescriptor.h?
+struct DescriptorId
+{
+  int source;
+  int transponder;
+  int serviceId;
+};
+
+bool operator<(const DescriptorId& lhs, const DescriptorId& rhs);
+
 class cCaDescriptorHandler
 {
 public:
   static cCaDescriptorHandler& Get();
 
   /*!
-   * \brief Returns 0 if this is an already known descriptor, 1 if it is an all
-   *        new descriptor with actual contents, and 2 if an existing descriptor
-   *        was changed. TODO: Change to an enum return value
+   * \brief Returns true if any descriptors were added or modified
    */
-  int AddCaDescriptors(const CaDescriptorsPtr& caDescriptors);
+  bool AddCaDescriptors(int source, int transponder, int serviceId,
+      const CaDescriptorVector& caDescriptors);
 
-  int GetCaDescriptors(int source, int transponder, int serviceId, const int* caSystemIds, int bufSize, uint8_t* data, int esPid);
+  int GetCaDescriptors(int source, int transponder, uint16_t serviceId,
+      const std::vector<uint16_t>& caSystemIds, std::vector<uint8_t>& data, int esPid = -1);
 
 private:
   cCaDescriptorHandler() { }
 
-  CaDescriptorsVector m_caDescriptors;
-  PLATFORM::CMutex    m_mutex;
+  typedef std::map<DescriptorId, CaDescriptorVector> CaDescriptorCollection;
+
+  CaDescriptorCollection m_caDescriptors;
+  PLATFORM::CMutex       m_mutex;
 };
 }

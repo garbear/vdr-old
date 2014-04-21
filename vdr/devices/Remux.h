@@ -15,6 +15,11 @@
 #include "channels/Channel.h"
 #include "utils/Tools.h"
 
+#define MAXAPIDS 32 // audio
+#define MAXDPIDS 16
+#define MAXSPIDS 32 // subtitles
+#define MAXCAIDS 12 // conditional access
+
 namespace VDR
 {
 
