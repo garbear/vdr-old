@@ -39,21 +39,21 @@ namespace VDR
 struct VideoStream
 {
   uint16_t vpid;  // Video stream packet ID
-  uint16_t vtype; // Video stream type
+  uint8_t  vtype; // Video stream type
   uint16_t ppid;  // Program clock reference packet ID
 };
 
 struct AudioStream
 {
   uint16_t    apid;  // Audio stream packet ID
-  uint16_t    atype; // Audio stream type
+  uint8_t     atype; // Audio stream type
   std::string alang; // Audio stream language
 };
 
 struct DataStream
 {
   uint16_t    dpid;  // Data stream packet ID
-  uint16_t    dtype; // Data stream type
+  uint8_t     dtype; // Data stream type
   std::string dlang; // Data stream language
 };
 
@@ -68,7 +68,7 @@ struct SubtitleStream
 
 struct TeletextStream
 {
-  int tpid; // Teletext stream packet ID
+  uint16_t tpid; // Teletext stream packet ID
 };
 
 
