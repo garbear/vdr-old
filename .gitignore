@@ -15,3 +15,10 @@
 # Test files
 /vdr/scan/test/channel-scan-results.xml
 
+# CMake spew
+CMakeCache.txt
+CMakeFiles
+/Makefile
+*.cmake
+*.ctest
+
