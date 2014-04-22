@@ -90,7 +90,7 @@ TEST(DvbTuner, Getters)
 
     EXPECT_STRNE("", tuner.Name().c_str());
 
-    if (tuner.Name() == WINTVHVR950Q)
+    if (cDvbDevices::IsATSC(tuner.Name()))
     {
       EXPECT_EQ(SYS_UNDEFINED, tuner.FrontendType());
 

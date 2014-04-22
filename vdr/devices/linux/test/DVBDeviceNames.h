@@ -28,5 +28,18 @@
  * basis.
  */
 
+#include <string>
+
 // Hauppauge WinTV-HVR 950Q hybrid TV stick
 #define WINTVHVR950Q         "Auvitek AU8522 QAM/8VSB Frontend"
+#define WINTVHVR2250         "Samsung S5H1411 QAM/8VSB Frontend"
+
+class cDvbDevices
+{
+public:
+  static bool IsATSC(const std::string& deviceName)
+  {
+    return deviceName == WINTVHVR950Q ||
+           deviceName == WINTVHVR2250;
+  }
+};

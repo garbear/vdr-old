@@ -46,7 +46,7 @@ TEST(ScanTask, cScanTaskATSC)
 
     ASSERT_TRUE(device->Initialise());
 
-    if (device->DeviceName() == WINTVHVR950Q)
+    if (cDvbDevices::IsATSC(device->DeviceName()))
     {
       cFrontendCapabilities caps(device->m_dvbTuner.GetCapabilities());
       cScanTaskATSC task(device, caps, ATSC_QAM);
