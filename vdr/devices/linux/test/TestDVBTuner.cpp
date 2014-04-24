@@ -179,11 +179,12 @@ TEST(DvbTuner, HasLock)
 
     EXPECT_STRNE("", tuner.Name().c_str());
 
-    EXPECT_FALSE(tuner.HasLock(false)); // 10s
+    EXPECT_FALSE(tuner.HasLock(false));
     EXPECT_FALSE(tuner.IsTunedTo(*channel));
     tuner.SetChannel(*channel);
-    EXPECT_FALSE(tuner.HasLock(false)); // 10s
-    EXPECT_TRUE(tuner.HasLock(true)); // 10s
+    EXPECT_FALSE(tuner.HasLock(false));
+    EXPECT_TRUE(tuner.HasLock(true));
+    EXPECT_TRUE(tuner.HasLock(true));
     EXPECT_TRUE(tuner.IsTunedTo(*channel));
   }
 }
