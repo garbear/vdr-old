@@ -24,7 +24,6 @@
 #include "PMTScanner.h"
 #include "channels/Channel.h"
 #include "dvb/CADescriptorHandler.h"
-#include "dvb/CADescriptors.h"
 #include "utils/I18N.h"
 
 #include <libsi/si_ext.h>
@@ -62,6 +61,7 @@ void cPmtScanner::ProcessData(u_short pid, u_char tid, const vector<uint8_t>& da
     return;
   }
 
+  /* TODO
   SI::CaDescriptor * d;
   CaDescriptorsPtr CaDescriptors = CaDescriptorsPtr(new cCaDescriptors(Channel->Source(), Channel->TransponderFrequency(), Channel->GetSid()));
 
@@ -251,7 +251,7 @@ void cPmtScanner::ProcessData(u_short pid, u_char tid, const vector<uint8_t>& da
       default:
         break;
     }
-    */
+    *
     for (SI::Loop::Iterator it; (d = (SI::CaDescriptor*)stream.streamDescriptors.getNext(it, SI::CaDescriptorTag));)
     {
       CaDescriptors->AddCaDescriptor(d, true);

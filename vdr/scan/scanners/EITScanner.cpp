@@ -109,7 +109,7 @@ cEitParser::cEitParser(cChannelManager& channelManager, int Source, u_char Tid, 
                 {
                   if (!LinkChannels)
                     LinkChannels = new cLinkChannels;
-                  LinkChannels->push_back(new cLinkChannel(link));
+                  //LinkChannels->push_back(new cLinkChannel(link)); // TODO
                 }
               }
               else
@@ -124,8 +124,10 @@ cEitParser::cEitParser(cChannelManager& channelManager, int Source, u_char Tid, 
       DELETENULL(d);
     }
 
+    /* TODO
     if (LinkChannels)
       channel->SetLinkChannels(*LinkChannels);
+    */
   }
 }
 

@@ -23,6 +23,7 @@
 #include "Config.h"
 #include "VideoInput.h"
 #include "channels/ChannelManager.h"
+#include "devices/Remux.h" // For MAX*PIDS
 #include "settings/Settings.h"
 #include <libsi/section.h>
 #include <libsi/descriptor.h>

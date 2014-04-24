@@ -254,7 +254,7 @@ void cEIT::ParseSIDescriptor(SI::Descriptor* d)
             }
             if (link)
             {
-              m_LinkChannels.push_back(new cLinkChannel(link));
+              //m_LinkChannels.push_back(new cLinkChannel(link)); // TODO
             }
           }
           else
@@ -411,8 +411,10 @@ bool cEIT::HandleEitEvent(SI::EIT::Event *EitEvent)
     cEpgHandlers::Get().SetComponents(m_pEvent, m_Components);
 
     cEpgHandlers::Get().FixEpgBugs(m_pEvent);
+    /* TODO
     if (!m_LinkChannels.empty())
       m_channel->SetLinkChannels(m_LinkChannels);
+    */
     m_bModified = true;
     cEpgHandlers::Get().HandleEvent(m_pEvent);
     if (m_bHandledExternally)

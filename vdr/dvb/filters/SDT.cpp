@@ -162,8 +162,10 @@ void cSdtFilter::ProcessData(u_short pid, u_char tid, const std::vector<uint8_t>
                 empty;
             m_patFilter->Trigger();
           }
+          /* TODO
           if (link)
             LinkChannels.push_back(new cLinkChannel(link));
+          */
         }
         break;
       }
@@ -173,11 +175,13 @@ void cSdtFilter::ProcessData(u_short pid, u_char tid, const std::vector<uint8_t>
       delete d;
     }
 
+    /* TODO
     if (!LinkChannels.empty())
     {
       if (channel)
         channel->SetLinkChannels(LinkChannels);
     }
+    */
   }
 //XXX  Channels.Unlock();
 }
