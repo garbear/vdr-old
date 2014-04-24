@@ -44,7 +44,16 @@ enum TableId { TableIdPAT = 0x00, //program association section
                TableIdDIT = 0x7E, //discontinuity information section
                TableIdSIT = 0x7F, //service information section
                TableIdAIT = 0x74, //application information section
-               TableIdPremiereCIT = 0xA0 //premiere content information section
+               TableIdPremiereCIT = 0xA0, //premiere content information section
+               TableIdMGT = 0xC7, // master guide section
+               TableIdTVCT = 0xC8, // terrestrial virtual channel section
+               TableIdCVCT = 0xC9, // cable virtual channel section
+               TableIdRTT = 0xCA, // rating region section
+               TableIdEIT = 0xCB, // event information section
+               TableIdETT = 0xCC, // extended text section
+               TableIdSTT = 0xCD, // system time section
+               TableIdDCCT = 0xD3, // directed channel change section
+               TableIdDCCSCT = 0xD4 // directed channel change selection code section
              };
 
 
@@ -174,12 +183,27 @@ enum DescriptorTag {
   // Premiere private Descriptor Tags
                PremiereContentTransmissionDescriptorTag = 0xF2,
 
+  // Defined by ATSC Standard A/65:2009
+               PSIP_StuffingDescriptorTag = 0x80,
+               PSIP_AC3DescriptorTag = 0x81,
+               PSIP_CaptionServiceDescriptorTag = 0x86,
+               PSIP_ContentAdvisoryDescriptorTag = 0x87,
+               PSIP_ExtendedChannelNameDescriptorTag = 0xA0,
+               PSIP_ServiceLocationDescriptorTag = 0xA1,
+               PSIP_TimeShiftedServiceDescriptor = 0xA2,
+               PSIP_ComponentNameDescriptor = 0xA3,
+               PSIP_DCCDepartingRequestDescriptor = 0xA8,
+               PSIP_DCCArrivingRequestDescriptorTag = 0xA9,
+               PSIP_RedistributionControlDescriptorTag = 0xAA,
+               PSIP_PrivateInformationDescriptor = 0xAD,
+               PSIP_GenreDescriptor = 0xAB,
+
                //a descriptor currently unimplemented in this library
                //the actual value 0xFF is "forbidden" according to the spec.
                UnimplementedDescriptorTag = 0xFF
 };
 
-enum DescriptorTagDomain { SI, MHP, PCIT };
+enum DescriptorTagDomain { SI, MHP, PCIT, PSIP };
 
 enum RunningStatus { RunningStatusUndefined = 0,
                      RunningStatusNotRunning = 1,
@@ -205,6 +229,11 @@ enum AudioType { AudioTypeUndefined = 0x00,
                  AudioTypeHearingImpaired = 0x02,
                  AudioTypeVisualImpairedCommentary = 0x03
                };
+
+enum CompressionType { CompressionTypeNone = 0x00,      // No compression
+                       CompressionTypeHuffmanC5 = 0x01, // Huffman coding using table C5 in A/65:2009 (optimized for titles)
+                       CompressionTypeHuffmanC7 = 0x02  // Huffman coding using table C7 in A/65:2009 (optimized for descriptions)
+                     };
 
 /* Some principles:
    - Objects that return references to other objects contained in their data must make sure
@@ -271,12 +300,21 @@ public:
    static int getTableIdExtension(const unsigned char *d);
 };
 
+/* A section which has the ExtendedSectionHeader
+   (section_syntax_indicator==1) */
+class VersionedSection : public NumberedSection {
+public:
+   VersionedSection(const unsigned char *data, bool doCopy=true) : NumberedSection(data, doCopy) {}
+   VersionedSection() {}
+   int getProtocolVersion() const;
+};
+
 class VariableLengthPart : public Object {
 public:
    //never forget to call this
-   void setData(CharArray d, int l) { Object::setData(d); checkSize(l); length=l; }
+   void setData(CharArray d, int l);
    //convenience method
-   void setDataAndOffset(CharArray d, int l, int &offset) { Object::setData(d); checkSize(l); length=l; offset+=l; }
+   void setDataAndOffset(CharArray d, int l, int &offset);
    virtual int getLength() { return length; }
 private:
    int length;
@@ -315,6 +353,7 @@ public:
       friend class DescriptorLoop;
       template <class T> friend class TypeLoop;
       friend class ExtendedEventDescriptors;
+      friend class StringLoop;
       int i;
    };
 protected:
@@ -456,6 +495,12 @@ public:
    PCIT_DescriptorLoop() { domain=PCIT; }
 };
 
+//Premiere Content Information Table
+class PSIP_DescriptorLoop : public DescriptorLoop {
+public:
+   PSIP_DescriptorLoop() { domain=PSIP; }
+};
+
 //The content of the ExtendedEventDescriptor may be split over several
 //descriptors if the text is longer than 256 bytes.
 //The following classes provide base functionality to handle this case.
@@ -486,8 +531,6 @@ public:
    //The text may be shorter. Its length can be obtained with one of the
    //getText functions and strlen.
 
-   //returns text. Data is allocated with new and must be delete'd by the user.
-   char *getText();
    //copies text into given buffer.
    //a buffer of size getLength()+1 is guaranteed to be sufficiently large.
    //In most descriptors the string length is an 8-bit field,
@@ -495,6 +538,7 @@ public:
    //returns the given buffer for convenience.
    //The emphasis marks 0x86 and 0x87 are still available.
    char *getText(char *buffer, int size);
+
    //The same semantics as for getText(char*) apply.
    //The short version of the text according to ETSI TR 101 211 (chapter 4.6)
    //will be written into the shortVersion buffer (which should, therefore, have the same

@@ -11,7 +11,12 @@
  ***************************************************************************/
 
 #include "section.h"
+#include "util.h"
+#include <assert.h>
 #include <stdio.h>
+
+#define POSIX_EPOCH  0
+#define ATSC_EPOCH   (POSIX_EPOCH + ((10 * 365 + 7) * 24 * 60 * 60))
 
 namespace SI {
 
@@ -355,6 +360,142 @@ int PremiereCIT::getContentId() const {
 
 time_t PremiereCIT::getDuration() const {
    return DVBTime::getDuration(s->duration_h, s->duration_m, s->duration_s);
+}
+
+/*********************** PSIP_MGT ***********************/
+
+void PSIP_MGT::Parse() {
+   int offset=0;
+   data.setPointerAndOffset<const mgt>(s, offset);
+   const int tableCount = HILO(s->tables_defined);
+   tableInfoLoop.setDataAndOffset(data+offset, getTableInfoLoopLength(data+offset, tableCount), offset);
+   const mgt_mid *mid;
+   data.setPointerAndOffset<const mgt_mid>(mid, offset);
+   descriptorLoop.setData(data+offset, HILO(mid->descriptors_length));
+}
+
+int PSIP_MGT::getTableInfoLoopLength(const CharArray &data, int tableCount) {
+   int tableInfoLength = 0;
+   for (int i = 0; i < tableCount; i++)
+   {
+      TableInfo tableInfo;
+      tableInfo.setData(data + tableInfoLength);
+      tableInfo.CheckParse();
+      tableInfoLength+=tableInfo.getLength();
+   }
+   return tableInfoLength;
+}
+
+int PSIP_MGT::TableInfo::getTableType() const {
+   return HILO(s->table_type);
+}
+
+int PSIP_MGT::TableInfo::getPid() const {
+   return HILO(s->table_type_pid);
+}
+
+int PSIP_MGT::TableInfo::getVersion() const {
+   return s->table_type_version_number;
+}
+
+void PSIP_MGT::TableInfo::setData(CharArray d)
+{
+  VariableLengthPart::setData(d, getTableInfoLength(d.getData()));
+}
+
+int PSIP_MGT::TableInfo::getTableInfoLength(const unsigned char *data)
+{
+  const int descriptorsLength = HILO(((const mgt_table_info*)data)->table_type_descriptors_length);
+  return sizeof(const mgt_table_info) + descriptorsLength;
+}
+
+void PSIP_MGT::TableInfo::Parse() {
+   int offset=0;
+   data.setPointerAndOffset<const mgt_table_info>(s, offset);
+   tableDescriptors.setData(data+offset, HILO(s->table_type_descriptors_length));
+}
+
+/*********************** PSIP_EIT ***********************/
+
+void PSIP_EIT::Parse() {
+  int offset=0;
+  data.setPointerAndOffset<const psip_eit>(s, offset);
+
+  int eventLoopOffset = offset;
+
+  const unsigned int eventCount = s->num_events_in_section;
+  for (unsigned int i = 0; i < eventCount; i++)
+  {
+    const psip_eit_event *eitEvent;
+    data.setPointerAndOffset<const psip_eit_event>(eitEvent, eventLoopOffset);
+
+    const unsigned int titleLength = eitEvent->title_length;
+    eventLoopOffset += titleLength;
+
+    const psip_eit_event_mid *eitEventMid;
+    data.setPointerAndOffset<const psip_eit_event_mid>(eitEventMid, eventLoopOffset);
+
+    const unsigned int descriptorsLength = HILO(eitEventMid->descriptors_length);
+    eventLoopOffset += descriptorsLength;
+  }
+
+  const int eventLoopLength = eventLoopOffset - offset;
+  eventLoop.setData(data+offset, eventLoopLength);
+}
+
+void PSIP_EIT::Event::setData(CharArray d) {
+  const psip_eit_event *eitEvent = reinterpret_cast<const psip_eit_event*>(d.getData());
+  const int eventLength = getEventLength(eitEvent);
+  VariableLengthPart::setData(d, eventLength);
+}
+
+int PSIP_EIT::Event::getEventId() const {
+   return HILO(s->event_id);
+}
+
+time_t PSIP_EIT::Event::getStartTime() const {
+   return HILOHILO(s->start_time);
+}
+
+time_t PSIP_EIT::Event::getLengthInSeconds() const {
+   return LOHILO(s->length_in_seconds);
+}
+
+int PSIP_EIT::Event::getEventLength(const psip_eit_event *event) {
+   const psip_eit_event_mid *mid = (const psip_eit_event_mid*)(((uint8_t*)event) + sizeof(const psip_eit_event) + event->title_length);
+   return sizeof(const psip_eit_event) + event->title_length + sizeof(const psip_eit_event_mid) + HILO(mid->descriptors_length);
+}
+
+void PSIP_EIT::Event::Parse() {
+   int offset=0;
+   data.setPointerAndOffset<const psip_eit_event>(s, offset);
+
+   assert(offset == sizeof(const psip_eit_event));
+
+   textLoop.setDataAndOffset(data+offset, offset);
+
+   assert(offset == sizeof(const psip_eit_event) + textLoop.getLength());
+
+   const psip_eit_event_mid *mid;
+   data.setPointerAndOffset<const psip_eit_event_mid>(mid, offset);
+
+   assert(offset == sizeof(const psip_eit_event) + textLoop.getLength() + sizeof(const psip_eit_event_mid));
+
+   const uint16_t descriptorsLength = HILO(mid->descriptors_length);
+   eventDescriptors.setDataAndOffset(data+offset, descriptorsLength, offset);
+
+   assert(offset == sizeof(const psip_eit_event) + textLoop.getLength() + sizeof(const psip_eit_event_mid) + eventDescriptors.getLength());
+}
+
+/*********************** PSIP_STT ***********************/
+
+void PSIP_STT::Parse() {
+   int offset=0;
+   data.setPointerAndOffset<const stt>(s, offset);
+}
+
+int PSIP_STT::getGpsUtcOffset() const {
+   return s->GPS_UTC_offset;
 }
 
 } //end of namespace

@@ -14,6 +14,21 @@
  *                                                                         *
  ***************************************************************************/
 
+/*
+ *
+ *    Helpful resources:
+ *
+ *    *   ATSC Standard A/65:2009: Program and System Information Protocol for Terrestrial Broadcast and Cable (PSIP)
+ *        http://www.atsc.org/cms/standards/a_65-2009.pdf
+ *
+ *    *   MPEG-2 Reference Guide to Digital Video Technology, Testing and Monitoring
+ *        http://www.jdsu.com/ProductLiterature/mpeg2_bk_cab_tm_ae.pdf
+ *
+ *    Paragraphs from these documents have been provided near the structures as
+ *    informative explanations.
+ *
+ */
+
 #ifndef LIBSI_HEADERS_H
 #define LIBSI_HEADERS_H
 
@@ -62,6 +77,40 @@ struct ExtendedSectionHeader {
 #endif
    u_char section_number                         :8;
    u_char last_section_number                    :8;
+};
+
+/*
+ *    Tables defined in ATSC Standard A/65:2009 are derived from the extended
+ *    section header defined in ISO/IEC 13818-1. An additional field,
+ *    protocol_version, has been added as a consistent first byte of every PSIP
+ *    table section.
+ */
+struct VersionedSectionHeader {
+   u_char table_id                               :8;
+#if BYTE_ORDER == BIG_ENDIAN
+   u_char section_syntax_indicator               :1;
+   u_char                                        :3;
+   u_char section_length_hi                      :4;
+#else
+   u_char section_length_hi                      :4;
+   u_char                                        :3;
+   u_char section_syntax_indicator               :1;
+#endif
+   u_char section_length_lo                      :8;
+   u_char table_id_extension_hi                  :8;
+   u_char table_id_extension_lo                  :8;
+#if BYTE_ORDER == BIG_ENDIAN
+   u_char                                        :2;
+   u_char version_number                         :5;
+   u_char current_next_indicator                 :1;
+#else
+   u_char current_next_indicator                 :1;
+   u_char version_number                         :5;
+   u_char                                        :2;
+#endif
+   u_char section_number                         :8;
+   u_char last_section_number                    :8;
+   u_char protocol_version                       :8;
 };
 
 struct DescriptorHeader {
@@ -822,6 +871,629 @@ struct pcit {
 
 /*
  *
+ *    In addition to the DVB tables, the ATSC defined its own set of tables.
+ *    These tables give the decoder access to tuning parameters, program
+ *    ratings, and event descriptors for all channels in the network. This data
+ *    is structured as nine tables:
+ *
+ *    1) Master Guide Table (MGT):
+ *
+ *       - the MGT lists version numbers, length in bytes, and PIDs for all of
+ *         the PSIP tables with the exception of the STT which works
+ *         independently from the other tables.
+ *
+ */
+
+#define MGT_LEN 12
+
+struct mgt {
+   u_char table_id                               :8;
+#if BYTE_ORDER == BIG_ENDIAN
+   u_char section_syntax_indicator               :1; // has to be 1
+   u_char private_indicator                      :1; // has to be 1
+   u_char reserved                               :2;
+   u_char section_length_hi                      :4;
+#else
+   u_char section_length_hi                      :4;
+   u_char reserved                               :2;
+   u_char private_indicator                      :1; // has to be 1
+   u_char section_syntax_indicator               :1; // has to be 1
+#endif
+   u_char section_length_lo                      :8;
+   u_char table_id_extension_hi                  :8;
+   u_char table_id_extension_lo                  :8;
+#if BYTE_ORDER == BIG_ENDIAN
+   u_char                                        :2;
+   u_char version_number                         :5;
+   u_char current_next_indicator                 :1;
+#else
+   u_char current_next_indicator                 :1;
+   u_char version_number                         :5;
+   u_char                                        :2;
+#endif
+   u_char section_number                         :8;
+   u_char last_section_number                    :8;
+   u_char protocol_version                       :8;
+   u_char tables_defined_hi                      :8; // 6 to 370 for terrestrial, 2 to 370 for cable
+   u_char tables_defined_lo                      :8;
+   // table info loop
+};
+
+#define MGT_TABLE_INFO_LEN 11
+
+struct mgt_table_info {
+   u_char table_type_hi                          :8;
+   u_char table_type_lo                          :8;
+#if BYTE_ORDER == BIG_ENDIAN
+   u_char reserved                               :3;
+   u_char table_type_pid_hi                      :5;
+#else
+   u_char table_type_pid_hi                      :5;
+   u_char reserved                               :3;
+#endif
+   u_char table_type_pid_lo                      :8;
+#if BYTE_ORDER == BIG_ENDIAN
+   u_char                                        :3;
+   u_char table_type_version_number              :5;
+#else
+   u_char table_type_version_number              :5;
+   u_char                                        :3;
+#endif
+   u_char number_bytes_id_hi_hi                  :8;
+   u_char number_bytes_id_hi_lo                  :8;
+   u_char number_bytes_id_lo_hi                  :8;
+   u_char number_bytes_id_lo_lo                  :8;
+#if BYTE_ORDER == BIG_ENDIAN
+   u_char                                        :4;
+   u_char descriptors_loop_length_hi             :4;
+#else
+   u_char table_type_descriptors_length_hi       :4;
+   u_char                                        :4;
+#endif
+   u_char table_type_descriptors_length_lo       :8;
+   // descriptors
+};
+
+#define SIZE_MGT_MID 2
+
+struct mgt_mid {
+#if BYTE_ORDER == BIG_ENDIAN
+   u_char                                        :4;
+   u_char descriptors_length_hi                  :4;
+#else
+   u_char descriptors_length_hi                  :4;
+   u_char                                        :4;
+#endif
+   u_char descriptors_length_lo                  :8;
+   // descriptors
+};
+
+#define SIZE_MGT_END 4
+
+struct mgt_end {
+   long CRC;
+};
+
+/*
+ *
+ *    2) Terrestrial Virtual Channel Table (TVCT):
+ *    3) Cable Virtual Channel Table (CVCT):
+ *
+ *       - the Virtual Channel Tables (VCTs) list all the channels in the
+ *         transport stream and define their characteristics. This includes the
+ *         channel name, the stream components, stream types, and navigation
+ *         identifiers. The VCT also carries the source_id for each program,
+ *         which the EIT uses to locate and display channel information for the
+ *         EPG.
+ *
+ */
+
+#define VCT_LEN 12
+
+struct vct {
+   u_char table_id                               :8;
+#if BYTE_ORDER == BIG_ENDIAN
+   u_char section_syntax_indicator               :1; // has to be 1
+   u_char private_indicator                      :1; // has to be 1
+   u_char reserved                               :2;
+   u_char section_length_hi                      :4;
+#else
+   u_char section_length_hi                      :4;
+   u_char reserved                               :2;
+   u_char private_indicator                      :1; // has to be 1
+   u_char section_syntax_indicator               :1; // has to be 1
+#endif
+   u_char section_length_lo                      :8;
+   u_char transport_stream_id_hi                 :8;
+   u_char transport_stream_id_lo                 :8;
+#if BYTE_ORDER == BIG_ENDIAN
+   u_char                                        :2;
+   u_char version_number                         :5;
+   u_char current_next_indicator                 :1;
+#else
+   u_char current_next_indicator                 :1;
+   u_char version_number                         :5;
+   u_char                                        :2;
+#endif
+   u_char section_number                         :8;
+   u_char last_section_number                    :8;
+   u_char protocol_version                       :8;
+   u_char num_channels_in_section                :8;
+   // channel info
+};
+
+#define VCT_CHANNEL_INFO_LEN 5
+
+struct vct_channel_info {
+   u_char short_name0                            :8;
+   u_char short_name1                            :8;
+   u_char short_name2                            :8;
+   u_char short_name3                            :8;
+   u_char short_name4                            :8;
+   u_char short_name5                            :8;
+   u_char short_name6                            :8;
+#if BYTE_ORDER == BIG_ENDIAN
+   u_char reserved                               :4;
+   u_char major_channel_number_hi                :4;
+#else
+   u_char major_channel_number_hi                :4;
+   u_char reserved                               :4;
+#endif
+#if BYTE_ORDER == BIG_ENDIAN
+   u_char major_channel_number_lo                :6;
+   u_char minor_channel_number_hi                :2;
+#else
+   u_char minor_channel_number_hi                :2;
+   u_char major_channel_number_lo                :6;
+#endif
+   u_char minor_channel_number_lo                :8;
+   u_char modulation_mode                        :8;
+   u_char carrier_frequency_hi_hi                :8;
+   u_char carrier_frequency_hi_lo                :8;
+   u_char carrier_frequency_lo_hi                :8;
+   u_char carrier_frequency_lo_lo                :8;
+   u_char channel_TSID_hi                        :8;
+   u_char channel_TSID_lo                        :8;
+   u_char program_number_hi                      :8;
+   u_char program_number_lo                      :8;
+#if BYTE_ORDER == BIG_ENDIAN
+   u_char ETM_location                           :2;
+   u_char access_controlled                      :1;
+   u_char hidden                                 :1;
+   u_char path_select                            :1; // reserved for CVCT
+   u_char out_of_band                            :1; // reserved for CVCT
+   u_char hide_guide                             :1;
+   u_char                                        :1;
+#else
+   u_char                                        :1;
+   u_char hide_guide                             :1;
+   u_char out_of_band                            :1; // reserved for CVCT
+   u_char path_select                            :1; // reserved for CVCT
+   u_char hidden                                 :1;
+   u_char access_controlled                      :1;
+   u_char ETM_location                           :2;
+#endif
+#if BYTE_ORDER == BIG_ENDIAN
+   u_char                                        :2;
+   u_char service_type                           :6;
+#else
+   u_char service_type                           :6;
+   u_char                                        :2;
+#endif
+   u_char source_id_hi                           :8;
+   u_char source_id_lo                           :8;
+#if BYTE_ORDER == BIG_ENDIAN
+   u_char                                        :6;
+   u_char descriptors_length_hi                  :2;
+#else
+   u_char                                        :6;
+   u_char descriptors_length_hi                  :2;
+#endif
+   u_char descriptors_length_lo                  :8;
+   // descriptors
+};
+
+#define SIZE_VCT_MID 2
+
+struct vct_mid {
+#if BYTE_ORDER == BIG_ENDIAN
+   u_char reserved                               :6;
+   u_char descriptors_length_hi                  :2;
+#else
+   u_char descriptors_length_hi                  :2;
+   u_char reserved                               :6;
+#endif
+   u_char descriptors_length_lo                  :8;
+   // descriptors
+};
+
+#define SIZE_VCT_END 4
+
+struct vct_end {
+   long CRC;
+};
+
+/*
+ *
+ *    4)  Rating Region Table (RRT):
+ *
+ *       - the RRT transmits program rating systems for each country that uses
+ *         a rating standard. The information allows viewers to filter certain
+ *         programs based on their content. Each RRT instance conveys the rating
+ *         system information for one specific region.
+ *
+ */
+
+#define RRT_LEN 12
+
+struct rrt {
+   u_char table_id                               :8;
+#if BYTE_ORDER == BIG_ENDIAN
+   u_char section_syntax_indicator               :1; // has to be 1
+   u_char private_indicator                      :1; // has to be 1
+   u_char reserved                               :2;
+   u_char section_length_hi                      :4;
+#else
+   u_char section_length_hi                      :4;
+   u_char reserved                               :2;
+   u_char private_indicator                      :1; // has to be 1
+   u_char section_syntax_indicator               :1; // has to be 1
+#endif
+   u_char section_length_lo                      :8;
+   u_char                                        :8; // table_id_extension_hi in other tables
+   u_char rating_region                          :8; // table_id_extension_lo in other tables
+#if BYTE_ORDER == BIG_ENDIAN
+   u_char                                        :2;
+   u_char version_number                         :5;
+   u_char current_next_indicator                 :1;
+#else
+   u_char current_next_indicator                 :1;
+   u_char version_number                         :5;
+   u_char                                        :2;
+#endif
+   u_char section_number                         :8;
+   u_char last_section_number                    :8;
+   u_char protocol_version                       :8;
+   u_char rating_region_name_length              :8;
+   // rating_region_name_text
+};
+
+#define SIZE_RRT_MID_1 1
+
+struct rrt_mid_1 {
+   u_char dimensions_defined                     :8;
+   // dimensions
+};
+
+#define RRT_DIMENSION_LEN 1
+
+struct rrt_dimension {
+   u_char dimension_name_length                  :8;
+   // dimension_name_text
+};
+
+#define SIZE_RRT_DIMENSION_MID 1
+
+struct rrt_dimension_mid {
+#if BYTE_ORDER == BIG_ENDIAN
+   u_char reserved                               :3;
+   u_char graduated_scale                        :1;
+   u_char values_defined                         :4;
+#else
+   u_char values_defined                         :4;
+   u_char graduated_scale                        :1;
+   u_char reserved                               :3;
+#endif
+   // dimension values
+};
+
+#define RRT_DIMENSION_VALUE_LEN 1
+
+struct rrt_dimension_value {
+   u_char abbrev_rating_value_length             :8;
+   // abbrev_rating_value_text
+};
+
+#define SIZE_RRT_DIMENSION_VALUE_MID 1
+
+struct rrt_dimension_value_mid {
+   u_char rating_value_length                    :8;
+   // rating_value_text
+};
+
+#define SIZE_RRT_MID_2 2
+
+struct rrt_mid_2 {
+#if BYTE_ORDER == BIG_ENDIAN
+  u_char reserved                                :6;
+  u_char descriptors_length_hi                   :2;
+#else
+  u_char descriptors_length_hi                   :2;
+  u_char reserved                                :6;
+#endif
+  u_char descriptors_length_lo                   :8;
+  // descriptors
+};
+
+#define SIZE_RRT_END 4
+
+struct rrt_end {
+   long CRC;
+};
+
+/*
+ *
+ *    5)  Event Information Table (EIT):
+ *
+ *       - The EIT defines the events associated with each of the virtual
+ *         channels listed in the VCT. It provides event descriptions, start
+ *         times, and durations. An event is, in most cases, a typical TV
+ *         program. The decoder uses these to create the EPG.
+ *
+ *         Each EIT provides event information for a 3-hour time period, so up
+ *         to 16 days of programming can be advertised in advance in the EPG.
+ *         EIT-0 always contains information for the current 3-hour time block,
+ *         EIT-1 defines programming for the next 3 hours, etc.
+ *
+ */
+
+#define PSIP_EIT_LEN 10
+
+struct psip_eit {
+   u_char table_id                               :8;
+#if BYTE_ORDER == BIG_ENDIAN
+   u_char section_syntax_indicator               :1;
+   u_char private_indicator                      :1;
+   u_char reserved                               :2;
+   u_char section_length_hi                      :4;
+#else
+   u_char section_length_hi                      :4;
+   u_char reserved                               :2;
+   u_char private_indicator                      :1;
+   u_char section_syntax_indicator               :1;
+#endif
+   u_char section_length_lo                      :8;
+   u_char source_id_hi                           :8;
+   u_char source_id_lo                           :8;
+#if BYTE_ORDER == BIG_ENDIAN
+   u_char                                        :2;
+   u_char version_number                         :5;
+   u_char current_next_indicator                 :1;
+#else
+   u_char current_next_indicator                 :1;
+   u_char version_number                         :5;
+   u_char                                        :2;
+#endif
+   u_char section_number                         :8;
+   u_char last_section_number                    :8;
+   u_char protocol_version                       :8;
+   u_char num_events_in_section                  :8;
+};
+
+#define PSIP_EIT_EVENT_LEN 10
+
+struct psip_eit_event {
+#if BYTE_ORDER == BIG_ENDIAN
+   u_char reserved                               :2;
+   u_char event_id_hi                            :6;
+#else
+   u_char event_id_hi                            :6;
+   u_char reserved                               :2;
+#endif
+   u_char event_id_lo                            :8;
+   u_char start_time_hi_hi                       :8;
+   u_char start_time_hi_lo                       :8;
+   u_char start_time_lo_hi                       :8;
+   u_char start_time_lo_lo                       :8;
+#if BYTE_ORDER == BIG_ENDIAN
+   u_char                                        :2;
+   u_char etm_location                           :2;
+   u_char length_in_seconds_hi_lo                :4;
+#else
+   u_char length_in_seconds_hi_lo                :4;
+   u_char etm_location                           :2;
+   u_char                                        :2;
+#endif
+   u_char length_in_seconds_lo_hi                :8;
+   u_char length_in_seconds_lo_lo                :8;
+   u_char title_length                           :8;
+   // title_text (variable length)
+};
+
+#define SIZE_PSIP_EIT_EVENT_MID 2
+
+struct psip_eit_event_mid {
+#if BYTE_ORDER == BIG_ENDIAN
+   u_char                                        :4;
+   u_char descriptors_length_hi                  :4;
+#else
+   u_char descriptors_length_hi                  :4;
+   u_char                                        :4;
+#endif
+   u_char descriptors_length_lo                  :8;
+   // descriptors
+};
+
+#define SIZE_EIT_END 4
+
+struct psip_eit_end {
+   long CRC;
+};
+
+/*
+ *
+ *    6)  Extended Text Table (ETT):
+ *
+ *       - ETTs carry Extended Text Message (ETM) streams describing both
+ *         channels and events. An ETM represents a description in several
+ *         different languages using a multiple-string data structure. ETTs
+ *         come in two types: Channel ETTs and Event ETTs. ETT messages are
+ *         displayed in the Electronic Program Guide (EPG) to give viewers more
+ *         detailed information than is available in the EIT. For example,
+ *         Channel ETTs may contain information about the price of a channel or
+ *         its coming attractions. Event ETTs might include a short paragraph
+ *         describing a specific event, such as a movie.
+ *
+ */
+
+#define ETT_LEN 13
+
+struct ett {
+   u_char table_id                               :8;
+#if BYTE_ORDER == BIG_ENDIAN
+   u_char section_syntax_indicator               :1;
+   u_char                                        :3;
+   u_char section_length_hi                      :4;
+#else
+   u_char section_length_hi                      :4;
+   u_char                                        :3;
+   u_char section_syntax_indicator               :1;
+#endif
+   u_char section_length_lo                      :8;
+   u_char ETT_table_id_extension_hi              :8;
+   u_char ETT_table_id_extension_lo              :8;
+#if BYTE_ORDER == BIG_ENDIAN
+   u_char                                        :2;
+   u_char version_number                         :5;
+   u_char current_next_indicator                 :1;
+#else
+   u_char current_next_indicator                 :1;
+   u_char version_number                         :5;
+   u_char                                        :2;
+#endif
+   u_char section_number                         :8;
+   u_char last_section_number                    :8;
+   u_char protocol_version                       :8;
+   u_char ETM_id_hi_hi                           :8;
+   u_char ETM_id_hi_lo                           :8;
+   u_char ETM_id_lo_hi                           :8;
+   u_char ETM_id_lo_lo                           :8;
+   // extended_text_message
+};
+
+#define SIZE_ETT_END 4
+
+struct ett_end {
+   long CRC;
+};
+
+/*
+ *
+ *    7)  System Time Table (STT):
+ *
+ *       - the STT consists of a single packet that serves as a reference for
+ *         the current date and time of day.
+ *
+ */
+
+#define STT_LEN 16
+
+struct stt {
+   u_char table_id                               :8;
+#if BYTE_ORDER == BIG_ENDIAN
+   u_char section_syntax_indicator               :1;
+   u_char                                        :3;
+   u_char section_length_hi                      :4;
+#else
+   u_char section_length_hi                      :4;
+   u_char                                        :3;
+   u_char section_syntax_indicator               :1;
+#endif
+   u_char section_length_lo                      :8;
+   u_char table_id_extension_hi                  :8;
+   u_char table_id_extension_lo                  :8;
+#if BYTE_ORDER == BIG_ENDIAN
+   u_char                                        :2;
+   u_char version_number                         :5;
+   u_char current_next_indicator                 :1;
+#else
+   u_char current_next_indicator                 :1;
+   u_char version_number                         :5;
+   u_char                                        :2;
+#endif
+   u_char section_number                         :8;
+   u_char last_section_number                    :8;
+   u_char protocol_version                       :8;
+   u_char system_time_hi_hi                      :8;
+   u_char system_time_hi_lo                      :8;
+   u_char system_time_lo_hi                      :8;
+   u_char system_time_lo_lo                      :8;
+   u_char GPS_UTC_offset                         :8;
+#if BYTE_ORDER == BIG_ENDIAN
+   u_char DS_status                              :1;
+   u_char reserved                               :2;
+   u_char DS_day_of_month                        :5;
+#else
+   u_char DS_day_of_month                        :5;
+   u_char reserved                               :2;
+   u_char DS_status                              :1;
+#endif
+   u_char DS_hour                                :8;
+   // descriptors
+};
+
+#define SIZE_STT_END 4
+
+struct stt_end {
+   long CRC;
+};
+
+/*
+ *
+ *    8)  Directed Channel Change Table (DCCT):
+ *
+ *       - the optional DCCT provides definitions of virtual channel change
+ *         requests. The table permits the broadcaster to indicate when the
+ *         viewing experience can be enhanced by a change of virtual channels
+ *         within or between physical channels. The requested channel change
+ *         may be unconditional or may be based upon geographic, demographic, or
+ *         categorical selection criteria.
+ *
+ */
+    /* TO BE DONE */
+/*
+ *
+ *    9)  Directed Channel Change Selection Code Table (DCCSCT):
+ *
+ *       - the optional DCCSCT carries genre code values and genre criteria name
+ *         values and/or state/county location codes.
+ *
+ */
+    /* TO BE DONE */
+/*
+ *
+ *    Multiple string structure: This is a general PSIP data structure used
+ *    specifically for text strings. Text strings appear as event titles, long
+ *    channel names, the ETT messages, and RRT text items.
+ *
+ */
+
+struct multiple_strings {
+   u_char number_strings                         :8;
+   // strings
+};
+
+struct multiple_string {
+   u_char iso_639_language_code_hi_lo            :8;
+   u_char iso_639_language_code_lo_hi            :8;
+   u_char iso_639_language_code_lo_lo            :8;
+   u_char number_segments                        :8;
+   // segments
+};
+
+struct multiple_string_segment {
+   u_char compression_type                       :8;
+   u_char mode                                   :8;
+   u_char number_bytes                           :8;
+   // bytes
+};
+
+struct multiple_string_segment_byte {
+   u_char compressed_string_byte                 :8;
+};
+
+/*
+ *
  *    The following describes the different descriptors that can be used within
  *    the SI.
  *
@@ -844,6 +1516,17 @@ struct descr_gen {
    u_char descriptor_tag                         :8;
    u_char descriptor_length                      :8;
 };
+/*
+struct psip_descr_gen {
+   u_char reserved                               :4;
+   u_char descriptors_length                     :12;
+};
+
+struct psip_descr_vct {
+   u_char reserved                               :6;
+   u_char descriptors_length                     :10;
+};
+*/
 
 #define GetDescriptorTag(x) (((descr_gen_t *) x)->descriptor_tag)
 #define GetDescriptorLength(x) (((descr_gen_t *) x)->descriptor_length+DESCR_GEN_LEN)

@@ -17,6 +17,7 @@
 
 #include "si.h"
 #include "headers.h"
+#include "multiple_string.h"
 
 namespace SI {
 
@@ -273,6 +274,78 @@ protected:
    virtual void Parse();
 private:
    const pcit *s;
+};
+
+/* Master Guide Table */
+
+class PSIP_MGT : public VersionedSection {
+public:
+   PSIP_MGT(const unsigned char *data, bool doCopy=true) : VersionedSection(data, doCopy), s(NULL) {}
+   PSIP_MGT() : s(NULL) {}
+   class TableInfo : public VariableLengthPart {
+   public:
+      void setData(CharArray d);
+      void setDataAndOffset(CharArray d, int &offset) { setData(d); offset += getLength(); }
+      int getTableType() const;
+      int getPid() const; // TODO: Rename to getTablePid()
+      int getVersion() const; // TODO: Rename to getTableVersion()
+      virtual int getLength() { return int(sizeof(mgt_table_info)+tableDescriptors.getLength()); }
+      static int getTableInfoLength(const unsigned char *data);
+      PSIP_DescriptorLoop tableDescriptors;
+   protected:
+      virtual void Parse();
+   private:
+      const mgt_table_info *s;
+   };
+   StructureLoop<TableInfo> tableInfoLoop;
+   PSIP_DescriptorLoop descriptorLoop;
+protected:
+   virtual void Parse();
+private:
+   // Calculate size of table info loop
+   static int getTableInfoLoopLength(const CharArray &data, int tableCount);
+   const mgt *s;
+};
+
+/* Event Information Table (PSIP) */
+
+class PSIP_EIT : public VersionedSection {
+public:
+   PSIP_EIT(const unsigned char *data, bool doCopy=true) : VersionedSection(data, doCopy), s(NULL) {}
+   PSIP_EIT() : s(NULL) {}
+   class Event : public VariableLengthPart {
+   public:
+      void setData(CharArray d);
+      void setDataAndOffset(CharArray d, int &offset) { setData(d); offset += getLength(); }
+      int getEventId() const;
+      time_t getStartTime() const; // GPS time
+      time_t getLengthInSeconds() const;
+      static int getEventLength(const psip_eit_event *data);
+      PSIPStringLoop textLoop;
+      PSIP_DescriptorLoop eventDescriptors;
+   protected:
+      virtual void Parse();
+   private:
+      const psip_eit_event *s;
+   };
+   StructureLoop<Event> eventLoop;
+protected:
+   virtual void Parse();
+private:
+   const psip_eit *s;
+};
+
+/* System Time Table */
+
+class PSIP_STT : public VersionedSection {
+public:
+   PSIP_STT(const unsigned char *data, bool doCopy=true) : VersionedSection(data, doCopy), s(NULL) {}
+   PSIP_STT() : s(NULL) {}
+   int getGpsUtcOffset() const;
+protected:
+   virtual void Parse();
+private:
+   const stt *s;
 };
 
 } //end of namespace

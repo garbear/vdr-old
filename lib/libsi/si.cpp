@@ -94,6 +94,25 @@ int NumberedSection::getLastSectionNumber() const {
    return data.getData<ExtendedSectionHeader>()->last_section_number;
 }
 
+int VersionedSection::getProtocolVersion() const {
+   return data.getData<VersionedSectionHeader>()->protocol_version;
+}
+
+void VariableLengthPart::setData(CharArray d, int l)
+{
+  Object::setData(d);
+  checkSize(l);
+  length = l;
+}
+
+void VariableLengthPart::setDataAndOffset(CharArray d, int l, int &offset)
+{
+  Object::setData(d);
+  checkSize(l);
+  length = l;
+  offset += l;
+}
+
 int Descriptor::getLength() {
    return getLength(data.getData());
 }
@@ -217,17 +236,6 @@ bool DescriptorGroup::isComplete() {
       if (array[i]==0)
          return false;
    return true;
-}
-
-char *String::getText() {
-   int len=getLength();
-   if (len < 0 || len > 4095)
-      return strdup("text error"); // caller will delete it!
-   char *data=new char(len+1); // FIXME If this function is ever actually used, this buffer might
-                               // need to be bigger in order to hold the string as UTF-8.
-                               // Maybe decodeText should dynamically handle this? kls 2007-06-10
-   decodeText(data, len+1);
-   return data;
 }
 
 char *String::getText(char *buffer, int size) {

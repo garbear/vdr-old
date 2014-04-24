@@ -175,6 +175,10 @@ enum pid_codes {
   PID_TDT                                      = 0x14,
   PID_DIT                                      = 0x1E,
   PID_SIT                                      = 0x1F,
+  PID_MGT                                      = 0x1FFB, // base_PID, same for all base PSIP tables
+  PID_VCT                                      = 0x1FFB,
+  PID_RTT                                      = 0x1FFB,
+  PID_STT                                      = 0x1FFB,
   };
 enum _stream_type {
   STREAMTYPE_UNDEFINED                         = 0x0,  // ITU-T | ISO/IEC Reserved

@@ -7,6 +7,7 @@ set(LIBSI_SRCS
 	section.cpp
 	descriptor.cpp
 	dish.cpp
+	multiple_string.cpp
 )
 IF("${OS}" STREQUAL "android")
 add_definitions(-DTARGET_ANDROID)

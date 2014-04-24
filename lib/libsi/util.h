@@ -18,18 +18,8 @@
 #include <pthread.h>
 #include <time.h>
 
-#if !defined(si_time_gm)
-#if defined(TARGET_ANDROID)
-#include <time64.h>
-typedef time64_t si_time_t;
-#define si_time_gm(x) timegm64(x)
-#else
-typedef time_t si_time_t;
-#define si_time_gm(x)  timegm(x)
-#endif
-#endif
-
 #define HILO(x) (x##_hi << 8 | x##_lo)
+#define LOHILO(x) (x##_hi_lo << 16 | x##_lo_hi << 8 | x##_lo_lo)
 #define HILOHILO(x) (x##_hi_hi << 24 | x##_hi_lo << 16 | x##_lo_hi << 8 | x##_lo_lo)
 #define BCD_TIME_TO_SECONDS(x) ((3600 * ((10*((x##_h & 0xF0)>>4)) + (x##_h & 0xF))) + \
                              (60 * ((10*((x##_m & 0xF0)>>4)) + (x##_m & 0xF))) + \
@@ -149,9 +139,9 @@ private:
 
 //taken and adapted from libdtv, (c) Rolf Hakenes and VDR, (c) Klaus Schmidinger
 namespace DVBTime {
-  si_time_t getTime(unsigned char date_hi, unsigned char date_lo, unsigned char timehr, unsigned char timemi, unsigned char timese);
-  si_time_t getDuration(unsigned char timehr, unsigned char timemi, unsigned char timese);
-  inline unsigned char bcdToDec(unsigned char b) { return (unsigned char)(((b >> 4) & 0x0F) * 10 + (b & 0x0F)); }
+time_t getTime(unsigned char date_hi, unsigned char date_lo, unsigned char timehr, unsigned char timemi, unsigned char timese);
+time_t getDuration(unsigned char timehr, unsigned char timemi, unsigned char timese);
+inline unsigned char bcdToDec(unsigned char b) { return (unsigned char)(((b >> 4) & 0x0F) * 10 + (b & 0x0F)); }
 }
 
 //taken and adapted from libdtv, (c) Rolf Hakenes
