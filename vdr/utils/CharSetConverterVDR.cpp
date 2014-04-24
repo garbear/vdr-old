@@ -23,6 +23,10 @@
 #include "UTF8Utils.h"
 #include "Tools.h"
 
+#include <string>
+
+using namespace std;
+
 namespace VDR
 {
 
@@ -49,22 +53,28 @@ cCharSetConv::~cCharSetConv()
 void cCharSetConv::SetSystemCharacterTable(const char *CharacterTable)
 {
   free(systemCharacterTable);
+
   systemCharacterTable = NULL;
-  if (!strcasestr(CharacterTable, "UTF-8")) {
+
+  if (!strcasestr(CharacterTable, "UTF-8"))
+  {
     // Set up a map for the character values 128...255:
     char buf[129];
-    for (int i = 0; i < 128; i++)
+
+    for (unsigned int i = 0; i < 128; i++)
       buf[i] = i + 128;
+
     buf[128] = 0;
+
     cCharSetConv csc(CharacterTable);
-    const char *s = csc.Convert(buf);
-    int i = 0;
-    while (*s)
+
+    const char *converted = csc.Convert(buf);
+    string strConverted(converted);
+    for (unsigned int i = 0; !strConverted.empty(); i++)
     {
-      int sl = cUtf8Utils::Utf8CharLen(s);
-      cUtf8Utils::SystemToUtf8[i] = cUtf8Utils::Utf8CharGet(s, sl);
-      s += sl;
-      i++;
+      int sl = cUtf8Utils::Utf8CharLen(strConverted);
+      cUtf8Utils::SystemToUtf8[i] = cUtf8Utils::Utf8CharGet(strConverted);
+      strConverted.erase(0, sl);
     }
     systemCharacterTable = strdup(CharacterTable);
   }

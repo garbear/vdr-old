@@ -20,185 +20,160 @@
  */
 
 #include "UTF8Utils.h"
-#include "CharSetConverterVDR.h"
-#include "Tools.h"
+//#include "CharSetConverterVDR.h"
+//#include "Tools.h"
+
+using namespace std;
 
 namespace VDR
 {
 
 // Mask Test
-#define MT(s, m, v) ((*(s) & (m)) == (v))
-
-uint cUtf8Utils::SystemToUtf8[128] = { 0 };
-
-int cUtf8Utils::Utf8CharLen(const char *s)
+bool MT(unsigned char s, unsigned char mask, unsigned char value)
 {
+  return (s & mask) == value;
+}
+
+uint32_t cUtf8Utils::SystemToUtf8[128] = { 0 };
+
+unsigned int cUtf8Utils::Utf8CharLen(const string& s)
+{
+  if (s.empty())
+    return 0;
+  /*
   if (cCharSetConv::SystemCharacterTable())
     return 1;
-  if (MT(s, 0xE0, 0xC0) && MT(s + 1, 0xC0, 0x80))
+  */
+  if (s.length() >= 2 && MT(s[0], 0xE0, 0xC0) && MT(s[1], 0xC0, 0x80))
     return 2;
-  if (MT(s, 0xF0, 0xE0) && MT(s + 1, 0xC0, 0x80) && MT(s + 2, 0xC0, 0x80))
+  if (s.length() >= 3 && MT(s[0], 0xF0, 0xE0) && MT(s[1], 0xC0, 0x80) && MT(s[2], 0xC0, 0x80))
     return 3;
-  if (MT(s, 0xF8, 0xF0) && MT(s + 1, 0xC0, 0x80) && MT(s + 2, 0xC0, 0x80) && MT(s + 3, 0xC0, 0x80))
+  if (s.length() >= 4 && MT(s[0], 0xF8, 0xF0) && MT(s[1], 0xC0, 0x80) && MT(s[2], 0xC0, 0x80) && MT(s[3], 0xC0, 0x80))
     return 4;
   return 1;
 }
 
-uint cUtf8Utils::Utf8CharGet(const char *s, int Length)
+uint32_t cUtf8Utils::Utf8CharGet(const string& s)
 {
+  if (s.empty())
+    return 0;
+  /*
   if (cCharSetConv::SystemCharacterTable())
-    return (uchar)*s < 128 ? *s : SystemToUtf8[(uchar)*s - 128];
-  if (!Length)
-    Length = Utf8CharLen(s);
-  switch (Length)
+    return (uchar)s[0] < 128 ? s[0] : SystemToUtf8[(uchar)s[0] - 128];
+  */
+  switch (Utf8CharLen(s))
   {
-    case 2: return ((*s & 0x1F) <<  6) |  (*(s + 1) & 0x3F);
-    case 3: return ((*s & 0x0F) << 12) | ((*(s + 1) & 0x3F) <<  6) |  (*(s + 2) & 0x3F);
-    case 4: return ((*s & 0x07) << 18) | ((*(s + 1) & 0x3F) << 12) | ((*(s + 2) & 0x3F) << 6) | (*(s + 3) & 0x3F);
+    case 2: return ((s[0] & 0x1F) <<  6) |  (s[1] & 0x3F);
+    case 3: return ((s[0] & 0x0F) << 12) | ((s[1] & 0x3F) <<  6) |  (s[2] & 0x3F);
+    case 4: return ((s[0] & 0x07) << 18) | ((s[1] & 0x3F) << 12) | ((s[2] & 0x3F) << 6) | (s[3] & 0x3F);
     default: break;
   }
-  return *s;
+  return s[0];
 }
 
-int cUtf8Utils::Utf8CharSet(uint c, char *s)
+string cUtf8Utils::Utf8CharSet(uint32_t utf8Symbol)
 {
-  if (c < 0x80 || cCharSetConv::SystemCharacterTable())
+  string s;
+  if (utf8Symbol < 0x80 /* || cCharSetConv::SystemCharacterTable() */)
   {
-    if (s)
-      *s = c;
-    return 1;
+    s.push_back(utf8Symbol);
   }
-  if (c < 0x800)
+  if (utf8Symbol < 0x800)
   {
-    if (s)
-    {
-      *s++ = ((c >> 6) & 0x1F) | 0xC0;
-      *s   = (c & 0x3F) | 0x80;
-    }
-    return 2;
+    s.push_back(((utf8Symbol >> 6) & 0x1F) | 0xC0);
+    s.push_back((utf8Symbol & 0x3F) | 0x80);
   }
-  if (c < 0x10000)
+  if (utf8Symbol < 0x10000)
   {
-    if (s)
-    {
-      *s++ = ((c >> 12) & 0x0F) | 0xE0;
-      *s++ = ((c >>  6) & 0x3F) | 0x80;
-      *s   = (c & 0x3F) | 0x80;
-    }
-    return 3;
+    s.push_back(((utf8Symbol >> 12) & 0x0F) | 0xE0);
+    s.push_back(((utf8Symbol >>  6) & 0x3F) | 0x80);
+    s.push_back((utf8Symbol & 0x3F) | 0x80);
   }
-  if (c < 0x110000)
+  if (utf8Symbol < 0x110000)
   {
-    if (s)
-    {
-      *s++ = ((c >> 18) & 0x07) | 0xF0;
-      *s++ = ((c >> 12) & 0x3F) | 0x80;
-      *s++ = ((c >>  6) & 0x3F) | 0x80;
-      *s   = (c & 0x3F) | 0x80;
-    }
-    return 4;
+    s.push_back(((utf8Symbol >> 18) & 0x07) | 0xF0);
+    s.push_back(((utf8Symbol >> 12) & 0x3F) | 0x80);
+    s.push_back(((utf8Symbol >>  6) & 0x3F) | 0x80);
+    s.push_back((utf8Symbol & 0x3F) | 0x80);
   }
-  return 0; // can't convert to UTF-8
+  return s;
 }
 
-int cUtf8Utils::Utf8SymChars(const char *s, int Symbols)
+unsigned int cUtf8Utils::Utf8SymChars(const string& s, unsigned int symbols)
 {
+  if (s.empty())
+    return 0;
+  /*
   if (cCharSetConv::SystemCharacterTable())
-    return Symbols;
-  int n = 0;
-  while (*s && Symbols--)
+    return symbols;
+  */
+  unsigned int n = 0;
+  while (n < s.length() && symbols)
   {
-    int sl = Utf8CharLen(s);
-    s += sl;
-    n += sl;
+    n += Utf8CharLen(s.substr(n));
+    symbols--;
   }
+
   return n;
 }
 
-unsigned int cUtf8Utils::Utf8StrLen(const char *s)
+unsigned int cUtf8Utils::Utf8StrLen(const string& s)
 {
+  if (s.empty())
+    return 0;
+  /*
   if (cCharSetConv::SystemCharacterTable())
-    return strlen(s);
+    return s.length();
+  */
   unsigned int n = 0;
-  while (*s)
+  unsigned int pos = 0;
+  while (pos < s.length())
   {
-    s += Utf8CharLen(s);
+    pos += Utf8CharLen(s.substr(pos));
     n++;
   }
   return n;
 }
 
-char *cUtf8Utils::Utf8Strn0Cpy(char *Dest, const char *Src, int n)
+vector<uint32_t> cUtf8Utils::Utf8ToArray(const string& s)
 {
-  if (cCharSetConv::SystemCharacterTable())
-    return strn0cpy(Dest, Src, n);
-  char *d = Dest;
-  while (*Src)
-  {
-    int sl = Utf8CharLen(Src);
-    n -= sl;
-    if (n > 0)
-    {
-      while (sl--)
-        *d++ = *Src++;
-    }
-    else
-      break;
-  }
-  *d = 0;
-  return Dest;
-}
+  vector<uint32_t> utf8Symbols;
+  if (s.empty())
+    return utf8Symbols;
 
-unsigned int cUtf8Utils::Utf8ToArray(const char *s, uint *a, int Size)
-{
-  unsigned int n = 0;
-  while (*s && --Size > 0)
+  unsigned int pos = 0;
+  while (pos < s.length())
   {
-    if (cCharSetConv::SystemCharacterTable())
-      *a++ = (uchar)(*s++);
-    else
-    {
-      int sl = Utf8CharLen(s);
-      *a++ = Utf8CharGet(s, sl);
-      s += sl;
-    }
-    n++;
-  }
-  if (Size > 0)
-    *a = 0;
-  return n;
-}
-
-int cUtf8Utils::Utf8FromArray(const uint *a, char *s, int Size, int Max)
-{
-  int NumChars = 0;
-  int NumSyms = 0;
-  while (*a && NumChars < Size)
-  {
-    if (Max >= 0 && NumSyms++ >= Max)
-      break;
+    /*
     if (cCharSetConv::SystemCharacterTable())
     {
-      *s++ = *a++;
-      NumChars++;
+      utf8Symbols.push_back((uchar)s[pos]);
+      pos++;
     }
     else
+    */
     {
-      int sl = Utf8CharSet(*a);
-      if (NumChars + sl <= Size)
-      {
-        Utf8CharSet(*a, s);
-        a++;
-        s += sl;
-        NumChars += sl;
-      }
-      else
-        break;
+      string nextChar = s.substr(pos);
+      utf8Symbols.push_back(Utf8CharGet(nextChar));
+      pos += Utf8CharLen(nextChar);
     }
   }
-  if (NumChars < Size)
-    *s = 0;
-  return NumChars;
+  return utf8Symbols;
+}
+
+string cUtf8Utils::Utf8FromArray(const vector<uint32_t>& utf8Symbols)
+{
+  string s;
+  for (vector<uint32_t>::const_iterator it = utf8Symbols.begin(); it != utf8Symbols.end(); ++it)
+  {
+    /*
+    if (cCharSetConv::SystemCharacterTable())
+      s.push_back(*it);
+    else
+    */
+      s += Utf8CharSet(*it);
+  }
+  return s;
 }
 
 }
