@@ -88,15 +88,23 @@ bool cDvbTuner::Open()
 {
   try
   {
-    m_fileDescriptor = m_device->DvbOpen(DEV_DVB_FRONTEND, O_RDWR | O_NONBLOCK);
-
-    if (m_fileDescriptor == INVALID_FD)
+    errno = 0;
+    while ((m_fileDescriptor = m_device->DvbOpen(DEV_DVB_FRONTEND, O_RDWR | O_NONBLOCK)) == INVALID_FD)
     {
-      // TODO: If error is "Device or resource busy", kill the owner process
-      if (errno == EBUSY)
+      if (errno == EINTR)
+      {
+        esyslog("Failed to open frontend: Interrupted system call. Trying again");
+        continue;
+      }
+      else if (errno == EBUSY)
+      {
+        // TODO: If error is "Device or resource busy", kill the owner process
         throw "DVB tuner: Frontend is held by another process (try `lsof +D /dev/dvb`)";
-
-      throw "DVB tuner: Can't open frontend";
+      }
+      else
+      {
+        throw "DVB tuner: Can't open frontend";
+      }
     }
 
     if (!QueryDvbApiVersion())
