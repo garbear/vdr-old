@@ -150,10 +150,12 @@ set(VDR_SRCS
 	vdr/dvb/EITScan.cpp
 	vdr/dvb/filters/EIT.cpp
 	vdr/dvb/filters/Filter.cpp
-	vdr/dvb/filters/FilterData.cpp
+	vdr/dvb/filters/FilterResource.cpp
 	vdr/dvb/filters/NIT.cpp
 	vdr/dvb/filters/PAT.cpp
+	vdr/dvb/filters/PMT.cpp
 	vdr/dvb/filters/SDT.cpp
+	vdr/dvb/filters/TDT.cpp
 	vdr/epg/Component.cpp
 	vdr/epg/Components.cpp
 	vdr/epg/EPG.cpp
@@ -188,16 +190,10 @@ set(VDR_SRCS
 	vdr/scan/FrontendCapabilities.cpp
 	vdr/scan/SatelliteUtils.cpp
 	vdr/scan/ScanConfig.cpp
-	vdr/scan/ScanFSM.cpp
 	vdr/scan/ScanLimits.cpp
 	vdr/scan/Scanner.cpp
 	vdr/scan/ScanTask.cpp
 	vdr/scan/SWReceiver.cpp
-	vdr/scan/scanners/EITScanner.cpp
-	vdr/scan/scanners/NITScanner.cpp
-	vdr/scan/scanners/PATScanner.cpp
-	vdr/scan/scanners/PMTScanner.cpp
-	vdr/scan/scanners/SDTScanner.cpp
 	vdr/settings/AllowedHosts.cpp
 	vdr/settings/Settings.cpp
 	vdr/sources/ISourceParams.cpp
@@ -241,7 +237,6 @@ set(VDR_SRCS
 	vdr/vnsi/net/ResponsePacket.cpp
 	vdr/vnsi/video/Demuxer.cpp
 	vdr/vnsi/video/LiveReceiver.cpp
-	vdr/vnsi/video/PATFilter.cpp
 	vdr/vnsi/video/RecPlayer.cpp
 	vdr/vnsi/video/Streamer.cpp
 	vdr/vnsi/video/VideoBuffer.cpp
@@ -267,6 +262,7 @@ set(VDR_TEST_SRCS
 	vdr/channels/test/TestChannelManager.cpp
 	vdr/devices/linux/test/TestDVBDevice.cpp
 	vdr/devices/linux/test/TestDVBTuner.cpp
+	vdr/dvb/filters/test/TestPAT.cpp
 	vdr/filesystem/test/TestSpecialProtocol.cpp
 	vdr/filesystem/native/test/TestHDDirectory.cpp
 	vdr/filesystem/native/test/TestHDFile.cpp

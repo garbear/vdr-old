@@ -18,7 +18,7 @@ public:
 
   int NumComponents(void) const;
   void SetComponent(int Index, const char *s);
-  void SetComponent(int Index, uchar Stream, uchar Type, const char *Language, const char *Description);
+  void SetComponent(int Index, uchar Stream, uchar Type, const std::string& Language, const std::string& Description);
 
   CEpgComponent* Component(int Index, bool bCreate = false);
   CEpgComponent* GetComponent(int Index, uchar Stream, uchar Type); // Gets the Index'th component of Stream and Type, skipping other components

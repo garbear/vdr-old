@@ -539,7 +539,7 @@ void cDvbTuner::ClearChannel()
 
 bool cDvbTuner::HasLock(bool bWait)
 {
-  const unsigned int timeoutMs = ATSC_LOCK_TIMEOUT + 1000; // TODO
+  const unsigned int timeoutMs = ATSC_LOCK_TIMEOUT * 2; // TODO
 
   bool bIsLocked;
   {

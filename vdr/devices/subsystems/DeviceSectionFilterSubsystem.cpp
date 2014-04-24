@@ -20,18 +20,12 @@
  */
 
 #include "DeviceSectionFilterSubsystem.h"
-#include "devices/subsystems/DeviceChannelSubsystem.h"
-#include "devices/subsystems/DeviceSectionFilterSubsystem.h"
-#include "dvb/filters/FilterData.h"
-#include "platform/threads/mutex.h"
+#include "DeviceChannelSubsystem.h"
+#include "dvb/filters/Filter.h"
 #include "utils/Tools.h"
 
 #include <algorithm>
-#include <set>
 #include <unistd.h>
-
-namespace VDR
-{
 
 using namespace PLATFORM;
 using namespace std;
@@ -39,132 +33,133 @@ using namespace std;
 // Wait 10 seconds between logging incomplete sections
 #define LOG_INCOMPLETE_SECTIONS_DELAY_S  10
 
-// --- cFilterHandleContainer --------------------------------------------------
+// When idle (no clients are waiting for GetSection()), we check every
+// MAX_GETSECTION_DELAY_MS to see if GetSection() has been called. Thus, this is
+// the maximum delay spent waiting for the polling thread to awaken. This can be
+// reduced to 0 (no delay) by waiting on an event when idle.
+#define MAX_IDLE_DELAY_MS 10
 
-void cFilterHandleContainer::InsertFilter(cFilter* filter, const vector<FilterHandlePtr>& filterHandles)
+// When not idle (one or more clients are waiting for GetSection() to return)
+// the filter resources are polled with a maximum timeout specified by:
+//
+// POLL_TIMEOUT_MS in DVBSectionFilterSubsystem.cpp
+//
+// If another call to GetSection() is made concurrently, it must wait for the
+// current poll to return or time out. Thus, POLL_TIMEOUT_MS is the maximum
+// delay spent waiting for its resources to be included in the polling process.
+// This can be reduced to 0 (no delay) by implementing an abortable polling
+// function.
+
+namespace VDR
 {
-  // If any filter handles are orphaned by this, their reference count will drop
-  // to zero, closing the handle
-  m_container[filter] = filterHandles;
 
-  UpdateCache();
-}
+// --- cDeviceSectionFilterSubsystem::cFilterHandlePollRequest-----------------
 
-void cFilterHandleContainer::RemoveFilter(cFilter* filter)
-{
-  map<cFilter*, vector<FilterHandlePtr> >::iterator it = m_container.find(filter);
-  if (it != m_container.end())
-  {
-    m_container.erase(it);
-    UpdateCache();
-  }
-}
-
-void cFilterHandleContainer::Clear()
-{
-  m_container.clear();
-  m_filters.clear();
-  m_filterHandles.clear();
-}
-
-const FilterHandlePtr& cFilterHandleContainer::GetHandle(const cFilterData& data) const
-{
-  static FilterHandlePtr emptyPtr;
-
-  for (vector<FilterHandlePtr>::const_iterator itHandle = m_filterHandles.begin();
-      itHandle != m_filterHandles.end(); ++itHandle)
-  {
-    if ((*itHandle)->GetFilterData() == data)
-      return *itHandle;
-  }
-
-  return emptyPtr;
-}
-
-void cFilterHandleContainer::UpdateCache(void)
-{
-  std::vector<cFilter*>     filters;
-  std::set<FilterHandlePtr> uniqueFilterHandles;
-
-  // Walk the map and insert filter handles into the set
-  for (map<cFilter*, vector<FilterHandlePtr> >::const_iterator itFilter = m_container.begin();
-      itFilter != m_container.end(); ++itFilter)
-  {
-    filters.push_back(itFilter->first);
-
-    const vector<FilterHandlePtr> filterHandles = itFilter->second;
-    for (vector<FilterHandlePtr>::const_iterator itHandle = filterHandles.begin();
-        itHandle != filterHandles.end(); ++itHandle)
-    {
-      uniqueFilterHandles.insert(*itHandle);
-    }
-  }
-
-  m_filters.clear();
-  m_filterHandles.clear();
-
-  m_filters.insert(m_filters.begin(), filters.begin(), filters.end());
-  m_filterHandles.insert(m_filterHandles.begin(), uniqueFilterHandles.begin(), uniqueFilterHandles.end());
-}
-
-// --- cDeviceSectionFilterSubsystem -------------------------------------------
-
-cDeviceSectionFilterSubsystem::cDeviceSectionFilterSubsystem(cDevice *device)
- : cDeviceSubsystem(device),
-   m_eitFilter(device),
-   m_patFilter(device),
-   m_sdtFilter(device, &m_patFilter),
-   m_nitFilter(device),
-   m_iStatusCount(0),
-   m_bEnabled(false)
+cDeviceSectionFilterSubsystem::cFilterResourceRequest::cFilterResourceRequest(const set<FilterResourcePtr>& filterResources)
+ : m_resources(filterResources)
 {
 }
 
-int cDeviceSectionFilterSubsystem::GetSource(void)
+void cDeviceSectionFilterSubsystem::cFilterResourceRequest::WaitForSection(void)
 {
-  CLockObject lock(m_mutex);
-  return IsRunning() ? m_channel->Source() : 0;
+  m_readyEvent.Wait();
 }
 
-int cDeviceSectionFilterSubsystem::GetTransponder(void)
+void cDeviceSectionFilterSubsystem::cFilterResourceRequest::HandleSection(const FilterResourcePtr& resource)
 {
-  CLockObject lock(m_mutex);
-  return IsRunning() ? m_channel->TransponderFrequency() : 0;
+  // Record the resource that is ready to provide a section
+  m_activeResource = resource;
+  m_readyEvent.Broadcast();
 }
 
-ChannelPtr cDeviceSectionFilterSubsystem::GetChannel(void)
+void cDeviceSectionFilterSubsystem::cFilterResourceRequest::Abort(void)
 {
-  CLockObject lock(m_mutex);
-  return IsRunning() ? m_channel : cChannel::EmptyChannel;
+  m_readyEvent.Broadcast();
 }
 
-void cDeviceSectionFilterSubsystem::SetChannel(const ChannelPtr& channel)
+// --- cDeviceSectionFilterSubsystem ------------------------------------------
+
+cDeviceSectionFilterSubsystem::cDeviceSectionFilterSubsystem(cDevice* device)
+ : cDeviceSubsystem(device)
 {
-  CLockObject lock(m_mutex);
-  m_channel = channel;
 }
 
-void cDeviceSectionFilterSubsystem::StartSectionHandler()
+void cDeviceSectionFilterSubsystem::StartSectionHandler(void)
 {
-  CLockObject lock(m_mutex);
   if (!IsRunning())
-  {
-    m_eitFilter.Enable(true);
-    m_patFilter.Enable(true);
-    m_sdtFilter.Enable(true);
-    m_nitFilter.Enable(true);
     CreateThread();
-  }
 }
 
-void cDeviceSectionFilterSubsystem::StopSectionHandler()
+void cDeviceSectionFilterSubsystem::StopSectionHandler(void)
 {
-  StopThread(3000);
+  StopThread(0);
+}
 
+void cDeviceSectionFilterSubsystem::RegisterFilter(const cFilter* filter)
+{
+  CLockObject lock(m_mutex);
+
+  m_registeredFilters.insert(filter);
+}
+
+void cDeviceSectionFilterSubsystem::UnregisterFilter(const cFilter* filter)
+{
+  CLockObject lock(m_mutex);
+
+  set<const cFilter*>::iterator it = m_registeredFilters.find(filter);
+  assert(it != m_registeredFilters.end());
+  m_registeredFilters.erase(it);
+}
+
+FilterResourcePtr cDeviceSectionFilterSubsystem::OpenResource(uint16_t pid, uint8_t tid, uint8_t mask)
+{
+  // Check open resources first
+  FilterResourcePtr resource = GetOpenResource(pid, tid, mask);
+  if (resource)
+    return resource;
+
+  // Open the resource
+  return OpenResourceInternal(pid, tid, mask);
+}
+
+bool cDeviceSectionFilterSubsystem::GetSection(const set<FilterResourcePtr>& filterResources, uint16_t& pid, std::vector<uint8_t>& data)
+{
+  // If we don't have a tuner lock, no sections are being received
+  if (!Channel()->HasLock(false))
+    return false;
+
+  // Create a new request to poll filter resources
+  shared_ptr<cFilterResourceRequest> pollRequest = shared_ptr<cFilterResourceRequest>(new cFilterResourceRequest(filterResources));
+
+  // Record it so that Process() can access it
   {
     CLockObject lock(m_mutex);
-    m_filterHandles.Clear();
+    m_activePollRequests.push_back(pollRequest);
   }
+
+  // Block until a resources receives a section
+  pollRequest->WaitForSection();
+
+  // Remove poll request so that Process() doesn't invoke it twice
+  {
+    CLockObject lock(m_mutex);
+    ResourceRequestCollection::iterator it = std::find(m_activePollRequests.begin(), m_activePollRequests.end(), pollRequest);
+    assert(it != m_activePollRequests.end());
+    m_activePollRequests.erase(it);
+  }
+
+  // Read a resource if one is ready to be read
+  if (pollRequest->GetActiveResource() && ReadResource(pollRequest->GetActiveResource(), data))
+  {
+    pid = pollRequest->GetActiveResource()->GetPid();
+    return true;
+  }
+  else
+  {
+    dsyslog("Failed to read section!");
+  }
+
+  return false;
 }
 
 void* cDeviceSectionFilterSubsystem::Process(void)
@@ -172,27 +167,30 @@ void* cDeviceSectionFilterSubsystem::Process(void)
   // Buffer for section data
   std::vector<uint8_t> data;
 
-  m_nextLogTimeout.Set(LOG_INCOMPLETE_SECTIONS_DELAY_S * 1000);
+  VDR::EndTime nextLogTimeout(LOG_INCOMPLETE_SECTIONS_DELAY_S * 1000);
 
   while (!IsStopped())
   {
-    vector<FilterHandlePtr> filterHandles;
+    // Accumulate all resources from active poll requests into a vector
+    set<FilterResourcePtr> activeResources = GetActiveResources();
+
+    if (activeResources.empty())
     {
-      CLockObject lock(m_mutex);
-      filterHandles = m_filterHandles.GetHandles();
+      // TODO: Wait on event instead of sleeping
+      usleep(MAX_IDLE_DELAY_MS * 1000);
+      continue;
     }
 
-    // Poll set of filter handles
     // TODO: Need a thread-safe, abortable poll
-    FilterHandlePtr handle = Poll(filterHandles);
-    if (handle)
+    FilterResourcePtr resource = Poll(activeResources);
+    if (resource && !IsStopped())
     {
+      // TODO: We shouldn't lose channel lock, should we?
       bool bDeviceHasLock = Channel()->HasLock(false);
       if (!bDeviceHasLock)
-        usleep(100 * 1000); // 100ms
+        usleep(100 * 1000); // 100ms?
 
-      // Read section data
-      if (!ReadFilter(handle, data))
+      if (!ReadResource(resource, data))
         continue;
 
       // Do the read even if we don't have a lock to flush any data that might
@@ -203,75 +201,81 @@ void* cDeviceSectionFilterSubsystem::Process(void)
       // Minimum number of bytes necessary to get section length
       if (data.size() > 3)
       {
-        int len = (((data[1] & 0x0F) << 8) | (data[2] & 0xFF)) + 3;
+        unsigned int len = (((data[1] & 0x0F) << 8) | (data[2] & 0xFF)) + 3;
         if (len == data.size())
         {
-          CLockObject lock(m_mutex);
-
-          // Distribute data to all attached filters:
-          int pid = handle->GetFilterData().Pid();
-          int tid = data[0];
-          for (vector<cFilter*>::const_iterator it = m_filterHandles.GetFilters().begin();
-              it != m_filterHandles.GetFilters().end(); ++it)
-          {
-            if ((*it)->Matches(pid, tid))
-              (*it)->ProcessData(pid, tid, data);
-          }
+          HandleSection(resource);
         }
-        else if (m_nextLogTimeout.IsTimePast())
+        else if (nextLogTimeout.IsTimePast())
         {
-          // log them only every 10 seconds
-          dsyslog("read incomplete section - len = %d, r = %d", len, data.size());
-          m_nextLogTimeout.Set(LOG_INCOMPLETE_SECTIONS_DELAY_S * 1000);
+          // log every 10 seconds
+          dsyslog("read incomplete section - len = %d, read = %d", len, data.size());
+          nextLogTimeout.Set(LOG_INCOMPLETE_SECTIONS_DELAY_S * 1000);
         }
       }
     }
   }
 
+  CLockObject lock(m_mutex);
+
+  // Look for any poll requests that were waiting on the resource
+  for (ResourceRequestCollection::iterator it = m_activePollRequests.begin(); it != m_activePollRequests.end(); ++it)
+    (*it)->Abort();
+
   return NULL;
 }
 
-void cDeviceSectionFilterSubsystem::RegisterFilter(cFilter* filter)
+FilterResourcePtr cDeviceSectionFilterSubsystem::GetOpenResource(uint16_t pid, uint8_t tid, uint8_t mask)
 {
-  assert(filter);
-
   CLockObject lock(m_mutex);
 
-  // Build a vector of handles to associate with this filter
-  vector<FilterHandlePtr> newHandles;
+  cFilterResource needle(pid, tid, mask);
 
-  // Obtain a handle for the filter's data, either by opening a new handle or
-  // by obtaining an existing one.
-  const vector<cFilterData>& vecData = filter->GetFilterData();
-  for (vector<cFilterData>::const_iterator itData = vecData.begin(); itData != vecData.end(); ++itData)
+  // Scan registered filters for the resource
+  for (set<const cFilter*>::const_iterator itFilter = m_registeredFilters.begin(); itFilter != m_registeredFilters.end(); ++itFilter)
   {
-    const FilterHandlePtr& handle = m_filterHandles.GetHandle(*itData);
-    if (handle)
+    const set<FilterResourcePtr>& haystack = (*itFilter)->GetResources();
+    for (set<FilterResourcePtr>::const_iterator itResource = haystack.begin(); itResource != haystack.end(); ++itResource)
     {
-      // Copy the existing handle for the data
-      dsyslog("Opened handle for filter PID=%u, TID=%u",
-          handle->GetFilterData().Pid(), handle->GetFilterData().Tid());
-      newHandles.push_back(handle);
-    }
-    else
-    {
-      // Open a new handle for the data
-      FilterHandlePtr newHandle = OpenFilter(*itData);
-      if (newHandle)
-        newHandles.push_back(newHandle);
+      if (**itResource == needle)
+        return *itResource;
     }
   }
 
-  m_filterHandles.InsertFilter(filter, newHandles);
+  return FilterResourcePtr();
 }
 
-void cDeviceSectionFilterSubsystem::UnregisterFilter(cFilter* filter)
+set<FilterResourcePtr> cDeviceSectionFilterSubsystem::GetActiveResources(void)
 {
-  assert(filter);
-
   CLockObject lock(m_mutex);
 
-  m_filterHandles.RemoveFilter(filter);
+  set<FilterResourcePtr> activeResources;
+
+  // Enumerate all active filters (those who are waiting on a call to GetSection())
+  for (ResourceRequestCollection::const_iterator it = m_activePollRequests.begin(); it != m_activePollRequests.end(); ++it)
+  {
+    const set<FilterResourcePtr>& filterResources = (*it)->GetResources();
+    activeResources.insert(filterResources.begin(), filterResources.end());
+  }
+
+  return activeResources;
+}
+
+void cDeviceSectionFilterSubsystem::HandleSection(const FilterResourcePtr& resource)
+{
+  CLockObject lock(m_mutex);
+
+  // Look for any poll requests that were waiting on the resource
+  for (ResourceRequestCollection::iterator it = m_activePollRequests.begin(); it != m_activePollRequests.end(); ++it)
+  {
+    const set<FilterResourcePtr>& filterResources = (*it)->GetResources();
+    set<FilterResourcePtr>::const_iterator it2 = filterResources.find(resource);
+    if (it2 != filterResources.end())
+    {
+      // Found a poll request waiting on the resource, notify clients
+      (*it)->HandleSection(resource);
+    }
+  }
 }
 
 }

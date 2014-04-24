@@ -1,112 +1,108 @@
 /*
- * nit.c: NIT section filter
+ *      Copyright (C) 2013-2014 Garrett Brown
+ *      Copyright (C) 2013-2014 Lars Op den Kamp
+ *      Portions Copyright (C) 2006, 2007, 2008, 2009 Winfried Koehler
+ *      Portions Copyright (C) 2000, 2003, 2006, 2008, 2013 Klaus Schmidinger
+ *      Portions Copyright (C) 2005-2013 Team XBMC
  *
- * See the main source file 'vdr.c' for copyright information and
- * how to reach the author.
+ *  This Program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2, or (at your option)
+ *  any later version.
  *
- * $Id: nit.c 2.10 2013/03/07 09:42:29 kls Exp $
+ *  This Program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this Program; see the file COPYING. If not, see
+ *  <http://www.gnu.org/licenses/>.
+ *
  */
 
 #include "NIT.h"
-#include "channels/ChannelManager.h"
-#include "dvb/EITScan.h"
-#include "sources/linux/DVBSourceParams.h"
-#include "utils/Tools.h"
-#include "settings/Settings.h"
+#include "scan/dvb_wrapper.h"
+#include "sources/Source.h"
+#include "utils/StringUtils.h"
 
-#include <algorithm>
-#include <linux/dvb/frontend.h>
-#include <libsi/descriptor.h>
-#include <libsi/si.h>
 #include <libsi/si_ext.h>
+#include <libsi/descriptor.h>
 #include <libsi/section.h>
+#include <libsi/util.h>
+#include <map>
+#include <string>
 
 using namespace SI;
 using namespace SI_EXT;
 using namespace std;
 
+#define UNKNOWN_NETWORK_NAME  "" // Network name if NetworkNameDescriptorTag is absent (TODO)
+
+// From UTF8Utils.h
+#ifndef Utf8BufSize
+#define Utf8BufSize(s)  ((s) * 4)
+#endif
+
+#define MAXNETWORKNAME  Utf8BufSize(256)
+
+#ifndef ARRAY_SIZE
+#define ARRAY_SIZE(x)   (sizeof(x) / sizeof((x)[0]))
+#endif
+
 namespace VDR
 {
 
-#ifndef ARRAY_SIZE
-#define ARRAY_SIZE(x)  (sizeof(x) / sizeof((x)[0]))
-#endif
-
-cNitFilter::cNitFilter(cDevice* device)
+cNit::cNit(cDevice* device)
  : cFilter(device),
-   m_networkId(0)
-{
-  Set(PID_NIT, TableIdNIT);
+   m_networkId(NETWORK_ID_UNKNOWN)
+ {
+  OpenResource(PID_NIT, TableIdNIT);
+  OpenResource(PID_NIT, TableIdNIT_other);
 }
 
-void cNitFilter::Enable(bool bEnabled)
+ChannelVector cNit::GetTransponders()
 {
-  cFilter::Enable(bEnabled);
-  m_networkId = 0;
-  m_nits.clear();
-  m_sectionSyncer.Reset();
-}
+  ChannelVector          transponders; // Return value
+  cSectionSyncer         syncNit;
+  map<uint16_t, Network> networks; // Network ID -> Network
 
-void cNitFilter::ProcessData(u_short pid, u_char tid, const std::vector<uint8_t>& data)
-{
-  SI::NIT nit(data.data(), false);
-  if (!nit.CheckCRCAndParse())
-    return;
-
-  // Some broadcasters send more than one NIT, with no apparent way of telling which
-  // one is the right one to use. This is an attempt to find the NIT that contains
-  // the transponder it was transmitted on and use only that one:
-  bool bFound = false;
-  vector<cNit>::iterator thisNit = m_nits.end();
-  if (!m_networkId)
+  uint16_t        pid;  // Packet ID
+  vector<uint8_t> data; // Section data
+  while (GetSection(pid, data))
   {
-    for (vector<cNit>::iterator it = m_nits.begin(); it != m_nits.end(); ++it)
+    SI::NIT nit(data.data(), false);
+    if (nit.CheckCRCAndParse())
     {
-      if (it->networkId == nit.getNetworkId())
-      {
-        if (nit.getSectionNumber() == 0)
-        {
-          // all NITs have passed by
-          //for (int j = 0; j < m_numNits; j++)
-          for (vector<cNit>::const_iterator it2 = m_nits.begin(); it2 != m_nits.end(); ++it2)
-          {
-            if (it2->hasTransponder)
-            {
-              m_networkId = it2->networkId;
-              //printf("taking NIT with network ID %d\n", m_networkId);
-              //XXX what if more than one NIT contains this transponder???
-              break;
-            }
-          }
-          if (!m_networkId)
-          {
-            //printf("none of the NITs contains transponder %d\n", Transponder());
-            return;
-          }
-        }
-        else
-        {
-          bFound = true;
-          thisNit = it;
-          break;
-        }
-      }
-    }
+      // TODO: Handle TableIdNIT_other
+      SI::TableId tid = nit.getTableId();
+      if (tid != TableIdNIT)
+        continue;
 
-    if (!m_networkId && bFound)
-    {
-      if (nit.getSectionNumber() == 0)
+      cSectionSyncer::SYNC_STATUS status = syncNit.Sync(nit.getVersionNumber(), nit.getSectionNumber(), nit.getLastSectionNumber());
+      if (status == cSectionSyncer::SYNC_STATUS_NOT_SYNCED)
+        continue;
+      if (status == cSectionSyncer::SYNC_STATUS_OLD_VERSION)
+        break;
+
+      assert(status == cSectionSyncer::SYNC_STATUS_NEW_VERSION);
+
+      // Add the network if we aren't already tracking it
+      if (networks.find(nit.getNetworkId()) == networks.end())
       {
-        cNit newNit = { };
-        SI::Descriptor *d;
-        for (SI::Loop::Iterator it; (d = nit.commonDescriptors.getNext(it));)
+        string strName(UNKNOWN_NETWORK_NAME);
+
+        SI::Descriptor* d;
+        for (SI::Loop::Iterator it; (d = nit.commonDescriptors.getNext(it)); )
         {
           switch (d->getDescriptorTag())
           {
           case SI::NetworkNameDescriptorTag:
           {
-            SI::NetworkNameDescriptor *nnd = (SI::NetworkNameDescriptor *) d;
-            nnd->name.getText(newNit.name, MAXNETWORKNAME);
+            SI::NetworkNameDescriptor* nnd = (SI::NetworkNameDescriptor*)d;
+            char buffer[MAXNETWORKNAME] = { };
+            nnd->name.getText(buffer, sizeof(buffer));
+            strName = buffer;
             break;
           }
           default:
@@ -114,418 +110,593 @@ void cNitFilter::ProcessData(u_short pid, u_char tid, const std::vector<uint8_t>
           }
           delete d;
         }
-        newNit.networkId = nit.getNetworkId();
-        newNit.hasTransponder = false;
-        dsyslog("NIT[%u] %5d '%s'\n", m_nits.size(), newNit.networkId, newNit.name);
-        m_nits.push_back(newNit);
-        thisNit = m_nits.end() - 1;
+
+        dsyslog("NIT[%u] %5d '%s'", networks.size(), nit.getNetworkId(), strName.c_str());
+        networks[nit.getNetworkId()] = Network(nit.getNetworkId(), strName);
       }
-    }
-  }
-  else if (m_networkId != nit.getNetworkId())
-    return; // ignore all other NITs
-  else if (!m_sectionSyncer.Sync(nit.getVersionNumber(), nit.getSectionNumber(), nit.getLastSectionNumber()))
-    return;
-//  XXX if (!Channels.Lock(true, 10))
-//     return;
 
-  SI::NIT::TransportStream ts;
-  for (SI::Loop::Iterator it; nit.transportStreamLoop.getNext(ts, it);)
-  {
-    SI::Descriptor *d;
+      assert(networks.find(nit.getNetworkId()) != networks.end());
 
-    SI::Loop::Iterator it2;
-    SI::FrequencyListDescriptor *fld = (SI::FrequencyListDescriptor *) ts.transportStreamDescriptors.getNext(it2, SI::FrequencyListDescriptorTag);
-    int NumFrequencies = fld ? fld->frequencies.getCount() + 1 : 1;
-    int FrequenciesHz[NumFrequencies];
-    if (fld)
-    {
-      int iCodingType = fld->getCodingType();
-      if (iCodingType > 0)
+      Network& thisNetwork = networks[nit.getNetworkId()];
+
+      // Some broadcasters send more than one NIT, with no apparent way of telling
+      // which one is the right one to use. This is an attempt to find the NIT that
+      // contains the transponder it was transmitted on and use only that one.
+      if (m_networkId == NETWORK_ID_UNKNOWN && nit.getSectionNumber() == 0)
       {
-        int n = 1;
-        for (SI::Loop::Iterator it3; fld->frequencies.hasNext(it3);)
+        for (std::map<uint16_t, Network>::const_iterator it = networks.begin(); it != networks.end(); ++it)
         {
-          int iFrequencyHz = fld->frequencies.getNext(it3);
-          switch (iCodingType)
-            {
-          case 1:
-            iFrequencyHz = BCD2INT(iFrequencyHz) / 100;
+          if (it->second.bHasTransponder)
+          {
+            m_networkId = it->second.nid;
+            dsyslog("Using NIT with network ID %u", m_networkId);
+            //XXX what if more than one NIT contains this transponder???
             break;
-          case 2:
-            iFrequencyHz = BCD2INT(iFrequencyHz) / 10;
-            break;
-          case 3:
-            iFrequencyHz = iFrequencyHz * 10;
-            break;
-          default:
-            ;
-            }
-          FrequenciesHz[n++] = iFrequencyHz;
+          }
         }
       }
-      else
-        NumFrequencies = 1;
-    }
-    delete fld;
 
-    for (SI::Loop::Iterator it2; (d = ts.transportStreamDescriptors.getNext(it2));)
-    {
-      switch (d->getDescriptorTag())
+      if (m_networkId != NETWORK_ID_UNKNOWN && m_networkId != nit.getNetworkId())
+        break; // Ignore all other NITs
+
+      SI::NIT::TransportStream ts;
+      for (SI::Loop::Iterator it; nit.transportStreamLoop.getNext(ts, it); )
       {
-      case SI::SatelliteDeliverySystemDescriptorTag:
+        SI::Descriptor* d;
+        SI::Loop::Iterator it2;
+        SI::FrequencyListDescriptor* fld = (SI::FrequencyListDescriptor*)ts.transportStreamDescriptors.getNext(it2, SI::FrequencyListDescriptorTag);
+        vector<uint32_t> frequenciesKHz; // I have no fucking clue if this is actually KHz
+        frequenciesKHz.resize(1); // frequencies[0] is determined later
+        if (fld)
         {
-          SI::SatelliteDeliverySystemDescriptor *sd = (SI::SatelliteDeliverySystemDescriptor *) d;
-          cDvbTransponderParams dtp;
-          int Source = cSource::FromData(cSource::stSat, BCD2INT(sd->getOrbitalPosition()) /*, sd->getWestEastFlag()  TODO*/);
-          int iFrequencyMHz = FrequenciesHz[0] = BCD2INT(sd->getFrequency()) / 100000;
-          dtp.SetPolarization((fe_polarization)sd->getPolarization());
-          static fe_code_rate CodeRates[] =
-            { FEC_NONE, FEC_1_2, FEC_2_3, FEC_3_4, FEC_5_6, FEC_7_8, FEC_8_9,
-                FEC_3_5, FEC_4_5, FEC_9_10, FEC_AUTO, FEC_AUTO, FEC_AUTO,
-                FEC_AUTO, FEC_AUTO, FEC_NONE };
-          dtp.SetCoderateH(CodeRates[sd->getFecInner()]);
-          static fe_modulation Modulations[] = { QAM_AUTO, QPSK, PSK_8, QAM_16 };
-          dtp.SetModulation(Modulations[sd->getModulationType()]);
-          dtp.SetSystem(sd->getModulationSystem() ? DVB_SYSTEM_2 : DVB_SYSTEM_1);
-          static fe_rolloff RollOffs[] = { ROLLOFF_35, ROLLOFF_25, ROLLOFF_20, ROLLOFF_AUTO };
-          dtp.SetRollOff( sd->getModulationSystem() ? RollOffs[sd->getRollOff()] : ROLLOFF_AUTO);
-          int SymbolRate = BCD2INT(sd->getSymbolRate()) / 10;
+          int iCodingType = fld->getCodingType();
+          if (iCodingType > 0)
+          {
+            for (SI::Loop::Iterator it3; fld->frequencies.hasNext(it3);)
+            {
+              uint32_t iFrequencyKHz = fld->frequencies.getNext(it3);
+              switch (iCodingType)
+              {
+              // Satellite
+              case 1: iFrequencyKHz = BCD2INT(iFrequencyKHz) / 100;
+                break;
 
-          if (thisNit != m_nits.end())
-          {
-            for (int n = 0; n < NumFrequencies; n++)
-            {
-              if (ISTRANSPONDER(cChannel::Transponder(iFrequencyMHz, dtp.Polarization()), Transponder()))
-              {
-                thisNit->hasTransponder = true;
-                //printf("has transponder %d\n", Transponder());
+              // Cable
+              case 2: iFrequencyKHz = BCD2INT(iFrequencyKHz) / 10;
+                break;
+
+              // Terrestrial
+              case 3: iFrequencyKHz *= 10;
+                break;
+
+              default:
                 break;
               }
+              frequenciesKHz.push_back(iFrequencyKHz);
             }
-            break;
           }
-          if (cSettings::Get().m_iUpdateChannels >= 5)
+        }
+        DELETENULL(fld);
+
+        for (SI::Loop::Iterator it2; (d = ts.transportStreamDescriptors.getNext(it2)); )
+        {
+          switch (d->getDescriptorTag())
           {
-            bool found = false;
-            bool forceTransponderUpdate = false;
-            std::vector<ChannelPtr> channels =
-                cChannelManager::Get().GetCurrent();
-            for (std::vector<ChannelPtr>::const_iterator it = channels.begin();
-                it != channels.end(); ++it)
+            case SI::SatelliteDeliverySystemDescriptorTag:
             {
-              ChannelPtr Channel = (*it);
-              if (Channel->Source()    == Source
-                  && Channel->GetNid() == ts.getOriginalNetworkId()
-                  && Channel->GetTid() == ts.getTransportStreamId())
+              SI::SatelliteDeliverySystemDescriptor* sd = (SI::SatelliteDeliverySystemDescriptor*)d;
+
+              cDvbTransponderParams dtp;
+
+              // Symbol rate
+              int symbolRate = BCD2INT(sd->getSymbolRate()) / 10;
+
+              // Polarization
+              dtp.SetPolarization((fe_polarization)sd->getPolarization());
+
+              // Rolloff
+              //fe_rolloff_t rollOff = ROLLOFF_35; // Implied value in DVB-S, default for DVB-S2 (per frontend.h)
+              static fe_rolloff rollOffs[] = { ROLLOFF_35, ROLLOFF_25, ROLLOFF_20, ROLLOFF_AUTO };
+              dtp.SetRollOff(sd->getModulationSystem() == DVB_SYSTEM_2 ? rollOffs[sd->getRollOff()] : ROLLOFF_AUTO);
+
+              // Code rate
+              static fe_code_rate codeRates[] =
               {
-                int transponder = Channel->TransponderFrequency();
-                found = true;
-                if (!ISTRANSPONDER(cChannel::Transponder(iFrequencyMHz, dtp.Polarization()), transponder))
+                FEC_NONE, FEC_1_2,  FEC_2_3,  FEC_3_4,  FEC_5_6,  FEC_7_8,  FEC_8_9,
+                FEC_3_5,  FEC_4_5,  FEC_9_10, FEC_AUTO, FEC_AUTO, FEC_AUTO,
+                FEC_AUTO, FEC_AUTO, FEC_NONE
+              };
+              dtp.SetCoderateH(codeRates[sd->getFecInner()]);
+
+              // Frequency
+              int iFrequencyKHz = frequenciesKHz[0] = BCD2INT(sd->getFrequency()) / 100;
+
+              // Modulation
+              //fe_modulation modulationType = QPSK;
+              static fe_modulation modulations[] = { QAM_AUTO, QPSK, PSK_8, QAM_16 };
+              dtp.SetModulation(modulations[sd->getModulationType()]);
+
+              // System
+              dtp.SetSystem(sd->getModulationSystem() ? DVB_SYSTEM_2 : DVB_SYSTEM_1);
+
+              assert(GetCurrentlyTunedTransponder() != NULL); // TODO
+              for (vector<uint32_t>::const_iterator itKHz = frequenciesKHz.begin(); itKHz != frequenciesKHz.end(); ++itKHz)
+              {
+                if (ISTRANSPONDER(cChannel::Transponder(*itKHz, dtp.Polarization()), GetCurrentlyTunedTransponder()->TransponderFrequency()))
                 {
-                  for (int n = 0; n < NumFrequencies; n++)
+                  thisNetwork.bHasTransponder = true;
+                  break;
+                }
+              }
+
+              // Source
+              int source = cSource::FromData(cSource::stSat, BCD2INT(sd->getOrbitalPosition()), sd->getWestEastFlag() ? cSource::sdEast : cSource::sdWest);
+
+              for (vector<uint32_t>::const_iterator itKHz = frequenciesKHz.begin(); itKHz != frequenciesKHz.end(); ++itKHz)
+              {
+                ChannelPtr transponder = ChannelPtr(new cChannel);
+                transponder->SetId(ts.getOriginalNetworkId(), ts.getTransportStreamId(), 0, 0);
+                if (transponder->SetTransponderData(source, frequenciesKHz[0], symbolRate, dtp))
+                  transponders.push_back(transponder);
+              }
+
+              /* TODO
+              if (cSettings::Get().m_iUpdateChannels)
+              {
+                // Source
+                int source = cSource::FromData(cSource::stSat, BCD2INT(sd->getOrbitalPosition()), sd->getWestEastFlag() ? cSource::sdEast : cSource::sdWest);
+
+                bool bFound = false;
+                bool bForceTransponderUpdate = false;
+
+                ChannelVector& channels = m_callback->GetChannels();
+                for (ChannelVector::iterator it = channels.begin(); it != channels.end(); ++it)
+                {
+                  ChannelPtr& channel = *it;
+                  if (channel->Source() == source &&
+                      channel->GetNid() == ts.getOriginalNetworkId() &&
+                      channel->GetTid() == ts.getTransportStreamId())
                   {
-                    if (ISTRANSPONDER(cChannel::Transponder(FrequenciesHz[n], dtp.Polarization()), transponder))
+                    int transponder = channel->TransponderFrequency();
+                    bFound = true;
+                    if (!ISTRANSPONDER(cChannel::Transponder(iFrequencyKHz, dtp.Polarization()), transponder))
                     {
-                      iFrequencyMHz = FrequenciesHz[n] / 100000;
-                      break;
+                      for (vector<uint32_t>::const_iterator itKHz = frequenciesKHz.begin(); itKHz != frequenciesKHz.end(); ++itKHz)
+                      {
+                        if (ISTRANSPONDER(cChannel::Transponder(*itKHz, dtp.Polarization()), transponder))
+                        {
+                          iFrequencyKHz = *itKHz;
+                          break;
+                        }
+                      }
                     }
+
+                    // Only modify channels if we're actually receiving this transponder
+                    assert(GetCurrentlyTunedTransponder() != NULL); // TODO
+                    if (ISTRANSPONDER(cChannel::Transponder(iFrequencyKHz, dtp.Polarization()), GetCurrentlyTunedTransponder()->TransponderFrequency()))
+                      channel->SetTransponderData(source, iFrequencyKHz, symbolRate, dtp);
+                    else
+                      bForceTransponderUpdate = true; // Get us receiving this transponder
                   }
                 }
-                if (ISTRANSPONDER(cChannel::Transponder(iFrequencyMHz, dtp.Polarization()), Transponder())) // only modify channels if we're actually receiving this transponder
-                  Channel->SetTransponderData(Source, FrequenciesHz[0], SymbolRate, dtp);
-                else if (Channel->Srate() != SymbolRate || Channel->Parameters() != dtp)
-                  forceTransponderUpdate = true; // get us receiving this transponder
-                Channel->NotifyObservers(ObservableMessageChannelChanged);
-              }
-            }
-            if (!found || forceTransponderUpdate)
-            {
-              for (int n = 0; n < NumFrequencies; n++)
-              {
-                ChannelPtr Channel = ChannelPtr(new cChannel);
-                Channel->SetId(ts.getOriginalNetworkId(), ts.getTransportStreamId(), 0, 0);
-                if (Channel->SetTransponderData(Source, FrequenciesHz[0], SymbolRate, dtp))
+
+                if (!bFound || bForceTransponderUpdate)
                 {
-                  EITScanner.AddTransponder(Channel);
-                  Channel->NotifyObservers(ObservableMessageChannelChanged);
-                }
-              }
-            }
-          }
-        }
-        break;
-      case SI::S2SatelliteDeliverySystemDescriptorTag:
-        {
-          if (cSettings::Get().m_iUpdateChannels >= 5)
-          {
-            std::vector<ChannelPtr> channels =
-                cChannelManager::Get().GetCurrent();
-            for (std::vector<ChannelPtr>::const_iterator it = channels.begin();
-                it != channels.end(); ++it)
-            {
-              ChannelPtr Channel = (*it);
-              if (cSource::IsSat(Channel->Source())
-                  && Channel->GetNid() == ts.getOriginalNetworkId()
-                  && Channel->GetTid() == ts.getTransportStreamId())
-              {
-                SI::S2SatelliteDeliverySystemDescriptor *sd =
-                    (SI::S2SatelliteDeliverySystemDescriptor *) d;
-                cDvbTransponderParams dtp(Channel->Parameters());
-                dtp.SetSystem(DVB_SYSTEM_2);
-                dtp.SetStreamId(sd->getInputStreamIdentifier());
-                Channel->SetTransponderData(Channel->Source(), Channel->FrequencyHz(), Channel->Srate(), dtp);
-                Channel->NotifyObservers(ObservableMessageChannelChanged);
-                break;
-              }
-            }
-          }
-        }
-        break;
-      case SI::CableDeliverySystemDescriptorTag:
-        {
-          SI::CableDeliverySystemDescriptor *sd =
-              (SI::CableDeliverySystemDescriptor *) d;
-          cDvbTransponderParams dtp;
-          int Source = cSource::FromData(cSource::stCable);
-          int iFrequencyHz = FrequenciesHz[0] = BCD2INT(sd->getFrequency()) / 10;
-          //XXX FEC_outer???
-          static fe_code_rate CodeRates[] =
-            { FEC_NONE, FEC_1_2, FEC_2_3, FEC_3_4, FEC_5_6, FEC_7_8, FEC_8_9,
-                FEC_3_5, FEC_4_5, FEC_9_10, FEC_AUTO, FEC_AUTO, FEC_AUTO,
-                FEC_AUTO, FEC_AUTO, FEC_NONE };
-          dtp.SetCoderateH(CodeRates[sd->getFecInner()]);
-          static fe_modulation Modulations[] =
-            { QPSK, QAM_16, QAM_32, QAM_64, QAM_128, QAM_256, QAM_AUTO };
-          dtp.SetModulation(Modulations[std::min(sd->getModulation(), 6)]);
-          int SymbolRate = BCD2INT(sd->getSymbolRate()) / 10;
-          if (thisNit != m_nits.end())
-          {
-            for (int n = 0; n < NumFrequencies; n++)
-            {
-              if (ISTRANSPONDER(FrequenciesHz[n] / 1000, Transponder()))
-              {
-                thisNit->hasTransponder = true;
-                //printf("has transponder %d\n", Transponder());
-                break;
-              }
-            }
-            break;
-          }
-          if (cSettings::Get().m_iUpdateChannels >= 5)
-          {
-            bool found = false;
-            bool forceTransponderUpdate = false;
-            std::vector<ChannelPtr> channels =
-                cChannelManager::Get().GetCurrent();
-            for (std::vector<ChannelPtr>::const_iterator it = channels.begin();
-                it != channels.end(); ++it)
-            {
-              ChannelPtr Channel = (*it);
-              if (Channel->Source()    == Source
-                  && Channel->GetNid() == ts.getOriginalNetworkId()
-                  && Channel->GetTid() == ts.getTransportStreamId())
-              {
-                int transponder = Channel->TransponderFrequency();
-                found = true;
-                if (!ISTRANSPONDER(iFrequencyHz / 1000, transponder))
-                {
-                  for (int n = 0; n < NumFrequencies; n++)
+                  for (vector<uint32_t>::const_iterator itKHz = frequenciesKHz.begin(); itKHz != frequenciesKHz.end(); ++itKHz)
                   {
-                    if (ISTRANSPONDER(FrequenciesHz[n] / 1000, transponder))
-                    {
-                      iFrequencyHz = FrequenciesHz[n];
-                      break;
-                    }
+                    ChannelPtr transponder = ChannelPtr(new cChannel);
+                    transponder->SetId(ts.getOriginalNetworkId(), ts.getTransportStreamId(), 0, 0);
+                    if (transponder->SetTransponderData(source, frequenciesKHz[0], symbolRate, dtp))
+                      m_callback->NitFoundTransponder(transponder, m_tableId);
                   }
                 }
-                if (ISTRANSPONDER(iFrequencyHz / 1000, Transponder())) // only modify channels if we're actually receiving this transponder
-                  Channel->SetTransponderData(Source, iFrequencyHz, SymbolRate, dtp);
-                else if (Channel->Srate() != SymbolRate || Channel->Parameters() != dtp)
-                  forceTransponderUpdate = true; // get us receiving this transponder
               }
+              */
+              break;
             }
-            if (!found || forceTransponderUpdate)
+            case SI::S2SatelliteDeliverySystemDescriptorTag:
             {
-              for (int n = 0; n < NumFrequencies; n++)
+              // only interesting if NBC-BS
+              SI::S2SatelliteDeliverySystemDescriptor* sd = (SI::S2SatelliteDeliverySystemDescriptor*)d;
+              int DVBS_backward_compatibility = sd->getBackwardsCompatibilityIndicator();
+              if (DVBS_backward_compatibility)
               {
-                ChannelPtr Channel = ChannelPtr(new cChannel);
-                Channel->SetId(ts.getOriginalNetworkId(), ts.getTransportStreamId(), 0, 0);
-                if (Channel->SetTransponderData(Source, FrequenciesHz[n], SymbolRate, dtp))
-                {
-                  EITScanner.AddTransponder(Channel);
-                  Channel->NotifyObservers(ObservableMessageChannelChanged);
-                }
+                // Okay: we should add a dvb-s transponder with same source, same
+                // polarization and QPSK to list of transponders if this transponder
+                // isn't already marked as known.
               }
-            }
-          }
-        }
-        break;
-      case SI::TerrestrialDeliverySystemDescriptorTag:
-        {
-          SI::TerrestrialDeliverySystemDescriptor *sd =
-              (SI::TerrestrialDeliverySystemDescriptor *) d;
-          cDvbTransponderParams dtp;
-          int Source = cSource::FromData(cSource::stTerr);
-          int iFrequencyHz = FrequenciesHz[0] = sd->getFrequency() * 10;
-          static fe_bandwidth Bandwidths[] = { BANDWIDTH_8_MHZ, BANDWIDTH_7_MHZ, BANDWIDTH_6_MHZ, BANDWIDTH_5_MHZ };
-          if (sd->getBandwidth() < ARRAY_SIZE(Bandwidths))
-            dtp.SetBandwidth(Bandwidths[sd->getBandwidth()]);
-          else
-            dtp.SetBandwidth(BANDWIDTH_8_MHZ); // Note: Default value was 0 Hz ??? Changed to 8 MHz instead
-          static fe_modulation Constellations[] = { QPSK, QAM_16, QAM_64, QAM_AUTO };
-          dtp.SetModulation(Constellations[sd->getConstellation()]);
-          dtp.SetSystem(DVB_SYSTEM_1);
-          static fe_hierarchy Hierarchies[] =
-            { HIERARCHY_NONE, HIERARCHY_1, HIERARCHY_2, HIERARCHY_4,
-                HIERARCHY_AUTO, HIERARCHY_AUTO, HIERARCHY_AUTO, HIERARCHY_AUTO };
-          dtp.SetHierarchy(Hierarchies[sd->getHierarchy()]);
-          static fe_code_rate CodeRates[] =
-            { FEC_1_2, FEC_2_3, FEC_3_4, FEC_5_6, FEC_7_8, FEC_AUTO, FEC_AUTO,
-                FEC_AUTO };
-          dtp.SetCoderateH(CodeRates[sd->getCodeRateHP()]);
-          dtp.SetCoderateL(CodeRates[sd->getCodeRateLP()]);
-          static fe_guard_interval GuardIntervals[] =
-            { GUARD_INTERVAL_1_32, GUARD_INTERVAL_1_16, GUARD_INTERVAL_1_8,
-                GUARD_INTERVAL_1_4 };
-          dtp.SetGuard(GuardIntervals[sd->getGuardInterval()]);
-          static fe_transmit_mode TransmissionModes[] =
-            { TRANSMISSION_MODE_2K, TRANSMISSION_MODE_8K, TRANSMISSION_MODE_4K,
-                TRANSMISSION_MODE_AUTO };
-          dtp.SetTransmission(TransmissionModes[sd->getTransmissionMode()]);
-          if (thisNit != m_nits.end())
-          {
-            for (int n = 0; n < NumFrequencies; n++)
-            {
-              if (ISTRANSPONDER(FrequenciesHz[n] / 1000000, Transponder()))
-              {
-                thisNit->hasTransponder = true;
-                //printf("has transponder %d\n", Transponder());
-                break;
-              }
-            }
-            break;
-          }
-          if (cSettings::Get().m_iUpdateChannels >= 5)
-          {
-            bool found = false;
-            bool forceTransponderUpdate = false;
-            std::vector<ChannelPtr> channels =
-                cChannelManager::Get().GetCurrent();
-            for (std::vector<ChannelPtr>::const_iterator it = channels.begin();
-                it != channels.end(); ++it)
-            {
-              ChannelPtr Channel = (*it);
-              if (Channel->Source()    == Source
-                  && Channel->GetNid() == ts.getOriginalNetworkId()
-                  && Channel->GetTid() == ts.getTransportStreamId())
-              {
-                int transponder = Channel->TransponderFrequency();
-                found = true;
-                if (!ISTRANSPONDER(iFrequencyHz / 1000000, transponder))
-                {
-                  for (int n = 0; n < NumFrequencies; n++)
-                  {
-                    if (ISTRANSPONDER(FrequenciesHz[n] / 1000000, transponder))
-                    {
-                      iFrequencyHz = FrequenciesHz[n];
-                      break;
-                    }
-                  }
-                }
-                if (ISTRANSPONDER(iFrequencyHz / 1000000, Transponder())) // only modify channels if we're actually receiving this transponder
-                  Channel->SetTransponderData(Source, iFrequencyHz, 0, dtp);
-                else if (Channel->Parameters() != dtp)
-                  forceTransponderUpdate = true; // get us receiving this transponder
-              }
-            }
-            if (!found || forceTransponderUpdate)
-            {
-              for (int n = 0; n < NumFrequencies; n++)
-              {
-                ChannelPtr Channel = ChannelPtr(new cChannel);
-                Channel->SetId(ts.getOriginalNetworkId(),
-                    ts.getTransportStreamId(), 0, 0);
-                if (Channel->SetTransponderData(Source, FrequenciesHz[n], 0, dtp))
-                  EITScanner.AddTransponder(Channel);
-              }
-            }
-          }
-        }
-        break;
-      case SI::ExtensionDescriptorTag:
-        {
-          SI::ExtensionDescriptor *sd = (SI::ExtensionDescriptor *) d;
-          switch (sd->getExtensionDescriptorTag())
-            {
-          case SI::T2DeliverySystemDescriptorTag:
-            {
+
+              /* TODO
               if (cSettings::Get().m_iUpdateChannels >= 5)
               {
-                std::vector<ChannelPtr> channels =
-                    cChannelManager::Get().GetCurrent();
-                for (std::vector<ChannelPtr>::const_iterator it =
-                    channels.begin(); it != channels.end(); ++it)
+                ChannelVector& channels = m_callback->GetChannels();
+                for (ChannelVector::iterator it = channels.begin(); it != channels.end(); ++it)
                 {
-                  ChannelPtr Channel = (*it);
-                  int Source = cSource::FromData(cSource::stTerr);
-                  if (Channel->Source()    == Source
-                      && Channel->GetNid() == ts.getOriginalNetworkId()
-                      && Channel->GetTid() == ts.getTransportStreamId())
+                  ChannelPtr& channel = *it;
+                  if (cSource::IsSat(channel->Source()) &&
+                      channel->GetNid()    == ts.getOriginalNetworkId() &&
+                      channel->GetTid()    == ts.getTransportStreamId())
                   {
-                    SI::T2DeliverySystemDescriptor *td =
-                        (SI::T2DeliverySystemDescriptor *) d;
-                    int FrequencyHz = Channel->FrequencyHz();
-                    int SymbolRate = Channel->Srate();
-                    //int SystemId = td->getSystemId();
-                    cDvbTransponderParams dtp(Channel->Parameters());
+                    SI::S2SatelliteDeliverySystemDescriptor* sd = (SI::S2SatelliteDeliverySystemDescriptor*)d;
+                    cDvbTransponderParams dtp(channel->Parameters());
                     dtp.SetSystem(DVB_SYSTEM_2);
-                    dtp.SetStreamId(td->getPlpId());
-                    if (td->getExtendedDataFlag())
-                    {
-                      static fe_bandwidth T2Bandwidths[] =
-                        { BANDWIDTH_8_MHZ, BANDWIDTH_7_MHZ, BANDWIDTH_6_MHZ, BANDWIDTH_5_MHZ, BANDWIDTH_10_MHZ, BANDWIDTH_1_712_MHZ };
-                      if (td->getBandwidth() < ARRAY_SIZE(T2Bandwidths))
-                        dtp.SetBandwidth(T2Bandwidths[td->getBandwidth()]);
-                      else
-                        dtp.SetBandwidth(BANDWIDTH_8_MHZ); // Note: Default value was 0 Hz ??? Changed to 8 MHz instead
-                      static fe_guard_interval T2GuardIntervals[] =
-                        { GUARD_INTERVAL_1_32, GUARD_INTERVAL_1_16,
-                            GUARD_INTERVAL_1_8, GUARD_INTERVAL_1_4,
-                            GUARD_INTERVAL_1_128, GUARD_INTERVAL_19_128,
-                            GUARD_INTERVAL_19_256 };
-                      if (td->getGuardInterval() < ARRAY_SIZE(T2GuardIntervals))
-                        dtp.SetGuard(T2GuardIntervals[td->getGuardInterval()]);
-                      else
-                        dtp.SetGuard(GUARD_INTERVAL_AUTO); // Note: Default value was 0 ??? Changed to GUARD_INTERVAL_AUTO instead
-                      static fe_transmit_mode T2TransmissionModes[] =
-                        { TRANSMISSION_MODE_2K, TRANSMISSION_MODE_8K,
-                            TRANSMISSION_MODE_4K, TRANSMISSION_MODE_1K,
-                            TRANSMISSION_MODE_16K, TRANSMISSION_MODE_32K,
-                            TRANSMISSION_MODE_AUTO, TRANSMISSION_MODE_AUTO };
-                      dtp.SetTransmission(
-                          T2TransmissionModes[td->getTransmissionMode()]);
-                      //TODO add parsing of frequencies
-                    }
-                    Channel->SetTransponderData(Source, FrequencyHz, SymbolRate, dtp);
-                    Channel->NotifyObservers(ObservableMessageChannelChanged);
+                    dtp.SetStreamId(sd->getInputStreamIdentifier());
+                    channel->SetTransponderData(channel->Source(), channel->FrequencyHz(), channel->Srate(), dtp);
+                    channel->NotifyObservers(ObservableMessageChannelChanged);
+                    break;
                   }
                 }
               }
+              */
+              break;
             }
-            break;
-          default:
-            ;
+            case SI::CableDeliverySystemDescriptorTag:
+            {
+              SI::CableDeliverySystemDescriptor* sd = (SI::CableDeliverySystemDescriptor*)d;
+
+              cDvbTransponderParams dtp;
+
+              // Source
+              int source = cSource::FromData(cSource::stCable);
+
+              // Frequency
+              int iFrequencyKHz = frequenciesKHz[0] = BCD2INT(sd->getFrequency()) / 10;
+
+              //XXX FEC_outer???
+              static fe_code_rate codeRates[] =
+              {
+                FEC_NONE, FEC_1_2,  FEC_2_3,  FEC_3_4,  FEC_5_6,  FEC_7_8,  FEC_8_9,
+                FEC_3_5,  FEC_4_5,  FEC_9_10, FEC_AUTO, FEC_AUTO, FEC_AUTO,
+                FEC_AUTO, FEC_AUTO, FEC_NONE
+              };
+              dtp.SetCoderateH(codeRates[sd->getFecInner()]);
+
+              // Modulation
+              static fe_modulation modulations[] =
+                { QPSK, QAM_16, QAM_32, QAM_64, QAM_128, QAM_256, QAM_AUTO };
+              dtp.SetModulation(modulations[std::min(sd->getModulation(), 6)]);
+
+              // Symbol rate
+              int symbolRate = BCD2INT(sd->getSymbolRate()) / 10;
+
+              for (vector<uint32_t>::const_iterator itKHz = frequenciesKHz.begin(); itKHz != frequenciesKHz.end(); ++itKHz)
+              {
+                assert(GetCurrentlyTunedTransponder() != NULL); // TODO
+                if (ISTRANSPONDER(*itKHz / 1000, GetCurrentlyTunedTransponder()->TransponderFrequency()))
+                {
+                  thisNetwork.bHasTransponder = true;
+                  break;
+                }
+              }
+
+              for (vector<uint32_t>::const_iterator itKHz = frequenciesKHz.begin(); itKHz != frequenciesKHz.end(); ++itKHz)
+              {
+                ChannelPtr transponder = ChannelPtr(new cChannel);
+                transponder->SetId(ts.getOriginalNetworkId(), ts.getTransportStreamId(), 0, 0);
+                if (transponder->SetTransponderData(source, frequenciesKHz[0], symbolRate, dtp))
+                  transponders.push_back(transponder);
+              }
+
+              /* TODO
+              if (cSettings::Get().m_iUpdateChannels >= 5)
+              {
+                bool bFound = false;
+                bool bForceTransponderUpdate = false;
+
+                ChannelVector channels = m_callback->GetChannels();
+                for (ChannelVector::iterator it = channels.begin(); it != channels.end(); ++it)
+                {
+                  ChannelPtr& channel = *it;
+                  if (channel->Source() == source &&
+                      channel->GetNid() == ts.getOriginalNetworkId() &&
+                      channel->GetTid() == ts.getTransportStreamId())
+                  {
+                    int transponder = channel->TransponderFrequency();
+
+                    bFound = true;
+
+                    if (!ISTRANSPONDER(iFrequencyKHz / 1000, transponder))
+                    {
+                      for (vector<uint32_t>::const_iterator itKHz = frequenciesKHz.begin(); itKHz != frequenciesKHz.end(); ++itKHz)
+                      {
+                        if (ISTRANSPONDER(*itKHz / 1000, transponder))
+                        {
+                          iFrequencyKHz = *itKHz;
+                          break;
+                        }
+                      }
+                    }
+
+                    // Only modify channels if we're actually receiving this transponder
+                    assert(GetCurrentlyTunedTransponder() != NULL); // TODO
+                    if (ISTRANSPONDER(iFrequencyKHz / 1000, GetCurrentlyTunedTransponder()->TransponderFrequency()))
+                      channel->SetTransponderData(source, iFrequencyKHz, symbolRate, dtp);
+                    else if (channel->Srate() != symbolRate || channel->Parameters() != dtp)
+                      bForceTransponderUpdate = true; // get us receiving this transponder
+                  }
+                }
+
+                if (!bFound || bForceTransponderUpdate)
+                {
+                  for (vector<uint32_t>::const_iterator itKHz = frequenciesKHz.begin(); itKHz != frequenciesKHz.end(); ++itKHz)
+                  {
+                    ChannelPtr transponder = ChannelPtr(new cChannel);
+                    transponder->SetId(ts.getOriginalNetworkId(), ts.getTransportStreamId(), 0, 0);
+                    if (transponder->SetTransponderData(source, frequenciesKHz[0], symbolRate, dtp))
+                      m_callback->NitFoundTransponder(transponder, m_tableId);
+                  }
+                }
+              }
+              */
+
+              break;
             }
+            case SI::TerrestrialDeliverySystemDescriptorTag:
+            {
+              SI::TerrestrialDeliverySystemDescriptor* sd = (SI::TerrestrialDeliverySystemDescriptor*)d;
+
+              cDvbTransponderParams dtp;
+
+              int source = cSource::FromData(cSource::stTerr);
+
+              int iFrequencyKHz = frequenciesKHz[0] = sd->getFrequency() * 10;
+
+              // Bandwidth
+              static fe_bandwidth bandwidths[] = { BANDWIDTH_8_MHZ, BANDWIDTH_7_MHZ, BANDWIDTH_6_MHZ, BANDWIDTH_5_MHZ };
+              if (sd->getBandwidth() < ARRAY_SIZE(bandwidths))
+                dtp.SetBandwidth(bandwidths[sd->getBandwidth()]);
+              else
+                dtp.SetBandwidth(BANDWIDTH_8_MHZ); // Note: Default value was 0 Hz ??? Changed to 8 MHz instead
+
+              // Modulation
+              static fe_modulation constellations[] = { QPSK, QAM_16, QAM_64, QAM_AUTO };
+              dtp.SetModulation(constellations[sd->getConstellation()]);
+
+              // System
+              dtp.SetSystem(DVB_SYSTEM_1);
+
+              // Hierarchy
+              static fe_hierarchy hierarchies[] =
+              {
+                HIERARCHY_NONE, HIERARCHY_1,    HIERARCHY_2,    HIERARCHY_4,
+                HIERARCHY_AUTO, HIERARCHY_AUTO, HIERARCHY_AUTO, HIERARCHY_AUTO
+              };
+              dtp.SetHierarchy(hierarchies[sd->getHierarchy()]);
+
+              // Code rates
+              static fe_code_rate codeRates[] =
+              {
+                  FEC_1_2, FEC_2_3, FEC_3_4, FEC_5_6, FEC_7_8, FEC_AUTO, FEC_AUTO,
+                  FEC_AUTO
+              };
+              dtp.SetCoderateH(codeRates[sd->getCodeRateHP()]);
+              dtp.SetCoderateL(codeRates[sd->getCodeRateLP()]);
+
+              // Guard interval
+              static fe_guard_interval guardIntervals[] =
+              {
+                  GUARD_INTERVAL_1_32, GUARD_INTERVAL_1_16, GUARD_INTERVAL_1_8,
+                  GUARD_INTERVAL_1_4
+              };
+              dtp.SetGuard(guardIntervals[sd->getGuardInterval()]);
+
+              // Transmission mode
+              static fe_transmit_mode transmissionModes[] =
+              {
+                  TRANSMISSION_MODE_2K, TRANSMISSION_MODE_8K, TRANSMISSION_MODE_4K,
+                  TRANSMISSION_MODE_AUTO
+              };
+              dtp.SetTransmission(transmissionModes[sd->getTransmissionMode()]);
+
+              for (vector<uint32_t>::const_iterator itKHz = frequenciesKHz.begin(); itKHz != frequenciesKHz.end(); ++itKHz)
+              {
+                assert(GetCurrentlyTunedTransponder() != NULL); // TODO
+                if (ISTRANSPONDER(*itKHz / (1000 * 1000), GetCurrentlyTunedTransponder()->TransponderFrequency()))
+                {
+                  thisNetwork.bHasTransponder = true;
+                  break;
+                }
+              }
+
+              for (vector<uint32_t>::const_iterator itKHz = frequenciesKHz.begin(); itKHz != frequenciesKHz.end(); ++itKHz)
+              {
+                ChannelPtr transponder = ChannelPtr(new cChannel);
+                transponder->SetId(ts.getOriginalNetworkId(), ts.getTransportStreamId(), 0, 0);
+                if (transponder->SetTransponderData(source, *itKHz, 0, dtp))
+                  transponders.push_back(transponder);
+              }
+
+              /* TODO
+              if (cSettings::Get().m_iUpdateChannels >= 5)
+              {
+                bool bFound = false;
+                bool bForceTransponderUpdate = false;
+                ChannelVector& channels = m_callback->GetChannels();
+                for (ChannelVector::iterator it = channels.begin(); it != channels.end(); ++it)
+                {
+                  ChannelPtr& channel = *it;
+                  if (channel->Source() == source &&
+                      channel->GetNid() == ts.getOriginalNetworkId() &&
+                      channel->GetTid() == ts.getTransportStreamId())
+                  {
+                    int transponder = channel->TransponderFrequency();
+                    bFound = true;
+                    if (!ISTRANSPONDER(iFrequencyKHz / (1000 * 1000), transponder))
+                    {
+                      for (vector<uint32_t>::const_iterator itKHz = frequenciesKHz.begin(); itKHz != frequenciesKHz.end(); ++itKHz)
+                      {
+                        assert(GetCurrentlyTunedTransponder() != NULL); // TODO
+                        if (ISTRANSPONDER(*itKHz / (1000 * 1000), GetCurrentlyTunedTransponder()->TransponderFrequency()))
+                        {
+                          iFrequencyKHz = *itKHz;
+                          break;
+                        }
+                      }
+                    }
+
+                    // Only modify channels if we're actually receiving this transponder
+                    assert(GetCurrentlyTunedTransponder() != NULL); // TODO
+                    if (ISTRANSPONDER(iFrequencyKHz / (1000 * 1000), GetCurrentlyTunedTransponder()->TransponderFrequency()))
+                      channel->SetTransponderData(source, iFrequencyKHz, 0, dtp);
+                    else if (channel->Parameters() != dtp)
+                      bForceTransponderUpdate = true; // get us receiving this transponder
+                  }
+                }
+
+                if (!bFound || bForceTransponderUpdate)
+                {
+                  for (vector<uint32_t>::const_iterator itKHz = frequenciesKHz.begin(); itKHz != frequenciesKHz.end(); ++itKHz)
+                  {
+                    ChannelPtr transponder = ChannelPtr(new cChannel);
+                    transponder->SetId(ts.getOriginalNetworkId(), ts.getTransportStreamId(), 0, 0);
+                    if (transponder->SetTransponderData(source, *itKHz, 0, dtp))
+                      m_callback->NitFoundTransponder(transponder, m_tableId);
+                  }
+                }
+              }
+              */
+
+              break;
+            }
+            case SI::ExtensionDescriptorTag:
+            {
+              SI::ExtensionDescriptor* sd = (SI::ExtensionDescriptor*)d;
+              switch (sd->getExtensionDescriptorTag())
+              {
+              case SI::T2DeliverySystemDescriptorTag:
+              {
+                /* TODO
+                if (cSettings::Get().m_iUpdateChannels >= 5)
+                {
+                  ChannelVector& channels = m_callback->GetChannels();
+                  for (ChannelVector::iterator it = channels.begin(); it != channels.end(); ++it)
+                  {
+                    ChannelPtr& channel = *it;
+
+                    int source = cSource::FromData(cSource::stTerr);
+
+                    if (channel->Source() == source &&
+                        channel->GetNid() == ts.getOriginalNetworkId() &&
+                        channel->GetTid() == ts.getTransportStreamId())
+                    {
+                      SI::T2DeliverySystemDescriptor* td = (SI::T2DeliverySystemDescriptor*)d;
+
+                      int iFrequencyHz = channel->FrequencyHz();
+                      int symbolRate = channel->Srate();
+
+                      //int SystemId = td->getSystemId();
+
+                      cDvbTransponderParams dtp(channel->Parameters());
+
+                      dtp.SetSystem(DVB_SYSTEM_2);
+                      dtp.SetStreamId(td->getPlpId());
+
+                      if (td->getExtendedDataFlag())
+                      {
+                        // Bandwidth
+                        static fe_bandwidth T2Bandwidths[] =
+                        {
+                          BANDWIDTH_8_MHZ, BANDWIDTH_7_MHZ,  BANDWIDTH_6_MHZ,
+                          BANDWIDTH_5_MHZ, BANDWIDTH_10_MHZ, BANDWIDTH_1_712_MHZ
+                        };
+                        if (td->getBandwidth() < ARRAY_SIZE(T2Bandwidths))
+                          dtp.SetBandwidth(T2Bandwidths[td->getBandwidth()]);
+                        else
+                          dtp.SetBandwidth(BANDWIDTH_8_MHZ); // Note: Default value was 0 Hz ??? Changed to 8 MHz instead
+
+                        // Guard interval
+                        static fe_guard_interval T2GuardIntervals[] =
+                        {
+                            GUARD_INTERVAL_1_32,  GUARD_INTERVAL_1_16,
+                            GUARD_INTERVAL_1_8,   GUARD_INTERVAL_1_4,
+                            GUARD_INTERVAL_1_128, GUARD_INTERVAL_19_128,
+                            GUARD_INTERVAL_19_256
+                        };
+                        if (td->getGuardInterval() < ARRAY_SIZE(T2GuardIntervals))
+                          dtp.SetGuard(T2GuardIntervals[td->getGuardInterval()]);
+                        else
+                          dtp.SetGuard(GUARD_INTERVAL_AUTO); // Note: Default value was 0 ??? Changed to GUARD_INTERVAL_AUTO instead
+
+                        // Transmission mode
+                        static fe_transmit_mode T2TransmissionModes[] =
+                        {
+                          TRANSMISSION_MODE_2K,   TRANSMISSION_MODE_8K,
+                          TRANSMISSION_MODE_4K,   TRANSMISSION_MODE_1K,
+                          TRANSMISSION_MODE_16K,  TRANSMISSION_MODE_32K,
+                          TRANSMISSION_MODE_AUTO, TRANSMISSION_MODE_AUTO
+                        };
+                        dtp.SetTransmission(T2TransmissionModes[td->getTransmissionMode()]);
+                        //TODO add parsing of frequencies
+                      }
+                      channel->SetTransponderData(source, iFrequencyHz, symbolRate, dtp);
+                      channel->NotifyObservers(ObservableMessageChannelChanged);
+                    }
+                  }
+                }
+                */
+
+                break;
+              }
+              default:
+                break;
+              }
+              break;
+            }
+            case SI::ServiceListDescriptorTag:
+            {
+              SI::ServiceListDescriptor* sd = (SI::ServiceListDescriptor*)d;
+              SI::ServiceListDescriptor::Service service;
+              for (SI::Loop::Iterator it; sd->serviceLoop.getNext(service, it); )
+              {
+                if (service.getServiceType() == 0x04 ||            // NVOD reference service
+                    service.getServiceType() == 0x18 ||            // advanced codec SD NVOD reference service
+                    service.getServiceType() == 0x1B)              // advanced codec HD NVOD reference service
+                {
+                  continue;
+                }
+                if (service.getServiceType() == 0x03 ||            // Teletext service
+                    service.getServiceType() == 0x04 ||            // NVOD reference service (see note 1)
+                    service.getServiceType() == 0x05 ||            // NVOD time-shifted service (see note 1)
+                    service.getServiceType() == 0x06 ||            // mosaic service
+                    service.getServiceType() == 0x0C ||            // data broadcast service
+                    service.getServiceType() == 0x0D ||            // reserved for Common Interface Usage (EN 50221 [39])
+                    service.getServiceType() == 0x0E ||            // RCS Map (see EN 301 790 [7])
+                    service.getServiceType() == 0x0F ||            // RCS FLS (see EN 301 790 [7])
+                    service.getServiceType() == 0x10 ||            // DVB MHP service
+                    service.getServiceType() == 0x17 ||            // advanced codec SD NVOD time-shifted service
+                    service.getServiceType() == 0x18 ||            // advanced codec SD NVOD reference service
+                    service.getServiceType() == 0x1A ||            // advanced codec HD NVOD time-shifted service
+                    service.getServiceType() == 0x1B)              // advanced codec HD NVOD reference service
+                {
+                  // TODO: Do we need a callback for updating discovered channels?
+
+                  /*
+                  ChannelPtr channel = cChannelManager::GetByServiceID(m_newChannels, Source(), GetCurrentlyTunedTransponder()->TransponderFrequency(), service.getServiceId());
+                  if (channel && !(channel->Rid() & INVALID_CHANNEL))
+                  {
+                    dsyslog("   NIT: invalid (service_type=0x%.2x)", service.getServiceType());
+                    channel->SetId(channel->GetNid(), channel->GetTid(), channel->GetSid(), INVALID_CHANNEL);
+                  }
+                  */
+                }
+              }
+              break;
+            }
+            case SI::CellFrequencyLinkDescriptorTag: break;         // not implemented in libsi
+            case SI::FrequencyListDescriptorTag: break;             // already handled
+            case SI::PrivateDataSpecifierDescriptorTag: break;      // not usable
+            case 0x80 ... 0xFE: break;                              // user defined
+            default:
+              dsyslog("NIT: unknown descriptor tag 0x%.2x", d->getDescriptorTag());
+              break;
+          }
+          DELETENULL(d);
         }
-        break;
-      default:
-        ;
-        }
-      delete d;
+      }
     }
   }
-  //XXX Channels.Unlock();
+
+  return transponders;
 }
 
 }

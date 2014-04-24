@@ -1,50 +1,71 @@
 /*
- * nit.h: NIT section filter
+ *      Copyright (C) 2013-2014 Garrett Brown
+ *      Copyright (C) 2013-2014 Lars Op den Kamp
+ *      Portions Copyright (C) 2006, 2007, 2008, 2009 Winfried Koehler
+ *      Portions Copyright (C) 2000, 2003, 2006, 2008, 2013 Klaus Schmidinger
+ *      Portions Copyright (C) 2005-2013 Team XBMC
  *
- * See the main source file 'vdr.c' for copyright information and
- * how to reach the author.
+ *  This Program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2, or (at your option)
+ *  any later version.
  *
- * $Id: nit.h 2.0 2007/06/10 08:50:21 kls Exp $
+ *  This Program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this Program; see the file COPYING. If not, see
+ *  <http://www.gnu.org/licenses/>.
+ *
  */
-
 #pragma once
 
 #include "Types.h"
-#include "Filter.h"
+#include "channels/ChannelManager.h" // for ChannelVector
+#include "dvb/filters/Filter.h"
+#include "libsi/si.h"
 
-#include <vector>
+#include <sys/types.h>
 
-// From UTF8Utils.h
-#define Utf8BufSize(s) ((s) * 4)
-
-//#define MAXNITS 16
-#define MAXNETWORKNAME Utf8BufSize(256)
+#define NETWORK_ID_UNKNOWN  0
 
 namespace VDR
 {
-class cNitFilter : public cFilter
+
+//#define INVALID_CHANNEL  0x4000 // TODO: Is this needed?
+
+class iNitScannerCallback
 {
 public:
-  cNitFilter(cDevice* device);
-  virtual ~cNitFilter(void) { }
+  virtual void NitFoundTransponder(ChannelPtr transponder, SI::TableId tid) = 0;
+  virtual std::vector<ChannelPtr>& GetChannels() = 0;
+  virtual ~iNitScannerCallback() { }
+};
 
-  virtual void Enable(bool bEnabled);
+class cDevice;
 
-protected:
-  virtual void ProcessData(u_short pid, u_char tid, const std::vector<uint8_t>& data);
+class cNit : public cFilter
+{
+public:
+  cNit(cDevice* device);
+  virtual ~cNit() { }
+
+  ChannelVector GetTransponders();
 
 private:
-  class cNit
+  struct Network
   {
-  public:
-    u_short networkId;
-    char    name[MAXNETWORKNAME];
-    bool    hasTransponder;
+    Network() : nid(NETWORK_ID_UNKNOWN), bHasTransponder(false) { }
+    Network(uint16_t nid, std::string strName) : nid(nid), name(strName), bHasTransponder(false) { }
+
+    uint16_t    nid;  // Network ID
+    std::string name; // Network name
+    bool        bHasTransponder;
   };
 
-  cSectionSyncer    m_sectionSyncer;
-  u_short           m_networkId;
-  std::vector<cNit> m_nits;
+  uint16_t m_networkId;
 };
 
 }

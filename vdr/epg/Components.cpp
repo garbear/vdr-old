@@ -12,7 +12,7 @@ void CEpgComponents::SetComponent(int Index, const char *s)
     component->Deserialse(s);
 }
 
-void CEpgComponents::SetComponent(int Index, uchar Stream, uchar Type, const char *Language, const char *Description)
+void CEpgComponents::SetComponent(int Index, uchar Stream, uchar Type, const std::string& Language, const std::string& Description)
 {
   CEpgComponent* component = Component(Index, true);
   if (!component)
@@ -21,7 +21,7 @@ void CEpgComponents::SetComponent(int Index, uchar Stream, uchar Type, const cha
   component->SetStream(Stream);
   component->SetType(Type);
   component->SetLanguage(Language);
-  component->SetDescription(!isempty(Description) ? Description : "");
+  component->SetDescription(Description);
 }
 
 CEpgComponent *CEpgComponents::GetComponent(int Index, uchar Stream, uchar Type)

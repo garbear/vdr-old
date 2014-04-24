@@ -34,82 +34,91 @@
 
 using namespace std;
 
+#define READ_BUFFER_SIZE  4096 // From cSectionHandler
+#define POLL_TIMEOUT_MS   1000
+
 namespace VDR
 {
 
-#define READ_BUFFER_SIZE  4096 // From cSectionHandler
+// --- cDvbFilterResource -------------------------------------------------------
 
-// Class cDvbFilterHandle
-
-class cDvbFilterHandle : public cFilterHandle
+class cDvbFilterResource : public cFilterResource
 {
 public:
-  cDvbFilterHandle(const cFilterData& filterData, int handle)
-      : cFilterHandle(filterData),
-        m_handle(handle)
+  cDvbFilterResource(uint16_t pid, uint8_t tid, uint8_t mask, int fileDescriptor)
+    : cFilterResource(pid, tid, mask),
+      m_fileDescriptor(fileDescriptor)
   {
   }
 
-  virtual ~cDvbFilterHandle()
+  // Use RAII pattern to close file when no longer referenced
+  virtual ~cDvbFilterResource()
   {
-    close(m_handle);
+    close(m_fileDescriptor);
+    dsyslog("Closed handle for filter PID=%u, TID=0x%02X", GetPid(), GetTid());
   }
 
-  int GetHandle() const { return m_handle; }
+  int GetFileDescriptor() const { return m_fileDescriptor; }
 
 private:
-  int m_handle;
+  const int m_fileDescriptor;
 };
 
-// Class cDvbSectionFilterSubsystem
+// --- cDvbSectionFilterSubsystem ---------------------------------------------
 
 cDvbSectionFilterSubsystem::cDvbSectionFilterSubsystem(cDevice *device)
  : cDeviceSectionFilterSubsystem(device)
 {
 }
 
-dmx_sct_filter_params ToFilterParams(const cFilterData& filterData)
+dmx_sct_filter_params ToFilterParams(uint16_t pid, uint8_t tid, uint8_t mask)
 {
   dmx_sct_filter_params sctFilterParams = { };
-  sctFilterParams.pid = filterData.Pid();
+  sctFilterParams.pid = pid;
   sctFilterParams.timeout = 0; // seconds to wait for section to be loaded, 0 == no timeout
   sctFilterParams.flags = DMX_IMMEDIATE_START;
-  sctFilterParams.filter.filter[0] = filterData.Tid();
-  sctFilterParams.filter.mask[0] = filterData.Mask();
+  sctFilterParams.filter.filter[0] = tid;
+  sctFilterParams.filter.mask[0] = mask;
   return sctFilterParams;
 }
 
-FilterHandlePtr cDvbSectionFilterSubsystem::OpenFilter(const cFilterData& filterData)
+FilterResourcePtr cDvbSectionFilterSubsystem::OpenResourceInternal(uint16_t pid, uint8_t tid, uint8_t mask)
 {
   string fileName = cDvbDevice::DvbName(DEV_DVB_DEMUX, GetDevice<cDvbDevice>()->Adapter(), GetDevice<cDvbDevice>()->Frontend());
 
-  int fd = open(fileName.c_str(), O_RDWR | O_NONBLOCK);
+  // Don't open with O_NONBLOCK flag so that reads will wait for a full section
+  int fd = open(fileName.c_str(), O_RDWR);
   if (fd >= 0)
   {
-    dmx_sct_filter_params sctFilterParams = ToFilterParams(filterData);
+    dmx_sct_filter_params sctFilterParams = ToFilterParams(pid, tid, mask);
 
     if (ioctl(fd, DMX_SET_FILTER, &sctFilterParams) >= 0)
-      return FilterHandlePtr(new cDvbFilterHandle(filterData, fd));
+    {
+      dsyslog("Opened handle for filter PID=%u, TID=0x%02X, mask=0x%02X", pid, tid, mask);
+      return FilterResourcePtr(new cDvbFilterResource(pid, tid, mask, fd));
+    }
     else
     {
-      esyslog("ERROR: can't set filter (pid=%d, tid=%02X, mask=0x%02X): %s",
-          filterData.Pid(), filterData.Tid(), filterData.Mask(), strerror(errno));
+      esyslog("ERROR: can't set filter (pid=%u, tid=0x%02X, mask=0x%02X): %s",
+          pid, tid, mask, strerror(errno));
       close(fd);
     }
   }
   else
     esyslog("ERROR: can't open filter handle on '%s'", fileName.c_str());
 
-  return FilterHandlePtr();
+  return FilterResourcePtr();
 }
 
-bool cDvbSectionFilterSubsystem::ReadFilter(const FilterHandlePtr& handle, std::vector<uint8_t>& data)
+bool cDvbSectionFilterSubsystem::ReadResource(const FilterResourcePtr& handle, std::vector<uint8_t>& data)
 {
-  cDvbFilterHandle* dvbHandle = dynamic_cast<cDvbFilterHandle*>(handle.get());
-  if (dvbHandle)
+  cDvbFilterResource* dvbResource = dynamic_cast<cDvbFilterResource*>(handle.get());
+  if (dvbResource)
   {
     uint8_t buffer[READ_BUFFER_SIZE];
-    ssize_t read = safe_read(dvbHandle->GetHandle(), buffer, sizeof(buffer));
+
+    // Perform a blocking read
+    ssize_t read = safe_read(dvbResource->GetFileDescriptor(), buffer, sizeof(buffer));
     if (read > 0)
     {
       data.assign(buffer, buffer + read);
@@ -119,23 +128,28 @@ bool cDvbSectionFilterSubsystem::ReadFilter(const FilterHandlePtr& handle, std::
   return false;
 }
 
-FilterHandlePtr cDvbSectionFilterSubsystem::Poll(const std::vector<FilterHandlePtr>& filterHandles)
+FilterResourcePtr cDvbSectionFilterSubsystem::Poll(const std::set<FilterResourcePtr>& filterResources)
 {
   vector<pollfd> vecPfds;
-  vecPfds.reserve(filterHandles.size());
 
-  for (vector<FilterHandlePtr>::const_iterator it = filterHandles.begin(); it != filterHandles.end(); ++it)
+  vecPfds.reserve(filterResources.size());
+
+  for (set<FilterResourcePtr>::const_iterator it = filterResources.begin(); it != filterResources.end(); ++it)
   {
-    cDvbFilterHandle* handle = dynamic_cast<cDvbFilterHandle*>(it->get());
+    FilterResourcePtr resource = *it;
+
+    assert(resource.get());
+
+    cDvbFilterResource* handle = dynamic_cast<cDvbFilterResource*>(resource.get());
     if (!handle)
     {
       // Fail hard and fast if vector contains invalid handle
       esyslog("cDvbSectionFilterSubsystem: Encountered empty handle!");
-      return FilterHandlePtr();
+      return FilterResourcePtr();
     }
 
     pollfd pfd;
-    pfd.fd = handle->GetHandle();
+    pfd.fd = handle->GetFileDescriptor();
     pfd.events = POLLIN;
     pfd.revents = 0;
     vecPfds.push_back(pfd);
@@ -143,17 +157,32 @@ FilterHandlePtr cDvbSectionFilterSubsystem::Poll(const std::vector<FilterHandleP
 
   if (!vecPfds.empty())
   {
-    const unsigned int timeoutMs = 1000;
-    if (poll(vecPfds.data(), vecPfds.size(), timeoutMs) > 0)
+    if (poll(vecPfds.data(), vecPfds.size(), POLL_TIMEOUT_MS) > 0)
     {
+      // Look for fd that signaled poll()
+      int signaledFd = -1;
       for (unsigned int i = 0; i < vecPfds.size(); i++)
       {
         if (vecPfds[i].revents & POLLIN)
-          return filterHandles[i];
+        {
+          signaledFd = vecPfds[i].fd;
+          break;
+        }
+      }
+
+      // Look for handle that corresponds to fd
+      if (signaledFd != -1)
+      {
+        for (set<FilterResourcePtr>::const_iterator it = filterResources.begin(); it != filterResources.end(); ++it)
+        {
+          cDvbFilterResource* handle = dynamic_cast<cDvbFilterResource*>(it->get());
+          if (handle && handle->GetFileDescriptor() == signaledFd)
+            return *it;
+        }
       }
     }
   }
-  return FilterHandlePtr();
+  return FilterResourcePtr();
 }
 
 }

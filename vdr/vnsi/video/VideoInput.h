@@ -29,13 +29,11 @@
 namespace VDR
 {
 
-class cLivePatFilter;
 class cLiveReceiver;
 class cVideoBuffer;
 
 class cVideoInput : public PLATFORM::CThread, public Observer
 {
-friend class cLivePatFilter;
 friend class cLiveReceiver;
 public:
   cVideoInput();
@@ -53,12 +51,10 @@ protected:
   void Attach(bool on);
   void CancelPMTThread(void);
   DevicePtr                  m_Device;
-  cLivePatFilter*            m_PatFilter;
   cLiveReceiver*             m_Receiver;
   ChannelPtr                 m_Channel;
   cVideoBuffer*              m_VideoBuffer;
   PLATFORM::CMutex           m_mutex;
-  PLATFORM::CCondition<bool> m_pmtCondition;
   int                        m_Priority;
   bool                       m_PmtChange;
   bool                       m_SeenPmt;

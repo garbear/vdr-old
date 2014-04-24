@@ -52,13 +52,20 @@ typedef time_t vdr_time_t;
 #define vdr_realpath(x) canonicalize_file_name(x)
 #endif
 
+#include <vector>
+
 namespace VDR
 {
 class cChannel;
 typedef VDR::shared_ptr<cChannel> ChannelPtr;
+typedef std::vector<ChannelPtr>   ChannelVector;
 
 class cDevice;
 typedef VDR::shared_ptr<cDevice> DevicePtr;
+
+class cFilter;
+typedef VDR::shared_ptr<cFilter> FilterPtr;
+typedef std::vector<FilterPtr>   FilterVector;
 
 class cSchedule;
 typedef VDR::shared_ptr<cSchedule> SchedulePtr;

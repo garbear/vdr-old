@@ -22,13 +22,13 @@
 #include "VideoInput.h"
 #include "VideoBuffer.h"
 
-#include "PATFilter.h"
 #include "LiveReceiver.h"
 #include "devices/DeviceManager.h"
 #include "devices/subsystems/DeviceChannelSubsystem.h"
 #include "devices/subsystems/DeviceReceiverSubsystem.h"
 #include "devices/subsystems/DeviceSectionFilterSubsystem.h"
 #include "devices/Remux.h"
+#include "dvb/filters/PAT.h"
 #include "channels/ChannelManager.h"
 #include "devices/Device.h"
 #include "devices/Receiver.h"
@@ -41,7 +41,6 @@ namespace VDR
 
 cVideoInput::cVideoInput()
 {
-  m_PatFilter = NULL;
   m_Receiver  = NULL;
   ResetMembers();
 }
@@ -53,7 +52,6 @@ cVideoInput::~cVideoInput()
 
 void cVideoInput::ResetMembers(void)
 {
-  DELETENULL(m_PatFilter);
   DELETENULL(m_Receiver);
   if (m_Channel)
     m_Channel->UnregisterObserver(this);
@@ -72,7 +70,8 @@ bool cVideoInput::Open(ChannelPtr channel, int priority, cVideoBuffer *videoBuff
   m_Device = cDeviceManager::Get().GetDevice(*channel, priority, true);
   if (m_Device)
   {
-    dsyslog("found device: '%s' (%d) for channel '%s'", m_Device->DeviceName().c_str(), m_Device->CardIndex(), channel->Name().c_str());
+    dsyslog("found device: '%s' (%d) for channel '%s'",
+        m_Device->DeviceName().c_str(), m_Device->CardIndex(), channel->Name().c_str());
 
     m_VideoBuffer = videoBuffer;
     m_Priority    = priority;
@@ -83,10 +82,8 @@ bool cVideoInput::Open(ChannelPtr channel, int priority, cVideoBuffer *videoBuff
     {
       dsyslog("Creating new live Receiver");
       m_SeenPmt   = false;
-      m_PatFilter = new cLivePatFilter(m_Device.get(), this, m_Channel);
       m_Receiver  = new cLiveReceiver(m_Device, this, m_Channel, m_Priority);
       m_Device->Receiver()->AttachReceiver(m_Receiver);
-      m_PatFilter->Enable(true);
       CreateThread();
       return true;
     }
@@ -100,7 +97,6 @@ void cVideoInput::CancelPMTThread(void)
   {
     CLockObject lock(m_mutex);
     m_SeenPmt = true;
-    m_pmtCondition.Signal();
   }
   StopThread(0);
 }
@@ -111,7 +107,6 @@ void cVideoInput::Close()
 
   DevicePtr device;
   cLiveReceiver* receiver;
-  cLivePatFilter* patFilter;
   {
     CLockObject lock(m_mutex);
     device   = m_Device;
@@ -119,9 +114,6 @@ void cVideoInput::Close()
 
     receiver   = m_Receiver;
     m_Receiver = NULL;
-
-    patFilter   = m_PatFilter;
-    m_PatFilter = NULL;
 
     if (m_Channel)
       m_Channel->UnregisterObserver(this);
@@ -140,18 +132,7 @@ void cVideoInput::Close()
       dsyslog("No live receiver present");
     }
 
-    if (patFilter)
-    {
-      dsyslog("Detaching Live Filter");
-      patFilter->Enable(false);
-    }
-    else
-    {
-      dsyslog("No live filter present");
-    }
-
     delete receiver;
-    delete patFilter;
   }
 
   ResetMembers();
@@ -173,7 +154,6 @@ void cVideoInput::PmtChange(void)
   CLockObject lock(m_mutex);
   m_PmtChange = true;
   m_SeenPmt   = true;
-  m_pmtCondition.Signal();
 }
 
 void cVideoInput::Receive(uchar *data, int length)
@@ -203,14 +183,44 @@ void cVideoInput::Attach(bool on)
 
 void* cVideoInput::Process()
 {
+  cPat pat(m_Device.get());
+
+  ChannelVector channels;
+  while (!IsStopped() && channels.empty())
+    channels = pat.GetChannels();
+
+  if (IsStopped())
+    return NULL;
+
   CLockObject lock(m_mutex);
-  if (!m_pmtCondition.Wait(m_mutex, m_SeenPmt, (unsigned int)cSettings::Get().m_PmtTimeout*1000))
+  if (m_Channel)
   {
-    if (!IsStopped())
+    for (ChannelVector::const_iterator it = channels.begin(); it != channels.end(); ++it)
     {
-      isyslog("VideoInput: no pat/pmt within timeout, falling back to channel pids");
-      PmtChange();
+      if ((*it)->GetSid() == m_Channel->GetSid())
+      {
+        // Clear modification flag
+        m_Channel->Modification();
+
+        m_Channel->SetStreams((*it)->GetVideoStream(),
+                              (*it)->GetAudioStreams(),
+                              (*it)->GetDataStreams(),
+                              (*it)->GetSubtitleStreams(),
+                              (*it)->GetTeletextStream());
+
+        m_Channel->NotifyObservers(ObservableMessageChannelHasPMT);
+        if (m_Channel->Modification(CHANNELMOD_PIDS))
+          m_Channel->NotifyObservers(ObservableMessageChannelPMTChanged);
+
+        break;
+      }
     }
+  }
+
+  if (!m_SeenPmt)
+  {
+    isyslog("VideoInput: no pat/pmt within timeout, falling back to channel pids");
+    PmtChange();
   }
 
   return NULL;

@@ -22,14 +22,11 @@
 
 #include "Types.h"
 #include "devices/DeviceSubsystem.h"
-#include "dvb/filters/EIT.h"
-#include "dvb/filters/FilterData.h"
-#include "dvb/filters/NIT.h"
-#include "dvb/filters/PAT.h"
-#include "dvb/filters/SDT.h"
-#include "threads/SystemClock.h" // for XbmcThreads::EndTime
+#include "dvb/filters/FilterResource.h"
+#include "platform/threads/mutex.h"
+#include "threads/SystemClock.h" // for EndTime
 
-#include <map>
+#include <set>
 #include <shared_ptr/shared_ptr.hpp>
 #include <stdint.h>
 #include <vector>
@@ -37,122 +34,137 @@
 namespace VDR
 {
 
-class cFilterHandle
-{
-public:
-  cFilterHandle(const cFilterData& filterData) : m_filterData(filterData) { }
-  virtual ~cFilterHandle() { }
-
-  const cFilterData& GetFilterData() const { return m_filterData; }
-
-private:
-  cFilterData m_filterData;
-};
-
-typedef VDR::shared_ptr<cFilterHandle> FilterHandlePtr;
+class cFilter;
 
 /*!
- * \brief Container to hold filter handles.
- *
- * Vectors of filter handles are mapped to their device. Filter handles are
- * stored in shared pointers, so when a device and its filter handles are
- * removed from the map, the reference count of all orphaned filter handles will
- * drop to zero, closing the handle.
- *
- * This container is optimized for access to vectors of all filters and vectors
- * of all filter handles. This is done by keeping a separate cache vector for
- * each that can be returned in O(1) time.
+ * The section filter subsystem is responsible for distributing DVB sections
+ * from the device to a collection of filters. A section can come from one of
+ * several resources, for example from a DVB demux file (/dev/dvb/adapterX/demuxY).
  */
-class cFilterHandleContainer
-{
-public:
-  void InsertFilter(cFilter* filter, const std::vector<FilterHandlePtr>& filterHandles);
-  void RemoveFilter(cFilter* filter);
-  void Clear(void);
-
-  const FilterHandlePtr& GetHandle(const cFilterData& data) const;
-
-  const std::vector<cFilter*>&        GetFilters(void) const { return m_filters; }
-  const std::vector<FilterHandlePtr>& GetHandles(void) const { return m_filterHandles; }
-
-private:
-  void UpdateCache(void);
-
-  std::map<cFilter*, std::vector<FilterHandlePtr> > m_container;
-  std::vector<cFilter*>                             m_filters;
-  std::vector<FilterHandlePtr>                      m_filterHandles;
-};
-
 class cDeviceSectionFilterSubsystem : protected cDeviceSubsystem, protected PLATFORM::CThread
 {
+private:
+  /*!
+   * When a client calls cDeviceSectionFilterSubsystem::GetSection(), a request
+   * to poll the specified resources is submitted to the polling thread. When
+   * one of the resources is ready to provide a section, it will be placed in
+   * m_activeResource and WaitForSection() will finish blocking.
+   */
+  class cFilterResourceRequest
+  {
+  public:
+    cFilterResourceRequest(const std::set<FilterResourcePtr>& filterResources);
+    ~cFilterResourceRequest(void) { Abort(); }
+
+    /*!
+     * Return all resources being polled.
+     */
+    const std::set<FilterResourcePtr>& GetResources(void) const { return m_resources; }
+
+    /*!
+     * Returns the resource that received the section, or an empty pointer if no
+     * resource has received a section yet.
+     */
+    FilterResourcePtr GetActiveResource(void) const { return m_activeResource; }
+
+    /*!
+     * Block until a resource receives a section. Allows the thread to sleep
+     * until one of the resources has a section ready.
+     */
+    void WaitForSection(void);
+
+    /*!
+     * Called by cDeviceSectionFilterSubsystem::HandleSection() when a section
+     * has been received from the section handler. Any threads blocking on this
+     * request via WaitForSection() will return.
+     */
+    void HandleSection(const FilterResourcePtr& resource);
+
+    void Abort(void);
+
+  private:
+    std::set<FilterResourcePtr> m_resources;      // The filter resources that this request is polling
+    FilterResourcePtr           m_activeResource; // Resource ready to be read
+    PLATFORM::CEvent            m_readyEvent;     // Fired when resource is ready to be read
+  };
+
+  typedef std::vector<shared_ptr<cFilterResourceRequest> > ResourceRequestCollection;
+
 public:
-  cDeviceSectionFilterSubsystem(cDevice *device);
-  virtual ~cDeviceSectionFilterSubsystem() { }
+  cDeviceSectionFilterSubsystem(cDevice* device);
+  virtual ~cDeviceSectionFilterSubsystem(void) { StopSectionHandler(); }
 
-  int GetSource(void);
-  int GetTransponder(void);
-  ChannelPtr GetChannel(void);
-  void SetChannel(const ChannelPtr& channel);
+  void StartSectionHandler(void);
+  void StopSectionHandler(void);
 
   /*!
-   * \brief A derived device that provides section data must call this function
-   *        (typically in its constructor) to actually set up the section handler
+   * Register/unregister a filter. This is used to track which filter resources
+   * are open.
    */
-  void StartSectionHandler();
+  void RegisterFilter(const cFilter* filter);
+  void UnregisterFilter(const cFilter* filter);
 
   /*!
-   * \brief A device that has called StartSectionHandler() must call this
-   *        function (typically in its destructor) to stop the section handler
+   * Open a resource internally for the given PID/TID. If the resource is already
+   * help by another registered filter, a pointer to the open resource will be
+   * returned instead. When all filters are destroyed, all references to a
+   * resource will be lost and the resource will close automatically
+   * (RAII pattern).
    */
-  void StopSectionHandler();
+  FilterResourcePtr OpenResource(uint16_t pid, uint8_t tid, uint8_t mask);
 
   /*!
-   * \brief Attach a filter to this device and open the necessary handles.
+   * Wait on a collection of filter resources until one of them has received a
+   * section. If this returns true, a section will be placed in data and pid
+   * will be set to the pid of the section. Blocks until a section is received
+   * or false is returned.
    */
-  void RegisterFilter(cFilter* filter);
-
-  /*!
-   * \brief Detach a filter from this device. Unused handles are automatically
-   * closed.
-   */
-  void UnregisterFilter(cFilter* filter);
+  bool GetSection(const std::set<FilterResourcePtr>& filterResources, uint16_t& pid, std::vector<uint8_t>& data);
 
 protected:
+  /*!
+   * Polling thread.
+   */
   void* Process(void);
 
   /*!
-   * \brief Reads data from a handle for the given filter
-   *
-   * A derived class need not implement this function, because this is done by
-   * the default implementation.
+   * Open a resource for the given filter data. Returns the resource, or an
+   * empty pointer if open failed or wasn't implemented.
    */
-  virtual bool ReadFilter(const FilterHandlePtr& handle, std::vector<uint8_t>& data) { return false; }
+  virtual FilterResourcePtr OpenResourceInternal(uint16_t pid, uint8_t tid, uint8_t mask) = 0;
 
   /*!
-   * \brief Wait an event on any of the provided handles
-   * \return The handle that fired the event, or empty pointer if poll timed out
+   * Read data from a resource.
    */
-  virtual FilterHandlePtr Poll(const std::vector<FilterHandlePtr>& filterHandles) { return FilterHandlePtr(); }
+  virtual bool ReadResource(const FilterResourcePtr& resource, std::vector<uint8_t>& data) = 0;
 
   /*!
-   * \brief Opens a file handle for the given filter data
-   *
-   * A derived device that provides section data must implement this function.
+   * Wait on any of the provided resources until one receives a section. Returns
+   * the resource that received the section, or an empty pointer if no filters
+   * were received by any sections.
    */
-  virtual FilterHandlePtr OpenFilter(const cFilterData& filterData) { return FilterHandlePtr(); }
+  virtual FilterResourcePtr Poll(const std::set<FilterResourcePtr>& filterResources) = 0;
 
 private:
-  cEitFilter      m_eitFilter;
-  cPatFilter      m_patFilter;
-  cSdtFilter      m_sdtFilter;
-  cNitFilter      m_nitFilter;
+  /*!
+   * Scan registered filters for an existing resource with the specified ID.
+   */
+  FilterResourcePtr GetOpenResource(uint16_t pid, uint8_t tid, uint8_t mask);
 
-  cFilterHandleContainer m_filterHandles;
+  /*!
+   * Accumulate resources of all active filters (those who are waiting on a call
+   * to GetSection()).
+   */
+  std::set<FilterResourcePtr> GetActiveResources(void);
 
-  ChannelPtr             m_channel;
-  int                    m_iStatusCount;
-  bool                   m_bEnabled;
-  VDR::EndTime           m_nextLogTimeout;
-  PLATFORM::CMutex       m_mutex;
+  /*!
+   * Called when a section has been read from the device.
+   */
+  void HandleSection(const FilterResourcePtr& resource);
+
+  ResourceRequestCollection m_activePollRequests;
+  std::set<const cFilter*>  m_registeredFilters;
+  PLATFORM::CMutex          m_mutex;
 };
+
 }

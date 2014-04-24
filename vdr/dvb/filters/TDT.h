@@ -1,7 +1,9 @@
-#pragma once
 /*
- *      Copyright (C) 2005-2012 Team XBMC
- *      http://www.xbmc.org
+ *      Copyright (C) 2013-2014 Garrett Brown
+ *      Copyright (C) 2013-2014 Lars Op den Kamp
+ *      Portions Copyright (C) 2006, 2007, 2008, 2009 Winfried Koehler
+ *      Portions Copyright (C) 2000, 2003, 2006, 2008, 2013 Klaus Schmidinger
+ *      Portions Copyright (C) 2005-2013 Team XBMC
  *
  *  This Program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -14,34 +16,31 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with XBMC; see the file COPYING.  If not, see
+ *  along with this Program; see the file COPYING. If not, see
  *  <http://www.gnu.org/licenses/>.
  *
- *
  */
+#pragma once
 
-#include "Types.h"
-#include "channels/Channel.h"
 #include "dvb/filters/Filter.h"
+#include "platform/threads/mutex.h"
 
 namespace VDR
 {
 
-class cVideoInput;
-
-class cLivePatFilter : public cFilter
+class iTdtScannerCallback
 {
-private:
-  int             m_pmtPid;
-  int             m_pmtSid;
-  int             m_pmtVersion;
-  ChannelPtr      m_Channel;
-  cVideoInput    *m_VideoInput;
-
-  virtual void ProcessData(u_short pid, u_char tid, const std::vector<uint8_t>& data);
-
 public:
-  cLivePatFilter(cDevice* device, cVideoInput *VideoInput, ChannelPtr Channel);
+  virtual ~iTdtScannerCallback() { }
+};
+
+class cTdt : public cFilter
+{
+public:
+  cTdt(cDevice* device);
+  virtual ~cTdt(void) { }
+
+  time_t GetTime(void);
 };
 
 }

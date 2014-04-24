@@ -23,11 +23,12 @@
 #include "ScanTask.h"
 #include "CountryUtils.h"
 #include "SatelliteUtils.h"
-#include "ScanFSM.h"
 #include "channels/Channel.h"
+#include "devices/Device.h"
+#include "devices/subsystems/DeviceChannelSubsystem.h"
 #include "dvb/DiSEqC.h"
 #include "sources/linux/DVBTransponderParams.h"
-#include "utils/Tools.h"
+#include "utils/log/Log.h"
 #include "settings/Settings.h"
 
 #include <assert.h>
@@ -38,9 +39,9 @@ namespace VDR
 {
 
 cScanTask::cScanTask(cDevice* device, const cFrontendCapabilities& caps)
- : m_device(device),
-   m_caps(caps),
-   m_bWait(false)
+ : m_caps(caps),
+   m_device(device),
+   m_abortableJob(NULL)
 {
   assert(m_device);
 }
@@ -53,17 +54,38 @@ void cScanTask::DoWork(fe_modulation modulation, unsigned int iChannel, eDvbcSym
 
 void cScanTask::DoWork(const ChannelPtr& channel, cSynchronousAbort* abortableJob /* = NULL */)
 {
+  m_abortableJob = abortableJob;
   if (channel == cChannel::EmptyChannel)
     return;
 
   if (abortableJob && abortableJob->IsAborting())
     return;
 
+  m_device->Channel()->SwitchChannel(channel);
+  if (m_device->Channel()->HasLock(true))
+  {
+    cPat pat(m_device);
+    ChannelVector channels = pat.GetChannels();
+
+    for (ChannelVector::const_iterator it = channels.begin(); it != channels.end(); ++it)
+      cChannelManager::Get().AddChannel(*it);
+
+    /*
+    if (m_abortableJob)
+      m_abortableJob->WaitForAbort(SCAN_TIMEOUT_MS);
+    else
+      usleep(SCAN_TIMEOUT_MS * 1000);
+    */
+
+  }
+
+  /*
   cScanFsm scanner(m_device, &cChannelManager::Get(), channel, abortableJob);
   cFiniteStateMachine<cScanFsm> fsm(scanner);
 
   while (fsm.State() != SCAN_FSM::eStop)
     fsm.Work();
+  */
 }
 
 unsigned int cScanTask::ChannelToFrequency(unsigned int channel, eChannelList channelList)
@@ -276,8 +298,6 @@ cScanTaskATSC::cScanTaskATSC(cDevice* device, const cFrontendCapabilities& caps,
 
 ChannelPtr cScanTaskATSC::GetChannel(fe_modulation modulation, unsigned int iChannel, eDvbcSymbolRate symbolRate, eOffsetType freqOffset)
 {
-  ChannelPtr channel = ChannelPtr(new cChannel);
-
   unsigned int frequency = ChannelToFrequency(iChannel, m_channelList);
   if (frequency == 0)
     return cChannel::EmptyChannel; // Skip unused channels
@@ -302,6 +322,7 @@ ChannelPtr cScanTaskATSC::GetChannel(fe_modulation modulation, unsigned int iCha
   params.SetHierarchy(HIERARCHY_NONE); // (fe_hierarchy)0
   params.SetRollOff(ROLLOFF_35); // (fe_rolloff)0
 
+  ChannelPtr channel = ChannelPtr(new cChannel);
   channel->SetTransponderData(cSource::stAtsc, frequency, cScanConfig::TranslateSymbolRate(symbolRate), params, true);
   channel->SetId(0, 0, 0, 0);
 

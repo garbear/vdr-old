@@ -21,10 +21,11 @@
 
 #pragma once
 
-#include "channels/Channel.h"
+#include "FilterResource.h"
+#include "Types.h"
 
+#include <set>
 #include <stdint.h>
-#include <sys/types.h>
 #include <vector>
 
 namespace VDR
@@ -32,70 +33,77 @@ namespace VDR
 class cSectionSyncer
 {
 public:
-  cSectionSyncer(void);
+  cSectionSyncer(void) { Reset(); }
   void Reset(void);
-  bool Sync(uchar version, int number, int lastNumber);
+
+  enum SYNC_STATUS
+  {
+    SYNC_STATUS_NOT_SYNCED,  // Not synced yet (haven't encountered section number 0)
+    SYNC_STATUS_NEW_VERSION, // Synced, and section has a new version and should be processed
+    SYNC_STATUS_OLD_VERSION, // Synced, and section has a stale version and need not be processed
+                             // (version is updated after sectionNumber == endSectionNumber)
+  };
+
+  SYNC_STATUS Sync(uchar version, int sectionNumber, int endSectionNumber);
 
 private:
-  int lastVersion;
-  bool synced;
+  uint8_t m_previousVersion;
+  bool    m_bSynced;
 };
 
 class cDevice;
-class cFilterData;
 
+/*!
+ * Parent class for DVB section filters. Encapsulates interaction with the
+ * device they were created with.
+ */
 class cFilter
 {
 public:
+  /*!
+   * Construct with a pointer to the device that owns the filter. Must remain
+   * valid for the life of this filter.
+   */
   cFilter(cDevice* device);
-  cFilter(cDevice* device, u_short pid, u_char tid, u_char mask = 0xFF);
   virtual ~cFilter(void);
 
-  void CloseHandles(void);
-
-  bool Matches(u_short Pid, u_char Tid);
-       ///< Indicates whether this filter wants to receive data from the given Pid/Tid.
-       ///< If SetStatus() changed the status to off, this will return false.
-
-  virtual void ProcessData(u_short pid, u_char tid, const std::vector<uint8_t>& data) = 0;
-       ///< Processes the data delivered to this filter.
-       ///< Pid and Tid is one of the combinations added to this filter by
-       ///< a previous call to Add(), Data is a pointer to Length bytes of
-       ///< data. This function will be called from the section handler's
-       ///< thread, so it has to use proper locking mechanisms in case it
-       ///< accesses any global data. It is guaranteed that if several cFilters
-       ///< are attached to the same cSectionHandler, only _one_ of them has
-       ///< its ProcessData() function called at any given time. It is allowed
-       ///< that more than one cFilter are set up to receive the same Pid/Tid.
-       ///< The ProcessData() function must return as soon as possible.
-
-  virtual void Enable(bool bEnabled);
-       ///< Turns this filter on or off. If the filter is turned off, any filter data
-       ///< that has been added without the Sticky parameter set to 'true' will be
-       ///< automatically deleted. Those parameters that have been added with Sticky
-       ///< set to 'true' will be automatically reused when Enable() is called.
-
-  const std::vector<cFilterData>& GetFilterData() const { return m_data; }
+  /*!
+   * Get the resources that have been opened as a result of OpenResource().
+   */
+  const std::set<FilterResourcePtr>& GetResources() const { return m_resources; }
 
 protected:
-  int Source(void);
-       ///< Returns the source of the data delivered to this filter.
-  int Transponder(void);
-       ///< Returns the transponder of the data delivered to this filter.
-  ChannelPtr Channel(void);
-       ///< Returns the channel of the data delivered to this filter.
+  /*!
+   * Open a resource so that it will be included in the resources used by the
+   * next call to GetSection(). This should be called from the constructor of
+   * the derived class.
+   */
+  void OpenResource(uint16_t pid, uint8_t tid, uint8_t mask = 0xFF);
 
-  void Set(u_short pid, u_char tid, u_char mask = 0xFF, bool bSticy = true);
-       ///< Adds the given filter data to this filter.
-       ///< If Sticky is true, this will survive a status change, otherwise
-       ///< it will be automatically deleted.
-  void Del(u_short pid, u_char tid, u_char mask = 0xFF);
-       ///< Deletes the given filter data from this filter.
+  /*!
+   * Get a section from the resources that have been opened by this filter.
+   * Blocks until a section is received! The section's PID is placed in pid
+   * and the section's data is placed in data. If no sections are received
+   * (possibly due to a timeout), this returns false and pid/data are left
+   * untouched.
+   */
+  bool GetSection(uint16_t& pid, std::vector<uint8_t>& data);
+
+  /*!
+   * Get the device that owns this filter.
+   */
+  cDevice* GetDevice(void) const { return m_device; }
+
+  // TODO: Convert to ChannelPtr after m_chanbnel is switched to ChannelPtr in cDvbTransponder
+  /*!
+   * Get the channel that this filter's device is tuned to, or an empty pointer
+   * if the device is not tuned to a channel.
+   */
+  const cChannel* GetCurrentlyTunedTransponder(void) const;
 
 private:
-  cDevice* const           m_device;
-  std::vector<cFilterData> m_data;
-  bool                     m_bEnabled;
+  cDevice* const              m_device;    // Device that this filter belongs to
+  std::set<FilterResourcePtr> m_resources; // Open resources held by this device
 };
 
 }

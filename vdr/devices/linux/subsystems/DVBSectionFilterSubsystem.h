@@ -23,6 +23,7 @@
 #include "Types.h"
 #include "devices/subsystems/DeviceSectionFilterSubsystem.h"
 
+#include <set>
 #include <stdint.h>
 #include <vector>
 
@@ -35,8 +36,8 @@ public:
   virtual ~cDvbSectionFilterSubsystem() { }
 
 protected:
-  virtual FilterHandlePtr OpenFilter(const cFilterData& filterData);
-  virtual bool ReadFilter(const FilterHandlePtr& handle, std::vector<uint8_t>& data);
-  virtual FilterHandlePtr Poll(const std::vector<FilterHandlePtr>& filterHandles);
+  virtual FilterResourcePtr OpenResourceInternal(uint16_t pid, uint8_t tid, uint8_t mask);
+  virtual bool ReadResource(const FilterResourcePtr& handle, std::vector<uint8_t>& data);
+  virtual FilterResourcePtr Poll(const std::set<FilterResourcePtr>& filterResources);
 };
 }

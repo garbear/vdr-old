@@ -1,37 +1,62 @@
 /*
- * sdt.h: SDT section filter
+ *      Copyright (C) 2013-2014 Garrett Brown
+ *      Copyright (C) 2013-2014 Lars Op den Kamp
+ *      Portions Copyright (C) 2006, 2007, 2008, 2009 Winfried Koehler
+ *      Portions Copyright (C) 2000, 2003, 2006, 2008, 2013 Klaus Schmidinger
+ *      Portions Copyright (C) 2005-2013 Team XBMC
  *
- * See the main source file 'vdr.c' for copyright information and
- * how to reach the author.
+ *  This Program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2, or (at your option)
+ *  any later version.
  *
- * $Id: sdt.h 2.0 2004/01/05 14:30:14 kls Exp $
+ *  This Program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this Program; see the file COPYING. If not, see
+ *  <http://www.gnu.org/licenses/>.
+ *
  */
-
-#ifndef __SDT_H
-#define __SDT_H
+#pragma once
 
 #include "Types.h"
-#include "Filter.h"
-#include "PAT.h"
+#include "channels/ChannelManager.h" // for ChannelVector
+#include "dvb/filters/Filter.h"
+
+#include <libsi/si.h>
 
 namespace VDR
 {
-class cSdtFilter : public cFilter
+
+class iSdtScannerCallback
 {
 public:
-  cSdtFilter(cDevice* device, cPatFilter* patFilter);
-  virtual ~cSdtFilter() { }
+  //virtual ChannelPtr SdtGetByService(int source, int tid, int sid) = 0;
+  //virtual void SdtFoundChannel(ChannelPtr channel) = 0;
+  //virtual void SdtFoundTransponder(ChannelPtr transponder) = 0;
+  /*!
+   * If an existing channel has the service, the NID is updated and the channel
+   * is returned. Otherwise, an empty channel ptr is returned.
+   */
+  virtual ChannelPtr SdtFoundService(ChannelPtr channel, int nid, int tid, int sid) = 0;
+  virtual void SdtFoundChannel(ChannelPtr channel, int nid, int tid, int sid, char* name, char* shortName, char* provider) = 0;
+  virtual ~iSdtScannerCallback() { }
+};
 
-  virtual void Enable(bool bEnabled);
+class cSdt : public cFilter
+{
+public:
+  cSdt(cDevice* device, SI::TableId tableId = SI::TableIdSDT);
+  virtual ~cSdt(void) { }
 
-protected:
-  virtual void ProcessData(u_short pid, u_char tid, const std::vector<uint8_t>& data);
+  ChannelVector GetChannels();
 
 private:
-  cSectionSyncer    m_sectionSyncer;
-  cPatFilter* const m_patFilter;
+  SI::TableId          m_tableId;
+  cSectionSyncer       m_sectionSyncer;
 };
 
 }
-
-#endif //__SDT_H

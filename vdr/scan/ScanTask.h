@@ -26,6 +26,12 @@
 #include "FrontendCapabilities.h"
 #include "ScanLimits.h"
 #include "ScanConfig.h"
+#include "dvb/filters/EIT.h"
+#include "dvb/filters/NIT.h"
+#include "dvb/filters/PAT.h"
+#include "dvb/filters/PMT.h"
+#include "dvb/filters/SDT.h"
+#include "dvb/filters/TDT.h"
 #include "Types.h"
 
 #include <linux/dvb/frontend.h>
@@ -64,9 +70,9 @@ protected:
   cFrontendCapabilities m_caps;
 
 private:
-  cDevice*         m_device;
-  PLATFORM::CEvent m_stopEvent;
-  volatile bool    m_bWait;
+  cDevice*           m_device;
+  cSynchronousAbort* m_abortableJob;
+  //std::vector<cPmtScanner*> m_pmtScanners;
 };
 
 class cScanTaskTerrestrial : public cScanTask

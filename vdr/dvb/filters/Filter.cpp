@@ -8,7 +8,7 @@
  */
 
 #include "Filter.h"
-#include "FilterData.h"
+#include "devices/subsystems/DeviceChannelSubsystem.h"
 #include "devices/subsystems/DeviceSectionFilterSubsystem.h"
 
 #include <assert.h>
@@ -16,129 +16,72 @@
 
 using namespace std;
 
+#define INVALID_VERSION  0xFF
+
 namespace VDR
 {
 
 // --- cSectionSyncer --------------------------------------------------------
 
-cSectionSyncer::cSectionSyncer(void)
-{
-  Reset();
-}
-
 void cSectionSyncer::Reset(void)
 {
-  lastVersion = 0xFF;
-  synced = false;
+  m_previousVersion = INVALID_VERSION;
+  m_bSynced = false;
 }
 
-bool cSectionSyncer::Sync(uchar version, int number, int lastNumber)
+cSectionSyncer::SYNC_STATUS cSectionSyncer::Sync(uint8_t version, int sectionNumber, int endSectionNumber)
 {
-  if (version == lastVersion)
-    return false;
+  // Wait for version change
+  if (version == m_previousVersion)
+    return SYNC_STATUS_OLD_VERSION; // No change in version
 
-  if (!synced)
+  // If we're not already synced, then sync on first section
+  if (!m_bSynced)
   {
-    if (number != 0)
-      return false; // sync on first section
-    synced = true;
+    if (sectionNumber == 0)
+      m_bSynced = true;
   }
 
-  if (number == lastNumber)
-    lastVersion = version;
+  if (!m_bSynced)
+    return SYNC_STATUS_NOT_SYNCED;
 
-  return synced;
+  // If all sections have passed by, record the new version for next time
+  if (sectionNumber == endSectionNumber)
+    m_previousVersion = version;
+
+  return SYNC_STATUS_NEW_VERSION;
 }
 
-// --- cFilter ---------------------------------------------------------------
+// --- cFilter ----------------------------------------------------------------
 
 cFilter::cFilter(cDevice* device)
- : m_device(device),
-   m_bEnabled(false)
+: m_device(device)
 {
   assert(m_device);
-}
-
-cFilter::cFilter(cDevice* device, u_short pid, u_char tid, u_char mask /* = 0xFF */)
-: m_device(device),
-  m_bEnabled(false)
-{
-  Set(pid, tid, mask);
+  m_device->SectionFilter()->RegisterFilter(this);
 }
 
 cFilter::~cFilter(void)
 {
-  Enable(false);
+  m_device->SectionFilter()->UnregisterFilter(this);
 }
 
-bool cFilter::Matches(u_short pid, u_char tid)
+void cFilter::OpenResource(u_short pid, u_char tid, u_char mask /* = 0xFF */)
 {
-  if (m_bEnabled)
-  {
-    for (vector<cFilterData>::const_iterator it = m_data.begin(); it != m_data.end(); ++it)
-    {
-      if (it->Matches(pid, tid))
-        return true;
-    }
-  }
-  return false;
+  FilterResourcePtr newResource = m_device->SectionFilter()->OpenResource(pid, tid, mask);
+
+  if (newResource)
+    m_resources.insert(newResource);
 }
 
-int cFilter::Source(void)
+bool cFilter::GetSection(uint16_t& pid, std::vector<uint8_t>& data)
 {
-  return m_device->SectionFilter()->GetSource();
+  return m_device->SectionFilter()->GetSection(m_resources, pid, data);
 }
 
-int cFilter::Transponder(void)
+const cChannel* cFilter::GetCurrentlyTunedTransponder(void) const
 {
-  return m_device->SectionFilter()->GetTransponder();
-}
-
-ChannelPtr cFilter::Channel(void)
-{
-  return m_device->SectionFilter()->GetChannel();
-}
-
-void cFilter::Enable(bool bEnabled)
-{
-  if (bEnabled != m_bEnabled)
-  {
-    if (bEnabled)
-    {
-      // Attach ourselves to our device. The device will query our filter data
-      // and open the necessary handles.
-      m_device->SectionFilter()->RegisterFilter(this);
-      m_bEnabled = true;
-    }
-    else
-    {
-      m_bEnabled = false;
-      // Remove ourselves from our device.
-      m_device->SectionFilter()->UnregisterFilter(this);
-    }
-  }
-}
-
-void cFilter::Set(u_short pid, u_char tid, u_char mask /* = 0xFF */, bool bSticky /* = true */)
-{
-  cFilterData filterData(pid, tid, mask, bSticky);
-  m_data.push_back(filterData);
-
-  // Update the open handles for this filter
-  if (m_bEnabled)
-    m_device->SectionFilter()->RegisterFilter(this);
-}
-
-void cFilter::Del(u_short pid, u_char tid, u_char mask)
-{
-  cFilterData filterData(pid, tid, mask, true);
-  vector<cFilterData>::iterator it = std::find(m_data.begin(), m_data.end(), filterData);
-  if (it != m_data.end())
-    m_data.erase(it);
-
-  // Update the open handles for this filter (expired ones will be removed)
-  if (m_bEnabled)
-    m_device->SectionFilter()->RegisterFilter(this);
+  return m_device->Channel()->GetCurrentlyTunedTransponder();
 }
 
 }

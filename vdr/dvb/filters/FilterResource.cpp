@@ -1,9 +1,7 @@
 /*
- *      Copyright (C) 2013 Garrett Brown
- *      Copyright (C) 2013 Lars Op den Kamp
- *      Portions Copyright (C) 2006, 2007, 2008, 2009 Winfried Koehler
+ *      Copyright (C) 2013-2014 Garrett Brown
+ *      Copyright (C) 2013-2014 Lars Op den Kamp
  *      Portions Copyright (C) 2000, 2003, 2006, 2008, 2013 Klaus Schmidinger
- *      Portions Copyright (C) 2005-2013 Team XBMC
  *
  *  This Program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -20,27 +18,29 @@
  *  <http://www.gnu.org/licenses/>.
  *
  */
-#pragma once
 
-#include "Types.h"
-#include "dvb/filters/Filter.h"
+#include "FilterResource.h"
 
 namespace VDR
 {
 
-class cChannelManager;
-
-class cEitScanner : public cFilter
+cFilterResource::cFilterResource(uint16_t pid, uint8_t tid, uint8_t mask)
+ : m_pid(pid),
+   m_tid(tid),
+   m_mask(mask)
 {
-public:
-  cEitScanner(cDevice* device, cChannelManager& channelManager);
-  virtual ~cEitScanner();
+}
 
-protected:
-  virtual void ProcessData(u_short pid, u_char tid, const std::vector<uint8_t>& data);
+bool cFilterResource::operator==(const cFilterResource& rhs) const
+{
+  return m_pid  == rhs.m_pid  &&
+         m_tid  == rhs.m_tid  &&
+         m_mask == rhs.m_mask;
+}
 
-private:
-  cChannelManager& m_channelManager;
-};
+bool cFilterResource::Matches(const cFilterResource& rhs) const
+{
+  return m_pid  == rhs.m_pid && (m_tid & m_mask) == (rhs.m_tid & rhs.m_mask);
+}
 
 }

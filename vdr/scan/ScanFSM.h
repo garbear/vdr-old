@@ -25,6 +25,7 @@
 #include "ScanConfig.h" // for eScanFlags
 #include "SWReceiver.h"
 #include "scanners/EITScanner.h"
+#include "scanners/MGTScanner.h"
 #include "scanners/NITScanner.h"
 #include "scanners/PATScanner.h"
 #include "scanners/PMTScanner.h"
@@ -38,6 +39,7 @@
 #include "utils/FSM.h"
 #include "utils/SynchronousAbort.h"
 
+#include <libsi/si.h>
 #include <libsi/si_ext.h>
 
 namespace VDR
@@ -66,7 +68,10 @@ enum eScanStatus
 };
 }
 
-class cScanFsm : protected iNitScannerCallback, protected iPatScannerCallback, protected iSdtScannerCallback
+class cScanFsm : protected iNitScannerCallback,
+                 protected iPatScannerCallback,
+                 protected iSdtScannerCallback,
+                 protected iMgtScannerCallback
 {
 public:
   typedef STATELIST10(SCAN_FSM::eStart,
@@ -89,7 +94,7 @@ public:
   template <int> void Exit()  { }
 
   // Scanner callbacks
-  virtual void NitFoundTransponder(ChannelPtr transponder, bool bOtherTable, int originalNid, int originalTid);
+  virtual void NitFoundTransponder(ChannelPtr transponder, SI::TableId tid, int originalNid, int originalTid);
   virtual void PatFoundChannel(ChannelPtr channel, int pid);
   virtual ChannelPtr SdtFoundService(ChannelPtr channel, int nid, int tid, int sid);
           ChannelPtr SdtGetByService(int source, int tid, int sid);

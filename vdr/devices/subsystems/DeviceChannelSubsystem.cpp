@@ -146,19 +146,17 @@ eSetChannelResult cDeviceChannelSubsystem::SetChannel(ChannelPtr channel)
   {
     //cChannelManager::Get().Lock(false); // TODO
 
-    // Stop section handling:
+    // Stop section handling
     SectionFilter()->StopSectionHandler();
-    SectionFilter()->SetChannel(cChannel::EmptyChannel);
 
     // Tell the camSlot about the channel switch and add all PIDs of this
-    // channel to it, for possible later decryption:
+    // channel to it, for possible later decryption
     if (CommonInterface()->m_camSlot)
       CommonInterface()->m_camSlot->AddChannel(*channel);
 
     if (SetChannelDevice(*channel))
     {
-      // Start section handling:
-      SectionFilter()->SetChannel(channel);
+      // Start section handling
       SectionFilter()->StartSectionHandler();
 
       // Start decrypting any PIDs that might have been set in SetChannelDevice():

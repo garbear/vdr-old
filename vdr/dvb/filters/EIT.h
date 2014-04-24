@@ -1,35 +1,57 @@
 /*
- * eit.h: EIT section filter
+ *      Copyright (C) 2013-2014 Garrett Brown
+ *      Copyright (C) 2013-2014 Lars Op den Kamp
+ *      Portions Copyright (C) 2006, 2007, 2008, 2009 Winfried Koehler
+ *      Portions Copyright (C) 2000, 2003, 2006, 2008, 2013 Klaus Schmidinger
+ *      Portions Copyright (C) 2005-2013 Team XBMC
  *
- * See the main source file 'vdr.c' for copyright information and
- * how to reach the author.
+ *  This Program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2, or (at your option)
+ *  any later version.
  *
- * $Id: eit.h 2.1 2010/01/03 15:28:34 kls Exp $
+ *  This Program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this Program; see the file COPYING. If not, see
+ *  <http://www.gnu.org/licenses/>.
+ *
  */
+#pragma once
 
-#ifndef __EIT_H
-#define __EIT_H
-
+#include "dvb/filters/Filter.h"
+#include "epg/Event.h"
 #include "Types.h"
-#include "Filter.h"
-#include "utils/DateTime.h"
+
+#include <libsi/descriptor.h>
+#include <libsi/si.h>
+#include <stdint.h>
 
 namespace VDR
 {
-class cEitFilter : public cFilter
+
+class cEvent;
+
+class cChannelManager;
+
+class cEit : public cFilter
 {
 public:
-  cEitFilter(cDevice* device);
-  virtual ~cEitFilter(void) { }
+  cEit(cDevice* device, cChannelManager& channelManager);
+  virtual ~cEit(void) { }
 
-protected:
-  virtual void ProcessData(u_short pid, u_char tid, const std::vector<uint8_t>& data);
-  static void SetDisableUntil(const CDateTime& time);
+  EventVector GetEvents();
 
 private:
-  static CDateTime m_disableUntil;
+  void GetText(SI::Descriptor* d, uint8_t tid, uint16_t nid, uint16_t tsid,
+      std::string& strTitle, std::string& strShortText, std::string& strDescription);
+  void GetContents(SI::ContentDescriptor* cd, std::vector<uint8_t>& contents);
+
+  cChannelManager&              m_channelManager;
+  SI::ExtendedEventDescriptors* m_extendedEventDescriptors;
 };
 
 }
-
-#endif //__EIT_H
