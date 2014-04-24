@@ -71,7 +71,7 @@ public:
    u_int32_t FourBytes(const int index) const { return data_->data ? data_->FourBytes(off+index) : u_int32_t(0); }
 
    bool isValid() const { return data_->valid; }
-   bool checkSize(int offset) { return (data_->valid && (data_->valid=(offset>=0 && off+offset < data_->size))); }
+   bool checkSize(int offset);
 
    void addOffset(int offset) { off+=offset; }
 private:

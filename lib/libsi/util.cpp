@@ -175,6 +175,12 @@ void CharArray::Data::Unlock(void)
 }
 */
 
+bool CharArray::checkSize(int offset)
+{
+  data_->valid = (offset >= 0 && off + offset < data_->size);
+  return data_->valid;
+}
+
 Parsable::Parsable() {
    parsed=false;
 }
