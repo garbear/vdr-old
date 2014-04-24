@@ -114,14 +114,6 @@ public:
   ChannelPtr GetByTransponderID(tChannelID channelID);
 
   /*!
-   * Get all channels that match the given source and transponder
-   * @param iSource The source of the channels
-   * @param iTransponder The transponder of the channels
-   * @return The list of channels for this transponder
-   */
-  ChannelVector GetByTransponder(int iSource, int iTransponder);
-
-  /*!
    * \brief The documentation claims: "Recalculate 'number' based on channel type" (TODO)
    */
   void ReNumber();
@@ -151,7 +143,7 @@ public:
   std::vector<ChannelPtr> GetCurrent(void) const;
   void CreateChannelGroups(bool automatic);
 
-  unsigned int ChannelCount() const { return m_channels.size(); }
+  unsigned int ChannelCount() const;
 
 private:
   typedef std::map<int, ChannelVector> ChannelSidMap;

@@ -330,6 +330,8 @@ ChannelPtr cChannelManager::GetByServiceID(const ChannelVector& channels, int se
 
 ChannelPtr cChannelManager::GetByChannelID(const tChannelID &channelID, bool bTryWithoutRid /* = false */, bool bTryWithoutPolarization /* = false */)
 {
+  CLockObject lock(m_mutex);
+
   int serviceID = channelID.Sid();
   ChannelSidMap::iterator it = m_channelSids.find(serviceID);
   if (it != m_channelSids.end())
@@ -374,6 +376,8 @@ ChannelPtr cChannelManager::GetByChannelID(const tChannelID &channelID, bool bTr
 
 ChannelPtr cChannelManager::GetByChannelID(int nid, int tid, int sid)
 {
+  CLockObject lock(m_mutex);
+
   ChannelSidMap::iterator it = m_channelSids.find(sid);
   if (it != m_channelSids.end())
   {
@@ -461,6 +465,7 @@ ChannelPtr cChannelManager::NewChannel(const cChannel& transponder, const string
 
 void cChannelManager::AddTransponders(cScanList* list) const
 {
+  CLockObject lock(m_mutex);
   for (std::vector<ChannelPtr>::const_iterator it = m_channels.begin(); it != m_channels.end(); it++)
     list->AddTransponder(*it);
 }
@@ -512,4 +517,10 @@ void cChannelManager::CreateChannelGroups(bool automatic)
       CChannelGroups::Get(isRadio).AddGroup(group);
     }
   }
+}
+
+unsigned int cChannelManager::ChannelCount() const
+{
+  CLockObject lock(m_mutex);
+  return m_channels.size();
 }
