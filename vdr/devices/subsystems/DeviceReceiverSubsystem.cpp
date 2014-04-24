@@ -71,8 +71,7 @@ bool cDeviceReceiverSubsystem::AttachReceiver(cReceiver *receiver)
     return true;
   }
 #if WAIT_FOR_TUNER_LOCK
-#define TUNER_LOCK_TIMEOUT 5000 // ms
-  if (!Channel()->HasLock(TUNER_LOCK_TIMEOUT))
+  if (!Channel()->HasLock(true))
   {
     esyslog("ERROR: device %d has no lock, can't attach receiver!", Device()->CardIndex() + 1);
     return false;

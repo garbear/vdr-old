@@ -157,7 +157,7 @@ public:
    * \return Default is true, a specific device implementation may return false
    *         to indicate that it is not ready yet.
    */
-  virtual bool HasLock(unsigned int timeoutMs = 0) const { return true; }
+  virtual bool HasLock(bool bWait) const { return true; }
 
   /*!
    * \brief Returns true if the device is currently showing any programme to the

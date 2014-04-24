@@ -75,7 +75,7 @@ public:
   bool IsTunedTo(const cChannel &channel) const;
   void SetChannel(const cChannel &channel);
   void ClearChannel();
-  bool Locked(int timeoutMs = 0);
+  bool HasLock(bool bWait);
   int GetSignalStrength() const;
   int GetSignalQuality() const;
 
@@ -133,7 +133,7 @@ private:
   bool                        m_bLnbPowerTurnedOn;
   eTunerStatus                m_tunerStatus;
   PLATFORM::CMutex            m_mutex;
-  PLATFORM::CCondition<bool>  m_locked;
+  PLATFORM::CEvent            m_lockedEvent;
   PLATFORM::CCondition<bool>  m_newSet;
   cDvbTuner*                  m_bondedTuner;
   bool                        m_bBondedMaster;

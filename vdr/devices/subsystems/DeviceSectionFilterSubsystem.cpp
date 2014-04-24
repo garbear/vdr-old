@@ -187,7 +187,7 @@ void* cDeviceSectionFilterSubsystem::Process(void)
     FilterHandlePtr handle = Poll(filterHandles);
     if (handle)
     {
-      bool bDeviceHasLock = Channel()->HasLock();
+      bool bDeviceHasLock = Channel()->HasLock(false);
       if (!bDeviceHasLock)
         usleep(100 * 1000); // 100ms
 

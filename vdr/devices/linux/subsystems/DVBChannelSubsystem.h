@@ -52,7 +52,7 @@ public:
   void ForceTransferMode();
   unsigned int Occupied() const;
   void SetOccupied(unsigned int seconds);
-  virtual bool HasLock(unsigned int timeoutMs = 0) const;
+  virtual bool HasLock(bool bWait) const;
 
 protected:
   virtual bool SetChannelDevice(const cChannel &channel);

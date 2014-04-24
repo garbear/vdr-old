@@ -79,7 +79,6 @@ cDvbTuner::cDvbTuner(cDvbDevice *device)
    m_tunerStatus(tsIdle),
    m_bondedTuner(NULL),
    m_bBondedMaster(false),
-   m_bLocked(false),
    m_bNewSet(false)
 {
 }
@@ -218,7 +217,7 @@ void cDvbTuner::Close()
 
   SetTunerStatus(tsIdle);
   m_newSet.Broadcast();
-  m_locked.Broadcast();
+  m_lockedEvent.Broadcast();
   StopThread(3000);
   UnBond();
   /* looks like this irritates the SCR switch, so let's leave it out for now
@@ -367,8 +366,7 @@ void *cDvbTuner::Process()
           LostLock = false;
         }
         SetTunerStatus(tsLocked);
-        m_bLocked = m_tunerStatus >= tsLocked;
-        m_locked.Broadcast();
+        m_lockedEvent.Broadcast();
         m_lastTimeoutReport = 0;
       }
       else if (m_tunerStatus == tsLocked)
@@ -488,6 +486,8 @@ cDvbTuner *cDvbTuner::GetBondedMaster()
 
 bool cDvbTuner::IsTunedTo(const cChannel &channel) const
 {
+  CLockObject lock(m_bondMutex);
+
   if (m_tunerStatus == tsIdle)
     return false; // not tuned to
   if (m_channel.Source() != channel.Source() || m_channel.TransponderFrequency() != channel.TransponderFrequency())
@@ -537,18 +537,23 @@ void cDvbTuner::ClearChannel()
 //    cDeviceManager::Get().PrimaryDevice()->PID()->DelLivePids(); // 'device' is const, so we must do it this way
 }
 
-bool cDvbTuner::Locked(int timeoutMs)
+bool cDvbTuner::HasLock(bool bWait)
 {
-  bool isLocked = (m_tunerStatus >= tsLocked);
-  if (isLocked || !timeoutMs)
-    return isLocked;
+  const unsigned int timeoutMs = ATSC_LOCK_TIMEOUT + 1000; // TODO
 
-  CLockObject lock(m_mutex);
+  bool bIsLocked;
+  {
+    CLockObject lock(m_mutex);
+    bIsLocked = (m_tunerStatus >= tsLocked);
+  }
 
-  m_bLocked = m_tunerStatus >= tsLocked;
-  if (timeoutMs && m_tunerStatus < tsLocked)
-    m_locked.Wait(m_mutex, m_bLocked, timeoutMs);
-  return m_tunerStatus >= tsLocked;
+  if (!bIsLocked && bWait)
+    m_lockedEvent.Wait(timeoutMs);
+
+  {
+    CLockObject lock(m_mutex);
+    return m_tunerStatus >= tsLocked;
+  }
 }
 
 void cDvbTuner::ClearEventQueue() const

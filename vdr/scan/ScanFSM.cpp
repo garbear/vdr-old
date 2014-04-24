@@ -75,7 +75,7 @@ template <> int cScanFsm::Event<eTune>()
 
   m_device->Channel()->SwitchChannel(m_currentTransponder);
 
-  if (m_device->Channel()->HasLock(LOCK_TIMEOUT_MS))
+  if (m_device->Channel()->HasLock(true))
     return eScanNit;
   else
     return eNextTransponder;

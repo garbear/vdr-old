@@ -25,6 +25,7 @@
 #include "devices/linux/DVBDevice.h"
 #include "devices/linux/DVBTuner.h"
 #include "devices/linux/subsystems/DVBChannelSubsystem.h"
+#include "devices/linux/test/DVBDeviceNames.h"
 #include "filesystem/SpecialProtocol.h"
 #include "gtest/gtest.h"
 
@@ -154,7 +155,7 @@ TEST(DvbTuner, Getters)
   }
 }
 
-TEST(DvbTuner, Locked)
+TEST(DvbTuner, HasLock)
 {
   // Load a channel
   cChannelManager channelManager;
@@ -178,10 +179,12 @@ TEST(DvbTuner, Locked)
 
     EXPECT_STRNE("", tuner.Name().c_str());
 
+    EXPECT_FALSE(tuner.HasLock(false)); // 10s
     EXPECT_FALSE(tuner.IsTunedTo(*channel));
     tuner.SetChannel(*channel);
+    EXPECT_FALSE(tuner.HasLock(false)); // 10s
+    EXPECT_TRUE(tuner.HasLock(true)); // 10s
     EXPECT_TRUE(tuner.IsTunedTo(*channel));
-    EXPECT_TRUE(tuner.Locked(10 * 1000)); // 10s
   }
 }
 

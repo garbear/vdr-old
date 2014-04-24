@@ -201,10 +201,10 @@ bool cDvbChannelSubsystem::MaySwitchTransponder(const cChannel &channel) const
       cDeviceChannelSubsystem::MaySwitchTransponder(channel);
 }
 
-bool cDvbChannelSubsystem::HasLock(unsigned int timeoutMs) const
+bool cDvbChannelSubsystem::HasLock(bool bWait) const
 {
   if (GetDevice<cDvbDevice>()->m_dvbTuner.IsOpen())
-    return GetDevice<cDvbDevice>()->m_dvbTuner.Locked(timeoutMs);
+    return GetDevice<cDvbDevice>()->m_dvbTuner.HasLock(bWait);
   return false;
 }
 
