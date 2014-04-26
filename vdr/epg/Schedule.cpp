@@ -1,11 +1,14 @@
 #include "Schedule.h"
 #include "EPG.h"
+#include "Components.h"
 #include "EPGDefinitions.h"
 #include "Config.h"
 #include "channels/Channel.h"
 #include "channels/ChannelManager.h"
 #include "utils/XBMCTinyXML.h"
 #include "settings/Settings.h"
+
+#include <algorithm>
 
 namespace VDR
 {
@@ -18,22 +21,43 @@ cSchedule::cSchedule(tChannelID ChannelID)
   hasRunning  = false;
 }
 
-cEvent *cSchedule::AddEvent(cEvent *Event)
+void cSchedule::AddEvent(const EventPtr& event)
 {
-  events.Add(Event);
-  Event->schedule = this;
-  HashEvent(Event);
-  return Event;
+  EventPtr existingEvent = GetEvent(event->EventID(), event->StartTime());
+  if (existingEvent)
+  {
+    // We have found an existing event, either through its event ID or its start time.
+    //*existingEvent = *event;
+    existingEvent->SetSeen();
+    existingEvent->SetEventID(event->EventID());
+    existingEvent->SetStartTime(event->StartTime());
+    existingEvent->SetDuration(event->Duration());
+    existingEvent->SetVersion(event->Version());
+    existingEvent->SetTitle(event->Title());
+    existingEvent->SetShortText(event->ShortText());
+    existingEvent->SetDescription(event->Description());
+    existingEvent->SetTableID(event->TableID());
+    existingEvent->SetComponents(const_cast<CEpgComponents*>(event->Components()));
+    existingEvent->FixEpgBugs();
+  }
+  else
+  {
+    event->schedule = this;
+    m_events.push_back(event);
+    HashEvent(event.get());
+  }
 }
 
-void cSchedule::DelEvent(cEvent *Event)
+void cSchedule::DelEvent(const EventPtr& event)
 {
-  if (Event->schedule == this)
+  if (event->schedule == this)
   {
-    if (hasRunning && Event->IsRunning())
+    if (hasRunning && event->IsRunning())
       ClrRunningStatus();
-    UnhashEvent(Event);
-    events.Del(Event);
+    UnhashEvent(event.get());
+    EventVector::iterator it = std::find(m_events.begin(), m_events.end(), event);
+    if (it != m_events.end())
+      m_events.erase(it);
   }
 }
 
@@ -51,72 +75,113 @@ void cSchedule::UnhashEvent(cEvent *Event)
     eventsHashStartTime.Del(Event, Event->StartTimeAsTime());
 }
 
-const cEvent *cSchedule::GetPresentEvent(void) const
+EventPtr cSchedule::GetPresentEvent(void) const
 {
-  const cEvent *pe = NULL;
+  EventPtr presentEvent;
   CDateTime now = CDateTime::GetUTCDateTime();
-  for (cEvent *p = events.First(); p; p = events.Next(p))
+  for (EventVector::const_iterator it = m_events.begin(); it != m_events.end(); ++it)
   {
-    if (p->StartTime() <= now)
-      pe = p;
-    else if (p->StartTime() > now + CDateTimeSpan(0, 1, 0, 0))
+    const EventPtr& event = *it;
+
+    if (event->StartTime() <= now)
+      presentEvent = event;
+    else if (event->StartTime() > now + CDateTimeSpan(0, 1, 0, 0))
       break;
-    if (p->SeenWithin(RUNNINGSTATUSTIMEOUT)
-        && p->RunningStatus() >= SI::RunningStatusPausing)
-      return p;
+
+    if (event->SeenWithin(RUNNINGSTATUSTIMEOUT) &&
+          event->RunningStatus() >= SI::RunningStatusPausing)
+    {
+      presentEvent = event;
+      break;
+    }
   }
-  return pe;
+  return presentEvent;
 }
 
-const cEvent *cSchedule::GetFollowingEvent(void) const
+EventPtr cSchedule::GetFollowingEvent(void) const
 {
-  const cEvent *p = GetPresentEvent();
-  if (p)
-    p = events.Next(p);
+  EventPtr event = GetPresentEvent();
+
+  if (event)
+  {
+    // Get the next event
+    for (EventVector::const_iterator it = m_events.begin(); it != m_events.end(); ++it)
+    {
+      if (event == *it && (it + 1) != m_events.end())
+      {
+        event = *(it + 1);
+        break;
+      }
+    }
+  }
   else
   {
     CDateTime now = CDateTime::GetUTCDateTime();
-    for (p = events.First(); p; p = events.Next(p))
+    for (EventVector::const_iterator it = m_events.begin(); it != m_events.end(); ++it)
     {
-      if (p->StartTime() >= now)
+      if ((*it)->StartTime() >= now)
+      {
+        event = *it;
         break;
+      }
     }
   }
-  return p;
+  return event;
 }
 
-cEvent *cSchedule::GetEvent(tEventID EventID, CDateTime StartTime /* = CDateTime::GetCurrentDateTime() */)
+EventPtr cSchedule::GetEvent(tEventID EventID, CDateTime StartTime /* = CDateTime::GetCurrentDateTime() */)
 {
+  EventPtr event;
+
   // Returns the event info with the given StartTime or, if no actual StartTime
   // is given, the one with the given EventID.
+  cEvent* eventRawPtr = NULL;
   if (StartTime.IsValid()) // 'StartTime < 0' is apparently used with NVOD channels
   {
     time_t tmStart;
     StartTime.GetAsTime(tmStart);
-    return eventsHashStartTime.Get(tmStart);
+    eventRawPtr = eventsHashStartTime.Get(tmStart);
   }
   else
-    return eventsHashID.Get(EventID);
-}
+    eventRawPtr = eventsHashID.Get(EventID);
 
-void cSchedule::SetRunningStatus(cEvent *Event, int RunningStatus, cChannel *Channel)
-{
-  hasRunning = false;
-  for (cEvent *p = events.First(); p; p = events.Next(p))
+  if (eventRawPtr)
   {
-    if (p == Event)
+    // Look for corresponding shared pointer
+    for (EventVector::const_iterator it = m_events.begin(); it != m_events.end(); ++it)
     {
-      if (p->RunningStatus() > SI::RunningStatusNotRunning
-          || RunningStatus > SI::RunningStatusNotRunning)
+      if (eventRawPtr == it->get())
       {
-        p->SetRunningStatus(RunningStatus, Channel);
+        event = *it;
         break;
       }
     }
-    else if (RunningStatus >= SI::RunningStatusPausing
-        && p->StartTime() < Event->StartTime())
-      p->SetRunningStatus(SI::RunningStatusNotRunning);
-    if (p->RunningStatus() >= SI::RunningStatusPausing)
+  }
+
+  return event;
+}
+
+void cSchedule::SetRunningStatus(const EventPtr& event, int RunningStatus, cChannel *Channel)
+{
+  hasRunning = false;
+  for (EventVector::iterator it = m_events.begin(); it != m_events.end(); ++it)
+  {
+    if (*it == event)
+    {
+      if ((*it)->RunningStatus() > SI::RunningStatusNotRunning  ||
+                   RunningStatus > SI::RunningStatusNotRunning)
+      {
+        (*it)->SetRunningStatus(RunningStatus, Channel);
+        break;
+      }
+    }
+    else if (RunningStatus >= SI::RunningStatusPausing &&
+        (*it)->StartTime() < event->StartTime())
+    {
+      (*it)->SetRunningStatus(SI::RunningStatusNotRunning);
+    }
+
+    if ((*it)->RunningStatus() >= SI::RunningStatusPausing)
       hasRunning = true;
   }
 }
@@ -125,11 +190,11 @@ void cSchedule::ClrRunningStatus(cChannel *Channel)
 {
   if (hasRunning)
   {
-    for (cEvent *p = events.First(); p; p = events.Next(p))
+    for (EventVector::const_iterator it = m_events.begin(); it != m_events.end(); ++it)
     {
-      if (p->RunningStatus() >= SI::RunningStatusPausing)
+      if ((*it)->RunningStatus() >= SI::RunningStatusPausing)
       {
-        p->SetRunningStatus(SI::RunningStatusNotRunning, Channel);
+        (*it)->SetRunningStatus(SI::RunningStatusNotRunning, Channel);
         hasRunning = false;
         break;
       }
@@ -139,21 +204,24 @@ void cSchedule::ClrRunningStatus(cChannel *Channel)
 
 void cSchedule::ResetVersions(void)
 {
-  for (cEvent *p = events.First(); p; p = events.Next(p))
-    p->SetVersion(0xFF);
+  for (EventVector::const_iterator it = m_events.begin(); it != m_events.end(); ++it)
+    (*it)->SetVersion(0xFF);
 }
 
 void cSchedule::Sort(void)
 {
-  events.Sort();
+  // TODO: Should we be sorting by pointer?
+  //events.Sort();
+  std::sort(m_events.begin(), m_events.end());
+
   // Make sure there are no RunningStatusUndefined before the currently running event:
   if (hasRunning)
   {
-    for (cEvent *p = events.First(); p; p = events.Next(p))
+    for (EventVector::const_iterator it = m_events.begin(); it != m_events.end(); ++it)
     {
-      if (p->RunningStatus() >= SI::RunningStatusPausing)
+      if ((*it)->RunningStatus() >= SI::RunningStatusPausing)
         break;
-      p->SetRunningStatus(SI::RunningStatusNotRunning);
+      (*it)->SetRunningStatus(SI::RunningStatusNotRunning);
     }
   }
 }
@@ -162,26 +230,27 @@ void cSchedule::DropOutdated(const CDateTime& SegmentStart, const CDateTime& Seg
 {
   if (SegmentStart.IsValid() && SegmentEnd.IsValid())
   {
-    for (cEvent *p = events.First(); p; p = events.Next(p))
+    for (EventVector::const_iterator it = m_events.begin(); it != m_events.end(); ++it)
     {
-      if (p->EndTime() > SegmentStart)
+      const EventPtr& event = *it;
+      if (event->EndTime() > SegmentStart)
       {
-        if (p->StartTime() < SegmentEnd)
+        if (event->StartTime() < SegmentEnd)
         {
           // The event overlaps with the given time segment.
-          if (p->TableID() > TableID
-              || (p->TableID() == TableID && p->Version() != Version))
+          if (event->TableID() > TableID ||
+              (event->TableID() == TableID && event->Version() != Version))
           {
             // The segment overwrites all events from tables with higher ids, and
             // within the same table id all events must have the same version.
             // We can't delete the event right here because a timer might have
             // a pointer to it, so let's set its id and start time to 0 to have it
             // "phased out":
-            if (hasRunning && p->IsRunning())
+            if (hasRunning && event->IsRunning())
               ClrRunningStatus();
-            UnhashEvent(p);
-            p->eventID = 0;
-            p->m_startTime.Reset();
+            UnhashEvent(event.get());
+            event->eventID = 0;
+            event->m_startTime.Reset();
           }
         }
         else
@@ -198,16 +267,21 @@ void cSchedule::Cleanup(void)
 
 void cSchedule::Cleanup(const CDateTime& Time)
 {
-  cEvent *Event;
-  while ((Event = events.First()) != NULL)
+  for (EventVector::const_iterator it = m_events.begin(); it != m_events.end(); )
   {
-    if (!Event->HasTimer() && (!Time.IsValid() || (Event->EndTime() + CDateTimeSpan(0, 1, cSettings::Get().m_iEPGLinger, 0)) < Time)) // adding one hour for safety
+    const EventPtr& event = *it;
+
+    static const CDateTimeSpan oneHour(0, 1, 0, 0); // Add one hour for safety
+    if (!event->HasTimer() &&
+        (!Time.IsValid() ||
+            (event->EndTime() + CDateTimeSpan(0, 0, cSettings::Get().m_iEPGLinger, 0) + oneHour) < Time))
     {
       modified = CDateTime::GetCurrentDateTime();
-      DelEvent(Event);
+      // TODO: Need a safer way to delete while iterating!
+      DelEvent(event);
     }
     else
-      break;
+      ++it;
   }
 }
 
@@ -296,10 +370,9 @@ bool cSchedule::Serialise(TiXmlNode *node) const
 
   epgElement->SetAttribute(EPG_XML_ATTR_CHANNEL, channelID.Serialize());
 
-  cEvent* p;
-  for (p = events.First(); p; p = events.Next(p))
+  for (EventVector::const_iterator it = m_events.begin(); it != m_events.end(); ++it)
   {
-    if (!p->Serialise(epgElement))
+    if (!(*it)->Serialise(epgElement))
       return false;
   }
 

@@ -463,13 +463,6 @@ ChannelPtr cChannelManager::NewChannel(const cChannel& transponder, const string
   return newChannel;
 }
 
-void cChannelManager::AddTransponders(cScanList* list) const
-{
-  CLockObject lock(m_mutex);
-  for (std::vector<ChannelPtr>::const_iterator it = m_channels.begin(); it != m_channels.end(); it++)
-    list->AddTransponder(*it);
-}
-
 ChannelPtr cChannelManager::GetByChannelUID(uint32_t channelUID) const
 {
   ChannelPtr result;

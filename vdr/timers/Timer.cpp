@@ -285,12 +285,12 @@ void cTimer::SetEventFromSchedule(cSchedules *Schedules)
         return;
      }
   SchedulePtr Schedule = Schedules->GetSchedule(Channel());
-  if (Schedule && Schedule->Events()->First()) {
+  if (Schedule && !Schedule->Events().empty()) {
     CDateTime now = CDateTime::GetUTCDateTime();
      if (!m_lastEPGEventCheck.IsValid() || Schedule->Modified() >= m_lastEPGEventCheck) {
         m_lastEPGEventCheck = now;
-        const cEvent *Event = NULL;
-        if (HasFlags(tfVps) && Schedule->Events()->First()->HasVps()) {
+        EventPtr event;
+        if (HasFlags(tfVps) && Schedule->Events().at(0)->HasVps()) {
            if (m_time.EPGEvent() && m_time.EPGEvent()->StartTime().IsValid()) { // checks for "phased out" events
               if (Recording())
                  return; // let the recording end first
@@ -298,12 +298,12 @@ void cTimer::SetEventFromSchedule(cSchedules *Schedules)
                  return; // stay with the old event until the timer has completely expired
               }
            // VPS timers only match if their start time exactly matches the event's VPS time:
-           for (const cEvent *e = Schedule->Events()->First(); e; e = Schedule->Events()->Next(e)) {
-               if (e->StartTime().IsValid() && e->RunningStatus() != SI::RunningStatusNotRunning) { // skip outdated events
+           for (EventVector::const_iterator itEvent = Schedule->Events().begin(); itEvent != Schedule->Events().end(); ++itEvent) {
+               if ((*itEvent)->StartTime().IsValid() && (*itEvent)->RunningStatus() != SI::RunningStatusNotRunning) { // skip outdated events
                   int overlap = 0;
-                  MatchesEvent(e, &overlap);
+                  MatchesEvent(itEvent->get(), &overlap);
                   if (overlap > FULLMATCH) {
-                     Event = e;
+                     event = *itEvent;
                      break; // take the first matching event
                      }
                   }
@@ -316,22 +316,22 @@ void cTimer::SetEventFromSchedule(cSchedules *Schedules)
            Matches(0, true);
            CDateTime TimeFrameBegin = m_time.Start() - CDateTimeSpan(0, 0, 0, EPGLIMITBEFORE);
            CDateTime TimeFrameEnd   = m_time.End()  + CDateTimeSpan(0, 0, 0, EPGLIMITAFTER);
-           for (const cEvent *e = Schedule->Events()->First(); e; e = Schedule->Events()->Next(e)) {
-               if (e->EndTime() < TimeFrameBegin)
+           for (EventVector::const_iterator itEvent = Schedule->Events().begin(); itEvent != Schedule->Events().end(); ++itEvent) {
+               if ((*itEvent)->EndTime() < TimeFrameBegin)
                   continue; // skip events way before the timer starts
-               if (e->StartTime() > TimeFrameEnd)
+               if ((*itEvent)->StartTime() > TimeFrameEnd)
                   break; // the rest is way after the timer ends
                int overlap = 0;
-               MatchesEvent(e, &overlap);
+               MatchesEvent(itEvent->get(), &overlap);
                if (overlap && overlap >= Overlap) {
-                  if (Event && overlap == Overlap && e->Duration() <= Event->Duration())
+                  if (event && overlap == Overlap && (*itEvent)->Duration() <= event->Duration())
                      continue; // if overlap is the same, we take the longer event
                   Overlap = overlap;
-                  Event = e;
+                  event = *itEvent;
                   }
                }
            }
-        SetEvent(Event);
+        SetEvent(event.get()); // TODO: Convert SetEvent() to use shared ptr
         }
      }
 }

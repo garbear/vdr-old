@@ -23,6 +23,7 @@
 
 #include "EIT.h"
 #include "channels/Channel.h"
+#include "channels/ChannelID.h"
 #include "channels/ChannelManager.h"
 #include "epg/Components.h"
 #include "epg/EPG.h"
@@ -48,34 +49,6 @@ using namespace std;
 
 namespace VDR
 {
-
-// TODO: Move this to schedules
-cEvent* GetEvent(int source, uint16_t nid, uint16_t tid, uint16_t sid, tEventID eventId)
-{
-  SchedulePtr schedule;
-
-  cSchedulesLock schedulesLock(true, 10);
-  cSchedules* schedules = schedulesLock.Get();
-
-  if (schedules)
-    schedule = schedules->GetSchedule(tChannelID(source, nid, tid, sid));
-  else
-  {
-    // If we don't get a write lock, let's at least get a read lock, so
-    // that we can set the running status and 'seen' timestamp (well, actually
-    // with a read lock we shouldn't be doing that, but it's only integers that
-    // get changed, so it should be ok)
-    cSchedulesLock schedulesLock;
-    cSchedules* schedules = schedulesLock.Get();
-    if (schedules)
-      schedule = schedules->GetSchedule(tChannelID(source, nid, tid, sid));
-  }
-
-  if (schedule)
-    return schedule->GetEvent(eventId);
-
-  return NULL;
-}
 
 cEit::cEit(cDevice* device, cChannelManager& channelManager)
  : cFilter(device),
@@ -478,8 +451,12 @@ void cEit::GetText(SI::Descriptor* d, uint8_t tid, uint16_t nid, uint16_t tsid,
     SI::TimeShiftedEventDescriptor* tsed = (SI::TimeShiftedEventDescriptor*)d;
 
     assert(GetCurrentlyTunedTransponder() != NULL); // TODO
-    cEvent* rEvent = GetEvent(GetCurrentlyTunedTransponder()->Source(), nid, tsid,
-        tsed->getReferenceServiceId(), tsed->getReferenceEventId());
+    tChannelID channelId(GetCurrentlyTunedTransponder()->Source(), // Source
+                         nid,                                      // NID
+                         tsid,                                     // TID
+                         tsed->getReferenceServiceId());           // SID
+
+    EventPtr rEvent = cSchedulesLock::GetEvent(channelId, tsed->getReferenceEventId());
     if (rEvent)
     {
       strTitle = rEvent->Title();

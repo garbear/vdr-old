@@ -898,7 +898,7 @@ void AddEventElement(TiXmlElement* eventElement, const std::string& strElement, 
 bool cEvent::Deserialise(cSchedule* schedule, const TiXmlNode *eventNode)
 {
   bool bNewEvent(false);
-  cEvent* event(NULL);
+  EventPtr event;
   assert(schedule);
   assert(eventNode);
 
@@ -915,10 +915,12 @@ bool cEvent::Deserialise(cSchedule* schedule, const TiXmlNode *eventNode)
   {
     tEventID EventID = (tEventID)StringUtils::IntVal(id);
     CDateTime startTime = CDateTime((time_t)StringUtils::IntVal(start));
+
     event = schedule->GetEvent(EventID, startTime);
+
     if (!event)
     {
-      event = new cEvent(EventID);
+      event = EventPtr(new cEvent(EventID));
       event->m_startTime = startTime;
       bNewEvent = true;
     }
@@ -982,7 +984,7 @@ bool cEvent::Deserialise(cSchedule* schedule, const TiXmlNode *eventNode)
     if (bNewEvent)
       schedule->AddEvent(event);
     else
-      schedule->HashEvent(event);
+      schedule->HashEvent(event.get());
 
     return true;
   }

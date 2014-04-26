@@ -8,203 +8,192 @@
  */
 
 #include "EITScan.h"
-#include <stdlib.h>
 #include "channels/ChannelManager.h"
 #include "devices/Transfer.h"
 #include "devices/DeviceManager.h"
 #include "devices/subsystems/DeviceChannelSubsystem.h"
 #include "devices/subsystems/DeviceReceiverSubsystem.h"
+#include "dvb/filters/PSIP_MGT.h"
+#include "epg/EPG.h"
 #include "settings/Settings.h"
+
+#include <algorithm>
+#include <stdlib.h>
+#include <unistd.h> // for sleep()
+
+using namespace PLATFORM;
+using namespace std;
 
 namespace VDR
 {
 
 #define SCAN_TRANSPONDER_TIMEOUT_MS (20 * 1000)
 
-class cTransponderList
-{
-public:
-  void AddTransponder(ChannelPtr Channel);
-  void AddTranspondersToScanList(cScanList& scanlist) const;
-
-private:
-  std::vector<ChannelPtr> m_channels;
-};
-
-// --- cScanData -------------------------------------------------------------
-
-cScanData::cScanData(ChannelPtr channel)
-{
-  m_channel = channel;
-  m_bScanned = false;
-}
-
-cScanData::~cScanData(void)
-{
-}
-
-int
-cScanData::Source(void) const
-{
-  return m_channel->Source();
-}
-
-int
-cScanData::Transponder(void) const
-{
-  return m_channel->TransponderFrequency();
-}
-
 // --- cScanList -------------------------------------------------------------
 
-void
-cScanList::AddTransponders(const cTransponderList& Channels)
+void cScanList::AddTransponder(const ChannelPtr& channel)
 {
-  Channels.AddTranspondersToScanList(*this);
-}
-
-void
-cScanList::AddTransponders(const cChannelManager& channels)
-{
-  channels.AddTransponders(this);
-}
-
-void
-cScanList::AddTransponder(ChannelPtr Channel)
-{
-  if (Channel->Source() && Channel->TransponderFrequency())
+  if (channel->Source() && channel->TransponderFrequency())
   {
-    for (std::vector<cScanData>::const_iterator it = m_list.begin(); it != m_list.end(); ++it)
+    for (vector<cScanData>::const_iterator it = m_list.begin(); it != m_list.end(); ++it)
     {
-      if ((*it).Source() == Channel->Source() &&
-          ISTRANSPONDER((*it).Transponder(), Channel->TransponderFrequency()))
+      if (it->GetChannel()->Source() == channel->Source() &&
+          ISTRANSPONDER(it->GetChannel()->TransponderFrequency(), channel->TransponderFrequency()))
         return;
     }
-    m_list.push_back(cScanData(Channel));
+    m_list.push_back(cScanData(channel));
   }
-}
-
-cScanData* cScanList::Next(void)
-{
-  for (std::vector<cScanData>::iterator it = m_list.begin(); it != m_list.end(); ++it)
-  {
-    if (!(*it).Scanned())
-      return &(*it);
-  }
-
-  return NULL;
-}
-
-size_t cScanList::TotalTransponders(void) const
-{
-  return m_list.size();
-}
-
-size_t cScanList::UnscannedTransponders(void) const
-{
-  size_t cnt(0);
-  for (std::vector<cScanData>::const_iterator it = m_list.begin(); it != m_list.end(); ++it)
-  {
-    if (!(*it).Scanned())
-      ++cnt;
-  }
-
-  return cnt;
-}
-
-// --- cTransponderList ------------------------------------------------------
-
-void
-cTransponderList::AddTransponder(ChannelPtr Channel)
-{
-  for (std::vector<ChannelPtr>::iterator it = m_channels.begin(); it != m_channels.end(); ++it)
-  {
-    if ((*it)->Source() == Channel->Source() && (*it)->TransponderFrequency() == Channel->TransponderFrequency())
-      return;
-  }
-  m_channels.push_back(Channel);
-}
-
-void
-cTransponderList::AddTranspondersToScanList(cScanList& scanlist) const
-{
-  for (std::vector<ChannelPtr>::const_iterator it = m_channels.begin(); it != m_channels.end(); ++it)
-    scanlist.AddTransponder(*it);
 }
 
 // --- cEITScanner -----------------------------------------------------------
 
 cEITScanner EITScanner;
 
-cEITScanner::cEITScanner(void) :
-    m_nextTransponderScan(0),
-    m_nextFullScan(0),
-    m_scanList(NULL),
-    m_transponderList(NULL),
-    m_bScanFinished(false)
+cEITScanner::cEITScanner(void)
+ : m_nextFullScan(0),
+   m_bScanFinished(false)
 {
 }
 
-cEITScanner::~cEITScanner()
+cEITScanner& cEITScanner::Get()
 {
-  delete m_scanList;
-  delete m_transponderList;
+  static cEITScanner instance;
+  return instance;
 }
 
-void cEITScanner::AddTransponder(ChannelPtr Channel)
+void* cEITScanner::Process(void)
 {
-  if (!m_transponderList)
-    m_transponderList = new cTransponderList;
-  m_transponderList->AddTransponder(Channel);
+  m_nextFullScan.Init(0);
+
+  while (!IsStopped())
+  {
+    // TODO: Wait on an event instead of VDR's timeout strategy
+    while (m_nextFullScan.TimeLeft())
+    {
+      sleep(5); // 5 seconds
+      if (IsStopped())
+        return NULL;
+    }
+
+    m_nextFullScan.Init(cSettings::Get().m_iEPGScanTimeout * 1000 * 60);
+    dsyslog("EIT scan started, next full scan in %d minutes", cSettings::Get().m_iEPGScanTimeout);
+
+    SaveEPGData();
+
+    CreateScanList();
+
+    vector<cScanData>::iterator it;
+    for (it = m_scanList.m_list.begin(); it != m_scanList.m_list.end(); ++it)
+    {
+      if (it->GetChannel()->FrequencyHz() / (1000 * 1000) != 201)
+        continue;
+      ScanTransponder(*it);
+      if (IsStopped())
+        break;
+    }
+
+    cChannelManager::Get().Save();
+
+    SaveEPGData();
+
+    // This assumes we finished before m_nextFullScan timed out
+    uint32_t durationSec = (cSettings::Get().m_iEPGScanTimeout * 60) -
+                           (m_nextFullScan.TimeLeft() / 1000);
+
+    dsyslog("EIT scan finished in %umin %usec", durationSec / 60, durationSec % 60);
+  }
+
+  m_scanList.Clear();
+
+  return NULL;
+}
+
+void cEITScanner::AddTransponder(const ChannelPtr& channel)
+{
+  for (ChannelVector::const_iterator it = m_transponderList.begin(); it != m_transponderList.end(); ++it)
+  {
+    if ((*it)->Source()               == channel->Source()    &&
+        (*it)->TransponderFrequency() == channel->TransponderFrequency())
+    {
+      // Already added
+      return;
+    }
+  }
+
+  m_transponderList.push_back(channel);
 }
 
 void cEITScanner::ForceScan(void)
 {
-  m_nextTransponderScan.Init(0);
   m_nextFullScan.Init(0);
 }
 
 void cEITScanner::CreateScanList(void)
 {
-  if (!m_scanList)
-  {
-    m_scanList = new cScanList;
-    if (m_transponderList)
-    {
-      m_scanList->AddTransponders(*m_transponderList);
-      delete m_transponderList;
-      m_transponderList = NULL;
-    }
-    m_scanList->AddTransponders(cChannelManager::Get());
-  }
+  m_scanList.Clear();
+
+  for (ChannelVector::const_iterator it = m_transponderList.begin(); it != m_transponderList.end(); ++it)
+    m_scanList.AddTransponder(*it);
+
+  m_transponderList.clear();
+
+  const ChannelVector& channels = cChannelManager::Get().GetCurrent();
+  for (ChannelVector::const_iterator it = channels.begin(); it != channels.end(); it++)
+    m_scanList.AddTransponder(*it);
 }
 
-bool cEITScanner::ScanDevice(DevicePtr device)
+bool cEITScanner::Scan(const DevicePtr& device, cScanData& scanData)
 {
   assert(device);
-  bool bSwitched(false);
 
-  cScanData* ScanData = m_scanList->Next();
-  if (ScanData)
+  ChannelPtr channel = scanData.GetChannel();
+  assert(channel);
+  try
   {
-    ChannelPtr Channel = ScanData->GetChannel();
-    if (Channel &&
-        /** not encrypted or able to decrypt */
-        (!Channel->GetCaId(0) || Channel->GetCaId(0) == device->CardIndex() || Channel->GetCaId(0) >= CA_ENCRYPTED_MIN) &&
-        /** provided by this device */
-        device->Channel()->ProvidesTransponder(*Channel) &&
-        /** XXX priority? */
-        device->Receiver()->Priority() < 0 &&
-        /** allowed to switch */
-        (device->Channel()->MaySwitchTransponder(*Channel) || device->Channel()->ProvidesTransponderExclusively(*Channel)))
+    if (channel->GetCaId(0) &&
+        channel->GetCaId(0) != device->CardIndex() &&
+        channel->GetCaId(0) < CA_ENCRYPTED_MIN)
     {
-      dsyslog("EIT scan: device %d  source  %-8s tp %5d", device->CardIndex(), cSource::ToString(Channel->Source()).c_str(), Channel->TransponderFrequency());
-      bSwitched = device->Channel()->SwitchChannel(Channel);
-      ScanData->SetScanned();
+      throw "Failed to scan channel: Channel cannot be decrypted";
     }
+
+    if (!device->Channel()->ProvidesTransponder(*channel))
+      throw "Failed to scan channel: Channel is not provided by device";
+
+    if (device->Receiver()->Priority() >= 0)
+      throw "Failed to scan channel: Some weird priority thing left over from VDR";
+
+    if (!device->Channel()->MaySwitchTransponder(*channel) && !device->Channel()->ProvidesTransponderExclusively(*channel))
+      throw "Failed to scan channel: Not allowed to switch channels";
+
+    if (!device->Channel()->SwitchChannel(channel))
+      throw "Failed to scan channel: Failed to switch channels";
+
+    if (!device->Channel()->HasLock(true))
+      throw "Failed to scan channel: Tuner failed to get lock";
+
+    dsyslog("EIT scan: device %d source  %-8s tp %5d", device->CardIndex(), cSource::ToString(channel->Source()).c_str(), channel->TransponderFrequency());
+
+    EventVector events;
+
+    cPsipMgt mgt(device.get());
+    if (!mgt.GetPSIPData(events))
+      throw "Failed to scan channel: Tuner failed to get lock";
+
+    if (events.empty())
+      throw "Scanned channel, but no events discovered!";
+
+    // Finally, success! Add channels to EPG schedule
+    for (EventVector::const_iterator it = events.begin(); it != events.end(); ++it)
+      cSchedulesLock::AddEvent(channel->GetChannelID(), *it);
+  }
+  catch (const char* errorMsg)
+  {
+    dsyslog("%s", errorMsg);
+    return false;
   }
 
-  return bSwitched;
+  return true;
 }
 
 void cEITScanner::SaveEPGData(void)
@@ -215,49 +204,18 @@ void cEITScanner::SaveEPGData(void)
     s->Save();
 }
 
-bool cEITScanner::SwitchNextTransponder(void)
+bool cEITScanner::ScanTransponder(cScanData& scanData)
 {
+  // Look for a device whose channel provides EIT information
   for (DeviceVector::const_iterator it = cDeviceManager::Get().Iterator(); cDeviceManager::Get().IteratorHasNext(it); cDeviceManager::Get().IteratorNext(it))
   {
-    if (*it && (*it)->Channel() && (*it)->Channel()->ProvidesEIT())
+    if (*it && (*it)->Channel()->ProvidesEIT())
     {
-      if (ScanDevice(*it))
+      if (Scan(*it, scanData))
         return true;
     }
   }
   return false;
-}
-
-void cEITScanner::Process(void)
-{
-  if (!m_nextTransponderScan.TimeLeft() && !m_nextFullScan.TimeLeft())
-  {
-    SaveEPGData();
-
-    if (m_bScanFinished)
-    {
-      m_bScanFinished = false;
-      bool bFailed = m_scanList->UnscannedTransponders() > 0;
-      SAFE_DELETE(m_scanList);
-
-      if (!bFailed)
-      {
-        cChannelManager::Get().Save();
-        SaveEPGData();
-      }
-
-      m_nextFullScan.Init(cSettings::Get().m_iEPGScanTimeout * 1000 * 60);
-      dsyslog("EIT scan %s, next scan in %d minutes", bFailed ? "failed" : "finished", cSettings::Get().m_iEPGScanTimeout);
-      return;
-    }
-
-    CreateScanList();
-
-    if (!SwitchNextTransponder())
-      m_bScanFinished = true;
-    else
-      m_nextTransponderScan.Init(SCAN_TRANSPONDER_TIMEOUT_MS);
-  }
 }
 
 }

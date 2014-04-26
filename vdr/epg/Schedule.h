@@ -12,8 +12,8 @@ class cSchedules;
 class cSchedule : public cListObject  {
 private:
   tChannelID channelID;
-  cList<cEvent> events;
-  cHash<cEvent> eventsHashID;
+  EventVector m_events;
+  cHash<cEvent> eventsHashID; // TODO: hash table of shared pointers
   cHash<cEvent> eventsHashStartTime;
   bool hasRunning;
   CDateTime modified;
@@ -28,21 +28,21 @@ public:
   void SetModified(void) { modified = CDateTime::GetCurrentDateTime(); }
   void SetSaved(void) { saved = modified; }
   void SetPresentSeen(void) { presentSeen = CDateTime::GetCurrentDateTime(); }
-  void SetRunningStatus(cEvent *Event, int RunningStatus, cChannel *Channel = NULL);
+  void SetRunningStatus(const EventPtr& event, int RunningStatus, cChannel *Channel = NULL);
   void ClrRunningStatus(cChannel *Channel = NULL);
   void ResetVersions(void);
   void Sort(void);
   void DropOutdated(const CDateTime& SegmentStart, const CDateTime& SegmentEnd, uchar TableID, uchar Version);
   void Cleanup(const CDateTime& Time);
   void Cleanup(void);
-  cEvent *AddEvent(cEvent *Event);
-  void DelEvent(cEvent *Event);
+  void AddEvent(const EventPtr& event);
+  void DelEvent(const EventPtr& event);
   void HashEvent(cEvent *Event);
   void UnhashEvent(cEvent *Event);
-  const cList<cEvent> *Events(void) const { return &events; }
-  const cEvent *GetPresentEvent(void) const;
-  const cEvent *GetFollowingEvent(void) const;
-  cEvent *GetEvent(tEventID EventID, CDateTime StartTime = CDateTime::GetCurrentDateTime());
+  const EventVector& Events(void) const { return m_events; }
+  EventPtr GetPresentEvent(void) const;
+  EventPtr GetFollowingEvent(void) const;
+  EventPtr GetEvent(tEventID EventID, CDateTime StartTime = CDateTime::GetCurrentDateTime());
   bool Read(void);
   bool Save(void);
   bool Serialise(TiXmlNode *node) const;

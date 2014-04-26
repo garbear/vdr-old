@@ -1755,8 +1755,10 @@ bool cVNSIClient::processEPG_GetForChannel() /* OPCODE 120 */
   const char* thisEventSubTitle;
   const char* thisEventDescription;
 
-  for (const cEvent* event = Schedule->Events()->First(); event; event = Schedule->Events()->Next(event))
+  for (EventVector::const_iterator it = Schedule->Events().begin(); it != Schedule->Events().end(); ++it)
   {
+    const EventPtr& event = *it;
+
     thisEventID           = event->EventID();
     thisEventTitle        = event->Title().c_str();
     thisEventSubTitle     = event->ShortText().c_str();
@@ -1806,7 +1808,10 @@ bool cVNSIClient::processEPG_GetForChannel() /* OPCODE 120 */
   m_resp->finalise();
   m_socket.write(m_resp->getPtr(), m_resp->getLen());
 
-  cEvent *lastEvent =  Schedule->Events()->Last();
+  const EventVector& events = Schedule->Events();
+  EventPtr lastEvent;
+  if (!events.empty())
+    lastEvent = events[events.size() - 1];
   if (lastEvent)
   {
     m_epgUpdate[channelUID] = lastEvent->StartTime();

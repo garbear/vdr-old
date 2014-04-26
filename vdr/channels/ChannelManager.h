@@ -138,8 +138,6 @@ public:
    */
   ChannelPtr NewChannel(const cChannel& transponder, const std::string& name, const std::string& shortName, const std::string& provider, int nid, int tid, int sid, int rid = 0);
 
-  void AddTransponders(cScanList* list) const;
-
   std::vector<ChannelPtr> GetCurrent(void) const;
   void CreateChannelGroups(bool automatic);
 

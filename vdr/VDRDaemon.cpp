@@ -118,6 +118,8 @@ bool cVDRDaemon::Init()
   if (!cDeviceManager::Get().WaitForAllDevicesReady(DEVICEREADYTIMEOUT))
     dsyslog("some devices are not ready after %d seconds", DEVICEREADYTIMEOUT);
 
+  cEITScanner::Get().CreateThread();
+
   return CreateThread(true);
 }
 
@@ -131,7 +133,6 @@ void *cVDRDaemon::Process()
 {
   while (!IsStopped())
   {
-    EITScanner.Process();
     cTimers::Get().Process();
 
     m_sleepEvent.Wait(100);
@@ -160,6 +161,8 @@ void cVDRDaemon::OnSignal(int signum)
 
 void cVDRDaemon::DeInit()
 {
+  cEITScanner::Get().StopThread();
+
   cDeviceManager::Get().Shutdown();
 
   cChannelManager::Get().Clear();

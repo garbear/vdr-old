@@ -50,6 +50,52 @@ cSchedules* cSchedulesLock::Get(void) const
   return m_bLocked ? &cSchedules::Get() : NULL;
 }
 
+EventPtr cSchedulesLock::GetEvent(const tChannelID& channelId, tEventID eventId)
+{
+  EventPtr event;
+
+  SchedulePtr schedule;
+
+  cSchedulesLock schedulesLock(true, 10);
+  cSchedules* schedules = schedulesLock.Get();
+
+  if (schedules)
+    schedule = schedules->GetSchedule(channelId);
+  else
+  {
+    // If we don't get a write lock, let's at least get a read lock, so
+    // that we can set the running status and 'seen' timestamp (well, actually
+    // with a read lock we shouldn't be doing that, but it's only integers that
+    // get changed, so it should be ok)
+    cSchedulesLock schedulesLock;
+    cSchedules* schedules = schedulesLock.Get();
+    if (schedules)
+      schedule = schedules->GetSchedule(channelId);
+  }
+
+  if (schedule)
+    event = schedule->GetEvent(eventId);
+
+  return event;
+}
+
+bool cSchedulesLock::AddEvent(const tChannelID& channelId, const EventPtr& event)
+{
+
+
+  cSchedulesLock schedulesLock(true, 10);
+  cSchedules* schedules = schedulesLock.Get();
+
+  if (schedules)
+  {
+    SchedulePtr schedule = schedules->AddSchedule(channelId);
+    schedule->AddEvent(event);
+    schedule->SetModified();
+    return true;
+  }
+  return false;
+}
+
 // --- cSchedules ------------------------------------------------------------
 
 cSchedules::cSchedules(void)
@@ -283,7 +329,10 @@ std::vector<SchedulePtr> cSchedules::GetUpdatedSchedules(const std::map<int, CDa
   std::map<int, CDateTime>::const_iterator previousIt;
   for (std::vector<SchedulePtr>::iterator it = m_schedules.begin(); it != m_schedules.end(); ++it)
   {
-    cEvent *lastEvent = (*it)->Events()->Last();
+    const EventVector& events = (*it)->Events();
+    EventPtr lastEvent;
+    if (!events.empty())
+      lastEvent = events[events.size() - 1];
     if (!lastEvent)
       continue;
 

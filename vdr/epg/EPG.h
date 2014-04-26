@@ -31,6 +31,12 @@ public:
 
   cSchedules* Get(void) const;
 
+  // This function has been butchered out of VDR's old EIT filter
+  // I take shame in not fixing all the horrid things it does
+  static EventPtr GetEvent(const tChannelID& channelId, tEventID eventId);
+
+  static bool AddEvent(const tChannelID& channelId, const EventPtr& event);
+
 private:
   bool m_bLocked;
 };
