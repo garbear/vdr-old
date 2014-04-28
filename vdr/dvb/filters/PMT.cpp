@@ -34,6 +34,7 @@
 #include <libsi/si_ext.h>
 #include <libsi/descriptor.h>
 #include <libsi/section.h>
+#include <sstream>
 
 using namespace SI;
 using namespace SI_EXT;
@@ -107,6 +108,19 @@ ChannelPtr cPmt::CreateChannel(/* const */ SI::PMT& pmt) const // TODO: libsi fa
   SetIds(channel);
   SetStreams(channel, pmt);
   SetCaDescriptors(channel, pmt);
+
+  // Log a comma-separated list of streams we found in the channel
+  stringstream logStreams;
+  logStreams << "PMT: Found channel with streams: " << channel->GetVideoStream().vpid << " (Video)";
+  for (vector<AudioStream>::const_iterator it = channel->GetAudioStreams().begin(); it != channel->GetAudioStreams().end(); ++it)
+    logStreams << ", " << it->apid << " (Audio)";
+  for (vector<DataStream>::const_iterator it = channel->GetDataStreams().begin(); it != channel->GetDataStreams().end(); ++it)
+    logStreams << ", " << it->dpid << " (Data)";
+  for (vector<SubtitleStream>::const_iterator it = channel->GetSubtitleStreams().begin(); it != channel->GetSubtitleStreams().end(); ++it)
+    logStreams << ", " << it->spid << " (Sub)";
+  if (channel->GetTeletextStream().tpid != 0)
+    logStreams << ", " << channel->GetTeletextStream().tpid << " (Teletext)";
+  dsyslog("%s", logStreams.str().c_str());
 
   return channel;
 }
