@@ -108,21 +108,6 @@ void* cEITScanner::Process(void)
   return NULL;
 }
 
-void cEITScanner::AddTransponder(const ChannelPtr& channel)
-{
-  for (ChannelVector::const_iterator it = m_transponderList.begin(); it != m_transponderList.end(); ++it)
-  {
-    if ((*it)->Source()               == channel->Source()    &&
-        (*it)->TransponderFrequency() == channel->TransponderFrequency())
-    {
-      // Already added
-      return;
-    }
-  }
-
-  m_transponderList.push_back(channel);
-}
-
 void cEITScanner::ForceScan(void)
 {
   m_nextFullScan.Init(0);

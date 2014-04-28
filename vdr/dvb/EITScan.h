@@ -60,8 +60,6 @@ public:
 
   static cEITScanner& Get();
 
-  void AddTransponder(const ChannelPtr& channel);
-
   void ForceScan(void);
 
 protected:
