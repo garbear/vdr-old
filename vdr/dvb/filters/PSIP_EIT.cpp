@@ -106,8 +106,7 @@ EventVector cPsipEit::GetEvents()
         {
           char buffer[Utf8BufSize(256)] = { }; // TODO: Size?
           psipString.getText(buffer, sizeof(buffer));
-          //titleStrings.push_back(buffer);
-          titleStrings.push_back("<title>");
+          titleStrings.push_back(buffer);
         }
 
         thisEvent->SetTitle(StringUtils::Join(titleStrings, "/"));
