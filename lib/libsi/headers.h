@@ -1093,8 +1093,8 @@ struct vct_channel_info {
    u_char                                        :6;
    u_char descriptors_length_hi                  :2;
 #else
-   u_char                                        :6;
    u_char descriptors_length_hi                  :2;
+   u_char                                        :6;
 #endif
    u_char descriptors_length_lo                  :8;
    // descriptors
