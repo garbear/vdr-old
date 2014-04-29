@@ -14,7 +14,6 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/wait.h>
-#include "channels/ChannelManager.h"
 #include "Config.h"
 #include "recordings/RecordingCutter.h"
 #include "I18N.h"

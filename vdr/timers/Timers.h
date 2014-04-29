@@ -11,13 +11,13 @@
 #define __TIMERS_H
 
 #include "Types.h"
-#include "channels/ChannelManager.h"
 #include "Config.h"
 #include "utils/Tools.h"
 #include "utils/Observer.h"
 #include "utils/DateTime.h"
 #include "Timer.h"
 
+#include <map>
 #include <vector>
 
 namespace VDR

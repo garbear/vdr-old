@@ -21,7 +21,7 @@
  */
 #pragma once
 
-#include "Types.h"
+#include "DVBTypes.h"
 #include "CADescriptor.h"
 
 #include <map>

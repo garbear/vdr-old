@@ -1,7 +1,6 @@
 /*
  *      Copyright (C) 2013-2014 Garrett Brown
  *      Copyright (C) 2013-2014 Lars Op den Kamp
- *      Portions Copyright (C) 2006, 2007, 2008, 2009 Winfried Koehler
  *      Portions Copyright (C) 2000, 2003, 2006, 2008, 2013 Klaus Schmidinger
  *
  *  This Program is free software; you can redistribute it and/or modify
@@ -19,35 +18,20 @@
  *  <http://www.gnu.org/licenses/>.
  *
  */
+#pragma once
 
-#include "dvb/EITScan.h"
-#include "channels/ChannelManager.h"
-#include "devices/DeviceManager.h"
-
-#include <gtest/gtest.h>
-#include <unistd.h> // for sleep()
-
-using namespace std;
-
-#define DEVICEREADYTIMEOUT 30 // From VDRDaemon.cpp
+#include <shared_ptr/shared_ptr.hpp>
+#include <vector>
 
 namespace VDR
 {
 
-TEST(EITScan, Process)
-{
-  EXPECT_TRUE(cChannelManager::Get().Load());
-  EXPECT_NE(0, cChannelManager::Get().ChannelCount());
-  dsyslog("Loaded %u channels", cChannelManager::Get().ChannelCount());
+class cFilter;
+typedef VDR::shared_ptr<cFilter> FilterPtr;
+typedef std::vector<FilterPtr>   FilterVector;
 
-  EXPECT_NE(0, cDeviceManager::Get().Initialise());
-
-  EXPECT_TRUE(cDeviceManager::Get().WaitForAllDevicesReady(DEVICEREADYTIMEOUT));
-
-  EXPECT_TRUE(cEITScanner::Get().CreateThread());
-
-  while (cEITScanner::Get().IsRunning())
-    sleep(1);
-}
+class cCaDescriptor;
+typedef VDR::shared_ptr<cCaDescriptor> CaDescriptorPtr;
+typedef std::vector<CaDescriptorPtr>   CaDescriptorVector;
 
 }

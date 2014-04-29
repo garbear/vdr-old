@@ -40,6 +40,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
+#include "channels/ChannelManager.h"
 #include "utils/Shutdown.h"
 #include "filesystem/Videodir.h"
 #include "recordings/Recordings.h"

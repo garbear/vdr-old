@@ -20,16 +20,15 @@
  */
 #pragma once
 
-#include "Types.h"
 #include "Device.h"
+#include "DeviceTypes.h"
+#include "channels/ChannelTypes.h"
 #include "utils/Observer.h"
 
 #include <vector>
 
 namespace VDR
 {
-
-class cChannel;
 
 class cDeviceManager : public Observer
 {

@@ -22,6 +22,7 @@
 
 #include "Types.h"
 #include "Channel.h"
+#include "ChannelTypes.h"
 #include "utils/Observer.h"
 #include "platform/threads/mutex.h"
 
@@ -43,7 +44,6 @@ enum eLastModifiedType
 
 class cScanList;
 class CChannelFilter;
-typedef std::vector<ChannelPtr> ChannelVector;
 
 class cChannelManager : public Observer, public Observable
 {

@@ -21,7 +21,7 @@
  */
 #pragma once
 
-#include "Types.h"
+#include "channels/ChannelTypes.h"
 #include "CountryUtils.h"
 #include "FrontendCapabilities.h"
 #include "ScanLimits.h"
@@ -40,7 +40,6 @@
 namespace VDR
 {
 
-class cChannel;
 class cDiseqc;
 class cDevice;
 class cSynchronousAbort;

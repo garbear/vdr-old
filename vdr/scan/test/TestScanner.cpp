@@ -22,6 +22,7 @@
 
 #include "scan/Scanner.h"
 #include "scan/ScanConfig.h"
+#include "channels/ChannelManager.h"
 #include "devices/linux/DVBDevice.h"
 #include "devices/linux/test/DVBDeviceNames.h"
 

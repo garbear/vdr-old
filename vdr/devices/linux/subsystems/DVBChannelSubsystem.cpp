@@ -28,7 +28,7 @@
 #include "devices/subsystems/DevicePlayerSubsystem.h"
 #include "devices/subsystems/DevicePIDSubsystem.h"
 #include "devices/subsystems/DeviceReceiverSubsystem.h"
-#include "channels/ChannelManager.h"
+#include "channels/ChannelTypes.h"
 #include "dvb/DiSEqC.h"
 #include "settings/Settings.h"
 

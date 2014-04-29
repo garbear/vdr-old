@@ -10,9 +10,8 @@
 #ifndef __REMUX_H
 #define __REMUX_H
 
-#include "Types.h"
-#include "channels/ChannelManager.h"
 #include "channels/Channel.h"
+#include "channels/ChannelTypes.h"
 #include "utils/Tools.h"
 
 #define MAXAPIDS 32 // audio

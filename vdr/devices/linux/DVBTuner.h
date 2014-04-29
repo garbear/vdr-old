@@ -21,7 +21,7 @@
 #pragma once
 
 #include "Types.h"
-#include "channels/ChannelManager.h"
+#include "channels/Channel.h"
 #include "platform/threads/threads.h"
 
 #include <linux/dvb/frontend.h>

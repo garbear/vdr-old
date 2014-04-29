@@ -20,9 +20,9 @@
  */
 #pragma once
 
-#include "Types.h"
 #include "ChannelID.h"
-#include "dvb/CADescriptor.h"
+#include "ChannelTypes.h"
+#include "dvb/DVBTypes.h"
 #include "sources/linux/DVBTransponderParams.h"
 #include "sources/Source.h"
 #include "utils/Observer.h"

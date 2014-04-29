@@ -20,9 +20,8 @@
  */
 #pragma once
 
-#include "Types.h"
+#include "channels/ChannelTypes.h"
 #include "devices/DeviceSubsystem.h"
-#include "channels/Channel.h"
 #include "Config.h" // For IDLEPRIORITY
 
 namespace VDR
@@ -34,8 +33,6 @@ enum eSetChannelResult
   scrNoTransfer,
   scrFailed
 };
-
-class cChannel;
 
 class cDeviceChannelSubsystem : protected cDeviceSubsystem
 {

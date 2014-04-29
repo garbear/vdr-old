@@ -26,7 +26,7 @@
 #ifndef VNSI_CLIENT_H
 #define VNSI_CLIENT_H
 
-#include "Types.h"
+#include "channels/ChannelTypes.h"
 #include "lib/platform/threads/threads.h"
 #include "utils/Tools.h"
 #include "devices/Receiver.h"
@@ -41,7 +41,6 @@
 
 namespace VDR
 {
-class cChannel;
 class cDevice;
 class cLiveStreamer;
 class cRequestPacket;

@@ -25,6 +25,7 @@
 #include "SatelliteUtils.h"
 #include "ScanLimits.h"
 #include "ScanTask.h"
+#include "channels/ChannelManager.h"
 #include "devices/linux/DVBDevice.h"
 #include "utils/SynchronousAbort.h"
 #include "utils/Tools.h"

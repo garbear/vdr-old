@@ -29,7 +29,6 @@
 #include "devices/commoninterface/CI.h"
 #include "devices/Device.h"
 #include "devices/DeviceManager.h"
-#include "channels/ChannelManager.h"
 #include "Player.h"
 #include "utils/Status.h"
 #include "utils/Tools.h"

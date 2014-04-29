@@ -51,6 +51,4 @@ private:
   std::vector<uint8_t> m_data;
 };
 
-typedef VDR::shared_ptr<cCaDescriptor> CaDescriptorPtr;
-typedef std::vector<CaDescriptorPtr>   CaDescriptorVector;
 }

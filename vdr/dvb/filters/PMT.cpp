@@ -24,6 +24,7 @@
 #include "PMT.h"
 #include "channels/Channel.h"
 #include "Config.h"
+#include "dvb/CADescriptor.h"
 #include "settings/Settings.h"
 #include "Types.h"
 #include "utils/I18N.h"

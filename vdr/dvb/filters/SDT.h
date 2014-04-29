@@ -22,8 +22,7 @@
  */
 #pragma once
 
-#include "Types.h"
-#include "channels/ChannelManager.h" // for ChannelVector
+#include "channels/ChannelTypes.h"
 #include "dvb/filters/Filter.h"
 
 #include <libsi/si.h>

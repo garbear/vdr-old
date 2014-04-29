@@ -23,6 +23,7 @@
 #include "scan/ScanTask.h"
 #include "scan/CountryUtils.h"
 #include "scan/ScanConfig.h"
+#include "channels/ChannelManager.h"
 #include "devices/linux/DVBDevice.h"
 #include "devices/linux/test/DVBDeviceNames.h"
 

@@ -13,7 +13,7 @@
 #include "Types.h"
 #include "Config.h"
 #include "devices/Device.h"
-#include "channels/ChannelManager.h"
+#include "channels/ChannelTypes.h"
 #include "platform/threads/threads.h"
 
 #include <time.h>

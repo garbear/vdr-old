@@ -26,11 +26,10 @@
 #ifndef VNSI_RECEIVER_H
 #define VNSI_RECEIVER_H
 
-#include "Types.h"
 #include <linux/dvb/frontend.h>
 #include <linux/videodev2.h>
-#include "channels/ChannelManager.h"
-#include "devices/Device.h"
+#include "channels/ChannelTypes.h"
+#include "devices/DeviceTypes.h"
 #include "devices/Receiver.h"
 #include "lib/platform/threads/threads.h"
 #include <list>
@@ -46,7 +45,6 @@ namespace VDR
 #define STREAMER_NO_FRONTEND_FOUND (-2)
 
 class cxSocket;
-class cChannel;
 class cTSParser;
 class cResponsePacket;
 class cVideoBuffer;

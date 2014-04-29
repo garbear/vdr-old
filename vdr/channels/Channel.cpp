@@ -21,6 +21,7 @@
 
 #include "Channel.h"
 #include "ChannelDefinitions.h"
+#include "dvb/CADescriptor.h"
 #include "utils/StringUtils.h"
 #include "utils/CRC32.h"
 #include "filesystem/File.h"

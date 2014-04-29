@@ -19,6 +19,8 @@
  */
 
 #include "ChannelFilter.h"
+#include "Channel.h"
+#include "ChannelManager.h"
 #include "Config.h"
 #include "settings/Settings.h"
 #include <string>

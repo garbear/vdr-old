@@ -20,11 +20,11 @@
 
 #pragma once
 
-#include "Types.h"
+#include "ChannelTypes.h"
+#include "lib/platform/threads/mutex.h"
+
 #include <string>
 #include <vector>
-#include "lib/platform/threads/mutex.h"
-#include "channels/ChannelManager.h"
 
 namespace VDR
 {

@@ -22,7 +22,6 @@
 
 #include "Types.h"
 #include "SignalHandler.h"
-#include "channels/ChannelManager.h"
 
 #include "platform/threads/mutex.h"
 #include "platform/threads/threads.h"

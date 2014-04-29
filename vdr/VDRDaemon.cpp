@@ -21,6 +21,7 @@
 
 #include "VDRDaemon.h"
 
+#include "channels/ChannelManager.h"
 #include "devices/DeviceManager.h"
 #include "dvb/DiSEqC.h"
 #include "epg/EPG.h"

@@ -24,7 +24,7 @@
  * Device.h: The basic device interface
  */
 
-#include "Types.h"
+#include "DeviceTypes.h"
 #include "platform/threads/threads.h"
 
 #include <list>
@@ -60,16 +60,12 @@ struct cSubsystems
   cDeviceVideoFormatSubsystem     *VideoFormat;
 };
 
-class cDevice;
 //class cDvbSubtitleConverter;
-//class cChannel;
 
 /// The cDevice class is the base from which actual devices can be derived.
 
 class cPlayer;
 class cReceiver;
-
-typedef std::vector<DevicePtr> DeviceVector;
 
 class cDevice : public PLATFORM::CThread
 {

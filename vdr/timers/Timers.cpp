@@ -10,7 +10,6 @@
 #include "Timers.h"
 #include "Timer.h"
 #include "TimerDefinitions.h"
-#include "channels/ChannelManager.h"
 #include "devices/Device.h"
 #include "devices/DeviceManager.h"
 #include "recordings/Recordings.h"

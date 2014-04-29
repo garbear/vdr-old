@@ -13,7 +13,6 @@
 #include "Types.h"
 #include <time.h>
 #include "RecordingConfig.h"
-#include "channels/ChannelManager.h"
 #include "Config.h"
 #include "timers/Timers.h"
 #include "epg/EPG.h"

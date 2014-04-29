@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Types.h"
+#include "channels/ChannelTypes.h"
 #include <stddef.h>
 #include <limits.h>
 #include "channels/Channel.h"

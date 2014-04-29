@@ -10,8 +10,8 @@
 #ifndef __RECEIVER_H
 #define __RECEIVER_H
 
-#include "Types.h"
-#include "channels/ChannelManager.h"
+#include "channels/Channel.h"
+#include "channels/ChannelID.h"
 #include "platform/threads/mutex.h"
 #include "Config.h"
 
