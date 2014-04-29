@@ -127,6 +127,8 @@ void* cScanner::Process()
   delete task;
   delete scanLimits;
 
+  cChannelManager::Get().Save();
+
   return NULL;
 }
 
