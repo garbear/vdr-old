@@ -988,7 +988,7 @@ struct mgt_end {
  *
  */
 
-#define VCT_LEN 12
+#define VCT_LEN 10
 
 struct vct {
    u_char table_id                               :8;
@@ -1022,16 +1022,23 @@ struct vct {
    // channel info
 };
 
-#define VCT_CHANNEL_INFO_LEN 5
+#define VCT_CHANNEL_INFO_LEN 32
 
 struct vct_channel_info {
-   u_char short_name0                            :8;
-   u_char short_name1                            :8;
-   u_char short_name2                            :8;
-   u_char short_name3                            :8;
-   u_char short_name4                            :8;
-   u_char short_name5                            :8;
-   u_char short_name6                            :8;
+   u_char short_name0_hi                         :8;
+   u_char short_name0_lo                         :8;
+   u_char short_name1_hi                         :8;
+   u_char short_name1_lo                         :8;
+   u_char short_name2_hi                         :8;
+   u_char short_name2_lo                         :8;
+   u_char short_name3_hi                         :8;
+   u_char short_name3_lo                         :8;
+   u_char short_name4_hi                         :8;
+   u_char short_name4_lo                         :8;
+   u_char short_name5_hi                         :8;
+   u_char short_name5_lo                         :8;
+   u_char short_name6_hi                         :8;
+   u_char short_name6_lo                         :8;
 #if BYTE_ORDER == BIG_ENDIAN
    u_char reserved                               :4;
    u_char major_channel_number_hi                :4;
@@ -1060,15 +1067,15 @@ struct vct_channel_info {
    u_char ETM_location                           :2;
    u_char access_controlled                      :1;
    u_char hidden                                 :1;
-   u_char path_select                            :1; // reserved for CVCT
-   u_char out_of_band                            :1; // reserved for CVCT
+   u_char path_select                            :1; // reserved for CVCT, '1' for TVCT
+   u_char out_of_band                            :1; // reserved for CVCT, '1' for TVCT
    u_char hide_guide                             :1;
    u_char                                        :1;
 #else
    u_char                                        :1;
    u_char hide_guide                             :1;
-   u_char out_of_band                            :1; // reserved for CVCT
-   u_char path_select                            :1; // reserved for CVCT
+   u_char out_of_band                            :1; // reserved for CVCT, '1' for TVCT
+   u_char path_select                            :1; // reserved for CVCT, '1' for TVCT
    u_char hidden                                 :1;
    u_char access_controlled                      :1;
    u_char ETM_location                           :2;
@@ -1098,13 +1105,13 @@ struct vct_channel_info {
 struct vct_mid {
 #if BYTE_ORDER == BIG_ENDIAN
    u_char reserved                               :6;
-   u_char descriptors_length_hi                  :2;
+   u_char additional_descriptors_length_hi       :2;
 #else
-   u_char descriptors_length_hi                  :2;
+   u_char additional_descriptors_length_hi       :2;
    u_char reserved                               :6;
 #endif
-   u_char descriptors_length_lo                  :8;
-   // descriptors
+   u_char additional_descriptors_length_lo       :8;
+   // additional descriptors
 };
 
 #define SIZE_VCT_END 4
