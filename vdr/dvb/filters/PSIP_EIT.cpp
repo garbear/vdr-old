@@ -65,14 +65,13 @@ EventVector cPsipEit::GetEvents()
     vector<uint16_t>::iterator it = std::find(m_pidsLeftToScan.begin(), m_pidsLeftToScan.end(), pid);
     if (it == m_pidsLeftToScan.end())
     {
-      dsyslog("Already encountered PID %u", pid); // TODO: Remove this debug statement
+      dsyslog("Already encountered PID %u", pid);
       continue; // Already scanned
     }
     else
     {
       dsyslog("Found PID %u", pid);
       m_pidsLeftToScan.erase(it);
-      // TODO: Close filter resource
     }
 
     SI::PSIP_EIT psipEit(data.data(), false);
