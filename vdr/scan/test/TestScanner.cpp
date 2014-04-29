@@ -27,12 +27,17 @@
 #include "devices/linux/test/DVBDeviceNames.h"
 
 #include <gtest/gtest.h>
-
+#include <unistd.h> // for sleep()
 namespace VDR
 {
 
-TEST(Scanner, Start)
+TEST(Scanner, Scan)
 {
+  // Initialize cChannelManager with the proper path
+  cChannelManager::Get().Load();
+  cChannelManager::Get().Clear();
+  EXPECT_EQ(0, cChannelManager::Get().ChannelCount());
+
   DeviceVector devices = cDvbDevice::FindDevices();
   ASSERT_FALSE(devices.empty());
   for (DeviceVector::iterator it = devices.begin(); it != devices.end(); ++it)
@@ -43,7 +48,7 @@ TEST(Scanner, Start)
 
     ASSERT_TRUE(device->Initialise());
 
-    if (device->DeviceName() == WINTVHVR950Q)
+    if (cDvbDevices::IsATSC(device->DeviceName()))
     {
       cScanConfig config;
       config.dvbType = DVB_ATSC;
@@ -53,9 +58,14 @@ TEST(Scanner, Start)
       cScanner scanner(device, config);
 
       scanner.Start();
-      usleep(60 * 1000 * 1000); // 60 seconds
-      scanner.Stop(true);
+      while (scanner.IsRunning())
+        sleep(5);
+
       EXPECT_NE(0, cChannelManager::Get().ChannelCount());
+
+      cChannelManager::Get().Clear();
+
+      break;
     }
   }
 }

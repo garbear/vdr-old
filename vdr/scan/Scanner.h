@@ -38,9 +38,9 @@ class cScanner : public PLATFORM::CThread
 {
 public:
   cScanner(cDevice* device, const cScanConfig& setup);
-  virtual ~cScanner() { Stop(true); }
+  virtual ~cScanner(void) { Stop(true); }
 
-  void Start(void) { CreateThread(false); }
+  void Start(void) { CreateThread(true); }
   void Stop(bool bWait = false);
 
 protected:
