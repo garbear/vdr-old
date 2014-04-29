@@ -157,6 +157,7 @@ set(VDR_SRCS
 	vdr/dvb/filters/PSIP_EIT.cpp
 	vdr/dvb/filters/PSIP_MGT.cpp
 	vdr/dvb/filters/PSIP_STT.cpp
+	vdr/dvb/filters/PSIP_VCT.cpp
 	vdr/dvb/filters/SDT.cpp
 	vdr/dvb/filters/TDT.cpp
 	vdr/epg/Component.cpp
@@ -268,6 +269,7 @@ set(VDR_TEST_SRCS
 	vdr/dvb/filters/test/TestPAT.cpp
 	vdr/dvb/filters/test/TestPSIP_MGT.cpp
 	vdr/dvb/filters/test/TestPSIP_STT.cpp
+	vdr/dvb/filters/test/TestPSIP_VCT.cpp
 	vdr/dvb/test/TestEITScan.cpp
 	vdr/filesystem/test/TestSpecialProtocol.cpp
 	vdr/filesystem/native/test/TestHDDirectory.cpp
