@@ -884,7 +884,7 @@ struct pcit {
  *
  */
 
-#define MGT_LEN 12
+#define MGT_LEN 11
 
 struct mgt {
    u_char table_id                               :8;
@@ -1130,8 +1130,7 @@ struct vct_end {
  *         system information for one specific region.
  *
  */
-
-#define RRT_LEN 12
+#define RRT_LEN 10
 
 struct rrt {
    u_char table_id                               :8;
@@ -1212,14 +1211,14 @@ struct rrt_dimension_value_mid {
 
 struct rrt_mid_2 {
 #if BYTE_ORDER == BIG_ENDIAN
-  u_char reserved                                :6;
-  u_char descriptors_length_hi                   :2;
+   u_char reserved                                :6;
+   u_char descriptors_length_hi                   :2;
 #else
-  u_char descriptors_length_hi                   :2;
-  u_char reserved                                :6;
+   u_char descriptors_length_hi                   :2;
+   u_char reserved                                :6;
 #endif
-  u_char descriptors_length_lo                   :8;
-  // descriptors
+   u_char descriptors_length_lo                   :8;
+   // descriptors
 };
 
 #define SIZE_RRT_END 4
