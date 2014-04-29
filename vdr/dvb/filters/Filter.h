@@ -81,12 +81,6 @@ protected:
   void OpenResource(uint16_t pid, uint8_t tid, uint8_t mask = 0xFF);
 
   /*!
-   * Close a resource. Parameters must match the call to OpenResource(). This
-   * will assert if the resource can't identified by these parameters.
-   */
-  void CloseResource(uint16_t pid, uint8_t tid, uint8_t mask = 0xFF);
-
-  /*!
    * Get a section from the resources that have been opened by this filter.
    * Blocks until a section is received! The section's PID is placed in pid
    * and the section's data is placed in data. If no sections are received

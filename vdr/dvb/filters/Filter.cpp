@@ -74,26 +74,6 @@ void cFilter::OpenResource(u_short pid, u_char tid, u_char mask /* = 0xFF */)
     m_resources.insert(newResource);
 }
 
-void cFilter::CloseResource(u_short pid, u_char tid, u_char mask /* = 0xFF */)
-{
-  cFilterResource needle(pid, tid, mask);
-
-  bool bResourceClosed = false;
-
-  for (set<FilterResourcePtr>::const_iterator itResource = m_resources.begin();
-      itResource != m_resources.end(); ++itResource)
-  {
-    if (**itResource == needle)
-    {
-      m_resources.erase(itResource);
-      bResourceClosed = true;
-      break;
-    }
-  }
-
-  assert(bResourceClosed);
-}
-
 bool cFilter::GetSection(uint16_t& pid, std::vector<uint8_t>& data)
 {
   return m_device->SectionFilter()->GetSection(m_resources, pid, data);

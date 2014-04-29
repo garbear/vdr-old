@@ -62,15 +62,18 @@ EventVector cPsipEit::GetEvents()
   vector<uint8_t> data; // Section data
   while (!m_pidsLeftToScan.empty() && GetSection(pid, data))
   {
-    vector<uint16_t>::iterator itPid = std::find(m_pidsLeftToScan.begin(), m_pidsLeftToScan.end(), pid);
-    if (itPid == m_pidsLeftToScan.end())
+    vector<uint16_t>::iterator it = std::find(m_pidsLeftToScan.begin(), m_pidsLeftToScan.end(), pid);
+    if (it == m_pidsLeftToScan.end())
     {
-      // Shouldn't happen
-      continue;
+      dsyslog("Already encountered PID %u", pid); // TODO: Remove this debug statement
+      continue; // Already scanned
     }
-
-    CloseResource(pid, TableIdEIT);
-    m_pidsLeftToScan.erase(itPid);
+    else
+    {
+      dsyslog("Found PID %u", pid);
+      m_pidsLeftToScan.erase(it);
+      // TODO: Close filter resource
+    }
 
     SI::PSIP_EIT psipEit(data.data(), false);
     if (psipEit.CheckCRCAndParse())
@@ -111,8 +114,6 @@ EventVector cPsipEit::GetEvents()
         events.push_back(thisEvent);
       }
     }
-
-    dsyslog("EIT: Found PID %u with %u events", pid, events.size());
   }
 
   return events;
