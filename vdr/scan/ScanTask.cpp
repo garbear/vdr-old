@@ -28,6 +28,9 @@
 #include "devices/Device.h"
 #include "devices/subsystems/DeviceChannelSubsystem.h"
 #include "dvb/DiSEqC.h"
+#include "dvb/filters/PAT.h"
+#include "dvb/filters/SDT.h"
+#include "dvb/filters/PSIP_VCT.h"
 #include "sources/linux/DVBTransponderParams.h"
 #include "utils/log/Log.h"
 #include "settings/Settings.h"
@@ -66,27 +69,30 @@ void cScanTask::DoWork(const ChannelPtr& channel, cSynchronousAbort* abortableJo
   if (m_device->Channel()->HasLock(true))
   {
     cPat pat(m_device);
-    ChannelVector channels = pat.GetChannels();
+    ChannelVector patChannels = pat.GetChannels();
 
-    for (ChannelVector::const_iterator it = channels.begin(); it != channels.end(); ++it)
-      cChannelManager::Get().AddChannel(*it);
+    // TODO: Use SDT for non-ATSC tuners
+    cPsipVct vct(m_device);
+    ChannelVector vctChannels = vct.GetChannels();
 
-    /*
-    if (m_abortableJob)
-      m_abortableJob->WaitForAbort(SCAN_TIMEOUT_MS);
-    else
-      usleep(SCAN_TIMEOUT_MS * 1000);
-    */
+    for (ChannelVector::const_iterator it = patChannels.begin(); it != patChannels.end(); ++it)
+    {
+      const ChannelPtr& patChannel = *it;
+      for (ChannelVector::const_iterator it2 = vctChannels.begin(); it2 != vctChannels.end(); ++it2)
+      {
+        const ChannelPtr& vctChannel = *it2;
+        if (patChannel->GetTid() == vctChannel->GetTid() &&
+            patChannel->GetSid() == vctChannel->GetSid())
+        {
+          patChannel->SetName(vctChannel->Name(), vctChannel->ShortName(), vctChannel->Provider());
+          // TODO: Copy transponder data
+          // TODO: Copy major/minor channel number
 
+          cChannelManager::Get().AddChannel(patChannel);
+        }
+      }
+    }
   }
-
-  /*
-  cScanFsm scanner(m_device, &cChannelManager::Get(), channel, abortableJob);
-  cFiniteStateMachine<cScanFsm> fsm(scanner);
-
-  while (fsm.State() != SCAN_FSM::eStop)
-    fsm.Work();
-  */
 }
 
 unsigned int cScanTask::ChannelToFrequency(unsigned int channel, eChannelList channelList)
