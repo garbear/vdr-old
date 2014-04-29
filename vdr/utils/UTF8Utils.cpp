@@ -78,18 +78,18 @@ string cUtf8Utils::Utf8CharSet(uint32_t utf8Symbol)
   {
     s.push_back(utf8Symbol);
   }
-  if (utf8Symbol < 0x800)
+  else if (utf8Symbol < 0x800)
   {
     s.push_back(((utf8Symbol >> 6) & 0x1F) | 0xC0);
     s.push_back((utf8Symbol & 0x3F) | 0x80);
   }
-  if (utf8Symbol < 0x10000)
+  else if (utf8Symbol < 0x10000)
   {
     s.push_back(((utf8Symbol >> 12) & 0x0F) | 0xE0);
     s.push_back(((utf8Symbol >>  6) & 0x3F) | 0x80);
     s.push_back((utf8Symbol & 0x3F) | 0x80);
   }
-  if (utf8Symbol < 0x110000)
+  else if (utf8Symbol < 0x110000)
   {
     s.push_back(((utf8Symbol >> 18) & 0x07) | 0xF0);
     s.push_back(((utf8Symbol >> 12) & 0x3F) | 0x80);
