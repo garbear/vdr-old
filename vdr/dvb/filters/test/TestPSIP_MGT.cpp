@@ -21,6 +21,8 @@
  */
 
 #include "dvb/filters/PSIP_MGT.h"
+#include "channels/ChannelManager.h"
+#include "channels/ChannelTypes.h"
 #include "devices/linux/DVBDevice.h"
 #include "devices/linux/test/DVBDeviceNames.h"
 #include "devices/subsystems/DeviceChannelSubsystem.h"
@@ -36,15 +38,25 @@
 
 using namespace std;
 
+#define CHANNELS_XML    "special://vdr/system/channels.xml"
+
 namespace VDR
 {
 
 TEST(PSIP_MGT, GetEvents)
 {
+  // Load channels
+  cChannelManager channelManager;
+  ASSERT_TRUE(channelManager.Load(CHANNELS_XML));
+  ChannelVector channels = channelManager.GetCurrent();
+  ASSERT_FALSE(channels.empty());
+
   DeviceVector devices = cDvbDevice::FindDevices();
   ASSERT_FALSE(devices.empty());
   for (DeviceVector::iterator it = devices.begin(); it != devices.end(); ++it)
   {
+    EventVector events;
+
     cDvbDevice *device = dynamic_cast<cDvbDevice*>(it->get());
     if (!device)
       continue;
@@ -53,7 +65,8 @@ TEST(PSIP_MGT, GetEvents)
 
     ChannelPtr channel;
 
-    if (device->DeviceName() == WINTVHVR950Q)
+    /*
+    if (device->DeviceName() == WINTVHVR2250)
     {
       cFrontendCapabilities caps(device->m_dvbTuner.GetCapabilities());
 
@@ -76,14 +89,18 @@ TEST(PSIP_MGT, GetEvents)
       channel->SetTransponderData(cSource::stAtsc, frequency, cScanConfig::TranslateSymbolRate(eSR_6900000), params, true);
       channel->SetId(0, 0, 0, 0);
     }
+    */
 
-    if (channel)
+    for (ChannelVector::const_iterator it2 = channels.begin(); it2 != channels.end(); ++it2)
     {
+      ChannelPtr channel = *it2;
+
+      ASSERT_TRUE(channel.get());
+
       EXPECT_TRUE(device->Channel()->SwitchChannel(channel));
       EXPECT_TRUE(device->Channel()->HasLock(true));
 
       cPsipMgt mgt(device);
-      EventVector events;
       EXPECT_TRUE(mgt.GetPSIPData(events));
 
       EXPECT_NE(0, events.size());
@@ -93,11 +110,7 @@ TEST(PSIP_MGT, GetEvents)
         dsyslog("Found event: %s", (*it)->Title().c_str());
         dsyslog("  Start time: %s, duration: %ds", (*it)->StartTime().GetAsDBDateTime().c_str(), (*it)->Duration());
 
-        EventPtr event = cSchedulesLock::GetEvent(device->Channel()->GetCurrentlyTunedTransponder()->GetChannelID(),
-            (*it)->EventID());
-
-        if (!event)
-          cSchedulesLock::AddEvent(device->Channel()->GetCurrentlyTunedTransponder()->GetChannelID(), *it);
+        //cSchedulesLock::AddEvent(device->Channel()->GetCurrentlyTunedTransponder()->GetChannelID(), *it);
       }
 
       // Stop testing after GetEvents() succeeds
@@ -105,6 +118,8 @@ TEST(PSIP_MGT, GetEvents)
         break;
     }
 
+    if (!events.empty())
+      break;
   }
 }
 
