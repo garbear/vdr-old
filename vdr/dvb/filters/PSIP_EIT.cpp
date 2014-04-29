@@ -65,14 +65,11 @@ EventVector cPsipEit::GetEvents()
     vector<uint16_t>::iterator it = std::find(m_pidsLeftToScan.begin(), m_pidsLeftToScan.end(), pid);
     if (it == m_pidsLeftToScan.end())
     {
-      dsyslog("Already encountered PID %u", pid);
+      dsyslog("EIT: PID %u repeated", pid);
       continue; // Already scanned
     }
-    else
-    {
-      dsyslog("Found PID %u", pid);
-      m_pidsLeftToScan.erase(it);
-    }
+
+    m_pidsLeftToScan.erase(it);
 
     SI::PSIP_EIT psipEit(data.data(), false);
     if (psipEit.CheckCRCAndParse())
@@ -113,6 +110,8 @@ EventVector cPsipEit::GetEvents()
         events.push_back(thisEvent);
       }
     }
+
+    dsyslog("EIT: Found PID %u (%u bytes) with %u events", pid, data.size(), events.size());
   }
 
   return events;
