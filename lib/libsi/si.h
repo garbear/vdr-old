@@ -235,6 +235,28 @@ enum CompressionType { CompressionTypeNone = 0x00,      // No compression
                        CompressionTypeHuffmanC7 = 0x02  // Huffman coding using table C7 in A/65:2009 (optimized for descriptions)
                      };
 
+enum ModulationMode { ModulationModeAnalog = 0x01,     // Standard analog methods for analog television
+                      ModulationModeSCTE_1 = 0x02,     // Symbol rate of 5.057 Msps, typically 64-QAM, see ANSI/SCTE 07 [1] (Mode 1)
+                      ModulationModeSCTE_2 = 0x03,     // Symbol rate of 5.361 Msps, typically 256-QAM, see ANSI/SCTE 07 [1] (Mode 2)
+                      ModulationModeATSC_VSB8 = 0x04,  // 8-VSB modulation method conforming to A/53 Part 2 [2]
+                      ModulationModeATSC_VSB16 = 0x05, // 16-VSB modulation method conforming to A/53 Part 2 [2]
+                    };
+
+enum ETMLocation { ETMLocationNone = 0x00,     // No ETM
+                   ETMLocationPTC = 0x01,      // ETM located in the PTC carrying this PSIP
+                   ETMLocationPTC_TSID = 0x02, // ETM located in the PTC specified by the channel_TSID
+                 };
+
+/* [1] SCTE: “Digital Video Transmission Standard for Cable Television,” Doc.
+       ANSI/SCTE 07 2006, Society of Cable Telecommunications Engineers,
+       http://www.scte.org/.
+
+   [2] ATSC: “ATSC Digital Television Standard, Part 2 — RF/Transmission System
+       Characteristics,” Doc. A/53 Part 2:2007, Advanced Television Systems
+       Committee, Washington, D.C., 3 January 2007.
+*/
+
+
 /* Some principles:
    - Objects that return references to other objects contained in their data must make sure
      that the returned objects have been parsed.

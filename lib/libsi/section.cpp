@@ -12,8 +12,10 @@
 
 #include "section.h"
 #include "util.h"
+#include "../../vdr/utils/UTF8Utils.h"
 #include <assert.h>
 #include <stdio.h>
+#include <string.h>
 
 #define POSIX_EPOCH  0
 #define ATSC_EPOCH   (POSIX_EPOCH + ((10 * 365 + 7) * 24 * 60 * 60))
@@ -415,6 +417,110 @@ void PSIP_MGT::TableInfo::Parse() {
    tableDescriptors.setData(data+offset, HILO(s->table_type_descriptors_length));
 }
 
+/*********************** PSIP_VCT ***********************/
+
+void PSIP_VCT::Parse() {
+   int offset=0;
+   data.setPointerAndOffset<const vct>(s, offset);
+   assert(offset == sizeof(const vct));
+
+   const int channelCount = s->num_channels_in_section;
+
+   channelInfoLoop.setDataAndOffset(data+offset, getChannelInfoLoopLength(data+offset, channelCount), offset);
+   assert(offset == sizeof(const vct) + channelInfoLoop.getLength());
+
+   const vct_mid *mid;
+   data.setPointerAndOffset<const vct_mid>(mid, offset);
+   assert(offset == sizeof(const vct) + channelInfoLoop.getLength() + sizeof(const vct_mid));
+
+   descriptorLoop.setDataAndOffset(data+offset, HILO(mid->additional_descriptors_length), offset);
+   assert(offset == sizeof(const vct) + channelInfoLoop.getLength() + sizeof(const vct_mid) + descriptorLoop.getLength());
+}
+
+int PSIP_VCT::getChannelInfoLoopLength(const CharArray &data, int channelCount) {
+   int channelInfoLength = 0;
+   for (int i = 0; i < channelCount; i++)
+   {
+      ChannelInfo channelInfo;
+      channelInfo.setData(data + channelInfoLength);
+      channelInfo.CheckParse();
+      channelInfoLength+=channelInfo.getLength();
+   }
+   return channelInfoLength;
+}
+
+void PSIP_VCT::ChannelInfo::getShortName(char buffer[21]) const {
+   std::vector<uint32_t> utf8Symbols;
+
+   utf8Symbols.push_back(HILO(s->short_name0));
+   utf8Symbols.push_back(HILO(s->short_name1));
+   utf8Symbols.push_back(HILO(s->short_name2));
+   utf8Symbols.push_back(HILO(s->short_name3));
+   utf8Symbols.push_back(HILO(s->short_name4));
+   utf8Symbols.push_back(HILO(s->short_name5));
+   utf8Symbols.push_back(HILO(s->short_name6));
+
+   std::string strDecoded = VDR::cUtf8Utils::Utf8FromArray(utf8Symbols);
+   strncpy(buffer, strDecoded.c_str(), sizeof(buffer));
+}
+
+int PSIP_VCT::ChannelInfo::getMajorNumber() const {
+   return HILO(s->major_channel_number);
+}
+
+int PSIP_VCT::ChannelInfo::getMinorNumber() const {
+   return HILO(s->minor_channel_number);
+}
+
+int PSIP_VCT::ChannelInfo::getModulationMode() const {
+   return s->modulation_mode;
+}
+
+int PSIP_VCT::ChannelInfo::getTSID() const {
+   return HILO(s->channel_TSID);
+}
+
+int PSIP_VCT::ChannelInfo::getServiceId() const {
+   return HILO(s->program_number);
+}
+
+int PSIP_VCT::ChannelInfo::getETMLocation() const {
+   return s->ETM_location;
+}
+
+bool PSIP_VCT::ChannelInfo::isHidden() const {
+   return s->hidden;
+}
+
+bool PSIP_VCT::ChannelInfo::isGuideHidden() const {
+   return s->hide_guide;
+}
+
+int PSIP_VCT::ChannelInfo::getSourceID() const {
+   return HILO(s->source_id);
+}
+
+void PSIP_VCT::ChannelInfo::setData(CharArray d)
+{
+  VariableLengthPart::setData(d, getChannelInfoLength(d.getData()));
+}
+
+int PSIP_VCT::ChannelInfo::getChannelInfoLength(const unsigned char *data)
+{
+   const vct_channel_info *channelInfo = (const vct_channel_info*)data;
+   const int descriptorsLength = HILO(channelInfo->descriptors_length);
+   return sizeof(const vct_channel_info) + descriptorsLength;
+}
+
+void PSIP_VCT::ChannelInfo::Parse() {
+   int offset=0;
+   data.setPointerAndOffset<const vct_channel_info>(s, offset);
+   assert(offset == sizeof(const vct_channel_info));
+
+   channelDescriptors.setDataAndOffset(data+offset, HILO(s->descriptors_length), offset);
+   assert(offset == sizeof(const vct_channel_info) + channelDescriptors.getLength());
+}
+
 /*********************** PSIP_EIT ***********************/
 
 void PSIP_EIT::Parse() {
@@ -469,21 +575,17 @@ int PSIP_EIT::Event::getEventLength(const psip_eit_event *event) {
 void PSIP_EIT::Event::Parse() {
    int offset=0;
    data.setPointerAndOffset<const psip_eit_event>(s, offset);
-
    assert(offset == sizeof(const psip_eit_event));
 
    textLoop.setDataAndOffset(data+offset, offset);
-
    assert(offset == sizeof(const psip_eit_event) + textLoop.getLength());
 
    const psip_eit_event_mid *mid;
    data.setPointerAndOffset<const psip_eit_event_mid>(mid, offset);
-
    assert(offset == sizeof(const psip_eit_event) + textLoop.getLength() + sizeof(const psip_eit_event_mid));
 
    const uint16_t descriptorsLength = HILO(mid->descriptors_length);
    eventDescriptors.setDataAndOffset(data+offset, descriptorsLength, offset);
-
    assert(offset == sizeof(const psip_eit_event) + textLoop.getLength() + sizeof(const psip_eit_event_mid) + eventDescriptors.getLength());
 }
 

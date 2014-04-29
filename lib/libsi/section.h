@@ -307,6 +307,46 @@ private:
    const mgt *s;
 };
 
+/* Virtual Channel Table */
+
+#define SHORT_NAME_LENGTH  7
+
+class PSIP_VCT : public VersionedSection {
+public:
+   PSIP_VCT(const unsigned char *data, bool doCopy=true) : VersionedSection(data, doCopy), s(NULL) {}
+   PSIP_VCT() : s(NULL) {}
+   class ChannelInfo : public VariableLengthPart {
+   public:
+      void setData(CharArray d);
+      void setDataAndOffset(CharArray d, int &offset) { setData(d); offset += getLength(); }
+      void getShortName(char buffer[22]) const; // UTF-8, 22 == SHORT_NAME_LENGTH * sizeof(codepoint U+FFFF) + 1
+      int getMajorNumber() const;
+      int getMinorNumber() const;
+      int getModulationMode() const;
+      int getTSID() const;
+      int getServiceId() const;
+      int getETMLocation() const;
+      bool isHidden() const;
+      bool isGuideHidden() const; // Should this channel's EPG events be hidden
+      int getSourceID() const;
+      virtual int getLength() { return int(sizeof(vct_channel_info)+channelDescriptors.getLength()); }
+      static int getChannelInfoLength(const unsigned char *data);
+      PSIP_DescriptorLoop channelDescriptors;
+   protected:
+      virtual void Parse();
+   private:
+      const vct_channel_info *s;
+   };
+   StructureLoop<ChannelInfo> channelInfoLoop;
+   PSIP_DescriptorLoop descriptorLoop;
+protected:
+   virtual void Parse();
+private:
+   // Calculate size of table info loop
+   static int getChannelInfoLoopLength(const CharArray &data, int channelCount);
+   const vct *s;
+};
+
 /* Event Information Table (PSIP) */
 
 class PSIP_EIT : public VersionedSection {
