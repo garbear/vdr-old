@@ -25,16 +25,22 @@
 #include "channels/ChannelManager.h"
 #include "devices/linux/DVBDevice.h"
 #include "devices/linux/test/DVBDeviceNames.h"
+#include "filesystem/File.h"
 
 #include <gtest/gtest.h>
 #include <unistd.h> // for sleep()
+
+#define CHANNELS_XML  "special://vdr/vdr/scan/test/channel-scan-results.xml"
+
 namespace VDR
 {
 
 TEST(Scanner, Scan)
 {
+  CFile::Delete(CHANNELS_XML);
+
   // Initialize cChannelManager with the proper path
-  cChannelManager::Get().Load();
+  cChannelManager::Get().Load(CHANNELS_XML);
   cChannelManager::Get().Clear();
   EXPECT_EQ(0, cChannelManager::Get().ChannelCount());
 

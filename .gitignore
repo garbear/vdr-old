@@ -7,6 +7,11 @@
 /build
 /Build
 
+# Configuration
 /system/channels.xml
 /system/allowed_hosts.conf #old filetype
 /epg
+
+# Test files
+/vdr/scan/test/channel-scan-results.xml
+
