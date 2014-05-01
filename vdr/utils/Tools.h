@@ -98,28 +98,6 @@ void TouchFile(const std::string& strFileName);
 time_t LastModifiedTime(const std::string& strFileName);
 off_t FileSize(const std::string& strFileName); ///< returns the size of the given file, or -1 in case of an error (e.g. if the file doesn't exist)
 
-class cBitStream {
-private:
-  const uint8_t *data;
-  int length; // in bits
-  int index; // in bits
-public:
-  cBitStream(const uint8_t *Data, int Length) : data(Data), length(Length), index(0) {}
-  ~cBitStream() {}
-  int GetBit(void);
-  uint32_t GetBits(int n);
-  void ByteAlign(void);
-  void WordAlign(void);
-  bool SetLength(int Length);
-  void SkipBits(int n) { index += n; }
-  void SkipBit(void) { SkipBits(1); }
-  bool IsEOF(void) const { return index >= length; }
-  void Reset(void) { index = 0; }
-  int Length(void) const { return length; }
-  int Index(void) const { return (IsEOF() ? length : index); }
-  const uint8_t *GetData(void) const { return (IsEOF() ? NULL : data + (index / 8)); }
-  };
-
 class cTimeMs {
 private:
   uint64_t begin;

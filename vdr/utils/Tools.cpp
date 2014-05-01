@@ -682,47 +682,6 @@ cString cString::vsprintf(const char *fmt, va_list &ap)
   return cString(buffer, true);
 }
 
-// --- cBitStream ------------------------------------------------------------
-
-int cBitStream::GetBit(void)
-{
-  if (index >= length)
-     return 1;
-  int r = (data[index >> 3] >> (7 - (index & 7))) & 1;
-  ++index;
-  return r;
-}
-
-uint32_t cBitStream::GetBits(int n)
-{
-  uint32_t r = 0;
-  while (n--)
-        r |= GetBit() << n;
-  return r;
-}
-
-void cBitStream::ByteAlign(void)
-{
-  int n = index % 8;
-  if (n > 0)
-     SkipBits(8 - n);
-}
-
-void cBitStream::WordAlign(void)
-{
-  int n = index % 16;
-  if (n > 0)
-     SkipBits(16 - n);
-}
-
-bool cBitStream::SetLength(int Length)
-{
-  if (Length > length)
-     return false;
-  length = Length;
-  return true;
-}
-
 bool GetSubDirectories(const string &strDirectory, vector<string> &vecFileNames)
 {
   vecFileNames.clear();
