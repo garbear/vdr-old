@@ -213,6 +213,7 @@ set(VDR_SRCS
 	vdr/utils/CharSetConverterVDR.cpp
 	vdr/utils/CharsetDetection.cpp
 	vdr/utils/DateTime.cpp
+	vdr/utils/Hash.cpp
 	vdr/utils/I18N.cpp
 	vdr/utils/Observer.cpp
 	vdr/utils/RegExp.cpp

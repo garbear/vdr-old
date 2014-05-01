@@ -211,40 +211,6 @@ inline int CompareStringsIgnoreCase(const void *a, const void *b)
 // Retrieves only directory names...
 bool GetSubDirectories(const std::string &strDirectory, std::vector<std::string> &vecFileNames);
 
-class cHashObject : public cListObject {
-  friend class cHashBase;
-private:
-  unsigned int id;
-  cListObject *object;
-public:
-  cHashObject(cListObject *Object, unsigned int Id) { object = Object; id = Id; }
-  cListObject *Object(void) { return object; }
-  };
-
-class cHashBase {
-private:
-  cList<cHashObject> **hashTable;
-  int size;
-  unsigned int hashfn(unsigned int Id) const { return Id % size; }
-protected:
-  cHashBase(int Size);
-public:
-  virtual ~cHashBase();
-  void Add(cListObject *Object, unsigned int Id);
-  void Del(cListObject *Object, unsigned int Id);
-  void Clear(void);
-  cListObject *Get(unsigned int Id) const;
-  cList<cHashObject> *GetList(unsigned int Id) const;
-  };
-
-#define HASHSIZE 512
-
-template<class T> class cHash : public cHashBase {
-public:
-  cHash(int Size = HASHSIZE) : cHashBase(Size) {}
-  T *Get(unsigned int Id) const { return (T *)cHashBase::Get(Id); }
-};
-
 // SystemExec() implements a 'system()' call that closes all unnecessary file
 // descriptors in the child process.
 // With Detached=true, calls command in background and in a separate session,

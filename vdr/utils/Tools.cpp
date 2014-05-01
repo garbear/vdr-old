@@ -828,66 +828,6 @@ void cLockFile::Unlock(void)
   }
 }
 
-// --- cHashBase -------------------------------------------------------------
-
-cHashBase::cHashBase(int Size)
-{
-  size = Size;
-  hashTable = (cList<cHashObject>**)calloc(size, sizeof(cList<cHashObject>*));
-}
-
-cHashBase::~cHashBase(void)
-{
-  Clear();
-  free(hashTable);
-}
-
-void cHashBase::Add(cListObject *Object, unsigned int Id)
-{
-  unsigned int hash = hashfn(Id);
-  if (!hashTable[hash])
-     hashTable[hash] = new cList<cHashObject>;
-  hashTable[hash]->Add(new cHashObject(Object, Id));
-}
-
-void cHashBase::Del(cListObject *Object, unsigned int Id)
-{
-  cList<cHashObject> *list = hashTable[hashfn(Id)];
-  if (list) {
-     for (cHashObject *hob = list->First(); hob; hob = list->Next(hob)) {
-         if (hob->object == Object) {
-            list->Del(hob);
-            break;
-            }
-         }
-     }
-}
-
-void cHashBase::Clear(void)
-{
-  for (int i = 0; i < size; i++) {
-      delete hashTable[i];
-      hashTable[i] = NULL;
-      }
-}
-
-cListObject *cHashBase::Get(unsigned int Id) const
-{
-  cList<cHashObject> *list = hashTable[hashfn(Id)];
-  if (list) {
-     for (cHashObject *hob = list->First(); hob; hob = list->Next(hob)) {
-         if (hob->id == Id)
-            return hob->object;
-         }
-     }
-  return NULL;
-}
-
-cList<cHashObject> *cHashBase::GetList(unsigned int Id) const
-{
-  return hashTable[hashfn(Id)];
-}
-
 int SystemExec(const char *Command, bool Detached)
 {
 #if !defined(TARGET_ANDROID)

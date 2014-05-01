@@ -3,8 +3,9 @@
 #include "EPGTypes.h"
 #include "channels/ChannelID.h"
 #include "utils/DateTime.h"
+#include "utils/Hash.h"
 #include "utils/List.h"
-#include "utils/Tools.h" // for uchar and cHash
+#include "utils/Tools.h" // for uchar
 
 class TiXmlNode;
 
