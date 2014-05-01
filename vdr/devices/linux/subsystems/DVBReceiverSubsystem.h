@@ -20,7 +20,6 @@
  */
 #pragma once
 
-#include "Types.h"
 #include "devices/subsystems/DeviceReceiverSubsystem.h"
 
 namespace VDR

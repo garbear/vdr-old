@@ -21,7 +21,6 @@
  */
 #pragma once
 
-#include "Types.h"
 #include "ScanConfig.h"
 
 #include <linux/dvb/frontend.h>

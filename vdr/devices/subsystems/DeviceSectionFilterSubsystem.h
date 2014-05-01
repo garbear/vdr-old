@@ -20,8 +20,8 @@
  */
 #pragma once
 
-#include "Types.h"
 #include "devices/DeviceSubsystem.h"
+#include "dvb/DVBTypes.h"
 #include "dvb/filters/FilterResource.h"
 #include "platform/threads/mutex.h"
 #include "threads/SystemClock.h" // for EndTime
@@ -53,13 +53,13 @@ private:
   class cFilterResourceRequest
   {
   public:
-    cFilterResourceRequest(const std::set<FilterResourcePtr>& filterResources);
-    ~cFilterResourceRequest(void) { Abort(); }
+    cFilterResourceRequest(const FilterResourceCollection& filterResources);
+    ~cFilterResourceRequest(void);
 
     /*!
      * Return all resources being polled.
      */
-    const std::set<FilterResourcePtr>& GetResources(void) const { return m_resources; }
+    const FilterResourceCollection& GetResources(void) const { return m_resources; }
 
     /*!
      * Returns the resource that received the section, or an empty pointer if no
@@ -83,9 +83,9 @@ private:
     void Abort(void);
 
   private:
-    std::set<FilterResourcePtr> m_resources;      // The filter resources that this request is polling
-    FilterResourcePtr           m_activeResource; // Resource ready to be read
-    PLATFORM::CEvent            m_readyEvent;     // Fired when resource is ready to be read
+    FilterResourceCollection m_resources;      // The filter resources that this request is polling
+    FilterResourcePtr        m_activeResource; // Resource ready to be read
+    PLATFORM::CEvent         m_readyEvent;     // Fired when resource is ready to be read
   };
 
   typedef std::vector<shared_ptr<cFilterResourceRequest> > ResourceRequestCollection;
@@ -119,7 +119,7 @@ public:
    * will be set to the pid of the section. Blocks until a section is received
    * or false is returned.
    */
-  bool GetSection(const std::set<FilterResourcePtr>& filterResources, uint16_t& pid, std::vector<uint8_t>& data);
+  bool GetSection(const FilterResourceCollection& filterResources, uint16_t& pid, std::vector<uint8_t>& data);
 
 protected:
   /*!
@@ -143,7 +143,7 @@ protected:
    * the resource that received the section, or an empty pointer if no filters
    * were received by any sections.
    */
-  virtual FilterResourcePtr Poll(const std::set<FilterResourcePtr>& filterResources) = 0;
+  virtual FilterResourcePtr Poll(const FilterResourceCollection& filterResources) = 0;
 
 private:
   /*!
@@ -155,7 +155,7 @@ private:
    * Accumulate resources of all active filters (those who are waiting on a call
    * to GetSection()).
    */
-  std::set<FilterResourcePtr> GetActiveResources(void);
+  FilterResourceCollection GetActiveResources(void);
 
   /*!
    * Called when a section has been read from the device.

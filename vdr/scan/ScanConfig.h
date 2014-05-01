@@ -21,7 +21,6 @@
  */
 #pragma once
 
-#include "Types.h"
 #include "CountryUtils.h"
 #include "SatelliteUtils.h"
 #include "sources/linux/DVBTransponderParams.h"

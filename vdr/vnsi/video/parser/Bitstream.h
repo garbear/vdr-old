@@ -25,7 +25,7 @@
 #ifndef VNSI_BITSTREAM_H
 #define VNSI_BITSTREAM_H
 
-#include "Types.h"
+#include <stdint.h>
 
 namespace VDR
 {

@@ -20,11 +20,12 @@
 
 #pragma once
 
-#include "Types.h"
-#include "lib/platform/threads/threads.h"
-#include "channels/Channel.h"
-#include "devices/Device.h"
+#include "channels/ChannelTypes.h"
+#include "devices/DeviceTypes.h"
+#include "platform/threads/threads.h"
 #include "utils/Observer.h"
+
+#include <stdint.h>
 
 namespace VDR
 {
@@ -47,7 +48,7 @@ protected:
   void ResetMembers(void);
   virtual void* Process(void);
   void PmtChange(void);
-  void Receive(uchar *data, int length);
+  void Receive(uint8_t *data, int length);
   void Attach(bool on);
   void CancelPMTThread(void);
   DevicePtr                  m_Device;

@@ -156,7 +156,7 @@ void cVideoInput::PmtChange(void)
   m_SeenPmt   = true;
 }
 
-void cVideoInput::Receive(uchar *data, int length)
+void cVideoInput::Receive(uint8_t *data, int length)
 {
   CLockObject lock(m_mutex);
   if (!m_Device)
@@ -168,7 +168,7 @@ void cVideoInput::Receive(uchar *data, int length)
      cPatPmtGenerator patPmtGenerator(m_Channel);
      m_VideoBuffer->Put(patPmtGenerator.GetPat(), TS_SIZE);
      int Index = 0;
-     while (uchar *pmt = patPmtGenerator.GetPmt(Index))
+     while (uint8_t *pmt = patPmtGenerator.GetPmt(Index))
        m_VideoBuffer->Put(pmt, TS_SIZE);
      m_PmtChange = false;
   }

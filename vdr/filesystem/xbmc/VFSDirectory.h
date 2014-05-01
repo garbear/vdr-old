@@ -20,11 +20,11 @@
  */
 #pragma once
 
-#include "Types.h"
 #include "filesystem/IDirectory.h"
-#include "xbmc/libXBMC_addon.h"
 
 #include <string>
+
+namespace ADDON { class CHelper_libXBMC_addon; }
 
 namespace VDR
 {

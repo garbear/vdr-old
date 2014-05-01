@@ -1,8 +1,9 @@
 #pragma once
 
-#include "Types.h"
 #include "channels/Channel.h"
 #include "channels/ChannelID.h"
+#include "channels/ChannelTypes.h"
+
 #include <stddef.h>
 
 namespace VDR

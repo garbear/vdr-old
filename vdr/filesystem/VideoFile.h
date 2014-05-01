@@ -1,7 +1,8 @@
 #pragma once
 
-#include "Types.h"
 #include "File.h"
+
+#include <sys/types.h>
 
 namespace VDR
 {

@@ -21,10 +21,9 @@
  */
 #pragma once
 
-#include "Types.h"
+#include "channels/ChannelTypes.h"
 #include "devices/Receiver.h"
 #include "platform/threads/threads.h"
-#include "Types.h"
 #include "utils/DateTime.h"
 
 namespace VDR

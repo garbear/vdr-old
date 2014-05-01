@@ -1,12 +1,13 @@
 #include "Schedule.h"
-#include "EPG.h"
 #include "Components.h"
+#include "EPG.h"
 #include "EPGDefinitions.h"
-#include "Config.h"
+#include "Event.h"
 #include "channels/Channel.h"
 #include "channels/ChannelManager.h"
 #include "utils/XBMCTinyXML.h"
 #include "settings/Settings.h"
+#include "Config.h"
 
 #include <algorithm>
 

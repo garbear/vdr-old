@@ -21,10 +21,9 @@
 #pragma once
 
 #include "dvb/filters/Filter.h"
-#include "Types.h"
+#include "channels/ChannelTypes.h"
 
 #include <stdint.h>
-#include <vector>
 
 namespace VDR
 {

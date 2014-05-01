@@ -22,7 +22,6 @@
  */
 #pragma once
 
-#include "Types.h"
 #include "XBMCTinyXML.h"
 
 #include <stdint.h>

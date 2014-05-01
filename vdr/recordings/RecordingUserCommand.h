@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Types.h"
 #include "RecordingConfig.h"
 #include <stddef.h>
 #include <string>

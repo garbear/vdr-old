@@ -21,7 +21,7 @@
  */
 #pragma once
 
-#include "Types.h"
+#include "devices/DeviceTypes.h"
 #include "devices/commoninterface/CI.h"
 
 namespace VDR

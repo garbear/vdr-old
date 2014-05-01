@@ -21,9 +21,9 @@
  */
 #pragma once
 
-#include "Types.h"
-
 #ifdef TARGET_POSIX
+
+#include "platform/os.h"
 
 namespace VDR
 {

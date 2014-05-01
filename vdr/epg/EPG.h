@@ -13,15 +13,20 @@
 #ifndef __EPG_H
 #define __EPG_H
 
-#include "Types.h"
+#include "EPGTypes.h"
 #include "Schedule.h"
+#include "channels/ChannelID.h"
+#include "channels/ChannelTypes.h"
+#include "platform/threads/mutex.h"
 #include "utils/DateTime.h"
-#include <vector>
+
 #include <map>
+#include <vector>
 
 namespace VDR
 {
 class CChannelFilter;
+class cSchedules;
 
 class cSchedulesLock
 {
@@ -61,7 +66,7 @@ public:
   void DelSchedule(SchedulePtr schedule);
   SchedulePtr GetSchedule(const tChannelID& ChannelID);
   SchedulePtr GetSchedule(ChannelPtr Channel, bool AddIfMissing = false);
-  std::vector<SchedulePtr> GetUpdatedSchedules(const std::map<int, CDateTime>& lastUpdated, CChannelFilter& filter);
+  ScheduleVector GetUpdatedSchedules(const std::map<int, CDateTime>& lastUpdated, CChannelFilter& filter);
 
   static SchedulePtr EmptySchedule;
 protected:
@@ -72,7 +77,7 @@ private:
 
   PLATFORM::CReadWriteLock  m_rwlock;
   CDateTime                 m_modified;
-  std::vector<SchedulePtr>  m_schedules;
+  ScheduleVector  m_schedules;
   bool                      m_bHasUnsavedData;
 };
 

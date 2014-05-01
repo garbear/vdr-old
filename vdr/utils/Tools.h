@@ -10,7 +10,6 @@
 #ifndef __TOOLS_H
 #define __TOOLS_H
 
-#include "Types.h"
 #include "filesystem/File.h"
 #include <float.h>
 #include <string>

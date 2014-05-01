@@ -21,7 +21,7 @@
  */
 #pragma once
 
-#include "Types.h"
+#include <stddef.h>
 #include <string>
 
 namespace VDR

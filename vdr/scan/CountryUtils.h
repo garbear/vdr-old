@@ -21,7 +21,6 @@
  */
 #pragma once
 
-#include "Types.h"
 #include <linux/dvb/frontend.h>
 #include <string>
 

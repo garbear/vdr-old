@@ -21,10 +21,12 @@
 #ifndef VNSI_DEMUXER_H
 #define VNSI_DEMUXER_H
 
-#include "Types.h"
-#include "utils/Tools.h"
 #include "devices/Device.h"
+#include "utils/Tools.h"
+
 #include <queue>
+#include <stdint.h>
+#include <sys/types.h>
 
 namespace VDR
 {

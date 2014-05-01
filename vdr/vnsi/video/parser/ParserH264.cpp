@@ -18,11 +18,12 @@
  *
  */
 
-#include <stdlib.h>
-#include <assert.h>
-
 #include "ParserH264.h"
 #include "Bitstream.h"
+#include "utils/log/Log.h"
+
+#include <assert.h>
+#include <stdlib.h>
 
 namespace VDR
 {

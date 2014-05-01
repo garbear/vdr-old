@@ -24,6 +24,7 @@
 #include "PSIP_MGT.h"
 #include "PSIP_EIT.h"
 #include "PSIP_STT.h"
+#include "Types.h"
 
 #include <libsi/si.h>
 #include <libsi/si_ext.h>

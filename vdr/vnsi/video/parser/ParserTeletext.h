@@ -21,8 +21,9 @@
 #ifndef VNSI_DEMUXER_TELETEXT_H
 #define VNSI_DEMUXER_TELETEXT_H
 
-#include "Types.h"
 #include "Parser.h"
+
+#include <sys/types.h>
 
 namespace VDR
 {

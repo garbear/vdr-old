@@ -23,17 +23,16 @@
 #pragma once
 
 #include "dvb/filters/Filter.h"
-#include "epg/Event.h"
-#include "Types.h"
+#include "epg/EPGTypes.h"
 
 #include <libsi/descriptor.h>
 #include <libsi/si.h>
 #include <stdint.h>
+#include <string>
+#include <vector>
 
 namespace VDR
 {
-
-class cEvent;
 
 class cChannelManager;
 

@@ -22,9 +22,11 @@
  */
 
 #include "NIT.h"
+#include "channels/Channel.h"
 #include "scan/dvb_wrapper.h"
 #include "sources/Source.h"
 #include "utils/StringUtils.h"
+#include "Types.h"
 
 #include <libsi/si_ext.h>
 #include <libsi/descriptor.h>

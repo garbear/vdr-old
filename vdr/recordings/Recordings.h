@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Types.h"
 #include "Recording.h"
 
 namespace VDR

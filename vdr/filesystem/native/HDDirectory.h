@@ -21,8 +21,9 @@
  */
 #pragma once
 
-#include "Types.h"
 #include "filesystem/IDirectory.h"
+
+#include <string>
 
 namespace VDR
 {

@@ -22,9 +22,8 @@
  */
 #pragma once
 
-#include "Types.h"
 #include "dvb/filters/Filter.h"
-#include "epg/Event.h"
+#include "epg/EPGTypes.h"
 
 #include <stdint.h>
 #include <vector>

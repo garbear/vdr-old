@@ -21,6 +21,7 @@
  */
 
 #include "XTimeUtils.h"
+#include "Types.h"
 
 #if defined(TARGET_DARWIN)
 #include "threads/Atomics.h"

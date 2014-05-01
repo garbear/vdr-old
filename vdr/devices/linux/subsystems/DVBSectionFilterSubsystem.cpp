@@ -20,9 +20,11 @@
  */
 
 #include "DVBSectionFilterSubsystem.h"
-#include "../../../devices/linux/DVBDevice.h" // for DEV_DVB_DEMUX
+#include "devices/linux/DVBDevice.h" // for DEV_DVB_DEMUX
+#include "dvb/filters/FilterResource.h"
 //#include "../../../../sections.h"
 #include "utils/Tools.h"
+#include "Types.h"
 
 #include <errno.h>
 #include <linux/dvb/dmx.h>
@@ -128,13 +130,13 @@ bool cDvbSectionFilterSubsystem::ReadResource(const FilterResourcePtr& handle, s
   return false;
 }
 
-FilterResourcePtr cDvbSectionFilterSubsystem::Poll(const std::set<FilterResourcePtr>& filterResources)
+FilterResourcePtr cDvbSectionFilterSubsystem::Poll(const FilterResourceCollection& filterResources)
 {
   vector<pollfd> vecPfds;
 
   vecPfds.reserve(filterResources.size());
 
-  for (set<FilterResourcePtr>::const_iterator it = filterResources.begin(); it != filterResources.end(); ++it)
+  for (FilterResourceCollection::const_iterator it = filterResources.begin(); it != filterResources.end(); ++it)
   {
     FilterResourcePtr resource = *it;
 
@@ -173,7 +175,7 @@ FilterResourcePtr cDvbSectionFilterSubsystem::Poll(const std::set<FilterResource
       // Look for handle that corresponds to fd
       if (signaledFd != -1)
       {
-        for (set<FilterResourcePtr>::const_iterator it = filterResources.begin(); it != filterResources.end(); ++it)
+        for (FilterResourceCollection::const_iterator it = filterResources.begin(); it != filterResources.end(); ++it)
         {
           cDvbFilterResource* handle = dynamic_cast<cDvbFilterResource*>(it->get());
           if (handle && handle->GetFileDescriptor() == signaledFd)

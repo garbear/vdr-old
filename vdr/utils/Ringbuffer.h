@@ -10,7 +10,6 @@
 #ifndef __RINGBUFFER_H
 #define __RINGBUFFER_H
 
-#include "Types.h"
 #include "platform/threads/mutex.h"
 #include "platform/threads/throttle.h"
 #include "Tools.h"

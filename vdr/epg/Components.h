@@ -1,9 +1,9 @@
 #pragma once
 
-#include "Types.h"
 #include "channels/Channel.h"
 #include "libsi/section.h"
 #include "Component.h"
+
 #include <map>
 
 namespace VDR

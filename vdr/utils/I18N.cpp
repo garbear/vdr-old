@@ -18,13 +18,14 @@
  */
 
 #include "I18N.h"
+#include "Tools.h"
+#include "utils/log/Log.h"
+
+#include <algorithm>
 #include <ctype.h>
 #include <libintl.h>
 #include <locale.h>
 #include <unistd.h>
-#include "Tools.h"
-
-#include <algorithm>
 
 using namespace std;
 

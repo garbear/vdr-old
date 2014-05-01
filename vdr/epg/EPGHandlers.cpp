@@ -1,5 +1,6 @@
 #include "EPGHandlers.h"
 #include "EPGHandler.h"
+#include "Event.h"
 #include "Schedule.h"
 
 namespace VDR

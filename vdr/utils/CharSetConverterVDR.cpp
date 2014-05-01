@@ -22,6 +22,7 @@
 #include "CharSetConverterVDR.h"
 #include "UTF8Utils.h"
 #include "Tools.h"
+#include "Types.h"
 
 #include <string>
 

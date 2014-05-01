@@ -32,7 +32,6 @@
 #include "dvb/filters/PMT.h"
 #include "dvb/filters/SDT.h"
 #include "dvb/filters/TDT.h"
-#include "Types.h"
 
 #include <linux/dvb/frontend.h>
 #include <vector>

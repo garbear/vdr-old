@@ -1,8 +1,10 @@
 #include "AllowedHosts.h"
 #include "SettingsDefinitions.h"
+#include "utils/log/Log.h"
 #include "utils/Tools.h"
 #include "utils/StringUtils.h"
 #include "utils/XBMCTinyXML.h"
+
 #include <string.h>
 #include <stdlib.h>
 

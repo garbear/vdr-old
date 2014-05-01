@@ -18,9 +18,10 @@
  *
  */
 #pragma once
-#include "Types.h"
-#include "utils/I18N.h"
+
 #include "utils/DateTime.h"
+#include "utils/I18N.h"
+#include "utils/log/Log.h"
 
 #include <termios.h>
 #include <string>

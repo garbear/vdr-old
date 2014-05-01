@@ -29,6 +29,7 @@
 #include "devices/linux/DVBDevice.h"
 #include "utils/SynchronousAbort.h"
 #include "utils/Tools.h"
+#include "utils/log/Log.h"
 
 #include <assert.h>
 

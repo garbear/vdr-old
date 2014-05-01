@@ -21,7 +21,6 @@
  */
 #pragma once
 
-#include "Types.h"
 #include "utils/url/URL.h"
 #include "Config.h"
 

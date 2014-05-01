@@ -20,11 +20,11 @@
 
 #pragma once
 
-#include "Types.h"
-#include <list>
 #include "parser/Parser.h"
-#include "channels/Channel.h"
+#include "channels/ChannelTypes.h"
 #include "devices/Remux.h"
+
+#include <list>
 
 namespace VDR
 {

@@ -1,11 +1,10 @@
 #pragma once
 
-#include "Types.h"
 #include "DateTime.h"
-#include <stddef.h>
-#include <time.h>
-#include <string>
+
 #include <stdint.h>
+#include <string>
+#include <time.h>
 
 namespace VDR
 {

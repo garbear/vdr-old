@@ -20,7 +20,6 @@
  */
 #pragma once
 
-#include "Types.h"
 #include "IDirectory.h"
 
 #include "platform/threads/threads.h"

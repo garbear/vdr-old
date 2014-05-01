@@ -20,7 +20,7 @@
  */
 
 #include "Source.h"
-#include "utils/Tools.h" // for logging
+#include "utils/log/Log.h"
 
 #include <stdio.h>
 #include <stdlib.h>

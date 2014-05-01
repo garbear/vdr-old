@@ -10,11 +10,11 @@
 #ifndef __RECORDING_H
 #define __RECORDING_H
 
-#include "Types.h"
 #include <time.h>
 #include "RecordingConfig.h"
 #include "Config.h"
 #include "timers/Timers.h"
+#include "timers/TimerTypes.h"
 #include "epg/EPG.h"
 #include "utils/Tools.h"
 #include "platform/threads/threads.h"

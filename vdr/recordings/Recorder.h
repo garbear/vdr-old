@@ -10,9 +10,9 @@
 #ifndef __RECORDER_H
 #define __RECORDER_H
 
-#include "Types.h"
-#include "devices/Receiver.h"
 #include "Recording.h"
+#include "channels/ChannelTypes.h"
+#include "devices/Receiver.h"
 #include "devices/Remux.h"
 #include "utils/Ringbuffer.h"
 #include "platform/threads/threads.h"

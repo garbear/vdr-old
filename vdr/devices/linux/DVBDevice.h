@@ -20,18 +20,17 @@
  */
 #pragma once
 
-#include "Types.h"
 #include "devices/Device.h"
+#include "devices/DeviceTypes.h"
 #include "DVBLegacy.h"
 #include "DVBTuner.h"
-#include "sources/linux/DVBSourceParams.h"
 #include "platform/threads/threads.h"
+#include "sources/linux/DVBSourceParams.h"
 #include "utils/Observer.h"
 
 #include <linux/dvb/frontend.h>
 #include <stdint.h>
 #include <string>
-#include <vector>
 
 namespace VDR
 {

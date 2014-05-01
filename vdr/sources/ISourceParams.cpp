@@ -21,7 +21,7 @@
 
 #include "ISourceParams.h"
 //#include "Source.h"
-#include "utils/Tools.h" // for logging
+#include "utils/log/Log.h"
 
 using namespace std;
 

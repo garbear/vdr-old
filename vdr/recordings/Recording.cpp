@@ -8,6 +8,28 @@
  */
 
 #include "Recording.h"
+#include "Recordings.h"
+#include "RecordingInfo.h"
+#include "RecordingUserCommand.h"
+#include "channels/ChannelManager.h"
+//#include "interface.h"
+#include "devices/Remux.h"
+#include "epg/Event.h"
+#include "filesystem/Directory.h"
+#include "filesystem/IndexFile.h"
+#include "filesystem/ReadDir.h"
+#include "filesystem/Videodir.h"
+#include "filesystem/VideoFile.h"
+#include "filesystem/FileName.h"
+#include "settings/Settings.h"
+#include "utils/CRC32.h"
+#include "utils/I18N.h"
+#include "utils/Ringbuffer.h"
+#include "utils/Tools.h"
+#include "utils/UTF8Utils.h"
+#include "utils/url/URLUtils.h"
+
+#include <algorithm>
 #include <ctype.h>
 #include <dirent.h>
 #include <errno.h>
@@ -19,28 +41,7 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <unistd.h>
-#include "channels/ChannelManager.h"
-#include "utils/I18N.h"
-//#include "interface.h"
-#include "devices/Remux.h"
-#include "utils/Ringbuffer.h"
-#include "utils/Tools.h"
-#include "filesystem/Videodir.h"
-#include "filesystem/ReadDir.h"
-#include "utils/CRC32.h"
-#include "RecordingInfo.h"
-#include "filesystem/FileName.h"
-#include "Recordings.h"
-#include "filesystem/IndexFile.h"
-#include "filesystem/VideoFile.h"
-#include "RecordingUserCommand.h"
 
-#include "filesystem/Directory.h"
-#include "utils/UTF8Utils.h"
-#include "utils/url/URLUtils.h"
-#include "settings/Settings.h"
-
-#include <algorithm>
 
 using namespace PLATFORM;
 

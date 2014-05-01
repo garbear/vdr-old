@@ -1,12 +1,16 @@
 #pragma once
 
-#include "Types.h"
+#include "EPGTypes.h"
 #include "utils/Tools.h"
 #include "utils/DateTime.h"
-#include "Event.h"
+
+#include <libsi/section.h>
 
 namespace VDR
 {
+class cChannel;
+class CEpgComponents;
+
 class cEpgHandler : public cListObject {
 public:
   cEpgHandler(void);

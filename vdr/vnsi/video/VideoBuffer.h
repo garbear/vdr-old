@@ -20,10 +20,11 @@
 
 #pragma once
 
-#include "Types.h"
+#include "utils/Tools.h"
+
 #include <stdint.h>
 #include <stdlib.h>
-#include "utils/Tools.h"
+#include <sys/types.h>
 
 namespace VDR
 {

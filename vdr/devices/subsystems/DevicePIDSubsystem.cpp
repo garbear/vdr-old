@@ -25,6 +25,7 @@
 #include "devices/commoninterface/CI.h"
 #include "devices/Device.h"
 #include "utils/Tools.h"
+#include "Types.h"
 
 namespace VDR
 {

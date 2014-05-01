@@ -1,13 +1,15 @@
 #pragma once
 
-#include "Types.h"
-#include "Event.h"
+#include "EPGTypes.h"
+#include "channels/ChannelID.h"
 #include "utils/DateTime.h"
-#include <shared_ptr/shared_ptr.hpp>
+#include "utils/Tools.h"
+
+class TiXmlNode;
 
 namespace VDR
 {
-class cSchedules;
+class cChannel;
 
 class cSchedule : public cListObject  {
 private:

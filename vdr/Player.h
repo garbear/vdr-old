@@ -10,7 +10,6 @@
 #ifndef __PLAYER_H
 #define __PLAYER_H
 
-#include "Types.h"
 #include "devices/subsystems/DevicePlayerSubsystem.h"
 #include "devices/subsystems/DeviceTrackSubsystem.h"
 #include "devices/subsystems/DeviceVideoFormatSubsystem.h"
@@ -43,7 +42,7 @@ protected:
   void DeviceFreeze(void);
   void DeviceMute(void);
   void DeviceSetVideoDisplayFormat(eVideoDisplayFormat VideoDisplayFormat);
-  void DeviceStillPicture(const std::vector<uchar> &data);
+  void DeviceStillPicture(const std::vector<uint8_t> &data);
   uint64_t DeviceGetSTC(void);
   void Detach(void);
 public: // TODO

@@ -20,9 +20,12 @@
  */
 #pragma once
 
-#include "Types.h"
 #include "filesystem/IFile.h"
 #include "xbmc/xbmc_vfs_utils.hpp"
+
+#include <stdint.h>
+#include <string>
+#include <sys/types.h>
 
 namespace VDR
 {

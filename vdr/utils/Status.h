@@ -10,10 +10,10 @@
 #ifndef __STATUS_H
 #define __STATUS_H
 
-#include "Types.h"
 #include "Config.h"
 #include "Player.h"
-#include "utils/Tools.h"
+#include "Tools.h"
+#include "timers/TimerTypes.h"
 
 namespace VDR
 {

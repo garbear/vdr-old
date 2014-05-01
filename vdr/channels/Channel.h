@@ -23,6 +23,7 @@
 #include "ChannelID.h"
 #include "ChannelTypes.h"
 #include "dvb/DVBTypes.h"
+#include "epg/EPGTypes.h"
 #include "sources/linux/DVBTransponderParams.h"
 #include "sources/Source.h"
 #include "utils/Observer.h"

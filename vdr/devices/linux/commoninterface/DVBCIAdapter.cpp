@@ -22,6 +22,7 @@
 
 #include "DVBCIAdapter.h"
 #include "devices/Device.h"
+#include "Types.h"
 
 #include <linux/dvb/ca.h>
 #include <sys/ioctl.h>

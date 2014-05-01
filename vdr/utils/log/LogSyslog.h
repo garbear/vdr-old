@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Types.h"
 #include "ILog.h"
 
 namespace VDR

@@ -22,6 +22,7 @@
  */
 
 #include "PSIP_STT.h"
+#include "channels/Channel.h"
 
 #include <libsi/si.h>
 #include <libsi/si_ext.h>

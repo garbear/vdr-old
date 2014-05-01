@@ -10,12 +10,12 @@
 #ifndef __TIMERS_H
 #define __TIMERS_H
 
-#include "Types.h"
+#include "Timer.h"
+#include "TimerTypes.h"
 #include "Config.h"
 #include "utils/Tools.h"
 #include "utils/Observer.h"
 #include "utils/DateTime.h"
-#include "Timer.h"
 
 #include <map>
 #include <vector>
@@ -37,7 +37,7 @@ public:
   TimerPtr GetMatch(const cEvent *Event, eTimerMatch *Match = NULL);
   TimerPtr GetNextActiveTimer(void);
   TimerPtr GetByIndex(size_t index);
-  std::vector<TimerPtr> GetTimers(void) const;
+  TimerVector GetTimers(void) const;
   cRecording* GetActiveRecording(const ChannelPtr channel);
   void SetModified(void);
   bool Modified(int &State);

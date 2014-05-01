@@ -21,6 +21,8 @@
 
 #include "PAT.h"
 #include "PMT.h"
+#include "channels/Channel.h"
+#include "Types.h"
 
 #include <libsi/si.h>
 #include <libsi/si_ext.h>

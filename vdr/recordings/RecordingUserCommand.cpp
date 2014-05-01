@@ -1,6 +1,7 @@
 #include "RecordingUserCommand.h"
 #include "utils/Tools.h"
 #include "utils/StringUtils.h"
+#include "utils/log/Log.h"
 
 namespace VDR
 {

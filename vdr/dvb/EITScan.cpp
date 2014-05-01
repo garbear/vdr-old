@@ -15,6 +15,7 @@
 #include "devices/subsystems/DeviceReceiverSubsystem.h"
 #include "dvb/filters/PSIP_MGT.h"
 #include "epg/EPG.h"
+#include "epg/Event.h"
 #include "settings/Settings.h"
 
 #include <algorithm>

@@ -1,10 +1,13 @@
 #pragma once
 
-#include "Types.h"
 #include "filesystem/File.h"
 #include "utils/Tools.h"
 #include "ResumeFile.h"
 #include "platform/threads/threads.h"
+
+#include <stdint.h>
+#include <string>
+#include <sys/types.h>
 
 namespace VDR
 {

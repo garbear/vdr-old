@@ -22,14 +22,15 @@
 #pragma once
 
 #include "FilterResource.h"
-#include "Types.h"
+#include "dvb/DVBTypes.h"
 
-#include <set>
 #include <stdint.h>
 #include <vector>
 
 namespace VDR
 {
+class cChannel; // TODO: Remove after converting to ChannelPtr (see below)
+
 class cSectionSyncer
 {
 public:
@@ -44,7 +45,7 @@ public:
                              // (version is updated after sectionNumber == endSectionNumber)
   };
 
-  SYNC_STATUS Sync(uchar version, int sectionNumber, int endSectionNumber);
+  SYNC_STATUS Sync(uint8_t version, int sectionNumber, int endSectionNumber);
 
 private:
   uint8_t m_previousVersion;
@@ -70,7 +71,7 @@ public:
   /*!
    * Get the resources that have been opened as a result of OpenResource().
    */
-  const std::set<FilterResourcePtr>& GetResources() const { return m_resources; }
+  const FilterResourceCollection& GetResources() const { return m_resources; }
 
 protected:
   /*!
@@ -103,7 +104,7 @@ protected:
 
 private:
   cDevice* const              m_device;    // Device that this filter belongs to
-  std::set<FilterResourcePtr> m_resources; // Open resources held by this device
+  FilterResourceCollection m_resources; // Open resources held by this device
 };
 
 }

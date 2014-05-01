@@ -26,7 +26,6 @@
 #include "Config.h"
 #include "dvb/CADescriptor.h"
 #include "settings/Settings.h"
-#include "Types.h"
 #include "utils/I18N.h"
 #include "utils/log/Log.h"
 

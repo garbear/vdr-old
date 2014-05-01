@@ -10,9 +10,9 @@
 #ifndef __EITSCAN_H
 #define __EITSCAN_H
 
-#include "Types.h"
 #include "Config.h"
 #include "devices/Device.h"
+#include "devices/DeviceTypes.h"
 #include "channels/ChannelTypes.h"
 #include "platform/threads/threads.h"
 

@@ -1,14 +1,15 @@
 #pragma once
 
-#include "Types.h"
-#include "Event.h"
+#include "EPGTypes.h"
 #include "utils/Tools.h"
 #include "utils/DateTime.h"
+
 #include <libsi/section.h>
 #include <time.h>
 
 namespace VDR
 {
+class CEpgComponents;
 class cEpgHandler;
 class cChannel;
 class cEvent;

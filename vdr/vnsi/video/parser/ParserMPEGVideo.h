@@ -21,9 +21,10 @@
 #ifndef VNSI_DEMUXER_MPEGVIDEO_H
 #define VNSI_DEMUXER_MPEGVIDEO_H
 
-#include "Types.h"
-#include <deque>
 #include "Parser.h"
+
+#include <deque>
+#include <stdint.h>
 
 namespace VDR
 {

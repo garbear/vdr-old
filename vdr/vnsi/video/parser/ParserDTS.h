@@ -21,7 +21,6 @@
 #ifndef VNSI_DEMUXER_DTS_H
 #define VNSI_DEMUXER_DTS_H
 
-#include "Types.h"
 #include "Parser.h"
 
 namespace VDR

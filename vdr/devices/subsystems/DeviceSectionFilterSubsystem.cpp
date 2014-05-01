@@ -23,6 +23,7 @@
 #include "DeviceChannelSubsystem.h"
 #include "dvb/filters/Filter.h"
 #include "utils/Tools.h"
+#include "Types.h"
 
 #include <algorithm>
 #include <unistd.h>
@@ -55,9 +56,14 @@ namespace VDR
 
 // --- cDeviceSectionFilterSubsystem::cFilterHandlePollRequest-----------------
 
-cDeviceSectionFilterSubsystem::cFilterResourceRequest::cFilterResourceRequest(const set<FilterResourcePtr>& filterResources)
+cDeviceSectionFilterSubsystem::cFilterResourceRequest::cFilterResourceRequest(const FilterResourceCollection& filterResources)
  : m_resources(filterResources)
 {
+}
+
+cDeviceSectionFilterSubsystem::cFilterResourceRequest::~cFilterResourceRequest(void)
+{
+  Abort();
 }
 
 void cDeviceSectionFilterSubsystem::cFilterResourceRequest::WaitForSection(void)
@@ -122,7 +128,7 @@ FilterResourcePtr cDeviceSectionFilterSubsystem::OpenResource(uint16_t pid, uint
   return OpenResourceInternal(pid, tid, mask);
 }
 
-bool cDeviceSectionFilterSubsystem::GetSection(const set<FilterResourcePtr>& filterResources, uint16_t& pid, std::vector<uint8_t>& data)
+bool cDeviceSectionFilterSubsystem::GetSection(const FilterResourceCollection& filterResources, uint16_t& pid, std::vector<uint8_t>& data)
 {
   // If we don't have a tuner lock, no sections are being received
   if (!Channel()->HasLock(false))
@@ -172,7 +178,7 @@ void* cDeviceSectionFilterSubsystem::Process(void)
   while (!IsStopped())
   {
     // Accumulate all resources from active poll requests into a vector
-    set<FilterResourcePtr> activeResources = GetActiveResources();
+    FilterResourceCollection activeResources = GetActiveResources();
 
     if (activeResources.empty())
     {
@@ -234,8 +240,8 @@ FilterResourcePtr cDeviceSectionFilterSubsystem::GetOpenResource(uint16_t pid, u
   // Scan registered filters for the resource
   for (set<const cFilter*>::const_iterator itFilter = m_registeredFilters.begin(); itFilter != m_registeredFilters.end(); ++itFilter)
   {
-    const set<FilterResourcePtr>& haystack = (*itFilter)->GetResources();
-    for (set<FilterResourcePtr>::const_iterator itResource = haystack.begin(); itResource != haystack.end(); ++itResource)
+    const FilterResourceCollection& haystack = (*itFilter)->GetResources();
+    for (FilterResourceCollection::const_iterator itResource = haystack.begin(); itResource != haystack.end(); ++itResource)
     {
       if (**itResource == needle)
         return *itResource;
@@ -245,16 +251,16 @@ FilterResourcePtr cDeviceSectionFilterSubsystem::GetOpenResource(uint16_t pid, u
   return FilterResourcePtr();
 }
 
-set<FilterResourcePtr> cDeviceSectionFilterSubsystem::GetActiveResources(void)
+FilterResourceCollection cDeviceSectionFilterSubsystem::GetActiveResources(void)
 {
   CLockObject lock(m_mutex);
 
-  set<FilterResourcePtr> activeResources;
+  FilterResourceCollection activeResources;
 
   // Enumerate all active filters (those who are waiting on a call to GetSection())
   for (ResourceRequestCollection::const_iterator it = m_activePollRequests.begin(); it != m_activePollRequests.end(); ++it)
   {
-    const set<FilterResourcePtr>& filterResources = (*it)->GetResources();
+    const FilterResourceCollection& filterResources = (*it)->GetResources();
     activeResources.insert(filterResources.begin(), filterResources.end());
   }
 
@@ -268,8 +274,8 @@ void cDeviceSectionFilterSubsystem::HandleSection(const FilterResourcePtr& resou
   // Look for any poll requests that were waiting on the resource
   for (ResourceRequestCollection::iterator it = m_activePollRequests.begin(); it != m_activePollRequests.end(); ++it)
   {
-    const set<FilterResourcePtr>& filterResources = (*it)->GetResources();
-    set<FilterResourcePtr>::const_iterator it2 = filterResources.find(resource);
+    const FilterResourceCollection& filterResources = (*it)->GetResources();
+    FilterResourceCollection::const_iterator it2 = filterResources.find(resource);
     if (it2 != filterResources.end())
     {
       // Found a poll request waiting on the resource, notify clients

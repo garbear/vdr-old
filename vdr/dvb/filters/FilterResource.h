@@ -20,9 +20,7 @@
  */
 #pragma once
 
-#include "Types.h"
-#include "channels/Channel.h"
-
+#include <shared_ptr/shared_ptr.hpp>
 #include <stdint.h>
 
 namespace VDR
@@ -60,7 +58,5 @@ private:
                    // sections. E.g. a tid of 0x4E and mask of 0xFE will match
                    // table ids 0x4E and 0x4F.
 };
-
-typedef VDR::shared_ptr<cFilterResource> FilterResourcePtr;
 
 }

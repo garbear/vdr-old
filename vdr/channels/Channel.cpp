@@ -22,12 +22,15 @@
 #include "Channel.h"
 #include "ChannelDefinitions.h"
 #include "dvb/CADescriptor.h"
+#include "epg/EPG.h"
+#include "epg/Event.h"
+#include "epg/Schedule.h"
+#include "filesystem/File.h"
 #include "utils/StringUtils.h"
 #include "utils/CRC32.h"
-#include "filesystem/File.h"
 //#include "utils/UTF8Utils.h"
-#include "epg/EPG.h"
 //#include "timers.h"
+#include "Types.h"
 
 #include "libsi/si.h" // For AC3DescriptorTag
 

@@ -10,10 +10,10 @@
 #ifndef __TRANSFER_H
 #define __TRANSFER_H
 
-#include "Types.h"
 #include "Player.h"
 #include "Receiver.h"
 #include "Remux.h"
+#include "channels/ChannelTypes.h"
 
 namespace VDR
 {

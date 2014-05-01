@@ -23,33 +23,30 @@
  *
  */
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <map>
-#include <netinet/in.h>
-
-#include "recordings/Recordings.h"
-#include "recordings/RecordingInfo.h"
-#include "recordings/marks/Marks.h"
+#include "Client.h"
+#include "Server.h"
+#include "vnsi/net/RequestPacket.h"
+#include "vnsi/net/ResponsePacket.h"
+#include "vnsi/net/VNSICommand.h"
+#include "vnsi/video/RecPlayer.h"
+#include "vnsi/video/Streamer.h"
 #include "channels/ChannelManager.h"
 #include "channels/ChannelGroup.h"
 #include "channels/ChannelFilter.h"
-#include "filesystem/Videodir.h"
-#include "timers/Timers.h"
 #include "devices/Device.h"
+#include "epg/Event.h"
+#include "filesystem/Videodir.h"
+#include "recordings/RecordingInfo.h"
+#include "recordings/Recordings.h"
+#include "recordings/marks/Marks.h"
+#include "settings/Settings.h"
+#include "timers/Timers.h"
 #include "utils/TimeUtils.h"
 
-//#include "vnsi.h"
-#include "settings/Settings.h"
-#include "net/VNSICommand.h"
-#include "Client.h"
-#include "video/Streamer.h"
-#include "Server.h"
-#include "video/RecPlayer.h"
-#include "net/RequestPacket.h"
-#include "net/ResponsePacket.h"
-//#include "wirbelscanservice.h" /// copied from modified wirbelscan plugin
-                               /// must be hold up to date with wirbelscan
+#include <map>
+#include <netinet/in.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 using namespace PLATFORM;
 
@@ -273,8 +270,8 @@ void cVNSIClient::EpgChange()
   if (!schedules)
     return;
 
-  std::vector<SchedulePtr> updatedSchedules = schedules->GetUpdatedSchedules(m_epgUpdate, VNSIChannelFilter);
-  for (std::vector<SchedulePtr>::const_iterator it = updatedSchedules.begin(); it != updatedSchedules.end(); ++it)
+  ScheduleVector updatedSchedules = schedules->GetUpdatedSchedules(m_epgUpdate, VNSIChannelFilter);
+  for (ScheduleVector::const_iterator it = updatedSchedules.begin(); it != updatedSchedules.end(); ++it)
   {
     tChannelID channelId = (*it)->ChannelID();
     const ChannelPtr channel = cChannelManager::Get().GetByChannelID(channelId);
@@ -963,8 +960,8 @@ bool cVNSIClient::processCHANNELS_GetChannels() /* OPCODE 63 */
   int caid;
   int caid_idx;
 
-  std::vector<ChannelPtr> channels = cChannelManager::Get().GetCurrent();
-  for (std::vector<ChannelPtr>::const_iterator it = channels.begin(); it != channels.end(); ++it)
+  ChannelVector channels = cChannelManager::Get().GetCurrent();
+  for (ChannelVector::const_iterator it = channels.begin(); it != channels.end(); ++it)
   {
     ChannelPtr channel = *it;
     if (radio != CChannelFilter::IsRadio(channel))
@@ -1062,8 +1059,8 @@ bool cVNSIClient::processCHANNELS_GetGroupMembers()
   bool automatic = group->Automatic();
   std::string name;
 
-  std::vector<ChannelPtr> channels = cChannelManager::Get().GetCurrent();
-  for (std::vector<ChannelPtr>::const_iterator it = channels.begin(); it != channels.end(); ++it)
+  ChannelVector channels = cChannelManager::Get().GetCurrent();
+  for (ChannelVector::const_iterator it = channels.begin(); it != channels.end(); ++it)
   {
     ChannelPtr channel = *it;
 

@@ -24,6 +24,7 @@
 #include "SDT.h"
 #include "channels/Channel.h"
 #include "utils/StringUtils.h"
+#include "Types.h"
 
 #include <assert.h>
 #include <libsi/si_ext.h>

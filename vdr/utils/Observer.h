@@ -20,8 +20,8 @@
  *
  */
 
-#include "Types.h"
 #include "platform/threads/threads.h"
+
 #include <vector>
 
 namespace VDR

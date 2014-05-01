@@ -1,7 +1,7 @@
-#pragma once
 /*
- *      Copyright (C) 2005-2012 Team XBMC
- *      http://www.xbmc.org
+ *      Copyright (C) 2013-2014 Garrett Brown
+ *      Copyright (C) 2013-2014 Lars Op den Kamp
+ *      Portions Copyright (C) 2000, 2003, 2006, 2008, 2013 Klaus Schmidinger
  *
  *  This Program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -14,33 +14,27 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with XBMC; see the file COPYING.  If not, see
+ *  along with this Program; see the file COPYING. If not, see
  *  <http://www.gnu.org/licenses/>.
  *
- *
  */
+#pragma once
 
-#include "channels/ChannelTypes.h"
-#include "devices/DeviceTypes.h"
-#include "devices/Receiver.h"
+#include <shared_ptr/shared_ptr.hpp>
+#include <sys/types.h>
+#include <vector>
 
 namespace VDR
 {
 
-class cVideoInput;
+class cSchedule;
+typedef VDR::shared_ptr<cSchedule> SchedulePtr;
+typedef std::vector<SchedulePtr>   ScheduleVector;
 
-class cLiveReceiver: public cReceiver
-{
-public:
-  cLiveReceiver(DevicePtr device, cVideoInput *VideoInput, ChannelPtr Channel, int Priority);
-  virtual ~cLiveReceiver();
+class cEvent;
+typedef VDR::shared_ptr<cEvent> EventPtr;
+typedef std::vector<EventPtr>   EventVector;
 
-protected:
-  virtual void Activate(bool On);
-  virtual void Receive(uchar *Data, int Length);
-
-  DevicePtr    m_device;
-  cVideoInput *m_VideoInput;
-};
+typedef u_int32_t tEventID;
 
 }

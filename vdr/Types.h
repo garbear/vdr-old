@@ -22,7 +22,6 @@
 
 #include "platform/os.h"
 #include "utils/log/Log.h"
-#include <shared_ptr/shared_ptr.hpp>
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -51,16 +50,3 @@ typedef time_t vdr_time_t;
 #define vdr_time_gm(x)  timegm(x)
 #define vdr_realpath(x) canonicalize_file_name(x)
 #endif
-
-#include <vector>
-
-namespace VDR
-{
-
-class cSchedule;
-typedef VDR::shared_ptr<cSchedule> SchedulePtr;
-
-class cTimer;
-typedef VDR::shared_ptr<cTimer> TimerPtr;
-
-}

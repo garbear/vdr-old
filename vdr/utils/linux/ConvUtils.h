@@ -21,7 +21,6 @@
  */
 #pragma once
 
-#include "Types.h"
 #include "WindowsDefs.h" // UINT DWORD LPCSTR LPSTR LPBOOL ...
 
 namespace VDR

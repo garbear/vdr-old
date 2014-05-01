@@ -18,11 +18,12 @@
  *
  */
 
-#include <stdlib.h>
-#include <assert.h>
-
 #include "ParserMPEGVideo.h"
 #include "Bitstream.h"
+#include "utils/log/Log.h"
+
+#include <assert.h>
+#include <stdlib.h>
 
 using namespace std;
 

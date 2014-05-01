@@ -21,11 +21,11 @@
  */
 #pragma once
 
-#include "Types.h"
 #include "channels/ChannelID.h"
-#include "utils/Tools.h"
-#include "platform/threads/threads.h"
 #include "devices/Device.h"
+#include "devices/DeviceTypes.h"
+#include "platform/threads/threads.h"
+#include "utils/Tools.h"
 
 #include <stdint.h>
 #include <stdio.h>

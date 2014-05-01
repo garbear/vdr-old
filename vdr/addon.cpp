@@ -20,13 +20,13 @@
  */
 
 #include "VDRDaemon.h"
+#include "utils/log/Log.h"
 
 #include "xbmc/libXBMC_addon.h"
 #include "xbmc/xbmc_service_dll.h"
 #include "xbmc/xbmc_addon_types.h"
 #include "xbmc/xbmc_content_types.h"
 #include "xbmc/xbmc_service_dll.h"
-#include "utils/log/ILog.h"
 
 #include <string>
 

@@ -21,7 +21,6 @@
  */
 #pragma once
 
-#include "Types.h"
 #include "libsi/descriptor.h"
 
 #include <stdint.h>

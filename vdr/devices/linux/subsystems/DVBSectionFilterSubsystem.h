@@ -20,10 +20,9 @@
  */
 #pragma once
 
-#include "Types.h"
 #include "devices/subsystems/DeviceSectionFilterSubsystem.h"
+#include "dvb/DVBTypes.h"
 
-#include <set>
 #include <stdint.h>
 #include <vector>
 
@@ -38,6 +37,6 @@ public:
 protected:
   virtual FilterResourcePtr OpenResourceInternal(uint16_t pid, uint8_t tid, uint8_t mask);
   virtual bool ReadResource(const FilterResourcePtr& handle, std::vector<uint8_t>& data);
-  virtual FilterResourcePtr Poll(const std::set<FilterResourcePtr>& filterResources);
+  virtual FilterResourcePtr Poll(const FilterResourceCollection& filterResources);
 };
 }

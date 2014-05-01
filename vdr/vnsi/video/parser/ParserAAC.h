@@ -21,9 +21,11 @@
 #ifndef VNSI_DEMUXER_AAC_H
 #define VNSI_DEMUXER_AAC_H
 
-#include "Types.h"
 #include "Parser.h"
 #include "Bitstream.h"
+
+#include <stdint.h>
+#include <sys/types.h>
 
 namespace VDR
 {

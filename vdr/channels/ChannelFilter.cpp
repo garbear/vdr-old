@@ -317,13 +317,13 @@ void CChannelFilter::SortChannels()
 {
   PLATFORM::CLockObject lock(cChannelManager::Get().m_mutex);
 
-  std::vector<ChannelPtr> channels = cChannelManager::Get().GetCurrent();
+  ChannelVector channels = cChannelManager::Get().GetCurrent();
 
-  for (std::vector<ChannelPtr>::iterator it = channels.begin(); it != channels.end(); ++it)
+  for (ChannelVector::iterator it = channels.begin(); it != channels.end(); ++it)
   {
     if(!PassFilter(*it))
     {
-      std::vector<ChannelPtr>::iterator it2 = it;
+      ChannelVector::iterator it2 = it;
       if (it2 != channels.end())
         ++it2;
       for (; it2 != channels.end(); ++it2)

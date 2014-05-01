@@ -20,7 +20,6 @@
  */
 #pragma once
 
-#include "Types.h"
 #include "Channel.h"
 #include "ChannelTypes.h"
 #include "utils/Observer.h"
@@ -138,7 +137,7 @@ public:
    */
   ChannelPtr NewChannel(const cChannel& transponder, const std::string& name, const std::string& shortName, const std::string& provider, int nid, int tid, int sid, int rid = 0);
 
-  std::vector<ChannelPtr> GetCurrent(void) const;
+  ChannelVector GetCurrent(void) const;
   void CreateChannelGroups(bool automatic);
 
   unsigned int ChannelCount() const;

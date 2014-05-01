@@ -20,6 +20,7 @@
  */
 
 #include "VFSDirectory.h"
+#include "xbmc/libXBMC_addon.h"
 #include "xbmc/xbmc_content_types.h"
 #include "xbmc/xbmc_file_utils.hpp"
 #include "filesystem/SpecialProtocol.h"

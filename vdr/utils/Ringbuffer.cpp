@@ -11,10 +11,12 @@
  */
 
 #include "Ringbuffer.h"
+#include "filesystem/VideoFile.h"
+#include "utils/log/Log.h"
+#include "Tools.h"
+
 #include <stdlib.h>
 #include <unistd.h>
-#include "Tools.h"
-#include "filesystem/VideoFile.h"
 
 namespace VDR
 {

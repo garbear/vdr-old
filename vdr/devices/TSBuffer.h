@@ -21,9 +21,7 @@
  */
 #pragma once
 
-#include "Types.h"
 #include "platform/threads/threads.h"
-#include "utils/Tools.h"
 
 #include <stdint.h>
 
@@ -46,7 +44,7 @@ public:
   cTSBuffer(int file, unsigned int size, int cardIndex);
   virtual ~cTSBuffer();
 
-  uchar* Get();
+  uint8_t* Get();
 
 private:
   virtual void *Process();

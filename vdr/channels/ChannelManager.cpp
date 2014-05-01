@@ -482,7 +482,7 @@ ChannelPtr cChannelManager::GetByChannelUID(uint32_t channelUID) const
   return result;
 }
 
-vector<ChannelPtr> cChannelManager::GetCurrent(void) const
+ChannelVector cChannelManager::GetCurrent(void) const
 {
   PLATFORM::CLockObject lock(m_mutex);
   return m_channels;
@@ -493,7 +493,7 @@ void cChannelManager::CreateChannelGroups(bool automatic)
   std::string groupname;
 
   CLockObject lock(m_mutex);
-  for (std::vector<ChannelPtr>::const_iterator it = m_channels.begin(); it != m_channels.end(); ++it)
+  for (ChannelVector::const_iterator it = m_channels.begin(); it != m_channels.end(); ++it)
   {
     ChannelPtr channel = *it;
     bool isRadio = CChannelFilter::IsRadio(channel);

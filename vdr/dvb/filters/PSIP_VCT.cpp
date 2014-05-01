@@ -24,6 +24,7 @@
 #include "PSIP_VCT.h"
 #include "channels/Channel.h"
 #include "sources/linux/DVBTransponderParams.h"
+#include "Types.h"
 
 #include <libsi/si.h>
 #include <libsi/si_ext.h>

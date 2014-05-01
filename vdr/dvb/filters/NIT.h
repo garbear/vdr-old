@@ -26,6 +26,8 @@
 #include "dvb/filters/Filter.h"
 #include "libsi/si.h"
 
+#include <stdint.h>
+#include <string>
 #include <sys/types.h>
 
 #define NETWORK_ID_UNKNOWN  0
@@ -39,7 +41,7 @@ class iNitScannerCallback
 {
 public:
   virtual void NitFoundTransponder(ChannelPtr transponder, SI::TableId tid) = 0;
-  virtual std::vector<ChannelPtr>& GetChannels() = 0;
+  virtual ChannelVector& GetChannels() = 0;
   virtual ~iNitScannerCallback() { }
 };
 
@@ -57,7 +59,7 @@ private:
   struct Network
   {
     Network() : nid(NETWORK_ID_UNKNOWN), bHasTransponder(false) { }
-    Network(uint16_t nid, std::string strName) : nid(nid), name(strName), bHasTransponder(false) { }
+    Network(uint16_t nid, const std::string& strName) : nid(nid), name(strName), bHasTransponder(false) { }
 
     uint16_t    nid;  // Network ID
     std::string name; // Network name

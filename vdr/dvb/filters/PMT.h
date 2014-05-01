@@ -22,10 +22,9 @@
  */
 #pragma once
 
-#include "Types.h"
 #include "channels/Channel.h"
+#include "channels/ChannelTypes.h"
 #include "dvb/filters/Filter.h"
-#include "Types.h"
 
 #include <libsi/section.h>
 #include <stdint.h>

@@ -20,7 +20,6 @@
  */
 #pragma once
 
-#include "Types.h"
 #include "Device.h"
 
 #include <assert.h>

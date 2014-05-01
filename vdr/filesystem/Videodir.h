@@ -10,11 +10,12 @@
 #ifndef __VIDEODIR_H
 #define __VIDEODIR_H
 
-#include "Types.h"
-#include <stdlib.h>
+#include "filesystem/Directory.h"
 #include "utils/Tools.h"
 #include "utils/DateTime.h"
-#include "filesystem/Directory.h"
+
+#include <stddef.h>
+#include <stdlib.h>
 
 namespace VDR
 {

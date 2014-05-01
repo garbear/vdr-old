@@ -22,7 +22,9 @@
 #include "DVBPIDSubsystem.h"
 #include "devices/linux/DVBDevice.h" // for DEV_DVB_DEMUX
 #include "utils/Tools.h"
+#include "Types.h"
 
+#include <fcntl.h>
 #include <linux/dvb/dmx.h>
 #include <sys/ioctl.h>
 #include <unistd.h>

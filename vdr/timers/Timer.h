@@ -1,10 +1,12 @@
 #pragma once
 
+#include "TimerTime.h"
+#include "TimerTypes.h"
+#include "channels/Channel.h"
 #include "channels/ChannelTypes.h"
+
 #include <stddef.h>
 #include <limits.h>
-#include "channels/Channel.h"
-#include "TimerTime.h"
 
 class TiXmlNode;
 

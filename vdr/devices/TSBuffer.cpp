@@ -23,6 +23,7 @@
 #include "TSBuffer.h"
 #include "filesystem/Poller.h"
 #include "utils/Ringbuffer.h"
+#include "Types.h"
 
 namespace VDR
 {
@@ -79,7 +80,7 @@ void *cTSBuffer::Process()
   return NULL;
 }
 
-uchar* cTSBuffer::Get()
+uint8_t* cTSBuffer::Get()
 {
   int Count = 0;
   if (m_bDelivered)
@@ -87,7 +88,7 @@ uchar* cTSBuffer::Get()
     m_ringBuffer->Del(TS_SIZE);
     m_bDelivered = false;
   }
-  uchar *p = m_ringBuffer->Get(Count);
+  uint8_t *p = m_ringBuffer->Get(Count);
   if (p && Count >= TS_SIZE)
   {
     if (*p != TS_SYNC_BYTE)

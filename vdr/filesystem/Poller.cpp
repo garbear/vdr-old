@@ -22,6 +22,7 @@
 
 #include "Poller.h"
 #include "utils/Tools.h"
+#include "Types.h"
 
 namespace VDR
 {

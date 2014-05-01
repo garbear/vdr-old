@@ -18,10 +18,11 @@
  *
  */
 
-#include <stdlib.h>
-#include <assert.h>
-
 #include "ParserAAC.h"
+#include "utils/log/Log.h"
+
+#include <assert.h>
+#include <stdlib.h>
 
 namespace VDR
 {

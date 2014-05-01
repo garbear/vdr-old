@@ -24,6 +24,7 @@
 #include "StringUtils.h"
 #include "Tools.h"
 #include "linux/ConvUtils.h"
+#include "Types.h"
 #ifdef TARGET_POSIX
 #include "XTimeUtils.h"
 #include <time.h>

@@ -23,6 +23,7 @@
 #include "devices/linux/DVBDevice.h"
 #include "devices/TSBuffer.h"
 
+#include <fcntl.h>
 #include <unistd.h>
 
 namespace VDR

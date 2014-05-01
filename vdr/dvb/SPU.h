@@ -12,8 +12,7 @@
 #ifndef __SPU_VDR_H
 #define __SPU_VDR_H
 
-#include "Types.h"
-#include <inttypes.h>
+#include <stdint.h>
 
 namespace VDR
 {

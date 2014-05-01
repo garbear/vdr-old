@@ -24,8 +24,6 @@
 #ifndef REGEXP_H
 #define REGEXP_H
 
-#include "Types.h"
-
 #if defined(HAVE_PCRE)
 #include <string>
 #include <vector>

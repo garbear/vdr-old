@@ -11,20 +11,22 @@
  */
 
 #include "EPG.h"
+#include "EPGDefinitions.h"
+#include "Event.h"
+#include "channels/ChannelFilter.h"
+#include "channels/ChannelManager.h"
+#include "platform/threads/threads.h"
+#include "settings/Settings.h"
+#include "timers/Timers.h"
+#include "utils/CalendarUtils.h"
+#include "utils/UTF8Utils.h"
+#include "utils/XBMCTinyXML.h"
+
+#include "libsi/si.h"
+
 #include <ctype.h>
 #include <limits.h>
 #include <time.h>
-#include "libsi/si.h"
-#include "channels/ChannelFilter.h"
-#include "channels/ChannelManager.h"
-#include "timers/Timers.h"
-#include "EPGDefinitions.h"
-#include "platform/threads/threads.h"
-#include "utils/XBMCTinyXML.h"
-#include "settings/Settings.h"
-
-#include "vdr/utils/CalendarUtils.h"
-#include "vdr/utils/UTF8Utils.h"
 
 namespace VDR
 {
@@ -133,14 +135,14 @@ void cSchedules::SetModified(SchedulePtr Schedule)
 
 void cSchedules::ResetVersions(void)
 {
-  for (std::vector<SchedulePtr>::iterator it = m_schedules.begin(); it != m_schedules.end(); ++it)
+  for (ScheduleVector::iterator it = m_schedules.begin(); it != m_schedules.end(); ++it)
     (*it)->ResetVersions();
 }
 
 bool cSchedules::ClearAll(void)
 {
   cTimers::Get().ClearEvents();
-  for (std::vector<SchedulePtr>::iterator it = m_schedules.begin(); it != m_schedules.end(); ++it)
+  for (ScheduleVector::iterator it = m_schedules.begin(); it != m_schedules.end(); ++it)
     (*it)->Cleanup(CDateTime());
   m_bHasUnsavedData = false;
   return true;
@@ -149,7 +151,7 @@ bool cSchedules::ClearAll(void)
 void cSchedules::CleanTables(void)
 {
   CDateTime now = CDateTime::GetUTCDateTime();
-  for (std::vector<SchedulePtr>::iterator it = m_schedules.begin(); it != m_schedules.end(); ++it)
+  for (ScheduleVector::iterator it = m_schedules.begin(); it != m_schedules.end(); ++it)
     (*it)->Cleanup(now);
 }
 
@@ -160,7 +162,7 @@ bool cSchedules::Save(void)
 
   if (!m_bHasUnsavedData)
   {
-    for (std::vector<SchedulePtr>::iterator it = m_schedules.begin(); it != m_schedules.end(); ++it)
+    for (ScheduleVector::iterator it = m_schedules.begin(); it != m_schedules.end(); ++it)
       (*it)->Save();
     return true;
   }
@@ -176,7 +178,7 @@ bool cSchedules::Save(void)
   if (root == NULL)
     return false;
 
-  for (std::vector<SchedulePtr>::iterator it = m_schedules.begin(); it != m_schedules.end(); ++it)
+  for (ScheduleVector::iterator it = m_schedules.begin(); it != m_schedules.end(); ++it)
   {
     if ((*it)->Save())
     {
@@ -260,7 +262,7 @@ bool cSchedules::Read(void)
 
 void cSchedules::DelSchedule(SchedulePtr schedule)
 {
-  for (std::vector<SchedulePtr>::iterator it = m_schedules.begin(); it != m_schedules.end(); ++it)
+  for (ScheduleVector::iterator it = m_schedules.begin(); it != m_schedules.end(); ++it)
   {
     if ((*it)->ChannelID() == schedule->ChannelID())
     {
@@ -293,7 +295,7 @@ SchedulePtr cSchedules::GetSchedule(const tChannelID& ChannelID)
   tChannelID id(ChannelID);
   tChannelID checkId;
   id.ClrRid();
-  for (std::vector<SchedulePtr>::iterator it = m_schedules.begin(); it != m_schedules.end(); ++it)
+  for (ScheduleVector::iterator it = m_schedules.begin(); it != m_schedules.end(); ++it)
   {
     checkId = (*it)->ChannelID();
     checkId.ClrRid();
@@ -323,12 +325,12 @@ SchedulePtr cSchedules::GetSchedule(ChannelPtr channel, bool bAddIfMissing)
   return schedule;
 }
 
-std::vector<SchedulePtr> cSchedules::GetUpdatedSchedules(const std::map<int, CDateTime>& lastUpdated, CChannelFilter& filter)
+ScheduleVector cSchedules::GetUpdatedSchedules(const std::map<int, CDateTime>& lastUpdated, CChannelFilter& filter)
 {
-  std::vector<SchedulePtr> retval;
+  ScheduleVector retval;
   std::map<int, CDateTime>::iterator it;
   std::map<int, CDateTime>::const_iterator previousIt;
-  for (std::vector<SchedulePtr>::iterator it = m_schedules.begin(); it != m_schedules.end(); ++it)
+  for (ScheduleVector::iterator it = m_schedules.begin(); it != m_schedules.end(); ++it)
   {
     const EventVector& events = (*it)->Events();
     EventPtr lastEvent;

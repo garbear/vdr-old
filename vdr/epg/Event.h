@@ -3,13 +3,9 @@
 #define MAXEPGBUGFIXLEVEL 3
 #define VDR_RATINGS_PATCHED_V2
 
-#include "Types.h"
 #include "Components.h"
 #include "utils/Tools.h"
 #include "utils/DateTime.h"
-
-#include <shared_ptr/shared_ptr.hpp>
-#include <vector>
 
 class TiXmlElement;
 
@@ -35,13 +31,7 @@ enum eEventContentGroup {
 
 enum eDumpMode { dmAll, dmPresent, dmFollowing, dmAtTime };
 
-class cEvent;
-typedef VDR::shared_ptr<cEvent> EventPtr;
-typedef std::vector<EventPtr>   EventVector;
-
 class cSchedule;
-
-typedef u_int32_t tEventID;
 
 class cEvent : public cListObject {
   friend class cSchedule;
