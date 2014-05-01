@@ -18,6 +18,8 @@
 #include "utils/UTF8Utils.h"
 #include "utils/XBMCTinyXML.h"
 
+#include <algorithm>
+
 namespace VDR
 {
 
@@ -239,7 +241,7 @@ eTimerMatch cTimer::MatchesEvent(const cEvent *Event, int *Overlap)
       else if (m_time.End() <= Event->StartTime() || Event->EndTime() <= m_time.Start())
         overlap = 0;
       else
-        overlap = (min(m_time.End(), Event->EndTime()) - max(m_time.Start(), Event->StartTime())).GetSecondsTotal() * FULLMATCH / max(Event->Duration(), 1);
+        overlap = (std::min(m_time.End(), Event->EndTime()) - std::max(m_time.Start(), Event->StartTime())).GetSecondsTotal() * FULLMATCH / std::max(Event->Duration(), 1);
     }
     if (Overlap)
       *Overlap = overlap;

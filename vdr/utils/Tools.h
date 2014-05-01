@@ -20,13 +20,6 @@
 namespace VDR
 {
 
-#ifndef __STL_CONFIG_H // in case some plugin needs to use the STL
-template<class T> inline T min(T a, T b) { return a <= b ? a : b; }
-template<class T> inline T max(T a, T b) { return a >= b ? a : b; }
-template<class T> inline int sgn(T a) { return a < 0 ? -1 : a > 0 ? 1 : 0; }
-//template<class T> inline void swap(T &a, T &b) { T t = a; a = b; b = t; }
-#endif
-
 class cString {
 private:
   char *s;
