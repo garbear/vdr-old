@@ -14,6 +14,7 @@
 #include "channels/ChannelID.h"
 #include "platform/threads/mutex.h"
 #include "Config.h"
+#include "utils/Tools.h" // for uchar
 
 #include <stdint.h>
 #include <set>

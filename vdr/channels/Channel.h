@@ -26,6 +26,7 @@
 #include "epg/EPGTypes.h"
 #include "sources/linux/DVBTransponderParams.h"
 #include "sources/Source.h"
+#include "utils/List.h"
 #include "utils/Observer.h"
 
 #include <stdint.h>

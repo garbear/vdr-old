@@ -20,14 +20,12 @@
  */
 #pragma once
 
-#include "utils/Tools.h"
-
 #include <string>
 
 namespace VDR
 {
 
-class cSource// : public cListObject
+class cSource
 {
 public:
   enum eSourceType

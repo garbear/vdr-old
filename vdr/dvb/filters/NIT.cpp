@@ -26,6 +26,7 @@
 #include "scan/dvb_wrapper.h"
 #include "sources/Source.h"
 #include "utils/StringUtils.h"
+#include "utils/Tools.h"
 #include "Types.h"
 
 #include <libsi/si_ext.h>

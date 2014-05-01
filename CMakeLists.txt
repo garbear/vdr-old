@@ -226,6 +226,7 @@ set(VDR_SRCS
 	vdr/utils/Status.cpp
 	vdr/utils/SynchronousAbort.cpp
 	vdr/utils/CRC32.cpp
+	vdr/utils/List.cpp
 	vdr/utils/log/Log.cpp
 	vdr/utils/log/LogConsole.cpp
 	vdr/utils/log/LogSyslog.cpp

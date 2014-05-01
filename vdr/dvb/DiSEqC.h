@@ -12,6 +12,8 @@
 
 #include "Config.h"
 #include "platform/threads/mutex.h"
+#include "utils/List.h"
+#include "utils/Tools.h" // for uchar
 
 namespace VDR
 {

@@ -1,10 +1,12 @@
 #pragma once
 
+#include "Component.h"
 #include "channels/Channel.h"
 #include "libsi/section.h"
-#include "Component.h"
+#include "utils/Tools.h" // for uchar
 
 #include <map>
+#include <string>
 
 namespace VDR
 {

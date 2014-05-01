@@ -25,6 +25,7 @@
 #include "devices/Device.h"
 #include "devices/DeviceTypes.h"
 #include "platform/threads/threads.h"
+#include "utils/List.h"
 #include "utils/Tools.h"
 
 #include <stdint.h>

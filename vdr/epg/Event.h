@@ -4,8 +4,12 @@
 #define VDR_RATINGS_PATCHED_V2
 
 #include "Components.h"
-#include "utils/Tools.h"
+#include "EPGTypes.h"
 #include "utils/DateTime.h"
+#include "utils/List.h"
+#include "utils/Tools.h" // for uchar
+
+#include <string>
 
 class TiXmlElement;
 

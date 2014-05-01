@@ -1,8 +1,9 @@
 #pragma once
 
 #include "EPGTypes.h"
-#include "utils/Tools.h"
 #include "utils/DateTime.h"
+#include "utils/List.h"
+#include "utils/Tools.h" // for uchar
 
 #include <libsi/section.h>
 

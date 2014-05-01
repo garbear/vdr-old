@@ -11,8 +11,8 @@
 #define __STATUS_H
 
 #include "Config.h"
+#include "List.h"
 #include "Player.h"
-#include "Tools.h"
 #include "timers/TimerTypes.h"
 
 namespace VDR

@@ -11,8 +11,9 @@
 #define __CONFIG_H
 
 #include "Types.h"
+#include "filesystem/File.h"
+#include "utils/List.h"
 #include "utils/StringUtils.h"
-#include "utils/Tools.h"
 
 namespace VDR
 {
