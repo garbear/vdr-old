@@ -22,8 +22,6 @@
 namespace VDR
 {
 
-#define SECSINDAY  86400
-
 #define KILOBYTE(n) ((n) * 1024)
 #define MEGABYTE(n) ((n) * 1024LL * 1024LL)
 

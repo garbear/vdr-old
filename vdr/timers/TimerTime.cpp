@@ -7,6 +7,8 @@
 #include "utils/TimeUtils.h"
 #include "settings/Settings.h"
 
+#define SECSINDAY  (60 * 60 * 24)
+
 namespace VDR
 {
 

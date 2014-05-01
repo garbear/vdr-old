@@ -8,6 +8,8 @@
 
 using namespace PLATFORM;
 
+#define SECSINDAY  (60 * 60 * 24)
+
 namespace VDR
 {
 
