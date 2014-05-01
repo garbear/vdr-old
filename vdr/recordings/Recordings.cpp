@@ -1,5 +1,6 @@
 #include "Recordings.h"
 #include "filesystem/Directory.h"
+#include "filesystem/LockFile.h"
 #include "filesystem/Videodir.h"
 #include "platform/threads/throttle.h"
 #include "utils/CommonMacros.h"

@@ -112,17 +112,6 @@ public:
   uint64_t Elapsed(void);
   };
 
-class cLockFile {
-private:
-  std::string m_strFilename;
-  CFile m_file;
-public:
-  cLockFile(const std::string& strDirectory);
-  ~cLockFile();
-  bool Lock(int WaitSeconds = 0);
-  void Unlock(void);
-  };
-
 inline int CompareStrings(const void *a, const void *b)
 {
   return strcmp(*(const char **)a, *(const char **)b);
