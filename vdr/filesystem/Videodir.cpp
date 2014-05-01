@@ -8,22 +8,22 @@
  */
 
 #include "Videodir.h"
+#include "VideoFile.h"
+#include "Directory.h"
+#include "File.h"
+#include "recordings/Recordings.h"
+#include "settings/Settings.h"
+#include "utils/CommonMacros.h"
+
 #include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string>
 #include <string.h>
 #include <sys/stat.h>
 #include <unistd.h>
-#include "filesystem/VideoFile.h"
-#include "recordings/Recordings.h"
-#include "utils/Tools.h"
-#include "Directory.h"
-#include "File.h"
-#include "settings/Settings.h"
-
-#include <string>
 
 using namespace std;
 

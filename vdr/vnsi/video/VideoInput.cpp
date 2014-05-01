@@ -33,6 +33,7 @@
 #include "devices/Device.h"
 #include "devices/Receiver.h"
 #include "settings/Settings.h"
+#include "utils/CommonMacros.h"
 
 using namespace PLATFORM;
 

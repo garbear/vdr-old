@@ -8,15 +8,16 @@
  */
 
 #include "Tools.h"
+#include "CommonMacros.h"
+#include "DateTime.h"
 #include "I18N.h"
+#include "StringUtils.h"
+#include "UTF8Utils.h"
 #include "filesystem/Directory.h"
 #include "filesystem/Poller.h"
 #include "filesystem/ReadDir.h"
 #include "filesystem/SpecialProtocol.h"
-#include "UTF8Utils.h"
-#include "StringUtils.h"
 #include "platform/threads/threads.h"
-#include "DateTime.h"
 
 #include <algorithm>
 #include <ctype.h>
@@ -24,25 +25,17 @@
 #include <errno.h>
 #include <locale.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/time.h>
 #include <sys/vfs.h>
 #include <time.h>
 #include <unistd.h>
 #include <utime.h>
-#include <string.h>
 
 using namespace std;
 
 namespace VDR
 {
-
-int BCD2INT(int x)
-{
-  return ((1000000 * BCDCHARTOINT((x >> 24) & 0xFF)) +
-            (10000 * BCDCHARTOINT((x >> 16) & 0xFF)) +
-              (100 * BCDCHARTOINT((x >>  8) & 0xFF)) +
-                     BCDCHARTOINT( x        & 0xFF));
-}
 
 ssize_t safe_read(int filedes, void *buffer, size_t size)
 {

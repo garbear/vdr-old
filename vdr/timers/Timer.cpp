@@ -11,11 +11,12 @@
 #include "devices/subsystems/DeviceReceiverSubsystem.h"
 #include "epg/Event.h"
 #include "filesystem/Videodir.h"
+#include "settings/Settings.h"
+#include "utils/CommonMacros.h"
 #include "utils/Status.h"
 #include "utils/TimeUtils.h"
 #include "utils/UTF8Utils.h"
 #include "utils/XBMCTinyXML.h"
-#include "settings/Settings.h"
 
 namespace VDR
 {

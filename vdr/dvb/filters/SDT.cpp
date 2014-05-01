@@ -23,6 +23,7 @@
 
 #include "SDT.h"
 #include "channels/Channel.h"
+#include "utils/CommonMacros.h"
 #include "utils/StringUtils.h"
 #include "utils/Tools.h"
 #include "Types.h"

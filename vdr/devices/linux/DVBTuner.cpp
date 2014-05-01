@@ -13,12 +13,12 @@
 #include "devices/subsystems/DeviceChannelSubsystem.h"
 #include "devices/subsystems/DevicePIDSubsystem.h"
 #include "devices/subsystems/DeviceReceiverSubsystem.h"
-#include "filesystem/Poller.h"
-#include "sources/linux/DVBSourceParams.h"
-#include "utils/StringUtils.h"
 #include "dvb/DiSEqC.h"
+#include "filesystem/Poller.h"
 #include "settings/Settings.h"
-//#include "utils/Tools.h"
+#include "sources/linux/DVBSourceParams.h"
+#include "utils/CommonMacros.h"
+#include "utils/StringUtils.h"
 
 #include <errno.h>
 #include <string.h>

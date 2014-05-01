@@ -8,12 +8,13 @@
  */
 
 #include "Config.h"
-#include <ctype.h>
-#include <stdlib.h>
 #include "devices/Device.h"
 #include "recordings/Recording.h"
+#include "utils/CommonMacros.h"
+#include "utils/UTF8Utils.h"
 
-#include "vdr/utils/UTF8Utils.h"
+#include <ctype.h>
+#include <stdlib.h>
 
 namespace VDR
 {

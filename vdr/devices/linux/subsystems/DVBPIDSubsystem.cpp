@@ -21,7 +21,7 @@
 
 #include "DVBPIDSubsystem.h"
 #include "devices/linux/DVBDevice.h" // for DEV_DVB_DEMUX
-#include "utils/Tools.h"
+#include "utils/CommonMacros.h"
 #include "Types.h"
 
 #include <fcntl.h>

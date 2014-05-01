@@ -29,6 +29,7 @@
 #include "epg/EPG.h"
 #include "epg/Event.h"
 #include "settings/Settings.h"
+#include "utils/CommonMacros.h"
 #include "utils/DateTime.h"
 #include "utils/I18N.h"
 

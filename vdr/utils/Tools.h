@@ -13,8 +13,6 @@
 #include "List.h"
 #include "filesystem/File.h"
 
-#include <float.h>
-#include <math.h>
 #include <stdint.h>
 #include <string>
 #include <vector>
@@ -22,54 +20,12 @@
 namespace VDR
 {
 
-#define KILOBYTE(n) ((n) * 1024)
-#define MEGABYTE(n) ((n) * 1024LL * 1024LL)
-
-#define MALLOC(type, size)  (type *)malloc(sizeof(type) * (size))
-
-#ifndef PRId64
-#define PRId64       "I64d"
-#endif
-
-template<class T> inline void DELETENULL(T *&p) { T *q = p; p = NULL; delete q; }
-
-#define CHECK(s) { if ((s) < 0) LOG_ERROR; } // used for 'ioctl()' calls
-#define FATALERRNO (errno && errno != EAGAIN && errno != EINTR)
-
 #ifndef __STL_CONFIG_H // in case some plugin needs to use the STL
 template<class T> inline T min(T a, T b) { return a <= b ? a : b; }
 template<class T> inline T max(T a, T b) { return a >= b ? a : b; }
 template<class T> inline int sgn(T a) { return a < 0 ? -1 : a > 0 ? 1 : 0; }
 //template<class T> inline void swap(T &a, T &b) { T t = a; a = b; b = t; }
 #endif
-
-template<class T> inline T constrain(T v, T l, T h) { return v < l ? l : v > h ? h : v; }
-
-#define BCDCHARTOINT(x) (10 * ((x & 0xF0) >> 4) + (x & 0xF))
-int BCD2INT(int x);
-
-// Unfortunately there are no platform independent macros for unaligned
-// access, so we do it this way:
-
-template<class T> inline T get_unaligned(T *p)
-{
-  struct s { T v; } __attribute__((packed));
-  return ((s *)p)->v;
-}
-
-template<class T> inline void put_unaligned(unsigned int v, T* p)
-{
-  struct s { T v; } __attribute__((packed));
-  ((s *)p)->v = v;
-}
-
-// Comparing doubles for equality is unsafe, but unfortunately we can't
-// overwrite operator==(double, double), so this will have to do:
-
-inline bool DoubleEqual(double a, double b)
-{
-  return fabs(a - b) <= DBL_EPSILON;
-}
 
 class cString {
 private:

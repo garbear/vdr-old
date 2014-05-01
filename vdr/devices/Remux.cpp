@@ -14,8 +14,9 @@
 #include "libsi/section.h"
 #include "libsi/descriptor.h"
 #include "recordings/Recording.h"
-#include "utils/Shutdown.h"
+#include "utils/CommonMacros.h"
 #include "utils/I18N.h"
+#include "utils/Shutdown.h"
 
 #include <algorithm>
 #include <vector>

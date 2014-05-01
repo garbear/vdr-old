@@ -22,6 +22,7 @@
 #include "DVBReceiverSubsystem.h"
 #include "devices/linux/DVBDevice.h"
 #include "devices/TSBuffer.h"
+#include "utils/CommonMacros.h"
 
 #include <fcntl.h>
 #include <unistd.h>

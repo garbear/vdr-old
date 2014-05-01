@@ -20,17 +20,17 @@
 
 #include "VideoBuffer.h"
 #include "RecPlayer.h"
-
-#include "utils/Ringbuffer.h"
 #include "devices/Remux.h"
 #include "filesystem/Videodir.h"
+#include "platform/threads/mutex.h"
 #include "recordings/Recording.h"
 #include "settings/Settings.h"
-#include "platform/threads/mutex.h"
+#include "utils/CommonMacros.h"
+#include "utils/Ringbuffer.h"
 
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <fcntl.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 using namespace PLATFORM;
 

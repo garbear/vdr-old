@@ -14,6 +14,7 @@
 #include "filesystem/FileName.h"
 #include "filesystem/Directory.h"
 #include "filesystem/VideoFile.h"
+#include "utils/CommonMacros.h"
 #include "utils/Shutdown.h"
 #include "settings/Settings.h"
 

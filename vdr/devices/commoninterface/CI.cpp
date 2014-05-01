@@ -28,7 +28,7 @@
 #include "devices/subsystems/DeviceReceiverSubsystem.h"
 #include "dvb/CADescriptorHandler.h"
 #include "dvb/filters/PAT.h"
-#include "utils/Tools.h"
+#include "utils/CommonMacros.h"
 
 #include <ctype.h>
 #include <linux/dvb/ca.h>

@@ -7,12 +7,13 @@
  * $Id: receiver.c 2.7 2012/06/02 13:20:38 kls Exp $
  */
 
+#include "Receiver.h"
 #include "Device.h"
 #include "devices/subsystems/DeviceReceiverSubsystem.h"
 #include "devices/subsystems/DevicePIDSubsystem.h"
-#include "Receiver.h"
+#include "utils/CommonMacros.h"
+
 #include <stdio.h>
-#include "utils/Tools.h"
 
 using namespace std;
 using namespace PLATFORM;

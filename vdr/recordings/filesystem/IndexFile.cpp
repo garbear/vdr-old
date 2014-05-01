@@ -1,9 +1,10 @@
 #include "IndexFile.h"
 #include "FileName.h"
-#include "recordings/Recordings.h"
-#include "recordings/RecordingInfo.h"
 #include "devices/Remux.h"
 #include "filesystem/Directory.h"
+#include "recordings/Recordings.h"
+#include "recordings/RecordingInfo.h"
+#include "utils/CommonMacros.h"
 #include "utils/I18N.h"
 #include "utils/Ringbuffer.h"
 

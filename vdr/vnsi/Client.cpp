@@ -41,6 +41,7 @@
 #include "recordings/marks/Marks.h"
 #include "settings/Settings.h"
 #include "timers/Timers.h"
+#include "utils/CommonMacros.h"
 #include "utils/TimeUtils.h"
 
 #include <map>

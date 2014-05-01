@@ -8,18 +8,18 @@
  */
 
 #include "RecordingCutter.h"
-//#include "menu.h"
 #include "Recordings.h"
+#include "RecordingUserCommand.h"
+#include "recordings/marks/Marks.h"
+#include "devices/Remux.h"
+#include "filesystem/Directory.h"
 #include "filesystem/FileName.h"
 #include "filesystem/IndexFile.h"
-#include "filesystem/VideoFile.h"
-#include "marks/Marks.h"
-#include "RecordingUserCommand.h"
-#include "devices/Remux.h"
 #include "filesystem/Videodir.h"
-#include "filesystem/Directory.h"
+#include "filesystem/VideoFile.h"
 #include "platform/threads/throttle.h"
 #include "settings/Settings.h"
+#include "utils/CommonMacros.h"
 
 #include <stdint.h>
 

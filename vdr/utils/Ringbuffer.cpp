@@ -11,6 +11,7 @@
  */
 
 #include "Ringbuffer.h"
+#include "CommonMacros.h"
 #include "Tools.h"
 #include "filesystem/VideoFile.h"
 #include "utils/log/Log.h"
