@@ -9,6 +9,8 @@
 
 #include "DiSEqC.h"
 #include "sources/Source.h"
+#include "utils/Tools.h"
+
 #include <ctype.h>
 
 using namespace PLATFORM;
@@ -200,7 +202,7 @@ const char *cDiseqc::GetScrBank(const char *s) const
   return NULL;
 }
 
-const char *cDiseqc::GetCodes(const char *s, uchar *Codes, uint8_t *MaxCodes) const
+const char *cDiseqc::GetCodes(const char *s, uint8_t *Codes, uint8_t *MaxCodes) const
 {
   const char *e = strchr(s, ']');
   if (e) {
@@ -214,7 +216,7 @@ const char *cDiseqc::GetCodes(const char *s, uchar *Codes, uint8_t *MaxCodes) co
               if (!errno && p != t && 0 <= n && n <= 255) {
                  if (Codes) {
                     if (NumCodes < *MaxCodes)
-                       Codes[NumCodes++] = uchar(n);
+                       Codes[NumCodes++] = uint8_t(n);
                     else {
                        esyslog("ERROR: too many codes in code sequence '%s'", s - 1);
                        return NULL;
@@ -241,7 +243,7 @@ const char *cDiseqc::GetCodes(const char *s, uchar *Codes, uint8_t *MaxCodes) co
   return NULL;
 }
 
-cDiseqc::eDiseqcActions cDiseqc::Execute(const char **CurrentAction, uchar *Codes, uint8_t *MaxCodes, const cScr *Scr, uint *Frequency) const
+cDiseqc::eDiseqcActions cDiseqc::Execute(const char **CurrentAction, uint8_t *Codes, uint8_t *MaxCodes, const cScr *Scr, uint *Frequency) const
 {
   if (!*CurrentAction)
      *CurrentAction = commands;

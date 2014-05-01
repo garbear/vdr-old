@@ -84,7 +84,7 @@ void writechar(int filedes, char c)
   safe_write(filedes, &c, sizeof(c));
 }
 
-int WriteAllOrNothing(int fd, const uchar *Data, int Length, int TimeoutMs, int RetryMs)
+int WriteAllOrNothing(int fd, const uint8_t *Data, int Length, int TimeoutMs, int RetryMs)
 {
   int written = 0;
   while (Length > 0) {

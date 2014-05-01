@@ -7,8 +7,8 @@
 #include "EPGTypes.h"
 #include "utils/DateTime.h"
 #include "utils/List.h"
-#include "utils/Tools.h" // for uchar
 
+#include <stdint.h>
 #include <string>
 
 class TiXmlElement;
@@ -43,16 +43,16 @@ private:
   // The sequence of these parameters is optimized for minimal memory waste!
   cSchedule *schedule;     // The Schedule this event belongs to
   tEventID eventID;        // Event ID of this event
-  uchar tableID;           // Table ID this event came from
-  uchar version;           // Version number of section this event came from
-  uchar runningStatus;     // 0=undefined, 1=not running, 2=starts in a few seconds, 3=pausing, 4=running
+  uint8_t tableID;           // Table ID this event came from
+  uint8_t version;           // Version number of section this event came from
+  uint8_t runningStatus;     // 0=undefined, 1=not running, 2=starts in a few seconds, 3=pausing, 4=running
   uint16_t parentalRating; // Parental rating of this event
   uint8_t starRating;      // Dish/BEV star rating
   std::string m_strTitle;  // Title of this event
   std::string m_strShortText; // Short description of this event (typically the episode name in case of a series)
   std::string m_strDescription; // Description of this event
   CEpgComponents *components;       // The stream components of this event
-  uchar contents[MaxEventContents]; // Contents of this event
+  uint8_t contents[MaxEventContents]; // Contents of this event
   CDateTime m_startTime;        // Start time of this event
   int duration;            // Duration of this event in seconds
   CDateTime m_vps;              // Video Programming Service timestamp (VPS, aka "Programme Identification Label", PIL)
@@ -64,14 +64,14 @@ public:
   tChannelID ChannelID(void) const;
   const cSchedule *Schedule(void) const { return schedule; }
   tEventID EventID(void) const { return eventID; }
-  uchar TableID(void) const { return tableID; }
-  uchar Version(void) const { return version; }
+  uint8_t TableID(void) const { return tableID; }
+  uint8_t Version(void) const { return version; }
   int RunningStatus(void) const { return runningStatus; }
   std::string Title(void) const { return m_strTitle; }
   std::string ShortText(void) const { return m_strShortText; }
   std::string Description(void) const { return m_strDescription; }
   const CEpgComponents *Components(void) const { return components; }
-  uchar Contents(int i = 0) const { return (0 <= i && i < MaxEventContents) ? contents[i] : uchar(0); }
+  uint8_t Contents(int i = 0) const { return (0 <= i && i < MaxEventContents) ? contents[i] : uint8_t(0); }
   int ParentalRating(void) const { return parentalRating; }
   uint8_t StarRating(void) const { return starRating; }
   CDateTime StartTime(void) const { return m_startTime; }
@@ -85,19 +85,19 @@ public:
   bool SeenWithin(int Seconds) const { return (CDateTime::GetUTCDateTime() - seen).GetSecondsTotal() < Seconds; }
   bool HasTimer(void) const;
   bool IsRunning(bool OrAboutToStart = false) const;
-  static const char *ContentToString(uchar Content);
+  static const char *ContentToString(uint8_t Content);
   std::string GetParentalRatingString(void) const;
   std::string GetStarRatingString(void) const;
   std::string GetVpsString(void) const;
   void SetEventID(tEventID EventID);
-  void SetTableID(uchar TableID);
-  void SetVersion(uchar Version);
+  void SetTableID(uint8_t TableID);
+  void SetVersion(uint8_t Version);
   void SetRunningStatus(int RunningStatus, cChannel *Channel = NULL);
   void SetTitle(const std::string& strTitle);
   void SetShortText(const std::string& strShortText);
   void SetDescription(const std::string& strDescription);
   void SetComponents(CEpgComponents *Components); // Will take ownership of Components!
-  void SetContents(uchar *Contents);
+  void SetContents(uint8_t *Contents);
   void SetParentalRating(int ParentalRating);
   void SetStarRating(uint8_t StarRating) { starRating = StarRating; }
   void SetStartTime(const CDateTime& StartTime);

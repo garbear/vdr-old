@@ -30,9 +30,9 @@ cPlayer::~cPlayer()
   Detach();
 }
 
-int cPlayer::PlayPes(const uchar *Data, int Length, bool VideoOnly /* = false */)
+int cPlayer::PlayPes(const uint8_t *Data, int Length, bool VideoOnly /* = false */)
 {
-  vector<uchar> data;
+  vector<uint8_t> data;
   if (Data && Length)
   {
     data.reserve(Length);
@@ -42,7 +42,7 @@ int cPlayer::PlayPes(const uchar *Data, int Length, bool VideoOnly /* = false */
   return PlayPes(data, VideoOnly);
 }
 
-int cPlayer::PlayPes(const vector<uchar> &data, bool VideoOnly /* = false */)
+int cPlayer::PlayPes(const vector<uint8_t> &data, bool VideoOnly /* = false */)
 {
   if (device)
      return device->Player()->PlayPes(data, VideoOnly);
@@ -50,21 +50,21 @@ int cPlayer::PlayPes(const vector<uchar> &data, bool VideoOnly /* = false */)
   return -1;
 }
 
-int cPlayer::PlayTs(const uchar *Data, int Length, bool VideoOnly /* = false */)
+int cPlayer::PlayTs(const uint8_t *Data, int Length, bool VideoOnly /* = false */)
 {
   if (Data && Length)
   {
-    vector<uchar> data(Data, Data + Length);
+    vector<uint8_t> data(Data, Data + Length);
     return PlayTs(data, VideoOnly);
   }
   else
   {
-    vector<uchar> empty;
+    vector<uint8_t> empty;
     return PlayTs(empty, VideoOnly);
   }
 }
 
-int cPlayer::PlayTs(const vector<uchar> &data, bool VideoOnly /* = false */)
+int cPlayer::PlayTs(const vector<uint8_t> &data, bool VideoOnly /* = false */)
 {
   return device ? device->Player()->PlayTs(data, VideoOnly) : -1;
 }
@@ -214,7 +214,7 @@ void cPlayer::DeviceSetVideoDisplayFormat(eVideoDisplayFormat VideoDisplayFormat
   if (device) device->VideoFormat()->SetVideoDisplayFormat(VideoDisplayFormat);
 }
 
-void cPlayer::DeviceStillPicture(const vector<uchar> &data)
+void cPlayer::DeviceStillPicture(const vector<uint8_t> &data)
 {
   if (device) device->Player()->StillPicture(data);
 }

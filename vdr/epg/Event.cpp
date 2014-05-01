@@ -2,12 +2,12 @@
 #include "EPGDefinitions.h"
 #include "Schedule.h"
 #include "channels/ChannelManager.h"
+#include "settings/Settings.h"
 #include "timers/Timers.h"
 #include "utils/UTF8Utils.h"
 #include "utils/I18N.h"
 #include "utils/CalendarUtils.h"
 #include "utils/XBMCTinyXML.h"
-#include "settings/Settings.h"
 
 namespace VDR
 {
@@ -55,12 +55,12 @@ void cEvent::SetEventID(tEventID EventID)
   }
 }
 
-void cEvent::SetTableID(uchar TableID)
+void cEvent::SetTableID(uint8_t TableID)
 {
   tableID = TableID;
 }
 
-void cEvent::SetVersion(uchar Version)
+void cEvent::SetVersion(uint8_t Version)
 {
   version = Version;
 }
@@ -93,7 +93,7 @@ void cEvent::SetComponents(CEpgComponents *Components)
   components = Components;
 }
 
-void cEvent::SetContents(uchar *Contents)
+void cEvent::SetContents(uint8_t *Contents)
 {
   for (int i = 0; i < MaxEventContents; i++)
       contents[i] = Contents[i];
@@ -149,7 +149,7 @@ bool cEvent::IsRunning(bool OrAboutToStart) const
   return runningStatus >= (OrAboutToStart ? SI::RunningStatusStartsInAFewSeconds : SI::RunningStatusPausing);
 }
 
-const char *cEvent::ContentToString(uchar Content)
+const char *cEvent::ContentToString(uint8_t Content)
 {
   switch (Content & 0xF0)
     {
@@ -614,7 +614,7 @@ static void StripControlCharacters(char *s)
     while (len > 0)
     {
       int l = cUtf8Utils::Utf8CharLen(s);
-      uchar *p = (uchar *) s;
+      uint8_t *p = (uint8_t*) s;
       if (l == 2 && *p == 0xC2) // UTF-8 sequence
         p++;
       if (*p == 0x86 || *p == 0x87)
@@ -926,8 +926,8 @@ bool cEvent::Deserialise(cSchedule* schedule, const TiXmlNode *eventNode)
     }
 
     event->duration = (int)StringUtils::IntVal(duration);
-    event->tableID  = (uchar)StringUtils::IntVal(tableId);
-    event->version  = (uchar)StringUtils::IntVal(version);
+    event->tableID  = (uint8_t)StringUtils::IntVal(tableId);
+    event->version  = (uint8_t)StringUtils::IntVal(version);
 
     const TiXmlNode *titleNode = elem->FirstChild(EPG_XML_ELM_TITLE);
     if (titleNode)
@@ -963,7 +963,7 @@ bool cEvent::Deserialise(cSchedule* schedule, const TiXmlNode *eventNode)
     int iPtr(0);
     while (contentsNode != NULL)
     {
-      event->contents[iPtr++] = (uchar)StringUtils::IntVal(contentsNode->ToElement()->GetText());
+      event->contents[iPtr++] = (uint8_t)StringUtils::IntVal(contentsNode->ToElement()->GetText());
       contentsNode = contentsNode->NextSibling(EPG_XML_ELM_CONTENTS);
     }
 

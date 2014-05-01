@@ -24,6 +24,8 @@
 #include "devices/DeviceTypes.h"
 #include "devices/Receiver.h"
 
+#include <stdint.h>
+
 namespace VDR
 {
 
@@ -37,7 +39,7 @@ public:
 
 protected:
   virtual void Activate(bool On);
-  virtual void Receive(uchar *Data, int Length);
+  virtual void Receive(uint8_t *Data, int Length);
 
   DevicePtr    m_device;
   cVideoInput *m_VideoInput;

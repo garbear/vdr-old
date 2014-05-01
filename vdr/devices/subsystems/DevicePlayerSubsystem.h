@@ -24,6 +24,7 @@
 #include "devices/Remux.h"
 
 #include <vector>
+#include <stdint.h>
 #include <sys/types.h>
 
 namespace VDR
@@ -158,7 +159,7 @@ public:
    * The default implementation converts TS to PES and calls itself again,
    * allowing a derived class to display PES if it can't handle TS directly.
    */
-  virtual void StillPicture(const std::vector<uchar> &data);
+  virtual void StillPicture(const std::vector<uint8_t> &data);
 
   /*!
    * \brief Returns true if the device itself or any of the file handles in
@@ -188,7 +189,7 @@ public:
    * any functions called from within PlayPes() will be guaranteed to always
    * receive complete PES packets.
    */
-  virtual int PlayPes(const std::vector<uchar> &data, bool bVideoOnly = false);
+  virtual int PlayPes(const std::vector<uint8_t> &data, bool bVideoOnly = false);
 
   /*!
    * \brief Plays the given TS packet
@@ -205,7 +206,7 @@ public:
    * itself. Any packets the derived function can't handle must be sent to the
    * base class function. This applies especially to the PAT/PMT packets.
    */
-  virtual int PlayTs(const std::vector<uchar> &data, bool bVideoOnly = false);
+  virtual int PlayTs(const std::vector<uint8_t> &data, bool bVideoOnly = false);
 
   /*!
    * \brief Returns true if we are currently replaying
@@ -260,7 +261,7 @@ public: // TODO
    *         (returning length) or not at all (returning 0 or -1 and setting
    *         'errno' accordingly).
    */
-  virtual int PlayVideo(const std::vector<uchar> &data) { return -1; }
+  virtual int PlayVideo(const std::vector<uint8_t> &data) { return -1; }
 
   /*!
    * \brief Plays the given data block as audio
@@ -272,7 +273,7 @@ public: // TODO
    *         (returning length) or not at all (returning 0 or -1 and setting
    *         'errno' accordingly).
    */
-  virtual int PlayAudio(const std::vector<uchar> &data, uchar id) { return -1; }
+  virtual int PlayAudio(const std::vector<uint8_t> &data, uint8_t id) { return -1; }
 
   /*!
    * \brief Plays the given data block as a subtitle
@@ -283,7 +284,7 @@ public: // TODO
    *         (returning length) or not at all (returning 0 or -1 and setting
    *         'errno' accordingly).
    */
-  virtual int PlaySubtitle(const std::vector<uchar> &data);
+  virtual int PlaySubtitle(const std::vector<uint8_t> &data);
 
   /*!
    * \brief Plays the single PES packet in data with the given length
@@ -292,7 +293,7 @@ public: // TODO
    * \param bVideoOnly If true, only the video will be displayed, which is
    *        necessary for trick modes like 'fast forward'
    */
-  virtual unsigned int PlayPesPacket(const std::vector<uchar> &data, bool bVideoOnly = false);
+  virtual unsigned int PlayPesPacket(const std::vector<uint8_t> &data, bool bVideoOnly = false);
 
   /*!
    * \brief Plays the given data block as video
@@ -306,7 +307,7 @@ public: // TODO
    * The default implementation collects all incoming TS payload belonging to
    * one PES packet and calls PlayVideo() with the resulting packet.
    */
-  virtual int PlayTsVideo(const std::vector<uchar> &data);
+  virtual int PlayTsVideo(const std::vector<uint8_t> &data);
 
   /*!
    * \brief Plays the given data block as audio
@@ -321,7 +322,7 @@ public: // TODO
    * The default implementation collects all incoming TS payload belonging to
    * one PES packet and calls PlayAudio() with the resulting packet.
    */
-  virtual int PlayTsAudio(const std::vector<uchar> &data);
+  virtual int PlayTsAudio(const std::vector<uint8_t> &data);
 
   /*!
    * \brief Plays the given data block as a subtitle
@@ -336,7 +337,7 @@ public: // TODO
    * The default implementation collects all incoming TS payload belonging to
    * one PES packet and displays the resulting subtitle via the OSD.
    */
-  virtual int PlayTsSubtitle(const std::vector<uchar> &data);
+  virtual int PlayTsSubtitle(const std::vector<uint8_t> &data);
 
 private:
 public: // TODO

@@ -32,7 +32,7 @@ void cTransfer::Activate(bool On)
   if (On) {
      PlayTs(patPmtGenerator.GetPat(), TS_SIZE);
      int Index = 0;
-     while (uchar *pmt = patPmtGenerator.GetPmt(Index))
+     while (uint8_t *pmt = patPmtGenerator.GetPmt(Index))
            PlayTs(pmt, TS_SIZE);
      }
   else
@@ -42,7 +42,7 @@ void cTransfer::Activate(bool On)
 #define MAXRETRIES    20 // max. number of retries for a single TS packet
 #define RETRYWAIT      5 // time (in ms) between two retries
 
-void cTransfer::Receive(uchar *Data, int Length)
+void cTransfer::Receive(uint8_t *Data, int Length)
 {
   if (cPlayer::IsAttached()) {
      // Transfer Mode means "live tv", so there's no point in doing any additional

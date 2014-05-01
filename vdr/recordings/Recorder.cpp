@@ -112,7 +112,7 @@ void cRecorder::Activate(bool On)
      StopThread(3);
 }
 
-void cRecorder::Receive(uchar *Data, int Length)
+void cRecorder::Receive(uint8_t *Data, int Length)
 {
   if (!IsStopped()) {
      int p = m_ringBuffer->Put(Data, Length);
@@ -134,7 +134,7 @@ void* cRecorder::Process(void)
   bool FirstIframeSeen = false;
   while (!IsStopped()) {
         int r;
-        uchar *b = m_ringBuffer->Get(r);
+        uint8_t *b = m_ringBuffer->Get(r);
         if (b) {
            int Count = m_frameDetector->Analyze(b, r);
            if (Count) {
@@ -162,7 +162,7 @@ void* cRecorder::Process(void)
                        m_recordFile->Write(m_patPmtGenerator.GetPat(), TS_SIZE);
                        m_fileSize += TS_SIZE;
                        int Index = 0;
-                       while (uchar *pmt = m_patPmtGenerator.GetPmt(Index)) {
+                       while (uint8_t *pmt = m_patPmtGenerator.GetPmt(Index)) {
                              m_recordFile->Write(pmt, TS_SIZE);
                              m_fileSize += TS_SIZE;
                              }

@@ -36,12 +36,12 @@ bool CEpgComponent::Deserialse(const std::string& str)
   return n >= 3;
 }
 
-uchar CEpgComponent::Stream(void) const
+uint8_t CEpgComponent::Stream(void) const
 {
   return m_stream;
 }
 
-uchar CEpgComponent::Type(void) const
+uint8_t CEpgComponent::Type(void) const
 {
   return m_type;
 }
@@ -56,12 +56,12 @@ std::string CEpgComponent::Description(void) const
   return m_strDescription;
 }
 
-void CEpgComponent::SetStream(uchar stream)
+void CEpgComponent::SetStream(uint8_t stream)
 {
   m_stream = stream;
 }
 
-void CEpgComponent::SetType(uchar type)
+void CEpgComponent::SetType(uint8_t type)
 {
   m_type = type;
 }

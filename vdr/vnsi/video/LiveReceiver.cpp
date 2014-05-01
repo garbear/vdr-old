@@ -41,7 +41,7 @@ cLiveReceiver::~cLiveReceiver()
     m_device->Receiver()->Detach(this);
 }
 
-void cLiveReceiver::Receive(uchar *Data, int Length)
+void cLiveReceiver::Receive(uint8_t *Data, int Length)
 {
   m_VideoInput->Receive(Data, Length);
 }

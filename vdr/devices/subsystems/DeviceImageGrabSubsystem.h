@@ -23,6 +23,7 @@
 #include "devices/DeviceSubsystem.h"
 #include "utils/Tools.h"
 
+#include <stdint.h>
 #include <string>
 
 namespace VDR
@@ -49,7 +50,7 @@ public:
    * The caller takes ownership of the returned memory and must free() it once
    * it isn't needed any more.
    */
-  virtual uchar *GrabImage(int &size, bool bJpeg = true, int quality = -1, int sizeX = -1, int sizeY = -1) { return NULL; }
+  virtual uint8_t *GrabImage(int &size, bool bJpeg = true, int quality = -1, int sizeX = -1, int sizeY = -1) { return NULL; }
 
   /*!
    * \brief Calls GrabImage() and stores the resulting image in a file with the

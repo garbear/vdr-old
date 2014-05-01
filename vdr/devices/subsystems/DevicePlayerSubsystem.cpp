@@ -74,7 +74,7 @@ void cDevicePlayerSubsystem::Mute()
 {
 }
 
-void cDevicePlayerSubsystem::StillPicture(const vector<uchar> &data)
+void cDevicePlayerSubsystem::StillPicture(const vector<uint8_t> &data)
 {
   assert(!data.empty());
 
@@ -82,8 +82,8 @@ void cDevicePlayerSubsystem::StillPicture(const vector<uchar> &data)
   {
     // TS data
     cTsToPes TsToPes;
-    uchar *buf = NULL;
-    const uchar *dataptr = data.data();
+    uint8_t *buf = NULL;
+    const uint8_t *dataptr = data.data();
     size_t length = data.size();
     int Size = 0;
     while (length >= TS_SIZE)
@@ -98,11 +98,11 @@ void cDevicePlayerSubsystem::StillPicture(const vector<uchar> &data)
         if (TsPayloadStart(dataptr))
         {
           int l;
-          while (const uchar *p = TsToPes.GetPes(l))
+          while (const uint8_t *p = TsToPes.GetPes(l))
           {
             int Offset = Size;
             int NewSize = Size + l;
-            if (uchar *NewBuffer = (uchar*)realloc(buf, NewSize))
+            if (uint8_t *NewBuffer = (uint8_t*)realloc(buf, NewSize))
             {
               Size = NewSize;
               buf = NewBuffer;
@@ -123,11 +123,11 @@ void cDevicePlayerSubsystem::StillPicture(const vector<uchar> &data)
       dataptr += TS_SIZE;
     }
     int l;
-    while (const uchar *p = TsToPes.GetPes(l))
+    while (const uint8_t *p = TsToPes.GetPes(l))
     {
       int Offset = Size;
       int NewSize = Size + l;
-      if (uchar *NewBuffer = (uchar *)realloc(buf, NewSize))
+      if (uint8_t *NewBuffer = (uint8_t*)realloc(buf, NewSize))
       {
         Size = NewSize;
         buf = NewBuffer;
@@ -142,14 +142,14 @@ void cDevicePlayerSubsystem::StillPicture(const vector<uchar> &data)
     }
     if (buf)
     {
-      vector<uchar> vec(buf, buf + Size);
+      vector<uint8_t> vec(buf, buf + Size);
       free(buf);
       StillPicture(vec);
     }
   }
 }
 
-int cDevicePlayerSubsystem::PlayPes(const vector<uchar> &data, bool bVideoOnly /* = false */)
+int cDevicePlayerSubsystem::PlayPes(const vector<uint8_t> &data, bool bVideoOnly /* = false */)
 {
   if (data.empty())
   {
@@ -166,7 +166,7 @@ int cDevicePlayerSubsystem::PlayPes(const vector<uchar> &data, bool bVideoOnly /
         esyslog("ERROR: incomplete PES packet!");
         return data.size();
       }
-      vector<uchar> vecData(data.data() + i, data.data() + i + length);
+      vector<uint8_t> vecData(data.data() + i, data.data() + i + length);
       int w = PlayPesPacket(vecData, bVideoOnly);
       if (w > 0)
         i += length;
@@ -182,7 +182,7 @@ int cDevicePlayerSubsystem::PlayPes(const vector<uchar> &data, bool bVideoOnly /
 }
 
 //TODO detect and report continuity errors?
-int cDevicePlayerSubsystem::PlayTs(const vector<uchar> &data, bool bVideoOnly /* = false */)
+int cDevicePlayerSubsystem::PlayTs(const vector<uint8_t> &data, bool bVideoOnly /* = false */)
 {
   unsigned int Played = 0;
   if (data.empty())
@@ -199,10 +199,10 @@ int cDevicePlayerSubsystem::PlayTs(const vector<uchar> &data, bool bVideoOnly /*
   else
   {
     size_t length = data.size();
-    const uchar *dataptr = data.data();
+    const uint8_t *dataptr = data.data();
     while (length >= TS_SIZE)
     {
-      vector<uchar> vecData(dataptr, dataptr + TS_SIZE);
+      vector<uint8_t> vecData(dataptr, dataptr + TS_SIZE);
 
       if (vecData[0] != TS_SYNC_BYTE)
       {
@@ -311,7 +311,7 @@ void cDevicePlayerSubsystem::Detach(cPlayer *player)
     PLATFORM::CLockObject lock(Track()->m_mutexCurrentSubtitleTrack);
     SetPlayMode(pmNone);
 //XXX    VideoFormat()->SetVideoDisplayFormat(cSettings::Get().m_VideoDisplayFormat);
-    PlayTs(vector<uchar>());
+    PlayTs(vector<uint8_t>());
     m_patPmtParser.Reset();
     m_bIsPlayingVideo = false;
   }
@@ -322,22 +322,22 @@ bool cDevicePlayerSubsystem::CanReplay() const
   return Device()->HasDecoder();
 }
 
-int cDevicePlayerSubsystem::PlaySubtitle(const vector<uchar> &data)
+int cDevicePlayerSubsystem::PlaySubtitle(const vector<uint8_t> &data)
 {
   return -1; //XXX remove this method
 }
 
-unsigned int cDevicePlayerSubsystem::PlayPesPacket(const vector<uchar> &data, bool bVideoOnly /* = false */)
+unsigned int cDevicePlayerSubsystem::PlayPesPacket(const vector<uint8_t> &data, bool bVideoOnly /* = false */)
 {
   bool FirstLoop = true;
-  uchar c = data[3];
-  const uchar *Start = data.data();
-  const uchar *End = Start + data.size();
+  uint8_t c = data[3];
+  const uint8_t *Start = data.data();
+  const uint8_t *End = Start + data.size();
   while (Start < End)
   {
     int d = End - Start;
     int w = d;
-    vector<uchar> vecStart(Start, Start + d);
+    vector<uint8_t> vecStart(Start, Start + d);
     switch (c)
     {
     case 0xBE:          // padding stream, needed for MPEG1
@@ -359,9 +359,9 @@ unsigned int cDevicePlayerSubsystem::PlayPesPacket(const vector<uchar> &data, bo
       if ((data[7] & 0x01) && (data[PayloadOffset - 3] & 0x81) == 0x01 && data[PayloadOffset - 2] == 0x81)
         PayloadOffset--;
 
-      uchar SubStreamId = data[PayloadOffset];
-      uchar SubStreamType = SubStreamId & 0xF0;
-      uchar SubStreamIndex = SubStreamId & 0x1F;
+      uint8_t SubStreamId = data[PayloadOffset];
+      uint8_t SubStreamType = SubStreamId & 0xF0;
+      uint8_t SubStreamIndex = SubStreamId & 0x1F;
 
       // Compatibility mode for old VDR recordings, where 0xBD was only AC3:
 pre_1_3_19_PrivateStreamDetected:
@@ -433,16 +433,16 @@ pre_1_3_19_PrivateStreamDetected:
   return data.size();
 }
 
-int cDevicePlayerSubsystem::PlayTsVideo(const vector<uchar> &data)
+int cDevicePlayerSubsystem::PlayTsVideo(const vector<uint8_t> &data)
 {
   // Video PES has no explicit length, so we can only determine the end of
   // a PES packet when the next TS packet that starts a payload comes in:
   if (TsPayloadStart(data.data()))
   {
     int length;
-    while (const uchar *p = m_tsToPesVideo.GetPes(length))
+    while (const uint8_t *p = m_tsToPesVideo.GetPes(length))
     {
-      vector<uchar> vecP(p, p + length);
+      vector<uint8_t> vecP(p, p + length);
       int w = PlayVideo(vecP);
       if (w <= 0)
       {
@@ -456,13 +456,13 @@ int cDevicePlayerSubsystem::PlayTsVideo(const vector<uchar> &data)
   return data.size();
 }
 
-int cDevicePlayerSubsystem::PlayTsAudio(const vector<uchar> &data)
+int cDevicePlayerSubsystem::PlayTsAudio(const vector<uint8_t> &data)
 {
   // Audio PES always has an explicit length and consists of single packets:
   int length;
-  if (const uchar *p = m_tsToPesAudio.GetPes(length))
+  if (const uint8_t *p = m_tsToPesAudio.GetPes(length))
   {
-    vector<uchar> vecP(p, p + length);
+    vector<uint8_t> vecP(p, p + length);
     int w = PlayAudio(vecP, vecP[3]);
     if (w <= 0)
     {
@@ -475,7 +475,7 @@ int cDevicePlayerSubsystem::PlayTsAudio(const vector<uchar> &data)
   return data.size();
 }
 
-int cDevicePlayerSubsystem::PlayTsSubtitle(const vector<uchar> &data)
+int cDevicePlayerSubsystem::PlayTsSubtitle(const vector<uint8_t> &data)
 {
   return -1; //XXX remove this method
 }

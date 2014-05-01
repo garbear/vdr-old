@@ -18,11 +18,6 @@
  *
  */
 
-#include <stdlib.h>
-#include <assert.h>
-#include "Config.h"
-#include "devices/Remux.h"
-#include "channels/ChannelManager.h"
 #include "Parser.h"
 #include "ParserAAC.h"
 #include "ParserAC3.h"
@@ -32,6 +27,12 @@
 #include "ParserMPEGVideo.h"
 #include "ParserSubtitle.h"
 #include "ParserTeletext.h"
+#include "Config.h"
+#include "channels/ChannelManager.h"
+#include "devices/Remux.h"
+
+#include <assert.h>
+#include <stdlib.h>
 
 namespace VDR
 {

@@ -10,17 +10,18 @@
 #ifndef __RECORDING_H
 #define __RECORDING_H
 
-#include <time.h>
 #include "RecordingConfig.h"
+#include "recordings/marks/Mark.h"
 #include "Config.h"
-#include "timers/Timers.h"
-#include "timers/TimerTypes.h"
 #include "epg/EPG.h"
-#include "utils/Tools.h"
-#include "platform/threads/threads.h"
 #include "filesystem/File.h"
 #include "filesystem/ResumeFile.h"
-#include "marks/Mark.h"
+#include "platform/threads/threads.h"
+#include "timers/Timers.h"
+#include "timers/TimerTypes.h"
+
+#include <stdint.h>
+#include <time.h>
 
 namespace VDR
 {
@@ -92,7 +93,7 @@ public:
   static int SecondsToFrames(int Seconds, double FramesPerSecond = DEFAULTFRAMESPERSECOND);
         // Returns the number of frames corresponding to the given number of seconds.
 
-  static int ReadFrame(CVideoFile *f, uchar *b, int Length, int Max);
+  static int ReadFrame(CVideoFile *f, uint8_t *b, int Length, int Max);
 
   static std::string ExchangeChars(const std::string& strSubject, bool ToFileSystem);
         // Exchanges the characters in the given string to or from a file system

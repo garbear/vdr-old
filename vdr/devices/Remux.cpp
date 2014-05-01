@@ -15,7 +15,6 @@
 #include "libsi/descriptor.h"
 #include "recordings/Recording.h"
 #include "utils/Shutdown.h"
-#include "utils/Tools.h"
 #include "utils/I18N.h"
 
 #include <algorithm>
@@ -33,7 +32,7 @@ static bool DebugFrames = false;
 
 #define EMPTY_SCANNER (0xFFFFFFFF)
 
-ePesHeader AnalyzePesHeader(const uchar *Data, int Count, int &PesPayloadOffset, bool *ContinuationHeader)
+ePesHeader AnalyzePesHeader(const uint8_t *Data, int Count, int &PesPayloadOffset, bool *ContinuationHeader)
 {
   if (Count < 7)
      return phNeedMoreData; // too short
@@ -103,7 +102,7 @@ ePesHeader AnalyzePesHeader(const uchar *Data, int Count, int &PesPayloadOffset,
 
 // --- cRemux ----------------------------------------------------------------
 
-void cRemux::SetBrokenLink(uchar *Data, int Length)
+void cRemux::SetBrokenLink(uint8_t *Data, int Length)
 {
   int PesPayloadOffset = 0;
   if (AnalyzePesHeader(Data, Length, PesPayloadOffset) >= phMPEG1 && (Data[3] & 0xF0) == VIDEO_STREAM_S) {
@@ -122,7 +121,7 @@ void cRemux::SetBrokenLink(uchar *Data, int Length)
 
 // --- Some TS handling tools ------------------------------------------------
 
-void TsHidePayload(uchar *p)
+void TsHidePayload(uint8_t *p)
 {
   p[1] &= ~TS_PAYLOAD_START;
   p[3] |=  TS_ADAPT_FIELD_EXISTS;
@@ -132,7 +131,7 @@ void TsHidePayload(uchar *p)
   memset(p + 6, 0xFF, TS_SIZE - 6);
 }
 
-void TsSetPcr(uchar *p, int64_t Pcr)
+void TsSetPcr(uint8_t *p, int64_t Pcr)
 {
   if (TsHasAdaptationField(p)) {
      if (p[4] >= 7 && (p[5] & TS_ADAPT_PCR)) {
@@ -148,11 +147,11 @@ void TsSetPcr(uchar *p, int64_t Pcr)
      }
 }
 
-int64_t TsGetPts(const uchar *p, int l)
+int64_t TsGetPts(const uint8_t *p, int l)
 {
   // Find the first packet with a PTS and use it:
   while (l > 0) {
-        const uchar *d = p;
+        const uint8_t *d = p;
         if (TsPayloadStart(d) && TsGetPayload(&d) && PesHasPts(d))
            return PesGetPts(d);
         p += TS_SIZE;
@@ -161,11 +160,11 @@ int64_t TsGetPts(const uchar *p, int l)
   return -1;
 }
 
-int64_t TsGetDts(const uchar *p, int l)
+int64_t TsGetDts(const uint8_t *p, int l)
 {
   // Find the first packet with a DTS and use it:
   while (l > 0) {
-        const uchar *d = p;
+        const uint8_t *d = p;
         if (TsPayloadStart(d) && TsGetPayload(&d) && PesHasDts(d))
            return PesGetDts(d);
         p += TS_SIZE;
@@ -174,13 +173,13 @@ int64_t TsGetDts(const uchar *p, int l)
   return -1;
 }
 
-void TsSetPts(uchar *p, int l, int64_t Pts)
+void TsSetPts(uint8_t *p, int l, int64_t Pts)
 {
   // Find the first packet with a PTS and use it:
   while (l > 0) {
-        const uchar *d = p;
+        const uint8_t *d = p;
         if (TsPayloadStart(d) && TsGetPayload(&d) && PesHasPts(d)) {
-           PesSetPts(const_cast<uchar *>(d), Pts);
+           PesSetPts(const_cast<uint8_t*>(d), Pts);
            return;
            }
         p += TS_SIZE;
@@ -188,13 +187,13 @@ void TsSetPts(uchar *p, int l, int64_t Pts)
         }
 }
 
-void TsSetDts(uchar *p, int l, int64_t Dts)
+void TsSetDts(uint8_t *p, int l, int64_t Dts)
 {
   // Find the first packet with a DTS and use it:
   while (l > 0) {
-        const uchar *d = p;
+        const uint8_t *d = p;
         if (TsPayloadStart(d) && TsGetPayload(&d) && PesHasDts(d)) {
-           PesSetDts(const_cast<uchar *>(d), Dts);
+           PesSetDts(const_cast<uint8_t*>(d), Dts);
            return;
            }
         p += TS_SIZE;
@@ -204,7 +203,7 @@ void TsSetDts(uchar *p, int l, int64_t Dts)
 
 // --- Some PES handling tools -----------------------------------------------
 
-void PesSetPts(uchar *p, int64_t Pts)
+void PesSetPts(uint8_t *p, int64_t Pts)
 {
   p[ 9] = ((Pts >> 29) & 0x0E) | (p[9] & 0xF1);
   p[10] =   Pts >> 22;
@@ -213,7 +212,7 @@ void PesSetPts(uchar *p, int64_t Pts)
   p[13] = ((Pts <<  1) & 0xFE) | 0x01;
 }
 
-void PesSetDts(uchar *p, int64_t Dts)
+void PesSetDts(uint8_t *p, int64_t Dts)
 {
   p[14] = ((Dts >> 29) & 0x0E) | (p[14] & 0xF1);
   p[15] =   Dts >> 22;
@@ -242,12 +241,12 @@ cTsPayload::cTsPayload(void)
   index = 0;
 }
 
-cTsPayload::cTsPayload(uchar *Data, int Length, int Pid)
+cTsPayload::cTsPayload(uint8_t *Data, int Length, int Pid)
 {
   Setup(Data, Length, Pid);
 }
 
-void cTsPayload::Setup(uchar *Data, int Length, int Pid)
+void cTsPayload::Setup(uint8_t *Data, int Length, int Pid)
 {
   data = Data;
   length = Length;
@@ -255,13 +254,13 @@ void cTsPayload::Setup(uchar *Data, int Length, int Pid)
   index = 0;
 }
 
-uchar cTsPayload::GetByte(void)
+uint8_t cTsPayload::GetByte(void)
 {
   if (!Eof()) {
      if (index % TS_SIZE == 0) { // encountered the next TS header
         for (;; index += TS_SIZE) {
             if (data[index] == TS_SYNC_BYTE && index + TS_SIZE <= length) { // to make sure we are at a TS header start and drop incomplete TS packets at the end
-               uchar *p = data + index;
+               uint8_t *p = data + index;
                if (TsPid(p) == pid) { // only handle TS packets for the initial PID
                   if (TsHasPayload(p)) {
                      if (index > 0 && TsPayloadStart(p)) { // checking index to not skip the very first TS packet
@@ -301,7 +300,7 @@ int cTsPayload::GetLastIndex(void)
   return index - 1;
 }
 
-void cTsPayload::SetByte(uchar Byte, int Index)
+void cTsPayload::SetByte(uint8_t Byte, int Index)
 {
   if (Index >= 0 && Index < length)
      data[Index] = Byte;
@@ -332,7 +331,7 @@ cPatPmtGenerator::cPatPmtGenerator(ChannelPtr Channel /* = cChannel::EmptyChanne
   SetChannel(Channel);
 }
 
-void cPatPmtGenerator::IncCounter(int &Counter, uchar *TsPacket)
+void cPatPmtGenerator::IncCounter(int &Counter, uint8_t *TsPacket)
 {
   TsPacket[3] = (TsPacket[3] & 0xF0) | Counter;
   if (++Counter > 0x0F)
@@ -354,7 +353,7 @@ void cPatPmtGenerator::IncEsInfoLength(int Length)
      }
 }
 
-int cPatPmtGenerator::MakeStream(uchar *Target, uchar Type, int Pid)
+int cPatPmtGenerator::MakeStream(uint8_t *Target, uint8_t Type, int Pid)
 {
   int i = 0;
   Target[i++] = Type; // stream type
@@ -366,7 +365,7 @@ int cPatPmtGenerator::MakeStream(uchar *Target, uchar Type, int Pid)
   return i;
 }
 
-int cPatPmtGenerator::MakeAC3Descriptor(uchar *Target, uchar Type)
+int cPatPmtGenerator::MakeAC3Descriptor(uint8_t *Target, uint8_t Type)
 {
   int i = 0;
   Target[i++] = Type;
@@ -376,7 +375,7 @@ int cPatPmtGenerator::MakeAC3Descriptor(uchar *Target, uchar Type)
   return i;
 }
 
-int cPatPmtGenerator::MakeSubtitlingDescriptor(uchar *Target, const char *Language, uchar SubtitlingType, uint16_t CompositionPageId, uint16_t AncillaryPageId)
+int cPatPmtGenerator::MakeSubtitlingDescriptor(uint8_t *Target, const char *Language, uint8_t SubtitlingType, uint16_t CompositionPageId, uint16_t AncillaryPageId)
 {
   int i = 0;
   Target[i++] = SI::SubtitlingDescriptorTag;
@@ -393,7 +392,7 @@ int cPatPmtGenerator::MakeSubtitlingDescriptor(uchar *Target, const char *Langua
   return i;
 }
 
-int cPatPmtGenerator::MakeLanguageDescriptor(uchar *Target, const char *Language)
+int cPatPmtGenerator::MakeLanguageDescriptor(uint8_t *Target, const char *Language)
 {
   int i = 0;
   Target[i++] = SI::ISO639LanguageDescriptorTag;
@@ -412,7 +411,7 @@ int cPatPmtGenerator::MakeLanguageDescriptor(uchar *Target, const char *Language
   return i;
 }
 
-int cPatPmtGenerator::MakeCRC(uchar *Target, const uchar *Data, int Length)
+int cPatPmtGenerator::MakeCRC(uint8_t *Target, const uint8_t *Data, int Length)
 {
   int crc = SI::CRC32::crc32((const char *)Data, Length, 0xFFFFFFFF);
   int i = 0;
@@ -465,7 +464,7 @@ void cPatPmtGenerator::GeneratePmtPid(ChannelPtr Channel)
 void cPatPmtGenerator::GeneratePat(void)
 {
   memset(pat, 0xFF, sizeof(pat));
-  uchar *p = pat;
+  uint8_t *p = pat;
   int i = 0;
   p[i++] = TS_SYNC_BYTE; // TS indicator
   p[i++] = TS_PAYLOAD_START | (PATPID >> 8); // flags (3), pid hi (5)
@@ -494,13 +493,13 @@ void cPatPmtGenerator::GeneratePat(void)
 void cPatPmtGenerator::GeneratePmt(ChannelPtr Channel)
 {
   // generate the complete PMT section:
-  uchar buf[MAX_SECTION_SIZE];
+  uint8_t buf[MAX_SECTION_SIZE];
   memset(buf, 0xFF, sizeof(buf));
   numPmtPackets = 0;
   if (Channel) {
      int Vpid = Channel->GetVideoStream().vpid;
      int Ppid = Channel->GetVideoStream().ppid;
-     uchar *p = buf;
+     uint8_t *p = buf;
      int i = 0;
      p[i++] = 0x02; // table id
      int SectionLength = i;
@@ -543,10 +542,10 @@ void cPatPmtGenerator::GeneratePmt(ChannelPtr Channel)
      buf[SectionLength + 1] = sl;
      MakeCRC(buf + i, buf, i);
      // split the PMT section into several TS packets:
-     uchar *q = buf;
+     uint8_t *q = buf;
      bool pusi = true;
      while (i > 0) {
-           uchar *p = pmt[numPmtPackets++];
+           uint8_t *p = pmt[numPmtPackets++];
            int j = 0;
            p[j++] = TS_SYNC_BYTE; // TS indicator
            p[j++] = (pusi ? TS_PAYLOAD_START : 0x00) | (pmtPid >> 8); // flags (3), pid hi (5)
@@ -581,13 +580,13 @@ void cPatPmtGenerator::SetChannel(ChannelPtr Channel)
    }
 }
 
-uchar *cPatPmtGenerator::GetPat(void)
+uint8_t *cPatPmtGenerator::GetPat(void)
 {
   IncCounter(patCounter, pat);
   return pat;
 }
 
-uchar *cPatPmtGenerator::GetPmt(int &Index)
+uint8_t *cPatPmtGenerator::GetPmt(int &Index)
 {
   if (Index < numPmtPackets) {
      IncCounter(pmtCounter, pmt[Index]);
@@ -612,7 +611,7 @@ void cPatPmtParser::Reset(void)
   ppid = 0;
 }
 
-void cPatPmtParser::ParsePat(const uchar *Data, int Length)
+void cPatPmtParser::ParsePat(const uint8_t *Data, int Length)
 {
   // Unpack the TS packet:
   int PayloadOffset = TsPayloadOffset(Data);
@@ -644,7 +643,7 @@ void cPatPmtParser::ParsePat(const uchar *Data, int Length)
      esyslog("ERROR: can't parse PAT");
 }
 
-void cPatPmtParser::ParsePmt(const uchar *Data, int Length)
+void cPatPmtParser::ParsePmt(const uint8_t *Data, int Length)
 {
   // Unpack the TS packet:
   bool PayloadStart = TsPayloadStart(Data);
@@ -854,7 +853,7 @@ void cPatPmtParser::ParsePmt(const uchar *Data, int Length)
   pmtSize = 0;
 }
 
-bool cPatPmtParser::ParsePatPmt(const uchar *Data, int Length)
+bool cPatPmtParser::ParsePatPmt(const uint8_t *Data, int Length)
 {
   while (Length >= TS_SIZE) {
         if (*Data != TS_SYNC_BYTE)
@@ -894,7 +893,7 @@ cTsToPes::~cTsToPes()
   free(data);
 }
 
-void cTsToPes::PutTs(const uchar *Data, int Length)
+void cTsToPes::PutTs(const uint8_t *Data, int Length)
 {
   if (TsError(Data)) {
      Reset();
@@ -907,7 +906,7 @@ void cTsToPes::PutTs(const uchar *Data, int Length)
   Length = TsGetPayload(&Data);
   if (length + Length > size) {
      int NewSize = max(KILOBYTE(2), length + Length);
-     if (uchar *NewData = (uchar *)realloc(data, NewSize)) {
+     if (uint8_t *NewData = (uint8_t*)realloc(data, NewSize)) {
         data = NewData;
         size = NewSize;
         }
@@ -923,7 +922,7 @@ void cTsToPes::PutTs(const uchar *Data, int Length)
 
 #define MAXPESLENGTH 0xFFF0
 
-const uchar *cTsToPes::GetPes(int &Length)
+const uint8_t *cTsToPes::GetPes(int &Length)
 {
   if (repeatLast) {
      repeatLast = false;
@@ -934,7 +933,7 @@ const uchar *cTsToPes::GetPes(int &Length)
      if (!PesHasLength(data)) // this is a video PES packet with undefined length
         offset = 6; // trigger setting PES length for initial slice
      if (offset) {
-        uchar *p = data + offset - 6;
+        uint8_t *p = data + offset - 6;
         if (p != data) {
            p -= 3;
            if (p < data) {
@@ -1027,7 +1026,7 @@ protected:
 public:
   cFrameParser(void);
   virtual ~cFrameParser() {};
-  virtual int Parse(const uchar *Data, int Length, int Pid) = 0;
+  virtual int Parse(const uint8_t *Data, int Length, int Pid) = 0;
        ///< Parses the given Data, which is a sequence of Length bytes of TS packets.
        ///< The payload in the TS packets with the given Pid is searched for just
        ///< enough information to determine the beginning and type of the next video
@@ -1051,14 +1050,14 @@ cFrameParser::cFrameParser(void)
 class cAudioParser : public cFrameParser {
 public:
   cAudioParser(void);
-  virtual int Parse(const uchar *Data, int Length, int Pid);
+  virtual int Parse(const uint8_t *Data, int Length, int Pid);
   };
 
 cAudioParser::cAudioParser(void)
 {
 }
 
-int cAudioParser::Parse(const uchar *Data, int Length, int Pid)
+int cAudioParser::Parse(const uint8_t *Data, int Length, int Pid)
 {
   if (TsPayloadStart(Data)) {
      newFrame = independentFrame = true;
@@ -1078,7 +1077,7 @@ private:
   bool seenIndependentFrame;
 public:
   cMpeg2Parser(void);
-  virtual int Parse(const uchar *Data, int Length, int Pid);
+  virtual int Parse(const uint8_t *Data, int Length, int Pid);
   };
 
 cMpeg2Parser::cMpeg2Parser(void)
@@ -1087,11 +1086,11 @@ cMpeg2Parser::cMpeg2Parser(void)
   seenIndependentFrame = false;
 }
 
-int cMpeg2Parser::Parse(const uchar *Data, int Length, int Pid)
+int cMpeg2Parser::Parse(const uint8_t *Data, int Length, int Pid)
 {
   newFrame = independentFrame = false;
   bool SeenPayloadStart = false;
-  cTsPayload tsPayload(const_cast<uchar *>(Data), Length, Pid);
+  cTsPayload tsPayload(const_cast<uint8_t*>(Data), Length, Pid);
   if (TsPayloadStart(Data)) {
      SeenPayloadStart = true;
      tsPayload.SkipPesHeader();
@@ -1111,7 +1110,7 @@ int cMpeg2Parser::Parse(const uchar *Data, int Length, int Pid)
             }
          newFrame = true;
          tsPayload.GetByte();
-         uchar FrameType = (tsPayload.GetByte() >> 3) & 0x07;
+         uint8_t FrameType = (tsPayload.GetByte() >> 3) & 0x07;
          independentFrame = FrameType == 1; // I-Frame
          if (debug) {
             seenIndependentFrame |= independentFrame;
@@ -1141,7 +1140,7 @@ private:
     nutAccessUnitDelimiter  = 9,
     };
   cTsPayload tsPayload;
-  uchar byte; // holds the current byte value in case of bitwise access
+  uint8_t byte; // holds the current byte value in case of bitwise access
   int bit; // the bit index into the current byte (-1 if we're not in bit reading mode)
   int zeroBytes; // the number of consecutive zero bytes (to detect 0x000003)
   uint32_t scanner;
@@ -1152,11 +1151,11 @@ private:
   //
   bool gotAccessUnitDelimiter;
   bool gotSequenceParameterSet;
-  uchar GetByte(bool Raw = false);
+  uint8_t GetByte(bool Raw = false);
        ///< Gets the next data byte. If Raw is true, no filtering will be done.
        ///< With Raw set to false, if the byte sequence 0x000003 is encountered,
        ///< the byte with 0x03 will be skipped.
-  uchar GetBit(void);
+  uint8_t GetBit(void);
   uint32_t GetBits(int Bits);
   uint32_t GetGolombUe(void);
   int32_t GetGolombSe(void);
@@ -1168,7 +1167,7 @@ public:
        ///< Sets up a new H.264 parser.
        ///< This class parses only the data absolutely necessary to determine the
        ///< frame borders and field count of the given H264 material.
-  virtual int Parse(const uchar *Data, int Length, int Pid);
+  virtual int Parse(const uint8_t *Data, int Length, int Pid);
   };
 
 cH264Parser::cH264Parser(void)
@@ -1184,9 +1183,9 @@ cH264Parser::cH264Parser(void)
   gotSequenceParameterSet = false;
 }
 
-uchar cH264Parser::GetByte(bool Raw)
+uint8_t cH264Parser::GetByte(bool Raw)
 {
-  uchar b = tsPayload.GetByte();
+  uint8_t b = tsPayload.GetByte();
   if (!Raw) {
      // If we encounter the byte sequence 0x000003, we need to skip the 0x03:
      if (b == 0x00)
@@ -1203,7 +1202,7 @@ uchar cH264Parser::GetByte(bool Raw)
   return b;
 }
 
-uchar cH264Parser::GetBit(void)
+uint8_t cH264Parser::GetBit(void)
 {
   if (bit < 0) {
      byte = GetByte();
@@ -1240,10 +1239,10 @@ int32_t cH264Parser::GetGolombSe(void)
   return v;
 }
 
-int cH264Parser::Parse(const uchar *Data, int Length, int Pid)
+int cH264Parser::Parse(const uint8_t *Data, int Length, int Pid)
 {
   newFrame = independentFrame = false;
-  tsPayload.Setup(const_cast<uchar *>(Data), Length, Pid);
+  tsPayload.Setup(const_cast<uint8_t*>(Data), Length, Pid);
   if (TsPayloadStart(Data)) {
      tsPayload.SkipPesHeader();
      scanner = EMPTY_SCANNER;
@@ -1254,7 +1253,7 @@ int cH264Parser::Parse(const uchar *Data, int Length, int Pid)
   for (;;) {
       scanner = (scanner << 8) | GetByte(true);
       if ((scanner & 0xFFFFFF00) == 0x00000100) { // NAL unit start
-         uchar NalUnitType = scanner & 0x1F;
+         uint8_t NalUnitType = scanner & 0x1F;
          switch (NalUnitType) {
            case nutAccessUnitDelimiter:  ParseAccessUnitDelimiter();
                                          gotAccessUnitDelimiter = true;
@@ -1290,7 +1289,7 @@ void cH264Parser::ParseAccessUnitDelimiter(void)
 
 void cH264Parser::ParseSequenceParameterSet(void)
 {
-  uchar profile_idc = GetByte(); // profile_idc
+  uint8_t profile_idc = GetByte(); // profile_idc
   GetByte(); // constraint_set[0-5]_flags, reserved_zero_2bits
   GetByte(); // level_idc
   GetGolombUe(); // seq_parameter_set_id
@@ -1403,7 +1402,7 @@ void cFrameDetector::SetPid(int Pid, int Type)
      esyslog("ERROR: unknown stream type %d (PID %d) in frame detector", type, pid);
 }
 
-int cFrameDetector::Analyze(const uchar *Data, int Length)
+int cFrameDetector::Analyze(const uint8_t *Data, int Length)
 {
   if (!parser)
      return 0;
@@ -1457,7 +1456,7 @@ int cFrameDetector::Analyze(const uchar *Data, int Length)
                     // frame rate unknown, so collect a sequence of PTS values:
                     if (numPtsValues < 2 || (numPtsValues < MaxPtsValues) && (numIFrames < 2)) { // collect a sequence containing at least two I-frames
                        if (newFrame) { // only take PTS values at the beginning of a frame (in case if fields!)
-                          const uchar *Pes = Data + TsPayloadOffset(Data);
+                          const uint8_t *Pes = Data + TsPayloadOffset(Data);
                           if (numIFrames && PesHasPts(Pes)) {
                              ptsValues[numPtsValues] = PesGetPts(Pes);
                              // check for rollover:

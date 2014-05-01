@@ -1,11 +1,11 @@
 #include "IndexFile.h"
 #include "FileName.h"
-#include "../Recordings.h"
-#include "../RecordingInfo.h"
+#include "recordings/Recordings.h"
+#include "recordings/RecordingInfo.h"
 #include "devices/Remux.h"
 #include "filesystem/Directory.h"
-#include "utils/Ringbuffer.h"
 #include "utils/I18N.h"
+#include "utils/Ringbuffer.h"
 
 using namespace PLATFORM;
 
@@ -20,8 +20,8 @@ namespace VDR
 
 struct tIndexPes {
   uint32_t offset;
-  uchar type;
-  uchar number;
+  uint8_t  type;
+  uint8_t  number;
   uint16_t reserved;
   };
 
@@ -89,7 +89,7 @@ void* cIndexFileGenerator::Process(void)
            }
         // Process data:
         int Length;
-        uchar *Data = Buffer.Get(Length);
+        uint8_t *Data = Buffer.Get(Length);
         if (Data) {
            if (FrameDetector.Synced()) {
               // Step 3 - generate the index:
@@ -119,7 +119,7 @@ void* cIndexFileGenerator::Process(void)
               }
            else {
               // Step 1 - parse PAT/PMT:
-              uchar *p = Data;
+              uint8_t *p = Data;
               while (Length >= TS_SIZE) {
                     int Pid = TsPid(p);
                     if (Pid == PATPID)
@@ -295,8 +295,8 @@ void cIndexFile::ConvertToPes(tIndexTs *IndexTs, int Count)
   tIndexPes IndexPes;
   while (Count-- > 0) {
         IndexPes.offset = uint32_t(IndexTs->offset);
-        IndexPes.type = uchar(IndexTs->independent ? 1 : 2); // I_FRAME : "not I_FRAME" (exact frame type doesn't matter)
-        IndexPes.number = uchar(IndexTs->number);
+        IndexPes.type = uint8_t(IndexTs->independent ? 1 : 2); // I_FRAME : "not I_FRAME" (exact frame type doesn't matter)
+        IndexPes.number = uint8_t(IndexTs->number);
         IndexPes.reserved = 0;
         memcpy(IndexTs, &IndexPes, sizeof(*IndexTs));
         IndexTs++;

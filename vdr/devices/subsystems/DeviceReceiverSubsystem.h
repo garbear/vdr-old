@@ -24,6 +24,8 @@
 #include "utils/Tools.h"
 #include "platform/threads/threads.h"
 
+#include <stdint.h>
+
 namespace VDR
 {
 class cReceiver;
@@ -89,7 +91,7 @@ public:
    * accessed. If there is currently no new data available, data will be set to
    * NULL.
    */
-  virtual bool GetTSPacket(uchar *&data) { return false; }
+  virtual bool GetTSPacket(uint8_t *&data) { return false; }
 
 private:
   PLATFORM::CMutex  m_mutexReceiver;

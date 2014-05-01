@@ -10,8 +10,9 @@
 #ifndef __CUTTER_H
 #define __CUTTER_H
 
-#include "utils/Tools.h"
 #include "platform/threads/threads.h"
+
+#include <string>
 
 namespace VDR
 {

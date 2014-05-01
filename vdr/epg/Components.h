@@ -3,9 +3,9 @@
 #include "Component.h"
 #include "channels/Channel.h"
 #include "libsi/section.h"
-#include "utils/Tools.h" // for uchar
 
 #include <map>
+#include <stdint.h>
 #include <string>
 
 namespace VDR
@@ -20,10 +20,10 @@ public:
 
   int NumComponents(void) const;
   void SetComponent(int Index, const char *s);
-  void SetComponent(int Index, uchar Stream, uchar Type, const std::string& Language, const std::string& Description);
+  void SetComponent(int Index, uint8_t Stream, uint8_t Type, const std::string& Language, const std::string& Description);
 
   CEpgComponent* Component(int Index, bool bCreate = false);
-  CEpgComponent* GetComponent(int Index, uchar Stream, uchar Type); // Gets the Index'th component of Stream and Type, skipping other components
+  CEpgComponent* GetComponent(int Index, uint8_t Stream, uint8_t Type); // Gets the Index'th component of Stream and Type, skipping other components
                                                                  // In case of an audio stream the 'type' check actually just distinguishes between "normal" and "Dolby Digital"
 
 private:

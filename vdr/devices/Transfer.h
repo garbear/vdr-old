@@ -15,6 +15,8 @@
 #include "Remux.h"
 #include "channels/ChannelTypes.h"
 
+#include <stdint.h>
+
 namespace VDR
 {
 
@@ -23,7 +25,7 @@ private:
   cPatPmtGenerator patPmtGenerator;
 protected:
   virtual void Activate(bool On);
-  virtual void Receive(uchar *Data, int Length);
+  virtual void Receive(uint8_t *Data, int Length);
 public:
   cTransfer(ChannelPtr Channel);
   virtual ~cTransfer();

@@ -5,7 +5,8 @@
 #include "utils/DateTime.h"
 #include "utils/Hash.h"
 #include "utils/List.h"
-#include "utils/Tools.h" // for uchar
+
+#include <stdint.h>
 
 class TiXmlNode;
 
@@ -36,7 +37,7 @@ public:
   void ClrRunningStatus(cChannel *Channel = NULL);
   void ResetVersions(void);
   void Sort(void);
-  void DropOutdated(const CDateTime& SegmentStart, const CDateTime& SegmentEnd, uchar TableID, uchar Version);
+  void DropOutdated(const CDateTime& SegmentStart, const CDateTime& SegmentEnd, uint8_t TableID, uint8_t Version);
   void Cleanup(const CDateTime& Time);
   void Cleanup(void);
   void AddEvent(const EventPtr& event);

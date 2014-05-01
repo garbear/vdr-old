@@ -11,9 +11,9 @@
  */
 
 #include "Ringbuffer.h"
+#include "Tools.h"
 #include "filesystem/VideoFile.h"
 #include "utils/log/Log.h"
-#include "Tools.h"
 
 #include <stdlib.h>
 #include <unistd.h>
@@ -181,7 +181,7 @@ cRingBufferLinear::cRingBufferLinear(int Size, int Margin, bool Statistics, cons
   buffer = NULL;
   if (Size > 1) { // 'Size - 1' must not be 0!
      if (Margin <= Size / 2) {
-        buffer = MALLOC(uchar, Size);
+        buffer = MALLOC(uint8_t, Size);
         if (!buffer)
            esyslog("ERROR: can't allocate ring buffer (size=%d)", Size);
         Clear();
@@ -208,7 +208,7 @@ cRingBufferLinear::~cRingBufferLinear()
   free(description);
 }
 
-int cRingBufferLinear::DataReady(const uchar *Data, int Count)
+int cRingBufferLinear::DataReady(const uint8_t *Data, int Count)
 {
   return Count >= margin ? Count : 0;
 }
@@ -307,7 +307,7 @@ int cRingBufferLinear::Read(CVideoFile *File, int Max)
   return Count;
 }
 
-int cRingBufferLinear::Put(const uchar *Data, int Count)
+int cRingBufferLinear::Put(const uint8_t *Data, int Count)
 {
   if (Count > 0) {
      int Tail = tail;
@@ -347,7 +347,7 @@ int cRingBufferLinear::Put(const uchar *Data, int Count)
   return Count;
 }
 
-uchar *cRingBufferLinear::Get(int &Count)
+uint8_t *cRingBufferLinear::Get(int &Count)
 {
   int Head = head;
   int rest = Size() - tail;
@@ -361,7 +361,7 @@ uchar *cRingBufferLinear::Get(int &Count)
   int cont = (diff >= 0) ? diff : Size() + diff - margin;
   if (cont > rest)
      cont = rest;
-  uchar *p = buffer + tail;
+  uint8_t *p = buffer + tail;
   if ((cont = DataReady(p, cont)) > 0) {
      Count = gotten = cont;
      return p;
@@ -393,16 +393,16 @@ void cRingBufferLinear::Del(int Count)
 
 // --- cFrame ----------------------------------------------------------------
 
-cFrame::cFrame(const uchar *Data, int Count, eFrameType Type, int Index, uint32_t Pts)
+cFrame::cFrame(const uint8_t *Data, int Count, eFrameType Type, int Index, uint32_t Pts)
 {
   count = abs(Count);
   type = Type;
   index = Index;
   pts = Pts;
   if (Count < 0)
-     data = (uchar *)Data;
+     data = (uint8_t*)Data;
   else {
-     data = MALLOC(uchar, count);
+     data = MALLOC(uint8_t, count);
      if (data)
         memcpy(data, Data, count);
      else

@@ -1,9 +1,9 @@
 #include "FileName.h"
 #include "Config.h"
+#include "devices/Remux.h"
 #include "filesystem/Videodir.h"
 #include "filesystem/VideoFile.h"
-#include "utils/Tools.h"
-#include "devices/Remux.h"
+
 //XXX
 #include <unistd.h>
 
@@ -62,7 +62,7 @@ bool cFileName::GetLastPatPmtVersions(int &PatVersion, int &PmtVersion)
         while (pos >= 0)
         {
           // Read and parse the PAT/PMT:
-          uchar buf[TS_SIZE];
+          uint8_t buf[TS_SIZE];
           while (file.Read(buf, sizeof(buf)) == sizeof(buf))
           {
             if (buf[0] == TS_SYNC_BYTE)

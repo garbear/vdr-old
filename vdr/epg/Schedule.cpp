@@ -227,7 +227,7 @@ void cSchedule::Sort(void)
   }
 }
 
-void cSchedule::DropOutdated(const CDateTime& SegmentStart, const CDateTime& SegmentEnd, uchar TableID, uchar Version)
+void cSchedule::DropOutdated(const CDateTime& SegmentStart, const CDateTime& SegmentEnd, uint8_t TableID, uint8_t Version)
 {
   if (SegmentStart.IsValid() && SegmentEnd.IsValid())
   {

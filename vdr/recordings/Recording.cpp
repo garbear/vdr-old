@@ -25,7 +25,6 @@
 #include "utils/CRC32.h"
 #include "utils/I18N.h"
 #include "utils/Ringbuffer.h"
-#include "utils/Tools.h"
 #include "utils/UTF8Utils.h"
 #include "utils/url/URLUtils.h"
 
@@ -168,7 +167,7 @@ char *cRecording::ExchangeCharsXXX(char *s, bool ToFileSystem)
             {
               char buf[3];
               sprintf(buf, "%c%c", *(p + 1), *(p + 2));
-              uchar c = uchar(strtol(buf, NULL, 16));
+              uint8_t c = uint8_t(strtol(buf, NULL, 16));
               if (c)
               {
                 *p = c;
@@ -745,7 +744,7 @@ int cRecording::SecondsToFrames(int Seconds, double FramesPerSecond)
   return int(round(Seconds * FramesPerSecond));
 }
 
-int cRecording::ReadFrame(CVideoFile *f, uchar *b, int Length, int Max)
+int cRecording::ReadFrame(CVideoFile *f, uint8_t *b, int Length, int Max)
 {
   if (Length == -1)
      Length = Max; // this means we read up to EOF (see cIndex)

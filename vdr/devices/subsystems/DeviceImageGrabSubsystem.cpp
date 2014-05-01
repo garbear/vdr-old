@@ -43,7 +43,7 @@ bool cDeviceImageGrabSubsystem::GrabImageFile(const string &strFileName, bool bJ
   if (file.OpenForWrite(strFileName))
   {
     int ImageSize;
-    uchar *image = GrabImage(ImageSize, bJpeg, quality, sizeX, sizeY);
+    uint8_t *image = GrabImage(ImageSize, bJpeg, quality, sizeX, sizeY);
     if (image)
     {
       if (file.Write(image, ImageSize) == ImageSize)

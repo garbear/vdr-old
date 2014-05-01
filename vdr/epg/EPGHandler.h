@@ -3,7 +3,6 @@
 #include "EPGTypes.h"
 #include "utils/DateTime.h"
 #include "utils/List.h"
-#include "utils/Tools.h" // for uchar
 
 #include <libsi/section.h>
 
@@ -29,7 +28,7 @@ public:
           ///< are asked whether this Channel shall be completely ignored. If any of
           ///< the EPG handlers returns true in this function, no EIT data at all will
           ///< be processed for this Channel.
-  virtual bool HandleEitEvent(SchedulePtr Schedule, const SI::EIT::Event *EitEvent, uchar TableID, uchar Version) { return false; }
+  virtual bool HandleEitEvent(SchedulePtr Schedule, const SI::EIT::Event *EitEvent, uint8_t TableID, uint8_t Version) { return false; }
           ///< Before the raw EitEvent for the given Schedule is processed, the
           ///< EPG handlers are queried to see if any of them would like to do the
           ///< complete processing by itself. TableID and Version are from the
@@ -40,7 +39,7 @@ public:
           ///< source. Incoming EIT data is processed as usual, but any new EPG event
           ///< will not be added to the respective schedule. It's up to the EPG
           ///< handler to take care of this.
-  virtual bool IsUpdate(tEventID EventID, const CDateTime& StartTime, uchar TableID, uchar Version) { return false; }
+  virtual bool IsUpdate(tEventID EventID, const CDateTime& StartTime, uint8_t TableID, uint8_t Version) { return false; }
           ///< VDR can't perform the update check (version, tid) for externally handled events,
           ///< therefore the EPG handlers have to take care of this. Otherwise the parsing of
           ///< non-updates will waste a lot of resources.
@@ -48,7 +47,7 @@ public:
   virtual bool SetTitle(cEvent *Event, const std::string& strTitle) { return false; }
   virtual bool SetShortText(cEvent *Event, const std::string& strShortText) { return false; }
   virtual bool SetDescription(cEvent *Event, const std::string& strDescription) { return false; }
-  virtual bool SetContents(cEvent *Event, uchar *Contents) { return false; }
+  virtual bool SetContents(cEvent *Event, uint8_t *Contents) { return false; }
   virtual bool SetParentalRating(cEvent *Event, int ParentalRating) { return false; }
   virtual bool SetStartTime(cEvent *Event, const CDateTime& StartTime) { return false; }
   virtual bool SetDuration(cEvent *Event, int Duration) { return false; }
@@ -61,7 +60,7 @@ public:
           ///< can take a final look at it.
   virtual bool SortSchedule(SchedulePtr Schedule) { return false; }
           ///< Sorts the Schedule after the complete table has been processed.
-  virtual bool DropOutdated(SchedulePtr Schedule, const CDateTime& SegmentStart, const CDateTime& SegmentEnd, uchar TableID, uchar Version) { return false; }
+  virtual bool DropOutdated(SchedulePtr Schedule, const CDateTime& SegmentStart, const CDateTime& SegmentEnd, uint8_t TableID, uint8_t Version) { return false; }
           ///< Takes a look at all EPG events between SegmentStart and SegmentEnd and
           ///< drops outdated events.
   };

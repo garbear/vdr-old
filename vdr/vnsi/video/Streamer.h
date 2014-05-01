@@ -26,18 +26,19 @@
 #ifndef VNSI_RECEIVER_H
 #define VNSI_RECEIVER_H
 
-#include <linux/dvb/frontend.h>
-#include <linux/videodev2.h>
+#include "Demuxer.h"
+#include "VideoInput.h"
+#include "vnsi/net/ResponsePacket.h"
+#include "vnsi/video/parser/Parser.h"
 #include "channels/ChannelTypes.h"
 #include "devices/DeviceTypes.h"
 #include "devices/Receiver.h"
 #include "lib/platform/threads/threads.h"
-#include <list>
+#include "utils/Tools.h"
 
-#include "parser/Parser.h"
-#include "vnsi/net/ResponsePacket.h"
-#include "Demuxer.h"
-#include "VideoInput.h"
+#include <linux/dvb/frontend.h>
+#include <linux/videodev2.h>
+#include <list>
 
 namespace VDR
 {

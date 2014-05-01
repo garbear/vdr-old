@@ -56,7 +56,7 @@ void cDvbReceiverSubsystem::CloseDvr()
   }
 }
 
-bool cDvbReceiverSubsystem::GetTSPacket(uchar *&Data)
+bool cDvbReceiverSubsystem::GetTSPacket(uint8_t *&Data)
 {
   if (m_tsBuffer)
   {

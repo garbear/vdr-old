@@ -14,8 +14,10 @@
 #include "channels/ChannelTypes.h"
 #include "devices/Receiver.h"
 #include "devices/Remux.h"
-#include "utils/Ringbuffer.h"
 #include "platform/threads/threads.h"
+#include "utils/Ringbuffer.h"
+
+#include <stdint.h>
 
 namespace VDR
 {
@@ -35,7 +37,7 @@ public:
 
 protected:
   virtual void Activate(bool On);
-  virtual void Receive(uchar *Data, int Length);
+  virtual void Receive(uint8_t *Data, int Length);
   virtual void* Process(void);
 
 private:

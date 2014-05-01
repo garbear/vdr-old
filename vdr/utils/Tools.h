@@ -12,14 +12,15 @@
 
 #include "List.h"
 #include "filesystem/File.h"
+
 #include <float.h>
+#include <math.h>
+#include <stdint.h>
 #include <string>
 #include <vector>
-#include <math.h>
 
 namespace VDR
 {
-typedef unsigned char uchar;
 
 #define SECSINDAY  86400
 
@@ -92,7 +93,7 @@ public:
 ssize_t safe_read(int filedes, void *buffer, size_t size);
 ssize_t safe_write(int filedes, const void *buffer, size_t size);
 void writechar(int filedes, char c);
-int WriteAllOrNothing(int fd, const uchar *Data, int Length, int TimeoutMs = 0, int RetryMs = 0);
+int WriteAllOrNothing(int fd, const uint8_t *Data, int Length, int TimeoutMs = 0, int RetryMs = 0);
     ///< Writes either all Data to the given file descriptor, or nothing at all.
     ///< If TimeoutMs is greater than 0, it will only retry for that long, otherwise
     ///< it will retry forever. RetryMs defines the time between two retries.
@@ -102,9 +103,9 @@ char *strreplace(char *s, char c1, char c2);
 char *strreplace(char *s, const char *s1, const char *s2); ///< re-allocates 's' and deletes the original string if necessary!
 inline char *skipspace(const char *s)
 {
-  if ((uchar)*s > ' ') // most strings don't have any leading space, so handle this case as fast as possible
+  if ((uint8_t)*s > ' ') // most strings don't have any leading space, so handle this case as fast as possible
      return (char *)s;
-  while (*s && (uchar)*s <= ' ') // avoiding isspace() here, because it is much slower
+  while (*s && (uint8_t)*s <= ' ') // avoiding isspace() here, because it is much slower
         s++;
   return (char *)s;
 }

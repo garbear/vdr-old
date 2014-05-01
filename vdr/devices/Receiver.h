@@ -14,10 +14,9 @@
 #include "channels/ChannelID.h"
 #include "platform/threads/mutex.h"
 #include "Config.h"
-#include "utils/Tools.h" // for uchar
 
-#include <stdint.h>
 #include <set>
+#include <stdint.h>
 
 namespace VDR
 {
@@ -51,7 +50,7 @@ public: // TODO
                ///< to do things like starting/stopping a thread.
                ///< It is guaranteed that Receive() will not be called before Activate(true).
 protected:
-  virtual void Receive(uchar *Data, int Length) = 0;
+  virtual void Receive(uint8_t *Data, int Length) = 0;
                ///< This function is called from the cDevice we are attached to, and
                ///< delivers one TS packet from the set of PIDs the cReceiver has requested.
                ///< The data packet must be accepted immediately, and the call must return

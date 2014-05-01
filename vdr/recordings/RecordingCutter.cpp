@@ -21,6 +21,8 @@
 #include "platform/threads/throttle.h"
 #include "settings/Settings.h"
 
+#include <stdint.h>
+
 using namespace PLATFORM;
 
 namespace VDR
@@ -30,15 +32,15 @@ namespace VDR
 
 class cPacketBuffer {
 private:
-  uchar *data;
-  int size;
-  int length;
+  uint8_t* data;
+  int      size;
+  int      length;
 public:
   cPacketBuffer(void);
   ~cPacketBuffer();
-  void Append(uchar *Data, int Length);
+  void Append(uint8_t *Data, int Length);
        ///< Appends Length bytes of Data to this packet buffer.
-  void Flush(uchar *Data, int &Length, int MaxLength);
+  void Flush(uint8_t *Data, int &Length, int MaxLength);
        ///< Flushes the content of this packet buffer into the given Data, starting
        ///< at position Length, and clears the buffer afterwards. Length will be
        ///< incremented accordingly. If Length plus the total length of the stored
@@ -56,11 +58,11 @@ cPacketBuffer::~cPacketBuffer()
   free(data);
 }
 
-void cPacketBuffer::Append(uchar *Data, int Length)
+void cPacketBuffer::Append(uint8_t *Data, int Length)
 {
   if (length + Length >= size) {
      int NewSize = (length + Length) * 3 / 2;
-     if (uchar *p = (uchar *)realloc(data, NewSize)) {
+     if (uint8_t *p = (uint8_t*)realloc(data, NewSize)) {
         data = p;
         size = NewSize;
         }
@@ -71,7 +73,7 @@ void cPacketBuffer::Append(uchar *Data, int Length)
   length += Length;
 }
 
-void cPacketBuffer::Flush(uchar *Data, int &Length, int MaxLength)
+void cPacketBuffer::Flush(uint8_t *Data, int &Length, int MaxLength)
 {
   if (Data && length > 0 && Length + length <= MaxLength) {
      memcpy(Data + Length, data, length);
@@ -88,8 +90,8 @@ private:
 public:
   cPacketStorage(void);
   ~cPacketStorage();
-  void Append(int Pid, uchar *Data, int Length);
-  void Flush(int Pid, uchar *Data, int &Length, int MaxLength);
+  void Append(int Pid, uint8_t *Data, int Length);
+  void Flush(int Pid, uint8_t *Data, int &Length, int MaxLength);
   };
 
 cPacketStorage::cPacketStorage(void)
@@ -104,14 +106,14 @@ cPacketStorage::~cPacketStorage()
       delete buffers[i];
 }
 
-void cPacketStorage::Append(int Pid, uchar *Data, int Length)
+void cPacketStorage::Append(int Pid, uint8_t *Data, int Length)
 {
   if (!buffers[Pid])
      buffers[Pid] = new cPacketBuffer;
   buffers[Pid]->Append(Data, Length);
 }
 
-void cPacketStorage::Flush(int Pid, uchar *Data, int &Length, int MaxLength)
+void cPacketStorage::Flush(int Pid, uint8_t *Data, int &Length, int MaxLength)
 {
   if (buffers[Pid])
      buffers[Pid]->Flush(Data, Length, MaxLength);
@@ -123,7 +125,7 @@ class cMpeg2Fixer : private cTsPayload {
 private:
   bool FindHeader(uint32_t Code, const char *Header);
 public:
-  cMpeg2Fixer(uchar *Data, int Length, int Vpid);
+  cMpeg2Fixer(uint8_t *Data, int Length, int Vpid);
   void SetBrokenLink(void);
   void SetClosedGop(void);
   int GetTref(void);
@@ -131,7 +133,7 @@ public:
   void AdjTref(int TrefOffset);
   };
 
-cMpeg2Fixer::cMpeg2Fixer(uchar *Data, int Length, int Vpid)
+cMpeg2Fixer::cMpeg2Fixer(uint8_t *Data, int Length, int Vpid)
 {
   // Go to first video packet:
   for (; Length > 0; Data += TS_SIZE, Length -= TS_SIZE) {
@@ -156,7 +158,7 @@ void cMpeg2Fixer::SetBrokenLink(void)
   if (!FindHeader(0x000001B8, "GOP"))
      return;
   SkipBytes(3);
-  uchar b = GetByte();
+  uint8_t b = GetByte();
   if (!(b & 0x40)) { // GOP not closed
      b |= 0x20;
      SetByte(b, GetLastIndex());
@@ -168,7 +170,7 @@ void cMpeg2Fixer::SetClosedGop(void)
   if (!FindHeader(0x000001B8, "GOP"))
      return;
   SkipBytes(3);
-  uchar b = GetByte();
+  uint8_t b = GetByte();
   b |= 0x40;
   SetByte(b, GetLastIndex());
 }
@@ -186,18 +188,18 @@ void cMpeg2Fixer::AdjGopTime(int Offset, int FramesPerSecond)
 {
   if (!FindHeader(0x000001B8, "GOP"))
      return;
-  uchar Byte1 = GetByte();
+  uint8_t Byte1 = GetByte();
   int Index1 = GetLastIndex();
-  uchar Byte2 =  GetByte();
+  uint8_t Byte2 =  GetByte();
   int Index2 = GetLastIndex();
-  uchar Byte3 = GetByte();
+  uint8_t Byte3 = GetByte();
   int Index3 = GetLastIndex();
-  uchar Byte4 =  GetByte();
+  uint8_t Byte4 =  GetByte();
   int Index4 = GetLastIndex();
-  uchar Frame = ((Byte3 & 0x1F) << 1) | (Byte4 >> 7);
-  uchar Sec   = ((Byte2 & 0x07) << 3) | (Byte3 >> 5);
-  uchar Min   = ((Byte1 & 0x03) << 4) | (Byte2 >> 4);
-  uchar Hour  = ((Byte1 & 0x7C) >> 2);
+  uint8_t Frame = ((Byte3 & 0x1F) << 1) | (Byte4 >> 7);
+  uint8_t Sec   = ((Byte2 & 0x07) << 3) | (Byte3 >> 5);
+  uint8_t Min   = ((Byte1 & 0x03) << 4) | (Byte2 >> 4);
+  uint8_t Hour  = ((Byte1 & 0x7C) >> 2);
   int GopTime = ((Hour * 60 + Min) * 60 + Sec) * FramesPerSecond + Frame;
   if (GopTime) { // do not fix when zero
      GopTime += Offset;
@@ -223,7 +225,7 @@ void cMpeg2Fixer::AdjTref(int TrefOffset)
      return;
   int Tref = GetByte() << 2;
   int Index1 = GetLastIndex();
-  uchar Byte2 = GetByte();
+  uint8_t Byte2 = GetByte();
   int Index2 = GetLastIndex();
   Tref |= Byte2 >> 6;
   Tref -= TrefOffset;
@@ -253,19 +255,19 @@ private:
   int64_t firstPts;      // first valid PTS, for dangling packet stripping
   int64_t offset;        // offset to add to all timestamps
   int tRefOffset;        // number of stripped frames in GOP
-  uchar counter[MAXPID]; // the TS continuity counter for each PID
+  uint8_t counter[MAXPID]; // the TS continuity counter for each PID
   bool keepPkt[MAXPID];  // flag for each PID to keep packets, for dangling packet stripping
   int numIFrames;        // number of I-frames without pending packets
   cPatPmtParser patPmtParser;
   bool Throttled(void);
   bool SwitchFile(bool Force = false);
-  bool LoadFrame(int Index, uchar *Buffer, bool &Independent, int &Length);
+  bool LoadFrame(int Index, uint8_t *Buffer, bool &Independent, int &Length);
   bool FramesAreEqual(int Index1, int Index2);
-  void GetPendingPackets(uchar *Buffer, int &Length, int Index);
+  void GetPendingPackets(uint8_t *Buffer, int &Length, int Index);
        // Gather all non-video TS packets from Index upward that either belong to
        // payloads that started before Index, or have a PTS that is before lastVidPts,
        // and add them to the end of the given Data.
-  bool FixFrame(uchar *Data, int &Length, bool Independent, int Index, bool CutIn, bool CutOut);
+  bool FixFrame(uint8_t *Data, int &Length, bool Independent, int Index, bool CutIn, bool CutOut);
   bool ProcessSequence(int LastEndIndex, int BeginIndex, int EndIndex, int NextBeginIndex);
 protected:
   virtual void* Process(void);
@@ -341,7 +343,7 @@ bool cCuttingThread::Throttled(void)
   return false;
 }
 
-bool cCuttingThread::LoadFrame(int Index, uchar *Buffer, bool &Independent, int &Length)
+bool cCuttingThread::LoadFrame(int Index, uint8_t *Buffer, bool &Independent, int &Length)
 {
   uint16_t FileNumber;
   off_t FileOffset;
@@ -377,11 +379,11 @@ bool cCuttingThread::SwitchFile(bool Force)
 
 class cHeapBuffer {
 private:
-  uchar *buffer;
+  uint8_t *buffer;
 public:
-  cHeapBuffer(int Size) { buffer = MALLOC(uchar, Size); }
+  cHeapBuffer(int Size) { buffer = MALLOC(uint8_t, Size); }
   ~cHeapBuffer() { free(buffer); }
-  operator uchar * () { return buffer; }
+  operator uint8_t*() { return buffer; }
   };
 
 bool cCuttingThread::FramesAreEqual(int Index1, int Index2)
@@ -408,7 +410,7 @@ bool cCuttingThread::FramesAreEqual(int Index1, int Index2)
   return false;
 }
 
-void cCuttingThread::GetPendingPackets(uchar *Data, int &Length, int Index)
+void cCuttingThread::GetPendingPackets(uint8_t *Data, int &Length, int Index)
 {
   cHeapBuffer Buffer(MAXFRAMESIZE);
   if (!Buffer)
@@ -423,7 +425,7 @@ void cCuttingThread::GetPendingPackets(uchar *Data, int &Length, int Index)
       if (LoadFrame(Index, Buffer, Independent, len)) {
          if (Independent)
             NumIndependentFrames++;
-         for (uchar *p = Buffer; len >= TS_SIZE && *p == TS_SYNC_BYTE; len -= TS_SIZE, p += TS_SIZE) {
+         for (uint8_t *p = Buffer; len >= TS_SIZE && *p == TS_SYNC_BYTE; len -= TS_SIZE, p += TS_SIZE) {
              int Pid = TsPid(p);
              if (Pid != PATPID && !patPmtParser.IsPmtPid(Pid) && !Processed[Pid]) {
                 int64_t Pts = TsGetPts(p, TS_SIZE);
@@ -446,7 +448,7 @@ void cCuttingThread::GetPendingPackets(uchar *Data, int &Length, int Index)
       }
 }
 
-bool cCuttingThread::FixFrame(uchar *Data, int &Length, bool Independent, int Index, bool CutIn, bool CutOut)
+bool cCuttingThread::FixFrame(uint8_t *Data, int &Length, bool Independent, int Index, bool CutIn, bool CutOut)
 {
   if (!patPmtParser.Vpid()) {
      if (!patPmtParser.ParsePatPmt(Data, Length))
@@ -488,7 +490,7 @@ bool cCuttingThread::FixFrame(uchar *Data, int &Length, bool Independent, int In
   bool DeletedFrame = false;
   bool GotVidPts = false;
   bool StripVideo = sequence > 1 && tRefOffset;
-  uchar *p;
+  uint8_t *p;
   int len;
   for (p = Data, len = Length; len >= TS_SIZE && *p == TS_SYNC_BYTE; p += TS_SIZE, len -= TS_SIZE) {
       int Pid = TsPid(p);

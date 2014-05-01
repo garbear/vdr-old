@@ -12,7 +12,6 @@
 
 #include "platform/threads/mutex.h"
 #include "platform/threads/throttle.h"
-#include "Tools.h"
 
 namespace VDR
 {
@@ -64,10 +63,10 @@ public:
 private:
   int margin, head, tail;
   int gotten;
-  uchar *buffer;
+  uint8_t *buffer;
   char *description;
 protected:
-  virtual int DataReady(const uchar *Data, int Count);
+  virtual int DataReady(const uint8_t *Data, int Count);
     ///< By default a ring buffer has data ready as soon as there are at least
     ///< 'margin' bytes available. A derived class can reimplement this function
     ///< if it has other conditions that define when data is ready.
@@ -92,10 +91,10 @@ public:
     ///< an error value from the actual read() call.
   int Read(CVideoFile *File, int Max = 0);
     ///< Like Read(int FileHandle, int Max), but reads from a CVideoFile).
-  int Put(const uchar *Data, int Count);
+  int Put(const uint8_t *Data, int Count);
     ///< Puts at most Count bytes of Data into the ring buffer.
     ///< Returns the number of bytes actually stored.
-  uchar *Get(int &Count);
+  uint8_t *Get(int &Count);
     ///< Gets data from the ring buffer.
     ///< The data will remain in the buffer until a call to Del() deletes it.
     ///< Returns a pointer to the data, and stores the number of bytes
@@ -112,18 +111,18 @@ class cFrame {
   friend class cRingBufferFrame;
 private:
   cFrame *next;
-  uchar *data;
+  uint8_t *data;
   int count;
   eFrameType type;
   int index;
   uint32_t pts;
 public:
-  cFrame(const uchar *Data, int Count, eFrameType = ftUnknown, int Index = -1, uint32_t Pts = 0);
+  cFrame(const uint8_t *Data, int Count, eFrameType = ftUnknown, int Index = -1, uint32_t Pts = 0);
     ///< Creates a new cFrame object.
     ///< If Count is negative, the cFrame object will take ownership of the given
     ///< Data. Otherwise it will allocate Count bytes of memory and copy Data.
   ~cFrame();
-  uchar *Data(void) const { return data; }
+  uint8_t *Data(void) const { return data; }
   int Count(void) const { return count; }
   eFrameType Type(void) const { return type; }
   int Index(void) const { return index; }

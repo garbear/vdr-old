@@ -25,6 +25,7 @@
 //#include "countries.h"
 #include "channels/Channel.h"
 #include "utils/Ringbuffer.h"
+#include "utils/Tools.h"
 
 #include <time.h>
 
@@ -48,7 +49,7 @@ namespace VDR
 #define Concealed(x)  ((x == 0x1b) || (x == 0x18))   /* "%" == 0x18; 300231 has typo. */
 
 
-uchar Revert8(uchar inp)
+uint8_t Revert8(uint8_t inp)
 {
   uint8_t lookup[] =
   {
@@ -63,15 +64,15 @@ uint16_t Revert16(uint16_t inp)
   return Revert8(inp & 0xFF) << 8 | Revert8(inp >> 8);
 }
 
-uchar RevertNibbles(uchar inp)
+uint8_t RevertNibbles(uint8_t inp)
 {
   inp = Revert8(inp);
   return (inp & 0xF0) >> 4 | (inp & 0xF) << 4;
 }
 
-uchar Hamming_8_4(uchar aByte)
+uint8_t Hamming_8_4(uint8_t aByte)
 {
-  uchar lookup[] =
+  uint8_t lookup[] =
   {
     21,  2,   73,  94,  100, 115,  56,  47,
     208, 199, 140, 155, 161, 182, 253, 234
@@ -79,11 +80,11 @@ uchar Hamming_8_4(uchar aByte)
   return lookup[aByte];
 }
 
-int HammingDistance_8(uchar a, uchar b)
+int HammingDistance_8(uint8_t a, uint8_t b)
 {
   int ret = 0;
   int mask[] = { 1, 2, 4, 8, 16, 32, 64, 128 };
-  uchar XOR = a ^ b;
+  uint8_t XOR = a ^ b;
 
   for (unsigned int i = 0; i < 8; i++)
     ret += (XOR & mask[i]) >> i;
@@ -91,11 +92,11 @@ int HammingDistance_8(uchar a, uchar b)
   return ret;
 }
 
-uchar OddParity(uchar u)
+uint8_t OddParity(uint8_t u)
 {
   int i;
   int mask[] = { 1, 2, 4, 8, 16, 32, 64, 128 };
-  uchar p=0;
+  uint8_t p=0;
 
   for (i=0; i<8; i++)
     p += (u & mask[i]) >> i;
@@ -103,16 +104,16 @@ uchar OddParity(uchar u)
   return p & 1 ? u & 0x7F : 255;
 }
 
-int DeHamming_8_4(uchar aByte)
+int DeHamming_8_4(uint8_t aByte)
 {
-  for (uchar i = 0; i < 16; i++)
+  for (uint8_t i = 0; i < 16; i++)
     if (HammingDistance_8(Hamming_8_4(i), aByte) < 2)
       return i;
 
   return -1; // 2 or more bit errors: non recoverable.
 }
 
-uint32_t DeHamming_24_18(uchar* data)
+uint32_t DeHamming_24_18(uint8_t* data)
 {
   //FIXME: add bit error detection and correction.
   return ((*(data + 0) >> 2) & 0x1)             |
@@ -121,7 +122,7 @@ uint32_t DeHamming_24_18(uchar* data)
          (uint32_t)((*(data + 2) & 0x7F) << 11);
 }
 
-static inline uint8_t CharToInt(uchar c)
+static inline uint8_t CharToInt(uint8_t c)
 {
   switch(c)
   {
@@ -171,9 +172,9 @@ cSwReceiver::~cSwReceiver()
   DELETENULL(buffer);
 }
 
-void cSwReceiver::Receive(uchar* Data, int Length)
+void cSwReceiver::Receive(uint8_t* Data, int Length)
 {
-  uchar * p;
+  uint8_t* p;
   int count = 184;
 
   if (m_bStopped || IsStopped())
@@ -184,8 +185,8 @@ void cSwReceiver::Receive(uchar* Data, int Length)
 
   if (*(p + 0) == 0 && *(p + 1) == 0 && *(p + 2) == 1) // next PES header
   {
-    uchar PES_header_data_length = *(p+8);
-    uchar data_identifier;
+    uint8_t PES_header_data_length = *(p+8);
+    uint8_t data_identifier;
 
     data_identifier = *(p + 9 + PES_header_data_length);
     if ((data_identifier < 0x10) || (data_identifier > 0x1F))
@@ -198,10 +199,10 @@ void cSwReceiver::Receive(uchar* Data, int Length)
   buffer->Put(p, count);
 }
 
-void cSwReceiver::DecodePacket(uchar * data)
+void cSwReceiver::DecodePacket(uint8_t* data)
 {
-  uchar MsbFirst[48] = { 0 };
-  uchar aByte;
+  uint8_t MsbFirst[48] = { 0 };
+  uint8_t aByte;
   int i;
   int Magazine = 0;
   int PacketNumber = 0;
@@ -211,7 +212,7 @@ void cSwReceiver::DecodePacket(uchar * data)
   {
   case 0xC3: // VPS line 16
   {
-    uchar * p = &MsbFirst[3];
+    uint8_t* p = &MsbFirst[3];
 
     /* convert data from lsb first to msb first */
     for (i = 3; i < 16; i++)
@@ -250,7 +251,7 @@ void cSwReceiver::DecodePacket(uchar * data)
     {
     case 0: /* page header X/0 */
     {
-      uchar * p = &MsbFirst[6];
+      uint8_t* p = &MsbFirst[6];
       pagenumber = DeHamming_8_4(*(p)) + 10 * DeHamming_8_4(*(p + 1));
       p += 2;
       subpage  =  DeHamming_8_4(*(p++));
@@ -321,7 +322,7 @@ void cSwReceiver::DecodePacket(uchar * data)
       /* PDC embedded into visible text.
        * 300231 page 30..31 'Method A'
        */
-      uchar * p = &MsbFirst[6];
+      uint8_t* p = &MsbFirst[6];
       if (Magazine != 3)
         break;
       for (int i = 0; i < 48; i++)
@@ -358,7 +359,7 @@ void cSwReceiver::DecodePacket(uchar * data)
       /* 13 x 3-byte pairs of hammed 24/18 data.
        * 300231 page 30..31 'Method B'
        */
-      uchar * p = &MsbFirst[7];
+      uint8_t* p = &MsbFirst[7];
       for (int i=0; i < 13; i++)
       {
         uint32_t value = DeHamming_24_18(p);
@@ -413,7 +414,7 @@ void cSwReceiver::DecodePacket(uchar * data)
       case 3:
       /* ETS 300 706: Table 19: Coding of Packet 8/30 Format 2 */
       {
-        uchar Data[256];
+        uint8_t Data[256];
         unsigned CNI_0, CNI_1, CNI_2, CNI_3;
 
         for (i = 0; i < 33; i++)
@@ -449,7 +450,7 @@ void cSwReceiver::DecodePacket(uchar * data)
   } // end switch data_unit_id
 }
 
-void cSwReceiver::Decode(uchar* data, int count)
+void cSwReceiver::Decode(uint8_t* data, int count)
 {
   if (count < 184)
     return;
@@ -474,7 +475,7 @@ void cSwReceiver::Decode(uchar* data, int count)
 
 void* cSwReceiver::Process()
 {
-  uchar* bp;
+  uint8_t* bp;
   int count;
 
   while (!IsStopped() & !m_bStopped)
@@ -574,7 +575,7 @@ const char* cSwReceiver::GetCniNameVPS()
 
 const char* cSwReceiver::GetCniNameX26()
 {
-  uchar a = cni_X_26 >> 8, b = cni_X_26 & 0xff;
+  uint8_t a = cni_X_26 >> 8, b = cni_X_26 & 0xff;
  
   if (cni_X_26)
   {
@@ -595,7 +596,7 @@ const char* cSwReceiver::GetCniNameX26()
 
 const char * cSwReceiver::GetCniNameCrIdx()
 {
-  uchar c = cni_cr_idx >> 8, idx = cni_cr_idx & 0xff;
+  uint8_t c = cni_cr_idx >> 8, idx = cni_cr_idx & 0xff;
  
   if (cni_cr_idx)
   {

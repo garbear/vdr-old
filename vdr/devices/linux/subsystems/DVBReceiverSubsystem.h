@@ -22,6 +22,8 @@
 
 #include "devices/subsystems/DeviceReceiverSubsystem.h"
 
+#include <stdint.h>
+
 namespace VDR
 {
 class cTSBuffer;
@@ -34,7 +36,7 @@ public:
 
   virtual bool OpenDvr();
   virtual void CloseDvr();
-  virtual bool GetTSPacket(uchar *&data);
+  virtual bool GetTSPacket(uint8_t *&data);
 
   // Overrides public method as protected
   virtual void DetachAllReceivers();

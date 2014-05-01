@@ -13,7 +13,8 @@
 #include "Config.h"
 #include "platform/threads/mutex.h"
 #include "utils/List.h"
-#include "utils/Tools.h" // for uchar
+
+#include <stdint.h>
 
 namespace VDR
 {
@@ -71,12 +72,12 @@ private:
   int SetScrPin(const cScr *Scr, uint8_t *Codes) const;
   const char *Wait(const char *s) const;
   const char *GetScrBank(const char *s) const;
-  const char *GetCodes(const char *s, uchar *Codes = NULL, uint8_t *MaxCodes = NULL) const;
+  const char *GetCodes(const char *s, uint8_t *Codes = NULL, uint8_t *MaxCodes = NULL) const;
 public:
   cDiseqc(void);
   ~cDiseqc();
   bool Parse(const char *s);
-  eDiseqcActions Execute(const char **CurrentAction, uchar *Codes, uint8_t *MaxCodes, const cScr *Scr, uint *Frequency) const;
+  eDiseqcActions Execute(const char **CurrentAction, uint8_t *Codes, uint8_t *MaxCodes, const cScr *Scr, uint *Frequency) const;
       ///< Parses the DiSEqC commands and returns the appropriate action code
       ///< with every call. CurrentAction must be the address of a character pointer,
       ///< which is initialized to NULL. This pointer is used internally while parsing

@@ -124,7 +124,7 @@ void *cDevice::Process()
     while (!IsStopped())
     {
       // Read data from the DVR device:
-      uchar *b = NULL;
+      uint8_t *b = NULL;
       if (!Receiver()->GetTSPacket(b))
         break;
 

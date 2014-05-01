@@ -18,11 +18,12 @@
  *
  */
 
-#include <stdlib.h>
-#include <assert.h>
-
 #include "ParserAC3.h"
 #include "Bitstream.h"
+
+#include <algorithm>
+#include <assert.h>
+#include <stdlib.h>
 
 namespace VDR
 {
@@ -197,7 +198,7 @@ int cParserAC3::FindHeaders(uint8_t *buf, int buf_size)
       }
       int lfeon = bs.readBits(1);
 
-      int srShift   = max(bsid, 8) - 8;
+      int srShift   = std::max(bsid, 8) - 8;
       m_SampleRate  = AC3SampleRateTable[fscod] >> srShift;
       m_BitRate     = (AC3BitrateTable[frmsizecod>>1] * 1000) >> srShift;
       m_Channels    = AC3ChannelsTable[acmod] + lfeon;

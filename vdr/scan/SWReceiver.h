@@ -26,6 +26,8 @@
 #include "platform/threads/threads.h"
 #include "utils/DateTime.h"
 
+#include <stdint.h>
+
 namespace VDR
 {
 
@@ -56,11 +58,11 @@ public:
   const char* GetFuzzyName() const { return fuzzy_network; };
 
 protected:
-  virtual void Receive(uchar* Data, int Length);
+  virtual void Receive(uint8_t* Data, int Length);
   virtual void* Process();
   virtual void Stop() { m_bStopped = true; };
-  void Decode(uchar* data, int count);
-  void DecodePacket(uchar* data);
+  void Decode(uint8_t* data, int count);
+  void DecodePacket(uint8_t* data);
 
 private:
   ChannelPtr channel;

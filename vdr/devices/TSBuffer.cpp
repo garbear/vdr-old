@@ -23,6 +23,7 @@
 #include "TSBuffer.h"
 #include "filesystem/Poller.h"
 #include "utils/Ringbuffer.h"
+#include "utils/Tools.h"
 #include "Types.h"
 
 namespace VDR

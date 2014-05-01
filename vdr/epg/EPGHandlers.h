@@ -3,9 +3,9 @@
 #include "EPGTypes.h"
 #include "utils/DateTime.h"
 #include "utils/List.h"
-#include "utils/Tools.h" // for uchar
 
 #include <libsi/section.h>
+#include <stdint.h>
 #include <string>
 #include <time.h>
 
@@ -20,14 +20,14 @@ class cEpgHandlers : public cList<cEpgHandler> {
 public:
   static cEpgHandlers& Get(void);
   bool IgnoreChannel(const cChannel& Channel);
-  bool HandleEitEvent(SchedulePtr Schedule, const SI::EIT::Event *EitEvent, uchar TableID, uchar Version);
+  bool HandleEitEvent(SchedulePtr Schedule, const SI::EIT::Event *EitEvent, uint8_t TableID, uint8_t Version);
   bool HandledExternally(const cChannel *Channel);
-  bool IsUpdate(tEventID EventID, const CDateTime& StartTime, uchar TableID, uchar Version);
+  bool IsUpdate(tEventID EventID, const CDateTime& StartTime, uint8_t TableID, uint8_t Version);
   void SetEventID(cEvent *Event, tEventID EventID);
   void SetTitle(cEvent *Event, const std::string& Title);
   void SetShortText(cEvent *Event, const std::string& ShortText);
   void SetDescription(cEvent *Event, const std::string& Description);
-  void SetContents(cEvent *Event, uchar *Contents);
+  void SetContents(cEvent *Event, uint8_t *Contents);
   void SetParentalRating(cEvent *Event, int ParentalRating);
   void SetStartTime(cEvent *Event, const CDateTime& StartTime);
   void SetDuration(cEvent *Event, int Duration);
@@ -36,6 +36,6 @@ public:
   void FixEpgBugs(cEvent *Event);
   void HandleEvent(cEvent *Event);
   void SortSchedule(SchedulePtr Schedule);
-  void DropOutdated(SchedulePtr Schedule, const CDateTime& SegmentStart, const CDateTime& SegmentEnd, uchar TableID, uchar Version);
+  void DropOutdated(SchedulePtr Schedule, const CDateTime& SegmentStart, const CDateTime& SegmentEnd, uint8_t TableID, uint8_t Version);
   };
 }

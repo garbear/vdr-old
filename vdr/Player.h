@@ -16,6 +16,8 @@
 #include "recordings/Recording.h"
 #include "recordings/marks/Mark.h"
 
+#include <stdint.h>
+
 namespace VDR
 {
 
@@ -52,13 +54,13 @@ public: // TODO
        // It can be used to do things like starting/stopping a thread.
 protected:
   // XXX probably convert all of these back from vectors to POD types to reduce the overhead
-  int PlayPes(const uchar *Data, int Length, bool VideoOnly = false);
-  int PlayPes(const std::vector<uchar> &data, bool VideoOnly = false);
+  int PlayPes(const uint8_t *Data, int Length, bool VideoOnly = false);
+  int PlayPes(const std::vector<uint8_t> &data, bool VideoOnly = false);
        // Sends the given PES Data to the device and returns the number of
        // bytes that have actually been accepted by the device (or a
        // negative value in case of an error).
-  int PlayTs(const uchar *Data, int Length, bool VideoOnly = false);
-  int PlayTs(const std::vector<uchar> &data, bool VideoOnly = false);
+  int PlayTs(const uint8_t *Data, int Length, bool VideoOnly = false);
+  int PlayTs(const std::vector<uint8_t> &data, bool VideoOnly = false);
        // Sends the given TS packet to the device and returns a positive number
        // if the packet has been accepted by the device, or a negative value in
        // case of an error.

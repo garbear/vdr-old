@@ -22,7 +22,6 @@
 #define VNSI_DEMUXER_H
 
 #include "devices/Device.h"
-#include "utils/Tools.h"
 
 #include <queue>
 #include <stdint.h>
@@ -55,32 +54,32 @@ namespace VDR
 #define ISO13522_STREAM   0xF3
 #define PROG_STREAM_DIR   0xFF
 
-inline bool PesIsHeader(const uchar *p)
+inline bool PesIsHeader(const uint8_t *p)
 {
   return !(p)[0] && !(p)[1] && (p)[2] == 1;
 }
 
-inline int PesHeaderLength(const uchar *p)
+inline int PesHeaderLength(const uint8_t *p)
 {
   return 8 + (p)[8] + 1;
 }
 
-inline bool PesIsVideoPacket(const uchar *p)
+inline bool PesIsVideoPacket(const uint8_t *p)
 {
   return (((p)[3] & ~VIDEO_STREAM_MASK) == VIDEO_STREAM);
 }
 
-inline bool PesIsMPEGAudioPacket(const uchar *p)
+inline bool PesIsMPEGAudioPacket(const uint8_t *p)
 {
   return (((p)[3] & ~AUDIO_STREAM_MASK) == AUDIO_STREAM);
 }
 
-inline bool PesIsPS1Packet(const uchar *p)
+inline bool PesIsPS1Packet(const uint8_t *p)
 {
   return ((p)[3] == PRIVATE_STREAM1 || (p)[3] == PRIVATE_STREAM3 );
 }
 
-inline bool PesIsAudioPacket(const uchar *p)
+inline bool PesIsAudioPacket(const uint8_t *p)
 {
   return (PesIsMPEGAudioPacket(p) || PesIsPS1Packet(p));
 }

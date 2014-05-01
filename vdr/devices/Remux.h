@@ -12,7 +12,9 @@
 
 #include "channels/Channel.h"
 #include "channels/ChannelTypes.h"
-#include "utils/Tools.h"
+//#include "utils/Tools.h"
+
+#include <stdint.h>
 
 #define MAXAPIDS 32 // audio
 #define MAXDPIDS 16
@@ -29,11 +31,11 @@ enum ePesHeader {
   phMPEG2 = 2
   };
 
-ePesHeader AnalyzePesHeader(const uchar *Data, int Count, int &PesPayloadOffset, bool *ContinuationHeader = NULL);
+ePesHeader AnalyzePesHeader(const uint8_t *Data, int Count, int &PesPayloadOffset, bool *ContinuationHeader = NULL);
 
 class cRemux {
 public:
-  static void SetBrokenLink(uchar *Data, int Length);
+  static void SetBrokenLink(uint8_t *Data, int Length);
   };
 
 // Some TS handling tools.
@@ -66,53 +68,53 @@ public:
 #define MAX33BIT  0x00000001FFFFFFFFLL // max. possible value with 33 bit
 #define MAX27MHZ  ((MAX33BIT + 1) * PCRFACTOR - 1) // max. possible PCR value
 
-inline bool TsHasPayload(const uchar *p)
+inline bool TsHasPayload(const uint8_t *p)
 {
   return p[3] & TS_PAYLOAD_EXISTS;
 }
 
-inline bool TsHasAdaptationField(const uchar *p)
+inline bool TsHasAdaptationField(const uint8_t *p)
 {
   return p[3] & TS_ADAPT_FIELD_EXISTS;
 }
 
-inline bool TsPayloadStart(const uchar *p)
+inline bool TsPayloadStart(const uint8_t *p)
 {
   return p[1] & TS_PAYLOAD_START;
 }
 
-inline bool TsError(const uchar *p)
+inline bool TsError(const uint8_t *p)
 {
   return p[1] & TS_ERROR;
 }
 
-inline int TsPid(const uchar *p)
+inline int TsPid(const uint8_t *p)
 {
   return (p[1] & TS_PID_MASK_HI) * 256 + p[2];
 }
 
-inline bool TsIsScrambled(const uchar *p)
+inline bool TsIsScrambled(const uint8_t *p)
 {
   return p[3] & TS_SCRAMBLING_CONTROL;
 }
 
-inline uchar TsGetContinuityCounter(const uchar *p)
+inline uint8_t TsGetContinuityCounter(const uint8_t *p)
 {
   return p[3] & TS_CONT_CNT_MASK;
 }
 
-inline void TsSetContinuityCounter(uchar *p, uchar Counter)
+inline void TsSetContinuityCounter(uint8_t *p, uint8_t Counter)
 {
   p[3] = (p[3] & ~TS_CONT_CNT_MASK) | (Counter & TS_CONT_CNT_MASK);
 }
 
-inline int TsPayloadOffset(const uchar *p)
+inline int TsPayloadOffset(const uint8_t *p)
 {
   int o = TsHasAdaptationField(p) ? p[4] + 5 : 4;
   return o <= TS_SIZE ? o : TS_SIZE;
 }
 
-inline int TsGetPayload(const uchar **p)
+inline int TsGetPayload(const uint8_t **p)
 {
   if (TsHasPayload(*p)) {
      int o = TsPayloadOffset(*p);
@@ -122,12 +124,12 @@ inline int TsGetPayload(const uchar **p)
   return 0;
 }
 
-inline int TsContinuityCounter(const uchar *p)
+inline int TsContinuityCounter(const uint8_t *p)
 {
   return p[3] & TS_CONT_CNT_MASK;
 }
 
-inline int64_t TsGetPcr(const uchar *p)
+inline int64_t TsGetPcr(const uint8_t *p)
 {
   if (TsHasAdaptationField(p)) {
      if (p[4] >= 7 && (p[5] & TS_ADAPT_PCR)) {
@@ -143,15 +145,15 @@ inline int64_t TsGetPcr(const uchar *p)
   return -1;
 }
 
-void TsHidePayload(uchar *p);
-void TsSetPcr(uchar *p, int64_t Pcr);
+void TsHidePayload(uint8_t *p);
+void TsSetPcr(uint8_t *p, int64_t Pcr);
 
 // The following functions all take a pointer to a sequence of complete TS packets.
 
-int64_t TsGetPts(const uchar *p, int l);
-int64_t TsGetDts(const uchar *p, int l);
-void TsSetPts(uchar *p, int l, int64_t Pts);
-void TsSetDts(uchar *p, int l, int64_t Dts);
+int64_t TsGetPts(const uint8_t *p, int l);
+int64_t TsGetDts(const uint8_t *p, int l);
+void TsSetPts(uint8_t *p, int l, int64_t Pts);
+void TsSetDts(uint8_t *p, int l, int64_t Dts);
 
 // Some PES handling tools:
 // The following functions that take a pointer to PES data all assume that
@@ -162,32 +164,32 @@ inline bool PesLongEnough(int Length)
   return Length >= 6;
 }
 
-inline bool PesHasLength(const uchar *p)
+inline bool PesHasLength(const uint8_t *p)
 {
   return p[4] | p[5];
 }
 
-inline int PesLength(const uchar *p)
+inline int PesLength(const uint8_t *p)
 {
   return 6 + p[4] * 256 + p[5];
 }
 
-inline int PesPayloadOffset(const uchar *p)
+inline int PesPayloadOffset(const uint8_t *p)
 {
   return 9 + p[8];
 }
 
-inline bool PesHasPts(const uchar *p)
+inline bool PesHasPts(const uint8_t *p)
 {
   return (p[7] & 0x80) && p[8] >= 5;
 }
 
-inline bool PesHasDts(const uchar *p)
+inline bool PesHasDts(const uint8_t *p)
 {
   return (p[7] & 0x40) && p[8] >= 10;
 }
 
-inline int64_t PesGetPts(const uchar *p)
+inline int64_t PesGetPts(const uint8_t *p)
 {
   return ((((int64_t)p[ 9]) & 0x0E) << 29) |
          (( (int64_t)p[10])         << 22) |
@@ -196,7 +198,7 @@ inline int64_t PesGetPts(const uchar *p)
          ((((int64_t)p[13]) & 0xFE) >>  1);
 }
 
-inline int64_t PesGetDts(const uchar *p)
+inline int64_t PesGetDts(const uint8_t *p)
 {
   return ((((int64_t)p[14]) & 0x0E) << 29) |
          (( (int64_t)p[15])         << 22) |
@@ -205,8 +207,8 @@ inline int64_t PesGetDts(const uchar *p)
          ((((int64_t)p[18]) & 0xFE) >>  1);
 }
 
-void PesSetPts(uchar *p, int64_t Pts);
-void PesSetDts(uchar *p, int64_t Dts);
+void PesSetPts(uint8_t *p, int64_t Pts);
+void PesSetDts(uint8_t *p, int64_t Dts);
 
 // PTS handling:
 
@@ -222,7 +224,7 @@ int64_t PtsDiff(int64_t Pts1, int64_t Pts2);
 
 class cTsPayload {
 private:
-  uchar *data;
+  uint8_t *data;
   int length;
   int pid;
   int index; // points to the next byte to process
@@ -230,9 +232,9 @@ protected:
   void Reset(void) { index = 0; }
 public:
   cTsPayload(void);
-  cTsPayload(uchar *Data, int Length, int Pid = -1);
+  cTsPayload(uint8_t *Data, int Length, int Pid = -1);
        ///< Creates a new TS payload handler and calls Setup() with the given Data.
-  void Setup(uchar *Data, int Length, int Pid = -1);
+  void Setup(uint8_t *Data, int Length, int Pid = -1);
        ///< Sets up this TS payload handler with the given Data, which points to a
        ///< sequence of Length bytes of complete TS packets. Any incomplete TS
        ///< packet at the end will be ignored.
@@ -255,7 +257,7 @@ public:
        ///< is counted with its full size.
   bool Eof(void) const { return index >= length; }
        ///< Returns true if all available bytes of the TS payload have been processed.
-  uchar GetByte(void);
+  uint8_t GetByte(void);
        ///< Gets the next byte of the TS payload, skipping any intermediate TS header data.
   bool SkipBytes(int Bytes);
        ///< Skips the given number of bytes in the payload and returns true if there
@@ -265,7 +267,7 @@ public:
   int GetLastIndex(void);
        ///< Returns the index into the TS data of the payload byte that has most recently
        ///< been read. If no byte has been read yet, -1 will be returned.
-  void SetByte(uchar Byte, int Index);
+  void SetByte(uint8_t Byte, int Index);
        ///< Sets the TS data byte at the given Index to the value Byte.
        ///< Index should be one that has been retrieved by a previous call to GetIndex(),
        ///< otherwise the behaviour is undefined. The current read index will not be
@@ -287,24 +289,24 @@ public:
 
 class cPatPmtGenerator {
 private:
-  uchar pat[TS_SIZE]; // the PAT always fits into a single TS packet
-  uchar pmt[MAX_PMT_TS][TS_SIZE]; // the PMT may well extend over several TS packets
+  uint8_t pat[TS_SIZE]; // the PAT always fits into a single TS packet
+  uint8_t pmt[MAX_PMT_TS][TS_SIZE]; // the PMT may well extend over several TS packets
   int numPmtPackets;
   int patCounter;
   int pmtCounter;
   int patVersion;
   int pmtVersion;
   int pmtPid;
-  uchar *esInfoLength;
-  void IncCounter(int &Counter, uchar *TsPacket);
+  uint8_t *esInfoLength;
+  void IncCounter(int &Counter, uint8_t *TsPacket);
   void IncVersion(int &Version);
   void IncEsInfoLength(int Length);
 protected:
-  int MakeStream(uchar *Target, uchar Type, int Pid);
-  int MakeAC3Descriptor(uchar *Target, uchar Type);
-  int MakeSubtitlingDescriptor(uchar *Target, const char *Language, uchar SubtitlingType, uint16_t CompositionPageId, uint16_t AncillaryPageId);
-  int MakeLanguageDescriptor(uchar *Target, const char *Language);
-  int MakeCRC(uchar *Target, const uchar *Data, int Length);
+  int MakeStream(uint8_t *Target, uint8_t Type, int Pid);
+  int MakeAC3Descriptor(uint8_t *Target, uint8_t Type);
+  int MakeSubtitlingDescriptor(uint8_t *Target, const char *Language, uint8_t SubtitlingType, uint16_t CompositionPageId, uint16_t AncillaryPageId);
+  int MakeLanguageDescriptor(uint8_t *Target, const char *Language);
+  int MakeCRC(uint8_t *Target, const uint8_t *Data, int Length);
   void GeneratePmtPid(ChannelPtr Channel);
        ///< Generates a PMT pid that doesn't collide with any of the actual
        ///< pids of the Channel.
@@ -326,10 +328,10 @@ public:
        ///< have an effect from the very start.
   void SetChannel(ChannelPtr Channel);
        ///< Sets the Channel for which the PAT/PMT shall be generated.
-  uchar *GetPat(void);
+  uint8_t *GetPat(void);
        ///< Returns a pointer to the PAT section, which consists of exactly
        ///< one TS packet.
-  uchar *GetPmt(int &Index);
+  uint8_t *GetPmt(int &Index);
        ///< Returns a pointer to the Index'th TS packet of the PMT section.
        ///< Index must be initialized to 0 and will be incremented by each
        ///< call to GetPmt(). Returns NULL is all packets of the PMT section
@@ -342,7 +344,7 @@ public:
 
 class cPatPmtParser {
 private:
-  uchar pmt[MAX_SECTION_SIZE];
+  uint8_t pmt[MAX_SECTION_SIZE];
   int pmtSize;
   int patVersion;
   int pmtVersion;
@@ -358,27 +360,27 @@ private:
   char dlangs[MAXDPIDS][MAXLANGCODE2];
   int spids[MAXSPIDS + 1]; // list is zero-terminated
   char slangs[MAXSPIDS][MAXLANGCODE2];
-  uchar subtitlingTypes[MAXSPIDS];
+  uint8_t subtitlingTypes[MAXSPIDS];
   uint16_t compositionPageIds[MAXSPIDS];
   uint16_t ancillaryPageIds[MAXSPIDS];
 protected:
-  int SectionLength(const uchar *Data, int Length) { return (Length >= 3) ? ((int(Data[1]) & 0x0F) << 8)| Data[2] : 0; }
+  int SectionLength(const uint8_t *Data, int Length) { return (Length >= 3) ? ((int(Data[1]) & 0x0F) << 8)| Data[2] : 0; }
 public:
   cPatPmtParser(void);
   void Reset(void);
        ///< Resets the parser. This function must be called whenever a new
        ///< stream is parsed.
-  void ParsePat(const uchar *Data, int Length);
+  void ParsePat(const uint8_t *Data, int Length);
        ///< Parses the PAT data from the single TS packet in Data.
        ///< Length is always TS_SIZE.
-  void ParsePmt(const uchar *Data, int Length);
+  void ParsePmt(const uint8_t *Data, int Length);
        ///< Parses the PMT data from the single TS packet in Data.
        ///< Length is always TS_SIZE.
        ///< The PMT may consist of several TS packets, which
        ///< are delivered to the parser through several subsequent calls to
        ///< ParsePmt(). The whole PMT data will be processed once the last packet
        ///< has been received.
-  bool ParsePatPmt(const uchar *Data, int Length);
+  bool ParsePatPmt(const uint8_t *Data, int Length);
        ///< Parses the given Data (which may consist of several TS packets, typically
        ///< an entire frame) and extracts the PAT and PMT.
        ///< Returns true if a valid PAT/PMT has been detected.
@@ -408,7 +410,7 @@ public:
   const char *Alang(int i) const { return (0 <= i && i < MAXAPIDS) ? alangs[i] : ""; }
   const char *Dlang(int i) const { return (0 <= i && i < MAXDPIDS) ? dlangs[i] : ""; }
   const char *Slang(int i) const { return (0 <= i && i < MAXSPIDS) ? slangs[i] : ""; }
-  uchar SubtitlingType(int i) const { return (0 <= i && i < MAXSPIDS) ? subtitlingTypes[i] : uchar(0); }
+  uint8_t SubtitlingType(int i) const { return (0 <= i && i < MAXSPIDS) ? subtitlingTypes[i] : uint8_t(0); }
   uint16_t CompositionPageId(int i) const { return (0 <= i && i < MAXSPIDS) ? compositionPageIds[i] : uint16_t(0); }
   uint16_t AncillaryPageId(int i) const { return (0 <= i && i < MAXSPIDS) ? ancillaryPageIds[i] : uint16_t(0); }
   };
@@ -419,17 +421,17 @@ public:
 
 class cTsToPes {
 private:
-  uchar *data;
+  uint8_t *data;
   int size;
   int length;
   int offset;
-  uchar *lastData;
+  uint8_t *lastData;
   int lastLength;
   bool repeatLast;
 public:
   cTsToPes(void);
   ~cTsToPes();
-  void PutTs(const uchar *Data, int Length);
+  void PutTs(const uint8_t *Data, int Length);
        ///< Puts the payload data of the single TS packet at Data into the converter.
        ///< Length is always TS_SIZE.
        ///< If the given TS packet starts a new PES payload packet, the converter
@@ -439,7 +441,7 @@ public:
        ///< packets until the next call to Reset() must belong to the same PID as
        ///< the first packet. There is no check whether this actually is the case, so
        ///< the caller is responsible for making sure this condition is met.
-  const uchar *GetPes(int &Length);
+  const uint8_t *GetPes(int &Length);
        ///< Gets a pointer to the complete PES packet, or NULL if the packet
        ///< is not complete yet. If the packet is complete, Length will contain
        ///< the total packet length. The returned pointer is only valid until
@@ -500,7 +502,7 @@ public:
       ///< call to SetPid().
   void SetPid(int Pid, int Type);
       ///< Sets the Pid and stream Type to detect frames for.
-  int Analyze(const uchar *Data, int Length);
+  int Analyze(const uint8_t *Data, int Length);
       ///< Analyzes the TS packets pointed to by Data. Length is the number of
       ///< bytes Data points to, and must be a multiple of TS_SIZE.
       ///< Returns the number of bytes that have been analyzed.
