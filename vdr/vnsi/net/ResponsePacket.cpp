@@ -190,11 +190,11 @@ bool cResponsePacket::unreserve(uint32_t len) {
   return true;
 }
 
-bool cResponsePacket::add_String(const char* string)
+bool cResponsePacket::add_String(const std::string& string)
 {
-  uint32_t len = strlen(string) + 1;
+  uint32_t len = string.length() + 1;
   if (!checkExtend(len)) return false;
-  memcpy(buffer + bufUsed, string, len);
+  memcpy(buffer + bufUsed, string.c_str(), len);
   bufUsed += len;
   return true;
 }

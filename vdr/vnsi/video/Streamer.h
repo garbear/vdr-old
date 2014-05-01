@@ -34,7 +34,7 @@
 #include "devices/DeviceTypes.h"
 #include "devices/Receiver.h"
 #include "lib/platform/threads/threads.h"
-#include "utils/Tools.h"
+#include "utils/Timer.h"
 
 #include <linux/dvb/frontend.h>
 #include <linux/videodev2.h>
@@ -72,7 +72,7 @@ private:
   int               m_Frontend;                     /*!> File descriptor to access used receiving device  */
   dvb_frontend_info m_FrontendInfo;                 /*!> DVB Information about the receiving device (DVB only) */
   v4l2_capability   m_vcap;                         /*!> PVR Information about the receiving device (pvrinput only) */
-  cString           m_DeviceString;                 /*!> The name of the receiving device */
+  std::string       m_DeviceString;                 /*!> The name of the receiving device */
   bool              m_startup;
   bool              m_IsAudioOnly;                  /*!> Set to true if streams contains only audio */
   bool              m_IsMPEGPS;                     /*!> TS Stream contains MPEG PS data like from pvrinput */

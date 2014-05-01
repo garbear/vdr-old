@@ -25,6 +25,8 @@
  *
  */
 
+#include <string>
+
 /*
  * This code is taken from VOMP for VDR plugin.
  */
@@ -49,7 +51,7 @@ public:
   uint8_t* reserve(uint32_t len);
   bool unreserve(uint32_t len);
 
-  bool add_String(const char* string);
+  bool add_String(const std::string& string);
   bool add_U32(uint32_t ul);
   bool add_S32(int32_t l);
   bool add_U8(uint8_t c);

@@ -1,7 +1,6 @@
 #include "ResumeFile.h"
-#include "../Recordings.h"
 #include "Config.h"
-#include "utils/Tools.h"
+#include "recordings/Recordings.h"
 #include "settings/Settings.h"
 
 #define RESUMEFILESUFFIX  "/resume%s%s"
@@ -14,7 +13,7 @@ cResumeFile::cResumeFile(const std::string& strFileName, bool IsPesRecording)
   m_bIsPesRecording = IsPesRecording;
   const char *Suffix = m_bIsPesRecording ? RESUMEFILESUFFIX ".vdr" : RESUMEFILESUFFIX;
   m_strFileName = strFileName;
-  m_strFileName.append(StringUtils::Format(Suffix, cSettings::Get().m_iResumeID ? "." : "", cSettings::Get().m_iResumeID ? *itoa(cSettings::Get().m_iResumeID) : ""));
+  m_strFileName.append(StringUtils::Format(Suffix, cSettings::Get().m_iResumeID ? "." : "", cSettings::Get().m_iResumeID ? StringUtils::Format("%d", cSettings::Get().m_iResumeID).c_str() : ""));
 }
 
 cResumeFile::~cResumeFile()

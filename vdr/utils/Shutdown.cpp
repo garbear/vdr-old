@@ -77,7 +77,7 @@ bool cCountdown::Update(void)
         counter = NewCounter;
         char time[10];
         snprintf(time, sizeof(time), "%d:%d0", counter > 0 ? counter / 6 : 0, counter > 0 ? counter % 6 : 0);
-        cString Message = cString::sprintf(message, time);
+        std::string Message = StringUtils::Format(message, time);
         //XXX Skins.Message(mtStatus, Message);
         return true;
         }

@@ -23,33 +23,34 @@
  *
  */
 
-#include <netdb.h>
-#include <poll.h>
-#include <assert.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stdarg.h>
-#include <fcntl.h>
-#include <errno.h>
-#include <netinet/in.h>
-#include <netinet/tcp.h>
-#include <arpa/inet.h>
-#include <time.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-
+#include "Server.h"
+#include "Client.h"
+#include "channels/ChannelFilter.h"
 #include "channels/ChannelManager.h"
-#include "utils/Shutdown.h"
 #include "filesystem/Videodir.h"
 #include "recordings/Recordings.h"
 #include "settings/AllowedHosts.h"
-
-#include "Server.h"
-#include "Client.h"
 #include "settings/Settings.h"
-#include "channels/ChannelFilter.h"
+#include "utils/Shutdown.h"
+#include "utils/StringUtils.h"
+#include "utils/Timer.h"
+
+#include <arpa/inet.h>
+#include <assert.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <netdb.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <poll.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <time.h>
+#include <unistd.h>
 
 namespace VDR
 {
@@ -188,13 +189,13 @@ void* cVNSIServer::Process(void)
   if (!strTimeshiftBufferDir.empty() && stat(strTimeshiftBufferDir.c_str(), &sb) == 0 && S_ISDIR(sb.st_mode))
   {
     if (strTimeshiftBufferDir.at(strTimeshiftBufferDir.length() - 1) == '/')
-      cmd = *cString::sprintf("rm -f %s*.vnsi", strTimeshiftBufferDir.c_str());
+      cmd = StringUtils::Format("rm -f %s*.vnsi", strTimeshiftBufferDir.c_str());
     else
-      cmd = *cString::sprintf("rm -f %s/*.vnsi", strTimeshiftBufferDir.c_str());
+      cmd = StringUtils::Format("rm -f %s/*.vnsi", strTimeshiftBufferDir.c_str());
   }
   else
   {
-    cmd = *cString::sprintf("rm -f %s/*.vnsi", VideoDirectory);
+    cmd = StringUtils::Format("rm -f %s/*.vnsi", VideoDirectory);
   }
   int ret = system(cmd.c_str());
 

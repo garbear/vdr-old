@@ -19,6 +19,7 @@
 #include "sources/linux/DVBSourceParams.h"
 #include "utils/CommonMacros.h"
 #include "utils/StringUtils.h"
+#include "utils/Timer.h"
 
 #include <errno.h>
 #include <string.h>

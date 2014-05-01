@@ -236,6 +236,7 @@ set(VDR_SRCS
 	vdr/utils/url/UrlOptions.cpp
 	vdr/utils/url/URLUtils.cpp
 	vdr/utils/Shutdown.cpp
+	vdr/utils/Timer.cpp
 	vdr/utils/XSocket.cpp
 	vdr/utils/XTimeUtils.cpp
 	vdr/utils/linux/ConvUtils.cpp

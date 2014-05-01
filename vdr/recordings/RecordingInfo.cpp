@@ -12,8 +12,23 @@
 
 using namespace std;
 
+#define DECIMAL_POINT_C  '.'
+
 namespace VDR
 {
+
+///< Converts the given double value to a string, making sure it uses a '.' as
+///< the decimal point, independent of the currently selected locale.
+///< If Format is given, it will be used instead of the default.
+std::string dtoa(double d, const char *Format = "%f")
+{
+  static const lconv *loc = localeconv();
+  char buf[16];
+  snprintf(buf, sizeof(buf), Format, d);
+  if (*loc->decimal_point != DECIMAL_POINT_C)
+     strreplace(buf, *loc->decimal_point, DECIMAL_POINT_C);
+  return buf;
+}
 
 cRecordingInfo::cRecordingInfo(ChannelPtr channel, const cEvent *Event)
 {
@@ -211,7 +226,7 @@ bool cRecordingInfo::Write(const std::string& strFilename /* = "" */) const
     recordingElement.SetAttribute(RECORDING_XML_ATTR_CHANNEL_UID,  m_channel->Hash());
   }
 
-  recordingElement.SetAttribute(RECORDING_XML_ATTR_FPS,      *dtoa(m_dFramesPerSecond, "%.10g"));
+  recordingElement.SetAttribute(RECORDING_XML_ATTR_FPS,      dtoa(m_dFramesPerSecond, "%.10g").c_str());
   recordingElement.SetAttribute(RECORDING_XML_ATTR_PRIORITY, m_iPriority);
   recordingElement.SetAttribute(RECORDING_XML_ATTR_LIFETIME, m_iLifetime);
 

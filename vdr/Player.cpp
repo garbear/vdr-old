@@ -103,7 +103,7 @@ const cRecording *cControl::GetRecording(void)
   return NULL;
 }
 
-cString cControl::GetHeader(void)
+string cControl::GetHeader(void)
 {
   return "";
 }

@@ -23,21 +23,21 @@
  *
  */
 
+#include "Streamer.h"
+#include "VideoBuffer.h"
+#include "vnsi/net/VNSICommand.h"
+#include "vnsi/net/ResponsePacket.h"
+#include "channels/ChannelManager.h"
+#include "devices/DeviceManager.h"
+#include "recordings/Recordings.h"
+#include "settings/Settings.h"
+#include "timers/Timers.h"
+#include "utils/StringUtils.h"
+#include "utils/XSocket.h"
+
 #include <stdlib.h>
 #include <sys/ioctl.h>
 #include <time.h>
-
-#include "channels/ChannelManager.h"
-
-#include "Streamer.h"
-#include "utils/XSocket.h"
-#include "vnsi/net/VNSICommand.h"
-#include "vnsi/net/ResponsePacket.h"
-#include "VideoBuffer.h"
-#include "devices/DeviceManager.h"
-#include "timers/Timers.h"
-#include "recordings/Recordings.h"
-#include "settings/Settings.h"
 
 namespace VDR
 {
@@ -420,8 +420,8 @@ void cLiveStreamer::sendSignalInfo()
       return;
     }
 
-    resp->add_String(*cString::sprintf("Unknown"));
-    resp->add_String(*cString::sprintf("Unknown"));
+    resp->add_String(StringUtils::Format("Unknown"));
+    resp->add_String(StringUtils::Format("Unknown"));
     resp->add_U32(0);
     resp->add_U32(0);
     resp->add_U32(0);
@@ -439,8 +439,8 @@ void cLiveStreamer::sendSignalInfo()
     {
       for (int i = 0; i < 8; i++)
       {
-        m_DeviceString = cString::sprintf("/dev/video%d", i);
-        m_Frontend = open(m_DeviceString, O_RDONLY | O_NONBLOCK);
+        m_DeviceString = StringUtils::Format("/dev/video%d", i);
+        m_Frontend = open(m_DeviceString.c_str(), O_RDONLY | O_NONBLOCK);
         if (m_Frontend >= 0)
         {
           if (ioctl(m_Frontend, VIDIOC_QUERYCAP, &m_vcap) < 0)
@@ -467,7 +467,7 @@ void cLiveStreamer::sendSignalInfo()
         delete resp;
         return;
       }
-      resp->add_String(*cString::sprintf("Analog #%s - %s (%s)", *m_DeviceString, (char *) m_vcap.card, m_vcap.driver));
+      resp->add_String(StringUtils::Format("Analog #%s - %s (%s)", m_DeviceString.c_str(), (char*)m_vcap.card, m_vcap.driver));
       resp->add_String("");
       resp->add_U32(0);
       resp->add_U32(0);
@@ -483,8 +483,8 @@ void cLiveStreamer::sendSignalInfo()
   {
     if (m_Frontend < 0)
     {
-      m_DeviceString = cString::sprintf(FRONTEND_DEVICE, m_Device->CardIndex(), 0);
-      m_Frontend = open(m_DeviceString, O_RDONLY | O_NONBLOCK);
+      m_DeviceString = StringUtils::Format(FRONTEND_DEVICE, m_Device->CardIndex(), 0);
+      m_Frontend = open(m_DeviceString.c_str(), O_RDONLY | O_NONBLOCK);
       if (m_Frontend >= 0)
       {
         if (ioctl(m_Frontend, FE_GET_INFO, &m_FrontendInfo) < 0)
@@ -529,16 +529,16 @@ void cLiveStreamer::sendSignalInfo()
       switch (m_Channel->Source() & cSource::st_Mask)
       {
         case cSource::stSat:
-          resp->add_String(*cString::sprintf("DVB-S%s #%d - %s", (m_FrontendInfo.caps & 0x10000000) ? "2" : "",  m_Device->CardIndex(), m_FrontendInfo.name));
+          resp->add_String(StringUtils::Format("DVB-S%s #%d - %s", (m_FrontendInfo.caps & 0x10000000) ? "2" : "",  m_Device->CardIndex(), m_FrontendInfo.name));
           break;
         case cSource::stCable:
-          resp->add_String(*cString::sprintf("DVB-C #%d - %s", m_Device->CardIndex(), m_FrontendInfo.name));
+          resp->add_String(StringUtils::Format("DVB-C #%d - %s", m_Device->CardIndex(), m_FrontendInfo.name));
           break;
         case cSource::stTerr:
-          resp->add_String(*cString::sprintf("DVB-T #%d - %s", m_Device->CardIndex(), m_FrontendInfo.name));
+          resp->add_String(StringUtils::Format("DVB-T #%d - %s", m_Device->CardIndex(), m_FrontendInfo.name));
           break;
       }
-      resp->add_String(*cString::sprintf("%s:%s:%s:%s:%s", (status & FE_HAS_LOCK) ? "LOCKED" : "-", (status & FE_HAS_SIGNAL) ? "SIGNAL" : "-", (status & FE_HAS_CARRIER) ? "CARRIER" : "-", (status & FE_HAS_VITERBI) ? "VITERBI" : "-", (status & FE_HAS_SYNC) ? "SYNC" : "-"));
+      resp->add_String(StringUtils::Format("%s:%s:%s:%s:%s", (status & FE_HAS_LOCK) ? "LOCKED" : "-", (status & FE_HAS_SIGNAL) ? "SIGNAL" : "-", (status & FE_HAS_CARRIER) ? "CARRIER" : "-", (status & FE_HAS_VITERBI) ? "VITERBI" : "-", (status & FE_HAS_SYNC) ? "SYNC" : "-"));
       resp->add_U32(fe_snr);
       resp->add_U32(fe_signal);
       resp->add_U32(fe_ber);
@@ -564,22 +564,22 @@ void cLiveStreamer::sendStreamStatus()
   if (error & ERROR_PES_SCRAMBLE)
   {
     isyslog("Channel: scrambled %d", error);
-    resp->add_String(cString::sprintf("Channel: scrambled (%d)", error));
+    resp->add_String(StringUtils::Format("Channel: scrambled (%d)", error));
   }
   else if (error & ERROR_PES_STARTCODE)
   {
     isyslog("Channel: startcode %d", error);
-    resp->add_String(cString::sprintf("Channel: encrypted? (%d)", error));
+    resp->add_String(StringUtils::Format("Channel: encrypted? (%d)", error));
   }
   else if (error & ERROR_DEMUX_NODATA)
   {
     isyslog("Channel: no data %d", error);
-    resp->add_String(cString::sprintf("Channel: no data"));
+    resp->add_String(StringUtils::Format("Channel: no data"));
   }
   else
   {
     isyslog("Channel: unknown error %d", error);
-    resp->add_String(cString::sprintf("Channel: unknown error (%d)", error));
+    resp->add_String(StringUtils::Format("Channel: unknown error (%d)", error));
   }
 
   resp->finaliseStream();

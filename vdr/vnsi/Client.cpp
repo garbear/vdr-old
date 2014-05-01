@@ -42,6 +42,7 @@
 #include "settings/Settings.h"
 #include "timers/Timers.h"
 #include "utils/CommonMacros.h"
+#include "utils/StringUtils.h"
 #include "utils/TimeUtils.h"
 
 #include <map>
@@ -957,7 +958,7 @@ bool cVNSIClient::processCHANNELS_GetChannels() /* OPCODE 63 */
   bool radio = m_req->extract_U32();
   bool filter = m_req->extract_U8();
 
-  cString caids;
+  std::string caids;
   int caid;
   int caid_idx;
 
@@ -985,10 +986,10 @@ bool cVNSIClient::processCHANNELS_GetChannels() /* OPCODE 63 */
     caids = "caids:";
     while((caid = channel->GetCaId(caid_idx)) != 0)
     {
-      caids = cString::sprintf("%s%d;", (const char*)caids, caid);
+      caids.append(StringUtils::Format("%d;", caid));
       caid_idx++;
     }
-    m_resp->add_String((const char*)caids);
+    m_resp->add_String(caids);
   }
 
   m_resp->finalise();
@@ -1621,7 +1622,7 @@ bool cVNSIClient::processRECORDINGS_Rename() /* OPCODE 103 */
 
 bool cVNSIClient::processRECORDINGS_Delete() /* OPCODE 104 */
 {
-  cString recName;
+  std::string recName;
   cRecording* recording = NULL;
 
   uint32_t uid = m_req->extract_U32();
@@ -1655,7 +1656,7 @@ bool cVNSIClient::processRECORDINGS_Delete() /* OPCODE 104 */
   }
   else
   {
-    esyslog("Error in recording name \"%s\"", (const char*)recName);
+    esyslog("Error in recording name \"%s\"", recName.c_str()); // TODO: This variable is never set?
     m_resp->add_U32(VNSI_RET_DATAUNKNOWN);
   }
 
@@ -1667,7 +1668,7 @@ bool cVNSIClient::processRECORDINGS_Delete() /* OPCODE 104 */
 
 bool cVNSIClient::processRECORDINGS_GetEdl() /* OPCODE 105 */
 {
-  cString recName;
+  std::string recName; // TODO: This variable is unused?
   cRecording* recording = NULL;
 
   uint32_t uid = m_req->extract_U32();

@@ -12,6 +12,7 @@
 #include "DateTime.h"
 #include "I18N.h"
 #include "StringUtils.h"
+#include "Timer.h"
 #include "UTF8Utils.h"
 #include "filesystem/Directory.h"
 #include "filesystem/Poller.h"
@@ -204,7 +205,7 @@ char *compactspace(char *s)
   return s;
 }
 
-cString strescape(const char *s, const char *chars)
+string strescape(const char *s, const char *chars)
 {
   char *buffer;
   const char *p = s;
@@ -224,7 +225,7 @@ cString strescape(const char *s, const char *chars)
         }
   if (t)
      *t = 0;
-  return cString(s, t != NULL);
+  return s;
 }
 
 bool startswith(const char *s, const char *p)
@@ -326,23 +327,6 @@ double atod(const char *s)
      }
   else
      return atof(s);
-}
-
-cString dtoa(double d, const char *Format)
-{
-  static const lconv *loc = localeconv();
-  char buf[16];
-  snprintf(buf, sizeof(buf), Format, d);
-  if (*loc->decimal_point != DECIMAL_POINT_C)
-     strreplace(buf, *loc->decimal_point, DECIMAL_POINT_C);
-  return buf;
-}
-
-cString itoa(int n)
-{
-  char buf[16];
-  snprintf(buf, sizeof(buf), "%d", n);
-  return buf;
 }
 
 bool MakeDirs(const std::string& strFileName, bool IsDirectory)
@@ -544,142 +528,6 @@ off_t FileSize(const std::string& strFileName)
   if (stat(strFileName.c_str(), &fs) == 0)
      return fs.st_size;
   return -1;
-}
-
-// --- cTimeMs ---------------------------------------------------------------
-
-cTimeMs::cTimeMs(int Ms)
-{
-  if (Ms >= 0)
-     Set(Ms);
-  else
-     begin = 0;
-}
-
-uint64_t cTimeMs::Now(void)
-{
-#if _POSIX_TIMERS > 0 && defined(_POSIX_MONOTONIC_CLOCK)
-#define MIN_RESOLUTION 5 // ms
-  static bool initialized = false;
-  static bool monotonic = false;
-  struct timespec tp;
-  if (!initialized) {
-     // check if monotonic timer is available and provides enough accurate resolution:
-     if (clock_getres(CLOCK_MONOTONIC, &tp) == 0) {
-        long Resolution = tp.tv_nsec;
-        // require a minimum resolution:
-        if (tp.tv_sec == 0 && tp.tv_nsec <= MIN_RESOLUTION * 1000000) {
-           if (clock_gettime(CLOCK_MONOTONIC, &tp) == 0) {
-              dsyslog("cTimeMs: using monotonic clock (resolution is %ld ns)", Resolution);
-              monotonic = true;
-              }
-           else
-              esyslog("cTimeMs: clock_gettime(CLOCK_MONOTONIC) failed");
-           }
-        else
-           dsyslog("cTimeMs: not using monotonic clock - resolution is too bad (%ld s %ld ns)", tp.tv_sec, tp.tv_nsec);
-        }
-     else
-        esyslog("cTimeMs: clock_getres(CLOCK_MONOTONIC) failed");
-     initialized = true;
-     }
-  if (monotonic) {
-     if (clock_gettime(CLOCK_MONOTONIC, &tp) == 0)
-        return (uint64_t(tp.tv_sec)) * 1000 + tp.tv_nsec / 1000000;
-     esyslog("cTimeMs: clock_gettime(CLOCK_MONOTONIC) failed");
-     monotonic = false;
-     // fall back to gettimeofday()
-     }
-#else
-#  warning Posix monotonic clock not available
-#endif
-  struct timeval t;
-  if (gettimeofday(&t, NULL) == 0)
-     return (uint64_t(t.tv_sec)) * 1000 + t.tv_usec / 1000;
-  return 0;
-}
-
-void cTimeMs::Set(int Ms)
-{
-  begin = Now() + Ms;
-}
-
-bool cTimeMs::TimedOut(void)
-{
-  return Now() >= begin;
-}
-
-uint64_t cTimeMs::Elapsed(void)
-{
-  return Now() - begin;
-}
-
-// --- cString ---------------------------------------------------------------
-
-cString::cString(const char *S, bool TakePointer)
-{
-  s = TakePointer ? (char *)S : S ? strdup(S) : NULL;
-}
-
-cString::cString(const cString &String)
-{
-  s = String.s ? strdup(String.s) : NULL;
-}
-
-cString::~cString()
-{
-  free(s);
-}
-
-cString &cString::operator=(const cString &String)
-{
-  if (this == &String)
-     return *this;
-  free(s);
-  s = String.s ? strdup(String.s) : NULL;
-  return *this;
-}
-
-cString &cString::operator=(const char *String)
-{
-  if (s == String)
-    return *this;
-  free(s);
-  s = String ? strdup(String) : NULL;
-  return *this;
-}
-
-cString &cString::Truncate(int Index)
-{
-  int l = strlen(s);
-  if (Index < 0)
-     Index = l + Index;
-  if (Index >= 0 && Index < l)
-     s[Index] = 0;
-  return *this;
-}
-
-cString cString::sprintf(const char *fmt, ...)
-{
-  va_list ap;
-  va_start(ap, fmt);
-  char *buffer;
-  if (!fmt || vasprintf(&buffer, fmt, ap) < 0) {
-     esyslog("error in vasprintf('%s', ...)", fmt);
-     buffer = strdup("???");
-     }
-  va_end(ap);
-  return cString(buffer, true);
-}
-
-cString cString::vsprintf(const char *fmt, va_list &ap)
-{
-  char *buffer;
-  if (!fmt || vasprintf(&buffer, fmt, ap) < 0) {
-     esyslog("error in vasprintf('%s', ...)", fmt);
-     buffer = strdup("???");
-     }
-  return cString(buffer, true);
 }
 
 bool GetSubDirectories(const string &strDirectory, vector<string> &vecFileNames)

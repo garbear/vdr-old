@@ -20,23 +20,6 @@
 namespace VDR
 {
 
-class cString {
-private:
-  char *s;
-public:
-  cString(const char *S = NULL, bool TakePointer = false);
-  cString(const cString &String);
-  virtual ~cString();
-  operator const void * () const { return s; } // to catch cases where operator*() should be used
-  operator const char * () const { return s; } // for use in (const char *) context
-  const char * operator*() const { return s; } // for use in (const void *) context (printf() etc.)
-  cString &operator=(const cString &String);
-  cString &operator=(const char *String);
-  cString &Truncate(int Index); ///< Truncate the string at the given Index (if Index is < 0 it is counted from the end of the string).
-  static cString sprintf(const char *fmt, ...) __attribute__ ((format (printf, 1, 2)));
-  static cString vsprintf(const char *fmt, va_list &ap);
-  };
-
 ssize_t safe_read(int filedes, void *buffer, size_t size);
 ssize_t safe_write(int filedes, const void *buffer, size_t size);
 void writechar(int filedes, char c);
@@ -59,7 +42,7 @@ inline char *skipspace(const char *s)
 char *stripspace(char *s);
 void stripspace(std::string& s);
 char *compactspace(char *s);
-cString strescape(const char *s, const char *chars);
+std::string strescape(const char *s, const char *chars);
 bool startswith(const char *s, const char *p);
 bool endswith(const char *s, const char *p);
 bool isempty(const char *s);
@@ -78,11 +61,6 @@ double atod(const char *s);
     ///< Converts the given string, which is a floating point number using a '.' as
     ///< the decimal point, to a double value, independent of the currently selected
     ///< locale.
-cString dtoa(double d, const char *Format = "%f");
-    ///< Converts the given double value to a string, making sure it uses a '.' as
-    ///< the decimal point, independent of the currently selected locale.
-    ///< If Format is given, it will be used instead of the default.
-cString itoa(int n);
 std::string AddDirectory(const std::string& strDirName, const std::string& strFileName);
 bool MakeDirs(const std::string& strFileName, bool IsDirectory = false);
 bool RemoveEmptyDirectories(const std::string& strDirName, bool RemoveThis = false, const char *IgnoreFiles[] = NULL);
@@ -97,20 +75,6 @@ bool SpinUpDisk(const std::string& strFileName);
 void TouchFile(const std::string& strFileName);
 time_t LastModifiedTime(const std::string& strFileName);
 off_t FileSize(const std::string& strFileName); ///< returns the size of the given file, or -1 in case of an error (e.g. if the file doesn't exist)
-
-class cTimeMs {
-private:
-  uint64_t begin;
-public:
-  cTimeMs(int Ms = 0);
-      ///< Creates a timer with ms resolution and an initial timeout of Ms.
-      ///< If Ms is negative the timer is not initialized with the current
-      ///< time.
-  static uint64_t Now(void);
-  void Set(int Ms = 0);
-  bool TimedOut(void);
-  uint64_t Elapsed(void);
-  };
 
 inline int CompareStrings(const void *a, const void *b)
 {

@@ -20,11 +20,13 @@
 
 #pragma once
 
-#include "utils/Tools.h"
+#include "utils/Timer.h"
 
 #include <stdint.h>
 #include <stdlib.h>
+#include <string>
 #include <sys/types.h>
+#include <time.h>
 
 namespace VDR
 {

@@ -17,6 +17,7 @@
 #include "recordings/marks/Mark.h"
 
 #include <stdint.h>
+#include <string>
 
 namespace VDR
 {
@@ -124,7 +125,7 @@ public:
   virtual const cRecording *GetRecording(void);
          ///< Returns the cRecording that is currently being replayed, or NULL if
          ///< this player is not playing a cRecording.
-  virtual cString GetHeader(void);
+  virtual std::string GetHeader(void);
          ///< This can be used by players that don't play a cRecording, but rather
          ///< do something completely different. The resulting string may be used by
          ///< skins as a last resort, in case they want to display the state of the

@@ -20,6 +20,7 @@
 #include "I18N.h"
 #include "Tools.h"
 #include "utils/log/Log.h"
+#include "utils/StringUtils.h"
 
 #include <algorithm>
 #include <ctype.h>
@@ -73,7 +74,7 @@ const char *LanguageCodeList[] = {
   NULL
   };
 
-static cString I18nLocaleDir;
+static string I18nLocaleDir;
 
 static vector<string> LanguageLocales;
 static vector<string> LanguageNames;
@@ -116,13 +117,13 @@ void I18nInitialize(const char *LocaleDir)
   LanguageNames.push_back(SkipContext(LanguageName));
   LanguageCodes.push_back(LanguageCodeList[0]);
   textdomain("vdr");
-  bindtextdomain("vdr", I18nLocaleDir);
+  bindtextdomain("vdr", I18nLocaleDir.c_str());
   vector<string> Locales;
-  if (GetSubDirectories(*I18nLocaleDir, Locales)) {
+  if (GetSubDirectories(I18nLocaleDir.c_str(), Locales)) {
      char *OldLocale = strdup(setlocale(LC_MESSAGES, NULL));
      for (vector<string>::const_iterator it = Locales.begin(); it != Locales.end(); ++it) {
-         cString FileName = cString::sprintf("%s/%s/LC_MESSAGES/vdr.mo", *I18nLocaleDir, it->c_str());
-         if (access(FileName, F_OK) == 0) { // found a locale with VDR texts
+         string FileName = StringUtils::Format("%s/%s/LC_MESSAGES/vdr.mo", I18nLocaleDir.c_str(), it->c_str());
+         if (access(FileName.c_str(), F_OK) == 0) { // found a locale with VDR texts
             if (NumLocales < I18N_MAX_LANGUAGES - 1) {
                SetEnvLanguage(it->c_str());
                const char *TranslatedLanguageName = gettext(LanguageName);
@@ -150,7 +151,7 @@ void I18nInitialize(const char *LocaleDir)
          }
      SetEnvLanguage(LanguageLocales[CurrentLanguage].c_str());
      free(OldLocale);
-     dsyslog("found %d locales in %s", NumLocales - 1, *I18nLocaleDir);
+     dsyslog("found %d locales in %s", NumLocales - 1, I18nLocaleDir.c_str());
      }
   // Prepare any known language codes for which there was no locale:
   for (const char **lc = LanguageCodeList; *lc; lc++) {
@@ -172,8 +173,8 @@ void I18nInitialize(const char *LocaleDir)
 
 void I18nRegister(const char *Plugin)
 {
-  cString Domain = cString::sprintf("vdr-%s", Plugin);
-  bindtextdomain(Domain, I18nLocaleDir);
+  string Domain = StringUtils::Format("vdr-%s", Plugin);
+  bindtextdomain(Domain.c_str(), I18nLocaleDir.c_str());
 }
 
 void I18nSetLocale(const char *Locale)
