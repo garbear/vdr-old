@@ -20,9 +20,8 @@
  *
  */
 
-#include "utils/CommonIncludes.h"
-
 #include "XTimeUtils.h"
+#include "CommonMacros.h"
 
 #if defined(TARGET_DARWIN)
 #include "threads/Atomics.h"

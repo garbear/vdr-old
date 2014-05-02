@@ -25,6 +25,7 @@
 #include <float.h>
 #include <math.h>
 #include <stddef.h>
+#include <stdlib.h>
 
 #define KILOBYTE(n) ((n) * 1024)
 #define MEGABYTE(n) ((n) * 1024LL * 1024LL)
@@ -40,8 +41,24 @@
 
 #define BCDCHARTOINT(x) (10 * ((x & 0xF0) >> 4) + (x & 0xF))
 
+#if defined(TARGET_ANDROID)
+#include <time64.h>
+#define vdr_time_gm(x) timegm64(x)
+#define vdr_realpath(x) realpath(x, NULL)
+#else
+#include <time.h>
+#define vdr_time_gm(x)  timegm(x)
+#define vdr_realpath(x) canonicalize_file_name(x)
+#endif
+
 namespace VDR
 {
+
+#if defined(TARGET_ANDROID)
+typedef time64_t vdr_time_t;
+#else
+typedef time_t vdr_time_t;
+#endif
 
 inline int BCD2INT(int x)
 {
