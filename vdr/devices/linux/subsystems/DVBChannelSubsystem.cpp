@@ -74,7 +74,7 @@ bool cDvbChannelSubsystem::ProvidesTransponder(const cChannel &channel) const
   cDvbTransponderParams dtp(channel.Parameters());
 
   // requires modulation system which frontend doesn't provide - return false in these cases
-  if (!ProvidesDeliverySystem(cDvbTuner::GetRequiredDeliverySystem(channel, &dtp))) return false;
+  if (!ProvidesDeliverySystem(cDvbTuner::GetRequiredDeliverySystem(channel))) return false;
   if (dtp.StreamId()   != 0        && !GetDevice<cDvbDevice>()->m_dvbTuner.HasCapability((fe_caps)FE_CAN_MULTISTREAM)) return false;
   if (dtp.Modulation() == QPSK     && !GetDevice<cDvbDevice>()->m_dvbTuner.HasCapability(FE_CAN_QPSK))        return false;
   if (dtp.Modulation() == QAM_16   && !GetDevice<cDvbDevice>()->m_dvbTuner.HasCapability(FE_CAN_QAM_16))      return false;
@@ -116,7 +116,7 @@ bool cDvbChannelSubsystem::ProvidesChannel(const cChannel &channel, int priority
           {
             if (CommonInterface()->CamSlot() && channel.GetCaId(0) >= CA_ENCRYPTED_MIN)
             {
-              if (CommonInterface()->CamSlot()->CanDecrypt(&channel))
+              if (CommonInterface()->CamSlot()->CanDecrypt(channel))
                 result = true;
               else
                 needsDetachReceivers = true;
@@ -164,7 +164,7 @@ bool cDvbChannelSubsystem::ProvidesEIT() const
 
 unsigned int cDvbChannelSubsystem::NumProvidedSystems() const
 {
-  return GetDevice<cDvbDevice>()->m_dvbTuner.m_deliverySystems.size() + GetDevice<cDvbDevice>()->m_dvbTuner.m_numModulations;
+  return GetDevice<cDvbDevice>()->m_dvbTuner.DeliverySystemCount() + GetDevice<cDvbDevice>()->m_dvbTuner.ModulationCount();
 }
 
 int cDvbChannelSubsystem::SignalStrength() const
@@ -181,18 +181,14 @@ int cDvbChannelSubsystem::SignalQuality() const
   return -1;
 }
 
-const cChannel *cDvbChannelSubsystem::GetCurrentlyTunedTransponder() const
+ChannelPtr cDvbChannelSubsystem::GetCurrentlyTunedTransponder() const
 {
-  if (GetDevice<cDvbDevice>()->m_dvbTuner.IsOpen())
-    return &GetDevice<cDvbDevice>()->m_dvbTuner.GetTransponder();
-  return NULL;
+  return GetDevice<cDvbDevice>()->m_dvbTuner.GetTransponder();
 }
 
 bool cDvbChannelSubsystem::IsTunedToTransponder(const cChannel &channel) const
 {
-  if (GetDevice<cDvbDevice>()->m_dvbTuner.IsOpen())
-    return GetDevice<cDvbDevice>()->m_dvbTuner.IsTunedTo(channel);
-  return false;
+  return GetDevice<cDvbDevice>()->m_dvbTuner.IsTunedTo(channel);
 }
 
 bool cDvbChannelSubsystem::MaySwitchTransponder(const cChannel &channel) const
@@ -201,18 +197,14 @@ bool cDvbChannelSubsystem::MaySwitchTransponder(const cChannel &channel) const
       cDeviceChannelSubsystem::MaySwitchTransponder(channel);
 }
 
-bool cDvbChannelSubsystem::HasLock(bool bWait) const
+bool cDvbChannelSubsystem::HasLock(void) const
 {
-  if (GetDevice<cDvbDevice>()->m_dvbTuner.IsOpen())
-    return GetDevice<cDvbDevice>()->m_dvbTuner.HasLock(bWait);
-  return false;
+  return GetDevice<cDvbDevice>()->m_dvbTuner.HasLock();
 }
 
-bool cDvbChannelSubsystem::SetChannelDevice(const cChannel &channel)
+bool cDvbChannelSubsystem::SetChannelDevice(const ChannelPtr& channel)
 {
-  if (GetDevice<cDvbDevice>()->m_dvbTuner.IsOpen())
-    GetDevice<cDvbDevice>()->m_dvbTuner.SetChannel(channel);
-  return true;
+  return GetDevice<cDvbDevice>()->m_dvbTuner.SwitchChannel(channel);
 }
 
 }

@@ -1944,24 +1944,24 @@ void cCamSlot::AddChannel(const cChannel& Channel)
 
 #define QUERY_REPLY_WAIT  100 // ms to wait between checks for a reply
 
-bool cCamSlot::CanDecrypt(const cChannel *Channel)
+bool cCamSlot::CanDecrypt(const cChannel& channel)
 {
-  if (Channel->GetCaId(0) < CA_ENCRYPTED_MIN)
+  if (channel.GetCaId(0) < CA_ENCRYPTED_MIN)
      return true; // channel not encrypted
   if (!IsDecrypting())
      return true; // any CAM can decrypt at least one channel
   CLockObject lock(mutex);
   cCiConditionalAccessSupport *cas = (cCiConditionalAccessSupport *)GetSessionByResourceId(RI_CONDITIONAL_ACCESS_SUPPORT);
   if (cas && cas->RepliesToQuery()) {
-     cCiCaPmt CaPmt(CPCI_QUERY, Channel->Source(), Channel->TransponderFrequency(), Channel->GetSid(), GetCaSystemIds());
+     cCiCaPmt CaPmt(CPCI_QUERY, channel.Source(), channel.TransponderFrequency(), channel.GetSid(), GetCaSystemIds());
      CaPmt.SetListManagement(CPLM_ADD); // WORKAROUND: CPLM_ONLY doesn't work with Alphacrypt 3.09 (deletes existing CA_PMTs)
 
-     CaPmt.AddPid(Channel->GetVideoStream().vpid, STREAM_TYPE_VIDEO);
-     for (vector<AudioStream>::const_iterator it = Channel->GetAudioStreams().begin(); it != Channel->GetAudioStreams().end(); ++it)
+     CaPmt.AddPid(channel.GetVideoStream().vpid, STREAM_TYPE_VIDEO);
+     for (vector<AudioStream>::const_iterator it = channel.GetAudioStreams().begin(); it != channel.GetAudioStreams().end(); ++it)
        CaPmt.AddPid(it->apid, STREAM_TYPE_AUDIO);
-     for (vector<DataStream>::const_iterator it = Channel->GetDataStreams().begin(); it != Channel->GetDataStreams().end(); ++it)
+     for (vector<DataStream>::const_iterator it = channel.GetDataStreams().begin(); it != channel.GetDataStreams().end(); ++it)
        CaPmt.AddPid(it->dpid, STREAM_TYPE_PRIVATE);
-     for (vector<SubtitleStream>::const_iterator it = Channel->GetSubtitleStreams().begin(); it != Channel->GetSubtitleStreams().end(); ++it)
+     for (vector<SubtitleStream>::const_iterator it = channel.GetSubtitleStreams().begin(); it != channel.GetSubtitleStreams().end(); ++it)
        CaPmt.AddPid(it->spid, STREAM_TYPE_PRIVATE);
 
      cas->SendPMT(&CaPmt);

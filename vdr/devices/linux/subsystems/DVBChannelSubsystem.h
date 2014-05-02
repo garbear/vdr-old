@@ -44,16 +44,16 @@ public:
   virtual unsigned int NumProvidedSystems() const;
   virtual int SignalStrength() const;
   virtual int SignalQuality() const;
-  virtual const cChannel *GetCurrentlyTunedTransponder() const;
+  virtual ChannelPtr GetCurrentlyTunedTransponder() const;
   virtual bool IsTunedToTransponder(const cChannel &channel) const;
   virtual bool MaySwitchTransponder(const cChannel &channel) const;
   bool SwitchChannel(const cChannel &channel, bool bLiveView);
   void ForceTransferMode();
   unsigned int Occupied() const;
   void SetOccupied(unsigned int seconds);
-  virtual bool HasLock(bool bWait) const;
+  virtual bool HasLock(void) const;
 
 protected:
-  virtual bool SetChannelDevice(const cChannel &channel);
+  virtual bool SetChannelDevice(const ChannelPtr& channel);
 };
 }

@@ -75,29 +75,32 @@ bool cDeviceChannelSubsystem::MaySwitchTransponder(const cChannel &channel) cons
   return false;
 }
 
-bool cDeviceChannelSubsystem::SwitchChannel(ChannelPtr channel)
+bool cDeviceChannelSubsystem::SwitchChannel(const ChannelPtr& channel)
 {
-  for (int i = 3; i--; )
+  cStatus::MsgChannelSwitch(Device(), 0);
+
+  // Stop section handling
+  SectionFilter()->StopSectionHandler();
+
+  // Tell the camSlot about the channel switch and add all PIDs of this
+  // channel to it, for possible later decryption
+  if (CommonInterface()->m_camSlot)
+    CommonInterface()->m_camSlot->AddChannel(*channel);
+
+  if (SetChannelDevice(channel))
   {
-    switch (SetChannel(channel))
-    {
-    case scrOk:
-      return true;
-    case scrNotAvailable:
-      esyslog(tr("Channel not available!"));
-      return false;
-    case scrNoTransfer:
-      esyslog(tr("Can't start Transfer Mode!"));
-      return false;
-    case scrFailed:
-      esyslog("Tuning failed");
-      break; // loop will retry
-    default:
-      esyslog("ERROR: invalid return value from SetChannel");
-      break;
-    }
-    esyslog("retrying");
+    // Start section handling
+    SectionFilter()->StartSectionHandler();
+
+    // Start decrypting any PIDs that might have been set in SetChannelDevice():
+    if (CommonInterface()->m_camSlot)
+      CommonInterface()->m_camSlot->StartDecrypting();
+
+    cStatus::MsgChannelSwitch(Device(), channel->Number());
+
+    return true;
   }
+
   return false;
 }
 
@@ -115,63 +118,6 @@ void cDeviceChannelSubsystem::SetOccupied(unsigned int seconds)
 bool cDeviceChannelSubsystem::HasProgramme() const
 {
   return Player()->Replaying() || PID()->m_pidHandles[ptAudio].pid || PID()->m_pidHandles[ptVideo].pid;
-}
-
-eSetChannelResult cDeviceChannelSubsystem::SetChannel(ChannelPtr channel)
-{
-  cStatus::MsgChannelSwitch(Device(), 0);
-
-  cDevice *device = Device();
-
-  bool NeedsTransferMode = (device != Device());
-
-  eSetChannelResult Result = scrOk;
-
-  // If this DVB card can't receive this channel, let's see if we can
-  // use the card that actually can receive it and transfer data from there:
-
-  if (NeedsTransferMode)
-  {
-    if (device && Player()->CanReplay())
-    {
-      if (device->Channel()->SetChannel(channel) == scrOk) // calling SetChannel() directly, not SwitchChannel()!
-        cControl::Launch(new cTransferControl(device, channel));
-      else
-        Result = scrNoTransfer;
-    }
-    else
-      Result = scrNotAvailable;
-  }
-  else
-  {
-    //cChannelManager::Get().Lock(false); // TODO
-
-    // Stop section handling
-    SectionFilter()->StopSectionHandler();
-
-    // Tell the camSlot about the channel switch and add all PIDs of this
-    // channel to it, for possible later decryption
-    if (CommonInterface()->m_camSlot)
-      CommonInterface()->m_camSlot->AddChannel(*channel);
-
-    if (SetChannelDevice(*channel))
-    {
-      // Start section handling
-      SectionFilter()->StartSectionHandler();
-
-      // Start decrypting any PIDs that might have been set in SetChannelDevice():
-      if (CommonInterface()->m_camSlot)
-        CommonInterface()->m_camSlot->StartDecrypting();
-    }
-    else
-      Result = scrFailed;
-    //cChannelManager::Get().Unlock(); // TODO
-  }
-
-  if (Result == scrOk)
-    cStatus::MsgChannelSwitch(Device(), channel->Number()); // only report status if channel switch successful
-
-  return Result;
 }
 
 }

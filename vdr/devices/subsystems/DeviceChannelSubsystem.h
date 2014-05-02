@@ -20,19 +20,13 @@
  */
 #pragma once
 
+#include "channels/Channel.h" // For cChannel::EmptyChannel
 #include "channels/ChannelTypes.h"
 #include "devices/DeviceSubsystem.h"
 #include "Config.h" // For IDLEPRIORITY
 
 namespace VDR
 {
-enum eSetChannelResult
-{
-  scrOk,
-  scrNotAvailable,
-  scrNoTransfer,
-  scrFailed
-};
 
 class cDeviceChannelSubsystem : protected cDeviceSubsystem
 {
@@ -112,7 +106,7 @@ public:
    * \return A local copy of one of the channels in the global cChannels list.
    *         May be NULL if the device is not tuned to any transponder.
    */
-  virtual const cChannel *GetCurrentlyTunedTransponder() const { return NULL; }
+  virtual ChannelPtr GetCurrentlyTunedTransponder() const { return cChannel::EmptyChannel; }
 
   /*!
    * \brief Returns true if this device is currently tuned to the given Channel's transponder
@@ -127,10 +121,11 @@ public:
   virtual bool MaySwitchTransponder(const cChannel &channel) const;
 
   /*!
-   * \brief Switches the device to the given Channel, initiating transfer mode
-   *        if necessary.
+   * \brief Switches the device to the given Channel (actual physical setup).
+   *        Blocks until the channel is successfully set or the action fails
+   *        (perhaps due to a timeout).
    */
-  bool SwitchChannel(ChannelPtr channel);
+  bool SwitchChannel(const ChannelPtr& channel);
 
   /*!
    * \brief Returns the number of seconds this device is still occupied for
@@ -154,7 +149,7 @@ public:
    * \return Default is true, a specific device implementation may return false
    *         to indicate that it is not ready yet.
    */
-  virtual bool HasLock(bool bWait) const { return true; }
+  virtual bool HasLock(void) const { return true; }
 
   /*!
    * \brief Returns true if the device is currently showing any programme to the
@@ -164,16 +159,13 @@ public:
 
 protected:
   /*!
-   * \brief Sets the device to the given channel (actual physical setup)
+   * \brief Sets the device to the given channel (actual physical setup). Blocks
+   *        until the channel is successfully set or the action fails (perhaps
+   *        due to a timeout).
    */
-  virtual bool SetChannelDevice(const cChannel &channel) { return false; }
+  virtual bool SetChannelDevice(const ChannelPtr& channel) { return false; }
 
 private:
-  /*!
-   * \brief Sets the device to the given channel (general setup)
-   */
-  eSetChannelResult SetChannel(ChannelPtr Channel);
-
   time_t     m_occupiedTimeout;
 };
 }

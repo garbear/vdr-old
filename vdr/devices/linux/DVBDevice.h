@@ -34,7 +34,6 @@
 
 namespace VDR
 {
-//#define MAXDVBDEVICES      8
 #define MAXDELIVERYSYSTEMS 8
 
 #define DEV_VIDEO         "/dev/video"
@@ -87,7 +86,7 @@ public:
 
   virtual bool Ready();
 
-  virtual std::string DeviceType() const;
+  virtual std::string DeviceType() const { return m_dvbTuner.DeviceType(); }
   virtual std::string DeviceName() const;
 
   /*!
@@ -144,12 +143,6 @@ public:
   bool Initialise(void);
   void Notify(const Observable &obs, const ObservableMessage msg);
 
-  /*!
-   * \brief Translate a vector of delivery system enums into a comma-separated string
-   * \return Comma-separated list of delivery systems, e.g. "ATSC,DVB-C"
-   */
-  static std::string TranslateDeliverySystems(const std::vector<fe_delivery_system>& deliverySystems);
-
 protected:
 public: // TODO
   static std::string DvbName(const char *name, unsigned int adapter, unsigned int frontend);
@@ -167,9 +160,6 @@ private:
   static cSubsystems CreateSubsystems(cDvbDevice* device);
 
   static DeviceVector FindDevicesMdev(void);
-
-  // Delivery systems translation table
-  static const char*   DeliverySystemNames[];
 
   unsigned int         m_adapter;
   unsigned int         m_frontend;

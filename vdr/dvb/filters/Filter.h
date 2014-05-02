@@ -21,6 +21,7 @@
 #pragma once
 
 #include "FilterResource.h"
+#include "channels/ChannelTypes.h"
 #include "dvb/DVBTypes.h"
 
 #include <stdint.h>
@@ -28,7 +29,6 @@
 
 namespace VDR
 {
-class cChannel; // TODO: Remove after converting to ChannelPtr (see below)
 
 class cSectionSyncer
 {
@@ -99,7 +99,7 @@ protected:
    * Get the channel that this filter's device is tuned to, or an empty pointer
    * if the device is not tuned to a channel.
    */
-  const cChannel* GetCurrentlyTunedTransponder(void) const;
+  ChannelPtr GetCurrentlyTunedTransponder(void) const;
 
 private:
   cDevice* const              m_device;    // Device that this filter belongs to

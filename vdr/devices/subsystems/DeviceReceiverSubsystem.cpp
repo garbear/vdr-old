@@ -37,9 +37,6 @@ using namespace std;
 namespace VDR
 {
 
-// activate the following line if you need it - actually the driver should be fixed!
-#define WAIT_FOR_TUNER_LOCK 0
-
 cDeviceReceiverSubsystem::cDeviceReceiverSubsystem(cDevice *device)
  : cDeviceSubsystem(device)
 {
@@ -71,13 +68,7 @@ bool cDeviceReceiverSubsystem::AttachReceiver(cReceiver *receiver)
     dsyslog("receiver %p is already attached to %p", receiver, this);
     return true;
   }
-#if WAIT_FOR_TUNER_LOCK
-  if (!Channel()->HasLock(true))
-  {
-    esyslog("ERROR: device %d has no lock, can't attach receiver!", Device()->CardIndex() + 1);
-    return false;
-  }
-#endif
+
   PLATFORM::CLockObject lock(m_mutexReceiver);
 
   if (!receiver->AddToPIDSubsystem(PID()))

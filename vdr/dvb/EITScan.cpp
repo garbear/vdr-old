@@ -168,9 +168,6 @@ bool cEITScanner::Scan(const DevicePtr& device, cScanData& scanData)
     if (!device->Channel()->SwitchChannel(channel))
       throw "Failed to scan channel: Failed to switch channels";
 
-    if (!device->Channel()->HasLock(true))
-      throw "Failed to scan channel: Tuner failed to get lock";
-
     dsyslog("EIT scan: device %d source  %-8s tp %5d", device->CardIndex(), cSource::ToString(channel->Source()).c_str(), channel->TransponderFrequency());
 
     EventVector events;

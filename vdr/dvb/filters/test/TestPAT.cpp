@@ -75,7 +75,7 @@ TEST(PAT, GetChannels)
     if (channel)
     {
       EXPECT_TRUE(device->Channel()->SwitchChannel(channel));
-      EXPECT_TRUE(device->Channel()->HasLock(true));
+      EXPECT_TRUE(device->Channel()->HasLock());
 
       cPat pat(device);
       ChannelVector channels = pat.GetChannels();

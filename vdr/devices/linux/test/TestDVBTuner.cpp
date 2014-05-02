@@ -20,10 +20,10 @@
  *
  */
 
+#include "devices/linux/DVBTuner.h"
 #include "DVBDeviceNames.h"
 #include "channels/ChannelManager.h"
 #include "devices/linux/DVBDevice.h"
-#include "devices/linux/DVBTuner.h"
 #include "devices/linux/subsystems/DVBChannelSubsystem.h"
 #include "devices/linux/test/DVBDeviceNames.h"
 #include "filesystem/SpecialProtocol.h"
@@ -37,23 +37,6 @@ using namespace std;
 
 namespace VDR
 {
-
-TEST(DvbTuner, cDvbTuner)
-{
-  DeviceVector devices = cDvbDevice::FindDevices();
-  ASSERT_FALSE(devices.empty());
-  for (DeviceVector::iterator it = devices.begin(); it != devices.end(); ++it)
-  {
-    cDvbDevice *device = dynamic_cast<cDvbDevice*>(it->get());
-    if (!device)
-      continue;
-
-    cDvbTuner& tuner = device->m_dvbTuner;
-
-    EXPECT_EQ(device->Adapter(), tuner.Adapter());
-    EXPECT_EQ(device->Frontend(), tuner.Frontend());
-  }
-}
 
 TEST(DvbTuner, Open)
 {
@@ -89,12 +72,11 @@ TEST(DvbTuner, Getters)
 
     ASSERT_TRUE(tuner.Open());
 
-    EXPECT_STRNE("", tuner.Name().c_str());
+    EXPECT_STRNE("", tuner.GetName().c_str());
+    EXPECT_EQ(SYS_UNDEFINED, tuner.FrontendType()); // Haven't set channel yet
 
-    if (cDvbDevices::IsATSC(tuner.Name()))
+    if (cDvbDevices::IsATSC(tuner.GetName()))
     {
-      EXPECT_EQ(SYS_UNDEFINED, tuner.FrontendType());
-
       EXPECT_FALSE(tuner.HasDeliverySystem(SYS_UNDEFINED));
       EXPECT_FALSE(tuner.HasDeliverySystem(SYS_DVBC_ANNEX_A));
       EXPECT_TRUE(tuner.HasDeliverySystem(SYS_DVBC_ANNEX_B));
@@ -141,16 +123,10 @@ TEST(DvbTuner, Getters)
       EXPECT_FALSE(tuner.HasCapability(FE_CAN_16VSB));
       EXPECT_FALSE(tuner.HasCapability(FE_CAN_MULTISTREAM));
       EXPECT_FALSE(tuner.HasCapability(FE_CAN_TURBO_FEC));
-      EXPECT_FALSE(tuner.HasCapability((fe_caps)FE_CAN_2G_MODULATION));
+      EXPECT_FALSE(tuner.HasCapability(FE_CAN_2G_MODULATION));
       EXPECT_FALSE(tuner.HasCapability(FE_NEEDS_BENDING));
       EXPECT_FALSE(tuner.HasCapability(FE_CAN_RECOVER));
       EXPECT_FALSE(tuner.HasCapability(FE_CAN_MUTE_TS));
-
-      EXPECT_EQ(0x0509, tuner.GetDvbApiVersion());
-    }
-    else
-    {
-      EXPECT_NE(SYS_UNDEFINED, tuner.FrontendType());
     }
   }
 }
@@ -177,14 +153,12 @@ TEST(DvbTuner, HasLock)
 
     ASSERT_TRUE(tuner.Open());
 
-    EXPECT_STRNE("", tuner.Name().c_str());
+    EXPECT_STRNE("", tuner.GetName().c_str());
 
-    EXPECT_FALSE(tuner.HasLock(false));
+    EXPECT_FALSE(tuner.HasLock());
     EXPECT_FALSE(tuner.IsTunedTo(*channel));
-    tuner.SetChannel(*channel);
-    EXPECT_FALSE(tuner.HasLock(false));
-    EXPECT_TRUE(tuner.HasLock(true));
-    EXPECT_TRUE(tuner.HasLock(true));
+    EXPECT_TRUE(tuner.SwitchChannel(channel));
+    EXPECT_TRUE(tuner.HasLock());
     EXPECT_TRUE(tuner.IsTunedTo(*channel));
   }
 }

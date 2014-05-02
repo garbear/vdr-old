@@ -100,7 +100,7 @@ TEST(PSIP_MGT, GetEvents)
       ASSERT_TRUE(channel.get());
 
       EXPECT_TRUE(device->Channel()->SwitchChannel(channel));
-      EXPECT_TRUE(device->Channel()->HasLock(true));
+      EXPECT_TRUE(device->Channel()->HasLock());
 
       cPsipMgt mgt(device);
       EXPECT_TRUE(mgt.GetPSIPData(events));

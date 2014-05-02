@@ -260,7 +260,7 @@ public:
        ///< If the source or transponder of the channel are different than
        ///< what was given in a previous call to AddChannel(), any previously
        ///< added PIDs will be cleared.
-  bool CanDecrypt(const cChannel *Channel);
+  bool CanDecrypt(const cChannel& Channel);
        ///< Returns true if there is a CAM in this slot that is able to decrypt
        ///< the given Channel (or at least claims to be able to do so).
        ///< Since the QUERY/REPLY mechanism for CAMs is pretty unreliable (some

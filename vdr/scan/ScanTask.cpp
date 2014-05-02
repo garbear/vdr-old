@@ -65,8 +65,7 @@ void cScanTask::DoWork(const ChannelPtr& channel, cSynchronousAbort* abortableJo
   if (abortableJob && abortableJob->IsAborting())
     return;
 
-  m_device->Channel()->SwitchChannel(channel);
-  if (m_device->Channel()->HasLock(true))
+  if (m_device->Channel()->SwitchChannel(channel))
   {
     cPat pat(m_device);
     ChannelVector patChannels = pat.GetChannels();

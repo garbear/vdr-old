@@ -131,7 +131,7 @@ FilterResourcePtr cDeviceSectionFilterSubsystem::OpenResource(uint16_t pid, uint
 bool cDeviceSectionFilterSubsystem::GetSection(const FilterResourceCollection& filterResources, uint16_t& pid, std::vector<uint8_t>& data)
 {
   // If we don't have a tuner lock, no sections are being received
-  if (!Channel()->HasLock(false))
+  if (!Channel()->HasLock())
     return false;
 
   // Create a new request to poll filter resources
@@ -192,7 +192,7 @@ void* cDeviceSectionFilterSubsystem::Process(void)
     if (resource && !IsStopped())
     {
       // TODO: We shouldn't lose channel lock, should we?
-      bool bDeviceHasLock = Channel()->HasLock(false);
+      bool bDeviceHasLock = Channel()->HasLock();
       if (!bDeviceHasLock)
         usleep(100 * 1000); // 100ms?
 

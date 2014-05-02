@@ -68,29 +68,6 @@ namespace VDR
 
 CMutex cDvbDevice::m_bondMutex;
 
-const char* cDvbDevice::DeliverySystemNames[] =
-{
-  "",
-  "DVB-C",
-  "DVB-C",
-  "DVB-T",
-  "DSS",
-  "DVB-S",
-  "DVB-S2",
-  "DVB-H",
-  "ISDBT",
-  "ISDBS",
-  "ISDBC",
-  "ATSC",
-  "ATSCMH",
-  "DMBTH",
-  "CMMB",
-  "DAB",
-  "DVB-T2",
-  "TURBO",
-  "DVB-C",
-};
-
 cDvbDevice::cDvbDevice(unsigned int adapter, unsigned int frontend)
  : cDevice(CreateSubsystems(this)),
    m_adapter(adapter),
@@ -306,21 +283,7 @@ bool cDvbDevice::Ready()
 
 string cDvbDevice::DeviceName() const
 {
-  return m_dvbTuner.IsOpen() ? m_dvbTuner.Name() : DvbName(DEV_DVB_FRONTEND, m_adapter, m_frontend);
-}
-
-string cDvbDevice::DeviceType() const
-{
-  if (m_dvbTuner.IsOpen())
-  {
-    if (m_dvbTuner.FrontendType() != SYS_UNDEFINED)
-      return DeliverySystemNames[m_dvbTuner.FrontendType()];
-
-    // IsOpen() implies that m_deliverySystems is not empty
-    assert(!m_dvbTuner.m_deliverySystems.empty());
-    return DeliverySystemNames[m_dvbTuner.m_deliverySystems[0]]; // To have some reasonable default
-  }
-  return "";
+  return m_dvbTuner.IsOpen() ? m_dvbTuner.GetName() : DvbName(DEV_DVB_FRONTEND, m_adapter, m_frontend);
 }
 
 bool cDvbDevice::Bond(cDvbDevice *device)
@@ -552,18 +515,6 @@ bool cDvbDevice::Initialise(void)
 void cDvbDevice::Notify(const Observable &obs, const ObservableMessage msg)
 {
   //XXX implement "CA ready"
-}
-
-string cDvbDevice::TranslateDeliverySystems(const vector<fe_delivery_system>& deliverySystems)
-{
-  vector<string> vecDeliverySystemNames;
-  for (vector<fe_delivery_system>::const_iterator it = deliverySystems.begin(); it != deliverySystems.end(); ++it)
-  {
-    fe_delivery_system ds = *it;
-    if (1 <= ds && ds < ARRAY_SIZE(DeliverySystemNames))
-      vecDeliverySystemNames.push_back(DeliverySystemNames[ds]);
-  }
-  return StringUtils::Join(vecDeliverySystemNames, ",");
 }
 
 }

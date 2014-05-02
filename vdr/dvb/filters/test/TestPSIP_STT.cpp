@@ -78,7 +78,7 @@ TEST(PSIP_STT, GetEvents)
     if (channel)
     {
       EXPECT_TRUE(device->Channel()->SwitchChannel(channel));
-      EXPECT_TRUE(device->Channel()->HasLock(true));
+      EXPECT_TRUE(device->Channel()->HasLock());
 
       cPsipStt stt(device);
       unsigned int offset = stt.GetGpsUtcOffset();

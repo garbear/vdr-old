@@ -98,7 +98,7 @@ TEST(PSIP_VCT, GetChannels)
       ASSERT_TRUE(channel.get());
 
       EXPECT_TRUE(device->Channel()->SwitchChannel(channel));
-      EXPECT_TRUE(device->Channel()->HasLock(true));
+      EXPECT_TRUE(device->Channel()->HasLock());
 
       cPsipVct vct(device);
       vctResults = vct.GetChannels();

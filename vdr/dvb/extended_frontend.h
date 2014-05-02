@@ -135,10 +135,6 @@ typedef enum fe_delivery_system {
 
 #endif
 
-#ifndef FE_CAN_2G_MODULATION
-#define FE_CAN_2G_MODULATION 0x10000000
-#endif
-
 /* since Linux DVB API v5 'struct dvb_qpsk_parameters' in frontend.h
  * is no longer able to store all information related to a
  * DVB-S frontend. Some information still missing at all in v5.
