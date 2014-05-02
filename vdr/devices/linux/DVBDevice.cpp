@@ -406,7 +406,7 @@ bool cDvbDevice::BondDevices(const std::string& bondings)
   UnBondDevices();
   if (!bondings.empty())
   {
-    cSatCableNumbers SatCableNumbers(MAXDEVICES, bondings.c_str());
+    cSatCableNumbers SatCableNumbers(MAXDEVICES, bondings);
     for (int i = 0; i < cDeviceManager::Get().NumDevices(); i++)
     {
       int d = SatCableNumbers.FirstDeviceIndex(i);
