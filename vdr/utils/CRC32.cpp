@@ -1,7 +1,7 @@
 /*
  *      Copyright (C) 1986 Gary S. Brown
- *      Copyright (C) 2013 Garrett Brown
- *      Copyright (C) 2013 Lars Op den Kamp
+ *      Copyright (C) 2013-2014 Garrett Brown
+ *      Copyright (C) 2013-2014 Lars Op den Kamp
  *      Portions Copyright (C) 2000, 2003, 2006, 2008, 2013 Klaus Schmidinger
  *
  *  This Program is free software; you can redistribute it and/or modify

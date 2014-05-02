@@ -1,6 +1,6 @@
 /*
- *      Copyright (C) 2013 Garrett Brown
- *      Copyright (C) 2013 Lars Op den Kamp
+ *      Copyright (C) 2013-2014 Garrett Brown
+ *      Copyright (C) 2013-2014 Lars Op den Kamp
  *      Portions Copyright (C) 2013 Team XBMC
  *      http://xbmc.org
  *

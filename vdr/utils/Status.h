@@ -1,14 +1,24 @@
 /*
- * status.h: Status monitoring
+ *      Copyright (C) 2013-2014 Garrett Brown
+ *      Copyright (C) 2013-2014 Lars Op den Kamp
+ *      Portions Copyright (C) 2000, 2003, 2006, 2008, 2013 Klaus Schmidinger
  *
- * See the main source file 'vdr.c' for copyright information and
- * how to reach the author.
+ *  This Program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2, or (at your option)
+ *  any later version.
  *
- * $Id: status.h 2.1 2012/03/07 14:16:57 kls Exp $
+ *  This Program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this Program; see the file COPYING. If not, see
+ *  <http://www.gnu.org/licenses/>.
+ *
  */
-
-#ifndef __STATUS_H
-#define __STATUS_H
+#pragma once
 
 #include "Config.h"
 #include "List.h"
@@ -107,5 +117,3 @@ public:
   static void MsgOsdProgramme(time_t PresentTime, const char *PresentTitle, const char *PresentSubtitle, time_t FollowingTime, const char *FollowingTitle, const char *FollowingSubtitle);
   };
 }
-
-#endif //__STATUS_H

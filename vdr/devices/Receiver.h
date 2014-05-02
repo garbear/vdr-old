@@ -1,14 +1,24 @@
 /*
- * receiver.h: The basic receiver interface
+ *      Copyright (C) 2013-2014 Garrett Brown
+ *      Copyright (C) 2013-2014 Lars Op den Kamp
+ *      Portions Copyright (C) 2000, 2003, 2006, 2008, 2013 Klaus Schmidinger
  *
- * See the main source file 'vdr.c' for copyright information and
- * how to reach the author.
+ *  This Program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2, or (at your option)
+ *  any later version.
  *
- * $Id: receiver.h 2.9 2012/09/02 09:27:20 kls Exp $
+ *  This Program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this Program; see the file COPYING. If not, see
+ *  <http://www.gnu.org/licenses/>.
+ *
  */
-
-#ifndef __RECEIVER_H
-#define __RECEIVER_H
+#pragma once
 
 #include "channels/Channel.h"
 #include "channels/ChannelID.h"
@@ -92,5 +102,3 @@ public:
   };
 
 }
-
-#endif //__RECEIVER_H
