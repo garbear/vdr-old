@@ -110,7 +110,6 @@ set(VDR_FS_SRC_XBMC
 )
 
 set(VDR_SRCS
-	vdr/Config.cpp
 	vdr/SignalHandler.cpp
 	vdr/VDRDaemon.cpp
 	vdr/channels/Channel.cpp

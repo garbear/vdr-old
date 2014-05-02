@@ -406,10 +406,28 @@ bool cDvbDevice::BondDevices(const std::string& bondings)
   UnBondDevices();
   if (!bondings.empty())
   {
-    cSatCableNumbers SatCableNumbers(MAXDEVICES, bondings);
-    for (int i = 0; i < cDeviceManager::Get().NumDevices(); i++)
+    vector<string> satCableNumbers;
+    StringUtils::Split(bondings, " ", satCableNumbers);
+
+    for (unsigned int i = 0; i < cDeviceManager::Get().NumDevices(); i++)
     {
-      int d = SatCableNumbers.FirstDeviceIndex(i);
+      int d = -1;
+      if (i < satCableNumbers.size())
+      {
+        int cableNumber = StringUtils::IntVal(satCableNumbers[i], -1);
+        if (cableNumber >= 0)
+        {
+          for (unsigned int j = 0; j < satCableNumbers.size(); j++)
+          {
+            if (j < i && StringUtils::IntVal(satCableNumbers[j], -1) == cableNumber)
+            {
+              d = j;
+              break;
+            }
+          }
+        }
+      }
+
       if (d >= 0)
       {
         int ErrorDevice = 0;
