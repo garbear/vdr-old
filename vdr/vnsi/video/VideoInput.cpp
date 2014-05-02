@@ -34,6 +34,7 @@
 #include "devices/Receiver.h"
 #include "settings/Settings.h"
 #include "utils/CommonMacros.h"
+#include "utils/log/Log.h"
 
 using namespace PLATFORM;
 

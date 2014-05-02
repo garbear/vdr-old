@@ -42,6 +42,7 @@
 #include "settings/Settings.h"
 #include "timers/Timers.h"
 #include "utils/CommonMacros.h"
+#include "utils/log/Log.h"
 #include "utils/StringUtils.h"
 #include "utils/TimeUtils.h"
 

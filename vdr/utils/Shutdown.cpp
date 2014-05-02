@@ -10,22 +10,20 @@
  */
 
 #include "Shutdown.h"
+#include "Config.h"
+#include "I18N.h"
+#include "recordings/Recording.h"
+#include "recordings/RecordingCutter.h"
+#include "settings/Settings.h"
+#include "timers/Timers.h"
+#include "Tools.h"
+#include "utils/CalendarUtils.h"
+#include "utils/log/Log.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/wait.h>
-#include "Config.h"
-#include "recordings/RecordingCutter.h"
-#include "I18N.h"
-#include "settings/Settings.h"
-//#include "interface.h"
-//#include "menu.h"
-//#include "plugin.h"
-#include "timers/Timers.h"
-#include "recordings/Recording.h"
-#include "Tools.h"
-
-#include "vdr/utils/CalendarUtils.h"
 
 namespace VDR
 {

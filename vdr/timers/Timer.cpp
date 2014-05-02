@@ -13,6 +13,7 @@
 #include "filesystem/Videodir.h"
 #include "settings/Settings.h"
 #include "utils/CommonMacros.h"
+#include "utils/log/Log.h"
 #include "utils/Status.h"
 #include "utils/TimeUtils.h"
 #include "utils/UTF8Utils.h"

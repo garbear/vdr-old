@@ -23,14 +23,15 @@
 #include "filesystem/Directory.h"
 #include "Config.h"
 #include "devices/Device.h"
+#include "devices/DeviceManager.h"
+#include "recordings/filesystem/IndexFile.h"
 #include "recordings/Recording.h"
+#include "recordings/RecordingCutter.h"
+#include "recordings/RecordingUserCommand.h"
+#include "utils/log/Log.h"
 #include "utils/Shutdown.h"
 #include "utils/Tools.h"
 #include "utils/XBMCTinyXML.h"
-#include "devices/DeviceManager.h"
-#include "recordings/RecordingCutter.h"
-#include "recordings/filesystem/IndexFile.h"
-#include "recordings/RecordingUserCommand.h"
 
 #include <getopt.h>
 #include <grp.h>

@@ -29,10 +29,11 @@
 #include "devices/commoninterface/CI.h"
 #include "devices/Device.h"
 #include "devices/DeviceManager.h"
+#include "devices/Transfer.h"
 #include "Player.h"
+#include "utils/log/Log.h"
 #include "utils/Status.h"
 #include "utils/Tools.h"
-#include "devices/Transfer.h"
 #include "utils/I18N.h"
 
 #include <time.h>

@@ -17,6 +17,7 @@
 #include "epg/EPG.h"
 #include "epg/Event.h"
 #include "settings/Settings.h"
+#include "utils/log/Log.h"
 
 #include <algorithm>
 #include <stdlib.h>

@@ -21,8 +21,8 @@
  */
 
 #include "Poller.h"
+#include "utils/log/Log.h"
 #include "utils/Tools.h"
-#include "Types.h"
 
 namespace VDR
 {

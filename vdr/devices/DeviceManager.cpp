@@ -20,6 +20,7 @@
  */
 
 #include "DeviceManager.h"
+#include "Transfer.h"
 #include "devices/linux/DVBDevice.h"
 #include "devices/commoninterface/CI.h"
 #include "devices/subsystems/DeviceChannelSubsystem.h"
@@ -28,8 +29,8 @@
 #include "devices/subsystems/DeviceVideoFormatSubsystem.h"
 #include "channels/Channel.h"
 #include "settings/Settings.h"
+#include "utils/log/Log.h"
 #include "utils/Tools.h"
-#include "Transfer.h"
 
 #include <assert.h>
 

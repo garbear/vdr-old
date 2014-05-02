@@ -8,8 +8,9 @@
  */
 
 #include "Transfer.h"
-#include "subsystems/DeviceReceiverSubsystem.h"
+#include "devices/subsystems/DeviceReceiverSubsystem.h"
 #include "platform/threads/mutex.h"
+#include "utils/log/Log.h"
 
 namespace VDR
 {

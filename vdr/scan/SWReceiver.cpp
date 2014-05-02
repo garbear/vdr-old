@@ -24,6 +24,7 @@
 #include "CNICodes.h"
 #include "channels/Channel.h"
 #include "utils/CommonMacros.h"
+#include "utils/log/Log.h"
 #include "utils/Ringbuffer.h"
 #include "utils/Tools.h"
 

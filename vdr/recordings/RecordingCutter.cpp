@@ -20,6 +20,7 @@
 #include "platform/threads/throttle.h"
 #include "settings/Settings.h"
 #include "utils/CommonMacros.h"
+#include "utils/log/Log.h"
 
 #include <stdint.h>
 

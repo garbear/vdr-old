@@ -24,6 +24,7 @@
 #include "settings/Settings.h"
 #include "utils/CRC32.h"
 #include "utils/I18N.h"
+#include "utils/log/Log.h"
 #include "utils/Ringbuffer.h"
 #include "utils/UTF8Utils.h"
 #include "utils/url/URLUtils.h"

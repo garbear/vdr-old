@@ -24,6 +24,7 @@
 #include "xbmc/xbmc_content_types.h"
 #include "xbmc/xbmc_file_utils.hpp"
 #include "filesystem/SpecialProtocol.h"
+#include "utils/log/Log.h"
 
 #include <vector>
 

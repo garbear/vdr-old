@@ -23,8 +23,8 @@
 
 #include "PSIP_EIT.h"
 #include "utils/DateTime.h"
+#include "utils/log/Log.h"
 #include "utils/StringUtils.h"
-#include "Types.h"
 
 #include <algorithm>
 #include <libsi/si.h>

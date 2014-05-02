@@ -30,6 +30,7 @@
 #include "Config.h"
 #include "channels/ChannelManager.h"
 #include "devices/Remux.h"
+#include "utils/log/Log.h"
 
 #include <assert.h>
 #include <stdlib.h>

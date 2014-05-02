@@ -9,6 +9,7 @@
 
 #include "DiSEqC.h"
 #include "sources/Source.h"
+#include "utils/log/Log.h"
 #include "utils/Tools.h"
 
 #include <ctype.h>

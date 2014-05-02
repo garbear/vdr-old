@@ -20,18 +20,19 @@
  *
  */
 
-#include "XTimeUtils.h"
 #include "Types.h"
+
+#include "XTimeUtils.h"
 
 #if defined(TARGET_DARWIN)
 #include "threads/Atomics.h"
 #endif
 
 #include <errno.h>
+#include <sched.h>
+#include <sys/times.h>
 #include <time.h>
 #include <unistd.h>
-#include <sys/times.h>
-#include <sched.h>
 
 namespace VDR
 {

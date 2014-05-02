@@ -32,6 +32,7 @@
 #include "sources/linux/DVBTransponderParams.h"
 #include "scan/ScanTask.h"
 #include "scan/ScanConfig.h"
+#include "utils/log/Log.h"
 
 #include <gtest/gtest.h>
 #include <libsi/si.h>

@@ -5,6 +5,7 @@
 #include "platform/threads/throttle.h"
 #include "utils/CommonMacros.h"
 #include "utils/I18N.h"
+#include "utils/log/Log.h"
 #include "utils/url/URLUtils.h"
 
 using namespace PLATFORM;

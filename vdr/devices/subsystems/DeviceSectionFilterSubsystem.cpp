@@ -22,8 +22,8 @@
 #include "DeviceSectionFilterSubsystem.h"
 #include "DeviceChannelSubsystem.h"
 #include "dvb/filters/Filter.h"
+#include "utils/log/Log.h"
 #include "utils/Tools.h"
-#include "Types.h"
 
 #include <algorithm>
 #include <unistd.h>

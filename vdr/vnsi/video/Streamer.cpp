@@ -32,9 +32,11 @@
 #include "recordings/Recordings.h"
 #include "settings/Settings.h"
 #include "timers/Timers.h"
+#include "utils/log/Log.h"
 #include "utils/StringUtils.h"
 #include "utils/XSocket.h"
 
+#include <fcntl.h>
 #include <stdlib.h>
 #include <sys/ioctl.h>
 #include <time.h>

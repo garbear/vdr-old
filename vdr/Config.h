@@ -10,10 +10,12 @@
 #ifndef __CONFIG_H
 #define __CONFIG_H
 
-#include "Types.h"
 #include "filesystem/File.h"
 #include "utils/List.h"
+#include "utils/log/Log.h"
 #include "utils/StringUtils.h"
+
+#include <stdlib.h>
 
 namespace VDR
 {

@@ -31,9 +31,9 @@
 #include "dvb/filters/PAT.h"
 #include "dvb/filters/SDT.h"
 #include "dvb/filters/PSIP_VCT.h"
+#include "settings/Settings.h"
 #include "sources/linux/DVBTransponderParams.h"
 #include "utils/log/Log.h"
-#include "settings/Settings.h"
 
 #include <assert.h>
 

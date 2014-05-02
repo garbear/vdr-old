@@ -20,6 +20,8 @@
  */
 #pragma once
 
+#include "utils/log/Log.h" // for LOG_ERROR
+
 #include <float.h>
 #include <math.h>
 #include <stddef.h>

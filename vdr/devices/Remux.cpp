@@ -16,6 +16,7 @@
 #include "recordings/Recording.h"
 #include "utils/CommonMacros.h"
 #include "utils/I18N.h"
+#include "utils/log/Log.h"
 #include "utils/Shutdown.h"
 
 #include <algorithm>

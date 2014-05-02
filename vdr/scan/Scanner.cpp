@@ -27,9 +27,9 @@
 #include "ScanTask.h"
 #include "channels/ChannelManager.h"
 #include "devices/linux/DVBDevice.h"
+#include "utils/log/Log.h"
 #include "utils/SynchronousAbort.h"
 #include "utils/Tools.h"
-#include "utils/log/Log.h"
 
 #include <assert.h>
 

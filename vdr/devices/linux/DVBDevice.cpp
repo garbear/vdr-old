@@ -39,6 +39,7 @@
 #include "sources/linux/DVBSourceParams.h"
 #include "utils/StringUtils.h"
 #include "utils/I18N.h"
+#include "utils/log/Log.h"
 #include "utils/Tools.h"
 #include "utils/url/URLUtils.h"
 #include "settings/Settings.h"

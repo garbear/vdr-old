@@ -23,15 +23,16 @@
 #include "devices/linux/DVBDevice.h" // for DEV_DVB_DEMUX
 #include "dvb/filters/FilterResource.h"
 //#include "../../../../sections.h"
+#include "utils/log/Log.h"
 #include "utils/Tools.h"
-#include "Types.h"
 
 #include <errno.h>
+#include <fcntl.h>
 #include <linux/dvb/dmx.h>
 #include <string>
 #include <string.h>
 #include <sys/ioctl.h>
-//#include <sys/poll.h>
+#include <sys/poll.h>
 #include <unistd.h>
 
 using namespace std;

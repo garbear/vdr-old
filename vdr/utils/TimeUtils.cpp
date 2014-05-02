@@ -1,7 +1,8 @@
 #include "TimeUtils.h"
-#include "utils/I18N.h"
-#include "utils/UTF8Utils.h"
-#include "Types.h"
+#include "I18N.h"
+#include "UTF8Utils.h"
+
+#include <stdlib.h>
 
 namespace VDR
 {

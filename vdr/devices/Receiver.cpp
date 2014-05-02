@@ -12,6 +12,7 @@
 #include "devices/subsystems/DeviceReceiverSubsystem.h"
 #include "devices/subsystems/DevicePIDSubsystem.h"
 #include "utils/CommonMacros.h"
+#include "utils/log/Log.h"
 
 #include <stdio.h>
 

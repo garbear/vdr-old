@@ -22,8 +22,9 @@
 #include "CharSetConverterVDR.h"
 #include "UTF8Utils.h"
 #include "Tools.h"
-#include "Types.h"
+#include "utils/log/Log.h"
 
+#include <stdlib.h>
 #include <string>
 
 using namespace std;

@@ -31,6 +31,7 @@
 #include "recordings/Recordings.h"
 #include "settings/AllowedHosts.h"
 #include "settings/Settings.h"
+#include "utils/log/Log.h"
 #include "utils/Shutdown.h"
 #include "utils/StringUtils.h"
 #include "utils/Timer.h"

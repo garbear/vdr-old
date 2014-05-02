@@ -23,6 +23,7 @@
 #include "dvb/EITScan.h"
 #include "channels/ChannelManager.h"
 #include "devices/DeviceManager.h"
+#include "utils/log/Log.h"
 
 #include <gtest/gtest.h>
 #include <unistd.h> // for sleep()

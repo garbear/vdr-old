@@ -24,6 +24,7 @@
 #include "TDT.h"
 #include "settings/Settings.h"
 #include "utils/CalendarUtils.h"
+#include "utils/log/Log.h"
 #include "utils/DateTime.h"
 
 #include <errno.h>

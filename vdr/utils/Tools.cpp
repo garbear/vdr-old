@@ -7,6 +7,8 @@
  * $Id: tools.c 2.29 2012/12/08 11:16:30 kls Exp $
  */
 
+#include "Types.h"
+
 #include "Tools.h"
 #include "CommonMacros.h"
 #include "DateTime.h"
@@ -19,16 +21,19 @@
 #include "filesystem/ReadDir.h"
 #include "filesystem/SpecialProtocol.h"
 #include "platform/threads/threads.h"
+#include "utils/log/Log.h"
 
 #include <algorithm>
 #include <ctype.h>
 #include <dirent.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <locale.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/time.h>
 #include <sys/vfs.h>
+#include <sys/wait.h>
 #include <time.h>
 #include <unistd.h>
 #include <utime.h>

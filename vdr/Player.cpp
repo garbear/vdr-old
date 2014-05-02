@@ -10,6 +10,7 @@
 #include "Player.h"
 #include "devices/DeviceManager.h"
 #include "utils/I18N.h"
+#include "utils/log/Log.h"
 
 using namespace std;
 using namespace PLATFORM;

@@ -29,10 +29,11 @@
 #include "dvb/EITScan.h"
 //#include "utils/I18N.h"
 #include "filesystem/File.h"
-#include "utils/StringUtils.h"
-#include "utils/XBMCTinyXML.h"
-#include "utils/UTF8Utils.h"
 #include "utils/CRC32.h"
+#include "utils/log/Log.h"
+#include "utils/StringUtils.h"
+#include "utils/UTF8Utils.h"
+#include "utils/XBMCTinyXML.h"
 
 #include <algorithm>
 #include <assert.h>

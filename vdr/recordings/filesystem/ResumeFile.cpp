@@ -2,6 +2,7 @@
 #include "Config.h"
 #include "recordings/Recordings.h"
 #include "settings/Settings.h"
+#include "utils/log/Log.h"
 
 #define RESUMEFILESUFFIX  "/resume%s%s"
 

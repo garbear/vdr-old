@@ -28,9 +28,9 @@
 #include "filesystem/File.h"
 #include "utils/StringUtils.h"
 #include "utils/CRC32.h"
+#include "utils/log/Log.h"
 //#include "utils/UTF8Utils.h"
 //#include "timers.h"
-#include "Types.h"
 
 #include "libsi/si.h" // For AC3DescriptorTag
 

@@ -14,10 +14,11 @@
 #include "filesystem/FileName.h"
 #include "filesystem/Directory.h"
 #include "filesystem/VideoFile.h"
+#include "settings/Settings.h"
 #include "utils/CommonMacros.h"
+#include "utils/log/Log.h"
 #include "utils/Shutdown.h"
 #include "utils/Timer.h"
-#include "settings/Settings.h"
 
 using namespace PLATFORM;
 

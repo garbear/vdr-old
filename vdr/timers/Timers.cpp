@@ -13,6 +13,7 @@
 #include "devices/Device.h"
 #include "devices/DeviceManager.h"
 #include "recordings/Recordings.h"
+#include "utils/log/Log.h"
 #include "utils/Status.h"
 #include "utils/UTF8Utils.h"
 #include "utils/XBMCTinyXML.h"

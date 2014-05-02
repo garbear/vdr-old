@@ -29,11 +29,13 @@
  */
 
 #include "RecPlayer.h"
-#include "recordings/filesystem/IndexFile.h"
 #include "filesystem/File.h"
+#include "recordings/filesystem/IndexFile.h"
+#include "utils/log/Log.h"
+
 #include <fcntl.h>
-#include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/types.h>
 #include <unistd.h>
 
 using namespace std;

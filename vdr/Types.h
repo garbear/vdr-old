@@ -21,7 +21,6 @@
 #pragma once
 
 #include "platform/os.h"
-#include "utils/log/Log.h"
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>

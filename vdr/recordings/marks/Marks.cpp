@@ -3,8 +3,9 @@
 #include "recordings/Recording.h"
 #include "recordings/filesystem/IndexFile.h"
 #include "recordings/RecordingUserCommand.h"
-#include "utils/XBMCTinyXML.h"
+#include "utils/log/Log.h"
 #include "utils/StringUtils.h"
+#include "utils/XBMCTinyXML.h"
 
 using namespace PLATFORM;
 

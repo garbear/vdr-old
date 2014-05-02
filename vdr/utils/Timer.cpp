@@ -20,6 +20,7 @@
  */
 
 #include "Timer.h"
+#include "utils/log/Log.h"
 
 #include <stddef.h>
 #include <sys/time.h>

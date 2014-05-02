@@ -24,10 +24,11 @@
 #include "DeviceCommonInterfaceSubsystem.h"
 #include "DevicePIDSubsystem.h"
 #include "DevicePlayerSubsystem.h"
+#include "Config.h"
 #include "devices/commoninterface/CI.h"
 #include "devices/Device.h"
-#include "Config.h"
 #include "devices/Receiver.h"
+#include "utils/log/Log.h"
 
 #include <algorithm>
 

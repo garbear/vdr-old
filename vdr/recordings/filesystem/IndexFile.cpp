@@ -5,6 +5,7 @@
 #include "recordings/Recordings.h"
 #include "recordings/RecordingInfo.h"
 #include "utils/CommonMacros.h"
+#include "utils/log/Log.h"
 #include "utils/I18N.h"
 #include "utils/Ringbuffer.h"
 

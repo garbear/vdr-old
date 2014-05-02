@@ -18,10 +18,12 @@
 #include "settings/Settings.h"
 #include "sources/linux/DVBSourceParams.h"
 #include "utils/CommonMacros.h"
+#include "utils/log/Log.h"
 #include "utils/StringUtils.h"
 #include "utils/Timer.h"
 
 #include <errno.h>
+#include <fcntl.h>
 #include <string.h>
 #include <sys/ioctl.h>
 

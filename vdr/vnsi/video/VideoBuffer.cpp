@@ -26,6 +26,7 @@
 #include "recordings/Recording.h"
 #include "settings/Settings.h"
 #include "utils/CommonMacros.h"
+#include "utils/log/Log.h"
 #include "utils/Ringbuffer.h"
 
 #include <fcntl.h>

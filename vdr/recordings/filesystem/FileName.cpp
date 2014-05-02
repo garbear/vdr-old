@@ -3,7 +3,9 @@
 #include "devices/Remux.h"
 #include "filesystem/Videodir.h"
 #include "filesystem/VideoFile.h"
+#include "utils/log/Log.h"
 
+#include <fcntl.h>
 //XXX
 #include <unistd.h>
 

@@ -20,11 +20,12 @@
 
 
 #include "Demuxer.h"
-
 #include "VideoBuffer.h"
 #include "Config.h"
 #include "channels/ChannelManager.h"
 #include "Streamer.h"
+#include "utils/log/Log.h"
+
 #include <libsi/si.h>
 
 using namespace PLATFORM;

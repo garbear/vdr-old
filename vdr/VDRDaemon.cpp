@@ -29,12 +29,13 @@
 #include "filesystem/Directory.h"
 #include "filesystem/SpecialProtocol.h"
 #include "recordings/Recordings.h"
-#include "timers/Timers.h"
-#include "settings/Settings.h"
 #include "settings/AllowedHosts.h"
+#include "settings/Settings.h"
+#include "timers/Timers.h"
+#include "dvb/EITScan.h"
+#include "utils/log/Log.h"
 #include "utils/Shutdown.h"
 #include "vnsi/Server.h"
-#include "dvb/EITScan.h"
 
 #include <signal.h> // or #include <bits/signum.h>
 

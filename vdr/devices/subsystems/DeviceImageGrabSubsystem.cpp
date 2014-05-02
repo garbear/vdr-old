@@ -20,7 +20,7 @@
  */
 
 #include "DeviceImageGrabSubsystem.h"
-#include "Types.h"
+#include "utils/log/Log.h"
 
 #include <fcntl.h>
 #include <sys/stat.h>

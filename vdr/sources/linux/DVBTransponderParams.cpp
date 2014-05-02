@@ -22,7 +22,7 @@
 #include "DVBTransponderParams.h"
 #include "channels/ChannelDefinitions.h"
 #include "utils/StringUtils.h"
-#include "utils/Tools.h" // for logging
+#include "utils/log/Log.h"
 
 #include <ctype.h>
 #include <tinyxml.h>

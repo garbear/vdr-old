@@ -22,6 +22,7 @@
 
 #include "SpecialProtocol.h"
 #include "utils/StringUtils.h"
+#include "utils/log/Log.h"
 #include "utils/url/URL.h"
 #include "utils/url/URLUtils.h"
 //#include "Util.h"

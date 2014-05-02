@@ -5,8 +5,9 @@
 #include "Event.h"
 #include "channels/Channel.h"
 #include "channels/ChannelManager.h"
-#include "utils/XBMCTinyXML.h"
 #include "settings/Settings.h"
+#include "utils/log/Log.h"
+#include "utils/XBMCTinyXML.h"
 #include "Config.h"
 
 #include <algorithm>

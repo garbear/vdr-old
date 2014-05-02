@@ -24,8 +24,9 @@
 #include "DeviceSPUSubsystem.h"
 #include "DeviceTrackSubsystem.h"
 #include "DeviceVideoFormatSubsystem.h"
-#include "Player.h"
 #include "devices/Transfer.h"
+#include "Player.h"
+#include "utils/log/Log.h"
 
 #ifndef SAFE_DELETE
 #define SAFE_DELETE(p) \
