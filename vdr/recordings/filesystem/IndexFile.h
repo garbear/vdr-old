@@ -20,6 +20,8 @@
  */
 #pragma once
 
+#include "utils/CommonIncludes.h" // off_t problems on x86
+
 #include "ResumeFile.h"
 #include "filesystem/File.h"
 #include "platform/threads/threads.h"

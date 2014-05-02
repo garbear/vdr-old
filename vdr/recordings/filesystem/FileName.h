@@ -20,6 +20,8 @@
  */
 #pragma once
 
+#include "utils/CommonIncludes.h" // off_t problems on x86
+
 #include <stdint.h>
 #include <stdio.h>
 #include <string>
