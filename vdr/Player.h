@@ -10,9 +10,9 @@
 #ifndef __PLAYER_H
 #define __PLAYER_H
 
-#include "devices/subsystems/DevicePlayerSubsystem.h"
-#include "devices/subsystems/DeviceTrackSubsystem.h"
-#include "devices/subsystems/DeviceVideoFormatSubsystem.h"
+#include "devices/subsystems/DevicePlayerSubsystem.h"      // for ePlayMode
+#include "devices/subsystems/DeviceTrackSubsystem.h"       // for eTrackType
+#include "devices/subsystems/DeviceVideoFormatSubsystem.h" // for eVideoDisplayFormat
 #include "recordings/Recording.h"
 #include "recordings/marks/Mark.h"
 
