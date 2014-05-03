@@ -102,7 +102,7 @@ int WriteAllOrNothing(int fd, const uint8_t *Data, int Length, int TimeoutMs, in
            Length -= w;
            written += w;
            }
-        else if (written > 0 && !FATALERRNO) {
+        else if (written > 0 && !(errno != 0 && errno != EAGAIN && errno != EINTR)) {
            // we've started writing, so we must finish it!
            cTimeMs t;
            cPoller Poller(fd, true);

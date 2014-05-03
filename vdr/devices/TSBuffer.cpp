@@ -65,13 +65,13 @@ void *cTSBuffer::Process()
       {
         firstRead = false;
         int r = m_ringBuffer->Read(m_file);
-        if (r < 0 && FATALERRNO)
+        if (r < 0)
         {
           if (errno == EOVERFLOW)
             esyslog("ERROR: driver buffer overflow on device %d", m_cardIndex);
-          else
+          else if (errno != 0 && errno != EAGAIN && errno != EINTR)
           {
-            //LOG_ERROR;
+            LOG_ERROR;
             break;
           }
         }

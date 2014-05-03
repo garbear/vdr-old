@@ -41,7 +41,6 @@
 #endif
 
 #define CHECK(s) { if ((s) < 0) LOG_ERROR; } // used for 'ioctl()' calls
-#define FATALERRNO (errno && errno != EAGAIN && errno != EINTR)
 
 #define BCDCHARTOINT(x) (10 * ((x & 0xF0) >> 4) + (x & 0xF))
 
