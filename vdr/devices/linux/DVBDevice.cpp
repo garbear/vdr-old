@@ -37,9 +37,10 @@
 #include "filesystem/Directory.h"
 #include "filesystem/ReadDir.h"
 #include "sources/linux/DVBSourceParams.h"
-#include "utils/StringUtils.h"
+#include "utils/CommonMacros.h" // for ARRAY_SIZE()
 #include "utils/I18N.h"
 #include "utils/log/Log.h"
+#include "utils/StringUtils.h"
 #include "utils/Tools.h"
 #include "utils/url/URLUtils.h"
 #include "settings/Settings.h"
@@ -64,10 +65,6 @@ namespace VDR
 #define MAXFRONTENDCMDS 16
 
 #define INVALID_FD  -1
-
-#ifndef ARRAY_SIZE
-#define ARRAY_SIZE(x)  (sizeof(x) / sizeof((x)[0]))
-#endif
 
 CMutex cDvbDevice::m_bondMutex;
 

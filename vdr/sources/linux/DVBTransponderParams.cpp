@@ -21,8 +21,9 @@
 
 #include "DVBTransponderParams.h"
 #include "channels/ChannelDefinitions.h"
-#include "utils/StringUtils.h"
+#include "utils/CommonMacros.h" // for ARRAY_SIZE()
 #include "utils/log/Log.h"
+#include "utils/StringUtils.h"
 
 #include <ctype.h>
 #include <tinyxml.h>
@@ -31,10 +32,6 @@ using namespace std;
 
 namespace VDR
 {
-
-#ifndef ARRAY_SIZE
-#define ARRAY_SIZE(x)  (sizeof(x) / sizeof((x)[0]))
-#endif
 
 #define INT_INVALID  -1
 

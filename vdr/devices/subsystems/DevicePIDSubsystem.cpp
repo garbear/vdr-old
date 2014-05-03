@@ -24,15 +24,12 @@
 #include "DeviceReceiverSubsystem.h"
 #include "devices/commoninterface/CI.h"
 #include "devices/Device.h"
+#include "utils/CommonMacros.h" // for ARRAY_SIZE()
 #include "utils/log/Log.h"
 #include "utils/Tools.h"
 
 namespace VDR
 {
-
-#ifndef ARRAY_SIZE
-#define ARRAY_SIZE(x)  (sizeof(x) / sizeof(x[0]))
-#endif
 
 #define PID_DEBUG 0
 

@@ -21,6 +21,7 @@
  */
 
 #include "CNICodes.h"
+#include "utils/CommonMacros.h" // for ARRAY_SIZE()
 
 #include <assert.h>
 
@@ -28,10 +29,6 @@ using namespace VDR::COUNTRY;
 
 namespace VDR
 {
-
-#ifndef ARRAY_SIZE
-#define ARRAY_SIZE(x)  (sizeof(x) / sizeof((x)[0]))
-#endif
 
 static const CniCodes::cCniCode cniCodes[] =
 {

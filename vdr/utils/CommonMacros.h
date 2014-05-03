@@ -27,6 +27,10 @@
 #include <stddef.h>
 #include <stdlib.h>
 
+#ifndef ARRAY_SIZE
+#define ARRAY_SIZE(x)  (sizeof(x) / sizeof((x)[0]))
+#endif
+
 #define KILOBYTE(n) ((n) * 1024)
 #define MEGABYTE(n) ((n) * 1024LL * 1024LL)
 

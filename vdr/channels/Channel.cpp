@@ -44,10 +44,6 @@ using namespace std;
 namespace VDR
 {
 
-#ifndef ARRAY_SIZE
-#define ARRAY_SIZE(x)  (sizeof(x) / sizeof(x[0]))
-#endif
-
 // IMPORTANT NOTE: in the 'sscanf()' calls there is a blank after the '%d'
 // format characters in order to allow any number of blanks after a numeric
 // value!

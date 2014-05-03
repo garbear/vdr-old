@@ -21,6 +21,7 @@
  */
 
 #include "CountryUtils.h"
+#include "utils/CommonMacros.h" // for ARRAY_SIZE()
 #include "utils/StringUtils.h"
 
 using namespace VDR::COUNTRY;
@@ -28,10 +29,6 @@ using namespace std;
 
 namespace VDR
 {
-
-#ifndef ARRAY_SIZE
-#define ARRAY_SIZE(x)  (sizeof(x) / sizeof((x)[0]))
-#endif
 
 // Two letters constants from ISO 3166-1 sorted alphabetically by long country name
 cCountry countryList[] =

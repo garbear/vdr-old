@@ -21,6 +21,7 @@
  */
 
 #include "SatelliteUtils.h"
+#include "utils/CommonMacros.h" // for ARRAY_SIZE()
 
 #include <assert.h>
 
@@ -30,18 +31,9 @@ using namespace std;
 namespace VDR
 {
 
-#ifndef ARRAY_SIZE
-#define ARRAY_SIZE(x)  (sizeof(x) / sizeof((x)[0]))
-#endif
-
 /*
  * You'll have to scroll down a couple thousand lines before the code starts. Sorry.
  */
-
-#define SAT_TRANSPONDER_COUNT(x) (sizeof(x)/sizeof(struct __sat_transponder))
-
-//#define SAT_COUNT(x) (sizeof(x)/sizeof(struct cSat))
-
 
 
 /******************************************************************************
@@ -1981,71 +1973,71 @@ static const struct __sat_transponder TELSTAR97_0W[] = { // Telstar 5 / IA5 / Ga
 
 struct cSat sat_list[] = {
 /** pos *** id *** long satellite name ***************************** items ******************* item_count ****************************** we_flag * orbit * rotor * vdrid */
-{  "S4E8",  S4E8, "4.8 east Sirius"                             , SIRIUS04_8E,          SAT_TRANSPONDER_COUNT(SIRIUS04_8E),             EAST_FLAG,   0x48, -1, "S5E"    },
-{  "S7E0",  S7E0, "7.0 east Eutelsat W3A"                       , EUTELSAT07_0E,        SAT_TRANSPONDER_COUNT(EUTELSAT07_0E),           EAST_FLAG,   0x70, -1, "S7E"    },
-{  "S9E0",  S9E0, "9.0 east Eurobird 9"                         , EUROBIRD09_0E,        SAT_TRANSPONDER_COUNT(EUROBIRD09_0E),           EAST_FLAG,   0x90, -1, "S9E"    },
-{ "S10E0", S10E0, "10.0 east Eutelsat W1"                       , EUTELSAT10_0E,        SAT_TRANSPONDER_COUNT(EUTELSAT10_0E),           EAST_FLAG,  0x100, -1, "S10E"   },
-{ "S13E0", S13E0, "13.0 east Hotbird 6/7A/8"                    , HOTBIRD13E,           SAT_TRANSPONDER_COUNT(HOTBIRD13E),              EAST_FLAG,  0x130, -1, "S13E"   },
-{ "S16E0", S16E0, "16.0 east Eutelsat W2"                       , EUTELSAT16_0E,        SAT_TRANSPONDER_COUNT(EUTELSAT16_0E),           EAST_FLAG,  0x160, -1, "S16E"   },
-{ "S19E2", S19E2, "19.2 east Astra 1F/1G/1H/1KR/1L"             , ASTRA19E,             SAT_TRANSPONDER_COUNT(ASTRA19E),                EAST_FLAG,  0x192, -1, "S19.2E" },
-{ "S21E6", S21E6, "21.6 east Eutelsat W6"                       , EUTELSAT21_6E,        SAT_TRANSPONDER_COUNT(EUTELSAT21_6E),           EAST_FLAG,  0x216, -1, "S21.6E" },
-{ "S23E5", S23E5, "23.5 east Astra 1E/3A"                       , ASTRA23_5E,           SAT_TRANSPONDER_COUNT(ASTRA23_5E),              EAST_FLAG,  0x235, -1, "S23.5E" },
-{ "S25E5", S25E5, "25.5 east Eurobird 2"                        , EUROBIRD25_5E,        SAT_TRANSPONDER_COUNT(EUROBIRD25_5E),           EAST_FLAG,  0x255, -1, "S25.5E" },
-{ "S26EX", S26EX, "26.X east Badr C/3/4/6"                      , BADR26_XE,            SAT_TRANSPONDER_COUNT(BADR26_XE),               EAST_FLAG,  0x260, -1, "S26E"   },
-{ "S28E2", S28E2, "28.2 east Astra 2A/2B/2C/2D"                 , ASTRA28_2E,           SAT_TRANSPONDER_COUNT(ASTRA28_2E),              EAST_FLAG,  0x282, -1, "S28.2E" },
-{ "S28E5", S28E5, "28.5 east EuroBird 1"                        , EUROBIRD28_5E,        SAT_TRANSPONDER_COUNT(EUROBIRD28_5E),           EAST_FLAG,  0x285, -1, "S28.5E" },
-{ "S31E5", S31E5, "31.5 east Astra 5A/1D"                       , ASTRA31_5E,           SAT_TRANSPONDER_COUNT(ASTRA31_5E),              EAST_FLAG,  0x315, -1, "S31.5E" },
-{ "S32E9", S32E9, "32.9 east Intelsat 802"                      , INTELSAT32_9E,        SAT_TRANSPONDER_COUNT(INTELSAT32_9E),           EAST_FLAG,  0x329, -1, "S33E"   },
-{ "S33E0", S33E0, "33.0 east Eurobird 3"                        , EUROBIRD33_0E,        SAT_TRANSPONDER_COUNT(EUROBIRD33_0E),           EAST_FLAG,  0x330, -1, "S33E"   },
-{ "S35E9", S35E9, "35.9 east Eutelsat W4"                       , EUTELSAT35_9E,        SAT_TRANSPONDER_COUNT(EUTELSAT35_9E),           EAST_FLAG,  0x359, -1, "S36E"   },
-{ "S36E0", S36E0, "36.0 east Eutelsat Sesat"                    , EUTELSAT36_0E,        SAT_TRANSPONDER_COUNT(EUTELSAT36_0E),           EAST_FLAG,  0x360, -1, "S36E"   },
-{ "S38E0", S38E0, "38.0 east Paksat 1"                          , PAKSAT38_0E,          SAT_TRANSPONDER_COUNT(PAKSAT38_0E),             EAST_FLAG,  0x380, -1, "S38E"   },
-{ "S39E0", S39E0, "39.0 east Hellas Sat 2"                      , HELLAS39_0E,          SAT_TRANSPONDER_COUNT(HELLAS39_0E),             EAST_FLAG,  0x390, -1, "S39E"   },
-{ "S40EX", S40EX, "40.X east Express AM1"                       , EXPRESS40_XE,         SAT_TRANSPONDER_COUNT(EXPRESS40_XE),            EAST_FLAG,  0x400, -1, "S40E"   },
-{ "S42E0", S42E0, "42.0 east Turksat 2A/3A"                     , TURKSAT42_0E,         SAT_TRANSPONDER_COUNT(TURKSAT42_0E),            EAST_FLAG,  0x420, -1, "S42E"   },
-{ "S45E0", S45E0, "45.0 east Intelsat 12"                       , INTELSAT45_0E,        SAT_TRANSPONDER_COUNT(INTELSAT45_0E),           EAST_FLAG,  0x450, -1, "S45E"   },
-{ "S49E0", S49E0, "49.0 east Yamal 202"                         , YAMAL49_0E,           SAT_TRANSPONDER_COUNT(YAMAL49_0E),              EAST_FLAG,  0x490, -1, "S49E"   },
-{ "S53E0", S53E0, "53.0 east Express AM22"                      , EXPRESS53_0E,         SAT_TRANSPONDER_COUNT(EXPRESS53_0E),            EAST_FLAG,  0x530, -1, "S53E"   },
-{ "S57E0", S57E0, "57.0 east Bonum 1"                           , BONUM56_0E,           SAT_TRANSPONDER_COUNT(BONUM56_0E),              EAST_FLAG,  0x570, -1, "S57E"   },
-{ "S57EX", S57EX, "57.X east NSS 703"                           , NSS57_XE,             SAT_TRANSPONDER_COUNT(NSS57_XE),                EAST_FLAG,  0x570, -1, "S57E"   },
-{ "S60EX", S60EX, "60.X east Intelsat 904"                      , INTELSAT60_XE,        SAT_TRANSPONDER_COUNT(INTELSAT60_XE),           EAST_FLAG,  0x600, -1, "S60E"   },
-{ "S62EX", S62EX, "62.X east Intelsat 902"                      , INTELSAT62_XE,        SAT_TRANSPONDER_COUNT(INTELSAT62_XE),           EAST_FLAG,  0x620, -1, "S62E"   },
-{ "S64E2", S64E2, "64.2 east Intelsat 906"                      , INTELSAT64_2E,        SAT_TRANSPONDER_COUNT(INTELSAT64_2E),           EAST_FLAG,  0x642, -1, "S64E"   },
-{ "S68EX", S68EX, "68.X east Intelsat 7/10"                     , INTELSAT68_XE,        SAT_TRANSPONDER_COUNT(INTELSAT68_XE),           EAST_FLAG,  0x680, -1, "S68.5E" },
-{ "S70E5", S70E5, "70.5 east Eutelsat W5"                       , EUTELSAT70_5E,        SAT_TRANSPONDER_COUNT(EUTELSAT70_5E),           EAST_FLAG,  0x705, -1, "S70.5E" },
-{ "S72EX", S72EX, "72.X east Intelsat 4"                        , INTELSAT72_XE,        SAT_TRANSPONDER_COUNT(INTELSAT72_XE),           EAST_FLAG,  0x720, -1, "S72E"   },
-{ "S75EX", S75EX, "75.X east ABS 1"                             , ABS75_XE,             SAT_TRANSPONDER_COUNT(ABS75_XE),                EAST_FLAG,  0x750, -1, "S75E"   },
-{ "S76EX", S76EX, "76.X east Telstar 10"                        , TELSTAR76_XE,         SAT_TRANSPONDER_COUNT(TELSTAR76_XE),            EAST_FLAG,  0x760, -1, "S76.5E" },
-{ "S78E5", S78E5, "78.5 east Thaicom 2/5"                       , THAICOM78_5E,         SAT_TRANSPONDER_COUNT(THAICOM78_5E),            EAST_FLAG,  0x785, -1, "S78.5E" },
-{ "S80EX", S80EX, "80.X east Express AM2"                       , EXPRESS80_XE,         SAT_TRANSPONDER_COUNT(EXPRESS80_XE),            EAST_FLAG,  0x800, -1, "S80E"   },
-{ "S83EX", S83EX, "83.X east Insat 2E/3B/4A"                    , INSAT83_XE,           SAT_TRANSPONDER_COUNT(INSAT83_XE),              EAST_FLAG,  0x830, -1, "S83E"   },
-{ "S87E5", S87E5, "87.5 east ChinaStar 1"                       , CHINASTAR87_5E,       SAT_TRANSPONDER_COUNT(CHINASTAR87_5E),          EAST_FLAG,  0x875, -1, "S87.5E" },
-{ "S88EX", S88EX, "88.X east ST 1"                              , ST88_XE,              SAT_TRANSPONDER_COUNT(ST88_XE),                 EAST_FLAG,  0x880, -1, "S88E"   },
-{ "S90EX", S90EX, "90.X east Yamal 201"                         , YAMAL90_XE,           SAT_TRANSPONDER_COUNT(YAMAL90_XE),              EAST_FLAG,  0x900, -1, "S90E"   },
-{ "S91E5", S91E5, "91.5 east Measat 3"                          , MEASAT91_5E,          SAT_TRANSPONDER_COUNT(MEASAT91_5E),             EAST_FLAG,  0x915, -1, "S91.5E" },
-{ "S93E5", S93E5, "93.5 east Insat 3A/4B"                       , INSAT93_5E,           SAT_TRANSPONDER_COUNT(INSAT93_5E),              EAST_FLAG,  0x935, -1, "S93.5E" },
-{ "S95E0", S95E0, "95.0 east NSS 6"                             , NSS95_0E,             SAT_TRANSPONDER_COUNT(NSS95_0E),                EAST_FLAG,  0x950, -1, "S95E"   },
-{ "S96EX", S96EX, "96.X east Express AM33"                      , EXPRESS96_XE,         SAT_TRANSPONDER_COUNT(EXPRESS96_XE),            EAST_FLAG,  0x960, -1, "S96.5E" },
-{"S100EX",S100EX,"100.X east AsiaSat 2"                         , ASIASAT100_XE,        SAT_TRANSPONDER_COUNT(ASIASAT100_XE),           EAST_FLAG, 0x1000, -1, "S100.5E"},
-{"S105EX",S105EX,"105.X east AsiaSat 3S"                        , ASIASAT105_XE,        SAT_TRANSPONDER_COUNT(ASIASAT105_XE),           EAST_FLAG, 0x1050, -1, "S105.5E"},
-{"S108EX",S108EX,"108.X east Telkom 1 & NSS 11"                 , NSS108_XE,            SAT_TRANSPONDER_COUNT(NSS108_XE),               EAST_FLAG, 0x1080, -1, "S108E"  },
-{"S140EX",S140EX,"140.X east Express AM3"                       , EXPRESS140_XE,        SAT_TRANSPONDER_COUNT(EXPRESS140_XE),           EAST_FLAG, 0x1400, -1, "S140E"  },
-{"S160E0",S160E0,"160.0 east Optus D1"                          , OPTUS_160_0E,         SAT_TRANSPONDER_COUNT(OPTUS_160_0E),            EAST_FLAG, 0x1600, -1, "S160E"  },
-{  "S0W8",  S0W8,  "0.8 west Thor 3/5 & Intelsat 10-02"         , THOR00_8W,            SAT_TRANSPONDER_COUNT(THOR00_8W),               WEST_FLAG,    0x8, -1, "S1W"    },
-{  "S4W0",  S4W0,  "4.0 west Amos 1/2/3"                        , AMOS04_0W,            SAT_TRANSPONDER_COUNT(AMOS04_0W),               WEST_FLAG,   0x40, -1, "S4W"    },
-{  "S5WX",  S5WX,  "5.X west Atlantic Bird 3"                   , ATLANTICBIRD05_XW,    SAT_TRANSPONDER_COUNT(ATLANTICBIRD05_XW),       WEST_FLAG,   0x50, -1, "S5W"    },
-{  "S7W0",  S7W0,  "7.0 west Nilesat 101/102 & Atlantic Bird 4" , ATLANTICBIRD07_0W,    SAT_TRANSPONDER_COUNT(ATLANTICBIRD07_0W),       WEST_FLAG,  0x700, -1, "S7W"    },
-{  "S8W0",  S8W0,  "8.0 west Atlantic Bird 2"                   , ATLANTICBIRD08_0W,    SAT_TRANSPONDER_COUNT(ATLANTICBIRD08_0W),       WEST_FLAG,  0x800, -1, "S8W"    },
-{ "S11WX", S11WX, "11.X west Express A3"                        , EXPRESS11_XW,         SAT_TRANSPONDER_COUNT(EXPRESS11_XW),            WEST_FLAG,  0x110, -1, "S11W"   },
-{ "S12W5", S12W5, "12.5 west Atlantic Bird 1"                   , ATLANTICBIRD12_5W,    SAT_TRANSPONDER_COUNT(ATLANTICBIRD12_5W),       WEST_FLAG,  0x125, -1, "S12.5W" },
-{ "S14W0", S14W0, "14.0 west Express A4"                        , EXPRESS14_0W,         SAT_TRANSPONDER_COUNT(EXPRESS14_0W),            WEST_FLAG,  0x140, -1, "S14W"   },
-{ "S15W0", S15W0, "15.0 west Telstar 12"                        , TELSTAR15_0W,         SAT_TRANSPONDER_COUNT(TELSTAR15_0W),            WEST_FLAG,  0x150, -1, "S15W"   },
-{ "S18WX", S18WX, "18.X west Intelsat 901"                      , INTELSAT18_XW,        SAT_TRANSPONDER_COUNT(INTELSAT18_XW),           WEST_FLAG,  0x180, -1, "S18W"   },
-{ "S22WX", S22WX, "22.X west NSS 7"                             , NSS22_XW,             SAT_TRANSPONDER_COUNT(NSS22_XW),                WEST_FLAG,  0x220, -1, "S22W"   },
-{ "S24WX", S24WX, "24.X west Intelsat 905"                      , INTELSAT24_XW,        SAT_TRANSPONDER_COUNT(INTELSAT24_XW),           WEST_FLAG,  0x240, -1, "S24.5W" },
-{ "S27WX", S27WX, "27.X west Intelsat 907"                      , INTELSAT27_XW,        SAT_TRANSPONDER_COUNT(INTELSAT27_XW),           WEST_FLAG,  0x270, -1, "S27.5W" },
-{ "S30W0", S30W0, "30.0 west Hispasat 1C/1D"                    , HISPASAT30_0W,        SAT_TRANSPONDER_COUNT(HISPASAT30_0W),           WEST_FLAG,  0x300, -1, "S30W"   },
-{ "S97W0", S97W0, "97.0 west Telstar 5"                         , TELSTAR97_0W,         SAT_TRANSPONDER_COUNT(TELSTAR97_0W),            WEST_FLAG,  0x970, -1, "S97.0W" }};
+{  "S4E8",  S4E8, "4.8 east Sirius"                             , SIRIUS04_8E,          ARRAY_SIZE(SIRIUS04_8E),             EAST_FLAG,   0x48, -1, "S5E"    },
+{  "S7E0",  S7E0, "7.0 east Eutelsat W3A"                       , EUTELSAT07_0E,        ARRAY_SIZE(EUTELSAT07_0E),           EAST_FLAG,   0x70, -1, "S7E"    },
+{  "S9E0",  S9E0, "9.0 east Eurobird 9"                         , EUROBIRD09_0E,        ARRAY_SIZE(EUROBIRD09_0E),           EAST_FLAG,   0x90, -1, "S9E"    },
+{ "S10E0", S10E0, "10.0 east Eutelsat W1"                       , EUTELSAT10_0E,        ARRAY_SIZE(EUTELSAT10_0E),           EAST_FLAG,  0x100, -1, "S10E"   },
+{ "S13E0", S13E0, "13.0 east Hotbird 6/7A/8"                    , HOTBIRD13E,           ARRAY_SIZE(HOTBIRD13E),              EAST_FLAG,  0x130, -1, "S13E"   },
+{ "S16E0", S16E0, "16.0 east Eutelsat W2"                       , EUTELSAT16_0E,        ARRAY_SIZE(EUTELSAT16_0E),           EAST_FLAG,  0x160, -1, "S16E"   },
+{ "S19E2", S19E2, "19.2 east Astra 1F/1G/1H/1KR/1L"             , ASTRA19E,             ARRAY_SIZE(ASTRA19E),                EAST_FLAG,  0x192, -1, "S19.2E" },
+{ "S21E6", S21E6, "21.6 east Eutelsat W6"                       , EUTELSAT21_6E,        ARRAY_SIZE(EUTELSAT21_6E),           EAST_FLAG,  0x216, -1, "S21.6E" },
+{ "S23E5", S23E5, "23.5 east Astra 1E/3A"                       , ASTRA23_5E,           ARRAY_SIZE(ASTRA23_5E),              EAST_FLAG,  0x235, -1, "S23.5E" },
+{ "S25E5", S25E5, "25.5 east Eurobird 2"                        , EUROBIRD25_5E,        ARRAY_SIZE(EUROBIRD25_5E),           EAST_FLAG,  0x255, -1, "S25.5E" },
+{ "S26EX", S26EX, "26.X east Badr C/3/4/6"                      , BADR26_XE,            ARRAY_SIZE(BADR26_XE),               EAST_FLAG,  0x260, -1, "S26E"   },
+{ "S28E2", S28E2, "28.2 east Astra 2A/2B/2C/2D"                 , ASTRA28_2E,           ARRAY_SIZE(ASTRA28_2E),              EAST_FLAG,  0x282, -1, "S28.2E" },
+{ "S28E5", S28E5, "28.5 east EuroBird 1"                        , EUROBIRD28_5E,        ARRAY_SIZE(EUROBIRD28_5E),           EAST_FLAG,  0x285, -1, "S28.5E" },
+{ "S31E5", S31E5, "31.5 east Astra 5A/1D"                       , ASTRA31_5E,           ARRAY_SIZE(ASTRA31_5E),              EAST_FLAG,  0x315, -1, "S31.5E" },
+{ "S32E9", S32E9, "32.9 east Intelsat 802"                      , INTELSAT32_9E,        ARRAY_SIZE(INTELSAT32_9E),           EAST_FLAG,  0x329, -1, "S33E"   },
+{ "S33E0", S33E0, "33.0 east Eurobird 3"                        , EUROBIRD33_0E,        ARRAY_SIZE(EUROBIRD33_0E),           EAST_FLAG,  0x330, -1, "S33E"   },
+{ "S35E9", S35E9, "35.9 east Eutelsat W4"                       , EUTELSAT35_9E,        ARRAY_SIZE(EUTELSAT35_9E),           EAST_FLAG,  0x359, -1, "S36E"   },
+{ "S36E0", S36E0, "36.0 east Eutelsat Sesat"                    , EUTELSAT36_0E,        ARRAY_SIZE(EUTELSAT36_0E),           EAST_FLAG,  0x360, -1, "S36E"   },
+{ "S38E0", S38E0, "38.0 east Paksat 1"                          , PAKSAT38_0E,          ARRAY_SIZE(PAKSAT38_0E),             EAST_FLAG,  0x380, -1, "S38E"   },
+{ "S39E0", S39E0, "39.0 east Hellas Sat 2"                      , HELLAS39_0E,          ARRAY_SIZE(HELLAS39_0E),             EAST_FLAG,  0x390, -1, "S39E"   },
+{ "S40EX", S40EX, "40.X east Express AM1"                       , EXPRESS40_XE,         ARRAY_SIZE(EXPRESS40_XE),            EAST_FLAG,  0x400, -1, "S40E"   },
+{ "S42E0", S42E0, "42.0 east Turksat 2A/3A"                     , TURKSAT42_0E,         ARRAY_SIZE(TURKSAT42_0E),            EAST_FLAG,  0x420, -1, "S42E"   },
+{ "S45E0", S45E0, "45.0 east Intelsat 12"                       , INTELSAT45_0E,        ARRAY_SIZE(INTELSAT45_0E),           EAST_FLAG,  0x450, -1, "S45E"   },
+{ "S49E0", S49E0, "49.0 east Yamal 202"                         , YAMAL49_0E,           ARRAY_SIZE(YAMAL49_0E),              EAST_FLAG,  0x490, -1, "S49E"   },
+{ "S53E0", S53E0, "53.0 east Express AM22"                      , EXPRESS53_0E,         ARRAY_SIZE(EXPRESS53_0E),            EAST_FLAG,  0x530, -1, "S53E"   },
+{ "S57E0", S57E0, "57.0 east Bonum 1"                           , BONUM56_0E,           ARRAY_SIZE(BONUM56_0E),              EAST_FLAG,  0x570, -1, "S57E"   },
+{ "S57EX", S57EX, "57.X east NSS 703"                           , NSS57_XE,             ARRAY_SIZE(NSS57_XE),                EAST_FLAG,  0x570, -1, "S57E"   },
+{ "S60EX", S60EX, "60.X east Intelsat 904"                      , INTELSAT60_XE,        ARRAY_SIZE(INTELSAT60_XE),           EAST_FLAG,  0x600, -1, "S60E"   },
+{ "S62EX", S62EX, "62.X east Intelsat 902"                      , INTELSAT62_XE,        ARRAY_SIZE(INTELSAT62_XE),           EAST_FLAG,  0x620, -1, "S62E"   },
+{ "S64E2", S64E2, "64.2 east Intelsat 906"                      , INTELSAT64_2E,        ARRAY_SIZE(INTELSAT64_2E),           EAST_FLAG,  0x642, -1, "S64E"   },
+{ "S68EX", S68EX, "68.X east Intelsat 7/10"                     , INTELSAT68_XE,        ARRAY_SIZE(INTELSAT68_XE),           EAST_FLAG,  0x680, -1, "S68.5E" },
+{ "S70E5", S70E5, "70.5 east Eutelsat W5"                       , EUTELSAT70_5E,        ARRAY_SIZE(EUTELSAT70_5E),           EAST_FLAG,  0x705, -1, "S70.5E" },
+{ "S72EX", S72EX, "72.X east Intelsat 4"                        , INTELSAT72_XE,        ARRAY_SIZE(INTELSAT72_XE),           EAST_FLAG,  0x720, -1, "S72E"   },
+{ "S75EX", S75EX, "75.X east ABS 1"                             , ABS75_XE,             ARRAY_SIZE(ABS75_XE),                EAST_FLAG,  0x750, -1, "S75E"   },
+{ "S76EX", S76EX, "76.X east Telstar 10"                        , TELSTAR76_XE,         ARRAY_SIZE(TELSTAR76_XE),            EAST_FLAG,  0x760, -1, "S76.5E" },
+{ "S78E5", S78E5, "78.5 east Thaicom 2/5"                       , THAICOM78_5E,         ARRAY_SIZE(THAICOM78_5E),            EAST_FLAG,  0x785, -1, "S78.5E" },
+{ "S80EX", S80EX, "80.X east Express AM2"                       , EXPRESS80_XE,         ARRAY_SIZE(EXPRESS80_XE),            EAST_FLAG,  0x800, -1, "S80E"   },
+{ "S83EX", S83EX, "83.X east Insat 2E/3B/4A"                    , INSAT83_XE,           ARRAY_SIZE(INSAT83_XE),              EAST_FLAG,  0x830, -1, "S83E"   },
+{ "S87E5", S87E5, "87.5 east ChinaStar 1"                       , CHINASTAR87_5E,       ARRAY_SIZE(CHINASTAR87_5E),          EAST_FLAG,  0x875, -1, "S87.5E" },
+{ "S88EX", S88EX, "88.X east ST 1"                              , ST88_XE,              ARRAY_SIZE(ST88_XE),                 EAST_FLAG,  0x880, -1, "S88E"   },
+{ "S90EX", S90EX, "90.X east Yamal 201"                         , YAMAL90_XE,           ARRAY_SIZE(YAMAL90_XE),              EAST_FLAG,  0x900, -1, "S90E"   },
+{ "S91E5", S91E5, "91.5 east Measat 3"                          , MEASAT91_5E,          ARRAY_SIZE(MEASAT91_5E),             EAST_FLAG,  0x915, -1, "S91.5E" },
+{ "S93E5", S93E5, "93.5 east Insat 3A/4B"                       , INSAT93_5E,           ARRAY_SIZE(INSAT93_5E),              EAST_FLAG,  0x935, -1, "S93.5E" },
+{ "S95E0", S95E0, "95.0 east NSS 6"                             , NSS95_0E,             ARRAY_SIZE(NSS95_0E),                EAST_FLAG,  0x950, -1, "S95E"   },
+{ "S96EX", S96EX, "96.X east Express AM33"                      , EXPRESS96_XE,         ARRAY_SIZE(EXPRESS96_XE),            EAST_FLAG,  0x960, -1, "S96.5E" },
+{"S100EX",S100EX,"100.X east AsiaSat 2"                         , ASIASAT100_XE,        ARRAY_SIZE(ASIASAT100_XE),           EAST_FLAG, 0x1000, -1, "S100.5E"},
+{"S105EX",S105EX,"105.X east AsiaSat 3S"                        , ASIASAT105_XE,        ARRAY_SIZE(ASIASAT105_XE),           EAST_FLAG, 0x1050, -1, "S105.5E"},
+{"S108EX",S108EX,"108.X east Telkom 1 & NSS 11"                 , NSS108_XE,            ARRAY_SIZE(NSS108_XE),               EAST_FLAG, 0x1080, -1, "S108E"  },
+{"S140EX",S140EX,"140.X east Express AM3"                       , EXPRESS140_XE,        ARRAY_SIZE(EXPRESS140_XE),           EAST_FLAG, 0x1400, -1, "S140E"  },
+{"S160E0",S160E0,"160.0 east Optus D1"                          , OPTUS_160_0E,         ARRAY_SIZE(OPTUS_160_0E),            EAST_FLAG, 0x1600, -1, "S160E"  },
+{  "S0W8",  S0W8,  "0.8 west Thor 3/5 & Intelsat 10-02"         , THOR00_8W,            ARRAY_SIZE(THOR00_8W),               WEST_FLAG,    0x8, -1, "S1W"    },
+{  "S4W0",  S4W0,  "4.0 west Amos 1/2/3"                        , AMOS04_0W,            ARRAY_SIZE(AMOS04_0W),               WEST_FLAG,   0x40, -1, "S4W"    },
+{  "S5WX",  S5WX,  "5.X west Atlantic Bird 3"                   , ATLANTICBIRD05_XW,    ARRAY_SIZE(ATLANTICBIRD05_XW),       WEST_FLAG,   0x50, -1, "S5W"    },
+{  "S7W0",  S7W0,  "7.0 west Nilesat 101/102 & Atlantic Bird 4" , ATLANTICBIRD07_0W,    ARRAY_SIZE(ATLANTICBIRD07_0W),       WEST_FLAG,  0x700, -1, "S7W"    },
+{  "S8W0",  S8W0,  "8.0 west Atlantic Bird 2"                   , ATLANTICBIRD08_0W,    ARRAY_SIZE(ATLANTICBIRD08_0W),       WEST_FLAG,  0x800, -1, "S8W"    },
+{ "S11WX", S11WX, "11.X west Express A3"                        , EXPRESS11_XW,         ARRAY_SIZE(EXPRESS11_XW),            WEST_FLAG,  0x110, -1, "S11W"   },
+{ "S12W5", S12W5, "12.5 west Atlantic Bird 1"                   , ATLANTICBIRD12_5W,    ARRAY_SIZE(ATLANTICBIRD12_5W),       WEST_FLAG,  0x125, -1, "S12.5W" },
+{ "S14W0", S14W0, "14.0 west Express A4"                        , EXPRESS14_0W,         ARRAY_SIZE(EXPRESS14_0W),            WEST_FLAG,  0x140, -1, "S14W"   },
+{ "S15W0", S15W0, "15.0 west Telstar 12"                        , TELSTAR15_0W,         ARRAY_SIZE(TELSTAR15_0W),            WEST_FLAG,  0x150, -1, "S15W"   },
+{ "S18WX", S18WX, "18.X west Intelsat 901"                      , INTELSAT18_XW,        ARRAY_SIZE(INTELSAT18_XW),           WEST_FLAG,  0x180, -1, "S18W"   },
+{ "S22WX", S22WX, "22.X west NSS 7"                             , NSS22_XW,             ARRAY_SIZE(NSS22_XW),                WEST_FLAG,  0x220, -1, "S22W"   },
+{ "S24WX", S24WX, "24.X west Intelsat 905"                      , INTELSAT24_XW,        ARRAY_SIZE(INTELSAT24_XW),           WEST_FLAG,  0x240, -1, "S24.5W" },
+{ "S27WX", S27WX, "27.X west Intelsat 907"                      , INTELSAT27_XW,        ARRAY_SIZE(INTELSAT27_XW),           WEST_FLAG,  0x270, -1, "S27.5W" },
+{ "S30W0", S30W0, "30.0 west Hispasat 1C/1D"                    , HISPASAT30_0W,        ARRAY_SIZE(HISPASAT30_0W),           WEST_FLAG,  0x300, -1, "S30W"   },
+{ "S97W0", S97W0, "97.0 west Telstar 5"                         , TELSTAR97_0W,         ARRAY_SIZE(TELSTAR97_0W),            WEST_FLAG,  0x970, -1, "S97.0W" }};
 /**********************************************************************************************************************************************/
 
 const cSat& SatelliteUtils::GetSatellite(eSatellite satelliteId)

@@ -49,10 +49,6 @@ using namespace std;
 
 #define MAXNETWORKNAME  Utf8BufSize(256)
 
-#ifndef ARRAY_SIZE
-#define ARRAY_SIZE(x)   (sizeof(x) / sizeof((x)[0]))
-#endif
-
 namespace VDR
 {
 
