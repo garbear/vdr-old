@@ -70,7 +70,8 @@ bool cDvbPIDSubsystem::SetPid(cPidHandle &handle, ePidType type, bool bOn)
     }
     else if (!handle.used)
     {
-      CHECK(ioctl(handle.handle, DMX_STOP));
+      if (ioctl(handle.handle, DMX_STOP) < 0)
+        LOG_ERROR;
 
       if (type <= ptTeletext)
       {
@@ -79,7 +80,9 @@ bool cDvbPIDSubsystem::SetPid(cPidHandle &handle, ePidType type, bool bOn)
         pesFilterParams.output  = DMX_OUT_DECODER;
         pesFilterParams.pes_type= DMX_PES_OTHER;
         pesFilterParams.flags   = DMX_IMMEDIATE_START;
-        CHECK(ioctl(handle.handle, DMX_SET_PES_FILTER, &pesFilterParams));
+
+        if (ioctl(handle.handle, DMX_SET_PES_FILTER, &pesFilterParams) < 0)
+          LOG_ERROR;
       }
 
       close(handle.handle);

@@ -775,7 +775,9 @@ void cDvbTuner::ExecuteDiseqc(const cDiseqc *Diseqc, unsigned int *Frequency)
 {
   if (!m_bLnbPowerTurnedOn)
   {
-    CHECK(ioctl(m_fileDescriptor, FE_SET_VOLTAGE, SEC_VOLTAGE_13)); // must explicitly turn on LNB power
+    // must explicitly turn on LNB power
+    if (ioctl(m_fileDescriptor, FE_SET_VOLTAGE, SEC_VOLTAGE_13) < 0)
+      LOG_ERROR;
     m_bLnbPowerTurnedOn = true;
   }
 
@@ -794,13 +796,35 @@ void cDvbTuner::ExecuteDiseqc(const cDiseqc *Diseqc, unsigned int *Frequency)
       break;
     switch (da)
     {
-    case cDiseqc::daToneOff:   CHECK(ioctl(m_fileDescriptor, FE_SET_TONE, SEC_TONE_OFF)); break;
-    case cDiseqc::daToneOn:    CHECK(ioctl(m_fileDescriptor, FE_SET_TONE, SEC_TONE_ON)); break;
-    case cDiseqc::daVoltage13: CHECK(ioctl(m_fileDescriptor, FE_SET_VOLTAGE, SEC_VOLTAGE_13)); break;
-    case cDiseqc::daVoltage18: CHECK(ioctl(m_fileDescriptor, FE_SET_VOLTAGE, SEC_VOLTAGE_18)); break;
-    case cDiseqc::daMiniA:     CHECK(ioctl(m_fileDescriptor, FE_DISEQC_SEND_BURST, SEC_MINI_A)); break;
-    case cDiseqc::daMiniB:     CHECK(ioctl(m_fileDescriptor, FE_DISEQC_SEND_BURST, SEC_MINI_B)); break;
-    case cDiseqc::daCodes:     CHECK(IoControl(FE_DISEQC_SEND_MASTER_CMD, &cmd)); break;
+
+    case cDiseqc::daToneOff:
+      if (ioctl(m_fileDescriptor, FE_SET_TONE, SEC_TONE_OFF) < 0)
+        LOG_ERROR;
+      break;
+    case cDiseqc::daToneOn:
+      if (ioctl(m_fileDescriptor, FE_SET_TONE, SEC_TONE_ON) < 0)
+        LOG_ERROR;
+      break;
+    case cDiseqc::daVoltage13:
+      if (ioctl(m_fileDescriptor, FE_SET_VOLTAGE, SEC_VOLTAGE_13) < 0)
+        LOG_ERROR;
+      break;
+    case cDiseqc::daVoltage18:
+      if (ioctl(m_fileDescriptor, FE_SET_VOLTAGE, SEC_VOLTAGE_18) < 0)
+        LOG_ERROR;
+      break;
+    case cDiseqc::daMiniA:
+      if (ioctl(m_fileDescriptor, FE_DISEQC_SEND_BURST, SEC_MINI_A) < 0)
+        LOG_ERROR;
+      break;
+    case cDiseqc::daMiniB:
+      if (ioctl(m_fileDescriptor, FE_DISEQC_SEND_BURST, SEC_MINI_B) < 0)
+        LOG_ERROR;
+      break;
+    case cDiseqc::daCodes:
+      if (IoControl(FE_DISEQC_SEND_MASTER_CMD, &cmd) < 0)
+        LOG_ERROR;
+      break;
     default:
       esyslog("ERROR: unknown diseqc command %d", da);
       break;
@@ -815,8 +839,11 @@ void cDvbTuner::ExecuteDiseqc(const cDiseqc *Diseqc, unsigned int *Frequency)
 
 void cDvbTuner::ResetToneAndVoltage()
 {
-  CHECK(ioctl(m_fileDescriptor, FE_SET_VOLTAGE, m_bondedTuner ? SEC_VOLTAGE_OFF : SEC_VOLTAGE_13));
-  CHECK(ioctl(m_fileDescriptor, FE_SET_TONE, SEC_TONE_OFF));
+  if (ioctl(m_fileDescriptor, FE_SET_VOLTAGE, m_bondedTuner ? SEC_VOLTAGE_OFF : SEC_VOLTAGE_13) < 0)
+    LOG_ERROR;
+
+  if (ioctl(m_fileDescriptor, FE_SET_TONE, SEC_TONE_OFF) < 0)
+    LOG_ERROR;
 }
 
 bool cDvbTuner::SetFrontend()
@@ -889,8 +916,12 @@ bool cDvbTuner::SetFrontend()
         tone = SEC_TONE_OFF;
         volt = SEC_VOLTAGE_13;
       }
-      CHECK(ioctl(m_fileDescriptor, FE_SET_VOLTAGE, volt));
-      CHECK(ioctl(m_fileDescriptor, FE_SET_TONE, tone));
+
+      if (ioctl(m_fileDescriptor, FE_SET_VOLTAGE, volt) < 0)
+        LOG_ERROR;
+
+      if (ioctl(m_fileDescriptor, FE_SET_TONE, tone) < 0)
+        LOG_ERROR;
     }
 
     frequency = ::abs(frequency); // Allow for C-band, where the frequency is less than the LOF

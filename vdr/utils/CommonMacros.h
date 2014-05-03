@@ -40,8 +40,6 @@
 #define PRId64       "I64d"
 #endif
 
-#define CHECK(s) { if ((s) < 0) LOG_ERROR; } // used for 'ioctl()' calls
-
 #define BCDCHARTOINT(x) (10 * ((x & 0xF0) >> 4) + (x & 0xF))
 
 #if defined(TARGET_ANDROID)
