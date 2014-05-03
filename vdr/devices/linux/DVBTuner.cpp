@@ -134,7 +134,7 @@ bool cDvbTuner::Open()
 
     m_strName = m_frontendInfo.name;
 
-    vector<string> vecModulations = m_device->GetModulationsFromCaps(m_frontendInfo.caps);
+    vector<string> vecModulations = cDvbTransponderParams::GetModulationsFromCaps(m_frontendInfo.caps);
     string modulations = StringUtils::Join(vecModulations, ",");
     if (modulations.empty())
       modulations = "unknown modulations";

@@ -140,9 +140,6 @@ public:
   cDvbReceiverSubsystem        *DvbReceiver() const;
   cDvbSectionFilterSubsystem   *DvbSectionFilter() const;
 
-  // TODO: Move to cDvbTransponderParams
-  static std::vector<std::string> GetModulationsFromCaps(fe_caps_t caps);
-
   bool HasCam(void) const { return m_fd_ca > 0; }
   bool Initialise(void);
   void Notify(const Observable &obs, const ObservableMessage msg);

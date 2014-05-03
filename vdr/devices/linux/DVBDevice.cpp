@@ -129,23 +129,6 @@ cDvbDevice::~cDvbDevice()
   // caused segfaults. Besides, the program is about to terminate anyway...
 }
 
-vector<string> cDvbDevice::GetModulationsFromCaps(fe_caps_t caps)
-{
-  vector<string> modulations;
-
-  if (caps & FE_CAN_QPSK)      { modulations.push_back(cDvbTransponderParams::TranslateModulation(QPSK)); }
-  if (caps & FE_CAN_QAM_16)    { modulations.push_back(cDvbTransponderParams::TranslateModulation(QAM_16)); }
-  if (caps & FE_CAN_QAM_32)    { modulations.push_back(cDvbTransponderParams::TranslateModulation(QAM_32)); }
-  if (caps & FE_CAN_QAM_64)    { modulations.push_back(cDvbTransponderParams::TranslateModulation(QAM_64)); }
-  if (caps & FE_CAN_QAM_128)   { modulations.push_back(cDvbTransponderParams::TranslateModulation(QAM_128)); }
-  if (caps & FE_CAN_QAM_256)   { modulations.push_back(cDvbTransponderParams::TranslateModulation(QAM_256)); }
-  if (caps & FE_CAN_8VSB)      { modulations.push_back(cDvbTransponderParams::TranslateModulation(VSB_8)); }
-  if (caps & FE_CAN_16VSB)     { modulations.push_back(cDvbTransponderParams::TranslateModulation(VSB_16)); }
-  if (caps & FE_CAN_TURBO_FEC) { modulations.push_back("TURBO_FEC"); }
-
-  return modulations;
-}
-
 DeviceVector cDvbDevice::FindDevicesMdev(void)
 {
   DeviceVector devices;

@@ -25,6 +25,7 @@
 #include "dvb/extended_frontend.h"
 
 #include <string>
+#include <vector>
 
 class TiXmlNode;
 
@@ -114,6 +115,8 @@ public:
    * \return The string representation, e.g. "QAM256"
    */
   static const char *TranslateModulation(fe_modulation modulation);
+
+  static std::vector<std::string> GetModulationsFromCaps(fe_caps_t caps);
 
 private:
   fe_polarization       m_polarization;
