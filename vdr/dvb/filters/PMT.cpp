@@ -112,7 +112,7 @@ ChannelPtr cPmt::CreateChannel(/* const */ SI::PMT& pmt) const // TODO: libsi fa
 
   // Log a comma-separated list of streams we found in the channel
   stringstream logStreams;
-  logStreams << "PMT: Found channel with streams: " << channel->GetVideoStream().vpid << " (Video)";
+  logStreams << "PMT: Found channel with SID=" << m_sid << " and streams: " << channel->GetVideoStream().vpid << " (Video)";
   for (vector<AudioStream>::const_iterator it = channel->GetAudioStreams().begin(); it != channel->GetAudioStreams().end(); ++it)
     logStreams << ", " << it->apid << " (Audio)";
   for (vector<DataStream>::const_iterator it = channel->GetDataStreams().begin(); it != channel->GetDataStreams().end(); ++it)

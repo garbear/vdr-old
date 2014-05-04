@@ -97,7 +97,7 @@ ChannelVector cPsipVct::GetChannels(void)
         // TODO: SID is 0xFFFF for analog channels
         channel->SetId(0, channelInfo.getTSID(), channelInfo.getServiceId());
 
-        dsyslog("VCT: Found %s: %s (%d.%d, TID=%u, SID=%u)",
+        dsyslog("VCT: Found %s: %s (%d.%d, TSID=%u, SID=%u)",
             channelInfo.isHidden() ? "hidden channel" : "channel", channel->ShortName().c_str(),
             channelInfo.getMajorNumber(), channelInfo.getMinorNumber(),
             channel->GetTid(), channel->GetSid());

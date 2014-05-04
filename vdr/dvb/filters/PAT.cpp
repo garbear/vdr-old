@@ -62,7 +62,7 @@ ChannelVector cPat::GetChannels(void)
         if (assoc.isNITPid())
           continue;
 
-        dsyslog("PAT: Scanning for PMT table with transport stream ID = %d, service ID = %d", tsPAT.getTransportStreamId(), assoc.getServiceId());
+        dsyslog("PAT: Scanning for PMT table with TSID=%d, SID=%d", tsPAT.getTransportStreamId(), assoc.getServiceId());
         cPmt pmt(GetDevice(), tsPAT.getTransportStreamId(), assoc.getServiceId(), assoc.getPid());
 
         ChannelPtr channel = pmt.GetChannel();
