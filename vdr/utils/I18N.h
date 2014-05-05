@@ -26,6 +26,10 @@
 #include <string>
 #include <vector>
 
+#if defined(TARGET_ANDROID) && !defined(__attribute_format_arg__)
+#define __attribute_format_arg__(x) __attribute__ ((__format_arg__ (x)))
+#endif
+
 namespace VDR
 {
 #define I18N_DEFAULT_LOCALE "en_US"

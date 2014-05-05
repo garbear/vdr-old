@@ -25,10 +25,6 @@
 
 namespace VDR
 {
-#if defined(TARGET_ANDROID)
-#define __attribute_format_arg__(x) __attribute__ ((__format_arg__ (x)))
-#endif
-
 #ifndef esyslog
 #define esyslog(a...) CLog::Get().Log(SYS_LOG_ERROR, a)
 #endif
