@@ -99,8 +99,6 @@ void* cEITScanner::Process(void)
     vector<cScanData>::iterator it;
     for (it = m_scanList.m_list.begin(); it != m_scanList.m_list.end(); ++it)
     {
-      if (it->GetChannel()->FrequencyMHz() != 201)
-        continue;
       ScanTransponder(*it);
       if (IsStopped())
         break;
