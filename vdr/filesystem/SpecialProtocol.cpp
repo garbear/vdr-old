@@ -21,20 +21,22 @@
  */
 
 #include "SpecialProtocol.h"
-#include "utils/StringUtils.h"
 #include "utils/log/Log.h"
+#include "utils/StringUtils.h"
 #include "utils/url/URL.h"
 #include "utils/url/URLUtils.h"
-//#include "Util.h"
 //#include "guilib/GraphicContext.h"
 //#include "profiles/ProfilesManager.h"
 //#include "settings/AdvancedSettings.h"
 //#include "settings/Settings.h"
-//#include "utils/log.h"
 
 //#ifdef TARGET_POSIX
 //#include <dirent.h>
 //#endif
+
+#if defined(TARGET_ANDROID)
+#include "utils/android/android_replacements.h"
+#endif
 
 #include <limits.h>
 #include <assert.h>
