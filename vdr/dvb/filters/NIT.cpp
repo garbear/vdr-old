@@ -221,7 +221,7 @@ ChannelVector cNit::GetTransponders()
               assert(GetCurrentlyTunedTransponder().get() != NULL); // TODO
               for (vector<uint32_t>::const_iterator itKHz = frequenciesKHz.begin(); itKHz != frequenciesKHz.end(); ++itKHz)
               {
-                if (ISTRANSPONDER(cChannel::Transponder(*itKHz, dtp.Polarization()), GetCurrentlyTunedTransponder()->TransponderFrequency()))
+                if (ISTRANSPONDER(cChannel::TransponderWTF(*itKHz, dtp.Polarization()), GetCurrentlyTunedTransponder()->TransponderFrequencyMHz()))
                 {
                   thisNetwork.bHasTransponder = true;
                   break;
@@ -256,13 +256,13 @@ ChannelVector cNit::GetTransponders()
                       channel->GetNid() == ts.getOriginalNetworkId() &&
                       channel->GetTid() == ts.getTransportStreamId())
                   {
-                    int transponder = channel->TransponderFrequency();
+                    int transponder = channel->TransponderFrequencyMHz();
                     bFound = true;
-                    if (!ISTRANSPONDER(cChannel::Transponder(iFrequencyKHz, dtp.Polarization()), transponder))
+                    if (!ISTRANSPONDER(cChannel::TransponderWTF(iFrequencyKHz, dtp.Polarization()), transponder))
                     {
                       for (vector<uint32_t>::const_iterator itKHz = frequenciesKHz.begin(); itKHz != frequenciesKHz.end(); ++itKHz)
                       {
-                        if (ISTRANSPONDER(cChannel::Transponder(*itKHz, dtp.Polarization()), transponder))
+                        if (ISTRANSPONDER(cChannel::TransponderWTF(*itKHz, dtp.Polarization()), transponder))
                         {
                           iFrequencyKHz = *itKHz;
                           break;
@@ -272,7 +272,7 @@ ChannelVector cNit::GetTransponders()
 
                     // Only modify channels if we're actually receiving this transponder
                     assert(GetCurrentlyTunedTransponder().get() != NULL); // TODO
-                    if (ISTRANSPONDER(cChannel::Transponder(iFrequencyKHz, dtp.Polarization()), GetCurrentlyTunedTransponder()->TransponderFrequency()))
+                    if (ISTRANSPONDER(cChannel::TransponderWTF(iFrequencyKHz, dtp.Polarization()), GetCurrentlyTunedTransponder()->TransponderFrequencyMHz()))
                       channel->SetTransponderData(source, iFrequencyKHz, symbolRate, dtp);
                     else
                       bForceTransponderUpdate = true; // Get us receiving this transponder
@@ -361,7 +361,7 @@ ChannelVector cNit::GetTransponders()
               for (vector<uint32_t>::const_iterator itKHz = frequenciesKHz.begin(); itKHz != frequenciesKHz.end(); ++itKHz)
               {
                 assert(GetCurrentlyTunedTransponder().get() != NULL); // TODO
-                if (ISTRANSPONDER(*itKHz / 1000, GetCurrentlyTunedTransponder()->TransponderFrequency()))
+                if (ISTRANSPONDER(*itKHz / 1000, GetCurrentlyTunedTransponder()->TransponderFrequencyMHz()))
                 {
                   thisNetwork.bHasTransponder = true;
                   break;
@@ -390,7 +390,7 @@ ChannelVector cNit::GetTransponders()
                       channel->GetNid() == ts.getOriginalNetworkId() &&
                       channel->GetTid() == ts.getTransportStreamId())
                   {
-                    int transponder = channel->TransponderFrequency();
+                    int transponder = channel->TransponderFrequencyMHz();
 
                     bFound = true;
 
@@ -408,7 +408,7 @@ ChannelVector cNit::GetTransponders()
 
                     // Only modify channels if we're actually receiving this transponder
                     assert(GetCurrentlyTunedTransponder().get() != NULL); // TODO
-                    if (ISTRANSPONDER(iFrequencyKHz / 1000, GetCurrentlyTunedTransponder()->TransponderFrequency()))
+                    if (ISTRANSPONDER(iFrequencyKHz / 1000, GetCurrentlyTunedTransponder()->TransponderFrequencyMHz()))
                       channel->SetTransponderData(source, iFrequencyKHz, symbolRate, dtp);
                     else if (channel->Srate() != symbolRate || channel->Parameters() != dtp)
                       bForceTransponderUpdate = true; // get us receiving this transponder
@@ -490,7 +490,7 @@ ChannelVector cNit::GetTransponders()
               for (vector<uint32_t>::const_iterator itKHz = frequenciesKHz.begin(); itKHz != frequenciesKHz.end(); ++itKHz)
               {
                 assert(GetCurrentlyTunedTransponder().get() != NULL); // TODO
-                if (ISTRANSPONDER(*itKHz / (1000 * 1000), GetCurrentlyTunedTransponder()->TransponderFrequency()))
+                if (ISTRANSPONDER(*itKHz / (1000 * 1000), GetCurrentlyTunedTransponder()->TransponderFrequencyMHz()))
                 {
                   thisNetwork.bHasTransponder = true;
                   break;
@@ -518,14 +518,14 @@ ChannelVector cNit::GetTransponders()
                       channel->GetNid() == ts.getOriginalNetworkId() &&
                       channel->GetTid() == ts.getTransportStreamId())
                   {
-                    int transponder = channel->TransponderFrequency();
+                    int transponder = channel->TransponderFrequencyMHz();
                     bFound = true;
                     if (!ISTRANSPONDER(iFrequencyKHz / (1000 * 1000), transponder))
                     {
                       for (vector<uint32_t>::const_iterator itKHz = frequenciesKHz.begin(); itKHz != frequenciesKHz.end(); ++itKHz)
                       {
                         assert(GetCurrentlyTunedTransponder().get() != NULL); // TODO
-                        if (ISTRANSPONDER(*itKHz / (1000 * 1000), GetCurrentlyTunedTransponder()->TransponderFrequency()))
+                        if (ISTRANSPONDER(*itKHz / (1000 * 1000), GetCurrentlyTunedTransponder()->TransponderFrequencyMHz()))
                         {
                           iFrequencyKHz = *itKHz;
                           break;
@@ -535,7 +535,7 @@ ChannelVector cNit::GetTransponders()
 
                     // Only modify channels if we're actually receiving this transponder
                     assert(GetCurrentlyTunedTransponder().get() != NULL); // TODO
-                    if (ISTRANSPONDER(iFrequencyKHz / (1000 * 1000), GetCurrentlyTunedTransponder()->TransponderFrequency()))
+                    if (ISTRANSPONDER(iFrequencyKHz / (1000 * 1000), GetCurrentlyTunedTransponder()->TransponderFrequencyMHz()))
                       channel->SetTransponderData(source, iFrequencyKHz, 0, dtp);
                     else if (channel->Parameters() != dtp)
                       bForceTransponderUpdate = true; // get us receiving this transponder
@@ -670,7 +670,7 @@ ChannelVector cNit::GetTransponders()
                   // TODO: Do we need a callback for updating discovered channels?
 
                   /*
-                  ChannelPtr channel = cChannelManager::GetByServiceID(m_newChannels, Source(), GetCurrentlyTunedTransponder()->TransponderFrequency(), service.getServiceId());
+                  ChannelPtr channel = cChannelManager::GetByServiceID(m_newChannels, Source(), GetCurrentlyTunedTransponder()->TransponderFrequencyMHz(), service.getServiceId());
                   if (channel && !(channel->Rid() & INVALID_CHANNEL))
                   {
                     dsyslog("   NIT: invalid (service_type=0x%.2x)", service.getServiceType());

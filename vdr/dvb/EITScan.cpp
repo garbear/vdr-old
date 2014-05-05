@@ -47,12 +47,12 @@ namespace VDR
 
 void cScanList::AddTransponder(const ChannelPtr& channel)
 {
-  if (channel->Source() && channel->TransponderFrequency())
+  if (channel->Source() && channel->TransponderFrequencyMHz())
   {
     for (vector<cScanData>::const_iterator it = m_list.begin(); it != m_list.end(); ++it)
     {
       if (it->GetChannel()->Source() == channel->Source() &&
-          ISTRANSPONDER(it->GetChannel()->TransponderFrequency(), channel->TransponderFrequency()))
+          ISTRANSPONDER(it->GetChannel()->TransponderFrequencyMHz(), channel->TransponderFrequencyMHz()))
         return;
     }
     m_list.push_back(cScanData(channel));
@@ -99,7 +99,7 @@ void* cEITScanner::Process(void)
     vector<cScanData>::iterator it;
     for (it = m_scanList.m_list.begin(); it != m_scanList.m_list.end(); ++it)
     {
-      if (it->GetChannel()->FrequencyHz() / (1000 * 1000) != 201)
+      if (it->GetChannel()->FrequencyMHz() != 201)
         continue;
       ScanTransponder(*it);
       if (IsStopped())
@@ -168,7 +168,7 @@ bool cEITScanner::Scan(const DevicePtr& device, cScanData& scanData)
     if (!device->Channel()->SwitchChannel(channel))
       throw "Failed to scan channel: Failed to switch channels";
 
-    dsyslog("EIT scan: device %d source  %-8s tp %5d", device->CardIndex(), cSource::ToString(channel->Source()).c_str(), channel->TransponderFrequency());
+    dsyslog("EIT scan: device %d source  %-8s tp %5d", device->CardIndex(), cSource::ToString(channel->Source()).c_str(), channel->TransponderFrequencyMHz());
 
     EventVector events;
 

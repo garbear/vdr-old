@@ -131,7 +131,7 @@ class cLinkChannels : public cList<cLinkChannel>
 
 struct tChannelData
 {
-  int          iFrequencyHz; // MHz
+  unsigned int iFrequencyHz; // MHz
   int          source;
   int          srate;
   unsigned int number;    // Sequence number assigned on load // TODO: Doesn't belong in tChannelData
@@ -201,33 +201,29 @@ public:
   bool Deserialise(const TiXmlNode *node);
   bool DeserialiseConf(const std::string &str);
 
+  unsigned int FrequencyHz() const { return m_channelData.iFrequencyHz; }
+  unsigned int FrequencyKHz() const { return m_channelData.iFrequencyHz / 1000; }
+  unsigned int FrequencyMHz() const { return m_channelData.iFrequencyHz / (1000 * 1000); }
+
+  void SetFrequencyHz(unsigned int frequencyHz) { m_channelData.iFrequencyHz = frequencyHz; }
+
   /*!
-   * \brief Returns the actual frequency in KHz, as given in 'channels.conf'
+   * \brief Returns the transponder frequency in MHz, plus the polarization in
+   * the case of a satellite. The polarization takes the form of a mask in the
+   * 100 GHz range (see TransponderWTF()).
    */
-  int FrequencyKHz() const { return m_channelData.iFrequencyHz / 1000; }
+  unsigned int TransponderFrequencyMHz() const;
 
   /*!
-   * \brief Returns the actual frequency in Hz XXX
-   */
-  int FrequencyHz() const { return m_channelData.iFrequencyHz; }
-
-  void SetFrequencyHz(int frequency) { m_channelData.iFrequencyHz = frequency; }
-
-  /*!
-   * \brief Returns the transponder frequency in MHz, plus the polarization in case of sat
-   */
-  int TransponderFrequency() const;
-
-  /*!
-   * \brief Builds the transponder from the given frequency and polarization
-   * \param frequency The transponder frequency before polarization is taken into account
-   * \param polarization The transponder polarization
-   * \return The adjusted frequency
+   * \brief Builds the transponder from the given frequency and polarization.
    *
-   * Some satellites have transponders at the same frequency, just with different
-   * polarization.
+   * This function adds 100 GHz - 400 GHz to the frequency depending on the
+   * polarization. I believe this is used as a mask so that the ISTRANSPONDER()
+   * macro can differentiate between transponders at the same frequency but with
+   * different polarizations. "WTF" has been added to clearly indicate that this
+   * function has confusing behaviour.
    */
-  static unsigned int Transponder(unsigned int frequency, fe_polarization polarization);
+  static unsigned int TransponderWTF(unsigned int frequencyMHz, fe_polarization polarization);
 
   int Source() const                                 { return m_channelData.source; }
   int Srate() const                                  { return m_channelData.srate; }
@@ -257,7 +253,7 @@ public:
 
   void CopyTransponderData(const cChannel &channel);
 
-  bool SetTransponderData(int source, int frequency, int srate, const cDvbTransponderParams& parameters, bool bQuiet = false);
+  bool SetTransponderData(int source, unsigned int frequency, int srate, const cDvbTransponderParams& parameters, bool bQuiet = false);
   void SetLinkChannels(cLinkChannels *linkChannels);
   void SetRefChannel(cChannel *refChannel) { m_refChannel = refChannel; }
 

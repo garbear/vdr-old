@@ -308,7 +308,7 @@ ChannelPtr cChannelManager::GetByServiceID(int serviceID, int source, int transp
     const ChannelVector &channelVec = it->second;
     for (ChannelVector::const_iterator itChannel = channelVec.begin(); itChannel != channelVec.end(); ++itChannel)
     {
-      if ((*itChannel)->GetSid() == serviceID && (*itChannel)->Source() == source && ISTRANSPONDER((*itChannel)->TransponderFrequency(), transponder))
+      if ((*itChannel)->GetSid() == serviceID && (*itChannel)->Source() == source && ISTRANSPONDER((*itChannel)->TransponderFrequencyMHz(), transponder))
         return (*itChannel);
     }
   }
@@ -323,7 +323,7 @@ ChannelPtr cChannelManager::GetByServiceID(const ChannelVector& channels, int se
 
   for (ChannelVector::const_iterator itChannel = channels.begin(); itChannel != channels.end(); ++itChannel)
   {
-    if ((*itChannel)->GetSid() == serviceID && (*itChannel)->Source() == source && ISTRANSPONDER((*itChannel)->TransponderFrequency(), transponder))
+    if ((*itChannel)->GetSid() == serviceID && (*itChannel)->Source() == source && ISTRANSPONDER((*itChannel)->TransponderFrequencyMHz(), transponder))
       return (*itChannel);
   }
   return cChannel::EmptyChannel;
@@ -451,7 +451,7 @@ void cChannelManager::SetModified(void)
 
 ChannelPtr cChannelManager::NewChannel(const cChannel& transponder, const string& name, const string& shortName, const string& provider, int nid, int tid, int sid, int rid /* = 0 */)
 {
-  dsyslog("creating new channel '%s,%s;%s' on %s transponder %d with id %d-%d-%d-%d", name.c_str(), shortName.c_str(), provider.c_str(), cSource::ToString(transponder.Source()).c_str(), transponder.TransponderFrequency(), nid, tid, sid, rid);
+  dsyslog("creating new channel '%s,%s;%s' on %s transponder %d with id %d-%d-%d-%d", name.c_str(), shortName.c_str(), provider.c_str(), cSource::ToString(transponder.Source()).c_str(), transponder.TransponderFrequencyMHz(), nid, tid, sid, rid);
   ChannelPtr newChannel = ChannelPtr(new cChannel);
   if (newChannel)
   {

@@ -469,8 +469,8 @@ bool cDvbTuner::IsTunedTo(const cChannel& channel) const
   if (!HasLock())
     return false;
 
-  if (m_channel->Source()               == channel.Source() &&
-      m_channel->TransponderFrequency() == channel.TransponderFrequency())
+  if (m_channel->Source()                  == channel.Source() &&
+      m_channel->TransponderFrequencyMHz() == channel.TransponderFrequencyMHz())
   {
     // Polarization is already checked as part of the Transponder
     // TODO: POLARIZATION SHOULD NOT BE PART OF THE TRANSPONDER! Remove this

@@ -1143,29 +1143,26 @@ bool cChannel::DeserialiseConf(const string &str)
   return ok;
 }
 
-int cChannel::TransponderFrequency() const
+unsigned int cChannel::TransponderFrequencyMHz() const
 {
-  int transponderFreq = FrequencyKHz();
-  while (transponderFreq > 20000) // XXX
-    transponderFreq /= 1000;
-
+  unsigned int transponderFreqMHz = FrequencyMHz();
   if (IsSat())
-    transponderFreq = Transponder(transponderFreq, m_parameters.Polarization());
+    transponderFreqMHz = TransponderWTF(transponderFreqMHz, m_parameters.Polarization());
 
-  return transponderFreq;
+  return transponderFreqMHz;
 }
 
-unsigned int cChannel::Transponder(unsigned int frequency, fe_polarization polarization)
+unsigned int cChannel::TransponderWTF(unsigned int frequencyMHz, fe_polarization polarization)
 {
   // some satellites have transponders at the same frequency, just with different polarization:
   switch (polarization)
   {
-  case POLARIZATION_HORIZONTAL:     frequency += 100000; break;
-  case POLARIZATION_VERTICAL:       frequency += 200000; break;
-  case POLARIZATION_CIRCULAR_LEFT:  frequency += 300000; break;
-  case POLARIZATION_CIRCULAR_RIGHT: frequency += 400000; break;
+  case POLARIZATION_HORIZONTAL:     frequencyMHz += 100000; break; // WTF 100 GHZ???
+  case POLARIZATION_VERTICAL:       frequencyMHz += 200000; break; // WTF 200 GHZ???
+  case POLARIZATION_CIRCULAR_LEFT:  frequencyMHz += 300000; break; // WTF 300 GHZ???
+  case POLARIZATION_CIRCULAR_RIGHT: frequencyMHz += 400000; break; // WTF 400 GHZ???
   }
-  return frequency;
+  return frequencyMHz;
 }
 
 tChannelID cChannel::GetChannelID() const
@@ -1173,7 +1170,7 @@ tChannelID cChannel::GetChannelID() const
   if (m_nid || m_tid)
     return tChannelID(m_channelData.source, m_nid, m_tid, m_sid, m_rid);
   else
-    return tChannelID(m_channelData.source, m_nid, TransponderFrequency(), m_sid, m_rid);
+    return tChannelID(m_channelData.source, m_nid, TransponderFrequencyMHz(), m_sid, m_rid);
 }
 
 bool cChannel::HasTimer(const vector<cTimer2> &timers) const // TODO" cTimer2
@@ -1202,18 +1199,20 @@ void cChannel::CopyTransponderData(const cChannel &channel)
   SetChanged();
 }
 
-bool cChannel::SetTransponderData(int source, int iFrequencyHz, int srate, const cDvbTransponderParams& parameters, bool bQuiet /* = false */)
+bool cChannel::SetTransponderData(int source, unsigned int iFrequencyHz, int srate, const cDvbTransponderParams& parameters, bool bQuiet /* = false */)
 {
   // Workarounds for broadcaster stupidity:
   // Some providers broadcast the transponder frequency of their channels with two different
   // values (like 12551000 and 12552000), so we need to allow for a little tolerance here
-  if (abs(FrequencyHz() - iFrequencyHz) <= 1000)
+  if (::abs(FrequencyHz() - iFrequencyHz) <= 1000)
     iFrequencyHz = FrequencyHz();
+
   // Sometimes the transponder frequency is set to 0, which is just wrong
   if (iFrequencyHz == 0)
     return false;
+
   // Sometimes the symbol rate is off by one
-  if (abs(m_channelData.srate - srate) <= 1)
+  if (::abs(m_channelData.srate - srate) <= 1)
     srate = m_channelData.srate;
 
   if (m_channelData.source != source || FrequencyHz() != iFrequencyHz || m_channelData.srate != srate || m_parameters != parameters)
