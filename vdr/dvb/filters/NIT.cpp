@@ -218,7 +218,7 @@ ChannelVector cNit::GetTransponders()
               // System
               dtp.SetSystem(sd->getModulationSystem() ? DVB_SYSTEM_2 : DVB_SYSTEM_1);
 
-              assert(GetCurrentlyTunedTransponder() != NULL); // TODO
+              assert(GetCurrentlyTunedTransponder().get() != NULL); // TODO
               for (vector<uint32_t>::const_iterator itKHz = frequenciesKHz.begin(); itKHz != frequenciesKHz.end(); ++itKHz)
               {
                 if (ISTRANSPONDER(cChannel::Transponder(*itKHz, dtp.Polarization()), GetCurrentlyTunedTransponder()->TransponderFrequency()))
@@ -271,7 +271,7 @@ ChannelVector cNit::GetTransponders()
                     }
 
                     // Only modify channels if we're actually receiving this transponder
-                    assert(GetCurrentlyTunedTransponder() != NULL); // TODO
+                    assert(GetCurrentlyTunedTransponder().get() != NULL); // TODO
                     if (ISTRANSPONDER(cChannel::Transponder(iFrequencyKHz, dtp.Polarization()), GetCurrentlyTunedTransponder()->TransponderFrequency()))
                       channel->SetTransponderData(source, iFrequencyKHz, symbolRate, dtp);
                     else
@@ -360,7 +360,7 @@ ChannelVector cNit::GetTransponders()
 
               for (vector<uint32_t>::const_iterator itKHz = frequenciesKHz.begin(); itKHz != frequenciesKHz.end(); ++itKHz)
               {
-                assert(GetCurrentlyTunedTransponder() != NULL); // TODO
+                assert(GetCurrentlyTunedTransponder().get() != NULL); // TODO
                 if (ISTRANSPONDER(*itKHz / 1000, GetCurrentlyTunedTransponder()->TransponderFrequency()))
                 {
                   thisNetwork.bHasTransponder = true;
@@ -407,7 +407,7 @@ ChannelVector cNit::GetTransponders()
                     }
 
                     // Only modify channels if we're actually receiving this transponder
-                    assert(GetCurrentlyTunedTransponder() != NULL); // TODO
+                    assert(GetCurrentlyTunedTransponder().get() != NULL); // TODO
                     if (ISTRANSPONDER(iFrequencyKHz / 1000, GetCurrentlyTunedTransponder()->TransponderFrequency()))
                       channel->SetTransponderData(source, iFrequencyKHz, symbolRate, dtp);
                     else if (channel->Srate() != symbolRate || channel->Parameters() != dtp)
@@ -489,7 +489,7 @@ ChannelVector cNit::GetTransponders()
 
               for (vector<uint32_t>::const_iterator itKHz = frequenciesKHz.begin(); itKHz != frequenciesKHz.end(); ++itKHz)
               {
-                assert(GetCurrentlyTunedTransponder() != NULL); // TODO
+                assert(GetCurrentlyTunedTransponder().get() != NULL); // TODO
                 if (ISTRANSPONDER(*itKHz / (1000 * 1000), GetCurrentlyTunedTransponder()->TransponderFrequency()))
                 {
                   thisNetwork.bHasTransponder = true;
@@ -524,7 +524,7 @@ ChannelVector cNit::GetTransponders()
                     {
                       for (vector<uint32_t>::const_iterator itKHz = frequenciesKHz.begin(); itKHz != frequenciesKHz.end(); ++itKHz)
                       {
-                        assert(GetCurrentlyTunedTransponder() != NULL); // TODO
+                        assert(GetCurrentlyTunedTransponder().get() != NULL); // TODO
                         if (ISTRANSPONDER(*itKHz / (1000 * 1000), GetCurrentlyTunedTransponder()->TransponderFrequency()))
                         {
                           iFrequencyKHz = *itKHz;
@@ -534,7 +534,7 @@ ChannelVector cNit::GetTransponders()
                     }
 
                     // Only modify channels if we're actually receiving this transponder
-                    assert(GetCurrentlyTunedTransponder() != NULL); // TODO
+                    assert(GetCurrentlyTunedTransponder().get() != NULL); // TODO
                     if (ISTRANSPONDER(iFrequencyKHz / (1000 * 1000), GetCurrentlyTunedTransponder()->TransponderFrequency()))
                       channel->SetTransponderData(source, iFrequencyKHz, 0, dtp);
                     else if (channel->Parameters() != dtp)

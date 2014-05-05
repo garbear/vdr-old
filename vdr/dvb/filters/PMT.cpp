@@ -103,7 +103,7 @@ ChannelPtr cPmt::CreateChannel(/* const */ SI::PMT& pmt) const // TODO: libsi fa
 {
   // Create a new channel to return
   ChannelPtr channel = ChannelPtr(new cChannel);
-  assert(GetCurrentlyTunedTransponder() != NULL); // TODO
+  assert(GetCurrentlyTunedTransponder().get() != NULL); // TODO
   channel->CopyTransponderData(*GetCurrentlyTunedTransponder());
 
   SetIds(channel);

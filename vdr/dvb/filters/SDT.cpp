@@ -129,7 +129,7 @@ ChannelVector cSdt::GetChannels()
         */
         ChannelPtr channel = ChannelPtr(new cChannel);
         channel->SetId(sdt.getOriginalNetworkId(), sdt.getTransportStreamId(), SiSdtService.getServiceId());
-        assert(GetCurrentlyTunedTransponder() != NULL); // TODO
+        assert(GetCurrentlyTunedTransponder().get() != NULL); // TODO
         channel->CopyTransponderData(*GetCurrentlyTunedTransponder());
 
         SI::Descriptor * d;

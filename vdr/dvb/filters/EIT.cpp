@@ -255,7 +255,7 @@ EventVector cEit::GetEvents()
             {
               SI::LinkageDescriptor* ld = (SI::LinkageDescriptor*)d;
 
-              assert(GetCurrentlyTunedTransponder() != NULL); // TODO
+              assert(GetCurrentlyTunedTransponder().get() != NULL); // TODO
               tChannelID linkID(GetCurrentlyTunedTransponder()->Source(), ld->getOriginalNetworkId(), ld->getTransportStreamId(), ld->getServiceId());
 
               // Premiere World
@@ -451,7 +451,7 @@ void cEit::GetText(SI::Descriptor* d, uint8_t tid, uint16_t nid, uint16_t tsid,
   {
     SI::TimeShiftedEventDescriptor* tsed = (SI::TimeShiftedEventDescriptor*)d;
 
-    assert(GetCurrentlyTunedTransponder() != NULL); // TODO
+    assert(GetCurrentlyTunedTransponder().get() != NULL); // TODO
     tChannelID channelId(GetCurrentlyTunedTransponder()->Source(), // Source
                          nid,                                      // NID
                          tsid,                                     // TID
