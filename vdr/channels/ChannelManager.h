@@ -62,7 +62,6 @@ public:
 
   bool Load(void);
   bool Load(const std::string &file);
-  bool LoadConf(const std::string &file);
   bool Save(const std::string &file = "");
 
   /*!

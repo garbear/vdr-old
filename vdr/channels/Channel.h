@@ -197,9 +197,8 @@ public:
 
   void SetCaDescriptors(const CaDescriptorVector& caDescriptors);
 
-  bool SerialiseChannel(TiXmlNode *node) const;
+  bool Serialise(TiXmlNode *node) const;
   bool Deserialise(const TiXmlNode *node);
-  bool DeserialiseConf(const std::string &str);
 
   unsigned int FrequencyHz() const { return m_channelData.iFrequencyHz; }
   unsigned int FrequencyKHz() const { return m_channelData.iFrequencyHz / 1000; }

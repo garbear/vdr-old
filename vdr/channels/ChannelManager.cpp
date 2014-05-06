@@ -128,19 +128,6 @@ bool cChannelManager::Load(void)
   if (!Load("special://home/system/channels.xml") &&
       !Load("special://vdr/system/channels.xml"))
   {
-    if (LoadConf("special://home/system/channels.conf") ||
-        LoadConf("special://vdr/system/channels.conf"))
-    {
-      // convert to xml
-      isyslog("converting channels.conf to channels.xml");
-      string strFile = m_strFilename;
-      SetChanged();
-      if (Save("special://home/system/channels.xml"))
-        CFile::Delete(strFile);
-
-      return true;
-    }
-
     return false;
   }
 
@@ -194,56 +181,6 @@ bool cChannelManager::Load(const std::string &file)
   return !m_channels.empty();
 }
 
-bool cChannelManager::LoadConf(const string& strFilename)
-{
-  if (strFilename.empty())
-    return false;
-
-  CLockObject lock(m_mutex);
-  Clear();
-
-  CFile file;
-  if (file.Open(strFilename))
-  {
-    m_strFilename = strFilename;
-    string strLine;
-    unsigned int line = 0; // For error logging
-
-    while (file.ReadLine(strLine))
-    {
-      // Strip comments and spaces
-      size_t comment_pos = strLine.find('#');
-      strLine = strLine.substr(0, comment_pos);
-      StringUtils::Trim(strLine);
-
-      if (strLine.empty())
-        continue;
-
-      ChannelPtr l = ChannelPtr(new cChannel);
-      if (l->DeserialiseConf(strLine))
-        AddChannel(l);
-      else
-      {
-        if (strLine[0] != ':') // Group separators start with :
-          esyslog("Error loading config file %s, line %d", strFilename.c_str(), line);
-      }
-
-      line++;
-    }
-  }
-
-  if (m_channels.empty())
-  {
-    esyslog("No channels loaded from %s", strFilename.c_str());
-    return false;
-  }
-
-  isyslog("Loaded channels from %s, tracking %lu total channels", strFilename.c_str(), m_channels.size());
-
-  ReNumber();
-  return true;
-}
-
 bool cChannelManager::Save(const string &file /* = ""*/)
 {
   CXBMCTinyXML xmlDoc;
@@ -261,7 +198,7 @@ bool cChannelManager::Save(const string &file /* = ""*/)
     const ChannelPtr &channel = *itChannel;
     TiXmlElement channelElement(CHANNEL_XML_ELM_CHANNEL);
     TiXmlNode *channelNode = root->InsertEndChild(channelElement);
-    channel->SerialiseChannel(channelNode);
+    channel->Serialise(channelNode);
   }
 
   if (!file.empty())
