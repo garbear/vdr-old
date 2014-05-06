@@ -131,11 +131,6 @@ public:
 
   void SetModified(void);
 
-  /*!
-   * \brief It looks like this creates a new channel, adds it to the vector, and re-computes m_channelSids (TODO)
-   */
-  ChannelPtr NewChannel(const cChannel& transponder, const std::string& name, const std::string& shortName, const std::string& provider, int nid, int tid, int sid, int rid = 0);
-
   ChannelVector GetCurrent(void) const;
   void CreateChannelGroups(bool automatic);
 

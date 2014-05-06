@@ -386,21 +386,6 @@ void cChannelManager::SetModified(void)
   NotifyObservers();
 }
 
-ChannelPtr cChannelManager::NewChannel(const cChannel& transponder, const string& name, const string& shortName, const string& provider, int nid, int tid, int sid, int rid /* = 0 */)
-{
-  dsyslog("creating new channel '%s,%s;%s' on %s transponder %d with id %d-%d-%d-%d", name.c_str(), shortName.c_str(), provider.c_str(), cSource::ToString(transponder.Source()).c_str(), transponder.TransponderFrequencyMHz(), nid, tid, sid, rid);
-  ChannelPtr newChannel = ChannelPtr(new cChannel);
-  if (newChannel)
-  {
-    newChannel->CopyTransponderData(transponder);
-    newChannel->SetId(nid, tid, sid, rid);
-    newChannel->SetName(name, shortName, provider);
-    AddChannel(newChannel);
-    ReNumber();
-  }
-  return newChannel;
-}
-
 ChannelPtr cChannelManager::GetByChannelUID(uint32_t channelUID) const
 {
   ChannelPtr result;

@@ -288,7 +288,15 @@ EventVector cEit::GetEvents()
                       ChannelPtr transponder = channel;
                       if (channel->GetTid() != ld->getTransportStreamId())
                         transponder = m_channelManager.GetByTransponderID(linkID);
-                      link = m_channelManager.NewChannel(*transponder, linkName, "", "", ld->getOriginalNetworkId(), ld->getTransportStreamId(), ld->getServiceId());
+
+                      link = ChannelPtr(new cChannel);
+                      link->SetName(linkName, "", "");
+                      link->SetId(ld->getOriginalNetworkId(), ld->getTransportStreamId(), ld->getServiceId());
+                      link->CopyTransponderData(*transponder);
+
+                      m_channelManager.AddChannel(link);
+                      m_channelManager.ReNumber();
+
                       //patFilter->Trigger();
                     }
 
