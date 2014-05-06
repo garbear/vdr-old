@@ -100,7 +100,6 @@ cChannel::cChannel()
  : m_nid(0),
    m_tid(0),
    m_sid(0),
-   m_rid(0),
    m_channelData(), // value-initialize
    m_modification(CHANNELMOD_NONE),
    m_schedule(NULL),
@@ -157,7 +156,6 @@ cChannel& cChannel::operator=(const cChannel &channel)
   m_nid = channel.m_nid;
   m_tid = channel.m_tid;
   m_sid = channel.m_sid;
-  m_rid = channel.m_rid;
 
   m_videoStream     = channel.m_videoStream;
   m_audioStreams    = channel.m_audioStreams;
@@ -269,20 +267,19 @@ void cChannel::SetPortalName(const string &strPortalName)
   }
 }
 
-void cChannel::SetId(uint16_t nid, uint16_t tid, uint16_t sid, uint16_t rid /* = 0 */)
+void cChannel::SetId(uint16_t nid, uint16_t tid, uint16_t sid)
 {
-  if (m_nid != nid || m_tid != tid || m_sid != sid || m_rid != rid)
+  if (m_nid != nid || m_tid != tid || m_sid != sid)
   {
     if (Number())
     {
-      //dsyslog("changing id of channel %d from %d-%d-%d-%d to %d-%d-%d-%d", Number(), m_nid, m_tid, m_sid, m_rid, nid, tid, sid, rid);
+      //dsyslog("changing id of channel %d from %d-%d-%d-%d to %d-%d-%d", Number(), m_nid, m_tid, m_sid, m_rid, nid, tid, sid);
       m_modification |= CHANNELMOD_ID;
       //Channels.UnhashChannel(this); // TODO
     }
     m_nid = nid;
     m_tid = tid;
     m_sid = sid;
-    m_rid = rid;
     if (Number())
       ;//Channels.HashChannel(this); // TODO
     m_schedule = cSchedules::EmptySchedule;
@@ -371,7 +368,6 @@ bool cChannel::Serialise(TiXmlNode *node) const
   channelElement->SetAttribute(CHANNEL_XML_ATTR_NID, m_nid);
   channelElement->SetAttribute(CHANNEL_XML_ATTR_TID, m_tid);
   channelElement->SetAttribute(CHANNEL_XML_ATTR_SID, m_sid);
-  channelElement->SetAttribute(CHANNEL_XML_ATTR_RID, m_rid);
 
   channelElement->SetAttribute(CHANNEL_XML_ATTR_VPID,  m_videoStream.vpid);
   channelElement->SetAttribute(CHANNEL_XML_ATTR_PPID,  m_videoStream.ppid);
@@ -547,10 +543,6 @@ bool cChannel::Deserialise(const TiXmlNode *node)
   if (sid != NULL)
     m_sid = StringUtils::IntVal(sid);
 
-  const char *rid = elem->Attribute(CHANNEL_XML_ATTR_RID);
-  if (rid != NULL)
-    m_rid = StringUtils::IntVal(rid);
-
   VideoStream vs = { };
   const char *vpid  = elem->Attribute(CHANNEL_XML_ATTR_VPID);
   const char *ppid  = elem->Attribute(CHANNEL_XML_ATTR_PPID);
@@ -724,9 +716,9 @@ unsigned int cChannel::TransponderWTF(unsigned int frequencyMHz, fe_polarization
 tChannelID cChannel::GetChannelID() const
 {
   if (m_nid || m_tid)
-    return tChannelID(m_channelData.source, m_nid, m_tid, m_sid, m_rid);
+    return tChannelID(m_channelData.source, m_nid, m_tid, m_sid);
   else
-    return tChannelID(m_channelData.source, m_nid, TransponderFrequencyMHz(), m_sid, m_rid);
+    return tChannelID(m_channelData.source, m_nid, TransponderFrequencyMHz(), m_sid);
 }
 
 bool cChannel::HasTimer(const vector<cTimer2> &timers) const // TODO" cTimer2

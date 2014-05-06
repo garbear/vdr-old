@@ -234,7 +234,7 @@ ChannelVector cNit::GetTransponders()
               for (vector<uint32_t>::const_iterator itKHz = frequenciesKHz.begin(); itKHz != frequenciesKHz.end(); ++itKHz)
               {
                 ChannelPtr transponder = ChannelPtr(new cChannel);
-                transponder->SetId(ts.getOriginalNetworkId(), ts.getTransportStreamId(), 0, 0);
+                transponder->SetId(ts.getOriginalNetworkId(), ts.getTransportStreamId(), 0);
                 if (transponder->SetTransponderData(source, frequenciesKHz[0], symbolRate, dtp))
                   transponders.push_back(transponder);
               }
@@ -371,7 +371,7 @@ ChannelVector cNit::GetTransponders()
               for (vector<uint32_t>::const_iterator itKHz = frequenciesKHz.begin(); itKHz != frequenciesKHz.end(); ++itKHz)
               {
                 ChannelPtr transponder = ChannelPtr(new cChannel);
-                transponder->SetId(ts.getOriginalNetworkId(), ts.getTransportStreamId(), 0, 0);
+                transponder->SetId(ts.getOriginalNetworkId(), ts.getTransportStreamId(), 0);
                 if (transponder->SetTransponderData(source, frequenciesKHz[0], symbolRate, dtp))
                   transponders.push_back(transponder);
               }
@@ -500,7 +500,7 @@ ChannelVector cNit::GetTransponders()
               for (vector<uint32_t>::const_iterator itKHz = frequenciesKHz.begin(); itKHz != frequenciesKHz.end(); ++itKHz)
               {
                 ChannelPtr transponder = ChannelPtr(new cChannel);
-                transponder->SetId(ts.getOriginalNetworkId(), ts.getTransportStreamId(), 0, 0);
+                transponder->SetId(ts.getOriginalNetworkId(), ts.getTransportStreamId(), 0);
                 if (transponder->SetTransponderData(source, *itKHz, 0, dtp))
                   transponders.push_back(transponder);
               }

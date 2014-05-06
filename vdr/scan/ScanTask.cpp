@@ -142,7 +142,7 @@ ChannelPtr cScanTaskTerrestrial::GetChannel(fe_modulation modulation, unsigned i
   params.SetRollOff(ROLLOFF_35); // (fe_rolloff)0
 
   channel->SetTransponderData(cSource::stTerr, frequency, 27500, params, true);
-  channel->SetId(0, 0, 0, 0);
+  channel->SetId(0, 0, 0);
 
   return channel;
 }
@@ -207,7 +207,7 @@ ChannelPtr cScanTaskCable::GetChannel(fe_modulation modulation, unsigned int iCh
   params.SetRollOff(ROLLOFF_35); // (fe_rolloff)0
 
   channel->SetTransponderData(cSource::stCable, 410000, 6900, params, true);
-  channel->SetId(0, 0, 0, 0);
+  channel->SetId(0, 0, 0);
 
   return channel;
 }
@@ -282,7 +282,7 @@ ChannelPtr cScanTaskSatellite::GetChannel(fe_modulation modulation, unsigned int
   if (!ValidSatFrequency(SatelliteUtils::GetTransponder(m_satelliteId, iChannel).intermediate_frequency, *channel))
     return cChannel::EmptyChannel;
 
-  channel->SetId(0, 0, 0, 0);
+  channel->SetId(0, 0, 0);
 
   if (SatelliteUtils::GetTransponder(m_satelliteId, iChannel).modulation_system == SYS_DVBS2)
   {
@@ -330,7 +330,7 @@ ChannelPtr cScanTaskATSC::GetChannel(fe_modulation modulation, unsigned int iCha
 
   ChannelPtr channel = ChannelPtr(new cChannel);
   channel->SetTransponderData(cSource::stAtsc, frequency, cScanConfig::TranslateSymbolRate(symbolRate), params, true);
-  channel->SetId(0, 0, 0, 0);
+  channel->SetId(0, 0, 0);
 
   return channel;
 }

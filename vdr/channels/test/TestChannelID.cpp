@@ -32,35 +32,27 @@ TEST(ChannelID, ChannelID)
   EXPECT_STREQ(tChannelID::InvalidID.Serialize().c_str(), "-0-0-0");
 
   int source = ('S' << 24) | 1073;
-  tChannelID channelId(source, 1, 2, 3, 4);
+  tChannelID channelId(source, 1, 2, 3);
   EXPECT_EQ(channelId.Source(), source);
   EXPECT_EQ(channelId.Nid(), 1);
   EXPECT_EQ(channelId.Tid(), 2);
   EXPECT_EQ(channelId.Sid(), 3);
-  EXPECT_EQ(channelId.Rid(), 4);
 
   tChannelID channelId2 = channelId;
   EXPECT_EQ(channelId2.Source(), source);
   EXPECT_EQ(channelId2.Nid(), 1);
   EXPECT_EQ(channelId2.Tid(), 2);
   EXPECT_EQ(channelId2.Sid(), 3);
-  EXPECT_EQ(channelId2.Rid(), 4);
   EXPECT_EQ(channelId2, channelId);
   EXPECT_NE(channelId2, tChannelID::InvalidID);
 
-  EXPECT_STREQ(channelId.Serialize().c_str(), "S107.3W-1-2-3-4");
+  EXPECT_STREQ(channelId.Serialize().c_str(), "S107.3W-1-2-3");
   tChannelID channelId3 = tChannelID::Deserialize(channelId.Serialize());
   //EXPECT_EQ(channelId3, channelId); // TODO
   //EXPECT_EQ(channelId3.Source(), source); // TODO
   EXPECT_EQ(channelId3.Nid(), 1);
   EXPECT_EQ(channelId3.Tid(), 2);
   EXPECT_EQ(channelId3.Sid(), 3);
-  EXPECT_EQ(channelId3.Rid(), 4);
-
-  channelId.ClrRid();
-  EXPECT_EQ(channelId.Rid(), 0);
-  EXPECT_STREQ(channelId.Serialize().c_str(), "S107.3W-1-2-3");
-  //EXPECT_EQ(tChannelID::Deserialize(channelId.Serialize()), channelId); // TODO
 
   EXPECT_EQ(tChannelID::Deserialize(""), tChannelID::InvalidID);
   EXPECT_EQ(tChannelID::Deserialize("S107.3W-1-2-"), tChannelID::InvalidID);

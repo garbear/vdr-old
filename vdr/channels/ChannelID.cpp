@@ -37,17 +37,15 @@ tChannelID::tChannelID()
  : m_source(0),
    m_nid(0),
    m_tid(0),
-   m_sid(0),
-   m_rid(0)
+   m_sid(0)
 {
 }
 
-tChannelID::tChannelID(int source, int nid, int tid, int sid, int rid /* = 0 */)
+tChannelID::tChannelID(int source, int nid, int tid, int sid)
  : m_source(source),
    m_nid(nid),
    m_tid(tid),
-   m_sid(sid),
-   m_rid(rid)
+   m_sid(sid)
 {
 }
 
@@ -56,16 +54,12 @@ bool tChannelID::operator==(const tChannelID &arg) const
   return m_source == arg.m_source &&
          m_nid == arg.m_nid &&
          m_tid == arg.m_tid &&
-         m_sid == arg.m_sid &&
-         m_rid == arg.m_rid;
+         m_sid == arg.m_sid;
 }
 
 string tChannelID::Serialize() const
 {
-  if (m_rid)
-    return StringUtils::Format("%s-%d-%d-%d-%d", cSource::ToString(m_source).c_str(), m_nid, m_tid, m_sid, m_rid);
-  else
-    return StringUtils::Format("%s-%d-%d-%d", cSource::ToString(m_source).c_str(), m_nid, m_tid, m_sid);
+  return StringUtils::Format("%s-%d-%d-%d", cSource::ToString(m_source).c_str(), m_nid, m_tid, m_sid);
 }
 
 tChannelID tChannelID::Deserialize(const std::string &str)
@@ -76,7 +70,6 @@ tChannelID tChannelID::Deserialize(const std::string &str)
   int nid;
   int tid;
   int sid;
-  int rid = 0;
 
   //int fields = sscanf(str.c_str(), "%a[^-]-%d-%d-%d-%d", &sourcebuf, &nid, &tid, &sid, &rid);
 
@@ -143,26 +136,11 @@ tChannelID tChannelID::Deserialize(const std::string &str)
     }
   }
 
-  if (!strcopy.empty())
-  {
-    fields++;
-    if ((pos = strcopy.find('-')) != string::npos)
-    {
-      rid = StringUtils::IntVal(strcopy.substr(0, pos));
-      strcopy = strcopy.substr(pos + 1);
-    }
-    else
-    {
-      rid = StringUtils::IntVal(strcopy);
-      strcopy.clear();
-    }
-  }
-
-  if (fields == 4 || fields == 5)
+  if (fields == 4)
   {
     int source = cSource::FromString(sourcebuf);
     if (source >= 0)
-      ret = tChannelID(source, nid, tid, sid, rid);
+      ret = tChannelID(source, nid, tid, sid);
   }
 
   return ret;

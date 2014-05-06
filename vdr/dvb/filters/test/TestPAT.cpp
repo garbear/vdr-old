@@ -69,7 +69,7 @@ TEST(PAT, GetChannels)
 
       channel = ChannelPtr(new cChannel);
       channel->SetTransponderData(cSource::stAtsc, frequency, cScanConfig::TranslateSymbolRate(eSR_6900000), params, true);
-      channel->SetId(0, 0, 0, 0);
+      channel->SetId(0, 0, 0);
     }
 
     if (channel)

@@ -164,7 +164,6 @@ public:
   uint16_t GetNid() const { return m_nid; }
   uint16_t GetTid() const { return m_tid; }
   uint16_t GetSid() const { return m_sid; }
-  uint16_t GetRid() const { return m_rid; }
 
   const VideoStream&                 GetVideoStream()                      const { return m_videoStream; }
   const AudioStream&                 GetAudioStream(unsigned int index)    const;
@@ -185,7 +184,7 @@ public:
 
   void SetPortalName(const std::string &strPortalName);
 
-  void SetId(uint16_t nid, uint16_t tid, uint16_t sid, uint16_t rid = 0);
+  void SetId(uint16_t nid, uint16_t tid, uint16_t sid);
 
   void SetStreams(const VideoStream& videoStream,
                   const std::vector<AudioStream>& audioStreams,
@@ -271,7 +270,6 @@ private:
   uint16_t m_nid; // Network ID
   uint16_t m_tid; // Transport stream ID
   uint16_t m_sid; // Service ID
-  uint16_t m_rid; // ???
 
   VideoStream                 m_videoStream;
   std::vector<AudioStream>    m_audioStreams;    // Max 32

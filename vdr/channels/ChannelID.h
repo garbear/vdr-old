@@ -29,21 +29,19 @@ struct tChannelID
 {
 public:
   tChannelID();
-  tChannelID(int source, int nid, int tid, int sid, int rid = 0);
+  tChannelID(int source, int nid, int tid, int sid);
 
   bool operator==(const tChannelID &arg) const;
   bool operator!=(const tChannelID &arg) const { return !(*this == arg); }
 
   bool Valid() const { return (m_nid || m_tid) && m_sid; } // rid is optional and source may be 0//XXX source may not be 0???
 
-  void ClrRid() { m_rid = 0; }
   void ClrPolarization();
 
   int Source() const { return m_source; }
   int Nid()    const { return m_nid; }
   int Tid()    const { return m_tid; }
   int Sid()    const { return m_sid; }
-  int Rid()    const { return m_rid; }
 
   std::string Serialize() const;
   static tChannelID Deserialize(const std::string &str);
@@ -57,6 +55,5 @@ private:
   int m_nid; // Actually the "original" network id
   int m_tid;
   int m_sid; // Service ID
-  int m_rid;
 };
 }

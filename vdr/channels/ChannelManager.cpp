@@ -285,12 +285,10 @@ ChannelPtr cChannelManager::GetByChannelID(const tChannelID &channelID, bool bTr
     tChannelID otherChannelID = channelID;
     if (bTryWithoutRid)
     {
-      otherChannelID.ClrRid();
-      for (ChannelVector::iterator itChannel = channelVec.begin(); itChannel != channelVec.end(); ++itChannel)
+      for (ChannelVector::const_iterator itChannel = channelVec.begin(); itChannel != channelVec.end(); ++itChannel)
       {
-        ChannelPtr &channel = *itChannel;
+        const ChannelPtr &channel = *itChannel;
         tChannelID myChannelID = channel->GetChannelID();
-        myChannelID.ClrRid();
         if (channel->GetSid() == serviceID && myChannelID == otherChannelID)
           return channel;
       }
