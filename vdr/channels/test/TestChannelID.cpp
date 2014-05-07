@@ -28,38 +28,7 @@ namespace VDR
 
 TEST(ChannelID, ChannelID)
 {
-  EXPECT_EQ(cChannelID(), cChannelID::InvalidID);
-  EXPECT_STREQ(cChannelID::InvalidID.Serialize().c_str(), "-0-0-0");
-
-  int source = ('S' << 24) | 1073;
-  cChannelID channelId(source, 1, 2, 3);
-  EXPECT_EQ(channelId.Source(), source);
-  EXPECT_EQ(channelId.Nid(), 1);
-  EXPECT_EQ(channelId.Tid(), 2);
-  EXPECT_EQ(channelId.Sid(), 3);
-
-  cChannelID channelId2 = channelId;
-  EXPECT_EQ(channelId2.Source(), source);
-  EXPECT_EQ(channelId2.Nid(), 1);
-  EXPECT_EQ(channelId2.Tid(), 2);
-  EXPECT_EQ(channelId2.Sid(), 3);
-  EXPECT_EQ(channelId2, channelId);
-  EXPECT_NE(channelId2, cChannelID::InvalidID);
-
-  EXPECT_STREQ(channelId.Serialize().c_str(), "S107.3W-1-2-3");
-  cChannelID channelId3 = cChannelID::Deserialize(channelId.Serialize());
-  //EXPECT_EQ(channelId3, channelId); // TODO
-  //EXPECT_EQ(channelId3.Source(), source); // TODO
-  EXPECT_EQ(channelId3.Nid(), 1);
-  EXPECT_EQ(channelId3.Tid(), 2);
-  EXPECT_EQ(channelId3.Sid(), 3);
-
-  EXPECT_EQ(cChannelID::Deserialize(""), cChannelID::InvalidID);
-  EXPECT_EQ(cChannelID::Deserialize("S107.3W-1-2-"), cChannelID::InvalidID);
-
-  // TODO: More ser/des tests
-
-  // TODO: Test ClrPolarization() once its functionality is understood
+  // TODO
 }
 
 }

@@ -23,7 +23,6 @@
 #define RECORDING_XML_ROOT                "metadata"
 
 #define RECORDING_XML_ELM_RECORDING       "recording"
-#define RECORDING_XML_ATTR_CHANNEL_ID     "channel_id"
 #define RECORDING_XML_ATTR_CHANNEL_NAME   "channel_name"
 #define RECORDING_XML_ATTR_CHANNEL_UID    "channel_uid"
 #define RECORDING_XML_ATTR_FPS            "fps"

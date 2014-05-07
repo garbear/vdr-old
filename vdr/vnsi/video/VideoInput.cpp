@@ -203,7 +203,7 @@ void* cVideoInput::Process()
   {
     for (ChannelVector::const_iterator it = channels.begin(); it != channels.end(); ++it)
     {
-      if ((*it)->GetSid() == m_Channel->GetSid())
+      if ((*it)->Sid() == m_Channel->Sid())
       {
         // Clear modification flag
         m_Channel->Modification();

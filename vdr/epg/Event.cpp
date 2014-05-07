@@ -62,7 +62,7 @@ int cEvent::Compare(const cListObject &ListObject) const
 
 cChannelID cEvent::ChannelID(void) const
 {
-  return schedule ? schedule->ChannelID() : cChannelID();
+  return schedule ? schedule->ChannelID() : cChannelID::InvalidID;
 }
 
 void cEvent::SetEventID(tEventID EventID)

@@ -50,19 +50,23 @@ bool cDvbChannelSubsystem::ProvidesDeliverySystem(fe_delivery_system deliverySys
   return GetDevice<cDvbDevice>()->m_dvbTuner.HasDeliverySystem(deliverySystem);
 }
 
-bool cDvbChannelSubsystem::ProvidesSource(int source) const
+bool cDvbChannelSubsystem::ProvidesSource(cChannelSource source) const
 {
-  int type = source & cSource::st_Mask;
-  if (type == cSource::stNone)
+  if (source == SOURCE_TYPE_NONE)
     return true;
-  if (type == cSource::stAtsc  && ProvidesDeliverySystem(SYS_ATSC))
+
+  if (source == SOURCE_TYPE_ATSC && ProvidesDeliverySystem(SYS_ATSC))
     return true;
-  if (type == cSource::stCable && (ProvidesDeliverySystem(SYS_DVBC_ANNEX_AC) || ProvidesDeliverySystem(SYS_DVBC_ANNEX_B)))
+
+  if (source == SOURCE_TYPE_CABLE && (ProvidesDeliverySystem(SYS_DVBC_ANNEX_AC) || ProvidesDeliverySystem(SYS_DVBC_ANNEX_B)))
     return true;
-  if (type == cSource::stSat   && (ProvidesDeliverySystem(SYS_DVBS) || ProvidesDeliverySystem(SYS_DVBS2)))
+
+  if (source == SOURCE_TYPE_SATELLITE && (ProvidesDeliverySystem(SYS_DVBS) || ProvidesDeliverySystem(SYS_DVBS2)))
     return true;
-  if (type == cSource::stTerr  && (ProvidesDeliverySystem(SYS_DVBT) || ProvidesDeliverySystem(SYS_DVBT2)))
+
+  if (source == SOURCE_TYPE_TERRESTRIAL && (ProvidesDeliverySystem(SYS_DVBT) || ProvidesDeliverySystem(SYS_DVBT2)))
     return true;
+
   return false;
 }
 
@@ -88,9 +92,12 @@ bool cDvbChannelSubsystem::ProvidesTransponder(const cChannel &channel) const
   // "turbo fec" is a non standard FEC used by North American broadcasters - this is a best guess to determine this condition
   if (dtp.Modulation() == PSK_8    && !GetDevice<cDvbDevice>()->m_dvbTuner.HasCapability(FE_CAN_TURBO_FEC) && dtp.System() == DVB_SYSTEM_1) return false; // TODO: Make this dtp.System() == SYS_DVBS
 
-  if (!cSource::IsSat(channel.Source()) ||
-      (!cSettings::Get().m_bDiSEqC || Diseqcs.Get(Device()->CardIndex() + 1, channel.Source(), channel.FrequencyKHz(), dtp.Polarization(), NULL)))
+  if (channel.Source() != SOURCE_TYPE_SATELLITE ||
+      !cSettings::Get().m_bDiSEqC               ||
+      Diseqcs.Get(Device()->CardIndex() + 1, channel.Source(), channel.FrequencyKHz(), dtp.Polarization(), NULL))
+  {
     return true; // TODO: Previous this checked to see if any devices provided a transponder for the channel
+  }
   return false;
 }
 

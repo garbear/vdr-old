@@ -47,7 +47,7 @@ cCaDescriptorHandler& cCaDescriptorHandler::Get()
   return handler;
 }
 
-bool cCaDescriptorHandler::AddCaDescriptors(int source, int transponder, int serviceId,
+bool cCaDescriptorHandler::AddCaDescriptors(cChannelSource source, int transponder, int serviceId,
     const CaDescriptorVector& caDescriptors)
 {
   PLATFORM::CLockObject lock(m_mutex);
@@ -72,7 +72,7 @@ bool cCaDescriptorHandler::AddCaDescriptors(int source, int transponder, int ser
   return true;
 }
 
-int cCaDescriptorHandler::GetCaDescriptors(int source, int transponder, uint16_t serviceId,
+int cCaDescriptorHandler::GetCaDescriptors(cChannelSource source, int transponder, uint16_t serviceId,
     const vector<uint16_t>& caSystemIds, vector<uint8_t>& data, int esPid /* = -1 */)
 {
   if (caSystemIds.empty())

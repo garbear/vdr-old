@@ -80,12 +80,13 @@ public:
    * \param transponder A compatible transponder (see ISTRANSPONDER())
    * \return The channel, or empty pointer if the channel isn't found
    */
-  ChannelPtr GetByServiceID(int serviceID, int source, int transponder) const;
-  static ChannelPtr GetByServiceID(const ChannelVector& channels, int serviceID, int source, int transponder); // TODO: Remove me
+  ChannelPtr GetByServiceID(int serviceID, cChannelSource source, int transponder) const;
+  static ChannelPtr GetByServiceID(const ChannelVector& channels, int serviceID, cChannelSource source, int transponder); // TODO: Remove me
 
   /*!
    * \brief Find a channel by its channel ID
    * \param channelID The channel ID tag
+   * \param bTryWithoutRid If the search fails, repeat without comparing the RID
    * \return The channel, or empty pointer if the channel isn't found
    */
   ChannelPtr GetByChannelID(const cChannelID& channelID);
@@ -97,7 +98,7 @@ public:
    * \param sid TODO
    * \return The channel, or empty pointer if the channel isn't found
    */
-  ChannelPtr GetByChannelID(int nid, int tid, int sid);
+  ChannelPtr GetByChannelID(uint16_t nid, uint16_t tsid, uint16_t sid);
 
   ChannelPtr GetByChannelUID(uint32_t channelUID) const;
 

@@ -176,10 +176,9 @@ bool cRecordingInfo::Read(const std::string& strFilename /* = "" */)
   {
     if (const TiXmlElement *recordingElem = recordingNode->ToElement())
     {
-      if (const char* attr = recordingElem->Attribute(RECORDING_XML_ATTR_CHANNEL_ID))
-        m_channelID.Deserialize(attr);
+      m_channelID.Deserialise(recordingNode);
 
-      if (m_channelID.Valid())
+      if (m_channelID.IsValid())
         m_channel = cChannelManager::Get().GetByChannelID(m_channelID);
       else if (const char* attr = recordingElem->Attribute(RECORDING_XML_ATTR_CHANNEL_UID))
         m_channel = cChannelManager::Get().GetByChannelUID(StringUtils::IntVal(attr));
@@ -239,9 +238,6 @@ bool cRecordingInfo::Write(const std::string& strFilename /* = "" */) const
 
   TiXmlElement recordingElement(RECORDING_XML_ELM_RECORDING);
 
-  if (m_channelID.Valid())
-    recordingElement.SetAttribute(RECORDING_XML_ATTR_CHANNEL_ID, m_channelID.Serialize().c_str());
-
   if (m_channel)
   {
     recordingElement.SetAttribute(RECORDING_XML_ATTR_CHANNEL_NAME, m_channel->Name().c_str());
@@ -253,6 +249,9 @@ bool cRecordingInfo::Write(const std::string& strFilename /* = "" */) const
   recordingElement.SetAttribute(RECORDING_XML_ATTR_LIFETIME, m_iLifetime);
 
   TiXmlNode* recordingNode = root->InsertEndChild(recordingElement);
+
+  if (m_channelID.IsValid())
+    m_channelID.Serialise(recordingNode);
 
   if (m_event)
   {

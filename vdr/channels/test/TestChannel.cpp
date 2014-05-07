@@ -39,7 +39,7 @@ TEST(Channel, Construction)
   /* TODO
   EXPECT_EQ(channel.FrequencyKHz(), 0);
   EXPECT_EQ(channel.Source(), 0);
-  EXPECT_EQ(channel.Srate(), 0);
+  EXPECT_EQ(channel.SymbolRate(), 0);
   EXPECT_EQ(channel.Vpid(), 0);
   EXPECT_EQ(channel.Ppid(), 0);
   EXPECT_NE(channel.Apids(), (const int*)NULL);
@@ -79,7 +79,7 @@ TEST(Channel, SerialiseDeserialise)
     EXPECT_TRUE(channel.DeserialiseConf("KABC-DT;(null):177000:M10:A:0:49=2:0;52=eng@106,53=esl@106:0:0:1:0:0:0\n"));
     EXPECT_EQ(channel.FrequencyHz(), 177000000);
     EXPECT_EQ(channel.Source(), 1090519040);
-    EXPECT_EQ(channel.Srate(), 0);
+    EXPECT_EQ(channel.SymbolRate(), 0);
     EXPECT_EQ(channel.Vpid(), 49);
     EXPECT_EQ(channel.Ppid(), 49);
     EXPECT_NE(channel.Apids(), (const int*)NULL);
@@ -212,7 +212,7 @@ TEST(Channel, SerialiseDeserialise)
     EXPECT_TRUE(channel.Deserialise(&channelElement));
     EXPECT_EQ(channel.FrequencyHz(), 177000000);
     EXPECT_EQ(channel.Source(), 1090519040);
-    EXPECT_EQ(channel.Srate(), 0);
+    EXPECT_EQ(channel.SymbolRate(), 0);
     EXPECT_EQ(channel.Vpid(), 49);
     EXPECT_EQ(channel.Ppid(), 49);
     EXPECT_NE(channel.Apids(), (const int*)NULL);
@@ -253,7 +253,7 @@ TEST(Channel, SerialiseDeserialise)
     EXPECT_TRUE(channel.DeserialiseConf("RedZone;(null):617000:M10:A:0:647=27:648=eng@15:0:1863:88:0:0:0\n"));
     EXPECT_EQ(channel.FrequencyHz(), 617000000);
     EXPECT_EQ(channel.Source(), 1090519040);
-    EXPECT_EQ(channel.Srate(), 0);
+    EXPECT_EQ(channel.SymbolRate(), 0);
     EXPECT_EQ(channel.Vpid(), 647);
     EXPECT_EQ(channel.Ppid(), 647);
     EXPECT_NE(channel.Apids(), (const int*)NULL);
@@ -297,7 +297,7 @@ TEST(Channel, SerialiseDeserialise)
     EXPECT_TRUE(channel.Deserialise(&channelElement2));
     EXPECT_EQ(channel.FrequencyHz(), 617000000);
     EXPECT_EQ(channel.Source(), 1090519040);
-    EXPECT_EQ(channel.Srate(), 0);
+    EXPECT_EQ(channel.SymbolRate(), 0);
     EXPECT_EQ(channel.Vpid(), 647);
     EXPECT_EQ(channel.Ppid(), 647);
     EXPECT_NE(channel.Apids(), (const int*)NULL);

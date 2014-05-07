@@ -35,13 +35,13 @@ cDvbSourceParams::cDvbSourceParams(char source, const string &strDescription)
 
 void cDvbSourceParams::SetData(const cChannel &channel)
 {
-  m_srate = channel.Srate();
+  m_srate = channel.SymbolRate();
   m_dtp = channel.Parameters();
 }
 
 void cDvbSourceParams::GetData(cChannel &channel) const
 {
-  channel.SetTransponderData(channel.Source(), channel.FrequencyHz(), m_srate, m_dtp, true);
+  channel.SetTransponderData(channel.Source(), channel.FrequencyHz(), m_srate, m_dtp);
   // TODO: Overload index operators possibly
   //channel[frequency][source] = TransponderData
 }

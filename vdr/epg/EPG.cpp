@@ -195,10 +195,7 @@ bool cSchedules::Save(void)
       TiXmlElement tableElement(EPG_XML_ELM_TABLE);
       TiXmlNode* textNode = root->InsertEndChild(tableElement);
       if (textNode)
-      {
-        TiXmlText* text = new TiXmlText(StringUtils::Format("%s", (*it)->ChannelID().Serialize().c_str()));
-        textNode->LinkEndChild(text);
-      }
+        (*it)->ChannelID().Serialise(textNode);
     }
     else
     {
@@ -250,8 +247,10 @@ bool cSchedules::Read(void)
   const TiXmlNode *tableNode = root->FirstChild(EPG_XML_ELM_TABLE);
   while (tableNode != NULL)
   {
-    const TiXmlElement *tableElem = tableNode->ToElement();
-    SchedulePtr schedule = AddSchedule(cChannelID::Deserialize(tableElem->GetText()));
+    cChannelID channelId;
+    channelId.Deserialise(tableNode);
+
+    SchedulePtr schedule = AddSchedule(channelId);
     if (schedule)
     {
       if (schedule->Read())

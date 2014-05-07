@@ -110,7 +110,7 @@ protected:
 
 private:
   static bool ValidSatFrequency(unsigned int frequencyHz, const cChannel& channel);
-  static cDiseqc* GetDiseqc(int Source, int Frequency, char Polarization);
+  static cDiseqc* GetDiseqc(cChannelSource source, unsigned int frequency, char polarization);
 
   SATELLITE::eSatellite m_satelliteId;
 };

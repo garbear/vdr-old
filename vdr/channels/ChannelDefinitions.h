@@ -41,7 +41,6 @@
 #define CHANNEL_XML_ATTR_NUMBER       "number"
 #define CHANNEL_XML_ATTR_FREQUENCY    "frequency"
 #define CHANNEL_XML_ATTR_PARAMETERS   "parameters"
-#define CHANNEL_XML_ATTR_SOURCE       "source"
 #define CHANNEL_XML_ATTR_SRATE        "srate"
 #define CHANNEL_XML_ATTR_VPID         "vpid"
 #define CHANNEL_XML_ATTR_PPID         "ppid"
@@ -52,10 +51,13 @@
 #define CHANNEL_XML_ATTR_DLANG        "dlang"
 #define CHANNEL_XML_ATTR_DTYPE        "dtype"
 #define CHANNEL_XML_ATTR_SLANG        "slang"
-#define CHANNEL_XML_ATTR_SID          "sid"
-#define CHANNEL_XML_ATTR_NID          "nid"
-#define CHANNEL_XML_ATTR_TID          "tid"
-#define CHANNEL_XML_ATTR_RID          "rid"
+
+#define CHANNEL_SOURCE_XML_ATTR_SOURCE    "source"
+#define CHANNEL_SOURCE_XML_ATTR_POSITION  "satellite_position"
+
+#define CHANNEL_ID_XML_ATTR_NID  "nid"  // Network ID
+#define CHANNEL_ID_XML_ATTR_TSID "tsid" // Transport stream ID
+#define CHANNEL_ID_XML_ATTR_SID  "sid"  // Service ID
 
 #define TRANSPONDER_XML_ATTR_POLARIZATION "polarization"
 #define TRANSPONDER_XML_ATTR_INVERSION    "inversion"

@@ -91,7 +91,7 @@ ChannelVector cPsipVct::GetChannels(void)
           break;
         }
         const unsigned int frequencyHz = 0; // TODO
-        channel->SetTransponderData(cSource::stAtsc, symbolRateHz, frequencyHz, params);
+        channel->SetTransponderData(SOURCE_TYPE_ATSC, symbolRateHz, frequencyHz, params);
 
         // Transport Stream ID (TID) and program number / service ID (SID)
         // TODO: SID is 0xFFFF for analog channels
@@ -100,7 +100,7 @@ ChannelVector cPsipVct::GetChannels(void)
         dsyslog("VCT: Found %s: %s (%d.%d, TSID=%u, SID=%u)",
             channelInfo.isHidden() ? "hidden channel" : "channel", channel->ShortName().c_str(),
             channelInfo.getMajorNumber(), channelInfo.getMinorNumber(),
-            channel->GetTid(), channel->GetSid());
+            channel->Tsid(), channel->Sid());
 
         if (channelInfo.isHidden())
           continue;

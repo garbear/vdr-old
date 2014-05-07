@@ -20,142 +20,113 @@
  */
 
 #include "ChannelID.h"
-#include "sources/Source.h"
-#include "utils/StringUtils.h"
+#include "ChannelDefinitions.h"
 #include "utils/CRC32.h"
+#include "utils/StringUtils.h"
 
-#include <stddef.h>
-#include <stdio.h>
-
-using namespace std;
+#include <tinyxml.h>
 
 namespace VDR
 {
+
 const cChannelID cChannelID::InvalidID;
 
-cChannelID::cChannelID()
- : m_source(0),
-   m_nid(0),
-   m_tid(0),
-   m_sid(0)
-{
-}
-
-cChannelID::cChannelID(int source, int nid, int tid, int sid)
+cChannelID::cChannelID(cChannelSource  source /* = SOURCE_TYPE_NONE */,
+                       uint16_t        nid    /* = 0                */,
+                       uint16_t        tsid   /* = 0                */,
+                       uint16_t        sid    /* = 0                */)
  : m_source(source),
    m_nid(nid),
-   m_tid(tid),
+   m_tsid(tsid),
    m_sid(sid)
 {
 }
 
-bool cChannelID::operator==(const cChannelID &arg) const
+bool cChannelID::operator==(const cChannelID &rhs) const
 {
-  return m_source == arg.m_source &&
-         m_nid == arg.m_nid &&
-         m_tid == arg.m_tid &&
-         m_sid == arg.m_sid;
+  return m_source == rhs.m_source &&
+         m_nid    == rhs.m_nid    &&
+         m_tsid   == rhs.m_tsid   &&
+         m_sid    == rhs.m_sid;
 }
 
-string cChannelID::Serialize() const
+bool cChannelID::IsValid(void) const
 {
-  return StringUtils::Format("%s-%d-%d-%d", cSource::ToString(m_source).c_str(), m_nid, m_tid, m_sid);
+  return m_source != SOURCE_TYPE_NONE &&
+         (m_nid != 0 || m_tsid != 0)  &&
+         m_sid != 0;
 }
 
-cChannelID cChannelID::Deserialize(const std::string &str)
+void cChannelID::SetID(uint16_t nid, uint16_t tsid, uint16_t sid)
 {
-  cChannelID ret = cChannelID::InvalidID;
-  string sourcebuf;
-  string strcopy(str);
-  int nid;
-  int tid;
-  int sid;
-
-  //int fields = sscanf(str.c_str(), "%a[^-]-%d-%d-%d-%d", &sourcebuf, &nid, &tid, &sid, &rid);
-
-  int fields = 0;
-  size_t pos;
-
-  if (!strcopy.empty())
-  {
-    fields++;
-    if ((pos = strcopy.find('-')) != string::npos)
-    {
-      sourcebuf = strcopy.substr(0, pos);
-      strcopy = strcopy.substr(pos + 1);
-    }
-    else
-    {
-      sourcebuf = strcopy;
-      strcopy.clear();
-    }
-  }
-
-  if (!strcopy.empty())
-  {
-    fields++;
-    if ((pos = strcopy.find('-')) != string::npos)
-    {
-      nid = StringUtils::IntVal(strcopy.substr(0, pos));
-      strcopy = strcopy.substr(pos + 1);
-    }
-    else
-    {
-      nid = StringUtils::IntVal(strcopy);
-      strcopy.clear();
-    }
-  }
-
-  if (!strcopy.empty())
-  {
-    fields++;
-    if ((pos = strcopy.find('-')) != string::npos)
-    {
-      tid = StringUtils::IntVal(strcopy.substr(0, pos));
-      strcopy = strcopy.substr(pos + 1);
-    }
-    else
-    {
-      tid = StringUtils::IntVal(strcopy);
-      strcopy.clear();
-    }
-  }
-
-  if (!strcopy.empty())
-  {
-    fields++;
-    if ((pos = strcopy.find('-')) != string::npos)
-    {
-      sid = StringUtils::IntVal(strcopy.substr(0, pos));
-      strcopy = strcopy.substr(pos + 1);
-    }
-    else
-    {
-      sid = StringUtils::IntVal(strcopy);
-      strcopy.clear();
-    }
-  }
-
-  if (fields == 4)
-  {
-    int source = cSource::FromString(sourcebuf);
-    if (source >= 0)
-      ret = cChannelID(source, nid, tid, sid);
-  }
-
-  return ret;
+  m_nid  = nid;
+  m_tsid = tsid;
+  m_sid  = sid;
 }
 
-void cChannelID::ClrPolarization()
+bool cChannelID::Serialise(TiXmlNode* node) const
 {
-  while (m_tid > 100000)
-    m_tid -= 100000;
+  if (node == NULL)
+    return false;
+
+  TiXmlElement *sourceElement = node->ToElement();
+  if (sourceElement == NULL)
+    return false;
+
+  if (!m_source.Serialise(node))
+    return false;
+
+  if (m_nid != 0)
+    sourceElement->SetAttribute(CHANNEL_ID_XML_ATTR_NID, m_nid);
+
+  if (m_tsid != 0)
+    sourceElement->SetAttribute(CHANNEL_ID_XML_ATTR_TSID, m_tsid);
+
+  if (m_sid != 0)
+    sourceElement->SetAttribute(CHANNEL_ID_XML_ATTR_SID, m_sid);
+
+  return true;
+}
+
+bool cChannelID::Deserialise(const TiXmlNode* node)
+{
+  if (node == NULL)
+    return false;
+
+  if (!m_source.Deserialise(node))
+    return false;
+
+  const TiXmlElement *elem = node->ToElement();
+  if (elem == NULL)
+    return false;
+
+  const char *nid = elem->Attribute(CHANNEL_ID_XML_ATTR_NID);
+  m_nid = nid ? StringUtils::IntVal(nid) : 0;
+
+  const char *tsid = elem->Attribute(CHANNEL_ID_XML_ATTR_TSID);
+  m_tsid = tsid ? StringUtils::IntVal(tsid) : 0;
+
+  const char *sid = elem->Attribute(CHANNEL_ID_XML_ATTR_SID);
+  m_sid = sid ? StringUtils::IntVal(sid) : 0;
+
+  return true;
 }
 
 uint32_t cChannelID::Hash(void) const
 {
-  string channelid = Serialize();
-  return CCRC32::CRC32(channelid);
+  return CCRC32::CRC32(ToString());
+}
+
+std::string cChannelID::ToString(void) const
+{
+  std::string str;
+
+  if (m_source != SOURCE_TYPE_NONE)
+    str = m_source.ToString() + "-";
+
+  str.append(StringUtils::Format("%u-%u-%u", m_nid, m_tsid, m_sid));
+
+  return str;
 }
 
 }

@@ -25,7 +25,6 @@
 #include "dvb/DVBTypes.h"
 #include "epg/EPGTypes.h"
 #include "sources/linux/DVBTransponderParams.h"
-#include "sources/Source.h"
 #include "utils/List.h"
 #include "utils/Observer.h"
 
@@ -41,21 +40,21 @@ namespace VDR
 struct VideoStream
 {
   uint16_t vpid;  // Video stream packet ID
-  uint8_t  vtype; // Video stream type
+  uint8_t  vtype; // Video stream type (see enum _stream_type in si_ext.h)
   uint16_t ppid;  // Program clock reference packet ID
 };
 
 struct AudioStream
 {
   uint16_t    apid;  // Audio stream packet ID
-  uint8_t     atype; // Audio stream type
+  uint8_t     atype; // Audio stream type (see enum _stream_type in si_ext.h)
   std::string alang; // Audio stream language
 };
 
 struct DataStream // dolby (AC3 + DTS)
 {
   uint16_t    dpid;  // Data stream packet ID
-  uint8_t     dtype; // Data stream type
+  uint8_t     dtype; // Data stream type (see enum _stream_type in si_ext.h)
   std::string dlang; // Data stream language
 };
 
@@ -80,14 +79,16 @@ struct TeletextStream
 class cTimer2
 {
 public:
-  const cChannel *Channel() const { return NULL; }
+  const cChannel *Channel(void) const { return NULL; }
 };
 
 //#include "config.h"
 //#include "thread.h"
 //#include "tools.h"
 
-bool ISTRANSPONDER(int frequencyMHz1, int frequencyMHz2); // XXX: Units?
+// TODO: Move to cDvbTransponderParams and figure out wtf this does
+// I suspect that the polarization masking is involved somehow
+bool ISTRANSPONDER(int frequencyMHz1, int frequencyMHz2);
 
 enum eChannelMod
 {
@@ -117,7 +118,7 @@ class cLinkChannel : public cListObject
 {
 public:
   cLinkChannel(ChannelPtr channel) : m_channel(channel) { }
-  ChannelPtr Channel() { return m_channel; }
+  ChannelPtr Channel(void) { return m_channel; }
 
 private:
   ChannelPtr m_channel;
@@ -129,62 +130,65 @@ class cLinkChannels : public cList<cLinkChannel>
 
 //typedef std::vector<cLinkChannel*> cLinkChannels;
 
-struct tChannelData
-{
-  unsigned int iFrequencyHz; // MHz
-  int          source;
-  int          srate;
-  unsigned int number;    // Sequence number assigned on load // TODO: Doesn't belong in tChannelData
-};
-
 class cSchedule;
 
 class cChannel : public cListObject, public Observable
 {
-  //friend class cSchedules;
-  //friend class cMenuEditChannel;
-  //friend class cDvbSourceParam;
-
 public:
-  cChannel();
-  cChannel(const cChannel &channel);
-  ~cChannel();
+  cChannel(void);
+  cChannel(const cChannel& channel);
+  ~cChannel(void);
+
+  void Reset(void);
+
+  cChannel& operator=(const cChannel& rhs);
+
+  ChannelPtr Clone(void) const;
 
   static ChannelPtr EmptyChannel;
 
-  cChannel& operator=(const cChannel &channel);
+  /*!
+   * Before one (of many) channel refactors, GetChannelID() would report its
+   * frequency in the TSID field if no VDR would use Previously, if NID and TSID were 0, then GetChannelID() would set TSID to
+   * the frequency in MHz, masked with polarization in the 100 GHz range. This
+   * hack-of-a-hack behavior has not been retained.
+   */
+  const cChannelID&     GetChannelID(void) const { return m_channelId; }
+  const cChannelSource& Source(void)       const { return m_channelId.m_source; }
+  uint16_t              Nid(void)          const { return m_channelId.Nid(); }
+  uint16_t              Tsid(void)         const { return m_channelId.Tsid(); }
+  uint16_t              Sid(void)          const { return m_channelId.Sid(); }
 
-  ChannelPtr Clone() const;
+  uint32_t Hash(void) const { return m_channelId.Hash(); }
 
-  const std::string& Name()       const { return m_name; }
-  const std::string& ShortName()  const { return m_shortName; }
-  const std::string& Provider()   const { return m_provider; }
-  const std::string& PortalName() const { return m_portalName; }
+  void SetId(uint16_t nid, uint16_t tsid, uint16_t sid);
 
-  uint16_t GetNid() const { return m_nid; }
-  uint16_t GetTid() const { return m_tid; }
-  uint16_t GetSid() const { return m_sid; }
+  const std::string& Name(void)       const { return m_name; }
+  const std::string& ShortName(void)  const { return m_shortName; }
+  const std::string& Provider(void)   const { return m_provider; }
+  const std::string& PortalName(void) const { return m_portalName; }
 
-  const VideoStream&                 GetVideoStream()                      const { return m_videoStream; }
+  void SetName(const std::string& strName,
+               const std::string& strShortName,
+               const std::string& strProvider);
+
+  void SetPortalName(const std::string& strPortalName);
+
+  /*!
+   *
+   */
+  const VideoStream&                 GetVideoStream(void)                  const { return m_videoStream; }
   const AudioStream&                 GetAudioStream(unsigned int index)    const;
   const DataStream&                  GetDataStream(unsigned int index)     const;
   const SubtitleStream&              GetSubtitleStream(unsigned int index) const;
-  const TeletextStream&              GetTeletextStream()                   const { return m_teletextStream; }
-  uint16_t                           GetCaId(unsigned int i)               const;
+  const TeletextStream&              GetTeletextStream(void)               const { return m_teletextStream; }
+  uint16_t                           GetCaId(unsigned int index)           const;
 
-  const std::vector<AudioStream>&    GetAudioStreams()    const { return m_audioStreams; }
-  const std::vector<DataStream>&     GetDataStreams()     const { return m_dataStreams; }
-  const std::vector<SubtitleStream>& GetSubtitleStreams() const { return m_subtitleStreams; }
-  const CaDescriptorVector&          GetCaDescriptors()   const { return m_caDescriptors; }
-  std::vector<uint16_t>              GetCaIds()           const;
-
-  void SetName(const std::string &strName,
-               const std::string &strShortName,
-               const std::string &strProvider);
-
-  void SetPortalName(const std::string &strPortalName);
-
-  void SetId(uint16_t nid, uint16_t tid, uint16_t sid);
+  const std::vector<AudioStream>&    GetAudioStreams(void)    const { return m_audioStreams; }
+  const std::vector<DataStream>&     GetDataStreams(void)     const { return m_dataStreams; }
+  const std::vector<SubtitleStream>& GetSubtitleStreams(void) const { return m_subtitleStreams; }
+  const CaDescriptorVector&          GetCaDescriptors(void)   const { return m_caDescriptors; }
+  std::vector<uint16_t>              GetCaIds(void)           const;
 
   void SetStreams(const VideoStream& videoStream,
                   const std::vector<AudioStream>& audioStreams,
@@ -196,21 +200,20 @@ public:
 
   void SetCaDescriptors(const CaDescriptorVector& caDescriptors);
 
-  bool Serialise(TiXmlNode *node) const;
-  bool Deserialise(const TiXmlNode *node);
+  const cDvbTransponderParams& Parameters(void) const { return m_parameters; }
+  bool SetTransponderData(cChannelSource source, unsigned int frequencyHz, int symbolRate, const cDvbTransponderParams& parameters);
+  void CopyTransponderData(const cChannel& channel);
 
-  unsigned int FrequencyHz() const { return m_channelData.iFrequencyHz; }
-  unsigned int FrequencyKHz() const { return m_channelData.iFrequencyHz / 1000; }
-  unsigned int FrequencyMHz() const { return m_channelData.iFrequencyHz / (1000 * 1000); }
-
-  void SetFrequencyHz(unsigned int frequencyHz) { m_channelData.iFrequencyHz = frequencyHz; }
+  unsigned int FrequencyHz(void)  const { return m_frequencyHz; }
+  unsigned int FrequencyKHz(void) const { return m_frequencyHz / 1000; }
+  unsigned int FrequencyMHz(void) const { return m_frequencyHz / (1000 * 1000); }
 
   /*!
    * \brief Returns the transponder frequency in MHz, plus the polarization in
    * the case of a satellite. The polarization takes the form of a mask in the
    * 100 GHz range (see TransponderWTF()).
    */
-  unsigned int TransponderFrequencyMHz() const;
+  unsigned int TransponderFrequencyMHz(void) const;
 
   /*!
    * \brief Builds the transponder from the given frequency and polarization.
@@ -223,69 +226,53 @@ public:
    */
   static unsigned int TransponderWTF(unsigned int frequencyMHz, fe_polarization polarization);
 
-  int Source() const                                 { return m_channelData.source; }
-  int Srate() const                                  { return m_channelData.srate; }
+  void SetFrequencyHz(unsigned int frequencyHz) { m_frequencyHz = frequencyHz; }
 
-  unsigned int Number()             const { return m_channelData.number; }
+  int SymbolRate(void) const { return m_symbolRate; }
 
-  bool IsAtsc()                     const { return cSource::IsAtsc(m_channelData.source); }
-  bool IsCable()                    const { return cSource::IsCable(m_channelData.source); }
-  bool IsSat()                      const { return cSource::IsSat(m_channelData.source); }
-  bool IsTerr()                     const { return cSource::IsTerr(m_channelData.source); }
-  bool IsSourceType(char source)    const { return cSource::IsType(m_channelData.source, source); }
+  unsigned int Number(void) const { return m_number; }
+  void SetNumber(unsigned int number) { m_number = number; }
 
-  void SetNumber(unsigned int number) { m_channelData.number = number; }
+  eChannelMod Modification(eChannelMod mask = CHANNELMOD_ALL);
 
-  const cDvbTransponderParams& Parameters() const { return m_parameters; }
-  //const cLinkChannels& LinkChannels()       const { return m_linkChannels; }
-  const cChannel* RefChannel()              const { return m_refChannel; }
+  SchedulePtr Schedule(void) const;
+  bool HasSchedule(void) const;
+  void SetSchedule(const SchedulePtr& schedule);
 
+  //const cLinkChannels& LinkChannels(void)       const { return m_linkChannels; }
   //void SetLinkChannels(cLinkChannels& channels) { m_linkChannels = channels; }
-
-  cChannelID GetChannelID() const;
+  void SetLinkChannels(cLinkChannels *linkChannels);
 
   bool HasTimer(void) const { return false; } //TODO
   bool HasTimer(const std::vector<cTimer2> &timers) const; // TODO: cTimer2
 
-  eChannelMod Modification(eChannelMod mask = CHANNELMOD_ALL);
-
-  void CopyTransponderData(const cChannel &channel);
-
-  bool SetTransponderData(int source, unsigned int frequency, int srate, const cDvbTransponderParams& parameters, bool bQuiet = false);
-  void SetLinkChannels(cLinkChannels *linkChannels);
-  void SetRefChannel(cChannel *refChannel) { m_refChannel = refChannel; }
-
-  void SetSchedule(SchedulePtr schedule);
-  bool HasSchedule(void) const;
-  SchedulePtr Schedule(void) const;
-
-  uint32_t Hash(void) const;
+  bool Serialise(TiXmlNode* node) const;
+  bool Deserialise(const TiXmlNode* node);
 
 private:
-  std::string m_name;
-  std::string m_shortName;
-  std::string m_provider;
-  std::string m_portalName;
+  cChannelID                  m_channelId;
+  std::string                 m_name;
+  std::string                 m_shortName;
+  std::string                 m_provider;
+  std::string                 m_portalName;
 
-  uint16_t m_nid; // Network ID
-  uint16_t m_tid; // Transport stream ID
-  uint16_t m_sid; // Service ID
-
-  VideoStream                 m_videoStream;
+  VideoStream                 m_videoStream;     // Max 1
   std::vector<AudioStream>    m_audioStreams;    // Max 32
   std::vector<DataStream>     m_dataStreams;     // Max 16
   std::vector<SubtitleStream> m_subtitleStreams; // Max 32
-  TeletextStream              m_teletextStream;
+  TeletextStream              m_teletextStream;  // Max 1
   CaDescriptorVector          m_caDescriptors;   // Max 12
 
-  tChannelData          m_channelData;
-  cDvbTransponderParams m_parameters;
-  int                   m_modification;
-  SchedulePtr           m_schedule;
-  cLinkChannels*        m_linkChannels;
-  //cLinkChannels         m_linkChannels;
-  cChannel*             m_refChannel;
-  uint32_t              m_channelHash;
+  cDvbTransponderParams       m_parameters;
+  unsigned int                m_frequencyHz;     // TODO: Move to transponder params
+  int                         m_symbolRate;      // TODO: Move to transponder params
+
+  unsigned int                m_number;          // Sequence number assigned on load
+
+  int                         m_modification;
+  SchedulePtr                 m_schedule;
+  cLinkChannels*              m_linkChannels;
+  //cLinkChannels               m_linkChannels;
 };
 
 }

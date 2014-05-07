@@ -24,7 +24,6 @@
 #include "NIT.h"
 #include "channels/Channel.h"
 #include "scan/dvb_wrapper.h"
-#include "sources/Source.h"
 #include "utils/CommonMacros.h"
 #include "utils/log/Log.h"
 #include "utils/StringUtils.h"
@@ -229,7 +228,7 @@ ChannelVector cNit::GetTransponders()
               }
 
               // Source
-              int source = cSource::FromData(cSource::stSat, BCD2INT(sd->getOrbitalPosition()), sd->getWestEastFlag() ? cSource::sdEast : cSource::sdWest);
+              cChannelSource source(SOURCE_TYPE_SATELLITE, BCD2INT(sd->getOrbitalPosition()), sd->getWestEastFlag() ? DIRECTION_EAST : DIRECTION_WEST);
 
               for (vector<uint32_t>::const_iterator itKHz = frequenciesKHz.begin(); itKHz != frequenciesKHz.end(); ++itKHz)
               {
@@ -253,8 +252,8 @@ ChannelVector cNit::GetTransponders()
                 {
                   ChannelPtr& channel = *it;
                   if (channel->Source() == source &&
-                      channel->GetNid() == ts.getOriginalNetworkId() &&
-                      channel->GetTid() == ts.getTransportStreamId())
+                      channel->Nid() == ts.getOriginalNetworkId() &&
+                      channel->Tid() == ts.getTransportStreamId())
                   {
                     int transponder = channel->TransponderFrequencyMHz();
                     bFound = true;
@@ -313,14 +312,14 @@ ChannelVector cNit::GetTransponders()
                 {
                   ChannelPtr& channel = *it;
                   if (cSource::IsSat(channel->Source()) &&
-                      channel->GetNid()    == ts.getOriginalNetworkId() &&
-                      channel->GetTid()    == ts.getTransportStreamId())
+                      channel->Nid()    == ts.getOriginalNetworkId() &&
+                      channel->Tid()    == ts.getTransportStreamId())
                   {
                     SI::S2SatelliteDeliverySystemDescriptor* sd = (SI::S2SatelliteDeliverySystemDescriptor*)d;
                     cDvbTransponderParams dtp(channel->Parameters());
                     dtp.SetSystem(DVB_SYSTEM_2);
                     dtp.SetStreamId(sd->getInputStreamIdentifier());
-                    channel->SetTransponderData(channel->Source(), channel->FrequencyHz(), channel->Srate(), dtp);
+                    channel->SetTransponderData(channel->Source(), channel->FrequencyHz(), channel->SymbolRate(), dtp);
                     channel->NotifyObservers(ObservableMessageChannelChanged);
                     break;
                   }
@@ -336,7 +335,7 @@ ChannelVector cNit::GetTransponders()
               cDvbTransponderParams dtp;
 
               // Source
-              int source = cSource::FromData(cSource::stCable);
+              cChannelSource source = SOURCE_TYPE_CABLE;
 
               // Frequency
               int iFrequencyKHz = frequenciesKHz[0] = BCD2INT(sd->getFrequency()) / 10;
@@ -387,8 +386,8 @@ ChannelVector cNit::GetTransponders()
                 {
                   ChannelPtr& channel = *it;
                   if (channel->Source() == source &&
-                      channel->GetNid() == ts.getOriginalNetworkId() &&
-                      channel->GetTid() == ts.getTransportStreamId())
+                      channel->Nid() == ts.getOriginalNetworkId() &&
+                      channel->Tid() == ts.getTransportStreamId())
                   {
                     int transponder = channel->TransponderFrequencyMHz();
 
@@ -410,7 +409,7 @@ ChannelVector cNit::GetTransponders()
                     assert(GetCurrentlyTunedTransponder().get() != NULL); // TODO
                     if (ISTRANSPONDER(iFrequencyKHz / 1000, GetCurrentlyTunedTransponder()->TransponderFrequencyMHz()))
                       channel->SetTransponderData(source, iFrequencyKHz, symbolRate, dtp);
-                    else if (channel->Srate() != symbolRate || channel->Parameters() != dtp)
+                    else if (channel->SymbolRate() != symbolRate || channel->Parameters() != dtp)
                       bForceTransponderUpdate = true; // get us receiving this transponder
                   }
                 }
@@ -436,7 +435,7 @@ ChannelVector cNit::GetTransponders()
 
               cDvbTransponderParams dtp;
 
-              int source = cSource::FromData(cSource::stTerr);
+              cChannelSource source = SOURCE_TYPE_TERRESTRIAL;
 
               int iFrequencyKHz = frequenciesKHz[0] = sd->getFrequency() * 10;
 
@@ -515,8 +514,8 @@ ChannelVector cNit::GetTransponders()
                 {
                   ChannelPtr& channel = *it;
                   if (channel->Source() == source &&
-                      channel->GetNid() == ts.getOriginalNetworkId() &&
-                      channel->GetTid() == ts.getTransportStreamId())
+                      channel->Nid() == ts.getOriginalNetworkId() &&
+                      channel->Tid() == ts.getTransportStreamId())
                   {
                     int transponder = channel->TransponderFrequencyMHz();
                     bFound = true;
@@ -575,13 +574,13 @@ ChannelVector cNit::GetTransponders()
                     int source = cSource::FromData(cSource::stTerr);
 
                     if (channel->Source() == source &&
-                        channel->GetNid() == ts.getOriginalNetworkId() &&
-                        channel->GetTid() == ts.getTransportStreamId())
+                        channel->Nid() == ts.getOriginalNetworkId() &&
+                        channel->Tid() == ts.getTransportStreamId())
                     {
                       SI::T2DeliverySystemDescriptor* td = (SI::T2DeliverySystemDescriptor*)d;
 
                       int iFrequencyHz = channel->FrequencyHz();
-                      int symbolRate = channel->Srate();
+                      int symbolRate = channel->SymbolRate();
 
                       //int SystemId = td->getSystemId();
 
@@ -674,7 +673,7 @@ ChannelVector cNit::GetTransponders()
                   if (channel && !(channel->Rid() & INVALID_CHANNEL))
                   {
                     dsyslog("   NIT: invalid (service_type=0x%.2x)", service.getServiceType());
-                    channel->SetId(channel->GetNid(), channel->GetTid(), channel->GetSid(), INVALID_CHANNEL);
+                    channel->SetId(channel->Nid(), channel->Tid(), channel->Sid(), INVALID_CHANNEL);
                   }
                   */
                 }

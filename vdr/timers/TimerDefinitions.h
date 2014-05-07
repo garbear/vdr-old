@@ -26,7 +26,6 @@
 
 #define TIMER_XML_ATTR_ID        "id"
 #define TIMER_XML_ATTR_FLAGS     "flags"
-#define TIMER_XML_ATTR_CHANNEL   "channel"
 #define TIMER_XML_ATTR_DAY_MASK  "day_mask"
 #define TIMER_XML_ATTR_START     "start"
 #define TIMER_XML_ATTR_DURATION  "duration"

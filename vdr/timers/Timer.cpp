@@ -161,9 +161,11 @@ bool cTimer::SerialiseTimer(TiXmlNode *node) const
   if (timerElement == NULL)
     return false;
 
+  if (!Channel()->GetChannelID().Serialise(node))
+    return false;
+
   timerElement->SetAttribute(TIMER_XML_ATTR_ID,       m_index);
   timerElement->SetAttribute(TIMER_XML_ATTR_FLAGS,    m_iTimerFlags);
-  timerElement->SetAttribute(TIMER_XML_ATTR_CHANNEL,  Channel()->GetChannelID().Serialize().c_str());
   timerElement->SetAttribute(TIMER_XML_ATTR_DAY_MASK, m_time.WeekDayMask());
   timerElement->SetAttribute(TIMER_XML_ATTR_START,    m_time.FirstStartAsTime());
   timerElement->SetAttribute(TIMER_XML_ATTR_DURATION, m_time.DurationSecs());
@@ -183,17 +185,16 @@ bool cTimer::DeserialiseTimer(const TiXmlNode *node)
   if (elem == NULL)
     return false;
 
+  cChannelID chanId;
+  chanId.Deserialise(node);
+  if (chanId.IsValid())
+    m_channel = cChannelManager::Get().GetByChannelID(chanId);
+
   if (const char* attr = elem->Attribute(TIMER_XML_ATTR_ID))
     m_index = StringUtils::IntVal(attr);
 
   if (const char* attr = elem->Attribute(TIMER_XML_ATTR_FLAGS))
     m_iTimerFlags = StringUtils::IntVal(attr);
-
-  if (const char* attr = elem->Attribute(TIMER_XML_ATTR_CHANNEL))
-  {
-    cChannelID chanId = cChannelID::Deserialize(attr);
-    m_channel = cChannelManager::Get().GetByChannelID(chanId);
-  }
 
   uint32_t iDaymask(tdNone);
   if (const char* attr = elem->Attribute(TIMER_XML_ATTR_DAY_MASK))

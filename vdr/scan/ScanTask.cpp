@@ -80,8 +80,8 @@ void cScanTask::DoWork(const ChannelPtr& channel, cSynchronousAbort* abortableJo
       for (ChannelVector::const_iterator it2 = vctChannels.begin(); it2 != vctChannels.end(); ++it2)
       {
         const ChannelPtr& vctChannel = *it2;
-        if (patChannel->GetTid() == vctChannel->GetTid() &&
-            patChannel->GetSid() == vctChannel->GetSid())
+        if (patChannel->Tsid() == vctChannel->Tsid() &&
+            patChannel->Sid()  == vctChannel->Sid())
         {
           patChannel->SetName(vctChannel->Name(), vctChannel->ShortName(), vctChannel->Provider());
           // TODO: Copy transponder data
@@ -141,7 +141,7 @@ ChannelPtr cScanTaskTerrestrial::GetChannel(fe_modulation modulation, unsigned i
   params.SetHierarchy(m_caps.caps_hierarchy);
   params.SetRollOff(ROLLOFF_35); // (fe_rolloff)0
 
-  channel->SetTransponderData(cSource::stTerr, frequency, 27500, params, true);
+  channel->SetTransponderData(SOURCE_TYPE_TERRESTRIAL, frequency, 27500, params);
   channel->SetId(0, 0, 0);
 
   return channel;
@@ -206,7 +206,7 @@ ChannelPtr cScanTaskCable::GetChannel(fe_modulation modulation, unsigned int iCh
   params.SetHierarchy(HIERARCHY_NONE); // (fe_hierarchy)0
   params.SetRollOff(ROLLOFF_35); // (fe_rolloff)0
 
-  channel->SetTransponderData(cSource::stCable, 410000, 6900, params, true);
+  channel->SetTransponderData(SOURCE_TYPE_CABLE, 410000, 6900, params);
   channel->SetId(0, 0, 0);
 
   return channel;
@@ -227,7 +227,7 @@ bool cScanTaskSatellite::ValidSatFrequency(unsigned int frequencyHz, const cChan
   if (cSettings::Get().m_bDiSEqC)
   {
     cDvbTransponderParams params(channel.Parameters());
-    cDiseqc *diseqc = GetDiseqc(channel.Source(), channel.FrequencyHz(), params.Polarization());
+    cDiseqc *diseqc = GetDiseqc(channel.Source(), channel.FrequencyHz(), params.Polarization()); // TODO: Incorrect conversion from fe_polarization_t to char!
 
     if (diseqc)
       frequencyMHz -= diseqc->Lof();
@@ -245,7 +245,7 @@ bool cScanTaskSatellite::ValidSatFrequency(unsigned int frequencyHz, const cChan
   return frequencyMHz >= 950 && frequencyMHz <= 2150;
 }
 
-cDiseqc* cScanTaskSatellite::GetDiseqc(int source, int frequency, char polarization)
+cDiseqc* cScanTaskSatellite::GetDiseqc(cChannelSource source, unsigned frequency, char polarization)
 {
   for (cDiseqc *p = Diseqcs.First(); p; p = Diseqcs.Next(p))
   {
@@ -273,11 +273,13 @@ ChannelPtr cScanTaskSatellite::GetChannel(fe_modulation modulation, unsigned int
   params.SetHierarchy(HIERARCHY_NONE); // (fe_hierarchy)0
   params.SetRollOff(SatelliteUtils::GetTransponder(m_satelliteId, iChannel).rolloff);
 
-  channel->SetTransponderData(cSource::FromString(SatelliteUtils::GetSatellite(m_satelliteId).source_id),
-                             SatelliteUtils::GetTransponder(m_satelliteId, iChannel).intermediate_frequency,
-                             SatelliteUtils::GetTransponder(m_satelliteId, iChannel).symbol_rate,
-                             params,
-                             true);
+  cChannelSource source;
+  source.Deserialise(SatelliteUtils::GetSatellite(m_satelliteId).source_id);
+
+  channel->SetTransponderData(source,
+                              SatelliteUtils::GetTransponder(m_satelliteId, iChannel).intermediate_frequency,
+                              SatelliteUtils::GetTransponder(m_satelliteId, iChannel).symbol_rate,
+                              params);
 
   if (!ValidSatFrequency(SatelliteUtils::GetTransponder(m_satelliteId, iChannel).intermediate_frequency, *channel))
     return cChannel::EmptyChannel;
@@ -329,7 +331,7 @@ ChannelPtr cScanTaskATSC::GetChannel(fe_modulation modulation, unsigned int iCha
   params.SetRollOff(ROLLOFF_35); // (fe_rolloff)0
 
   ChannelPtr channel = ChannelPtr(new cChannel);
-  channel->SetTransponderData(cSource::stAtsc, frequency, cScanConfig::TranslateSymbolRate(symbolRate), params, true);
+  channel->SetTransponderData(SOURCE_TYPE_ATSC, frequency, cScanConfig::TranslateSymbolRate(symbolRate), params);
   channel->SetId(0, 0, 0);
 
   return channel;

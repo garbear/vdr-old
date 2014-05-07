@@ -971,7 +971,7 @@ bool cVNSIClient::processCHANNELS_GetChannels() /* OPCODE 63 */
       continue;
 
     // skip invalid channels
-    if (channel->GetSid() == 0)
+    if (channel->Sid() == 0)
       continue;
 
     // check filter

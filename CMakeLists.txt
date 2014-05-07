@@ -117,6 +117,7 @@ set(VDR_SRCS
 	vdr/channels/ChannelGroup.cpp
 	vdr/channels/ChannelID.cpp
 	vdr/channels/ChannelManager.cpp
+	vdr/channels/ChannelSource.cpp
 	vdr/devices/commoninterface/CI.cpp
 	vdr/devices/Device.cpp
 	vdr/devices/DeviceManager.cpp
@@ -201,7 +202,6 @@ set(VDR_SRCS
 	vdr/settings/AllowedHosts.cpp
 	vdr/settings/Settings.cpp
 	vdr/sources/ISourceParams.cpp
-	vdr/sources/Source.cpp
 	vdr/sources/linux/DVBSourceParams.cpp
 	vdr/sources/linux/DVBTransponderParams.cpp
 	vdr/threads/SystemClock.cpp
@@ -267,6 +267,7 @@ set(VDR_TEST_SRCS
 	vdr/channels/test/TestChannel.cpp
 	vdr/channels/test/TestChannelID.cpp
 	vdr/channels/test/TestChannelManager.cpp
+	vdr/channels/test/TestChannelSource.cpp
 	vdr/devices/linux/test/TestDVBDevice.cpp
 	vdr/devices/linux/test/TestDVBTuner.cpp
 	vdr/dvb/filters/test/TestPAT.cpp

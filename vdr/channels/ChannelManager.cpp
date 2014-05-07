@@ -233,10 +233,10 @@ ChannelPtr cChannelManager::GetByNumber(int number, int skipGap /* = 0 */)
   return cChannel::EmptyChannel;
 }
 
-ChannelPtr cChannelManager::GetByServiceID(int serviceID, int source, int transponder) const
+ChannelPtr cChannelManager::GetByServiceID(int serviceID, cChannelSource source, int transponder) const
 {
   assert(serviceID);
-  assert(source);
+  assert(source != SOURCE_TYPE_NONE);
   assert(transponder);
 
   ChannelSidMap::const_iterator it = m_channelSids.find(serviceID);
@@ -245,22 +245,22 @@ ChannelPtr cChannelManager::GetByServiceID(int serviceID, int source, int transp
     const ChannelVector &channelVec = it->second;
     for (ChannelVector::const_iterator itChannel = channelVec.begin(); itChannel != channelVec.end(); ++itChannel)
     {
-      if ((*itChannel)->GetSid() == serviceID && (*itChannel)->Source() == source && ISTRANSPONDER((*itChannel)->TransponderFrequencyMHz(), transponder))
+      if ((*itChannel)->Sid() == serviceID && (*itChannel)->Source() == source && ISTRANSPONDER((*itChannel)->TransponderFrequencyMHz(), transponder))
         return (*itChannel);
     }
   }
   return cChannel::EmptyChannel;
 }
 
-ChannelPtr cChannelManager::GetByServiceID(const ChannelVector& channels, int serviceID, int source, int transponder)
+ChannelPtr cChannelManager::GetByServiceID(const ChannelVector& channels, int serviceID, cChannelSource source, int transponder)
 {
   assert(serviceID);
-  assert(source);
+  assert(source != SOURCE_TYPE_NONE);
   assert(transponder);
 
   for (ChannelVector::const_iterator itChannel = channels.begin(); itChannel != channels.end(); ++itChannel)
   {
-    if ((*itChannel)->GetSid() == serviceID && (*itChannel)->Source() == source && ISTRANSPONDER((*itChannel)->TransponderFrequencyMHz(), transponder))
+    if ((*itChannel)->Sid() == serviceID && (*itChannel)->Source() == source && ISTRANSPONDER((*itChannel)->TransponderFrequencyMHz(), transponder))
       return (*itChannel);
   }
   return cChannel::EmptyChannel;
@@ -278,14 +278,14 @@ ChannelPtr cChannelManager::GetByChannelID(const cChannelID& channelID)
     for (ChannelVector::iterator itChannel = channelVec.begin(); itChannel != channelVec.end(); ++itChannel)
     {
       ChannelPtr &channel = *itChannel;
-      if (channel->GetSid() == serviceID && channel->GetChannelID() == channelID)
+      if (channel->Sid() == serviceID && channel->GetChannelID() == channelID)
         return channel;
     }
   }
   return cChannel::EmptyChannel;
 }
 
-ChannelPtr cChannelManager::GetByChannelID(int nid, int tid, int sid)
+ChannelPtr cChannelManager::GetByChannelID(uint16_t nid, uint16_t tsid, uint16_t sid)
 {
   CLockObject lock(m_mutex);
 
@@ -296,7 +296,7 @@ ChannelPtr cChannelManager::GetByChannelID(int nid, int tid, int sid)
     for (ChannelVector::iterator itChannel = channelVec.begin(); itChannel != channelVec.end(); ++itChannel)
     {
       ChannelPtr &channel = *itChannel;
-      if (channel->GetSid() == sid && channel->GetTid() == tid && channel->GetNid() == nid)
+      if (channel->Sid() == sid && channel->Tsid() == tsid && channel->Nid() == nid)
         return channel;
     }
   }
@@ -305,14 +305,14 @@ ChannelPtr cChannelManager::GetByChannelID(int nid, int tid, int sid)
 
 ChannelPtr cChannelManager::GetByTransponderID(const cChannelID& channelID)
 {
-  int source = channelID.Source();
+  cChannelSource source = channelID.Source();
   int nid = channelID.Nid();
-  int tid = channelID.Tid();
+  int tid = channelID.Tsid();
   CLockObject lock(m_mutex);
   for (ChannelVector::iterator itChannel = m_channels.begin(); itChannel != m_channels.end(); ++itChannel)
   {
     ChannelPtr &channel = *itChannel;
-    if (channel->GetNid() == nid && channel->GetTid() == tid && channel->Source() == source)
+    if (channel->Nid() == nid && channel->Tsid() == tid && channel->Source() == source)
       return channel;
   }
   return cChannel::EmptyChannel;
@@ -328,7 +328,7 @@ void cChannelManager::ReNumber()
   for (ChannelVector::const_iterator itChannel = m_channels.begin(); itChannel != m_channels.end(); ++itChannel)
   {
     const ChannelPtr &channel = *itChannel;
-    m_channelSids[channel->GetSid()].push_back(channel);
+    m_channelSids[channel->Sid()].push_back(channel);
     m_maxNumber = number;
     channel->SetNumber(number++);
   }

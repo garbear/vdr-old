@@ -175,7 +175,7 @@ ChannelVector cSdt::GetChannels()
                   // Some cable providers don't mark short channel names according to the
                   // standard, but rather go their own way and use "name>short name" or
                   // "name, short name"
-                  if (strShortName.empty() && cSource::IsCable(channel->Source()))
+                  if (strShortName.empty() && channel->Source() == SOURCE_TYPE_CABLE)
                   {
                     size_t pos = strName.find('>'); // fix for UPC Wien
                     if (pos == string::npos)

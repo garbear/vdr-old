@@ -20,40 +20,59 @@
  */
 #pragma once
 
-#include <string>
+#include "ChannelSource.h"
+
 #include <stdint.h>
+#include <string>
 
 namespace VDR
 {
-struct cChannelID
+
+class cChannelID
 {
 public:
-  cChannelID();
-  cChannelID(int source, int nid, int tid, int sid);
+  cChannelID(cChannelSource  source = SOURCE_TYPE_NONE,
+             uint16_t        nid    = 0,
+             uint16_t        tsid   = 0,
+             uint16_t        sid    = 0);
 
-  bool operator==(const cChannelID &arg) const;
-  bool operator!=(const cChannelID &arg) const { return !(*this == arg); }
+  bool operator==(const cChannelID &rhs) const;
+  bool operator!=(const cChannelID &rhs) const { return !(*this == rhs); }
 
-  bool Valid() const { return (m_nid || m_tid) && m_sid; } // rid is optional and source may be 0//XXX source may not be 0???
+  /*!
+   * Checks the validity of this channel ID. A channel ID is valid if it has
+   * a source (source != SOURCE_TYPE_NONE), an SID (non-zero), and either a
+   * TID or an NID. RID is optional and not considered here.
+   */
+  bool IsValid(void) const;
 
-  void ClrPolarization();
+  const cChannelSource& Source() const { return m_source; }
+  uint16_t              Nid()    const { return m_nid; }
+  uint16_t              Tsid()   const { return m_tsid; }
+  uint16_t              Sid()    const { return m_sid; }
 
-  int Source() const { return m_source; }
-  int Nid()    const { return m_nid; }
-  int Tid()    const { return m_tid; }
-  int Sid()    const { return m_sid; }
+  //void SetSource(cChannelSource source) { m_source = source; } // TODO: Uncomment when needed
+  void SetID(uint16_t nid, uint16_t tsid, uint16_t sid);
 
-  std::string Serialize() const;
-  static cChannelID Deserialize(const std::string &str);
-
-  static const cChannelID InvalidID;
+  bool Serialise(TiXmlNode* node) const;
+  bool Deserialise(const TiXmlNode* node);
 
   uint32_t Hash(void) const;
 
+  /*!
+   * Convert this channel ID to a string. Guaranteed to be a valid filename
+   * (no spaces or slashes) or empty if invalid.
+   */
+  std::string ToString(void) const;
+
+  static const cChannelID InvalidID;
+
+public:// TODO
+  cChannelSource  m_source;
 private:
-  int m_source;
-  int m_nid; // Actually the "original" network id
-  int m_tid;
-  int m_sid; // Service ID
+  uint16_t        m_nid;  // Actually the "original" network ID
+  uint16_t        m_tsid; // Transport stream ID
+  uint16_t        m_sid;  // Service ID
 };
+
 }

@@ -35,8 +35,6 @@
 namespace VDR
 {
 
-//#define INVALID_CHANNEL  0x4000 // TODO: Is this needed?
-
 class iNitScannerCallback
 {
 public:

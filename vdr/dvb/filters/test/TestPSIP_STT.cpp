@@ -21,10 +21,10 @@
  */
 
 #include "dvb/filters/PSIP_STT.h"
+#include "channels/ChannelSource.h"
 #include "devices/linux/DVBDevice.h"
 #include "devices/linux/test/DVBDeviceNames.h"
 #include "devices/subsystems/DeviceChannelSubsystem.h"
-#include "sources/Source.h"
 #include "sources/linux/DVBTransponderParams.h"
 #include "scan/ScanTask.h"
 #include "scan/ScanConfig.h"
@@ -71,7 +71,7 @@ TEST(PSIP_STT, GetEvents)
       const unsigned int frequency = 177000000; // 177 MHz
 
       channel = ChannelPtr(new cChannel);
-      channel->SetTransponderData(cSource::stAtsc, frequency, cScanConfig::TranslateSymbolRate(eSR_6900000), params, true);
+      channel->SetTransponderData(SOURCE_TYPE_ATSC, frequency, cScanConfig::TranslateSymbolRate(eSR_6900000), params);
       channel->SetId(0, 0, 0);
     }
 

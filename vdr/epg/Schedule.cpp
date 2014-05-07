@@ -313,7 +313,7 @@ bool cSchedule::Read(void)
   assert(!cSettings::Get().m_EPGDirectory.empty());
 
   CXBMCTinyXML xmlDoc;
-  std::string strFilename = cSettings::Get().m_EPGDirectory + "/epg_" + channelID.Serialize() + ".xml";
+  std::string strFilename = cSettings::Get().m_EPGDirectory + "/epg_" + channelID.ToString() + ".xml";
   if (!xmlDoc.LoadFile(strFilename.c_str()))
   {
     esyslog("failed to open '%s'", strFilename.c_str());
@@ -367,7 +367,7 @@ bool cSchedule::Save(void)
     return false;
   }
 
-  std::string strFilename = cSettings::Get().m_EPGDirectory + "/epg_" + channelID.Serialize() + ".xml";
+  std::string strFilename = cSettings::Get().m_EPGDirectory + "/epg_" + channelID.ToString() + ".xml";
   if (!xmlDoc.SafeSaveFile(strFilename))
   {
     esyslog("failed to save the EPG data: could not write to '%s'", strFilename.c_str());
@@ -391,7 +391,8 @@ bool cSchedule::Serialise(TiXmlNode *node) const
   if (!epgElement)
     return false;
 
-  epgElement->SetAttribute(EPG_XML_ATTR_CHANNEL, channelID.Serialize());
+  if (!channelID.Serialise(node))
+    return false;
 
   for (EventVector::const_iterator it = m_events.begin(); it != m_events.end(); ++it)
   {

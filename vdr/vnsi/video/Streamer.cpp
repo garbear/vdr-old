@@ -116,7 +116,7 @@ bool cLiveStreamer::Open(int serial)
 
   if (!recording)
   {
-    if (m_Channel && ((m_Channel->Source() >> 24) == 'V'))
+    if (m_Channel && m_Channel->Source() == SOURCE_TYPE_ANALOG_VIDEO)
       m_IsMPEGPS = true;
 
     if (!m_VideoInput.Open(m_Channel, m_Priority, m_VideoBuffer))
@@ -435,7 +435,7 @@ void cLiveStreamer::sendSignalInfo()
     return;
   }
 
-  if (m_Channel && ((m_Channel->Source() >> 24) == 'V'))
+  if (m_Channel && m_Channel->Source() == SOURCE_TYPE_ANALOG_VIDEO)
   {
     if (m_Frontend < 0)
     {
@@ -528,18 +528,13 @@ void cLiveStreamer::sendSignalInfo()
       if (ioctl(m_Frontend, FE_READ_UNCORRECTED_BLOCKS, &fe_unc) == -1)
         fe_unc = -2;
 
-      switch (m_Channel->Source() & cSource::st_Mask)
-      {
-        case cSource::stSat:
-          resp->add_String(StringUtils::Format("DVB-S%s #%d - %s", (m_FrontendInfo.caps & 0x10000000) ? "2" : "",  m_Device->CardIndex(), m_FrontendInfo.name));
-          break;
-        case cSource::stCable:
-          resp->add_String(StringUtils::Format("DVB-C #%d - %s", m_Device->CardIndex(), m_FrontendInfo.name));
-          break;
-        case cSource::stTerr:
-          resp->add_String(StringUtils::Format("DVB-T #%d - %s", m_Device->CardIndex(), m_FrontendInfo.name));
-          break;
-      }
+      if (m_Channel->Source() == SOURCE_TYPE_SATELLITE)
+        resp->add_String(StringUtils::Format("DVB-S%s #%d - %s", (m_FrontendInfo.caps & 0x10000000) ? "2" : "",  m_Device->CardIndex(), m_FrontendInfo.name));
+      else if (m_Channel->Source() == SOURCE_TYPE_CABLE)
+        resp->add_String(StringUtils::Format("DVB-C #%d - %s", m_Device->CardIndex(), m_FrontendInfo.name));
+      else if (m_Channel->Source() == SOURCE_TYPE_TERRESTRIAL)
+        resp->add_String(StringUtils::Format("DVB-T #%d - %s", m_Device->CardIndex(), m_FrontendInfo.name));
+
       resp->add_String(StringUtils::Format("%s:%s:%s:%s:%s", (status & FE_HAS_LOCK) ? "LOCKED" : "-", (status & FE_HAS_SIGNAL) ? "SIGNAL" : "-", (status & FE_HAS_CARRIER) ? "CARRIER" : "-", (status & FE_HAS_VITERBI) ? "VITERBI" : "-", (status & FE_HAS_SYNC) ? "SYNC" : "-"));
       resp->add_U32(fe_snr);
       resp->add_U32(fe_signal);

@@ -20,7 +20,6 @@
  */
 
 #include "DiSEqC.h"
-#include "sources/Source.h"
 #include "utils/log/Log.h"
 #include "utils/Tools.h"
 
@@ -111,7 +110,7 @@ cScr *cScrs::GetUnused(int Device)
 cDiseqc::cDiseqc(void)
 {
   devices = 0;
-  source = 0;
+  source = SOURCE_TYPE_NONE;
   slof = 0;
   polarization = 0;
   lof = 0;
@@ -137,8 +136,9 @@ bool cDiseqc::Parse(const char *s)
   if (fields == 4)
      commands = NULL; //XXX Apparently sscanf() doesn't work correctly if the last %a argument results in an empty string
   if (4 <= fields && fields <= 5) {
-     source = cSource::FromString(sourcebuf);
-     if (source) {
+     source = SOURCE_TYPE_NONE; // TODO: Create source from sourcebuf
+
+     if (source != SOURCE_TYPE_NONE) {
         polarization = char(toupper(polarization));
         if (polarization == 'V' || polarization == 'H' || polarization == 'L' || polarization == 'R') {
            parsing = true;
@@ -290,7 +290,7 @@ cDiseqc::eDiseqcActions cDiseqc::Execute(const char **CurrentAction, uint8_t *Co
 
 cDiseqcs Diseqcs;
 
-const cDiseqc *cDiseqcs::Get(int Device, int Source, int Frequency, char Polarization, const cScr **Scr) const
+const cDiseqc *cDiseqcs::Get(int Device, cChannelSource Source, unsigned int Frequency, char Polarization, const cScr **Scr) const
 {
   int Devices = 0;
   for (const cDiseqc *p = First(); p; p = Next(p)) {

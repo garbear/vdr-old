@@ -60,7 +60,4 @@ private:
   char m_source;
 };
 
-// TODO: I need a home!
-//#include <map>
-//std::map<char, iSourceParams*> gSourceParams;
 }

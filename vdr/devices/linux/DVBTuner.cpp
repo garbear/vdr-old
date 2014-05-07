@@ -607,7 +607,7 @@ bool cDvbTuner::SetFrontend(const ChannelPtr& channel)
     SetCommand(frontends, DTV_FREQUENCY,   frequencyHz * 1000UL);
 
     SetCommand(frontends, DTV_MODULATION,  dtp.Modulation());
-    SetCommand(frontends, DTV_SYMBOL_RATE, channel->Srate() * 1000UL);
+    SetCommand(frontends, DTV_SYMBOL_RATE, channel->SymbolRate() * 1000UL);
     SetCommand(frontends, DTV_INNER_FEC,   dtp.CoderateH());
     SetCommand(frontends, DTV_INVERSION,   dtp.Inversion());
     if (frontendType == SYS_DVBS2)
@@ -629,7 +629,7 @@ bool cDvbTuner::SetFrontend(const ChannelPtr& channel)
     // DVB-C
     SetCommand(frontends, DTV_FREQUENCY,   channel->FrequencyHz());
     SetCommand(frontends, DTV_INVERSION,   dtp.Inversion());
-    SetCommand(frontends, DTV_SYMBOL_RATE, channel->Srate() * 1000UL);
+    SetCommand(frontends, DTV_SYMBOL_RATE, channel->SymbolRate() * 1000UL);
     SetCommand(frontends, DTV_INNER_FEC,   dtp.CoderateH());
     SetCommand(frontends, DTV_MODULATION,  dtp.Modulation());
   }
@@ -1013,13 +1013,13 @@ fe_delivery_system_t cDvbTuner::GetRequiredDeliverySystem(const cChannel &channe
   cDvbTransponderParams dtp(channel.Parameters());
 
   fe_delivery_system_t ds = SYS_UNDEFINED;
-  if (channel.IsAtsc())
+  if (channel.Source() == SOURCE_TYPE_ATSC)
     ds = SYS_ATSC;
-  else if (channel.IsCable())
+  else if (channel.Source() == SOURCE_TYPE_CABLE)
     ds = SYS_DVBC_ANNEX_AC;
-  else if (channel.IsSat())
+  else if (channel.Source() == SOURCE_TYPE_SATELLITE)
     ds = dtp.System() == DVB_SYSTEM_1 ? SYS_DVBS : SYS_DVBS2;
-  else if (channel.IsTerr())
+  else if (channel.Source() == SOURCE_TYPE_TERRESTRIAL)
     ds = dtp.System() == DVB_SYSTEM_1 ? SYS_DVBT : SYS_DVBT2;
   else
     esyslog("ERROR: can't determine frontend type for channel %d", channel.Number());

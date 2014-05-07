@@ -286,7 +286,7 @@ EventVector cEit::GetEvents()
                     else if (cSettings::Get().m_iUpdateChannels >= 4)
                     {
                       ChannelPtr transponder = channel;
-                      if (channel->GetTid() != ld->getTransportStreamId())
+                      if (channel->Tsid() != ld->getTransportStreamId())
                         transponder = m_channelManager.GetByTransponderID(linkID);
 
                       link = ChannelPtr(new cChannel);
@@ -460,10 +460,10 @@ void cEit::GetText(SI::Descriptor* d, uint8_t tid, uint16_t nid, uint16_t tsid,
     SI::TimeShiftedEventDescriptor* tsed = (SI::TimeShiftedEventDescriptor*)d;
 
     assert(GetCurrentlyTunedTransponder().get() != NULL); // TODO
-    cChannelID channelId(GetCurrentlyTunedTransponder()->Source(), // Source
-                         nid,                                      // NID
-                         tsid,                                     // TID
-                         tsed->getReferenceServiceId());           // SID
+    cChannelID channelId(GetCurrentlyTunedTransponder()->Source(),
+                         nid,
+                         tsid,
+                         tsed->getReferenceServiceId());
 
     EventPtr rEvent = cSchedulesLock::GetEvent(channelId, tsed->getReferenceEventId());
     if (rEvent)

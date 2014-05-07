@@ -32,8 +32,6 @@
 //#include "utils/UTF8Utils.h"
 //#include "timers.h"
 
-#include "libsi/si.h" // For AC3DescriptorTag
-
 #include <algorithm>
 #include <stdio.h>
 #include <string.h>
@@ -43,13 +41,6 @@ using namespace std;
 
 namespace VDR
 {
-
-// IMPORTANT NOTE: in the 'sscanf()' calls there is a blank after the '%d'
-// format characters in order to allow any number of blanks after a numeric
-// value!
-
-#define STRDIFF 0x01
-#define VALDIFF 0x02
 
 bool operator==(const VideoStream& lhs, const VideoStream& rhs)
 {
@@ -96,28 +87,17 @@ bool ISTRANSPONDER(int frequencyMHz1, int frequencyMHz2)
 
 ChannelPtr cChannel::EmptyChannel;
 
-cChannel::cChannel()
- : m_nid(0),
-   m_tid(0),
-   m_sid(0),
-   m_channelData(), // value-initialize
-   m_modification(CHANNELMOD_NONE),
-   m_schedule(NULL),
-   //m_linkChannels(NULL), // TODO
-   m_refChannel(NULL),
-   m_channelHash(0)
+cChannel::cChannel(void)
 {
+  Reset();
 }
 
-cChannel::cChannel(const cChannel &channel)
- : m_schedule(NULL),
-   //m_linkChannels(NULL),
-   m_refChannel(NULL)
+cChannel::cChannel(const cChannel& channel)
 {
   *this = channel;
 }
 
-cChannel::~cChannel()
+cChannel::~cChannel(void)
 {
   //delete linkChannels;
   //linkChannels = NULL; // more than one channel can link to this one, so we need the following loop
@@ -146,42 +126,96 @@ cChannel::~cChannel()
   */
 }
 
-cChannel& cChannel::operator=(const cChannel &channel)
+void cChannel::Reset(void)
 {
-  m_name        = channel.m_name;
-  m_shortName   = channel.m_shortName;
-  m_provider    = channel.m_provider;
-  m_portalName  = channel.m_portalName;
+  m_channelId      = cChannelID();
+  m_videoStream    = VideoStream();
+  m_teletextStream = TeletextStream();
+  m_frequencyHz    = 0;
+  m_symbolRate     = 0;
+  m_number         = 0;
+  m_modification   = CHANNELMOD_NONE,
+  m_linkChannels   = NULL;
 
-  m_nid = channel.m_nid;
-  m_tid = channel.m_tid;
-  m_sid = channel.m_sid;
+  m_name.clear();
+  m_shortName.clear();
+  m_provider.clear();
+  m_portalName.clear();
+  m_audioStreams.clear();
+  m_dataStreams.clear();
+  m_subtitleStreams.clear();
+  m_parameters.Reset();
+  m_schedule.reset();
+}
 
-  m_videoStream     = channel.m_videoStream;
-  m_audioStreams    = channel.m_audioStreams;
-  m_dataStreams     = channel.m_dataStreams;
-  m_subtitleStreams = channel.m_subtitleStreams;
-  m_teletextStream  = channel.m_teletextStream;
+cChannel& cChannel::operator=(const cChannel& rhs)
+{
+  m_channelId       = rhs.m_channelId;
+  m_name            = rhs.m_name;
+  m_shortName       = rhs.m_shortName;
+  m_provider        = rhs.m_provider;
+  m_portalName      = rhs.m_portalName;
+  m_videoStream     = rhs.m_videoStream;
+  m_audioStreams    = rhs.m_audioStreams;
+  m_dataStreams     = rhs.m_dataStreams;
+  m_subtitleStreams = rhs.m_subtitleStreams;
+  m_teletextStream  = rhs.m_teletextStream;
+  m_caDescriptors   = rhs.m_caDescriptors;
+  m_parameters      = rhs.m_parameters;
+  m_frequencyHz     = rhs.m_frequencyHz;
+  m_symbolRate      = rhs.m_symbolRate;
+  m_number          = rhs.m_number;
 
-  m_caDescriptors   = channel.m_caDescriptors;
-
-  m_channelData = channel.m_channelData;
-  m_parameters  = channel.m_parameters;
-
-  // m_modification
-  // m_schedule
-  // m_linkChannels
-  // m_refChannel
-  // m_channelHash
+  // TODO
+  m_modification = CHANNELMOD_ALL;
+  m_schedule.reset();
+  m_linkChannels = NULL;
 
   SetChanged();
 
   return *this;
 }
 
-ChannelPtr cChannel::Clone() const
+ChannelPtr cChannel::Clone(void) const
 {
   return ChannelPtr(new cChannel(*this));
+}
+
+void cChannel::SetId(uint16_t nid, uint16_t tsid, uint16_t sid)
+{
+  if (nid != Nid() || tsid != Tsid() || sid != Sid())
+  {
+    m_channelId.SetID(nid, tsid, sid);
+
+    m_schedule.reset();
+
+    m_modification |= CHANNELMOD_ID;
+    SetChanged();
+  }
+}
+
+void cChannel::SetName(const string& strName, const string& strShortName, const string& strProvider)
+{
+  if (m_name != strName || m_shortName != strShortName || m_provider != strProvider)
+  {
+    m_name      = strName;
+    m_shortName = strShortName;
+    m_provider  = strProvider;
+
+    m_modification |= CHANNELMOD_NAME;
+    SetChanged();
+  }
+}
+
+void cChannel::SetPortalName(const string& strPortalName)
+{
+  if (m_portalName != strPortalName)
+  {
+    m_portalName = strPortalName;
+
+    m_modification |= CHANNELMOD_NAME;
+    SetChanged();
+  }
 }
 
 const AudioStream& cChannel::GetAudioStream(unsigned int index) const
@@ -202,9 +236,9 @@ const SubtitleStream& cChannel::GetSubtitleStream(unsigned int index) const
   return index < m_subtitleStreams.size() ? m_subtitleStreams[index] : empty;
 }
 
-uint16_t cChannel::GetCaId(unsigned int i) const
+uint16_t cChannel::GetCaId(unsigned int index) const
 {
-  return i < m_caDescriptors.size() ? m_caDescriptors[i]->CaSystem() : 0;
+  return index < m_caDescriptors.size() ? m_caDescriptors[index]->CaSystem() : 0;
 }
 
 vector<uint16_t> cChannel::GetCaIds() const
@@ -216,75 +250,6 @@ vector<uint16_t> cChannel::GetCaIds() const
     caIds.push_back((*it)->CaSystem());
 
   return caIds;
-}
-
-void cChannel::SetName(const string &strName, const string &strShortName, const string &strProvider)
-{
-  bool nn = (m_name != strName);
-  bool ns = (m_shortName != strShortName);
-  bool np = (m_provider != strProvider);
-  if (nn || ns || np)
-  {
-    if (Number())
-    {
-      /* TODO
-      dsyslog("changing name of channel %d from '%s,%s;%s' to '%s,%s;%s'",
-          Number(), m_name.c_str(), m_shortName.c_str(), m_provider.c_str(),
-          strName.c_str(), strShortName.c_str(), strProvider.c_str());
-      */
-      m_modification |= CHANNELMOD_NAME;
-      SetChanged();
-    }
-    if (nn)
-    {
-      m_name = strName;
-      SetChanged();
-    }
-    if (ns)
-    {
-      m_shortName = strShortName;
-      SetChanged();
-    }
-    if (np)
-    {
-      m_provider = strProvider;
-      SetChanged();
-    }
-  }
-}
-
-void cChannel::SetPortalName(const string &strPortalName)
-{
-  if (!strPortalName.empty() && m_portalName != strPortalName)
-  {
-    if (Number())
-    {
-      //dsyslog("changing portal name of channel %d from '%s' to '%s'", Number(), m_portalName.c_str(), strPortalName.c_str());
-      m_modification |= CHANNELMOD_NAME;
-      SetChanged();
-    }
-    m_portalName = strPortalName;
-  }
-}
-
-void cChannel::SetId(uint16_t nid, uint16_t tid, uint16_t sid)
-{
-  if (m_nid != nid || m_tid != tid || m_sid != sid)
-  {
-    if (Number())
-    {
-      //dsyslog("changing id of channel %d from %d-%d-%d-%d to %d-%d-%d", Number(), m_nid, m_tid, m_sid, m_rid, nid, tid, sid);
-      m_modification |= CHANNELMOD_ID;
-      //Channels.UnhashChannel(this); // TODO
-    }
-    m_nid = nid;
-    m_tid = tid;
-    m_sid = sid;
-    if (Number())
-      ;//Channels.HashChannel(this); // TODO
-    m_schedule = cSchedules::EmptySchedule;
-    SetChanged();
-  }
 }
 
 void cChannel::SetStreams(const VideoStream& videoStream,
@@ -306,9 +271,6 @@ void cChannel::SetStreams(const VideoStream& videoStream,
 
   if (mod != CHANNELMOD_NONE)
   {
-    if (Number())
-      ;//dsyslog("changing pids of channel %d from %d+%d=%d:%s:%s:%d to %d+%d=%d:%s:%s:%d", Number(), m_channelData.vpid, m_channelData.ppid, m_channelData.vtype, OldApidsBuf, OldSpidsBuf, m_channelData.tpid, vpid, ppid, vtype, NewApidsBuf, NewSpidsBuf, tpid);
-
     m_videoStream     = videoStream;
     m_audioStreams    = audioStreams;;
     m_dataStreams     = dataStreams;
@@ -329,6 +291,9 @@ void cChannel::SetSubtitlingDescriptors(const vector<SubtitleStream>& subtitleSt
   if (m_subtitleStreams != subtitleStreams)
   {
     m_subtitleStreams = subtitleStreams;
+
+    // TODO: Check if PIDs or language changed
+    m_modification |= CHANNELMOD_PIDS | CHANNELMOD_LANGS;
     SetChanged();
   }
 }
@@ -341,9 +306,6 @@ void cChannel::SetCaDescriptors(const CaDescriptorVector& caDescriptors)
 
   if (m_caDescriptors != caDescriptors)
   {
-    if (Number())
-      ;//dsyslog("changing caids of channel %d from %s to %s", Number(), OldCaIdsBuf, NewCaIdsBuf);
-
     m_caDescriptors = caDescriptors;
 
     m_modification |= CHANNELMOD_CA;
@@ -351,7 +313,168 @@ void cChannel::SetCaDescriptors(const CaDescriptorVector& caDescriptors)
   }
 }
 
-bool cChannel::Serialise(TiXmlNode *node) const
+bool cChannel::SetTransponderData(cChannelSource source, unsigned int frequencyHz, int symbolRate, const cDvbTransponderParams& parameters)
+{
+  // Workarounds for broadcaster stupidity:
+  // Some providers broadcast the transponder frequency of their channels with two different
+  // values (like 12551000 and 12552000), so we need to allow for a little tolerance here
+  if (::abs(m_frequencyHz - frequencyHz) <= 1000)
+    frequencyHz = FrequencyHz();
+
+  // Sometimes the transponder frequency is set to 0, which is just wrong
+  if (frequencyHz == 0)
+    return false;
+
+  // Sometimes the symbol rate is off by one
+  if (::abs(m_symbolRate - symbolRate) <= 1)
+    symbolRate = m_symbolRate;
+
+  if (m_channelId.m_source != source      ||
+      m_frequencyHz        != frequencyHz ||
+      m_symbolRate         != symbolRate  ||
+      m_parameters         != parameters)
+  {
+    m_channelId.m_source = source;
+    m_frequencyHz        = frequencyHz;
+    m_symbolRate         = symbolRate;
+    m_parameters         = parameters;
+
+    m_schedule.reset();
+
+    m_modification |= CHANNELMOD_TRANSP;
+    SetChanged();
+    return true;
+  }
+
+  return false;
+}
+
+void cChannel::CopyTransponderData(const cChannel& channel)
+{
+  m_frequencyHz        = channel.m_frequencyHz;
+  m_channelId.m_source = channel.m_channelId.m_source;
+  m_symbolRate         = channel.m_symbolRate;
+  m_parameters         = channel.m_parameters;
+
+  m_modification |= CHANNELMOD_TRANSP;
+  SetChanged();
+}
+
+unsigned int cChannel::TransponderFrequencyMHz() const
+{
+  unsigned int transponderFreqMHz = FrequencyMHz();
+  if (Source() == SOURCE_TYPE_SATELLITE)
+    transponderFreqMHz = TransponderWTF(transponderFreqMHz, m_parameters.Polarization());
+
+  return transponderFreqMHz;
+}
+
+unsigned int cChannel::TransponderWTF(unsigned int frequencyMHz, fe_polarization polarization)
+{
+  // Some satellites have transponders at the same frequency, just with different polarization
+  switch (polarization)
+  {
+  case POLARIZATION_HORIZONTAL:     frequencyMHz += 100000; break; // WTF 100 GHZ???
+  case POLARIZATION_VERTICAL:       frequencyMHz += 200000; break; // WTF 200 GHZ???
+  case POLARIZATION_CIRCULAR_LEFT:  frequencyMHz += 300000; break; // WTF 300 GHZ???
+  case POLARIZATION_CIRCULAR_RIGHT: frequencyMHz += 400000; break; // WTF 400 GHZ???
+  }
+  return frequencyMHz;
+}
+
+eChannelMod cChannel::Modification(eChannelMod mask /* = CHANNELMOD_ALL */)
+{
+  eChannelMod result = (eChannelMod)(m_modification & mask);
+  m_modification = CHANNELMOD_NONE;
+  return result;
+}
+
+SchedulePtr cChannel::Schedule(void) const
+{
+  return m_schedule;
+}
+
+bool cChannel::HasSchedule(void) const
+{
+  return m_schedule.get() != NULL;
+}
+
+void cChannel::SetSchedule(const SchedulePtr& schedule)
+{
+  m_schedule = schedule;
+}
+
+void cChannel::SetLinkChannels(cLinkChannels *linkChannels)
+{
+  if (!m_linkChannels && !linkChannels)
+     return;
+
+  if (m_linkChannels && linkChannels)
+  {
+    cLinkChannel *lca = m_linkChannels->First();
+    cLinkChannel *lcb = linkChannels->First();
+    while (lca && lcb)
+    {
+      if (lca->Channel() != lcb->Channel())
+      {
+        lca = NULL;
+        break;
+      }
+      lca = m_linkChannels->Next(lca);
+      lcb = linkChannels->Next(lcb);
+    }
+    if (!lca && !lcb)
+    {
+      delete linkChannels;
+      return; // linkage has not changed
+    }
+  }
+
+  char buffer[((m_linkChannels ? m_linkChannels->Count() : 0) + (linkChannels ? linkChannels->Count() : 0)) * 6 + 256]; // 6: 5 digit channel number plus blank, 256: other texts (see below) plus reserve
+  char *q = buffer;
+  q += sprintf(q, "linking channel %d from", Number());
+  if (m_linkChannels)
+  {
+    for (cLinkChannel *lc = m_linkChannels->First(); lc; lc = m_linkChannels->Next(lc))
+    {
+      //lc->Channel()->SetRefChannel(NULL);
+      q += sprintf(q, " %d", lc->Channel()->Number());
+    }
+    delete m_linkChannels;
+  }
+  else
+    q += sprintf(q, " none");
+
+  q += sprintf(q, " to");
+
+  m_linkChannels = linkChannels;
+  if (m_linkChannels)
+  {
+    for (cLinkChannel *lc = m_linkChannels->First(); lc; lc = m_linkChannels->Next(lc))
+    {
+      //lc->Channel()->SetRefChannel(this);
+      q += sprintf(q, " %d", lc->Channel()->Number());
+      //dsyslog("link %4d -> %4d: %s", Number(), lc->Channel()->Number(), lc->Channel()->Name());
+    }
+  }
+  else
+    q += sprintf(q, " none");
+
+  if (Number())
+    dsyslog("%s", buffer);
+}
+
+bool cChannel::HasTimer(const vector<cTimer2> &timers) const // TODO" cTimer2
+{
+  for (vector<cTimer2>::const_iterator timerIt = timers.begin(); timerIt != timers.end(); ++timerIt)
+  {
+    if (timerIt->Channel() == this)
+      return true;
+  }
+  return false;
+}
+
+bool cChannel::Serialise(TiXmlNode* node) const
 {
   if (node == NULL)
     return false;
@@ -365,13 +488,15 @@ bool cChannel::Serialise(TiXmlNode *node) const
   channelElement->SetAttribute(CHANNEL_XML_ATTR_PROVIDER,  m_provider);
   // m_portalName
 
-  channelElement->SetAttribute(CHANNEL_XML_ATTR_NID, m_nid);
-  channelElement->SetAttribute(CHANNEL_XML_ATTR_TID, m_tid);
-  channelElement->SetAttribute(CHANNEL_XML_ATTR_SID, m_sid);
+  if (!m_channelId.Serialise(node))
+    return false;
 
-  channelElement->SetAttribute(CHANNEL_XML_ATTR_VPID,  m_videoStream.vpid);
-  channelElement->SetAttribute(CHANNEL_XML_ATTR_PPID,  m_videoStream.ppid);
-  channelElement->SetAttribute(CHANNEL_XML_ATTR_VTYPE, m_videoStream.vtype);
+  if (m_videoStream.vpid != 0)
+  {
+    channelElement->SetAttribute(CHANNEL_XML_ATTR_VPID,  m_videoStream.vpid);
+    channelElement->SetAttribute(CHANNEL_XML_ATTR_PPID,  m_videoStream.ppid);
+    channelElement->SetAttribute(CHANNEL_XML_ATTR_VTYPE, m_videoStream.vtype);
+  }
 
   if (!m_audioStreams.empty())
   {
@@ -460,7 +585,8 @@ bool cChannel::Serialise(TiXmlNode *node) const
     }
   }
 
-  channelElement->SetAttribute(CHANNEL_XML_ATTR_TPID, m_teletextStream.tpid);
+  if (m_teletextStream.tpid != 0)
+    channelElement->SetAttribute(CHANNEL_XML_ATTR_TPID, m_teletextStream.tpid);
 
   if (!m_caDescriptors.empty())
   {
@@ -492,31 +618,39 @@ bool cChannel::Serialise(TiXmlNode *node) const
   if (transponderNode)
   {
     bool success = false;
-    if (IsAtsc())
+    if (Source() == SOURCE_TYPE_ATSC)
       success = m_parameters.Serialise(DVB_ATSC, transponderNode);
-    else if (IsCable())
+    else if (Source() == SOURCE_TYPE_CABLE)
       success = m_parameters.Serialise(DVB_CABLE, transponderNode);
-    else if (IsSat())
+    else if (Source() == SOURCE_TYPE_SATELLITE)
       success = m_parameters.Serialise(DVB_SAT, transponderNode);
-    else if (IsTerr())
+    else if (Source() == SOURCE_TYPE_TERRESTRIAL)
       success = m_parameters.Serialise(DVB_TERR, transponderNode);
     if (!success)
       return false;
   }
 
-  channelElement->SetAttribute(CHANNEL_XML_ATTR_FREQUENCY, m_channelData.iFrequencyHz);
-  channelElement->SetAttribute(CHANNEL_XML_ATTR_SOURCE,    cSource::ToString(m_channelData.source));
-  channelElement->SetAttribute(CHANNEL_XML_ATTR_SRATE,     m_channelData.srate);
+  if (m_frequencyHz != 0)
+    channelElement->SetAttribute(CHANNEL_XML_ATTR_FREQUENCY, m_frequencyHz);
+
+  if (m_symbolRate != 0)
+    channelElement->SetAttribute(CHANNEL_XML_ATTR_SRATE, m_symbolRate);
+
   return true;
 }
 
-bool cChannel::Deserialise(const TiXmlNode *node)
+bool cChannel::Deserialise(const TiXmlNode* node)
 {
+  Reset();
+
   if (node == NULL)
     return false;
 
   const TiXmlElement *elem = node->ToElement();
   if (elem == NULL)
+    return false;
+
+  if (!m_channelId.Deserialise(node))
     return false;
 
   const char *name = elem->Attribute(CHANNEL_XML_ATTR_NAME);
@@ -531,31 +665,18 @@ bool cChannel::Deserialise(const TiXmlNode *node)
   if (provider != NULL)
     m_provider = provider;
 
-  const char *nid = elem->Attribute(CHANNEL_XML_ATTR_NID);
-  if (nid != NULL)
-    m_nid = StringUtils::IntVal(nid);
-
-  const char *tid = elem->Attribute(CHANNEL_XML_ATTR_TID);
-  if (tid != NULL)
-    m_tid = StringUtils::IntVal(tid);
-
-  const char *sid = elem->Attribute(CHANNEL_XML_ATTR_SID);
-  if (sid != NULL)
-    m_sid = StringUtils::IntVal(sid);
-
-  VideoStream vs = { };
   const char *vpid  = elem->Attribute(CHANNEL_XML_ATTR_VPID);
   const char *ppid  = elem->Attribute(CHANNEL_XML_ATTR_PPID);
   const char *vtype = elem->Attribute(CHANNEL_XML_ATTR_VTYPE);
   if (vpid != NULL && ppid != NULL && vtype != NULL)
   {
-    vs.vpid  = StringUtils::IntVal(vpid);
-    vs.ppid  = StringUtils::IntVal(ppid);
-    vs.vtype = StringUtils::IntVal(vtype);
+    VideoStream vs;
+    vs.vpid       = StringUtils::IntVal(vpid);
+    vs.ppid       = StringUtils::IntVal(ppid);
+    vs.vtype      = StringUtils::IntVal(vtype);
+    m_videoStream = vs;
   }
-  m_videoStream = vs;
 
-  m_audioStreams.clear(); // TODO: Move to cChannel::Reset()
   const TiXmlNode *apidsNode = elem->FirstChild(CHANNEL_XML_ELM_APIDS);
   if (apidsNode)
   {
@@ -582,7 +703,6 @@ bool cChannel::Deserialise(const TiXmlNode *node)
     }
   }
 
-  m_dataStreams.clear(); // TODO: Move to cChannel::Reset()
   const TiXmlNode *dpidsNode = elem->FirstChild(CHANNEL_XML_ELM_DPIDS);
   if (dpidsNode)
   {
@@ -609,7 +729,6 @@ bool cChannel::Deserialise(const TiXmlNode *node)
     }
   }
 
-  m_subtitleStreams.clear(); // TODO: Move to cChannel::Reset()
   const TiXmlNode *spidsNode = elem->FirstChild(CHANNEL_XML_ELM_SPIDS);
   if (spidsNode)
   {
@@ -632,15 +751,14 @@ bool cChannel::Deserialise(const TiXmlNode *node)
     }
   }
 
-  TeletextStream ts = { };
   const char *tpid = elem->Attribute(CHANNEL_XML_ATTR_TPID);
   if (tpid != NULL)
   {
-    ts.tpid = StringUtils::IntVal(tpid);
+    TeletextStream ts;
+    ts.tpid          = StringUtils::IntVal(tpid);
+    m_teletextStream = ts;
   }
-  m_teletextStream = ts;
 
-  m_caDescriptors.clear(); // TODO: Move to cChannel::Reset()
   const TiXmlNode *caidsNode = elem->FirstChild(CHANNEL_XML_ELM_CAIDS);
   if (caidsNode)
   {
@@ -658,210 +776,20 @@ bool cChannel::Deserialise(const TiXmlNode *node)
 
   const char *frequency = elem->Attribute(CHANNEL_XML_ATTR_FREQUENCY);
   if (frequency != NULL)
-    m_channelData.iFrequencyHz = StringUtils::IntVal(frequency);
+    m_frequencyHz = StringUtils::IntVal(frequency);
 
-  const char *source = elem->Attribute(CHANNEL_XML_ATTR_SOURCE);
-  if (source != NULL)
-    m_channelData.source = cSource::FromString(source);
+  const char *symbolRate = elem->Attribute(CHANNEL_XML_ATTR_SRATE);
+  if (symbolRate != NULL)
+    m_symbolRate = StringUtils::IntVal(symbolRate);
 
-  const char *srate = elem->Attribute(CHANNEL_XML_ATTR_SRATE);
-  if (srate != NULL)
-    m_channelData.srate = StringUtils::IntVal(srate);
-
-  m_parameters.Reset(); // TODO: Move to cChannel::Reset()
   const TiXmlNode *transponderNode = elem->FirstChild(CHANNEL_XML_ELM_PARAMETERS);
   if (transponderNode)
   {
     if (!m_parameters.Deserialise(transponderNode))
       return false;
   }
-  else
-  {
-    // Backwards compatibility: look for parameters attribute
-    const char *parameters = elem->Attribute(CHANNEL_XML_ATTR_PARAMETERS);
-    if (parameters != NULL)
-    {
-      string strParameters(parameters);
-      if (!m_parameters.Deserialise(strParameters))
-        return false;
-    }
-  }
 
-  m_channelHash = GetChannelID().Hash();
   return true;
-}
-
-unsigned int cChannel::TransponderFrequencyMHz() const
-{
-  unsigned int transponderFreqMHz = FrequencyMHz();
-  if (IsSat())
-    transponderFreqMHz = TransponderWTF(transponderFreqMHz, m_parameters.Polarization());
-
-  return transponderFreqMHz;
-}
-
-unsigned int cChannel::TransponderWTF(unsigned int frequencyMHz, fe_polarization polarization)
-{
-  // some satellites have transponders at the same frequency, just with different polarization:
-  switch (polarization)
-  {
-  case POLARIZATION_HORIZONTAL:     frequencyMHz += 100000; break; // WTF 100 GHZ???
-  case POLARIZATION_VERTICAL:       frequencyMHz += 200000; break; // WTF 200 GHZ???
-  case POLARIZATION_CIRCULAR_LEFT:  frequencyMHz += 300000; break; // WTF 300 GHZ???
-  case POLARIZATION_CIRCULAR_RIGHT: frequencyMHz += 400000; break; // WTF 400 GHZ???
-  }
-  return frequencyMHz;
-}
-
-cChannelID cChannel::GetChannelID() const
-{
-  if (m_nid || m_tid)
-    return cChannelID(m_channelData.source, m_nid, m_tid, m_sid);
-  else
-    return cChannelID(m_channelData.source, m_nid, TransponderFrequencyMHz(), m_sid);
-}
-
-bool cChannel::HasTimer(const vector<cTimer2> &timers) const // TODO" cTimer2
-{
-  for (vector<cTimer2>::const_iterator timerIt = timers.begin(); timerIt != timers.end(); ++timerIt)
-  {
-    if (timerIt->Channel() == this)
-      return true;
-  }
-  return false;
-}
-
-eChannelMod cChannel::Modification(eChannelMod mask /* = CHANNELMOD_ALL */)
-{
-  eChannelMod result = (eChannelMod)(m_modification & mask);
-  m_modification = CHANNELMOD_NONE;
-  return result;
-}
-
-void cChannel::CopyTransponderData(const cChannel &channel)
-{
-  m_channelData.iFrequencyHz = channel.m_channelData.iFrequencyHz;
-  m_channelData.source       = channel.m_channelData.source;
-  m_channelData.srate        = channel.m_channelData.srate;
-  m_parameters               = channel.m_parameters;
-  SetChanged();
-}
-
-bool cChannel::SetTransponderData(int source, unsigned int iFrequencyHz, int srate, const cDvbTransponderParams& parameters, bool bQuiet /* = false */)
-{
-  // Workarounds for broadcaster stupidity:
-  // Some providers broadcast the transponder frequency of their channels with two different
-  // values (like 12551000 and 12552000), so we need to allow for a little tolerance here
-  if (::abs(FrequencyHz() - iFrequencyHz) <= 1000)
-    iFrequencyHz = FrequencyHz();
-
-  // Sometimes the transponder frequency is set to 0, which is just wrong
-  if (iFrequencyHz == 0)
-    return false;
-
-  // Sometimes the symbol rate is off by one
-  if (::abs(m_channelData.srate - srate) <= 1)
-    srate = m_channelData.srate;
-
-  if (m_channelData.source != source || FrequencyHz() != iFrequencyHz || m_channelData.srate != srate || m_parameters != parameters)
-  {
-    m_channelData.source = source;
-    SetFrequencyHz(iFrequencyHz);
-    m_channelData.srate = srate;
-    m_parameters = parameters;
-    m_schedule = cSchedules::EmptySchedule;
-
-    if (Number() && !bQuiet)
-    {
-      dsyslog("changing transponder data of channel %s (%d)", Name().c_str(), Number());
-      m_modification |= CHANNELMOD_TRANSP;
-    }
-
-    SetChanged();
-    return true;
-  }
-
-  return false;
-}
-
-void cChannel::SetLinkChannels(cLinkChannels *linkChannels)
-{
-  if (!m_linkChannels && !linkChannels)
-     return;
-
-  if (m_linkChannels && linkChannels)
-  {
-    cLinkChannel *lca = m_linkChannels->First();
-    cLinkChannel *lcb = linkChannels->First();
-    while (lca && lcb)
-    {
-      if (lca->Channel() != lcb->Channel())
-      {
-        lca = NULL;
-        break;
-      }
-      lca = m_linkChannels->Next(lca);
-      lcb = linkChannels->Next(lcb);
-    }
-    if (!lca && !lcb)
-    {
-      delete linkChannels;
-      return; // linkage has not changed
-    }
-  }
-
-  char buffer[((m_linkChannels ? m_linkChannels->Count() : 0) + (linkChannels ? linkChannels->Count() : 0)) * 6 + 256]; // 6: 5 digit channel number plus blank, 256: other texts (see below) plus reserve
-  char *q = buffer;
-  q += sprintf(q, "linking channel %d from", Number());
-  if (m_linkChannels)
-  {
-    for (cLinkChannel *lc = m_linkChannels->First(); lc; lc = m_linkChannels->Next(lc))
-    {
-      lc->Channel()->SetRefChannel(NULL);
-      q += sprintf(q, " %d", lc->Channel()->Number());
-    }
-    delete m_linkChannels;
-  }
-  else
-    q += sprintf(q, " none");
-
-  q += sprintf(q, " to");
-
-  m_linkChannels = linkChannels;
-  if (m_linkChannels)
-  {
-    for (cLinkChannel *lc = m_linkChannels->First(); lc; lc = m_linkChannels->Next(lc))
-    {
-      lc->Channel()->SetRefChannel(this);
-      q += sprintf(q, " %d", lc->Channel()->Number());
-      //dsyslog("link %4d -> %4d: %s", Number(), lc->Channel()->Number(), lc->Channel()->Name());
-    }
-  }
-  else
-    q += sprintf(q, " none");
-
-  if (Number())
-    dsyslog("%s", buffer);
-}
-
-uint32_t cChannel::Hash(void) const
-{
-  return m_channelHash ? m_channelHash : GetChannelID().Hash();
-}
-
-void cChannel::SetSchedule(SchedulePtr schedule)
-{
-  m_schedule = schedule;
-}
-
-bool cChannel::HasSchedule(void) const
-{
-  return m_schedule;
-}
-
-SchedulePtr cChannel::Schedule(void) const
-{
-  return m_schedule;
 }
 
 }

@@ -21,6 +21,7 @@
 #pragma once
 
 #include "Config.h"
+#include "channels/ChannelSource.h"
 #include "platform/threads/mutex.h"
 #include "utils/List.h"
 
@@ -71,7 +72,7 @@ public:
   enum { MaxDiseqcCodes = 6 };
 private:
   int devices;
-  int source;
+  cChannelSource source;
   int slof;
   char polarization;
   int lof;
@@ -104,7 +105,7 @@ public:
       ///< Frequency must be the frequency the tuner will be tuned to, and will be
       ///< set to the proper SCR frequency upon return (if SCR is used).
   int Devices(void) const { return devices; }
-  int Source(void) const { return source; }
+  cChannelSource Source(void) const { return source; }
   int Slof(void) const { return slof; }
   char Polarization(void) const { return polarization; }
   int Lof(void) const { return lof; }
@@ -114,7 +115,7 @@ public:
 
 class cDiseqcs : public cConfig<cDiseqc> {
 public:
-  const cDiseqc *Get(int Device, int Source, int Frequency, char Polarization, const cScr **Scr) const;
+  const cDiseqc *Get(int Device, cChannelSource Source, unsigned int Frequency, char Polarization, const cScr **Scr) const;
       ///< Selects a DiSEqC entry suitable for the given Device and tuning parameters.
       ///< If this DiSEqC entry requires SCR and the given *Scr is NULL
       ///< a free one will be selected from the Scrs and a pointer to that will

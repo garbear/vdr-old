@@ -22,12 +22,12 @@
 
 #include "dvb/filters/PSIP_VCT.h"
 #include "channels/ChannelManager.h"
+#include "channels/ChannelSource.h"
 #include "channels/ChannelTypes.h"
 #include "devices/linux/DVBDevice.h"
 #include "devices/linux/test/DVBDeviceNames.h"
 #include "devices/subsystems/DeviceChannelSubsystem.h"
 #include "epg/EPG.h"
-#include "sources/Source.h"
 #include "sources/linux/DVBTransponderParams.h"
 #include "scan/ScanTask.h"
 #include "scan/ScanConfig.h"
@@ -86,7 +86,7 @@ TEST(PSIP_VCT, GetChannels)
       const unsigned int frequency = 177000000; // 177 MHz
 
       channel = ChannelPtr(new cChannel);
-      channel->SetTransponderData(cSource::stAtsc, frequency, cScanConfig::TranslateSymbolRate(eSR_6900000), params, true);
+      channel->SetTransponderData(SOURCE_TYPE_ATSC, frequency, cScanConfig::TranslateSymbolRate(eSR_6900000), params, true);
       channel->SetId(0, 0, 0, 0);
     }
     */
