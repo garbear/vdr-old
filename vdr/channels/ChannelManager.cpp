@@ -266,7 +266,7 @@ ChannelPtr cChannelManager::GetByServiceID(const ChannelVector& channels, int se
   return cChannel::EmptyChannel;
 }
 
-ChannelPtr cChannelManager::GetByChannelID(const tChannelID &channelID, bool bTryWithoutRid /* = false */, bool bTryWithoutPolarization /* = false */)
+ChannelPtr cChannelManager::GetByChannelID(const tChannelID& channelID)
 {
   CLockObject lock(m_mutex);
 
@@ -280,31 +280,6 @@ ChannelPtr cChannelManager::GetByChannelID(const tChannelID &channelID, bool bTr
       ChannelPtr &channel = *itChannel;
       if (channel->GetSid() == serviceID && channel->GetChannelID() == channelID)
         return channel;
-    }
-
-    tChannelID otherChannelID = channelID;
-    if (bTryWithoutRid)
-    {
-      for (ChannelVector::const_iterator itChannel = channelVec.begin(); itChannel != channelVec.end(); ++itChannel)
-      {
-        const ChannelPtr &channel = *itChannel;
-        tChannelID myChannelID = channel->GetChannelID();
-        if (channel->GetSid() == serviceID && myChannelID == otherChannelID)
-          return channel;
-      }
-    }
-
-    if (bTryWithoutPolarization)
-    {
-      otherChannelID.ClrPolarization();
-      for (ChannelVector::iterator itChannel = channelVec.begin(); itChannel != channelVec.end(); ++itChannel)
-      {
-        ChannelPtr &channel = *itChannel;
-        tChannelID myChannelID = channel->GetChannelID();
-        myChannelID.ClrPolarization();
-        if (channel->GetSid() == serviceID && myChannelID == otherChannelID)
-          return channel;
-      }
     }
   }
   return cChannel::EmptyChannel;

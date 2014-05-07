@@ -86,12 +86,9 @@ public:
   /*!
    * \brief Find a channel by its channel ID
    * \param channelID The channel ID tag
-   * \param bTryWithoutRid If the search fails, repeat without comparing the RID
-   * \param bTryWithoutPolarization If the search fails, repeat after removing
-   *        polarization from the TID
    * \return The channel, or empty pointer if the channel isn't found
    */
-  ChannelPtr GetByChannelID(const tChannelID &channelID, bool bTryWithoutRid = false, bool bTryWithoutPolarization = false);
+  ChannelPtr GetByChannelID(const tChannelID& channelID);
 
   /*!
    * \brief Find a channel by its channel ID

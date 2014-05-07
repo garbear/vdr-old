@@ -85,7 +85,7 @@ cTimer::cTimer(const cEvent *Event)
   m_bInVpsMargin  = false;
   m_iTimerFlags   = tfActive;
   m_index         = 0;
-  m_channel       = cChannelManager::Get().GetByChannelID(Event->ChannelID(), true);
+  m_channel       = cChannelManager::Get().GetByChannelID(Event->ChannelID());
   m_recorder      = NULL;
   m_time          = CTimerTime(Event);
   m_iPriority     = cSettings::Get().m_iDefaultPriority;
