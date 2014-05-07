@@ -303,7 +303,7 @@ ChannelPtr cChannelManager::GetByChannelID(int nid, int tid, int sid)
   return cChannel::EmptyChannel;
 }
 
-ChannelPtr cChannelManager::GetByTransponderID(cChannelID channelID)
+ChannelPtr cChannelManager::GetByTransponderID(const cChannelID& channelID)
 {
   int source = channelID.Source();
   int nid = channelID.Nid();
@@ -338,7 +338,7 @@ bool cChannelManager::HasUniqueChannelID(const ChannelPtr &newChannel, const Cha
 {
   assert(newChannel.get());
 
-  cChannelID newChannelID = newChannel->GetChannelID();
+  const cChannelID& newChannelID = newChannel->GetChannelID();
   CLockObject lock(m_mutex);
   for (ChannelVector::const_iterator itChannel = m_channels.begin(); itChannel != m_channels.end(); ++itChannel)
   {

@@ -536,7 +536,7 @@ struct tEpgBugFixStats
 
 tEpgBugFixStats EpgBugFixStats[MAXEPGBUGFIXSTATS];
 
-static void EpgBugFixStat(int Number, cChannelID ChannelID)
+static void EpgBugFixStat(int Number, const cChannelID& ChannelID)
 {
   if (0 <= Number && Number < MAXEPGBUGFIXSTATS)
   {

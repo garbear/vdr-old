@@ -45,8 +45,8 @@ private:
   CDateTime presentSeen;
   CDateTime saved;
 public:
-  cSchedule(cChannelID ChannelID);
-  cChannelID ChannelID(void) const { return channelID; }
+  cSchedule(const cChannelID& ChannelID);
+  const cChannelID& ChannelID(void) const { return channelID; }
   CDateTime Modified(void) const { return modified; }
   CDateTime PresentSeen(void) const { return presentSeen; }
   bool PresentSeenWithin(int Seconds) const { return (CDateTime::GetCurrentDateTime() - presentSeen).GetSecondsTotal() < Seconds; }

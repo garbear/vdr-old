@@ -106,7 +106,7 @@ public:
    * \param channelID The channel ID tag (TODO: Is this the transponder ID?)
    * \return The channel, or empty pointer if the channel isn't found
    */
-  ChannelPtr GetByTransponderID(cChannelID channelID);
+  ChannelPtr GetByTransponderID(const cChannelID& channelID);
 
   /*!
    * \brief The documentation claims: "Recalculate 'number' based on channel type" (TODO)
