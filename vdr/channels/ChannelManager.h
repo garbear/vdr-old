@@ -88,7 +88,7 @@ public:
    * \param channelID The channel ID tag
    * \return The channel, or empty pointer if the channel isn't found
    */
-  ChannelPtr GetByChannelID(const tChannelID& channelID);
+  ChannelPtr GetByChannelID(const cChannelID& channelID);
 
   /*!
    * \brief Find a channel by its channel ID
@@ -106,7 +106,7 @@ public:
    * \param channelID The channel ID tag (TODO: Is this the transponder ID?)
    * \return The channel, or empty pointer if the channel isn't found
    */
-  ChannelPtr GetByTransponderID(tChannelID channelID);
+  ChannelPtr GetByTransponderID(cChannelID channelID);
 
   /*!
    * \brief The documentation claims: "Recalculate 'number' based on channel type" (TODO)
@@ -114,7 +114,7 @@ public:
   void ReNumber();
 
   /*!
-   * \brief Returns false if another channel has the same tChannelID tag
+   * \brief Returns false if another channel has the same cChannelID tag
    * \param newChannel The channel whose channel ID will be used in the search
    * \param oldChannel Skip comparing channel IDs with this channel
    * \return true if no other channels (excluding oldChannel) have the same channel ID

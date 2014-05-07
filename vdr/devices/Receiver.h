@@ -37,7 +37,7 @@ class cReceiver {
   friend class cDevice;
 private:
   PLATFORM::CMutex   m_mutex;
-  tChannelID         m_channelID;
+  cChannelID         m_channelID;
   cDevice*           m_device;
   std::set<uint16_t> m_pids;
   int                m_priority;
@@ -92,7 +92,7 @@ public:
                ///< through ChannelID(). The ChannelID is necessary to allow the device
                ///< that will be used for this receiver to detect and store whether the
                ///< channel can be decrypted in case this is an encrypted channel.
-  tChannelID ChannelID(void) const;
+  cChannelID ChannelID(void) const;
   bool IsAttached(void) const;
                ///< Returns true if this receiver is (still) attached to a device.
                ///< A receiver may be automatically detached from its device in

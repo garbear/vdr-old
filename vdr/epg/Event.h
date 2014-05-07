@@ -81,7 +81,7 @@ public:
   cEvent(tEventID EventID);
   ~cEvent();
   virtual int Compare(const cListObject &ListObject) const;
-  tChannelID ChannelID(void) const;
+  cChannelID ChannelID(void) const;
   const cSchedule *Schedule(void) const { return schedule; }
   tEventID EventID(void) const { return eventID; }
   uint8_t TableID(void) const { return tableID; }

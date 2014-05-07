@@ -36,7 +36,7 @@ class cChannel;
 
 class cSchedule : public cListObject  {
 private:
-  tChannelID channelID;
+  cChannelID channelID;
   EventVector m_events;
   cHash<cEvent> eventsHashID; // TODO: hash table of shared pointers
   cHash<cEvent> eventsHashStartTime;
@@ -45,8 +45,8 @@ private:
   CDateTime presentSeen;
   CDateTime saved;
 public:
-  cSchedule(tChannelID ChannelID);
-  tChannelID ChannelID(void) const { return channelID; }
+  cSchedule(cChannelID ChannelID);
+  cChannelID ChannelID(void) const { return channelID; }
   CDateTime Modified(void) const { return modified; }
   CDateTime PresentSeen(void) const { return presentSeen; }
   bool PresentSeenWithin(int Seconds) const { return (CDateTime::GetCurrentDateTime() - presentSeen).GetSecondsTotal() < Seconds; }

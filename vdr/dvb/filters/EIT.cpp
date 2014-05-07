@@ -256,7 +256,7 @@ EventVector cEit::GetEvents()
               SI::LinkageDescriptor* ld = (SI::LinkageDescriptor*)d;
 
               assert(GetCurrentlyTunedTransponder().get() != NULL); // TODO
-              tChannelID linkID(GetCurrentlyTunedTransponder()->Source(), ld->getOriginalNetworkId(), ld->getTransportStreamId(), ld->getServiceId());
+              cChannelID linkID(GetCurrentlyTunedTransponder()->Source(), ld->getOriginalNetworkId(), ld->getTransportStreamId(), ld->getServiceId());
 
               // Premiere World
               if (ld->getLinkageType() == 0xB0)
@@ -460,7 +460,7 @@ void cEit::GetText(SI::Descriptor* d, uint8_t tid, uint16_t nid, uint16_t tsid,
     SI::TimeShiftedEventDescriptor* tsed = (SI::TimeShiftedEventDescriptor*)d;
 
     assert(GetCurrentlyTunedTransponder().get() != NULL); // TODO
-    tChannelID channelId(GetCurrentlyTunedTransponder()->Source(), // Source
+    cChannelID channelId(GetCurrentlyTunedTransponder()->Source(), // Source
                          nid,                                      // NID
                          tsid,                                     // TID
                          tsed->getReferenceServiceId());           // SID

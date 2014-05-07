@@ -2018,14 +2018,14 @@ bool cCamSlot::IsDecrypting(void)
 
 class cChannelCamRelation : public cListObject {
 private:
-  tChannelID channelID;
+  cChannelID channelID;
   uint32_t camSlotsChecked;
   uint32_t camSlotsDecrypt;
   time_t lastChecked;
 public:
-  cChannelCamRelation(tChannelID ChannelID);
+  cChannelCamRelation(cChannelID ChannelID);
   bool TimedOut(void);
-  tChannelID ChannelID(void) { return channelID; }
+  cChannelID ChannelID(void) { return channelID; }
   bool CamChecked(int CamSlotNumber);
   bool CamDecrypt(int CamSlotNumber);
   void SetChecked(int CamSlotNumber);
@@ -2034,7 +2034,7 @@ public:
   void ClrDecrypt(int CamSlotNumber);
   };
 
-cChannelCamRelation::cChannelCamRelation(tChannelID ChannelID)
+cChannelCamRelation::cChannelCamRelation(cChannelID ChannelID)
 {
   channelID = ChannelID;
   camSlotsChecked = 0;
@@ -2110,7 +2110,7 @@ void cChannelCamRelations::Cleanup(void)
      }
 }
 
-cChannelCamRelation *cChannelCamRelations::GetEntry(tChannelID ChannelID)
+cChannelCamRelation *cChannelCamRelations::GetEntry(cChannelID ChannelID)
 {
   CLockObject lock(mutex);
   Cleanup();
@@ -2121,7 +2121,7 @@ cChannelCamRelation *cChannelCamRelations::GetEntry(tChannelID ChannelID)
   return NULL;
 }
 
-cChannelCamRelation *cChannelCamRelations::AddEntry(tChannelID ChannelID)
+cChannelCamRelation *cChannelCamRelations::AddEntry(cChannelID ChannelID)
 {
   CLockObject lock(mutex);
   cChannelCamRelation *ccr = GetEntry(ChannelID);
@@ -2139,21 +2139,21 @@ void cChannelCamRelations::Reset(int CamSlotNumber)
       }
 }
 
-bool cChannelCamRelations::CamChecked(tChannelID ChannelID, int CamSlotNumber)
+bool cChannelCamRelations::CamChecked(cChannelID ChannelID, int CamSlotNumber)
 {
   CLockObject lock(mutex);
   cChannelCamRelation *ccr = GetEntry(ChannelID);
   return ccr ? ccr->CamChecked(CamSlotNumber) : false;
 }
 
-bool cChannelCamRelations::CamDecrypt(tChannelID ChannelID, int CamSlotNumber)
+bool cChannelCamRelations::CamDecrypt(cChannelID ChannelID, int CamSlotNumber)
 {
   CLockObject lock(mutex);
   cChannelCamRelation *ccr = GetEntry(ChannelID);
   return ccr ? ccr->CamDecrypt(CamSlotNumber) : false;
 }
 
-void cChannelCamRelations::SetChecked(tChannelID ChannelID, int CamSlotNumber)
+void cChannelCamRelations::SetChecked(cChannelID ChannelID, int CamSlotNumber)
 {
   CLockObject lock(mutex);
   cChannelCamRelation *ccr = AddEntry(ChannelID);
@@ -2161,7 +2161,7 @@ void cChannelCamRelations::SetChecked(tChannelID ChannelID, int CamSlotNumber)
      ccr->SetChecked(CamSlotNumber);
 }
 
-void cChannelCamRelations::SetDecrypt(tChannelID ChannelID, int CamSlotNumber)
+void cChannelCamRelations::SetDecrypt(cChannelID ChannelID, int CamSlotNumber)
 {
   CLockObject lock(mutex);
   cChannelCamRelation *ccr = AddEntry(ChannelID);
@@ -2169,7 +2169,7 @@ void cChannelCamRelations::SetDecrypt(tChannelID ChannelID, int CamSlotNumber)
      ccr->SetDecrypt(CamSlotNumber);
 }
 
-void cChannelCamRelations::ClrChecked(tChannelID ChannelID, int CamSlotNumber)
+void cChannelCamRelations::ClrChecked(cChannelID ChannelID, int CamSlotNumber)
 {
   CLockObject lock(mutex);
   cChannelCamRelation *ccr = GetEntry(ChannelID);
@@ -2177,7 +2177,7 @@ void cChannelCamRelations::ClrChecked(tChannelID ChannelID, int CamSlotNumber)
      ccr->ClrChecked(CamSlotNumber);
 }
 
-void cChannelCamRelations::ClrDecrypt(tChannelID ChannelID, int CamSlotNumber)
+void cChannelCamRelations::ClrDecrypt(cChannelID ChannelID, int CamSlotNumber)
 {
   CLockObject lock(mutex);
   cChannelCamRelation *ccr = GetEntry(ChannelID);

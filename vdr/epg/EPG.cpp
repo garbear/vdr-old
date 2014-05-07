@@ -63,7 +63,7 @@ cSchedules* cSchedulesLock::Get(void) const
   return m_bLocked ? &cSchedules::Get() : NULL;
 }
 
-EventPtr cSchedulesLock::GetEvent(const tChannelID& channelId, tEventID eventId)
+EventPtr cSchedulesLock::GetEvent(const cChannelID& channelId, tEventID eventId)
 {
   EventPtr event;
 
@@ -92,7 +92,7 @@ EventPtr cSchedulesLock::GetEvent(const tChannelID& channelId, tEventID eventId)
   return event;
 }
 
-bool cSchedulesLock::AddEvent(const tChannelID& channelId, const EventPtr& event)
+bool cSchedulesLock::AddEvent(const cChannelID& channelId, const EventPtr& event)
 {
 
 
@@ -251,7 +251,7 @@ bool cSchedules::Read(void)
   while (tableNode != NULL)
   {
     const TiXmlElement *tableElem = tableNode->ToElement();
-    SchedulePtr schedule = AddSchedule(tChannelID::Deserialize(tableElem->GetText()));
+    SchedulePtr schedule = AddSchedule(cChannelID::Deserialize(tableElem->GetText()));
     if (schedule)
     {
       if (schedule->Read())
@@ -283,7 +283,7 @@ void cSchedules::DelSchedule(SchedulePtr schedule)
   }
 }
 
-SchedulePtr cSchedules::AddSchedule(const tChannelID& ChannelID)
+SchedulePtr cSchedules::AddSchedule(const cChannelID& ChannelID)
 {
   SchedulePtr schedule = GetSchedule(ChannelID);
   if (!schedule)
@@ -298,11 +298,11 @@ SchedulePtr cSchedules::AddSchedule(const tChannelID& ChannelID)
   return schedule;
 }
 
-SchedulePtr cSchedules::GetSchedule(const tChannelID& ChannelID)
+SchedulePtr cSchedules::GetSchedule(const cChannelID& ChannelID)
 {
   for (ScheduleVector::const_iterator it = m_schedules.begin(); it != m_schedules.end(); ++it)
   {
-    const tChannelID& checkId = (*it)->ChannelID();
+    const cChannelID& checkId = (*it)->ChannelID();
     if (checkId == ChannelID)
       return *it;
   }

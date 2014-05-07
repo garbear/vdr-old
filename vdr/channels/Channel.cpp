@@ -713,12 +713,12 @@ unsigned int cChannel::TransponderWTF(unsigned int frequencyMHz, fe_polarization
   return frequencyMHz;
 }
 
-tChannelID cChannel::GetChannelID() const
+cChannelID cChannel::GetChannelID() const
 {
   if (m_nid || m_tid)
-    return tChannelID(m_channelData.source, m_nid, m_tid, m_sid);
+    return cChannelID(m_channelData.source, m_nid, m_tid, m_sid);
   else
-    return tChannelID(m_channelData.source, m_nid, TransponderFrequencyMHz(), m_sid);
+    return cChannelID(m_channelData.source, m_nid, TransponderFrequencyMHz(), m_sid);
 }
 
 bool cChannel::HasTimer(const vector<cTimer2> &timers) const // TODO" cTimer2

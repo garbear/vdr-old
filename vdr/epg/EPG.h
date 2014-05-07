@@ -45,9 +45,9 @@ public:
 
   // This function has been butchered out of VDR's old EIT filter
   // I take shame in not fixing all the horrid things it does
-  static EventPtr GetEvent(const tChannelID& channelId, tEventID eventId);
+  static EventPtr GetEvent(const cChannelID& channelId, tEventID eventId);
 
-  static bool AddEvent(const tChannelID& channelId, const EventPtr& event);
+  static bool AddEvent(const cChannelID& channelId, const EventPtr& event);
 
 private:
   bool m_bLocked;
@@ -69,9 +69,9 @@ public:
 
   bool Save(void);
   bool Read(void);
-  SchedulePtr AddSchedule(const tChannelID& ChannelID);
+  SchedulePtr AddSchedule(const cChannelID& ChannelID);
   void DelSchedule(SchedulePtr schedule);
-  SchedulePtr GetSchedule(const tChannelID& ChannelID);
+  SchedulePtr GetSchedule(const cChannelID& ChannelID);
   SchedulePtr GetSchedule(ChannelPtr Channel, bool AddIfMissing = false);
   ScheduleVector GetUpdatedSchedules(const std::map<int, CDateTime>& lastUpdated, CChannelFilter& filter);
 

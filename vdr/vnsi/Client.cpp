@@ -276,7 +276,7 @@ void cVNSIClient::EpgChange()
   ScheduleVector updatedSchedules = schedules->GetUpdatedSchedules(m_epgUpdate, VNSIChannelFilter);
   for (ScheduleVector::const_iterator it = updatedSchedules.begin(); it != updatedSchedules.end(); ++it)
   {
-    tChannelID channelId = (*it)->ChannelID();
+    cChannelID channelId = (*it)->ChannelID();
     const ChannelPtr channel = cChannelManager::Get().GetByChannelID(channelId);
     isyslog("Trigger EPG update for channel %s, id: %d", channel->Name().c_str(), channelId.Hash());
 

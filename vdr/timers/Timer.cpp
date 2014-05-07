@@ -191,7 +191,7 @@ bool cTimer::DeserialiseTimer(const TiXmlNode *node)
 
   if (const char* attr = elem->Attribute(TIMER_XML_ATTR_CHANNEL))
   {
-    tChannelID chanId = tChannelID::Deserialize(attr);
+    cChannelID chanId = cChannelID::Deserialize(attr);
     m_channel = cChannelManager::Get().GetByChannelID(chanId);
   }
 

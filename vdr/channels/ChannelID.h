@@ -25,14 +25,14 @@
 
 namespace VDR
 {
-struct tChannelID
+struct cChannelID
 {
 public:
-  tChannelID();
-  tChannelID(int source, int nid, int tid, int sid);
+  cChannelID();
+  cChannelID(int source, int nid, int tid, int sid);
 
-  bool operator==(const tChannelID &arg) const;
-  bool operator!=(const tChannelID &arg) const { return !(*this == arg); }
+  bool operator==(const cChannelID &arg) const;
+  bool operator!=(const cChannelID &arg) const { return !(*this == arg); }
 
   bool Valid() const { return (m_nid || m_tid) && m_sid; } // rid is optional and source may be 0//XXX source may not be 0???
 
@@ -44,9 +44,9 @@ public:
   int Sid()    const { return m_sid; }
 
   std::string Serialize() const;
-  static tChannelID Deserialize(const std::string &str);
+  static cChannelID Deserialize(const std::string &str);
 
-  static const tChannelID InvalidID;
+  static const cChannelID InvalidID;
 
   uint32_t Hash(void) const;
 

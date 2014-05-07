@@ -38,7 +38,7 @@ namespace VDR
 
 #define RUNNINGSTATUSTIMEOUT 30 // seconds before the running status is considered unknown
 
-cSchedule::cSchedule(tChannelID ChannelID)
+cSchedule::cSchedule(cChannelID ChannelID)
 {
   channelID   = ChannelID;
   hasRunning  = false;

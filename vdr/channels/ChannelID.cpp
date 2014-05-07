@@ -31,9 +31,9 @@ using namespace std;
 
 namespace VDR
 {
-const tChannelID tChannelID::InvalidID;
+const cChannelID cChannelID::InvalidID;
 
-tChannelID::tChannelID()
+cChannelID::cChannelID()
  : m_source(0),
    m_nid(0),
    m_tid(0),
@@ -41,7 +41,7 @@ tChannelID::tChannelID()
 {
 }
 
-tChannelID::tChannelID(int source, int nid, int tid, int sid)
+cChannelID::cChannelID(int source, int nid, int tid, int sid)
  : m_source(source),
    m_nid(nid),
    m_tid(tid),
@@ -49,7 +49,7 @@ tChannelID::tChannelID(int source, int nid, int tid, int sid)
 {
 }
 
-bool tChannelID::operator==(const tChannelID &arg) const
+bool cChannelID::operator==(const cChannelID &arg) const
 {
   return m_source == arg.m_source &&
          m_nid == arg.m_nid &&
@@ -57,14 +57,14 @@ bool tChannelID::operator==(const tChannelID &arg) const
          m_sid == arg.m_sid;
 }
 
-string tChannelID::Serialize() const
+string cChannelID::Serialize() const
 {
   return StringUtils::Format("%s-%d-%d-%d", cSource::ToString(m_source).c_str(), m_nid, m_tid, m_sid);
 }
 
-tChannelID tChannelID::Deserialize(const std::string &str)
+cChannelID cChannelID::Deserialize(const std::string &str)
 {
-  tChannelID ret = tChannelID::InvalidID;
+  cChannelID ret = cChannelID::InvalidID;
   string sourcebuf;
   string strcopy(str);
   int nid;
@@ -140,19 +140,19 @@ tChannelID tChannelID::Deserialize(const std::string &str)
   {
     int source = cSource::FromString(sourcebuf);
     if (source >= 0)
-      ret = tChannelID(source, nid, tid, sid);
+      ret = cChannelID(source, nid, tid, sid);
   }
 
   return ret;
 }
 
-void tChannelID::ClrPolarization()
+void cChannelID::ClrPolarization()
 {
   while (m_tid > 100000)
     m_tid -= 100000;
 }
 
-uint32_t tChannelID::Hash(void) const
+uint32_t cChannelID::Hash(void) const
 {
   string channelid = Serialize();
   return CCRC32::CRC32(channelid);

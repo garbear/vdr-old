@@ -40,7 +40,7 @@ public:
   cRecordingInfo(ChannelPtr channel, const cEvent *Event = NULL);
   cRecordingInfo(const std::string& strFileName);
   ~cRecordingInfo();
-  tChannelID ChannelID(void) const { return m_channelID; }
+  cChannelID ChannelID(void) const { return m_channelID; }
   std::string ChannelName(void) const { return m_channel ? m_channel->Name() : ""; }
   const cEvent *GetEvent(void) const { return m_event; }
   void SetEvent(const cEvent* event);
@@ -63,7 +63,7 @@ private:
   void SetData(const char *Title, const char *ShortText, const char *Description);
 
   ChannelPtr    m_channel;
-  tChannelID    m_channelID;
+  cChannelID    m_channelID;
   const cEvent* m_event;
   cEvent *      m_ownEvent;
   double        m_dFramesPerSecond;

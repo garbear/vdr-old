@@ -242,7 +242,7 @@ public:
 
   //void SetLinkChannels(cLinkChannels& channels) { m_linkChannels = channels; }
 
-  tChannelID GetChannelID() const;
+  cChannelID GetChannelID() const;
 
   bool HasTimer(void) const { return false; } //TODO
   bool HasTimer(const std::vector<cTimer2> &timers) const; // TODO: cTimer2

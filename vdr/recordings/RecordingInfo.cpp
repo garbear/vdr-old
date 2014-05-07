@@ -55,7 +55,7 @@ std::string dtoa(double d, const char *Format = "%f")
 cRecordingInfo::cRecordingInfo(ChannelPtr channel, const cEvent *Event)
 {
   m_channel          = channel;
-  m_channelID        = m_channel ? m_channel->GetChannelID() : tChannelID::InvalidID;
+  m_channelID        = m_channel ? m_channel->GetChannelID() : cChannelID::InvalidID;
   m_ownEvent         = Event ? NULL : new cEvent(0);
   m_event            = m_ownEvent ? m_ownEvent : Event;
   m_dFramesPerSecond = DEFAULTFRAMESPERSECOND;
@@ -119,7 +119,7 @@ cRecordingInfo::cRecordingInfo(ChannelPtr channel, const cEvent *Event)
 
 cRecordingInfo::cRecordingInfo(const std::string& strFileName)
 {
-  m_channelID        = tChannelID::InvalidID;
+  m_channelID        = cChannelID::InvalidID;
   m_ownEvent         = new cEvent(0);
   m_event            = m_ownEvent;
   m_dFramesPerSecond = DEFAULTFRAMESPERSECOND;

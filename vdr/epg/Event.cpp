@@ -60,9 +60,9 @@ int cEvent::Compare(const cListObject &ListObject) const
   return (m_startTime - e->m_startTime).GetSecondsTotal();
 }
 
-tChannelID cEvent::ChannelID(void) const
+cChannelID cEvent::ChannelID(void) const
 {
-  return schedule ? schedule->ChannelID() : tChannelID();
+  return schedule ? schedule->ChannelID() : cChannelID();
 }
 
 void cEvent::SetEventID(tEventID EventID)
@@ -527,7 +527,7 @@ struct tEpgBugFixStats
 {
   int hits;
   int n;
-  tChannelID channelIDs[MAXEPGBUGFIXCHANS];
+  cChannelID channelIDs[MAXEPGBUGFIXCHANS];
   tEpgBugFixStats(void)
   {
     hits = n = 0;
@@ -536,7 +536,7 @@ struct tEpgBugFixStats
 
 tEpgBugFixStats EpgBugFixStats[MAXEPGBUGFIXSTATS];
 
-static void EpgBugFixStat(int Number, tChannelID ChannelID)
+static void EpgBugFixStat(int Number, cChannelID ChannelID)
 {
   if (0 <= Number && Number < MAXEPGBUGFIXSTATS)
   {

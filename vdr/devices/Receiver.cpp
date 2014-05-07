@@ -93,7 +93,7 @@ void cReceiver::UpdatePids(const set<uint16_t>& pids)
   m_pids = pids;
 }
 
-tChannelID cReceiver::ChannelID(void) const
+cChannelID cReceiver::ChannelID(void) const
 {
   CLockObject lock(m_mutex);
 

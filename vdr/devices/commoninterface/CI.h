@@ -289,19 +289,19 @@ class cChannelCamRelation;
 class cChannelCamRelations : public cList<cChannelCamRelation> {
 private:
   PLATFORM::CMutex mutex;
-  cChannelCamRelation *GetEntry(tChannelID ChannelID);
-  cChannelCamRelation *AddEntry(tChannelID ChannelID);
+  cChannelCamRelation *GetEntry(cChannelID ChannelID);
+  cChannelCamRelation *AddEntry(cChannelID ChannelID);
   time_t lastCleanup;
   void Cleanup(void);
 public:
   cChannelCamRelations(void);
   void Reset(int CamSlotNumber);
-  bool CamChecked(tChannelID ChannelID, int CamSlotNumber);
-  bool CamDecrypt(tChannelID ChannelID, int CamSlotNumber);
-  void SetChecked(tChannelID ChannelID, int CamSlotNumber);
-  void SetDecrypt(tChannelID ChannelID, int CamSlotNumber);
-  void ClrChecked(tChannelID ChannelID, int CamSlotNumber);
-  void ClrDecrypt(tChannelID ChannelID, int CamSlotNumber);
+  bool CamChecked(cChannelID ChannelID, int CamSlotNumber);
+  bool CamDecrypt(cChannelID ChannelID, int CamSlotNumber);
+  void SetChecked(cChannelID ChannelID, int CamSlotNumber);
+  void SetDecrypt(cChannelID ChannelID, int CamSlotNumber);
+  void ClrChecked(cChannelID ChannelID, int CamSlotNumber);
+  void ClrDecrypt(cChannelID ChannelID, int CamSlotNumber);
   };
 
 extern cChannelCamRelations ChannelCamRelations;
