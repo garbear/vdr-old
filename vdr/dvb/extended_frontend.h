@@ -33,6 +33,7 @@
 #ifndef _EXTENDED_DVBFRONTEND_H_
 #define _EXTENDED_DVBFRONTEND_H_
 
+#include <sys/time.h>
 #include <linux/dvb/version.h>
 #include <linux/dvb/frontend.h>
 
