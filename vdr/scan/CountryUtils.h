@@ -21,6 +21,7 @@
  */
 #pragma once
 
+#include <sys/time.h>
 #include <linux/dvb/frontend.h>
 #include <string>
 
