@@ -24,6 +24,8 @@
 #include "utils/CommonMacros.h" // for ARRAY_SIZE()
 #include "utils/StringUtils.h"
 
+#include <assert.h>
+
 using namespace VDR::COUNTRY;
 using namespace std;
 
@@ -672,7 +674,7 @@ bool CountryUtils::GetIdFromShortName(string shortName, eCountry& countryId)
 
   StringUtils::ToUpper(shortName);
 
-  for (unsigned int i = 0; i < ARRAY_SIZE(countryList); i++)
+  for (unsigned int i = 0; i < CountryCount(); i++)
   {
     if (shortName[0] == countryList[i].short_name[0] &&
         shortName[1] == countryList[i].short_name[1])
@@ -686,7 +688,7 @@ bool CountryUtils::GetIdFromShortName(string shortName, eCountry& countryId)
 
 bool CountryUtils::GetShortNameFromId(eCountry countryId, string& shortName)
 {
-  for (unsigned int i = 0; i < ARRAY_SIZE(countryList); i++)
+  for (unsigned int i = 0; i < CountryCount(); i++)
   {
     if (countryId == countryList[i].id)
     {
@@ -699,7 +701,7 @@ bool CountryUtils::GetShortNameFromId(eCountry countryId, string& shortName)
 
 bool CountryUtils::GetFullNameFromId(eCountry countryId, string& fullName)
 {
-  for (unsigned int i = 0; i < ARRAY_SIZE(countryList); i++)
+  for (unsigned int i = 0; i < CountryCount(); i++)
   {
     if (countryId == countryList[i].id)
     {
@@ -708,6 +710,17 @@ bool CountryUtils::GetFullNameFromId(eCountry countryId, string& fullName)
     }
   }
   return false;
+}
+
+unsigned int CountryUtils::CountryCount()
+{
+  return ARRAY_SIZE(countryList);
+}
+
+const cCountry& CountryUtils::GetCountry(unsigned int index)
+{
+  assert(index < CountryCount());
+  return countryList[index];
 }
 
 }

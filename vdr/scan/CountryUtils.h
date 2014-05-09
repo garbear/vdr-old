@@ -128,6 +128,9 @@ public:
   static bool GetIdFromShortName(std::string shortName, COUNTRY::eCountry& countryId);
   static bool GetShortNameFromId(COUNTRY::eCountry countryId, std::string& shortName);
   static bool GetFullNameFromId(COUNTRY::eCountry countryId, std::string& fullName);
+
+  static unsigned int CountryCount();
+  static const cCountry& GetCountry(unsigned int index);
 };
 
 }

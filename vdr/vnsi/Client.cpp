@@ -39,6 +39,8 @@
 #include "recordings/RecordingInfo.h"
 #include "recordings/Recordings.h"
 #include "recordings/marks/Marks.h"
+#include "scan/CountryUtils.h"
+#include "scan/SatelliteUtils.h"
 #include "settings/Settings.h"
 #include "timers/Timers.h"
 #include "utils/CommonMacros.h"
@@ -68,7 +70,6 @@ cVNSIClient::cVNSIClient(int fd, unsigned int id, const char *ClientAdr)
   m_RecPlayer               = NULL;
   m_req                     = NULL;
   m_resp                    = NULL;
-  m_processSCAN_Response    = NULL;
   m_processSCAN_Socket      = NULL;
   m_loggedIn                = false;
   m_protocolVersion         = 0;
@@ -1841,25 +1842,14 @@ bool cVNSIClient::processSCAN_ScanSupported() /* OPCODE 140 */
 
 bool cVNSIClient::processSCAN_GetCountries() /* OPCODE 141 */
 {
-//  if (!m_processSCAN_Response)
-//  {
-//    m_processSCAN_Response = m_resp;
-//    cPlugin *p = cPluginManager::GetPlugin("wirbelscan");
-//    if (p)
-//    {
-//      m_resp->add_U32(VNSI_RET_OK);
-//      p->Service("WirbelScanService-GetCountries-v1.0", (void*) processSCAN_AddCountry);
-//    }
-//    else
-//    {
-      m_resp->add_U32(VNSI_RET_NOTSUPPORTED);
-//    }
-//    m_processSCAN_Response = NULL;
-//  }
-//  else
-//  {
-//    m_resp->add_U32(VNSI_RET_DATALOCKED);
-//  }
+  m_resp->add_U32(VNSI_RET_OK);
+
+  for (unsigned int i = 0; i < CountryUtils::CountryCount(); i++)
+  {
+    m_resp->add_U32(CountryUtils::GetCountry(i).id);
+    m_resp->add_String(CountryUtils::GetCountry(i).short_name);
+    m_resp->add_String(CountryUtils::GetCountry(i).full_name);
+  }
 
   m_resp->finalise();
   m_socket.write(m_resp->getPtr(), m_resp->getLen());
@@ -1868,25 +1858,14 @@ bool cVNSIClient::processSCAN_GetCountries() /* OPCODE 141 */
 
 bool cVNSIClient::processSCAN_GetSatellites() /* OPCODE 142 */
 {
-  if (!m_processSCAN_Response)
+  m_resp->add_U32(VNSI_RET_OK);
+
+  for (unsigned int i = 0; i < SatelliteUtils::SatelliteCount(); i++)
   {
-//    m_processSCAN_Response = m_resp;
-//    cPlugin *p = cPluginManager::GetPlugin("wirbelscan");
-//    if (p)
-//    {
-//      m_resp->add_U32(VNSI_RET_OK);
-//      p->Service("WirbelScanService-GetSatellites-v1.0", (void*) processSCAN_AddSatellite);
-//    }
-//    else
-//    {
-      m_resp->add_U32(VNSI_RET_NOTSUPPORTED);
-//    }
-//    m_processSCAN_Response = NULL;
+    m_resp->add_U32(SatelliteUtils::GetSatellite((SATELLITE::eSatellite)i).id);
+    m_resp->add_String(SatelliteUtils::GetSatellite((SATELLITE::eSatellite)i).short_name);
+    m_resp->add_String(SatelliteUtils::GetSatellite((SATELLITE::eSatellite)i).full_name);
   }
-//  else
-//  {
-//    m_resp->add_U32(VNSI_RET_DATALOCKED);
-//  }
 
   m_resp->finalise();
   m_socket.write(m_resp->getPtr(), m_resp->getLen());
@@ -1953,22 +1932,7 @@ bool cVNSIClient::processSCAN_Stop() /* OPCODE 144 */
   return true;
 }
 
-cResponsePacket *cVNSIClient::m_processSCAN_Response = NULL;
 cxSocket *cVNSIClient::m_processSCAN_Socket = NULL;
-
-void cVNSIClient::processSCAN_AddCountry(int index, const char *isoName, const char *longName)
-{
-//  m_processSCAN_Response->add_U32(index);
-//  m_processSCAN_Response->add_String(isoName);
-//  m_processSCAN_Response->add_String(longName);
-}
-
-void cVNSIClient::processSCAN_AddSatellite(int index, const char *shortName, const char *longName)
-{
-//  m_processSCAN_Response->add_U32(index);
-//  m_processSCAN_Response->add_String(shortName);
-//  m_processSCAN_Response->add_String(longName);
-}
 
 void cVNSIClient::processSCAN_SetPercentage(int percent)
 {

@@ -164,8 +164,6 @@ private:
 
   /** Static callback functions to interact with wirbelscan plugin over
       the plugin service interface */
-  static void processSCAN_AddCountry(int index, const char *isoName, const char *longName);
-  static void processSCAN_AddSatellite(int index, const char *shortName, const char *longName);
   static void processSCAN_SetPercentage(int percent);
   static void processSCAN_SetSignalStrength(int strength, bool locked);
   static void processSCAN_SetDeviceInfo(const char *Info);
@@ -173,7 +171,6 @@ private:
   static void processSCAN_NewChannel(const char *Name, bool isRadio, bool isEncrypted, bool isHD);
   static void processSCAN_IsFinished();
   static void processSCAN_SetStatus(int status);
-  static cResponsePacket *m_processSCAN_Response;
   static cxSocket *m_processSCAN_Socket;
 
   const char* OpcodeToString(uint8_t opcode);

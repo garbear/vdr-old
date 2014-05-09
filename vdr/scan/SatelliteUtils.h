@@ -133,6 +133,8 @@ struct cSat
 class SatelliteUtils
 {
 public:
+  static unsigned int SatelliteCount();
+
   /*!
    * \brief Get information about a satellite
    */

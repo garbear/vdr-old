@@ -2040,6 +2040,11 @@ struct cSat sat_list[] = {
 { "S97W0", S97W0, "97.0 west Telstar 5"                         , TELSTAR97_0W,         ARRAY_SIZE(TELSTAR97_0W),            WEST_FLAG,  0x970, -1, "S97.0W" }};
 /**********************************************************************************************************************************************/
 
+unsigned int SatelliteUtils::SatelliteCount()
+{
+  return ARRAY_SIZE(sat_list);
+}
+
 const cSat& SatelliteUtils::GetSatellite(eSatellite satelliteId)
 {
   return sat_list[satelliteId];
