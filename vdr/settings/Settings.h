@@ -92,7 +92,6 @@ public:
   bool                m_bDiSEqC;
 
   bool                m_bSetSystemTime;
-  int                 m_iTimeSource;
   int                 m_iTimeTransponder;
   int                 m_iUpdateChannels;
   int                 m_iMaxVideoFileSizeMB;

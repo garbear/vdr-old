@@ -125,7 +125,6 @@ cSettings::cSettings()
   m_iLnbFreqHigh            = 10600;
   m_bDiSEqC                 = false;
   m_bSetSystemTime          = false;
-  m_iTimeSource             = 0;
   m_iTimeTransponder        = 0;
   m_iStandardCompliance     = STANDARD_DVB;
   m_iMarginStart            = 2;
@@ -301,9 +300,6 @@ bool cSettings::Load(const std::string& strFilename)
   GetSettingBool(root,     SETTINGS_XML_ELM_SET_SYSTEM_TIME,            m_bSetSystemTime);
   GetSettingInt(root,      SETTINGS_XML_ELM_TIME_TRANSPONDER,           m_iTimeTransponder);
 
-  //if (GetSettingString(root, SETTINGS_XML_ELM_TIME_SOURCE, strValue)) // TODO
-  //  m_iTimeSource = cSource::FromString(strValue);
-
   GetSettingInt(root,      SETTINGS_XML_ELM_UPDATE_CHANNELS_LEVEL,      m_iUpdateChannels);
 
   GetSettingInt(root,      SETTINGS_XML_ELM_STANDARD_COMPLIANCE,        m_iStandardCompliance);
@@ -364,7 +360,6 @@ bool cSettings::Save(const std::string& strFilename)
 
   SaveSetting(root, SETTINGS_XML_ELM_SET_SYSTEM_TIME,            m_bSetSystemTime);
   SaveSetting(root, SETTINGS_XML_ELM_TIME_TRANSPONDER,           m_iTimeTransponder);
-  //SaveSetting(root, SETTINGS_XML_ELM_TIME_SOURCE,                cSource::ToString(m_iTimeSource)); // TODO
   SaveSetting(root, SETTINGS_XML_ELM_UPDATE_CHANNELS_LEVEL,      m_iUpdateChannels);
 
   SaveSetting(root, SETTINGS_XML_ELM_STANDARD_COMPLIANCE,        m_iStandardCompliance);
