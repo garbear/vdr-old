@@ -23,12 +23,16 @@
 
 #include "CountryUtils.h"
 #include "SatelliteUtils.h"
+#include "channels/ChannelTypes.h"
+#include "devices/DeviceTypes.h"
 #include "sources/linux/DVBTransponderParams.h"
 
 #include <linux/dvb/frontend.h>
 
 namespace VDR
 {
+
+class cVNSIClient;
 
 // TODO: Needs a better home. Currently lives in DVBTransponderParams.h
 /*
@@ -74,6 +78,20 @@ enum eDvbcSymbolRate
   eSR_END = eSR_5483000
 };
 
+class iScanCallback
+{
+public:
+  virtual ~iScanCallback() { }
+
+  virtual void ScanProgress(float percent) = 0;
+  virtual void ScanSignalStrength(int strength, bool bLocked) = 0;
+  virtual void ScanDeviceInfo(const std::string& strInfo) = 0;
+  virtual void ScanTransponder(const std::string strInfo) = 0;
+  virtual void ScanFoundChannel(ChannelPtr channel) = 0;
+  virtual void ScanFinished(bool bAborted) = 0;
+  virtual void ScanStatus(int status) = 0;
+};
+
 class cScanConfig
 {
 public:
@@ -94,6 +112,8 @@ public:
   COUNTRY::eCountry     countryIndex;
   SATELLITE::eSatellite satelliteIndex;
   fe_modulation         atscModulation; // Either VSB over-the-air (VSB_8) or QAM Annex B cable TV (QAM_256)
+  DevicePtr             device;
+  iScanCallback*        callback;
 };
 
 }

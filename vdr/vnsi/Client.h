@@ -28,6 +28,7 @@
 #include "lib/platform/threads/threads.h"
 #include "utils/Tools.h"
 #include "devices/Receiver.h"
+#include "scan/Scanner.h"
 #include "utils/Status.h"
 #include "utils/CharSetConverterVDR.h"
 #include "utils/Observer.h"
@@ -50,6 +51,7 @@ class cCmdControl;
 
 class cVNSIClient : public PLATFORM::CThread
                   , public Observer
+                  , public iScanCallback
 {
 private:
 
@@ -69,6 +71,7 @@ private:
   static PLATFORM::CMutex m_timerLock;
 //  cVnsiOsdProvider *m_Osd;
   std::map<int, CDateTime> m_epgUpdate;
+  cScanner         m_scanner;
 
 protected:
 
@@ -92,6 +95,14 @@ public:
   unsigned int GetID() { return m_Id; }
 
   void Notify(const Observable &obs, const ObservableMessage msg);
+
+  virtual void ScanProgress(float percent);
+  virtual void ScanSignalStrength(int strength, bool bLocked);
+  virtual void ScanDeviceInfo(const std::string& strInfo);
+  virtual void ScanTransponder(const std::string strInfo);
+  virtual void ScanFoundChannel(ChannelPtr channel);
+  virtual void ScanFinished(bool bAborted);
+  virtual void ScanStatus(int status);
 
 protected:
 
@@ -161,17 +172,6 @@ private:
   bool processSCAN_GetSatellites();
   bool processSCAN_Start();
   bool processSCAN_Stop();
-
-  /** Static callback functions to interact with wirbelscan plugin over
-      the plugin service interface */
-  static void processSCAN_SetPercentage(int percent);
-  static void processSCAN_SetSignalStrength(int strength, bool locked);
-  static void processSCAN_SetDeviceInfo(const char *Info);
-  static void processSCAN_SetTransponder(const char *Info);
-  static void processSCAN_NewChannel(const char *Name, bool isRadio, bool isEncrypted, bool isHD);
-  static void processSCAN_IsFinished();
-  static void processSCAN_SetStatus(int status);
-  static cxSocket *m_processSCAN_Socket;
 
   const char* OpcodeToString(uint8_t opcode);
   const char* ChannelToString(uint8_t channel);

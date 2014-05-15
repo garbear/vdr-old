@@ -21,6 +21,8 @@
  */
 
 #include "ScanConfig.h"
+#include "channels/Channel.h"
+#include "devices/Device.h"
 
 #include <assert.h>
 
@@ -34,7 +36,8 @@ cScanConfig::cScanConfig()
    dvbcSymbolRate(eSR_AUTO),
    countryIndex(COUNTRY::DE),        // Default to Germany
    satelliteIndex(SATELLITE::S19E2), // Default to Astra 19.2
-   atscModulation(VSB_8)
+   atscModulation(VSB_8),
+   callback(NULL)
 {
 }
 

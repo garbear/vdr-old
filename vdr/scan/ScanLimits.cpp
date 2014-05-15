@@ -21,7 +21,9 @@
  */
 
 #include "SatelliteUtils.h"
+#include "ScanConfig.h"
 #include "ScanTask.h"
+#include "vnsi/Client.h"
 
 using namespace PLATFORM;
 using namespace VDR::SATELLITE;
@@ -37,13 +39,26 @@ cScanLimits::cScanLimits()
 {
 }
 
-void cScanLimits::ForEach(cScanTask* task)
+void cScanLimits::ForEach(cScanTask* task, const cScanConfig& config)
 {
+  float progress = 0;
   for (vector<fe_modulation>::const_iterator modIt = m_modulations.begin(); modIt != m_modulations.end() && !IsAborting(); ++modIt)
+  {
     for (unsigned int iChannel = 0; iChannel < m_channelCount && !IsAborting(); ++iChannel)
+    {
       for (vector<eOffsetType>::const_iterator freqIt = m_freqOffsets.begin(); freqIt != m_freqOffsets.end() && !IsAborting(); ++freqIt)
+      {
         for (vector<eDvbcSymbolRate>::const_iterator srIt = m_dvbcSymbolRates.begin(); srIt != m_dvbcSymbolRates.end() && !IsAborting(); ++srIt)
+        {
           task->DoWork(*modIt, iChannel, *srIt, *freqIt, this);
+          progress += 1.0f / (m_modulations.size() * m_channelCount * m_freqOffsets.size() * m_dvbcSymbolRates.size());
+          config.callback->ScanProgress(progress * 100.0f);
+        }
+      }
+    }
+  }
+
+  config.callback->ScanProgress(100.0f);
 
   Finished();
 }

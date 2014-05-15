@@ -29,17 +29,21 @@
 namespace VDR
 {
 
-class cDevice;
+//class cDevice;
 class cScanLimits;
 class cSynchronousAbort;
 
 class cScanner : public PLATFORM::CThread
 {
 public:
-  cScanner(cDevice* device, const cScanConfig& setup);
+  cScanner(void);
   virtual ~cScanner(void) { Stop(true); }
 
-  void Start(void) { CreateThread(true); }
+  /*!
+   * Start the scan. Returns true if the scan was started, or false if a
+   * previous scan is still running.
+   */
+  bool Start(const cScanConfig& setup);
   void Stop(bool bWait = false);
 
 protected:
@@ -48,7 +52,6 @@ protected:
 private:
   static bool GetFrontendType(eDvbType dvbType, fe_type& frontendType);
 
-  cDevice*           m_device;
   cScanConfig        m_setup;
   PLATFORM::CMutex   m_mutex;
   cSynchronousAbort* m_abortableJob;

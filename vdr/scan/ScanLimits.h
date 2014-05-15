@@ -31,6 +31,7 @@
 namespace VDR
 {
 
+class cScanConfig;
 class cScanTask;
 
 class cScanLimits : public cSynchronousAbort
@@ -38,7 +39,7 @@ class cScanLimits : public cSynchronousAbort
 public:
   virtual ~cScanLimits() { }
 
-  void ForEach(cScanTask* task);
+  void ForEach(cScanTask* task, const cScanConfig& config);
 
 protected:
   cScanLimits();
