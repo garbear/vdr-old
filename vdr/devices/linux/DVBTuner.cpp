@@ -53,7 +53,7 @@ using namespace PLATFORM;
 #define DVBS_LOCK_TIMEOUT_MS       9000
 #define DVBC_LOCK_TIMEOUT_MS       9000
 #define DVBT_LOCK_TIMEOUT_MS       9000
-#define ATSC_LOCK_TIMEOUT_MS       9000
+#define ATSC_LOCK_TIMEOUT_MS       4000
 
 #define LOCK_REACQUIRE_TIMEOUT_MS  2000 // TODO: use this value somewhere
 
