@@ -51,7 +51,6 @@ class cCmdControl;
 
 class cVNSIClient : public PLATFORM::CThread
                   , public Observer
-                  , public iScanCallback
 {
 private:
 
@@ -95,14 +94,6 @@ public:
   unsigned int GetID() { return m_Id; }
 
   void Notify(const Observable &obs, const ObservableMessage msg);
-
-  virtual void ScanProgress(float percent);
-  virtual void ScanSignalStrength(int strength, bool bLocked);
-  virtual void ScanDeviceInfo(const std::string& strInfo);
-  virtual void ScanTransponder(const std::string strInfo);
-  virtual void ScanFoundChannel(ChannelPtr channel);
-  virtual void ScanFinished(bool bAborted);
-  virtual void ScanStatus(int status);
 
 protected:
 
@@ -172,6 +163,7 @@ private:
   bool processSCAN_GetSatellites();
   bool processSCAN_Start();
   bool processSCAN_Stop();
+  bool processSCAN_Progress();
 
   const char* OpcodeToString(uint8_t opcode);
   const char* ChannelToString(uint8_t channel);

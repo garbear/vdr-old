@@ -39,7 +39,7 @@ cScanLimits::cScanLimits()
 {
 }
 
-void cScanLimits::ForEach(cScanTask* task, const cScanConfig& config)
+void cScanLimits::ForEach(cScanTask* task, const cScanConfig& config, iScanCallback* callback)
 {
   float progress = 0;
   for (vector<fe_modulation>::const_iterator modIt = m_modulations.begin(); modIt != m_modulations.end() && !IsAborting(); ++modIt)
@@ -50,15 +50,15 @@ void cScanLimits::ForEach(cScanTask* task, const cScanConfig& config)
       {
         for (vector<eDvbcSymbolRate>::const_iterator srIt = m_dvbcSymbolRates.begin(); srIt != m_dvbcSymbolRates.end() && !IsAborting(); ++srIt)
         {
-          task->DoWork(*modIt, iChannel, *srIt, *freqIt, this);
+          task->DoWork(*modIt, iChannel, *srIt, *freqIt, this, callback);
           progress += 1.0f / (m_modulations.size() * m_channelCount * m_freqOffsets.size() * m_dvbcSymbolRates.size());
-          config.callback->ScanProgress(progress * 100.0f);
+          callback->ScanPercentage(progress * 100.0f);
         }
       }
     }
   }
 
-  config.callback->ScanProgress(100.0f);
+  callback->ScanPercentage(100.0f);
 
   Finished();
 }

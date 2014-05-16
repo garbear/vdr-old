@@ -39,7 +39,7 @@ class cScanLimits : public cSynchronousAbort
 public:
   virtual ~cScanLimits() { }
 
-  void ForEach(cScanTask* task, const cScanConfig& config);
+  void ForEach(cScanTask* task, const cScanConfig& config, iScanCallback* callback);
 
 protected:
   cScanLimits();

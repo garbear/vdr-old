@@ -52,8 +52,8 @@ public:
   /*!
    * \brief Scan a channel with the given parameters.
    */
-  void DoWork(fe_modulation modulation, unsigned int iChannel, eDvbcSymbolRate symbolRate, eOffsetType freqOffset, cSynchronousAbort* abortableJob = NULL);
-  void DoWork(const ChannelPtr& channel, cSynchronousAbort* abortableJob = NULL);
+  void DoWork(fe_modulation modulation, unsigned int iChannel, eDvbcSymbolRate symbolRate, eOffsetType freqOffset, cSynchronousAbort* abortableJob = NULL, iScanCallback* callback = NULL);
+  void DoWork(const ChannelPtr& channel, cSynchronousAbort* abortableJob = NULL, iScanCallback* callback = NULL);
 
   static unsigned int ChannelToFrequency(unsigned int channel, eChannelList channelList);
 

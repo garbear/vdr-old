@@ -50,13 +50,13 @@ cScanTask::cScanTask(cDevice* device, const cFrontendCapabilities& caps)
   assert(m_device);
 }
 
-void cScanTask::DoWork(fe_modulation modulation, unsigned int iChannel, eDvbcSymbolRate symbolRate, eOffsetType freqOffset, cSynchronousAbort* abortableJob /* = NULL */)
+void cScanTask::DoWork(fe_modulation modulation, unsigned int iChannel, eDvbcSymbolRate symbolRate, eOffsetType freqOffset, cSynchronousAbort* abortableJob /* = NULL */, iScanCallback* callback /* = NULL */)
 {
   ChannelPtr channel = GetChannel(modulation, iChannel, symbolRate, freqOffset);
-  DoWork(channel, abortableJob);
+  DoWork(channel, abortableJob, callback);
 }
 
-void cScanTask::DoWork(const ChannelPtr& channel, cSynchronousAbort* abortableJob /* = NULL */)
+void cScanTask::DoWork(const ChannelPtr& channel, cSynchronousAbort* abortableJob /* = NULL */, iScanCallback* callback /* = NULL */)
 {
   m_abortableJob = abortableJob;
   if (channel == cChannel::EmptyChannel)
@@ -64,6 +64,9 @@ void cScanTask::DoWork(const ChannelPtr& channel, cSynchronousAbort* abortableJo
 
   if (abortableJob && abortableJob->IsAborting())
     return;
+
+  if (callback)
+    callback->ScanFrequency(channel->FrequencyHz());
 
   if (m_device->Channel()->SwitchChannel(channel))
   {

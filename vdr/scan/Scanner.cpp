@@ -41,7 +41,9 @@ namespace VDR
 {
 
 cScanner::cScanner(void)
- : m_abortableJob(NULL)
+ : m_abortableJob(NULL),
+   m_percentage(0.0f),
+   m_frequencyHz(0)
 {
 }
 
@@ -63,7 +65,6 @@ bool cScanner::GetFrontendType(eDvbType dvbType, fe_type& frontendType)
 bool cScanner::Start(const cScanConfig& setup)
 {
   assert(setup.device.get() != NULL);
-  assert(setup.callback != NULL);
 
   if (!IsRunning())
   {
@@ -129,7 +130,7 @@ void* cScanner::Process()
       m_abortableJob = scanLimits;
     }
 
-    scanLimits->ForEach(task, m_setup);
+    scanLimits->ForEach(task, m_setup, this);
 
     {
       CLockObject lock(m_mutex);
@@ -143,7 +144,6 @@ void* cScanner::Process()
   }
   catch (bool bSucess)
   {
-    m_setup.callback->ScanFinished(true);
     return NULL;
   }
 

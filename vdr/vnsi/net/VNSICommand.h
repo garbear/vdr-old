@@ -24,7 +24,7 @@
 #pragma once
 
 /** Current VNSI Protocol Version number */
-#define VNSI_PROTOCOLVERSION 5
+#define VNSI_PROTOCOLVERSION 6
 
 //XXX
 #define VNSI_SERVER_VERSION "TEST"
@@ -104,6 +104,7 @@
 #define VNSI_SCAN_GETSATELLITES    142
 #define VNSI_SCAN_START            143
 #define VNSI_SCAN_STOP             144
+#define VNSI_SCAN_PROGRESS         145
 
 /** Stream packet types (server -> client) */
 #define VNSI_STREAM_CHANGE       1

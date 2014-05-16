@@ -83,13 +83,14 @@ class iScanCallback
 public:
   virtual ~iScanCallback() { }
 
-  virtual void ScanProgress(float percent) = 0;
-  virtual void ScanSignalStrength(int strength, bool bLocked) = 0;
-  virtual void ScanDeviceInfo(const std::string& strInfo) = 0;
-  virtual void ScanTransponder(const std::string strInfo) = 0;
-  virtual void ScanFoundChannel(ChannelPtr channel) = 0;
-  virtual void ScanFinished(bool bAborted) = 0;
-  virtual void ScanStatus(int status) = 0;
+  virtual void ScanPercentage(float percentage) { }
+  virtual void ScanFrequency(unsigned int frequencyHz) { }
+  virtual void ScanSignalStrength(int strength, bool bLocked) { }
+  virtual void ScanDeviceInfo(const std::string& strInfo) { }
+  virtual void ScanTransponder(const std::string strInfo) { }
+  virtual void ScanFoundChannel(ChannelPtr channel) { }
+  virtual void ScanFinished(bool bAborted) { }
+  virtual void ScanStatus(int status) { }
 };
 
 class cScanConfig
@@ -113,7 +114,6 @@ public:
   SATELLITE::eSatellite satelliteIndex;
   fe_modulation         atscModulation; // Either VSB over-the-air (VSB_8) or QAM Annex B cable TV (QAM_256)
   DevicePtr             device;
-  iScanCallback*        callback;
 };
 
 }

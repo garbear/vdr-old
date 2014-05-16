@@ -33,7 +33,7 @@ namespace VDR
 class cScanLimits;
 class cSynchronousAbort;
 
-class cScanner : public PLATFORM::CThread
+class cScanner : public PLATFORM::CThread, public iScanCallback
 {
 public:
   cScanner(void);
@@ -46,6 +46,12 @@ public:
   bool Start(const cScanConfig& setup);
   void Stop(bool bWait = false);
 
+  float GetPercentage() const { return m_percentage; }
+  virtual void ScanPercentage(float percentage) { m_percentage = percentage; }
+
+  float GetFrequency() const { return m_frequencyHz; }
+  virtual void ScanFrequency(unsigned int frequencyHz) { m_frequencyHz = frequencyHz; }
+
 protected:
   virtual void* Process(void);
 
@@ -55,6 +61,8 @@ private:
   cScanConfig        m_setup;
   PLATFORM::CMutex   m_mutex;
   cSynchronousAbort* m_abortableJob;
+  float              m_percentage;
+  unsigned int       m_frequencyHz;
 };
 
 }

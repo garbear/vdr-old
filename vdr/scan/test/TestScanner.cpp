@@ -77,7 +77,7 @@ TEST(Scanner, Scan)
       config.atscModulation = VSB_8;
       config.countryIndex = COUNTRY::US;
       config.device = *it;
-      config.callback = &scanCallback;
+      //config.callback = &scanCallback;
 
       cScanner scanner;
 
