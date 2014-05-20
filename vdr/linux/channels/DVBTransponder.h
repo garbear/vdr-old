@@ -46,23 +46,23 @@ enum eDvbType
   DVB_ATSC,
 };
 
-class cDvbTransponderParams
+class cDvbTransponder
 {
 public:
-  cDvbTransponderParams(fe_polarization       polarization = POLARIZATION_HORIZONTAL,
-                        fe_spectral_inversion inversion    = INVERSION_AUTO,
-                        fe_bandwidth          bandwidth    = BANDWIDTH_8_MHZ,
-                        fe_code_rate          coderateH    = FEC_AUTO,
-                        fe_code_rate          coderateL    = FEC_AUTO,
-                        fe_modulation         modulation   = QPSK,
-                        eSystemType           system       = DVB_SYSTEM_1,
-                        fe_transmit_mode      transmission = TRANSMISSION_MODE_AUTO,
-                        fe_guard_interval     guard        = GUARD_INTERVAL_AUTO,
-                        fe_hierarchy          hierarchy    = HIERARCHY_AUTO,
-                        fe_rolloff            rollOff      = ROLLOFF_AUTO);
+  cDvbTransponder(fe_polarization       polarization = POLARIZATION_HORIZONTAL,
+                  fe_spectral_inversion inversion    = INVERSION_AUTO,
+                  fe_bandwidth          bandwidth    = BANDWIDTH_8_MHZ,
+                  fe_code_rate          coderateH    = FEC_AUTO,
+                  fe_code_rate          coderateL    = FEC_AUTO,
+                  fe_modulation         modulation   = QPSK,
+                  eSystemType           system       = DVB_SYSTEM_1,
+                  fe_transmit_mode      transmission = TRANSMISSION_MODE_AUTO,
+                  fe_guard_interval     guard        = GUARD_INTERVAL_AUTO,
+                  fe_hierarchy          hierarchy    = HIERARCHY_AUTO,
+                  fe_rolloff            rollOff      = ROLLOFF_AUTO);
 
-  bool operator==(const cDvbTransponderParams& rhs) const;
-  bool operator!=(const cDvbTransponderParams& rhs) const { return !(*this == rhs); }
+  bool operator==(const cDvbTransponder& rhs) const;
+  bool operator!=(const cDvbTransponder& rhs) const { return !(*this == rhs); }
 
   void Reset();
 

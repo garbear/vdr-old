@@ -25,7 +25,7 @@
 #include "SatelliteUtils.h"
 #include "channels/ChannelTypes.h"
 #include "devices/DeviceTypes.h"
-#include "sources/linux/DVBTransponderParams.h"
+#include "linux/channels/DVBTransponder.h" // for eDvbType
 
 #include <linux/dvb/frontend.h>
 
@@ -34,7 +34,7 @@ namespace VDR
 
 class cVNSIClient;
 
-// TODO: Needs a better home. Currently lives in DVBTransponderParams.h
+// TODO: Needs a better home. Currently lives in DVBTransponder.h
 /*
 enum eDvbType
 {
@@ -44,7 +44,6 @@ enum eDvbType
   DVB_ATSC,
 };
 */
-#include "sources/linux/DVBTransponderParams.h"
 
 enum eScanFlags
 {

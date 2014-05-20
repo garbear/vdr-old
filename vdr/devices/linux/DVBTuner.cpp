@@ -27,9 +27,9 @@
 #include "devices/subsystems/DeviceReceiverSubsystem.h"
 #include "dvb/DiSEqC.h"
 #include "filesystem/Poller.h"
+#include "linux/channels/DVBTransponder.h"
 #include "platform/util/timeutils.h"
 #include "settings/Settings.h"
-#include "sources/linux/DVBTransponderParams.h"
 #include "utils/CommonMacros.h"
 #include "utils/log/Log.h"
 #include "utils/StringUtils.h"
@@ -196,7 +196,7 @@ bool cDvbTuner::Open(void)
   }
 
   // TODO: Why is only the number of modulations stored?
-  vector<string> vecModulations = cDvbTransponderParams::GetModulationsFromCaps(m_frontendInfo.capabilities);
+  vector<string> vecModulations = cDvbTransponder::GetModulationsFromCaps(m_frontendInfo.capabilities);
   m_numModulations = vecModulations.size();
 
   string modulations = StringUtils::Join(vecModulations, ",");
@@ -528,7 +528,7 @@ bool cDvbTuner::SetFrontend(const ChannelPtr& channel)
 
   dsyslog("Tuner '%s' tuning to frequency %u", GetName().c_str(), channel->FrequencyHz());
 
-  cDvbTransponderParams dtp(channel->Parameters());
+  cDvbTransponder dtp(channel->Parameters());
 
   if (frontendType == SYS_DVBS || frontendType == SYS_DVBS2)
   {
@@ -815,7 +815,7 @@ bool cDvbTuner::BondingOk(const cChannel& channel, bool bConsiderOccupied) const
 
 string cDvbTuner::GetBondingParams(const cChannel& channel) const
 {
-  cDvbTransponderParams dtp(channel.Parameters());
+  cDvbTransponder dtp(channel.Parameters());
   if (cSettings::Get().m_bDiSEqC)
   {
     if (const cDiseqc* diseqc = Diseqcs.Get(m_device->CardIndex() + 1, channel.Source(), channel.FrequencyKHz(), dtp.Polarization(), NULL))
@@ -1011,7 +1011,7 @@ int cDvbTuner::GetSignalQuality(void) const
 
 fe_delivery_system_t cDvbTuner::GetRequiredDeliverySystem(const cChannel &channel)
 {
-  cDvbTransponderParams dtp(channel.Parameters());
+  cDvbTransponder dtp(channel.Parameters());
 
   fe_delivery_system_t ds = SYS_UNDEFINED;
   if (channel.Source() == SOURCE_TYPE_ATSC)

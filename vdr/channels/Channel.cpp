@@ -143,7 +143,7 @@ void cChannel::Reset(void)
   m_audioStreams.clear();
   m_dataStreams.clear();
   m_subtitleStreams.clear();
-  m_parameters.Reset();
+  m_transponder.Reset();
   m_schedule.reset();
 }
 
@@ -160,7 +160,7 @@ cChannel& cChannel::operator=(const cChannel& rhs)
   m_subtitleStreams = rhs.m_subtitleStreams;
   m_teletextStream  = rhs.m_teletextStream;
   m_caDescriptors   = rhs.m_caDescriptors;
-  m_parameters      = rhs.m_parameters;
+  m_transponder     = rhs.m_transponder;
   m_frequencyHz     = rhs.m_frequencyHz;
   m_symbolRate      = rhs.m_symbolRate;
   m_number          = rhs.m_number;
@@ -312,7 +312,7 @@ void cChannel::SetCaDescriptors(const CaDescriptorVector& caDescriptors)
   }
 }
 
-bool cChannel::SetTransponderData(cChannelSource source, unsigned int frequencyHz, int symbolRate, const cDvbTransponderParams& parameters)
+bool cChannel::SetTransponderData(cChannelSource source, unsigned int frequencyHz, int symbolRate, const cDvbTransponder& transponder)
 {
   // Workarounds for broadcaster stupidity:
   // Some providers broadcast the transponder frequency of their channels with two different
@@ -331,12 +331,12 @@ bool cChannel::SetTransponderData(cChannelSource source, unsigned int frequencyH
   if (m_channelId.m_source != source      ||
       m_frequencyHz        != frequencyHz ||
       m_symbolRate         != symbolRate  ||
-      m_parameters         != parameters)
+      m_transponder        != transponder)
   {
     m_channelId.m_source = source;
     m_frequencyHz        = frequencyHz;
     m_symbolRate         = symbolRate;
-    m_parameters         = parameters;
+    m_transponder        = transponder;
 
     m_schedule.reset();
 
@@ -353,7 +353,7 @@ void cChannel::CopyTransponderData(const cChannel& channel)
   m_frequencyHz        = channel.m_frequencyHz;
   m_channelId.m_source = channel.m_channelId.m_source;
   m_symbolRate         = channel.m_symbolRate;
-  m_parameters         = channel.m_parameters;
+  m_transponder        = channel.m_transponder;
 
   m_modification |= CHANNELMOD_TRANSP;
   SetChanged();
@@ -363,7 +363,7 @@ unsigned int cChannel::TransponderFrequencyMHz() const
 {
   unsigned int transponderFreqMHz = FrequencyMHz();
   if (Source() == SOURCE_TYPE_SATELLITE)
-    transponderFreqMHz = TransponderWTF(transponderFreqMHz, m_parameters.Polarization());
+    transponderFreqMHz = TransponderWTF(transponderFreqMHz, m_transponder.Polarization());
 
   return transponderFreqMHz;
 }
@@ -618,13 +618,13 @@ bool cChannel::Serialise(TiXmlNode* node) const
   {
     bool success = false;
     if (Source() == SOURCE_TYPE_ATSC)
-      success = m_parameters.Serialise(DVB_ATSC, transponderNode);
+      success = m_transponder.Serialise(DVB_ATSC, transponderNode);
     else if (Source() == SOURCE_TYPE_CABLE)
-      success = m_parameters.Serialise(DVB_CABLE, transponderNode);
+      success = m_transponder.Serialise(DVB_CABLE, transponderNode);
     else if (Source() == SOURCE_TYPE_SATELLITE)
-      success = m_parameters.Serialise(DVB_SAT, transponderNode);
+      success = m_transponder.Serialise(DVB_SAT, transponderNode);
     else if (Source() == SOURCE_TYPE_TERRESTRIAL)
-      success = m_parameters.Serialise(DVB_TERR, transponderNode);
+      success = m_transponder.Serialise(DVB_TERR, transponderNode);
     if (!success)
       return false;
   }
@@ -784,7 +784,7 @@ bool cChannel::Deserialise(const TiXmlNode* node)
   const TiXmlNode *transponderNode = elem->FirstChild(CHANNEL_XML_ELM_PARAMETERS);
   if (transponderNode)
   {
-    if (!m_parameters.Deserialise(transponderNode))
+    if (!m_transponder.Deserialise(transponderNode))
       return false;
   }
 

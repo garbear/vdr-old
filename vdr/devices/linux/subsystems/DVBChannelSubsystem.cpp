@@ -75,7 +75,7 @@ bool cDvbChannelSubsystem::ProvidesTransponder(const cChannel &channel) const
   if (!ProvidesSource(channel.Source()))
     return false; // doesn't provide source
 
-  cDvbTransponderParams dtp(channel.Parameters());
+  cDvbTransponder dtp(channel.Parameters());
 
   // requires modulation system which frontend doesn't provide - return false in these cases
   if (!ProvidesDeliverySystem(cDvbTuner::GetRequiredDeliverySystem(channel))) return false;

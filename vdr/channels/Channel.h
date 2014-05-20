@@ -24,7 +24,7 @@
 #include "ChannelTypes.h"
 #include "dvb/DVBTypes.h"
 #include "epg/EPGTypes.h"
-#include "sources/linux/DVBTransponderParams.h"
+#include "linux/channels/DVBTransponder.h"
 #include "utils/List.h"
 #include "utils/Observer.h"
 
@@ -86,7 +86,7 @@ public:
 //#include "thread.h"
 //#include "tools.h"
 
-// TODO: Move to cDvbTransponderParams and figure out wtf this does
+// TODO: Move to cDvbTransponder and figure out wtf this does
 // I suspect that the polarization masking is involved somehow
 bool ISTRANSPONDER(int frequencyMHz1, int frequencyMHz2);
 
@@ -200,8 +200,8 @@ public:
 
   void SetCaDescriptors(const CaDescriptorVector& caDescriptors);
 
-  const cDvbTransponderParams& Parameters(void) const { return m_parameters; }
-  bool SetTransponderData(cChannelSource source, unsigned int frequencyHz, int symbolRate, const cDvbTransponderParams& parameters);
+  const cDvbTransponder& Parameters(void) const { return m_transponder; }
+  bool SetTransponderData(cChannelSource source, unsigned int frequencyHz, int symbolRate, const cDvbTransponder& transponder);
   void CopyTransponderData(const cChannel& channel);
 
   unsigned int FrequencyHz(void)  const { return m_frequencyHz; }
@@ -263,7 +263,7 @@ private:
   TeletextStream              m_teletextStream;  // Max 1
   CaDescriptorVector          m_caDescriptors;   // Max 12
 
-  cDvbTransponderParams       m_parameters;
+  cDvbTransponder             m_transponder;
   unsigned int                m_frequencyHz;     // TODO: Move to transponder params
   int                         m_symbolRate;      // TODO: Move to transponder params
 

@@ -28,7 +28,7 @@
 #include "devices/linux/test/DVBDeviceNames.h"
 #include "devices/subsystems/DeviceChannelSubsystem.h"
 #include "epg/Event.h"
-#include "sources/linux/DVBTransponderParams.h"
+#include "linux/channels/DVBTransponder.h"
 #include "scan/ScanTask.h"
 #include "scan/ScanConfig.h"
 #include "utils/log/Log.h"
@@ -71,23 +71,23 @@ TEST(PSIP_MGT, GetEvents)
     {
       cFrontendCapabilities caps(device->m_dvbTuner.GetCapabilities());
 
-      cDvbTransponderParams params;
-      params.SetPolarization(POLARIZATION_VERTICAL);
-      params.SetInversion(caps.caps_inversion);
-      params.SetBandwidth(BANDWIDTH_8_MHZ); // Should probably be 8000000 (8MHz) or BANDWIDTH_8_MHZ
-      params.SetCoderateH(caps.caps_fec);
-      params.SetCoderateL(FEC_NONE);
-      params.SetModulation(VSB_8); // Only loop-dependent variable
-      params.SetSystem((eSystemType)SYS_DVBC_ANNEX_AC); // TODO: This should probably be DVB_SYSTEM_2!!!
-      params.SetTransmission(TRANSMISSION_MODE_2K); // (fe_transmit_mode)0
-      params.SetGuard(GUARD_INTERVAL_1_32); // (fe_guard_interval)0
-      params.SetHierarchy(HIERARCHY_NONE); // (fe_hierarchy)0
-      params.SetRollOff(ROLLOFF_35); // (fe_rolloff)0
+      cDvbTransponder transponder;
+      transponder.SetPolarization(POLARIZATION_VERTICAL);
+      transponder.SetInversion(caps.caps_inversion);
+      transponder.SetBandwidth(BANDWIDTH_8_MHZ); // Should probably be 8000000 (8MHz) or BANDWIDTH_8_MHZ
+      transponder.SetCoderateH(caps.caps_fec);
+      transponder.SetCoderateL(FEC_NONE);
+      transponder.SetModulation(VSB_8); // Only loop-dependent variable
+      transponder.SetSystem((eSystemType)SYS_DVBC_ANNEX_AC); // TODO: This should probably be DVB_SYSTEM_2!!!
+      transponder.SetTransmission(TRANSMISSION_MODE_2K); // (fe_transmit_mode)0
+      transponder.SetGuard(GUARD_INTERVAL_1_32); // (fe_guard_interval)0
+      transponder.SetHierarchy(HIERARCHY_NONE); // (fe_hierarchy)0
+      transponder.SetRollOff(ROLLOFF_35); // (fe_rolloff)0
 
       const unsigned int frequency = 177000000; // 177 MHz
 
       channel = ChannelPtr(new cChannel);
-      channel->SetTransponderData(SOURCE_TYPE_ATSC, frequency, cScanConfig::TranslateSymbolRate(eSR_6900000), params, true);
+      channel->SetTransponderData(SOURCE_TYPE_ATSC, frequency, cScanConfig::TranslateSymbolRate(eSR_6900000), transponder, true);
       channel->SetId(0, 0, 0, 0);
     }
     */

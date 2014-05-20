@@ -19,7 +19,7 @@
  *
  */
 
-#include "DVBTransponderParams.h"
+#include "DVBTransponder.h"
 #include "channels/ChannelDefinitions.h"
 #include "utils/CommonMacros.h" // for ARRAY_SIZE()
 #include "utils/log/Log.h"
@@ -152,7 +152,7 @@ const tDvbParameter _RollOffValues[] =
   {  35, ROLLOFF_35,   "0.35" },
 };
 
-cDvbTransponderParams::cDvbTransponderParams(
+cDvbTransponder::cDvbTransponder(
    fe_polarization       polarization /* = POLARIZATION_HORIZONTAL */,
    fe_spectral_inversion inversion    /* = INVERSION_AUTO */,
    fe_bandwidth          bandwidth    /* = BANDWIDTH_8_MHZ */,
@@ -180,7 +180,7 @@ cDvbTransponderParams::cDvbTransponderParams(
 {
 }
 
-bool cDvbTransponderParams::operator==(const cDvbTransponderParams& rhs) const
+bool cDvbTransponder::operator==(const cDvbTransponder& rhs) const
 {
   return m_polarization == rhs.m_polarization &&
          m_inversion    == rhs.m_inversion &&
@@ -196,13 +196,13 @@ bool cDvbTransponderParams::operator==(const cDvbTransponderParams& rhs) const
          m_streamId     == rhs.m_streamId;
 }
 
-void cDvbTransponderParams::Reset()
+void cDvbTransponder::Reset()
 {
-  cDvbTransponderParams defaults;
+  cDvbTransponder defaults;
   *this = defaults;
 }
 
-unsigned int cDvbTransponderParams::BandwidthHz() const
+unsigned int cDvbTransponder::BandwidthHz() const
 {
   switch (m_bandwidth)
   {
@@ -231,7 +231,7 @@ const char* SerialiseDriverValue(T driverValue, const tDvbParameter (&dvbParamTa
   return "";
 }
 
-bool cDvbTransponderParams::Serialise(eDvbType type, TiXmlNode* node) const
+bool cDvbTransponder::Serialise(eDvbType type, TiXmlNode* node) const
 {
   if (node == NULL)
     return false;
@@ -303,7 +303,7 @@ void DeserialiseDriverValue(const char* userString, T &driverValue, const tDvbPa
   }
 }
 
-bool cDvbTransponderParams::Deserialise(const TiXmlNode* node)
+bool cDvbTransponder::Deserialise(const TiXmlNode* node)
 {
   if (node == NULL)
     return false;
@@ -378,7 +378,7 @@ bool DeserialiseDriverValueConf(const string &str, T &driverValue, const tDvbPar
   return false; // Don't continue deserialising
 }
 
-bool cDvbTransponderParams::Deserialise(const string& strParameters)
+bool cDvbTransponder::Deserialise(const string& strParameters)
 {
   for (unsigned int i = 0; i < strParameters.size(); )
   {
@@ -448,7 +448,7 @@ bool cDvbTransponderParams::Deserialise(const string& strParameters)
   return true;
 }
 
-const char *cDvbTransponderParams::TranslateModulation(fe_modulation modulation)
+const char *cDvbTransponder::TranslateModulation(fe_modulation modulation)
 {
   for (unsigned int i = 0; i < ARRAY_SIZE(_ModulationValues); i++)
   {
@@ -458,18 +458,18 @@ const char *cDvbTransponderParams::TranslateModulation(fe_modulation modulation)
   return "";
 }
 
-vector<string> cDvbTransponderParams::GetModulationsFromCaps(fe_caps_t caps)
+vector<string> cDvbTransponder::GetModulationsFromCaps(fe_caps_t caps)
 {
   vector<string> modulations;
 
-  if (caps & FE_CAN_QPSK)      { modulations.push_back(cDvbTransponderParams::TranslateModulation(QPSK)); }
-  if (caps & FE_CAN_QAM_16)    { modulations.push_back(cDvbTransponderParams::TranslateModulation(QAM_16)); }
-  if (caps & FE_CAN_QAM_32)    { modulations.push_back(cDvbTransponderParams::TranslateModulation(QAM_32)); }
-  if (caps & FE_CAN_QAM_64)    { modulations.push_back(cDvbTransponderParams::TranslateModulation(QAM_64)); }
-  if (caps & FE_CAN_QAM_128)   { modulations.push_back(cDvbTransponderParams::TranslateModulation(QAM_128)); }
-  if (caps & FE_CAN_QAM_256)   { modulations.push_back(cDvbTransponderParams::TranslateModulation(QAM_256)); }
-  if (caps & FE_CAN_8VSB)      { modulations.push_back(cDvbTransponderParams::TranslateModulation(VSB_8)); }
-  if (caps & FE_CAN_16VSB)     { modulations.push_back(cDvbTransponderParams::TranslateModulation(VSB_16)); }
+  if (caps & FE_CAN_QPSK)      { modulations.push_back(cDvbTransponder::TranslateModulation(QPSK)); }
+  if (caps & FE_CAN_QAM_16)    { modulations.push_back(cDvbTransponder::TranslateModulation(QAM_16)); }
+  if (caps & FE_CAN_QAM_32)    { modulations.push_back(cDvbTransponder::TranslateModulation(QAM_32)); }
+  if (caps & FE_CAN_QAM_64)    { modulations.push_back(cDvbTransponder::TranslateModulation(QAM_64)); }
+  if (caps & FE_CAN_QAM_128)   { modulations.push_back(cDvbTransponder::TranslateModulation(QAM_128)); }
+  if (caps & FE_CAN_QAM_256)   { modulations.push_back(cDvbTransponder::TranslateModulation(QAM_256)); }
+  if (caps & FE_CAN_8VSB)      { modulations.push_back(cDvbTransponder::TranslateModulation(VSB_8)); }
+  if (caps & FE_CAN_16VSB)     { modulations.push_back(cDvbTransponder::TranslateModulation(VSB_16)); }
   if (caps & FE_CAN_TURBO_FEC) { modulations.push_back("TURBO_FEC"); }
 
   return modulations;

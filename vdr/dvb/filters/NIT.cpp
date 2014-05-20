@@ -185,7 +185,7 @@ ChannelVector cNit::GetTransponders()
             {
               SI::SatelliteDeliverySystemDescriptor* sd = (SI::SatelliteDeliverySystemDescriptor*)d;
 
-              cDvbTransponderParams dtp;
+              cDvbTransponder dtp;
 
               // Symbol rate
               int symbolRate = BCD2INT(sd->getSymbolRate()) / 10;
@@ -317,7 +317,7 @@ ChannelVector cNit::GetTransponders()
                       channel->Tid()    == ts.getTransportStreamId())
                   {
                     SI::S2SatelliteDeliverySystemDescriptor* sd = (SI::S2SatelliteDeliverySystemDescriptor*)d;
-                    cDvbTransponderParams dtp(channel->Parameters());
+                    cDvbTransponder dtp(channel->Parameters());
                     dtp.SetSystem(DVB_SYSTEM_2);
                     dtp.SetStreamId(sd->getInputStreamIdentifier());
                     channel->SetTransponderData(channel->Source(), channel->FrequencyHz(), channel->SymbolRate(), dtp);
@@ -333,7 +333,7 @@ ChannelVector cNit::GetTransponders()
             {
               SI::CableDeliverySystemDescriptor* sd = (SI::CableDeliverySystemDescriptor*)d;
 
-              cDvbTransponderParams dtp;
+              cDvbTransponder dtp;
 
               // Source
               cChannelSource source = SOURCE_TYPE_CABLE;
@@ -434,7 +434,7 @@ ChannelVector cNit::GetTransponders()
             {
               SI::TerrestrialDeliverySystemDescriptor* sd = (SI::TerrestrialDeliverySystemDescriptor*)d;
 
-              cDvbTransponderParams dtp;
+              cDvbTransponder dtp;
 
               cChannelSource source = SOURCE_TYPE_TERRESTRIAL;
 
@@ -585,7 +585,7 @@ ChannelVector cNit::GetTransponders()
 
                       //int SystemId = td->getSystemId();
 
-                      cDvbTransponderParams dtp(channel->Parameters());
+                      cDvbTransponder dtp(channel->Parameters());
 
                       dtp.SetSystem(DVB_SYSTEM_2);
                       dtp.SetStreamId(td->getPlpId());

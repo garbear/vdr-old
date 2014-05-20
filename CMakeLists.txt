@@ -183,6 +183,7 @@ set(VDR_SRCS
 	vdr/filesystem/SpecialProtocol.cpp
 	vdr/filesystem/Videodir.cpp
 	vdr/filesystem/VideoFile.cpp
+	vdr/linux/channels/DVBTransponder.cpp
 	vdr/recordings/filesystem/FileName.cpp
 	vdr/recordings/filesystem/IndexFile.cpp
 	vdr/recordings/filesystem/ResumeFile.cpp
@@ -206,7 +207,6 @@ set(VDR_SRCS
 	vdr/scan/SWReceiver.cpp
 	vdr/settings/AllowedHosts.cpp
 	vdr/settings/Settings.cpp
-	vdr/sources/linux/DVBTransponderParams.cpp
 	vdr/timers/Timer.cpp
 	vdr/timers/Timers.cpp
 	vdr/timers/TimerTime.cpp
@@ -280,12 +280,12 @@ set(VDR_TEST_SRCS
 	vdr/filesystem/test/TestSpecialProtocol.cpp
 	vdr/filesystem/native/test/TestHDDirectory.cpp
 	vdr/filesystem/native/test/TestHDFile.cpp
+	vdr/linux/channels/test/TestDVBTransponder.cpp
 	vdr/scan/test/TestCNICodes.cpp
 	vdr/scan/test/TestCountryUtils.cpp
 	vdr/scan/test/TestScanConfig.cpp
 	vdr/scan/test/TestScanner.cpp
 	vdr/scan/test/TestScanTask.cpp
-	vdr/sources/linux/test/TestDVBTransponderParams.cpp
 	vdr/test/gtest/TestBasicEnvironment.cpp
 	vdr/test/gtest/TestUtils.cpp
 	vdr/test/gtest/vdr-test.cpp
