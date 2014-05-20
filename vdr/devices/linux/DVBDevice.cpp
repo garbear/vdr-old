@@ -36,7 +36,6 @@
 #include "filesystem/File.h"
 #include "filesystem/Directory.h"
 #include "filesystem/ReadDir.h"
-#include "sources/linux/DVBSourceParams.h"
 #include "utils/CommonMacros.h" // for ARRAY_SIZE()
 #include "utils/I18N.h"
 #include "utils/log/Log.h"
@@ -153,11 +152,6 @@ DeviceVector cDvbDevice::FindDevicesMdev(void)
 
 DeviceVector cDvbDevice::FindDevices()
 {
-  //gSourceParams['A'] = cDvbSourceParams('A', "ATSC");
-  //gSourceParams['C'] = cDvbSourceParams('C', "DVB-C");
-  //gSourceParams['S'] = cDvbSourceParams('S', "DVB-S");
-  //gSourceParams['T'] = cDvbSourceParams('T', "DVB-T");
-
 #if defined(TARGET_ANDROID)
   return FindDevicesMdev();
 #endif

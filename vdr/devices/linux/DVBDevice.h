@@ -25,7 +25,6 @@
 #include "DVBLegacy.h"
 #include "DVBTuner.h"
 #include "platform/threads/threads.h"
-#include "sources/linux/DVBSourceParams.h"
 #include "utils/Observer.h"
 
 #include <linux/dvb/frontend.h>

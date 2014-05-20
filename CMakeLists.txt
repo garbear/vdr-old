@@ -201,8 +201,6 @@ set(VDR_SRCS
 	vdr/scan/SWReceiver.cpp
 	vdr/settings/AllowedHosts.cpp
 	vdr/settings/Settings.cpp
-	vdr/sources/ISourceParams.cpp
-	vdr/sources/linux/DVBSourceParams.cpp
 	vdr/sources/linux/DVBTransponderParams.cpp
 	vdr/threads/SystemClock.cpp
 	vdr/timers/Timer.cpp

@@ -20,8 +20,6 @@
  */
 #pragma once
 
-#include "sources/ISourceParams.h"
-
 #include "dvb/extended_frontend.h"
 
 #include <string>
