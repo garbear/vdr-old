@@ -22,6 +22,7 @@
 
 #include "Config.h"
 #include "channels/ChannelSource.h"
+#include "dvb/extended_frontend.h" // for fe_polarization_t
 #include "platform/threads/mutex.h"
 #include "utils/List.h"
 
@@ -74,7 +75,7 @@ private:
   int devices;
   cChannelSource source;
   int slof;
-  char polarization;
+  fe_polarization_t m_polarization;
   int lof;
   mutable int scrBank;
   char *commands;
@@ -107,7 +108,7 @@ public:
   int Devices(void) const { return devices; }
   cChannelSource Source(void) const { return source; }
   int Slof(void) const { return slof; }
-  char Polarization(void) const { return polarization; }
+  fe_polarization_t Polarization(void) const { return m_polarization; }
   int Lof(void) const { return lof; }
   bool IsScr() const { return scrBank >= 0; }
   const char *Commands(void) const { return commands; }

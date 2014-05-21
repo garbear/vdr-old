@@ -112,7 +112,7 @@ cDiseqc::cDiseqc(void)
   devices = 0;
   source = SOURCE_TYPE_NONE;
   slof = 0;
-  polarization = 0;
+  m_polarization = POLARIZATION_HORIZONTAL;
   lof = 0;
   scrBank = -1;
   commands = NULL;
@@ -132,6 +132,7 @@ bool cDiseqc::Parse(const char *s)
      return true;
   bool result = false;
   char *sourcebuf = NULL;
+  char polarization;
   int fields = sscanf(s, "%a[^ ] %d %c %d %a[^\n]", &sourcebuf, &slof, &polarization, &lof, &commands);
   if (fields == 4)
      commands = NULL; //XXX Apparently sscanf() doesn't work correctly if the last %a argument results in an empty string
@@ -139,7 +140,13 @@ bool cDiseqc::Parse(const char *s)
      source = SOURCE_TYPE_NONE; // TODO: Create source from sourcebuf
 
      if (source != SOURCE_TYPE_NONE) {
-        polarization = char(toupper(polarization));
+        switch (toupper(polarization))
+        {
+        case 'H': m_polarization = POLARIZATION_HORIZONTAL; break;
+        case 'V': m_polarization = POLARIZATION_VERTICAL; break;
+        case 'L': m_polarization = POLARIZATION_CIRCULAR_LEFT; break;
+        case 'R': m_polarization = POLARIZATION_CIRCULAR_RIGHT; break;
+        }
         if (polarization == 'V' || polarization == 'H' || polarization == 'L' || polarization == 'R') {
            parsing = true;
            const char *CurrentAction = NULL;

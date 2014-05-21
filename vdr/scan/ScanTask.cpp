@@ -229,7 +229,7 @@ bool cScanTaskSatellite::ValidSatFrequency(unsigned int frequencyHz, const cChan
   if (cSettings::Get().m_bDiSEqC)
   {
     const cDvbTransponder& transponder = channel.GetTransponder();
-    cDiseqc *diseqc = GetDiseqc(channel.Source(), transponder.FrequencyHz(), transponder.Polarization()); // TODO: Incorrect conversion from fe_polarization_t to char!
+    cDiseqc *diseqc = GetDiseqc(channel.Source(), transponder.FrequencyHz(), transponder.Polarization());
 
     if (diseqc)
       frequencyMHz -= diseqc->Lof();
@@ -247,7 +247,7 @@ bool cScanTaskSatellite::ValidSatFrequency(unsigned int frequencyHz, const cChan
   return frequencyMHz >= 950 && frequencyMHz <= 2150;
 }
 
-cDiseqc* cScanTaskSatellite::GetDiseqc(cChannelSource source, unsigned frequency, char polarization)
+cDiseqc* cScanTaskSatellite::GetDiseqc(cChannelSource source, unsigned frequency, fe_polarization_t polarization)
 {
   for (cDiseqc *p = Diseqcs.First(); p; p = Diseqcs.Next(p))
   {
