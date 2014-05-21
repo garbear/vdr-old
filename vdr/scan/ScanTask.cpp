@@ -60,7 +60,7 @@ void cScanTask::DoWork(const ChannelPtr& channel, cSynchronousAbort* abortableJo
     return;
 
   if (callback)
-    callback->ScanFrequency(channel->FrequencyHz());
+    callback->ScanFrequency(channel->GetTransponder().FrequencyHz());
 
   if (m_device->Channel()->SwitchChannel(channel))
   {
@@ -113,20 +113,22 @@ ChannelPtr cScanTaskTerrestrial::GetChannel(fe_modulation modulation, unsigned i
 {
   ChannelPtr channel = ChannelPtr(new cChannel);
 
-  unsigned int frequency = ChannelToFrequency(iChannel, m_channelList);
-  if (frequency == 0)
+  unsigned int frequencyHz = ChannelToFrequency(iChannel, m_channelList);
+  if (frequencyHz == 0)
     return cChannel::EmptyChannel; // Skip unused channels
 
   int iFrequencyOffset;
   if (!CountryUtils::GetFrequencyOffset(iChannel, m_channelList, freqOffset, iFrequencyOffset))
     return cChannel::EmptyChannel; // Skip this one
-  frequency += iFrequencyOffset;
+  frequencyHz += iFrequencyOffset;
 
   fe_bandwidth bandwidth;
   if (!CountryUtils::GetBandwidth(iChannel, m_channelList, bandwidth))
     return cChannel::EmptyChannel;
 
   cDvbTransponder transponder;
+  transponder.SetFrequencyHz(frequencyHz);
+  transponder.SetSymbolRate(27500);
   transponder.SetPolarization(POLARIZATION_HORIZONTAL); // (fe_polarization)0
   transponder.SetInversion(m_caps.caps_inversion);
   transponder.SetBandwidth(bandwidth); // Only loop-dependent variable
@@ -139,7 +141,7 @@ ChannelPtr cScanTaskTerrestrial::GetChannel(fe_modulation modulation, unsigned i
   transponder.SetHierarchy(m_caps.caps_hierarchy);
   transponder.SetRollOff(ROLLOFF_35); // (fe_rolloff)0
 
-  channel->SetTransponderData(SOURCE_TYPE_TERRESTRIAL, frequency, 27500, transponder);
+  channel->SetTransponderData(SOURCE_TYPE_TERRESTRIAL, transponder);
   channel->SetId(0, 0, 0);
 
   return channel;
@@ -192,6 +194,8 @@ ChannelPtr cScanTaskCable::GetChannel(fe_modulation modulation, unsigned int iCh
   }
 
   cDvbTransponder transponder;
+  transponder.SetFrequencyMHz(410); // Find a dvb-c capable device using *some* channel
+  transponder.SetSymbolRate(6900);
   transponder.SetPolarization(POLARIZATION_VERTICAL);
   transponder.SetInversion(INVERSION_OFF);
   transponder.SetBandwidth(BANDWIDTH_8_MHZ);
@@ -204,7 +208,7 @@ ChannelPtr cScanTaskCable::GetChannel(fe_modulation modulation, unsigned int iCh
   transponder.SetHierarchy(HIERARCHY_NONE); // (fe_hierarchy)0
   transponder.SetRollOff(ROLLOFF_35); // (fe_rolloff)0
 
-  channel->SetTransponderData(SOURCE_TYPE_CABLE, 410000, 6900, transponder);
+  channel->SetTransponderData(SOURCE_TYPE_CABLE, transponder);
   channel->SetId(0, 0, 0);
 
   return channel;
@@ -224,8 +228,8 @@ bool cScanTaskSatellite::ValidSatFrequency(unsigned int frequencyHz, const cChan
 
   if (cSettings::Get().m_bDiSEqC)
   {
-    cDvbTransponder transponder(channel.Parameters());
-    cDiseqc *diseqc = GetDiseqc(channel.Source(), channel.FrequencyHz(), transponder.Polarization()); // TODO: Incorrect conversion from fe_polarization_t to char!
+    const cDvbTransponder& transponder = channel.GetTransponder();
+    cDiseqc *diseqc = GetDiseqc(channel.Source(), transponder.FrequencyHz(), transponder.Polarization()); // TODO: Incorrect conversion from fe_polarization_t to char!
 
     if (diseqc)
       frequencyMHz -= diseqc->Lof();
@@ -259,6 +263,8 @@ ChannelPtr cScanTaskSatellite::GetChannel(fe_modulation modulation, unsigned int
   ChannelPtr channel = ChannelPtr(new cChannel);
 
   cDvbTransponder transponder;
+  transponder.SetFrequencyHz(SatelliteUtils::GetTransponder(m_satelliteId, iChannel).intermediate_frequency);
+  transponder.SetSymbolRate(SatelliteUtils::GetTransponder(m_satelliteId, iChannel).symbol_rate);
   transponder.SetPolarization(SatelliteUtils::GetTransponder(m_satelliteId, iChannel).polarization);
   transponder.SetInversion(INVERSION_OFF);
   transponder.SetBandwidth(BANDWIDTH_8_MHZ); // (fe_bandwidth)0
@@ -274,10 +280,7 @@ ChannelPtr cScanTaskSatellite::GetChannel(fe_modulation modulation, unsigned int
   cChannelSource source;
   source.Deserialise(SatelliteUtils::GetSatellite(m_satelliteId).source_id);
 
-  channel->SetTransponderData(source,
-                              SatelliteUtils::GetTransponder(m_satelliteId, iChannel).intermediate_frequency,
-                              SatelliteUtils::GetTransponder(m_satelliteId, iChannel).symbol_rate,
-                              transponder);
+  channel->SetTransponderData(source, transponder);
 
   if (!ValidSatFrequency(SatelliteUtils::GetTransponder(m_satelliteId, iChannel).intermediate_frequency, *channel))
     return cChannel::EmptyChannel;
@@ -316,6 +319,8 @@ ChannelPtr cScanTaskATSC::GetChannel(fe_modulation modulation, unsigned int iCha
   // wirbelscan comment: "FIXME: VSB vs QAM here"
 
   cDvbTransponder transponder;
+  transponder.SetFrequencyHz(frequency);
+  transponder.SetSymbolRate(cScanConfig::TranslateSymbolRate(symbolRate));
   transponder.SetPolarization(POLARIZATION_VERTICAL);
   transponder.SetInversion(m_caps.caps_inversion);
   transponder.SetBandwidth(BANDWIDTH_8_MHZ); // Should probably be 8000000 (8MHz) or BANDWIDTH_8_MHZ
@@ -329,7 +334,7 @@ ChannelPtr cScanTaskATSC::GetChannel(fe_modulation modulation, unsigned int iCha
   transponder.SetRollOff(ROLLOFF_35); // (fe_rolloff)0
 
   ChannelPtr channel = ChannelPtr(new cChannel);
-  channel->SetTransponderData(SOURCE_TYPE_ATSC, frequency, cScanConfig::TranslateSymbolRate(symbolRate), transponder);
+  channel->SetTransponderData(SOURCE_TYPE_ATSC, transponder);
   channel->SetId(0, 0, 0);
 
   return channel;

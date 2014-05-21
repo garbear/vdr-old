@@ -153,6 +153,8 @@ const tDvbParameter _RollOffValues[] =
 };
 
 cDvbTransponder::cDvbTransponder(
+   unsigned int          frequencyHz  /* = 0, */,
+   unsigned int          symbolRate   /* = 0, */,
    fe_polarization       polarization /* = POLARIZATION_HORIZONTAL */,
    fe_spectral_inversion inversion    /* = INVERSION_AUTO */,
    fe_bandwidth          bandwidth    /* = BANDWIDTH_8_MHZ */,
@@ -165,7 +167,9 @@ cDvbTransponder::cDvbTransponder(
    fe_hierarchy          hierarchy    /* = HIERARCHY_AUTO */,
    fe_rolloff            rollOff      /* = ROLLOFF_AUTO */
 )
- : m_polarization(polarization),
+ : m_frequencyHz(frequencyHz),
+   m_symbolRate(symbolRate),
+   m_polarization(polarization),
    m_inversion(inversion),
    m_bandwidth(bandwidth),
    m_coderateH(coderateH),
@@ -182,7 +186,9 @@ cDvbTransponder::cDvbTransponder(
 
 bool cDvbTransponder::operator==(const cDvbTransponder& rhs) const
 {
-  return m_polarization == rhs.m_polarization &&
+  return m_frequencyHz  == rhs.m_frequencyHz &&
+         m_symbolRate   == rhs.m_symbolRate &&
+         m_polarization == rhs.m_polarization &&
          m_inversion    == rhs.m_inversion &&
          m_bandwidth    == rhs.m_bandwidth &&
          m_coderateH    == rhs.m_coderateH &&
@@ -200,6 +206,19 @@ void cDvbTransponder::Reset()
 {
   cDvbTransponder defaults;
   *this = defaults;
+}
+
+unsigned int cDvbTransponder::WTF(unsigned int frequencyMHz, fe_polarization polarization)
+{
+  // Some satellites have transponders at the same frequency, just with different polarization
+  switch (polarization)
+  {
+  case POLARIZATION_HORIZONTAL:     frequencyMHz += 100000; break; // WTF 100 GHZ???
+  case POLARIZATION_VERTICAL:       frequencyMHz += 200000; break; // WTF 200 GHZ???
+  case POLARIZATION_CIRCULAR_LEFT:  frequencyMHz += 300000; break; // WTF 300 GHZ???
+  case POLARIZATION_CIRCULAR_RIGHT: frequencyMHz += 400000; break; // WTF 400 GHZ???
+  }
+  return frequencyMHz;
 }
 
 unsigned int cDvbTransponder::BandwidthHz() const
@@ -239,6 +258,9 @@ bool cDvbTransponder::Serialise(eDvbType type, TiXmlNode* node) const
   TiXmlElement *element = node->ToElement();
   if (element == NULL)
     return false;
+
+  element->SetAttribute(TRANSPONDER_XML_ATTR_FREQUENCY, m_frequencyHz);
+  element->SetAttribute(TRANSPONDER_XML_ATTR_SYMBOL_RATE, m_symbolRate);
 
   switch (type)
   {
@@ -313,6 +335,14 @@ bool cDvbTransponder::Deserialise(const TiXmlNode* node)
     return false;
 
   Reset();
+
+  const char* frequency = elem->Attribute(TRANSPONDER_XML_ATTR_FREQUENCY);
+  if (frequency != NULL)
+    m_frequencyHz = StringUtils::IntVal(frequency);
+
+  const char* symbolRate = elem->Attribute(TRANSPONDER_XML_ATTR_SYMBOL_RATE);
+  if (symbolRate != NULL)
+    m_symbolRate = StringUtils::IntVal(symbolRate);
 
   DeserialiseDriverValue(elem->Attribute(TRANSPONDER_XML_ATTR_POLARIZATION), m_polarization, _PolarizationValues);
   DeserialiseDriverValue(elem->Attribute(TRANSPONDER_XML_ATTR_INVERSION), m_inversion, _InversionValues);

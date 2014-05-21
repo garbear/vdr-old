@@ -329,13 +329,4 @@ TEST(Channel, SerialiseDeserialise)
   */
 }
 
-TEST(Channel, Transponder)
-{
-  unsigned int frequency = 1000 * 1000 * 1000; // 1GHz
-  EXPECT_EQ(cChannel::TransponderWTF(frequency, POLARIZATION_HORIZONTAL), frequency + 100 * 1000);
-  EXPECT_EQ(cChannel::TransponderWTF(frequency, POLARIZATION_VERTICAL), frequency + 200 * 1000);
-  EXPECT_EQ(cChannel::TransponderWTF(frequency, POLARIZATION_CIRCULAR_LEFT), frequency + 300 * 1000);
-  EXPECT_EQ(cChannel::TransponderWTF(frequency, POLARIZATION_CIRCULAR_RIGHT), frequency + 400 * 1000);
-}
-
 }

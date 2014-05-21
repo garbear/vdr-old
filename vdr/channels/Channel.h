@@ -200,35 +200,16 @@ public:
 
   void SetCaDescriptors(const CaDescriptorVector& caDescriptors);
 
-  const cDvbTransponder& Parameters(void) const { return m_transponder; }
-  bool SetTransponderData(cChannelSource source, unsigned int frequencyHz, int symbolRate, const cDvbTransponder& transponder);
+  const cDvbTransponder& GetTransponder(void) const { return m_transponder; }
+  bool SetTransponderData(cChannelSource source, const cDvbTransponder& transponder);
   void CopyTransponderData(const cChannel& channel);
-
-  unsigned int FrequencyHz(void)  const { return m_frequencyHz; }
-  unsigned int FrequencyKHz(void) const { return m_frequencyHz / 1000; }
-  unsigned int FrequencyMHz(void) const { return m_frequencyHz / (1000 * 1000); }
 
   /*!
    * \brief Returns the transponder frequency in MHz, plus the polarization in
    * the case of a satellite. The polarization takes the form of a mask in the
-   * 100 GHz range (see TransponderWTF()).
+   * 100 GHz range (see cDvbTransponder::WTF()).
    */
-  unsigned int TransponderFrequencyMHz(void) const;
-
-  /*!
-   * \brief Builds the transponder from the given frequency and polarization.
-   *
-   * This function adds 100 GHz - 400 GHz to the frequency depending on the
-   * polarization. I believe this is used as a mask so that the ISTRANSPONDER()
-   * macro can differentiate between transponders at the same frequency but with
-   * different polarizations. "WTF" has been added to clearly indicate that this
-   * function has confusing behaviour.
-   */
-  static unsigned int TransponderWTF(unsigned int frequencyMHz, fe_polarization polarization);
-
-  void SetFrequencyHz(unsigned int frequencyHz) { m_frequencyHz = frequencyHz; }
-
-  int SymbolRate(void) const { return m_symbolRate; }
+  unsigned int FrequencyMHzWithPolarization() const;
 
   unsigned int Number(void) const { return m_number; }
   void SetNumber(unsigned int number) { m_number = number; }
@@ -264,8 +245,6 @@ private:
   CaDescriptorVector          m_caDescriptors;   // Max 12
 
   cDvbTransponder             m_transponder;
-  unsigned int                m_frequencyHz;     // TODO: Move to transponder params
-  int                         m_symbolRate;      // TODO: Move to transponder params
 
   unsigned int                m_number;          // Sequence number assigned on load
 

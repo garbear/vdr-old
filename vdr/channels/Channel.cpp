@@ -130,8 +130,6 @@ void cChannel::Reset(void)
   m_channelId      = cChannelID();
   m_videoStream    = VideoStream();
   m_teletextStream = TeletextStream();
-  m_frequencyHz    = 0;
-  m_symbolRate     = 0;
   m_number         = 0;
   m_modification   = CHANNELMOD_NONE,
   m_linkChannels   = NULL;
@@ -161,8 +159,6 @@ cChannel& cChannel::operator=(const cChannel& rhs)
   m_teletextStream  = rhs.m_teletextStream;
   m_caDescriptors   = rhs.m_caDescriptors;
   m_transponder     = rhs.m_transponder;
-  m_frequencyHz     = rhs.m_frequencyHz;
-  m_symbolRate      = rhs.m_symbolRate;
   m_number          = rhs.m_number;
 
   // TODO
@@ -312,30 +308,24 @@ void cChannel::SetCaDescriptors(const CaDescriptorVector& caDescriptors)
   }
 }
 
-bool cChannel::SetTransponderData(cChannelSource source, unsigned int frequencyHz, int symbolRate, const cDvbTransponder& transponder)
+bool cChannel::SetTransponderData(cChannelSource source, const cDvbTransponder& transponder)
 {
+  /* TODO: Move this logic elsewhere!
   // Workarounds for broadcaster stupidity:
   // Some providers broadcast the transponder frequency of their channels with two different
   // values (like 12551000 and 12552000), so we need to allow for a little tolerance here
-  if (::abs(m_frequencyHz - frequencyHz) <= 1000)
-    frequencyHz = FrequencyHz();
-
-  // Sometimes the transponder frequency is set to 0, which is just wrong
-  if (frequencyHz == 0)
-    return false;
+  if (::abs(m_transponder.FrequencyHz() - transponder.FrequencyHz()) <= 1000)
+    transponder.SetFrequencyHz(m_transponder.FrequencyHz());
 
   // Sometimes the symbol rate is off by one
-  if (::abs(m_symbolRate - symbolRate) <= 1)
-    symbolRate = m_symbolRate;
+  if (::abs(m_transponder.SymbolRate() - transponder.SymbolRate()) <= 1)
+    transponder.SetSymbolRate(m_transponder.SymbolRate());
+  */
 
   if (m_channelId.m_source != source      ||
-      m_frequencyHz        != frequencyHz ||
-      m_symbolRate         != symbolRate  ||
       m_transponder        != transponder)
   {
     m_channelId.m_source = source;
-    m_frequencyHz        = frequencyHz;
-    m_symbolRate         = symbolRate;
     m_transponder        = transponder;
 
     m_schedule.reset();
@@ -350,35 +340,19 @@ bool cChannel::SetTransponderData(cChannelSource source, unsigned int frequencyH
 
 void cChannel::CopyTransponderData(const cChannel& channel)
 {
-  m_frequencyHz        = channel.m_frequencyHz;
   m_channelId.m_source = channel.m_channelId.m_source;
-  m_symbolRate         = channel.m_symbolRate;
   m_transponder        = channel.m_transponder;
 
   m_modification |= CHANNELMOD_TRANSP;
   SetChanged();
 }
 
-unsigned int cChannel::TransponderFrequencyMHz() const
+unsigned int cChannel::FrequencyMHzWithPolarization() const
 {
-  unsigned int transponderFreqMHz = FrequencyMHz();
-  if (Source() == SOURCE_TYPE_SATELLITE)
-    transponderFreqMHz = TransponderWTF(transponderFreqMHz, m_transponder.Polarization());
+  if (m_channelId.m_source == SOURCE_TYPE_SATELLITE)
+    return cDvbTransponder::WTF(m_transponder.FrequencyMHz(), m_transponder.Polarization());
 
-  return transponderFreqMHz;
-}
-
-unsigned int cChannel::TransponderWTF(unsigned int frequencyMHz, fe_polarization polarization)
-{
-  // Some satellites have transponders at the same frequency, just with different polarization
-  switch (polarization)
-  {
-  case POLARIZATION_HORIZONTAL:     frequencyMHz += 100000; break; // WTF 100 GHZ???
-  case POLARIZATION_VERTICAL:       frequencyMHz += 200000; break; // WTF 200 GHZ???
-  case POLARIZATION_CIRCULAR_LEFT:  frequencyMHz += 300000; break; // WTF 300 GHZ???
-  case POLARIZATION_CIRCULAR_RIGHT: frequencyMHz += 400000; break; // WTF 400 GHZ???
-  }
-  return frequencyMHz;
+  return m_transponder.FrequencyMHz();
 }
 
 eChannelMod cChannel::Modification(eChannelMod mask /* = CHANNELMOD_ALL */)
@@ -629,12 +603,6 @@ bool cChannel::Serialise(TiXmlNode* node) const
       return false;
   }
 
-  if (m_frequencyHz != 0)
-    channelElement->SetAttribute(CHANNEL_XML_ATTR_FREQUENCY, m_frequencyHz);
-
-  if (m_symbolRate != 0)
-    channelElement->SetAttribute(CHANNEL_XML_ATTR_SRATE, m_symbolRate);
-
   return true;
 }
 
@@ -772,14 +740,6 @@ bool cChannel::Deserialise(const TiXmlNode* node)
       }
     }
   }
-
-  const char *frequency = elem->Attribute(CHANNEL_XML_ATTR_FREQUENCY);
-  if (frequency != NULL)
-    m_frequencyHz = StringUtils::IntVal(frequency);
-
-  const char *symbolRate = elem->Attribute(CHANNEL_XML_ATTR_SRATE);
-  if (symbolRate != NULL)
-    m_symbolRate = StringUtils::IntVal(symbolRate);
 
   const TiXmlNode *transponderNode = elem->FirstChild(CHANNEL_XML_ELM_PARAMETERS);
   if (transponderNode)

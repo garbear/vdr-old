@@ -259,7 +259,7 @@ ChannelPtr cChannelManager::GetByServiceID(int serviceID, cChannelSource source,
     const ChannelVector &channelVec = it->second;
     for (ChannelVector::const_iterator itChannel = channelVec.begin(); itChannel != channelVec.end(); ++itChannel)
     {
-      if ((*itChannel)->Sid() == serviceID && (*itChannel)->Source() == source && ISTRANSPONDER((*itChannel)->TransponderFrequencyMHz(), transponder))
+      if ((*itChannel)->Sid() == serviceID && (*itChannel)->Source() == source && ISTRANSPONDER((*itChannel)->FrequencyMHzWithPolarization(), transponder))
         return (*itChannel);
     }
   }
@@ -274,7 +274,7 @@ ChannelPtr cChannelManager::GetByServiceID(const ChannelVector& channels, int se
 
   for (ChannelVector::const_iterator itChannel = channels.begin(); itChannel != channels.end(); ++itChannel)
   {
-    if ((*itChannel)->Sid() == serviceID && (*itChannel)->Source() == source && ISTRANSPONDER((*itChannel)->TransponderFrequencyMHz(), transponder))
+    if ((*itChannel)->Sid() == serviceID && (*itChannel)->Source() == source && ISTRANSPONDER((*itChannel)->FrequencyMHzWithPolarization(), transponder))
       return (*itChannel);
   }
   return cChannel::EmptyChannel;

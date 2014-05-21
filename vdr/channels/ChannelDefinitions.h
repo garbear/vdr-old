@@ -39,9 +39,7 @@
 #define CHANNEL_XML_ATTR_PROVIDER     "provider"
 #define CHANNEL_XML_ATTR_SEPARATOR    "separator"
 #define CHANNEL_XML_ATTR_NUMBER       "number"
-#define CHANNEL_XML_ATTR_FREQUENCY    "frequency"
 #define CHANNEL_XML_ATTR_PARAMETERS   "parameters"
-#define CHANNEL_XML_ATTR_SRATE        "srate"
 #define CHANNEL_XML_ATTR_VPID         "vpid"
 #define CHANNEL_XML_ATTR_PPID         "ppid"
 #define CHANNEL_XML_ATTR_VTYPE        "vtype"
@@ -59,6 +57,8 @@
 #define CHANNEL_ID_XML_ATTR_TSID "tsid" // Transport stream ID
 #define CHANNEL_ID_XML_ATTR_SID  "sid"  // Service ID
 
+#define TRANSPONDER_XML_ATTR_FREQUENCY    "frequency"
+#define TRANSPONDER_XML_ATTR_SYMBOL_RATE  "symbolrate"
 #define TRANSPONDER_XML_ATTR_POLARIZATION "polarization"
 #define TRANSPONDER_XML_ATTR_INVERSION    "inversion"
 #define TRANSPONDER_XML_ATTR_BANDWIDTH    "bandwidth"

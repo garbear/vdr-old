@@ -1923,10 +1923,10 @@ void cCamSlot::SetPid(int Pid, bool Active)
 void cCamSlot::AddChannel(const cChannel& Channel)
 {
   CLockObject lock(mutex);
-  if (m_source != Channel.Source() || transponder != Channel.TransponderFrequencyMHz())
+  if (m_source != Channel.Source() || transponder != Channel.FrequencyMHzWithPolarization())
     StopDecrypting();
   m_source = Channel.Source();
-  transponder = Channel.TransponderFrequencyMHz();
+  transponder = Channel.FrequencyMHzWithPolarization();
   if (Channel.GetCaId(0) >= CA_ENCRYPTED_MIN)
   {
     AddPid(Channel.Sid(), Channel.GetVideoStream().vpid, STREAM_TYPE_VIDEO);
@@ -1950,7 +1950,7 @@ bool cCamSlot::CanDecrypt(const cChannel& channel)
   CLockObject lock(mutex);
   cCiConditionalAccessSupport *cas = (cCiConditionalAccessSupport *)GetSessionByResourceId(RI_CONDITIONAL_ACCESS_SUPPORT);
   if (cas && cas->RepliesToQuery()) {
-     cCiCaPmt CaPmt(CPCI_QUERY, channel.Source(), channel.TransponderFrequencyMHz(), channel.Sid(), GetCaSystemIds());
+     cCiCaPmt CaPmt(CPCI_QUERY, channel.Source(), channel.FrequencyMHzWithPolarization(), channel.Sid(), GetCaSystemIds());
      CaPmt.SetListManagement(CPLM_ADD); // WORKAROUND: CPLM_ONLY doesn't work with Alphacrypt 3.09 (deletes existing CA_PMTs)
 
      CaPmt.AddPid(channel.GetVideoStream().vpid, STREAM_TYPE_VIDEO);

@@ -69,17 +69,17 @@ ChannelVector cPsipVct::GetChannels(void)
 
         // Modulation mode
         cDvbTransponder transponder;
-        unsigned int symbolRateHz = 0;
+        //unsigned int symbolRateHz = 0;
         ModulationMode modulation = (ModulationMode)channelInfo.getModulationMode();
         switch (modulation)
         {
         case ModulationModeSCTE_1:
           transponder.SetModulation(QAM_64);
-          symbolRateHz = 5057000; // TODO
+          transponder.SetSymbolRate(5057000);
           break;
         case ModulationModeSCTE_2:
           transponder.SetModulation(QAM_256);
-          symbolRateHz = 5361000; // TODO
+          transponder.SetSymbolRate(5361000);
           break;
         case ModulationModeATSC_VSB8:
           transponder.SetModulation(VSB_8);
@@ -90,8 +90,7 @@ ChannelVector cPsipVct::GetChannels(void)
         default:
           break;
         }
-        const unsigned int frequencyHz = 0; // TODO
-        channel->SetTransponderData(SOURCE_TYPE_ATSC, symbolRateHz, frequencyHz, transponder);
+        channel->SetTransponderData(SOURCE_TYPE_ATSC, transponder);
 
         // Transport Stream ID (TID) and program number / service ID (SID)
         // TODO: SID is 0xFFFF for analog channels

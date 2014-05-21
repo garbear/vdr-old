@@ -56,6 +56,9 @@ TEST(PSIP_STT, GetEvents)
       cFrontendCapabilities caps(device->m_dvbTuner.GetCapabilities());
 
       cDvbTransponder transponder;
+      transponder.SetFrequencyMHz(177);
+      transponder.SetSymbolRate(cScanConfig::TranslateSymbolRate(eSR_6900000));
+      transponder.SetPolarization(POLARIZATION_VERTICAL);
       transponder.SetPolarization(POLARIZATION_VERTICAL);
       transponder.SetInversion(caps.caps_inversion);
       transponder.SetBandwidth(BANDWIDTH_8_MHZ); // Should probably be 8000000 (8MHz) or BANDWIDTH_8_MHZ
@@ -68,10 +71,8 @@ TEST(PSIP_STT, GetEvents)
       transponder.SetHierarchy(HIERARCHY_NONE); // (fe_hierarchy)0
       transponder.SetRollOff(ROLLOFF_35); // (fe_rolloff)0
 
-      const unsigned int frequency = 177000000; // 177 MHz
-
       channel = ChannelPtr(new cChannel);
-      channel->SetTransponderData(SOURCE_TYPE_ATSC, frequency, cScanConfig::TranslateSymbolRate(eSR_6900000), transponder);
+      channel->SetTransponderData(SOURCE_TYPE_ATSC, transponder);
       channel->SetId(0, 0, 0);
     }
 

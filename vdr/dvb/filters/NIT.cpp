@@ -188,7 +188,7 @@ ChannelVector cNit::GetTransponders()
               cDvbTransponder dtp;
 
               // Symbol rate
-              int symbolRate = BCD2INT(sd->getSymbolRate()) / 10;
+              dtp.SetSymbolRate(BCD2INT(sd->getSymbolRate()) / 10);
 
               // Polarization
               dtp.SetPolarization((fe_polarization)sd->getPolarization());
@@ -208,7 +208,7 @@ ChannelVector cNit::GetTransponders()
               dtp.SetCoderateH(codeRates[sd->getFecInner()]);
 
               // Frequency
-              int iFrequencyKHz = frequenciesKHz[0] = BCD2INT(sd->getFrequency()) / 100;
+              dtp.SetFrequencyHz(frequenciesKHz[0] = BCD2INT(sd->getFrequency()) / 100);
 
               // Modulation
               //fe_modulation modulationType = QPSK;
@@ -221,7 +221,7 @@ ChannelVector cNit::GetTransponders()
               assert(GetCurrentlyTunedTransponder().get() != NULL); // TODO
               for (vector<uint32_t>::const_iterator itKHz = frequenciesKHz.begin(); itKHz != frequenciesKHz.end(); ++itKHz)
               {
-                if (ISTRANSPONDER(cChannel::TransponderWTF(*itKHz, dtp.Polarization()), GetCurrentlyTunedTransponder()->TransponderFrequencyMHz()))
+                if (ISTRANSPONDER(cDvbTransponder::WTF(*itKHz, dtp.Polarization()), GetCurrentlyTunedTransponder()->GetTransponder().FrequencyMHz()))
                 {
                   thisNetwork.bHasTransponder = true;
                   break;
@@ -235,7 +235,7 @@ ChannelVector cNit::GetTransponders()
               {
                 ChannelPtr transponder = ChannelPtr(new cChannel);
                 transponder->SetId(ts.getOriginalNetworkId(), ts.getTransportStreamId(), 0);
-                if (transponder->SetTransponderData(source, frequenciesKHz[0], symbolRate, dtp))
+                if (transponder->SetTransponderData(source, dtp))
                   transponders.push_back(transponder);
               }
 
@@ -339,7 +339,7 @@ ChannelVector cNit::GetTransponders()
               cChannelSource source = SOURCE_TYPE_CABLE;
 
               // Frequency
-              int iFrequencyKHz = frequenciesKHz[0] = BCD2INT(sd->getFrequency()) / 10;
+              dtp.SetFrequencyKHz(frequenciesKHz[0] = BCD2INT(sd->getFrequency()) / 10);
 
               //XXX FEC_outer???
               static fe_code_rate codeRates[] =
@@ -356,12 +356,12 @@ ChannelVector cNit::GetTransponders()
               dtp.SetModulation(modulations[std::min(sd->getModulation(), 6)]);
 
               // Symbol rate
-              int symbolRate = BCD2INT(sd->getSymbolRate()) / 10;
+              dtp.SetSymbolRate(BCD2INT(sd->getSymbolRate()) / 10);
 
               for (vector<uint32_t>::const_iterator itKHz = frequenciesKHz.begin(); itKHz != frequenciesKHz.end(); ++itKHz)
               {
                 assert(GetCurrentlyTunedTransponder().get() != NULL); // TODO
-                if (ISTRANSPONDER(*itKHz / 1000, GetCurrentlyTunedTransponder()->TransponderFrequencyMHz()))
+                if (ISTRANSPONDER(*itKHz / 1000, GetCurrentlyTunedTransponder()->FrequencyMHzWithPolarization()))
                 {
                   thisNetwork.bHasTransponder = true;
                   break;
@@ -372,7 +372,7 @@ ChannelVector cNit::GetTransponders()
               {
                 ChannelPtr transponder = ChannelPtr(new cChannel);
                 transponder->SetId(ts.getOriginalNetworkId(), ts.getTransportStreamId(), 0);
-                if (transponder->SetTransponderData(source, frequenciesKHz[0], symbolRate, dtp))
+                if (transponder->SetTransponderData(source, dtp))
                   transponders.push_back(transponder);
               }
 
@@ -438,7 +438,7 @@ ChannelVector cNit::GetTransponders()
 
               cChannelSource source = SOURCE_TYPE_TERRESTRIAL;
 
-              int iFrequencyKHz = frequenciesKHz[0] = sd->getFrequency() * 10;
+              dtp.SetFrequencyKHz(frequenciesKHz[0] = sd->getFrequency() * 10);
 
               // Bandwidth
               static fe_bandwidth bandwidths[] = { BANDWIDTH_8_MHZ, BANDWIDTH_7_MHZ, BANDWIDTH_6_MHZ, BANDWIDTH_5_MHZ };
@@ -490,7 +490,7 @@ ChannelVector cNit::GetTransponders()
               for (vector<uint32_t>::const_iterator itKHz = frequenciesKHz.begin(); itKHz != frequenciesKHz.end(); ++itKHz)
               {
                 assert(GetCurrentlyTunedTransponder().get() != NULL); // TODO
-                if (ISTRANSPONDER(*itKHz / (1000 * 1000), GetCurrentlyTunedTransponder()->TransponderFrequencyMHz()))
+                if (ISTRANSPONDER(*itKHz / (1000 * 1000), GetCurrentlyTunedTransponder()->FrequencyMHzWithPolarization()))
                 {
                   thisNetwork.bHasTransponder = true;
                   break;
@@ -501,7 +501,8 @@ ChannelVector cNit::GetTransponders()
               {
                 ChannelPtr transponder = ChannelPtr(new cChannel);
                 transponder->SetId(ts.getOriginalNetworkId(), ts.getTransportStreamId(), 0);
-                if (transponder->SetTransponderData(source, *itKHz, 0, dtp))
+                dtp.SetFrequencyKHz(*itKHz);
+                if (transponder->SetTransponderData(source, dtp))
                   transponders.push_back(transponder);
               }
 

@@ -20,6 +20,7 @@
  */
 #pragma once
 
+#include "channels/ChannelSource.h"
 #include "dvb/extended_frontend.h"
 
 #include <string>
@@ -49,7 +50,9 @@ enum eDvbType
 class cDvbTransponder
 {
 public:
-  cDvbTransponder(fe_polarization       polarization = POLARIZATION_HORIZONTAL,
+  cDvbTransponder(unsigned int          frequencyHz  = 0,
+                  unsigned int          symbolRate   = 0,
+                  fe_polarization       polarization = POLARIZATION_HORIZONTAL,
                   fe_spectral_inversion inversion    = INVERSION_AUTO,
                   fe_bandwidth          bandwidth    = BANDWIDTH_8_MHZ,
                   fe_code_rate          coderateH    = FEC_AUTO,
@@ -65,6 +68,27 @@ public:
   bool operator!=(const cDvbTransponder& rhs) const { return !(*this == rhs); }
 
   void Reset();
+
+  unsigned int FrequencyHz()      const { return m_frequencyHz; }
+  unsigned int FrequencyKHz(void) const { return m_frequencyHz / 1000; }
+  unsigned int FrequencyMHz(void) const { return m_frequencyHz / (1000 * 1000); }
+  void SetFrequencyHz(unsigned int frequencyHz)   { m_frequencyHz = frequencyHz; }
+  void SetFrequencyKHz(unsigned int frequencyKHz) { m_frequencyHz = frequencyKHz * 1000; }
+  void SetFrequencyMHz(unsigned int frequencyMHz) { m_frequencyHz = frequencyMHz * 1000 * 1000; }
+
+  /*!
+   * \brief Builds the transponder from the given frequency and polarization.
+   *
+   * This function adds 100 GHz - 400 GHz to the frequency depending on the
+   * polarization. I believe this is used as a mask so that the ISTRANSPONDER()
+   * macro can differentiate between transponders at the same frequency but with
+   * different polarizations. "WTF" has been added to clearly indicate that this
+   * function has confusing behaviour.
+   */
+  static unsigned int WTF(unsigned int frequencyMHz, fe_polarization polarization);
+
+  unsigned int SymbolRate() const { return m_symbolRate; }
+  void SetSymbolRate(unsigned int symbolRate) { m_symbolRate = symbolRate; }
 
   fe_polarization Polarization() const { return m_polarization; }
   void SetPolarization(fe_polarization polarization) { m_polarization = polarization; }
@@ -117,6 +141,8 @@ public:
   static std::vector<std::string> GetModulationsFromCaps(fe_caps_t caps);
 
 private:
+  unsigned int          m_frequencyHz;
+  unsigned int          m_symbolRate;
   fe_polarization       m_polarization;
   fe_spectral_inversion m_inversion;
   fe_bandwidth          m_bandwidth;

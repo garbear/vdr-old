@@ -75,7 +75,7 @@ bool cDvbChannelSubsystem::ProvidesTransponder(const cChannel &channel) const
   if (!ProvidesSource(channel.Source()))
     return false; // doesn't provide source
 
-  cDvbTransponder dtp(channel.Parameters());
+  const cDvbTransponder& dtp = channel.GetTransponder();
 
   // requires modulation system which frontend doesn't provide - return false in these cases
   if (!ProvidesDeliverySystem(cDvbTuner::GetRequiredDeliverySystem(channel))) return false;
@@ -94,7 +94,7 @@ bool cDvbChannelSubsystem::ProvidesTransponder(const cChannel &channel) const
 
   if (channel.Source() != SOURCE_TYPE_SATELLITE ||
       !cSettings::Get().m_bDiSEqC               ||
-      Diseqcs.Get(Device()->CardIndex() + 1, channel.Source(), channel.FrequencyKHz(), dtp.Polarization(), NULL))
+      Diseqcs.Get(Device()->CardIndex() + 1, channel.Source(), dtp.FrequencyKHz(), dtp.Polarization(), NULL))
   {
     return true; // TODO: Previous this checked to see if any devices provided a transponder for the channel
   }
