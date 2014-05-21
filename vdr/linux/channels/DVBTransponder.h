@@ -50,19 +50,19 @@ enum eDvbType
 class cDvbTransponder
 {
 public:
-  cDvbTransponder(unsigned int          frequencyHz  = 0,
-                  unsigned int          symbolRate   = 0,
-                  fe_polarization       polarization = POLARIZATION_HORIZONTAL,
-                  fe_spectral_inversion inversion    = INVERSION_AUTO,
-                  fe_bandwidth          bandwidth    = BANDWIDTH_8_MHZ,
-                  fe_code_rate          coderateH    = FEC_AUTO,
-                  fe_code_rate          coderateL    = FEC_AUTO,
-                  fe_modulation         modulation   = QPSK,
-                  eSystemType           system       = DVB_SYSTEM_1,
-                  fe_transmit_mode      transmission = TRANSMISSION_MODE_AUTO,
-                  fe_guard_interval     guard        = GUARD_INTERVAL_AUTO,
-                  fe_hierarchy          hierarchy    = HIERARCHY_AUTO,
-                  fe_rolloff            rollOff      = ROLLOFF_AUTO);
+  cDvbTransponder(unsigned int            frequencyHz  = 0,
+                  unsigned int            symbolRate   = 0,
+                  fe_polarization_t       polarization = POLARIZATION_HORIZONTAL,
+                  fe_spectral_inversion_t inversion    = INVERSION_AUTO,
+                  fe_bandwidth_t          bandwidth    = BANDWIDTH_8_MHZ,
+                  fe_code_rate_t          coderateH    = FEC_AUTO,
+                  fe_code_rate_t          coderateL    = FEC_AUTO,
+                  fe_modulation_t         modulation   = QPSK,
+                  eSystemType             system       = DVB_SYSTEM_1,
+                  fe_transmit_mode_t      transmission = TRANSMISSION_MODE_AUTO,
+                  fe_guard_interval_t     guard        = GUARD_INTERVAL_AUTO,
+                  fe_hierarchy_t          hierarchy    = HIERARCHY_AUTO,
+                  fe_rolloff_t            rollOff      = ROLLOFF_AUTO);
 
   bool operator==(const cDvbTransponder& rhs) const;
   bool operator!=(const cDvbTransponder& rhs) const { return !(*this == rhs); }
@@ -90,39 +90,39 @@ public:
   unsigned int SymbolRate() const { return m_symbolRate; }
   void SetSymbolRate(unsigned int symbolRate) { m_symbolRate = symbolRate; }
 
-  fe_polarization Polarization() const { return m_polarization; }
-  void SetPolarization(fe_polarization polarization) { m_polarization = polarization; }
+  fe_polarization_t Polarization() const { return m_polarization; }
+  void SetPolarization(fe_polarization_t polarization) { m_polarization = polarization; }
 
-  fe_spectral_inversion Inversion() const { return m_inversion; }
-  void SetInversion(fe_spectral_inversion inversion) { m_inversion = inversion; }
+  fe_spectral_inversion_t Inversion() const { return m_inversion; }
+  void SetInversion(fe_spectral_inversion_t inversion) { m_inversion = inversion; }
 
-  fe_bandwidth Bandwidth() const { return m_bandwidth; }
+  fe_bandwidth_t Bandwidth() const { return m_bandwidth; }
   unsigned int BandwidthHz() const;
-  void SetBandwidth(fe_bandwidth bandwidth) { m_bandwidth = bandwidth; }
+  void SetBandwidth(fe_bandwidth_t bandwidth) { m_bandwidth = bandwidth; }
 
-  fe_code_rate CoderateH() const { return m_coderateH; }
-  void SetCoderateH(fe_code_rate coderateH) { m_coderateH = coderateH; }
+  fe_code_rate_t CoderateH() const { return m_coderateH; }
+  void SetCoderateH(fe_code_rate_t coderateH) { m_coderateH = coderateH; }
 
-  fe_code_rate CoderateL() const { return m_coderateL; }
-  void SetCoderateL(fe_code_rate coderateL) { m_coderateL = coderateL; }
+  fe_code_rate_t CoderateL() const { return m_coderateL; }
+  void SetCoderateL(fe_code_rate_t coderateL) { m_coderateL = coderateL; }
 
-  fe_modulation Modulation() const { return m_modulation; }
-  void SetModulation(fe_modulation modulation) { m_modulation = modulation; }
+  fe_modulation_t Modulation() const { return m_modulation; }
+  void SetModulation(fe_modulation_t modulation) { m_modulation = modulation; }
 
   eSystemType System() const { return m_system; }
   void SetSystem(eSystemType system) { m_system = system; }
 
-  fe_transmit_mode Transmission() const { return m_transmission; }
-  void SetTransmission(fe_transmit_mode transmission) { m_transmission = transmission; }
+  fe_transmit_mode_t Transmission() const { return m_transmission; }
+  void SetTransmission(fe_transmit_mode_t transmission) { m_transmission = transmission; }
 
-  fe_guard_interval Guard() const { return m_guard; }
-  void SetGuard(fe_guard_interval guard) { m_guard = guard; }
+  fe_guard_interval_t Guard() const { return m_guard; }
+  void SetGuard(fe_guard_interval_t guard) { m_guard = guard; }
 
-  fe_hierarchy Hierarchy() const { return m_hierarchy; }
-  void SetHierarchy(fe_hierarchy hierarchy) { m_hierarchy = hierarchy; }
+  fe_hierarchy_t Hierarchy() const { return m_hierarchy; }
+  void SetHierarchy(fe_hierarchy_t hierarchy) { m_hierarchy = hierarchy; }
 
-  fe_rolloff RollOff() const { return m_rollOff; }
-  void SetRollOff(fe_rolloff rollOff) { m_rollOff = rollOff; }
+  fe_rolloff_t RollOff() const { return m_rollOff; }
+  void SetRollOff(fe_rolloff_t rollOff) { m_rollOff = rollOff; }
 
   unsigned int StreamId() const { return m_streamId; }
   void SetStreamId(unsigned int streamId) { m_streamId = streamId; }
@@ -141,20 +141,20 @@ public:
   static std::vector<std::string> GetModulationsFromCaps(fe_caps_t caps);
 
 private:
-  unsigned int          m_frequencyHz;
-  unsigned int          m_symbolRate;
-  fe_polarization       m_polarization;
-  fe_spectral_inversion m_inversion;
-  fe_bandwidth          m_bandwidth;
-  fe_code_rate          m_coderateH;
-  fe_code_rate          m_coderateL;
-  fe_modulation         m_modulation;
-  eSystemType           m_system; // TODO: Change this to fe_delivery_system
-  fe_transmit_mode      m_transmission;
-  fe_guard_interval     m_guard;
-  fe_hierarchy          m_hierarchy;
-  fe_rolloff            m_rollOff;
-  unsigned int          m_streamId;
+  unsigned int            m_frequencyHz;
+  unsigned int            m_symbolRate;
+  fe_polarization_t       m_polarization;
+  fe_spectral_inversion_t m_inversion;
+  fe_bandwidth_t          m_bandwidth;
+  fe_code_rate_t          m_coderateH;
+  fe_code_rate_t          m_coderateL;
+  fe_modulation_t         m_modulation;
+  eSystemType             m_system; // TODO: Change this to fe_delivery_system
+  fe_transmit_mode_t      m_transmission;
+  fe_guard_interval_t     m_guard;
+  fe_hierarchy_t          m_hierarchy;
+  fe_rolloff_t            m_rollOff;
+  unsigned int            m_streamId;
 };
 
 }

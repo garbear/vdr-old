@@ -153,19 +153,19 @@ const tDvbParameter _RollOffValues[] =
 };
 
 cDvbTransponder::cDvbTransponder(
-   unsigned int          frequencyHz  /* = 0, */,
-   unsigned int          symbolRate   /* = 0, */,
-   fe_polarization       polarization /* = POLARIZATION_HORIZONTAL */,
-   fe_spectral_inversion inversion    /* = INVERSION_AUTO */,
-   fe_bandwidth          bandwidth    /* = BANDWIDTH_8_MHZ */,
-   fe_code_rate          coderateH    /* = FEC_AUTO */,
-   fe_code_rate          coderateL    /* = FEC_AUTO */,
-   fe_modulation         modulation   /* = QPSK */,
-   eSystemType           system       /* = DVB_SYSTEM_1 */,
-   fe_transmit_mode      transmission /* = TRANSMISSION_MODE_AUTO */,
-   fe_guard_interval     guard        /* = GUARD_INTERVAL_AUTO */,
-   fe_hierarchy          hierarchy    /* = HIERARCHY_AUTO */,
-   fe_rolloff            rollOff      /* = ROLLOFF_AUTO */
+   unsigned int            frequencyHz  /* = 0, */,
+   unsigned int            symbolRate   /* = 0, */,
+   fe_polarization_t       polarization /* = POLARIZATION_HORIZONTAL */,
+   fe_spectral_inversion_t inversion    /* = INVERSION_AUTO */,
+   fe_bandwidth_t          bandwidth    /* = BANDWIDTH_8_MHZ */,
+   fe_code_rate_t          coderateH    /* = FEC_AUTO */,
+   fe_code_rate_t          coderateL    /* = FEC_AUTO */,
+   fe_modulation_t         modulation   /* = QPSK */,
+   eSystemType             system       /* = DVB_SYSTEM_1 */,
+   fe_transmit_mode_t      transmission /* = TRANSMISSION_MODE_AUTO */,
+   fe_guard_interval_t     guard        /* = GUARD_INTERVAL_AUTO */,
+   fe_hierarchy_t          hierarchy    /* = HIERARCHY_AUTO */,
+   fe_rolloff_t            rollOff      /* = ROLLOFF_AUTO */
 )
  : m_frequencyHz(frequencyHz),
    m_symbolRate(symbolRate),
@@ -208,7 +208,7 @@ void cDvbTransponder::Reset()
   *this = defaults;
 }
 
-unsigned int cDvbTransponder::WTF(unsigned int frequencyMHz, fe_polarization polarization)
+unsigned int cDvbTransponder::WTF(unsigned int frequencyMHz, fe_polarization_t polarization)
 {
   // Some satellites have transponders at the same frequency, just with different polarization
   switch (polarization)
@@ -478,7 +478,7 @@ bool cDvbTransponder::Deserialise(const string& strParameters)
   return true;
 }
 
-const char *cDvbTransponder::TranslateModulation(fe_modulation modulation)
+const char *cDvbTransponder::TranslateModulation(fe_modulation_t modulation)
 {
   for (unsigned int i = 0; i < ARRAY_SIZE(_ModulationValues); i++)
   {
