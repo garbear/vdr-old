@@ -51,6 +51,9 @@ using namespace std;
 // This can be reduced to 0 (no delay) by implementing an abortable polling
 // function.
 
+// Wait 4 seconds for section to arrive before timing out
+#define SECTION_TIMEOUT_MS  4000
+
 namespace VDR
 {
 
@@ -68,7 +71,7 @@ cDeviceSectionFilterSubsystem::cFilterResourceRequest::~cFilterResourceRequest(v
 
 void cDeviceSectionFilterSubsystem::cFilterResourceRequest::WaitForSection(void)
 {
-  m_readyEvent.Wait();
+  m_readyEvent.Wait(SECTION_TIMEOUT_MS);
 }
 
 void cDeviceSectionFilterSubsystem::cFilterResourceRequest::HandleSection(const FilterResourcePtr& resource)
