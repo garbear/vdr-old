@@ -10,7 +10,7 @@
   </requires>
   <extension
     point="xbmc.servicedll"
-    library_linux="XBMC_VDR.so"
+    library_linux="libXBMC_VDR.so"
     library_osx="XBMC_VDR.so"
     library_wingl="XBMC_VDR.dll"
     library_windx="XBMC_VDR.dll"
