@@ -30,6 +30,7 @@
 #include "Streamer.h"
 #include "utils/log/Log.h"
 
+#include <assert.h>
 #include <libsi/si.h>
 
 using namespace PLATFORM;

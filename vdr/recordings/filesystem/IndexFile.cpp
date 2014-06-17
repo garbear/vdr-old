@@ -235,7 +235,7 @@ cIndexFile::cIndexFile(const std::string& strFileName, bool Record, bool IsPesRe
            delta = int(buf.st_size % sizeof(tIndexTs));
            if (delta) {
               delta = sizeof(tIndexTs) - delta;
-              esyslog("ERROR: invalid file size (%"PRId64") in '%s'", buf.st_size, m_strFilename.c_str());
+              esyslog("ERROR: invalid file size (%" PRId64 ") in '%s'", buf.st_size, m_strFilename.c_str());
               }
            m_iLast = int((buf.st_size + delta) / sizeof(tIndexTs) - 1);
            if (!Record && m_iLast >= 0) {

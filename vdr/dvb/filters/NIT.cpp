@@ -28,6 +28,7 @@
 #include "utils/log/Log.h"
 #include "utils/StringUtils.h"
 
+#include <assert.h>
 #include <libsi/si_ext.h>
 #include <libsi/descriptor.h>
 #include <libsi/section.h>

@@ -33,6 +33,7 @@
 #include "utils/DateTime.h"
 #include "utils/I18N.h"
 
+#include <assert.h>
 #include <libsi/dish.h>
 #include <libsi/si_ext.h>
 #include <libsi/section.h>

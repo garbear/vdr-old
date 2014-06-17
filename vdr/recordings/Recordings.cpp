@@ -29,6 +29,8 @@
 #include "utils/log/Log.h"
 #include "utils/url/URLUtils.h"
 
+#include <algorithm>
+
 using namespace PLATFORM;
 
 #define SECSINDAY  (60 * 60 * 24)

@@ -31,6 +31,7 @@
 #include "utils/CommonMacros.h"
 #include "utils/log/Log.h"
 
+#include <algorithm>
 #include <ctype.h>
 #include <linux/dvb/ca.h>
 #include <malloc.h>

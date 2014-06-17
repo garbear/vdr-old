@@ -34,6 +34,7 @@
 #include "utils/log/Log.h"
 #include "utils/StringUtils.h"
 
+#include <algorithm>
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -510,7 +511,7 @@ bool cDvbTuner::SetFrontend(const ChannelPtr& channel)
 
   // Reset the cache of data specific to the frontend. Does not effect hardware
   SetCommand(frontends, DTV_CLEAR);
-  dtv_properties cmdSeq = { frontends.size(), frontends.data() };
+  dtv_properties cmdSeq = { (uint32_t)frontends.size(), frontends.data() };
   if (ioctl(m_fileDescriptor, FE_SET_PROPERTY, &cmdSeq) < 0)
   {
     esyslog("Frontend %d/%d: %s", m_device->Adapter(), m_device->Frontend(), strerror(errno));
@@ -670,7 +671,7 @@ bool cDvbTuner::SetFrontend(const ChannelPtr& channel)
 
   SetCommand(frontends, DTV_TUNE);
 
-  dtv_properties cmdSeq2 = { frontends.size(), frontends.data() };
+  dtv_properties cmdSeq2 = { (uint32_t)frontends.size(), frontends.data() };
 
   if (ioctl(m_fileDescriptor, FE_SET_PROPERTY, &cmdSeq2) < 0)
   {
