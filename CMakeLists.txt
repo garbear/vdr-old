@@ -99,6 +99,12 @@ else()
     )
 endif()
 
+# Enable C++11
+ADD_DEFINITIONS(-std=c++11
+                -DHAVE_STD_SHARED_PTR
+                -DHAVE_STD__U16STRING
+                -DHAVE_STD__U32STRING)
+
 set(VDR_FS_SRC_NATIVE
 	vdr/filesystem/native/HDFile.cpp
 	vdr/filesystem/native/HDDirectory.cpp

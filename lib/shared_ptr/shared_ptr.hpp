@@ -9,6 +9,19 @@
  */
 #pragma once
 
+// This implementation of shared_ptr can cause memory corruption
+// Use std::shared_ptr if available
+#if defined(HAVE_STD_SHARED_PTR)
+
+#include <memory>
+
+namespace VDR
+{
+  using std::shared_ptr;
+}
+
+#else
+
 #include <cstddef>      // NULL
 #include <algorithm>    // std::swap
 
@@ -292,3 +305,5 @@ shared_ptr<T> dynamic_pointer_cast(const shared_ptr<U>& ptr) // never throws
 }
 
 }
+
+#endif // HAVE_STD_SHARED_PTR
