@@ -67,7 +67,7 @@ cSectionSyncer::SYNC_STATUS cSectionSyncer::Sync(uint8_t version, int sectionNum
 // --- cFilter ----------------------------------------------------------------
 
 cFilter::cFilter(cDevice* device)
-: m_device(device)
+ : m_device(device)
 {
   assert(m_device);
   m_device->SectionFilter()->RegisterFilter(this);
@@ -84,6 +84,24 @@ void cFilter::OpenResource(u_short pid, u_char tid, u_char mask /* = 0xFF */)
 
   if (newResource)
     m_resources.insert(newResource);
+}
+
+void cFilter::CloseResource(u_short pid, u_char tid, u_char mask /* = 0xFF */)
+{
+  bool bResourceFound = false;
+
+  for (FilterResourceCollection::iterator it = m_resources.begin(); it != m_resources.end(); ++it)
+  {
+    if ((*it)->GetPid() == pid && (*it)->GetTid() == tid && (*it)->GetMask() == mask)
+    {
+      m_resources.erase(it);
+      bResourceFound = true;
+      break;
+    }
+  }
+
+  // Resource is already closed?
+  //assert(bResourceFound);
 }
 
 bool cFilter::GetSection(uint16_t& pid, std::vector<uint8_t>& data)

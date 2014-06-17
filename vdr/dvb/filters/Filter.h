@@ -79,6 +79,7 @@ protected:
    * the derived class.
    */
   void OpenResource(uint16_t pid, uint8_t tid, uint8_t mask = 0xFF);
+  void CloseResource(uint16_t pid, uint8_t tid, uint8_t mask = 0xFF);
 
   /*!
    * Get a section from the resources that have been opened by this filter.
@@ -102,7 +103,7 @@ protected:
   ChannelPtr GetCurrentlyTunedTransponder(void) const;
 
 private:
-  cDevice* const              m_device;    // Device that this filter belongs to
+  cDevice* const           m_device;    // Device that this filter belongs to
   FilterResourceCollection m_resources; // Open resources held by this device
 };
 

@@ -40,9 +40,11 @@ public:
   EventVector GetEvents();
 
 private:
-  std::vector<uint16_t> m_pidsLeftToScan; // Remove PIDs from this list as they are scanned
-  unsigned int          m_gpsUtcOffset;   // Number of leap-seconds between GPS and UTC time systems
-                                          // This is 15 seconds as of 1 January 2009
+  /*!
+   * Number of leap-seconds between GPS and UTC time systems. This is 15 seconds
+   * as of 1 January 2009.
+   */
+  const unsigned int m_gpsUtcOffset;
 };
 
 }

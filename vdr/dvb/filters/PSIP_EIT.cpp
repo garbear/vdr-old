@@ -48,7 +48,6 @@ namespace VDR
 
 cPsipEit::cPsipEit(cDevice* device, const vector<uint16_t>& pids, unsigned int gpsUtcOffset)
  : cFilter(device),
-   m_pidsLeftToScan(pids),
    m_gpsUtcOffset(gpsUtcOffset)
 {
   for (vector<uint16_t>::const_iterator itPid = pids.begin(); itPid != pids.end(); ++itPid)
@@ -61,17 +60,8 @@ EventVector cPsipEit::GetEvents()
 
   uint16_t        pid;  // Packet ID
   vector<uint8_t> data; // Section data
-  while (!m_pidsLeftToScan.empty() && GetSection(pid, data))
+  while (!GetResources().empty() && GetSection(pid, data))
   {
-    vector<uint16_t>::iterator it = std::find(m_pidsLeftToScan.begin(), m_pidsLeftToScan.end(), pid);
-    if (it == m_pidsLeftToScan.end())
-    {
-      dsyslog("EIT: PID %u repeated", pid);
-      continue; // Already scanned
-    }
-
-    m_pidsLeftToScan.erase(it);
-
     SI::PSIP_EIT psipEit(data.data(), false);
     if (psipEit.CheckCRCAndParse())
     {
@@ -113,6 +103,8 @@ EventVector cPsipEit::GetEvents()
     }
 
     dsyslog("EIT: Found PID %u (%u bytes) with %u events", pid, data.size(), events.size());
+
+    CloseResource(pid, TableIdEIT);
   }
 
   return events;
