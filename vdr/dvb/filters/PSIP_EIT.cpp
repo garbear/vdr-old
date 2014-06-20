@@ -62,6 +62,9 @@ EventVector cPsipEit::GetEvents()
   vector<uint8_t> data; // Section data
   while (!GetResources().empty() && GetSection(pid, data))
   {
+    // For logging purposes
+    const size_t numEvents = events.size();
+
     SI::PSIP_EIT psipEit(data.data(), false);
     if (psipEit.CheckCRCAndParse())
     {
@@ -102,7 +105,8 @@ EventVector cPsipEit::GetEvents()
       }
     }
 
-    dsyslog("EIT: Found PID %u (%u bytes) with %u events", pid, data.size(), events.size());
+    dsyslog("EIT: Found PID %u (%u bytes) with %u events (%u total)",
+        pid, data.size(), events.size() - numEvents, events.size());
 
     CloseResource(pid, TableIdEIT);
   }
