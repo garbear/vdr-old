@@ -617,11 +617,9 @@ bool cSettings::LoadFromCmdLine(int argc, char *argv[])
      if (bDisplayHelp)
      {
         printf(MSG_HELP,
-               "DEFAULTCACHEDIR",
                "DEFAULTCONFDIR",
                PATH_MAX - 1,
                NAME_MAX,
-               MAXVIDEOFILESIZEDEFAULT,
                "DEFAULTPLUGINDIR",
                "LIRC_DEVICE",
                "DEFAULTLOCDIR",
