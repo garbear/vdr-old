@@ -36,6 +36,7 @@
 #include "devices/Device.h"
 #include "devices/DeviceManager.h"
 #include "epg/Event.h"
+#include "epg/Schedules.h"
 #include "filesystem/Videodir.h"
 #include "recordings/RecordingInfo.h"
 #include "recordings/Recordings.h"

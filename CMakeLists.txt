@@ -162,12 +162,12 @@ set(VDR_SRCS
 	vdr/dvb/filters/TDT.cpp
 	vdr/epg/Component.cpp
 	vdr/epg/Components.cpp
-	vdr/epg/EPG.cpp
 	vdr/epg/EPGDataReader.cpp
 	vdr/epg/EPGHandler.cpp
 	vdr/epg/EPGHandlers.cpp
 	vdr/epg/Event.cpp
 	vdr/epg/Schedule.cpp
+	vdr/epg/Schedules.cpp
 	vdr/filesystem/Directory.cpp
 	vdr/filesystem/DirectoryFetchJob.cpp
 	vdr/filesystem/File.cpp

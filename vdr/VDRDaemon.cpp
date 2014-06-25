@@ -24,7 +24,6 @@
 #include "channels/ChannelManager.h"
 #include "devices/DeviceManager.h"
 #include "dvb/DiSEqC.h"
-#include "epg/EPG.h"
 #include "epg/EPGDataReader.h"
 #include "filesystem/Directory.h"
 #include "filesystem/SpecialProtocol.h"

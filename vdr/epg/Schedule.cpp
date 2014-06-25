@@ -21,7 +21,6 @@
 
 #include "Schedule.h"
 #include "Components.h"
-#include "EPG.h"
 #include "EPGDefinitions.h"
 #include "Event.h"
 #include "channels/Channel.h"

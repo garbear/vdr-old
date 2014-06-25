@@ -22,7 +22,6 @@
 #include "Channel.h"
 #include "ChannelDefinitions.h"
 #include "dvb/CADescriptor.h"
-#include "epg/EPG.h"
 #include "epg/Event.h"
 #include "epg/Schedule.h"
 #include "filesystem/File.h"

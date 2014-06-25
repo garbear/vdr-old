@@ -24,6 +24,7 @@
 #include "TimerDefinitions.h"
 #include "devices/Device.h"
 #include "devices/DeviceManager.h"
+#include "epg/Schedules.h"
 #include "recordings/Recordings.h"
 #include "utils/log/Log.h"
 #include "utils/Status.h"

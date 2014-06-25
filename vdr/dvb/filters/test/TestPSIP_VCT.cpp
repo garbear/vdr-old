@@ -27,7 +27,6 @@
 #include "devices/linux/DVBDevice.h"
 #include "devices/linux/test/DVBDeviceNames.h"
 #include "devices/subsystems/DeviceChannelSubsystem.h"
-#include "epg/EPG.h"
 #include "sources/linux/DVBTransponderParams.h"
 #include "scan/ScanTask.h"
 #include "scan/ScanConfig.h"

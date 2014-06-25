@@ -26,8 +26,8 @@
 #include "devices/subsystems/DeviceChannelSubsystem.h"
 #include "devices/subsystems/DeviceReceiverSubsystem.h"
 #include "dvb/filters/PSIP_MGT.h"
-#include "epg/EPG.h"
 #include "epg/Event.h"
+#include "epg/Schedules.h"
 #include "settings/Settings.h"
 #include "utils/log/Log.h"
 

@@ -19,7 +19,7 @@
  *
  */
 
-#include "EPG.h"
+#include "Schedules.h"
 #include "EPGDefinitions.h"
 #include "Event.h"
 #include "channels/ChannelFilter.h"

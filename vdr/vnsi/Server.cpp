@@ -27,6 +27,7 @@
 #include "Client.h"
 #include "channels/ChannelFilter.h"
 #include "channels/ChannelManager.h"
+#include "epg/Schedules.h"
 #include "filesystem/Videodir.h"
 #include "recordings/Recordings.h"
 #include "settings/AllowedHosts.h"

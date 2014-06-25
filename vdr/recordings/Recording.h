@@ -23,7 +23,6 @@
 #include "RecordingConfig.h"
 #include "recordings/marks/Mark.h"
 #include "Config.h"
-#include "epg/EPG.h"
 #include "filesystem/File.h"
 #include "filesystem/ResumeFile.h"
 #include "platform/threads/threads.h"

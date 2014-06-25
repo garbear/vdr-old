@@ -20,7 +20,7 @@
  */
 
 #include "EPGDataReader.h"
-#include "EPG.h"
+#include "Schedules.h"
 
 namespace VDR
 {

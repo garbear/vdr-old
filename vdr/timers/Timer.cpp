@@ -31,6 +31,7 @@
 #include "devices/subsystems/DeviceChannelSubsystem.h"
 #include "devices/subsystems/DeviceReceiverSubsystem.h"
 #include "epg/Event.h"
+#include "epg/Schedules.h"
 #include "filesystem/Videodir.h"
 #include "settings/Settings.h"
 #include "utils/CommonMacros.h"
