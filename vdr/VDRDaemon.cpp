@@ -90,6 +90,13 @@ bool cVDRDaemon::LoadConfig(void)
   return true;
 }
 
+bool cVDRDaemon::SaveConfig(void)
+{
+  cTimers::Get().Save();
+
+  return true;
+}
+
 bool cVDRDaemon::Init()
 {
   if (!LoadConfig())
@@ -133,7 +140,6 @@ void *cVDRDaemon::Process()
     m_sleepEvent.Wait(100);
   }
   DeInit();
-  cTimers::Get().Save();
   m_exitEvent.Broadcast();
   return NULL;
 }
@@ -163,6 +169,8 @@ void cVDRDaemon::DeInit()
   cChannelManager::Get().Clear();
 
   SAFE_DELETE(m_server);
+
+  SaveConfig();
 }
 
 bool cVDRDaemon::WaitForShutdown(uint32_t iTimeout /* = 0 */)

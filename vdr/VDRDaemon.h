@@ -44,9 +44,10 @@ public:
   virtual ~cVDRDaemon();
 
   /*!
-   * \brief Load the configuration
+   * \brief Load/save the configuration
    */
   bool LoadConfig(void);
+  bool SaveConfig(void);
 
   /*!
    * \brief Initialize and start the daemon
