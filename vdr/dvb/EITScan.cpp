@@ -77,6 +77,13 @@ cEITScanner& cEITScanner::Get()
 
 void* cEITScanner::Process(void)
 {
+  {
+    cSchedulesLock lock(true);
+    cSchedules* schedules = lock.Get();
+    if (schedules)
+      schedules->Read();
+  }
+
   m_nextFullScan.Init(0);
 
   while (!IsStopped())

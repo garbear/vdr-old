@@ -29,7 +29,6 @@ namespace VDR
 {
 
 class cVNSIServer;
-class cEpgDataReader;
 
 class cVDRDaemon : protected PLATFORM::CThread, public ISignalReceiver
 {
@@ -97,7 +96,6 @@ private:
 
   int              m_exitCode;
   cVNSIServer*     m_server;
-  cEpgDataReader*  m_EpgDataReader;
   bool             m_bConfigLoaded;
 };
 

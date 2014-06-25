@@ -24,7 +24,6 @@
 #include "channels/ChannelManager.h"
 #include "devices/DeviceManager.h"
 #include "dvb/DiSEqC.h"
-#include "epg/EPGDataReader.h"
 #include "filesystem/Directory.h"
 #include "filesystem/SpecialProtocol.h"
 #include "recordings/Recordings.h"
@@ -50,7 +49,6 @@ using namespace PLATFORM;
 cVDRDaemon::cVDRDaemon()
  : m_exitCode(0),
    m_server(NULL),
-   m_EpgDataReader(NULL),
    m_bConfigLoaded(false)
 {
 }
@@ -99,10 +97,6 @@ bool cVDRDaemon::Init()
 
   // Recordings:
   Recordings.Update(true);
-
-  // EPG data:
-  m_EpgDataReader = new cEpgDataReader;
-  m_EpgDataReader->CreateThread(false);
 
   if (cDeviceManager::Get().Initialise() == 0)
   {
@@ -169,7 +163,6 @@ void cVDRDaemon::DeInit()
   cChannelManager::Get().Clear();
 
   SAFE_DELETE(m_server);
-  SAFE_DELETE(m_EpgDataReader);
 }
 
 bool cVDRDaemon::WaitForShutdown(uint32_t iTimeout /* = 0 */)
