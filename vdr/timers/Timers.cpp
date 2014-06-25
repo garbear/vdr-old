@@ -388,7 +388,7 @@ void cTimers::StartNewRecordings(const CDateTime& Now)
     Timer->StartRecording();
 }
 
-void cTimers::Process(void)
+void cTimers::ProcessOnce(void)
 {
   CLockObject lock(m_mutex);
 

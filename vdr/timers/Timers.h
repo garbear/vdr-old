@@ -67,7 +67,7 @@ public:
   bool Load(const std::string &file);
   bool Save(const std::string &file = "");
 
-  void Process(void);
+  void ProcessOnce(void);
 
   TimerPtr GetTimerForRecording(const cRecording* recording) const;
 

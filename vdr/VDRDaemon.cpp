@@ -135,7 +135,7 @@ void *cVDRDaemon::Process()
 {
   while (!IsStopped())
   {
-    cTimers::Get().Process();
+    cTimers::Get().ProcessOnce();
 
     m_sleepEvent.Wait(100);
   }
