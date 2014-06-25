@@ -28,6 +28,7 @@
 #include "utils/CalendarUtils.h"
 #include "utils/I18N.h"
 #include "utils/log/Log.h"
+#include "utils/StringUtils.h"
 #include "utils/UTF8Utils.h"
 #include "utils/XBMCTinyXML.h"
 

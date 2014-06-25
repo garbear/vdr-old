@@ -22,7 +22,6 @@
 
 #include "Timer.h"
 #include "TimerTypes.h"
-#include "Config.h"
 #include "utils/Tools.h"
 #include "utils/Observer.h"
 #include "utils/DateTime.h"
