@@ -101,14 +101,14 @@ TimerPtr cTimers::GetNextPendingTimer(const CDateTime& Now)
   return t0;
 }
 
-TimerPtr cTimers::GetMatch(const cEvent *Event, eTimerMatch *Match)
+TimerPtr cTimers::GetMatch(const EventPtr& event, eTimerMatch *Match)
 {
   TimerPtr t;
   eTimerMatch m = tmNone;
   CLockObject lock(m_mutex);
   for (std::map<size_t, TimerPtr>::iterator it = m_timers.begin(); it != m_timers.end(); ++it)
   {
-    eTimerMatch tm = it->second->MatchesEvent(Event);
+    eTimerMatch tm = it->second->MatchesEvent(event);
     if (tm > m)
     {
       t = it->second;
@@ -278,7 +278,7 @@ void cTimers::ClearEvents(void)
     it->second->ClearEvent();
 }
 
-bool cTimers::HasTimer(const cEvent* event) const
+bool cTimers::HasTimer(const EventPtr& event) const
 {
   CLockObject lock(m_mutex);
   for (std::map<size_t, TimerPtr>::const_iterator it = m_timers.begin(); it != m_timers.end(); ++it)

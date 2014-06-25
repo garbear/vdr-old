@@ -53,7 +53,7 @@ CTimerTime::CTimerTime(const CDateTime& firstStartTime, uint32_t iWeekdaysMask, 
 {
 }
 
-CTimerTime::CTimerTime(const cEvent* event) :
+CTimerTime::CTimerTime(const EventPtr& event) :
   m_firstStartTime(CDateTime::GetCurrentDateTime()),
   m_iWeekdaysMask(tdNone),
   m_iDurationSecs(cSettings::Get().m_iInstantRecordTime ? cSettings::Get().m_iInstantRecordTime : DEFINSTRECTIME),

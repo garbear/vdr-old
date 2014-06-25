@@ -24,6 +24,7 @@
 #include "TimerTypes.h"
 #include "channels/Channel.h"
 #include "channels/ChannelTypes.h"
+#include "epg/EPGTypes.h"
 
 #include <stddef.h>
 #include <limits.h>
@@ -51,7 +52,6 @@ enum eTimerMatch
   tmFull
 };
 
-class cEvent;
 class cSchedules;
 class cRecorder;
 
@@ -60,7 +60,7 @@ class cTimer
 public:
   cTimer(void);
   cTimer(ChannelPtr channel, const CTimerTime& time, uint32_t iTimerFlags, uint32_t iPriority, uint32_t iLifetimeDays, const char *strRecordingFilename);
-  cTimer(const cEvent *Event);
+  cTimer(const EventPtr& event);
   cTimer(const cTimer &Timer);
   virtual ~cTimer();
 
@@ -84,7 +84,7 @@ public:
   int Priority(void) const                  { return m_iPriority; }
   int LifetimeDays(void) const              { return m_iLifetimeDays; }
   std::string RecordingFilename(void) const { return m_strRecordingFilename; }
-  const cEvent *Event(void) const           { return m_time.EPGEvent(); }
+  EventPtr Event(void) const                { return m_time.EPGEvent(); }
 
   std::string ToDescr(void) const;
 
@@ -93,7 +93,7 @@ public:
 
   bool IsRepeatingEvent(void) const;
   bool Matches(CDateTime checkTime = CDateTime::GetCurrentDateTime(), bool bDirectly = false, int iMarginSeconds = 0);
-  eTimerMatch MatchesEvent(const cEvent *Event, int *Overlap = NULL);
+  eTimerMatch MatchesEvent(const EventPtr& Event, int *Overlap = NULL);
   bool Expired(void) const;
   time_t StartTimeAsTime(void) const;
   CDateTime StartTime(void) const { return m_time.Start(); }
@@ -105,7 +105,7 @@ public:
   void SetRecordingFilename(const std::string& strFile);
   void SetEventFromSchedule(cSchedules *Schedules = NULL);
   void ClearEvent(void);
-  void SetEvent(const cEvent *Event);
+  void SetEvent(const EventPtr& event);
   void SetRecording(cRecorder* recorder, cRecording* recording);
   cRecording* GetRecording(void) const { return m_recording; }
   void SetPending(bool Pending);

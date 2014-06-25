@@ -22,6 +22,7 @@
 #include "Recorder.h"
 #include "RecordingInfo.h"
 #include "Recordings.h"
+//#include "epg/Event.h"
 #include "filesystem/IndexFile.h"
 #include "filesystem/FileName.h"
 #include "filesystem/Directory.h"
@@ -136,7 +137,7 @@ void cRecorder::Receive(uint8_t *Data, int Length)
      }
 }
 
-void cRecorder::SetEvent(const cEvent* event)
+void cRecorder::SetEvent(const EventPtr& event)
 {
   if (m_recordingInfo)
     m_recordingInfo->SetEvent(event);

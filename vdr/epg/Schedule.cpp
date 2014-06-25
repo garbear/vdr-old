@@ -295,7 +295,7 @@ void cSchedule::Cleanup(const CDateTime& Time)
     const EventPtr& event = *it;
 
     static const CDateTimeSpan oneHour(0, 1, 0, 0); // Add one hour for safety
-    if (!cTimers::Get().HasTimer(event.get()) &&
+    if (!cTimers::Get().HasTimer(event) &&
         (!Time.IsValid() ||
             (event->EndTime() + CDateTimeSpan(0, 0, cSettings::Get().m_iEPGLinger, 0) + oneHour) < Time))
     {

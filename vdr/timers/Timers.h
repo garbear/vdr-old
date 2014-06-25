@@ -22,6 +22,7 @@
 
 #include "Timer.h"
 #include "TimerTypes.h"
+#include "epg/EPGTypes.h"
 #include "utils/Tools.h"
 #include "utils/Observer.h"
 #include "utils/DateTime.h"
@@ -31,7 +32,6 @@
 
 namespace VDR
 {
-class cEvent;
 class cRecording;
 
 class cTimers : public Observable
@@ -43,7 +43,7 @@ public:
    * @return the next timer that is scheduled to record now with the highest priority
    */
   TimerPtr GetNextPendingTimer(const CDateTime& Now);
-  TimerPtr GetMatch(const cEvent *Event, eTimerMatch *Match = NULL);
+  TimerPtr GetMatch(const EventPtr& event, eTimerMatch *Match = NULL);
   TimerPtr GetNextActiveTimer(void);
   TimerPtr GetByIndex(size_t index);
   TimerVector GetTimers(void) const;
@@ -65,7 +65,7 @@ public:
   void ClearEvents(void);
   size_t Size(void);
 
-  bool HasTimer(const cEvent* event) const;
+  bool HasTimer(const EventPtr& event) const;
 
   bool Load(void);
   bool Load(const std::string &file);

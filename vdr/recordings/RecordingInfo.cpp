@@ -21,6 +21,7 @@
 
 #include "RecordingInfo.h"
 #include "Recording.h"
+#include "RecordingConfig.h"
 #include "RecordingDefinitions.h"
 #include "channels/ChannelManager.h"
 #include "Config.h"
@@ -52,12 +53,21 @@ std::string dtoa(double d, const char *Format = "%f")
   return buf;
 }
 
-cRecordingInfo::cRecordingInfo(ChannelPtr channel, const cEvent *Event)
+cRecordingInfo::cRecordingInfo(ChannelPtr channel, const EventPtr& event)
 {
   m_channel          = channel;
   m_channelID        = m_channel ? m_channel->GetChannelID() : cChannelID::InvalidID;
-  m_ownEvent         = Event ? NULL : new cEvent(0);
-  m_event            = m_ownEvent ? m_ownEvent : Event;
+
+  if (event.get() != NULL)
+  {
+    m_event          = event;
+  }
+  else
+  {
+    m_ownEvent       = EventPtr(new cEvent(0));
+    m_event          = m_ownEvent;
+  }
+
   m_dFramesPerSecond = DEFAULTFRAMESPERSECOND;
   m_iPriority        = MAXPRIORITY;
   m_iLifetime        = MAXLIFETIME;
@@ -113,14 +123,14 @@ cRecordingInfo::cRecordingInfo(ChannelPtr channel, const cEvent *Event)
       }
     }
     if (Components != m_event->Components())
-      ((cEvent *)m_event)->SetComponents(Components);
+      m_event->SetComponents(Components);
   }
 }
 
 cRecordingInfo::cRecordingInfo(const std::string& strFileName)
 {
   m_channelID        = cChannelID::InvalidID;
-  m_ownEvent         = new cEvent(0);
+  m_ownEvent         = EventPtr(new cEvent(0));
   m_event            = m_ownEvent;
   m_dFramesPerSecond = DEFAULTFRAMESPERSECOND;
   m_iPriority        = MAXPRIORITY;
@@ -128,19 +138,14 @@ cRecordingInfo::cRecordingInfo(const std::string& strFileName)
   m_strFilename      = StringUtils::Format("%s%s", strFileName.c_str(), INFOFILESUFFIX);
 }
 
-cRecordingInfo::~cRecordingInfo()
-{
-  delete m_ownEvent;
-}
-
 void cRecordingInfo::SetData(const char *Title, const char *ShortText, const char *Description)
 {
   if (!isempty(Title))
-     ((cEvent *)m_event)->SetTitle(Title);
+     m_event->SetTitle(Title);
   if (!isempty(ShortText))
-     ((cEvent *)m_event)->SetShortText(ShortText);
+     m_event->SetShortText(ShortText);
   if (!isempty(Description))
-     ((cEvent *)m_event)->SetDescription(Description);
+     m_event->SetDescription(Description);
 }
 
 void cRecordingInfo::SetFramesPerSecond(double FramesPerSecond)
@@ -150,7 +155,7 @@ void cRecordingInfo::SetFramesPerSecond(double FramesPerSecond)
 
 bool cRecordingInfo::Read(const std::string& strFilename /* = "" */)
 {
-  if (!m_ownEvent)
+  if (m_ownEvent.get() == NULL)
     return false;
 
   std::string useFilename(strFilename.empty() ? m_strFilename : strFilename);
@@ -253,7 +258,7 @@ bool cRecordingInfo::Write(const std::string& strFilename /* = "" */) const
   if (m_channelID.IsValid())
     m_channelID.Serialise(recordingNode);
 
-  if (m_event)
+  if (m_event.get() != NULL)
   {
     TiXmlElement epgElement(RECORDING_XML_ELM_EPG_EVENT);
     epgElement.SetAttribute(RECORDING_XML_ATTR_EPG_EVENT_ID,   m_event->EventID());
@@ -273,7 +278,7 @@ bool cRecordingInfo::Write(const std::string& strFilename /* = "" */) const
   return true;
 }
 
-void cRecordingInfo::SetEvent(const cEvent* event)
+void cRecordingInfo::SetEvent(const EventPtr& event)
 {
   m_event = event;
   Write();
@@ -301,7 +306,7 @@ const CEpgComponents* cRecordingInfo::Components(void) const
 
 void cRecordingInfo::SetTitle(const std::string& strTitle)
 {
-  if (m_ownEvent)
+  if (m_ownEvent.get() != NULL)
     m_ownEvent->SetTitle(strTitle);
 }
 

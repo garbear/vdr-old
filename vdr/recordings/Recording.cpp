@@ -360,7 +360,7 @@ std::string cRecording::ExchangeChars(const std::string& strSubject, bool ToFile
   return strReturn;
 }
 
-cRecording::cRecording(TimerPtr Timer, const cEvent *Event)
+cRecording::cRecording(TimerPtr Timer, const EventPtr& event)
 {
   m_iResume = RESUME_NOT_INITIALIZED;
   m_iFileSizeMB = -1; // unknown
@@ -373,8 +373,8 @@ cRecording::cRecording(TimerPtr Timer, const cEvent *Event)
   m_deleted = 0;
   m_hash = -1;
   // set up the actual name:
-  std::string strTitle = Event ? Event->Title() : "";
-  std::string strSubtitle = Event ? Event->ShortText() : "";
+  std::string strTitle = event.get() != NULL ? event->Title() : "";
+  std::string strSubtitle = event.get() != NULL ? event->ShortText() : "";
   if (strTitle.empty())
     strTitle = Timer->Channel()->Name();
   if (strSubtitle.empty())
@@ -416,7 +416,7 @@ cRecording::cRecording(TimerPtr Timer, const cEvent *Event)
   m_iPriority = Timer->Priority();
   m_iLifetimeDays = Timer->LifetimeDays();
   // handle info:
-  m_recordingInfo = new cRecordingInfo(Timer->Channel(), Event);
+  m_recordingInfo = new cRecordingInfo(Timer->Channel(), event);
   m_recordingInfo->SetPriority(m_iPriority);
   m_recordingInfo->SetLifetime(m_iLifetimeDays);
 }

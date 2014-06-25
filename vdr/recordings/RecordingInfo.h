@@ -23,12 +23,12 @@
 #include "channels/Channel.h"
 #include "channels/ChannelID.h"
 #include "channels/ChannelTypes.h"
+#include "epg/EPGTypes.h"
 
 #include <stddef.h>
 
 namespace VDR
 {
-class cEvent;
 class CEpgComponents;
 class CFile;
 
@@ -37,13 +37,13 @@ class CFile;
 class cRecordingInfo
 {
 public:
-  cRecordingInfo(ChannelPtr channel, const cEvent *Event = NULL);
+  cRecordingInfo(ChannelPtr channel, const EventPtr& Event = EventPtr());
   cRecordingInfo(const std::string& strFileName);
-  ~cRecordingInfo();
+  ~cRecordingInfo() { }
   const cChannelID& ChannelID(void) const { return m_channelID; }
   std::string ChannelName(void) const { return m_channel ? m_channel->Name() : ""; }
-  const cEvent *GetEvent(void) const { return m_event; }
-  void SetEvent(const cEvent* event);
+  EventPtr GetEvent(void) const { return m_event; }
+  void SetEvent(const EventPtr& event);
   std::string Title(void) const;
   void SetTitle(const std::string& strTitle);
   std::string ShortText(void) const;
@@ -64,8 +64,8 @@ private:
 
   ChannelPtr    m_channel;
   cChannelID    m_channelID;
-  const cEvent* m_event;
-  cEvent *      m_ownEvent;
+  EventPtr      m_event;
+  EventPtr      m_ownEvent;
   double        m_dFramesPerSecond;
   int           m_iPriority;
   int           m_iLifetime;

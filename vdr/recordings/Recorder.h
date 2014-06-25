@@ -24,6 +24,7 @@
 #include "channels/ChannelTypes.h"
 #include "devices/Receiver.h"
 #include "devices/Remux.h"
+#include "epg/EPGTypes.h"
 #include "platform/threads/threads.h"
 #include "utils/Ringbuffer.h"
 
@@ -43,7 +44,7 @@ public:
                // the given Priority that will record into the file FileName.
   virtual ~cRecorder();
 
-  virtual void SetEvent(const cEvent* event);
+  virtual void SetEvent(const EventPtr& event);
 
 protected:
   virtual void Activate(bool On);

@@ -49,7 +49,7 @@ class cRecording
 {
   friend class cRecordings;
 public:
-  cRecording(TimerPtr Timer, const cEvent *Event);
+  cRecording(TimerPtr Timer, const EventPtr& event);
   cRecording(const std::string& strFileName);
   virtual ~cRecording();
   bool operator==(const cRecording& other) const;

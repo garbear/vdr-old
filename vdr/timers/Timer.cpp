@@ -80,24 +80,24 @@ cTimer::cTimer(ChannelPtr channel, const CTimerTime& time, uint32_t iTimerFlags,
   Matches();
 }
 
-cTimer::cTimer(const cEvent *Event)
+cTimer::cTimer(const EventPtr& event)
 {
   m_bPending      = false;
   m_bInVpsMargin  = false;
   m_iTimerFlags   = tfActive;
   m_index         = 0;
-  m_channel       = cChannelManager::Get().GetByChannelID(Event->ChannelID());
+  m_channel       = cChannelManager::Get().GetByChannelID(event->ChannelID());
   m_recorder      = NULL;
-  m_time          = CTimerTime(Event);
+  m_time          = CTimerTime(event);
   m_iPriority     = cSettings::Get().m_iDefaultPriority;
   m_iLifetimeDays = cSettings::Get().m_iDefaultLifetime;
   m_recording     = NULL;
 
-  std::string strTitle   = Event->Title();
+  std::string strTitle   = event->Title();
   if (!strTitle.empty())
     m_strRecordingFilename = strTitle;
 
-  SetEvent(Event);
+  SetEvent(event);
   Matches();
 }
 
@@ -244,7 +244,7 @@ bool cTimer::Matches(CDateTime checkTime, bool bDirectly, int iMarginSeconds)
 
 #define FULLMATCH 1000
 
-eTimerMatch cTimer::MatchesEvent(const cEvent *Event, int *Overlap)
+eTimerMatch cTimer::MatchesEvent(const EventPtr& Event, int *Overlap)
 {
   // Overlap is the percentage of the Event's duration that is covered by
   // this timer (based on FULLMATCH for finer granularity than just 100).
@@ -283,7 +283,7 @@ bool cTimer::Expired(void) const
   return !IsRepeatingEvent() &&
       !Recording() &&
       EndTime() + CDateTimeSpan(0, 0, 0, EXPIRELATENCY) <= CDateTime::GetUTCDateTime() &&
-      (!HasFlags(tfVps) || !m_time.EPGEvent() || !m_time.EPGEvent()->HasVps());
+      (!HasFlags(tfVps) || m_time.EPGEvent().get() == NULL || !m_time.EPGEvent()->HasVps());
 }
 
 time_t cTimer::StartTimeAsTime(void) const
@@ -318,7 +318,7 @@ void cTimer::SetEventFromSchedule(cSchedules *Schedules)
         m_lastEPGEventCheck = now;
         EventPtr event;
         if (HasFlags(tfVps) && Schedule->Events().at(0)->HasVps()) {
-           if (m_time.EPGEvent() && m_time.EPGEvent()->StartTime().IsValid()) { // checks for "phased out" events
+           if (m_time.EPGEvent().get() != NULL && m_time.EPGEvent()->StartTime().IsValid()) { // checks for "phased out" events
               if (Recording())
                  return; // let the recording end first
               if (now <= m_time.EPGEvent()->EndTime() || Matches(now, true))
@@ -328,7 +328,7 @@ void cTimer::SetEventFromSchedule(cSchedules *Schedules)
            for (EventVector::const_iterator itEvent = Schedule->Events().begin(); itEvent != Schedule->Events().end(); ++itEvent) {
                if ((*itEvent)->StartTime().IsValid() && (*itEvent)->RunningStatus() != SI::RunningStatusNotRunning) { // skip outdated events
                   int overlap = 0;
-                  MatchesEvent(itEvent->get(), &overlap);
+                  MatchesEvent(*itEvent, &overlap);
                   if (overlap > FULLMATCH) {
                      event = *itEvent;
                      break; // take the first matching event
@@ -349,40 +349,40 @@ void cTimer::SetEventFromSchedule(cSchedules *Schedules)
                if ((*itEvent)->StartTime() > TimeFrameEnd)
                   break; // the rest is way after the timer ends
                int overlap = 0;
-               MatchesEvent(itEvent->get(), &overlap);
+               MatchesEvent(*itEvent, &overlap);
                if (overlap && overlap >= Overlap) {
-                  if (event && overlap == Overlap && (*itEvent)->Duration() <= event->Duration())
+                  if (event.get() != NULL && overlap == Overlap && (*itEvent)->Duration() <= event->Duration())
                      continue; // if overlap is the same, we take the longer event
                   Overlap = overlap;
                   event = *itEvent;
                   }
                }
            }
-        SetEvent(event.get()); // TODO: Convert SetEvent() to use shared ptr
+        SetEvent(event);
         }
      }
 }
 
 void cTimer::ClearEvent(void)
 {
-  if (m_time.EPGEvent())
+  if (m_time.EPGEvent().get() != NULL)
     isyslog("timer %s set to no event", ToDescr().c_str());
   m_time.ClearEPGEvent();
 }
 
-void cTimer::SetEvent(const cEvent *Event)
+void cTimer::SetEvent(const EventPtr& event)
 {
-  if (m_time.EPGEvent() != Event)
+  if (m_time.EPGEvent() != event)
   { //XXX TODO check event data, too???
-    if (Event)
+    if (event.get() != NULL)
     {
-      isyslog("timer %s set to event %s", ToDescr().c_str(), Event->ToDescr().c_str());
+      isyslog("timer %s set to event %s", ToDescr().c_str(), event->ToDescr().c_str());
       if (m_recorder)
-        m_recorder->SetEvent(Event);
+        m_recorder->SetEvent(event);
     }
     else
       isyslog("timer %s set to no event", ToDescr().c_str());
-    m_time.SetEPGEvent(Event);
+    m_time.SetEPGEvent(event);
   }
 }
 

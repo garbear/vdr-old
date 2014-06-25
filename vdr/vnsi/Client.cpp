@@ -1493,11 +1493,11 @@ bool cVNSIClient::processRECORDINGS_GetList() /* OPCODE 102 */
   std::vector<cRecording*> recordings = Recordings.Recordings();
   for (std::vector<cRecording*>::const_iterator it = recordings.begin(); it != recordings.end(); ++it)
   {
-    const cEvent *event = (*it)->Info()->GetEvent();
+    const EventPtr& event = (*it)->Info()->GetEvent();
 
     CDateTime recordingStart;
     int       recordingDuration = 0;
-    if (event)
+    if (event.get() != NULL)
     {
       recordingStart    = event->StartTime();
       recordingDuration = event->Duration();

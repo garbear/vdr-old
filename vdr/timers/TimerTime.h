@@ -20,6 +20,7 @@
  */
 #pragma once
 
+#include "epg/EPGTypes.h"
 #include "utils/DateTime.h"
 
 namespace VDR
@@ -36,14 +37,12 @@ enum eTimerDays
   tdSunday    = 1 << 6
 };
 
-class cEvent;
-
 class CTimerTime
 {
 public:
   CTimerTime(void);
   CTimerTime(const CDateTime& firstStartTime, uint32_t iWeekdaysMask, uint32_t iDurationSecs);
-  CTimerTime(const cEvent* event);
+  CTimerTime(const EventPtr& event);
   virtual ~CTimerTime(void);
 
   CTimerTime& operator=(const CTimerTime &time);
@@ -67,9 +66,9 @@ public:
   void      Skip(void);
   std::string GetTimeDescription(void) const;
 
-  void          ClearEPGEvent(void) { m_event = NULL; }
-  void          SetEPGEvent(const cEvent* event) { m_event = event; }
-  const cEvent* EPGEvent(void) const { return m_event; }
+  void          ClearEPGEvent(void) { m_event.reset(); }
+  void          SetEPGEvent(const EventPtr& event) { m_event = event; }
+  EventPtr      EPGEvent(void) const { return m_event; }
 
   static CTimerTime FromVNSI(time_t startTime, time_t stopTime, time_t day, uint32_t weekdays);
 private:
@@ -79,7 +78,7 @@ private:
   CDateTime     m_firstStartTime;  ///< start time of the first recording
   uint32_t      m_iWeekdaysMask;   ///< bitmask, lowest bits: SSFTWTM  (the 'M' is the LSB)
   uint32_t      m_iDurationSecs;   ///< duration of the recording in seconds
-  const cEvent* m_event;
+  EventPtr      m_event;
   bool          m_bUseVPS;
 };
 }
