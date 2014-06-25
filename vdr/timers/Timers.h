@@ -48,11 +48,16 @@ public:
   TimerPtr GetByIndex(size_t index);
   TimerVector GetTimers(void) const;
   cRecording* GetActiveRecording(const ChannelPtr channel);
+
   void SetModified(void);
-  bool Modified(int &State);
-      ///< Returns true if any of the timers have been modified, which
-      ///< is detected by State being different than the internal state.
-      ///< Upon return the internal state will be stored in State.
+
+  /*!
+   * Returns true if any of the timers have been modified since the last call to
+   * Modified(). Side effect: next call to Modified() will return false until
+   * SetModified() has been called.
+   */
+  bool Modified();
+
   void SetEvents(void);
   void DeleteExpired(void);
   void Add(TimerPtr Timer);
@@ -75,7 +80,7 @@ private:
 
   void StartNewRecordings(const CDateTime& Now);
 
-  int                        m_iState;
+  bool                       m_bStateChanged;
   CDateTime                  m_lastSetEvents;
   time_t                     m_lastDeleteExpired;
   std::map<size_t, TimerPtr> m_timers;

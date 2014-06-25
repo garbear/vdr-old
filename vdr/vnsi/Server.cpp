@@ -177,10 +177,6 @@ void* cVNSIServer::Process(void)
   int recState = -1;
   Recordings.StateChanged(recState);
 
-  // get initial state of the timers
-  int timerState = -1;
-  cTimers::Get().Modified(timerState);
-
   // last update of epg
   CDateTime epgUpdate = cSchedules::Modified();
 
@@ -266,10 +262,9 @@ void* cVNSIServer::Process(void)
       }
 
       // update timers
-      if(cTimers::Get().Modified(timerState))
+      if(cTimers::Get().Modified())
       {
-        isyslog("Timers state changed (%i)", timerState);
-        isyslog("Requesting clients to reload timers");
+        isyslog("Timers state changed, requesting clients to reload timers");
         for (ClientList::iterator i = m_clients.begin(); i != m_clients.end(); i++)
         {
          (*i)->TimerChange();

@@ -44,8 +44,8 @@ cTimers& cTimers::Get(void)
 }
 
 cTimers::cTimers(void)
+ : m_bStateChanged(false)
 {
-  m_iState             = 0;
   m_lastDeleteExpired = 0;
   m_maxIndex        = 0;
 }
@@ -179,7 +179,7 @@ void cTimers::SetModified(void)
   {
     SetChanged();
     NotifyObservers(ObservableMessageTimerChanged);
-    m_iState++;
+    m_bStateChanged = true;;
   }
   Save();
 }
@@ -213,11 +213,11 @@ void cTimers::Del(TimerPtr Timer)
   Save();
 }
 
-bool cTimers::Modified(int &State)
+bool cTimers::Modified()
 {
-  bool Result = m_iState != State;
-  State = m_iState;
-  return Result;
+  bool bResult = m_bStateChanged;
+  m_bStateChanged = false;
+  return bResult;
 }
 
 void cTimers::SetEvents(void)
