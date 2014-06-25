@@ -24,7 +24,6 @@
 #include "dvb/DVBTypes.h"
 #include "dvb/filters/FilterResource.h"
 #include "platform/threads/mutex.h"
-#include "threads/SystemClock.h" // for EndTime
 
 #include <set>
 #include <shared_ptr/shared_ptr.hpp>

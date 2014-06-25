@@ -22,6 +22,7 @@
 #include "DeviceSectionFilterSubsystem.h"
 #include "DeviceChannelSubsystem.h"
 #include "dvb/filters/Filter.h"
+#include "platform/util/timeutils.h"
 #include "utils/log/Log.h"
 #include "utils/Tools.h"
 
@@ -176,7 +177,7 @@ void* cDeviceSectionFilterSubsystem::Process(void)
   // Buffer for section data
   std::vector<uint8_t> data;
 
-  VDR::EndTime nextLogTimeout(LOG_INCOMPLETE_SECTIONS_DELAY_S * 1000);
+  CTimeout nextLogTimeout(LOG_INCOMPLETE_SECTIONS_DELAY_S * 1000);
 
   while (!IsStopped())
   {
@@ -215,11 +216,11 @@ void* cDeviceSectionFilterSubsystem::Process(void)
         {
           HandleSection(resource);
         }
-        else if (nextLogTimeout.IsTimePast())
+        else if (nextLogTimeout.TimeLeft() == 0)
         {
           // log every 10 seconds
           dsyslog("read incomplete section - len = %d, read = %d", len, data.size());
-          nextLogTimeout.Set(LOG_INCOMPLETE_SECTIONS_DELAY_S * 1000);
+          nextLogTimeout.Init(LOG_INCOMPLETE_SECTIONS_DELAY_S * 1000);
         }
       }
     }

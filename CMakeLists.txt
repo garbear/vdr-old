@@ -201,7 +201,6 @@ set(VDR_SRCS
 	vdr/settings/AllowedHosts.cpp
 	vdr/settings/Settings.cpp
 	vdr/sources/linux/DVBTransponderParams.cpp
-	vdr/threads/SystemClock.cpp
 	vdr/timers/Timer.cpp
 	vdr/timers/Timers.cpp
 	vdr/timers/TimerTime.cpp
