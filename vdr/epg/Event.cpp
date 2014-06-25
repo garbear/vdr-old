@@ -24,7 +24,6 @@
 #include "Schedule.h"
 #include "channels/ChannelManager.h"
 #include "settings/Settings.h"
-#include "timers/Timers.h"
 #include "utils/CalendarUtils.h"
 #include "utils/I18N.h"
 #include "utils/log/Log.h"
@@ -160,11 +159,6 @@ std::string cEvent::ToDescr(void) const
   if (HasVps())
     sprintf(vpsbuf, "(VPS: %s) ", GetVpsString().c_str());
   return StringUtils::Format("%s - %s %s '%s'", StartTime().GetAsDBDateTime().c_str(), EndTime().GetAsDBDateTime().c_str(), vpsbuf, Title().c_str());
-}
-
-bool cEvent::HasTimer(void) const
-{
-  return cTimers::Get().HasTimer(this);
 }
 
 bool cEvent::IsRunning(bool OrAboutToStart) const

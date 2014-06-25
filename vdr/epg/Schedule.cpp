@@ -26,6 +26,7 @@
 #include "channels/Channel.h"
 #include "channels/ChannelManager.h"
 #include "settings/Settings.h"
+#include "timers/Timers.h"
 #include "utils/log/Log.h"
 #include "utils/XBMCTinyXML.h"
 #include "Config.h"
@@ -294,7 +295,7 @@ void cSchedule::Cleanup(const CDateTime& Time)
     const EventPtr& event = *it;
 
     static const CDateTimeSpan oneHour(0, 1, 0, 0); // Add one hour for safety
-    if (!event->HasTimer() &&
+    if (!cTimers::Get().HasTimer(event.get()) &&
         (!Time.IsValid() ||
             (event->EndTime() + CDateTimeSpan(0, 0, cSettings::Get().m_iEPGLinger, 0) + oneHour) < Time))
     {

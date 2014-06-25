@@ -103,7 +103,6 @@ public:
   CDateTime Vps(void) const { return m_vps; }
   CDateTime Seen(void) const { return seen; }
   bool SeenWithin(int Seconds) const { return (CDateTime::GetUTCDateTime() - seen).GetSecondsTotal() < Seconds; }
-  bool HasTimer(void) const;
   bool IsRunning(bool OrAboutToStart = false) const;
   static const char *ContentToString(uint8_t Content);
   std::string GetParentalRatingString(void) const;
