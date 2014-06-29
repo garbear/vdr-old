@@ -29,6 +29,7 @@
 #include "xbmc/VFSDirectory.h"
 #endif
 
+#include <memory>
 #include <auto_ptr.h>
 #include <sys/stat.h>
 #include <sys/statfs.h>

@@ -30,6 +30,7 @@
 #include "xbmc/VFSFile.h"
 #endif
 
+#include <memory>
 #include <auto_ptr.h>
 
 using namespace std;

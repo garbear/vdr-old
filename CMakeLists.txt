@@ -100,7 +100,7 @@ else()
 endif()
 
 # Enable C++11
-ADD_DEFINITIONS(-std=c++11
+ADD_DEFINITIONS(-std=gnu++11
                 -DHAVE_STD_SHARED_PTR
                 -DHAVE_STD__U16STRING
                 -DHAVE_STD__U32STRING)
