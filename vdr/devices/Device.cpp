@@ -33,8 +33,11 @@
 #include "devices/subsystems/DeviceSPUSubsystem.h"
 #include "devices/subsystems/DeviceTrackSubsystem.h"
 #include "devices/subsystems/DeviceVideoFormatSubsystem.h"
-#include "utils/StringUtils.h"
-//#include "utils/Ringbuffer.h"
+#include "dvb/filters/PSIP_MGT.h"
+#include "epg/EPGTypes.h"
+#include "epg/Event.h"
+#include "epg/Schedules.h"
+#include "utils/log/Log.h"
 
 using namespace std;
 
@@ -162,6 +165,51 @@ void *cDevice::Process()
     Receiver()->CloseDvr();
   }
   return NULL;
+}
+
+bool cDevice::ScanTransponder(const ChannelPtr& transponder)
+{
+  try
+  {
+    if (transponder->GetCaId(0) &&
+        transponder->GetCaId(0) != CardIndex() &&
+        transponder->GetCaId(0) < CA_ENCRYPTED_MIN)
+    {
+      throw "Failed to scan transponder: Channel cannot be decrypted";
+    }
+
+    if (!Channel()->ProvidesTransponder(*transponder))
+      throw "Failed to scan transponder: Channel is not provided by device";
+
+    if (!Channel()->MaySwitchTransponder(*transponder) && !Channel()->ProvidesTransponderExclusively(*transponder))
+      throw "Failed to scan transponder: Not allowed to switch transponders";
+
+    if (!Channel()->SwitchChannel(transponder))
+      throw "Failed to scan transponder: Failed to switch transponders";
+
+    dsyslog("EIT scan: device %d source %s tp %5d MHz", CardIndex(), transponder->Source().ToString().c_str(), transponder->TransponderFrequencyMHz());
+
+    EventVector events;
+
+    cPsipMgt mgt(this);
+    if (!mgt.GetPSIPData(events))
+      throw "Failed to scan transponder: Tuner failed to get lock";
+
+    if (events.empty())
+      throw "Scanned transponder, but no events discovered!";
+
+    // Finally, success! Add channels to EPG schedule
+    for (EventVector::const_iterator it = events.begin(); it != events.end(); ++it)
+      cSchedulesLock::AddEvent(transponder->GetChannelID(), *it);
+  }
+  catch (const char* errorMsg)
+  {
+    dsyslog("%s", errorMsg);
+    return false;
+  }
+
+  return true;
+
 }
 
 }

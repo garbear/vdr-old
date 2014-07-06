@@ -280,4 +280,22 @@ size_t cDeviceManager::NumDevices()
   return m_devices.size();
 }
 
+bool cDeviceManager::ScanTransponder(const ChannelPtr& transponder)
+{
+  // Look for a device whose channel provides EIT information
+  for (DeviceVector::const_iterator itDevice = m_devices.begin(); itDevice != m_devices.end(); ++itDevice)
+  {
+    const DevicePtr& device = *itDevice;
+
+    if (device->Channel()->ProvidesEIT())
+    {
+      if (device->ScanTransponder(transponder))
+        return true;
+    }
+  }
+
+  return false;
+}
+
+
 }

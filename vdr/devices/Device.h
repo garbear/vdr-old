@@ -25,6 +25,7 @@
  */
 
 #include "DeviceTypes.h"
+#include "channels/ChannelTypes.h"
 #include "platform/threads/threads.h"
 
 #include <list>
@@ -140,6 +141,8 @@ public:
    * @return True when initialised, false otherwise
    */
   virtual bool Initialised(void) const { return m_bInitialised; }
+
+  bool ScanTransponder(const ChannelPtr& transponder);
 
   void AssertValid(void) { m_subsystems.AssertValid(); }
 
