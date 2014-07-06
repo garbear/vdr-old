@@ -106,7 +106,6 @@ bool cDvbChannelSubsystem::ProvidesChannel(const cChannel &channel, int priority
   bool result = false;
   bool hasPriority = priority == IDLEPRIORITY || priority > this->Receiver()->Priority();
   bool needsDetachReceivers = false;
-  GetDevice<cDvbDevice>()->m_bNeedsDetachBondedReceivers = false;
 
   if (GetDevice<cDvbDevice>()->m_dvbTuner.IsOpen() && ProvidesTransponder(channel))
   {
@@ -136,26 +135,6 @@ bool cDvbChannelSubsystem::ProvidesChannel(const cChannel &channel, int priority
         }
         else
           needsDetachReceivers = Receiver()->Receiving();
-      }
-
-      if (result)
-      {
-        PLATFORM::CLockObject lock(GetDevice<cDvbDevice>()->m_bondMutex);
-        if (!GetDevice<cDvbDevice>()->BondingOk(channel))
-        {
-          // This device is bonded, so we need to check the priorities of the others:
-          for (cDvbDevice *d = GetDevice<cDvbDevice>()->m_bondedDevice; d && d != GetDevice<cDvbDevice>(); d = d->m_bondedDevice)
-          {
-            if (d->Receiver()->Priority() >= priority)
-            {
-              result = false;
-              break;
-            }
-            needsDetachReceivers |= d->Receiver()->Receiving();
-          }
-          GetDevice<cDvbDevice>()->m_bNeedsDetachBondedReceivers = true;
-          needsDetachReceivers |= Receiver()->Receiving();
-        }
       }
     }
   }
@@ -196,12 +175,6 @@ ChannelPtr cDvbChannelSubsystem::GetCurrentlyTunedTransponder() const
 bool cDvbChannelSubsystem::IsTunedToTransponder(const cChannel &channel) const
 {
   return GetDevice<cDvbDevice>()->m_dvbTuner.IsTunedTo(channel);
-}
-
-bool cDvbChannelSubsystem::MaySwitchTransponder(const cChannel &channel) const
-{
-  return GetDevice<cDvbDevice>()->BondingOk(channel, true) &&
-      cDeviceChannelSubsystem::MaySwitchTransponder(channel);
 }
 
 bool cDvbChannelSubsystem::HasLock(void) const

@@ -67,18 +67,4 @@ bool cDvbReceiverSubsystem::GetTSPacket(uint8_t *&Data)
   return false;
 }
 
-void cDvbReceiverSubsystem::DetachAllReceivers()
-{
-  PLATFORM::CLockObject lock(GetDevice<cDvbDevice>()->m_bondMutex);
-  cDvbDevice *d = GetDevice<cDvbDevice>();
-
-  do
-  {
-    d->Receiver()->cDeviceReceiverSubsystem::DetachAllReceivers();
-    d = d->m_bondedDevice;
-  } while (d && d !=  GetDevice<cDvbDevice>() && GetDevice<cDvbDevice>()->m_bNeedsDetachBondedReceivers);
-
-  GetDevice<cDvbDevice>()->m_bNeedsDetachBondedReceivers = false;
-}
-
 }

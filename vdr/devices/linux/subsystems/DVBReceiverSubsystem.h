@@ -38,9 +38,6 @@ public:
   virtual void CloseDvr();
   virtual bool GetTSPacket(uint8_t *&data);
 
-  // Overrides public method as protected
-  virtual void DetachAllReceivers();
-
 private:
   cTSBuffer *m_tsBuffer;
 

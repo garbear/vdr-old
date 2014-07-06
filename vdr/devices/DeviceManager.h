@@ -48,12 +48,6 @@ public:
   size_t Initialise(void);
 
   /*!
-   * \brief Have cDeviceManager track a new device
-   * \return The new device number (starting at 1)
-   */
-  size_t AddDevice(DevicePtr device);
-
-  /*!
    * \brief Returns the total number of devices
    */
   size_t NumDevices();

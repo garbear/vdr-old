@@ -46,7 +46,6 @@ public:
   virtual int SignalQuality() const;
   virtual ChannelPtr GetCurrentlyTunedTransponder() const;
   virtual bool IsTunedToTransponder(const cChannel &channel) const;
-  virtual bool MaySwitchTransponder(const cChannel &channel) const;
   bool SwitchChannel(const cChannel &channel, bool bLiveView);
   void ForceTransferMode();
   unsigned int Occupied() const;

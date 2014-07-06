@@ -289,7 +289,6 @@ bool cSettings::Load(const std::string& strFilename)
   GetSettingInt(root,      SETTINGS_XML_ELM_VPS_MARGIN,                 m_iVpsMargin);
   GetSettingInt(root,      SETTINGS_XML_ELM_MAX_RECORDING_FILESIZE_MB,  m_iMaxVideoFileSizeMB);
   GetSettingInt(root,      SETTINGS_XML_ELM_RESUME_ID,                  m_iResumeID);
-  GetSettingString(root,   SETTINGS_XML_ELM_DEVICE_BONDINGS,            m_strDeviceBondings);
   GetSettingDateTime(root, SETTINGS_XML_ELM_NEXT_WAKEUP,                m_nextWakeupTime);
 
   GetSettingInt(root,      SETTINGS_XML_ELM_LNB_SLOF,                   m_iLnbSLOF);
@@ -348,7 +347,6 @@ bool cSettings::Save(const std::string& strFilename)
   SaveSetting(root, SETTINGS_XML_ELM_VPS_MARGIN,                 m_iVpsMargin);
   SaveSetting(root, SETTINGS_XML_ELM_MAX_RECORDING_FILESIZE_MB,  m_iMaxVideoFileSizeMB);
   SaveSetting(root, SETTINGS_XML_ELM_RESUME_ID,                  m_iResumeID);
-  SaveSetting(root, SETTINGS_XML_ELM_DEVICE_BONDINGS,            m_strDeviceBondings);
   SaveSetting(root, SETTINGS_XML_ELM_NEXT_WAKEUP,                m_nextWakeupTime);
   SaveSetting(root, SETTINGS_XML_ELM_SYSLOG_TYPE,                m_SysLogType);
   SaveSetting(root, SETTINGS_XML_ELM_SYSLOG_LEVEL,               m_SysLogLevel);

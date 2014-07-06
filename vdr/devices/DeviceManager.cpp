@@ -63,37 +63,25 @@ size_t cDeviceManager::Initialise(void)
   dsyslog("initialising DVB devices");
 
   DeviceVector devices = cDvbDevice::FindDevices();
-  cDvbDevice::BondDevices(cSettings::Get().m_strDeviceBondings);
+
   dsyslog("%u DVB devices found", devices.size());
+
+  CLockObject lock(m_mutex);
 
   for (DeviceVector::iterator it = devices.begin(); it != devices.end(); ++it)
   {
-    cDvbDevice* device = dynamic_cast<cDvbDevice*>(it->get());
-    if (!device)
-      continue;
+    const DevicePtr& device = *it;
+    device->AssertValid();
 
-    AddDevice(*it);
-    if ((*it)->Initialise())
-    {
-      CLockObject lock(m_mutex);
+    device->SetCardIndex(m_devices.size());
+    m_devices.push_back(device);
+
+    if (device->Initialise())
       ++m_devicesReady;
-    }
   }
 
-  CLockObject lock(m_mutex);
   m_bAllDevicesReady = m_devices.size() == m_devicesReady;
   return m_devices.size();
-}
-
-size_t cDeviceManager::AddDevice(DevicePtr device)
-{
-  device->AssertValid();
-
-  CLockObject lock(m_mutex);
-  device->SetCardIndex(m_devices.size());
-  m_devices.push_back(device);
-  dsyslog("registered device #%u: %s", m_devices.size(), device->DeviceName().c_str());
-  return m_devices.size(); // Remember, our devices' numbers are 1-indexed
 }
 
 bool cDeviceManager::WaitForAllDevicesReady(unsigned int timeout /* = 0 */)

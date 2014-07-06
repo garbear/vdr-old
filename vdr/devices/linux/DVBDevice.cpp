@@ -65,16 +65,12 @@ namespace VDR
 
 #define INVALID_FD  -1
 
-CMutex cDvbDevice::m_bondMutex;
-
 cDvbDevice::cDvbDevice(unsigned int adapter, unsigned int frontend)
  : cDevice(CreateSubsystems(this)),
    m_adapter(adapter),
    m_frontend(frontend),
    m_dvbTuner(this),
-   m_fd_ca(INVALID_FD),
-   m_bondedDevice(NULL),
-   m_bNeedsDetachBondedReceivers(false)
+   m_fd_ca(INVALID_FD)
 {
 }
 
@@ -100,7 +96,7 @@ cSubsystems cDvbDevice::CreateSubsystems(cDvbDevice* device)
 cDvbDevice::~cDvbDevice()
 {
   SectionFilter()->StopSectionHandler();
-  UnBond();
+
   // We're not explicitly closing any device files here, since this sometimes
   // caused segfaults. Besides, the program is about to terminate anyway...
 }
@@ -278,144 +274,6 @@ bool cDvbDevice::Ready()
 string cDvbDevice::DeviceName() const
 {
   return m_dvbTuner.IsOpen() ? m_dvbTuner.GetName() : DvbName(DEV_DVB_FRONTEND, m_adapter, m_frontend);
-}
-
-bool cDvbDevice::Bond(cDvbDevice *device)
-{
-  CLockObject lock(m_bondMutex);
-
-  if (!m_bondedDevice)
-  {
-    if (device != this)
-    {
-      if ((DvbChannel()->ProvidesDeliverySystem(SYS_DVBS) || DvbChannel()->ProvidesDeliverySystem(SYS_DVBS2)) &&
-          (device->DvbChannel()->ProvidesDeliverySystem(SYS_DVBS) || device->DvbChannel()->ProvidesDeliverySystem(SYS_DVBS2)))
-      {
-        if (m_dvbTuner.IsOpen() && device->m_dvbTuner.IsOpen() && m_dvbTuner.Bond(&device->m_dvbTuner))
-        {
-          m_bondedDevice = device->m_bondedDevice ? device->m_bondedDevice : device;
-          device->m_bondedDevice = this;
-          dsyslog("device %d bonded with device %d", CardIndex() + 1, m_bondedDevice->CardIndex() + 1);
-          return true;
-        }
-      }
-      else
-        esyslog("ERROR: can't bond device %d with device %d (only DVB-S(2) devices can be bonded)", CardIndex() + 1, device->CardIndex() + 1);
-    }
-    else
-      esyslog("ERROR: can't bond device %d with itself", CardIndex() + 1);
-  }
-  else
-    esyslog("ERROR: device %d already bonded with device %d, can't bond with device %d", CardIndex() + 1, m_bondedDevice->CardIndex() + 1, device->CardIndex() + 1);
-
-  return false;
-}
-
-void cDvbDevice::UnBond()
-{
-  CLockObject lock(m_bondMutex);
-  if (cDvbDevice *d = m_bondedDevice)
-  {
-    if (m_dvbTuner.IsOpen())
-      m_dvbTuner.UnBond();
-    dsyslog("device %d unbonded from device %d", CardIndex() + 1, m_bondedDevice->CardIndex() + 1);
-
-    while (d->m_bondedDevice != this)
-      d = d->m_bondedDevice;
-    if (d == m_bondedDevice)
-      d->m_bondedDevice = NULL;
-    else
-      d->m_bondedDevice = m_bondedDevice;
-    m_bondedDevice = NULL;
-  }
-}
-
-bool cDvbDevice::BondingOk(const cChannel &channel, bool bConsiderOccupied) const
-{
-  CLockObject lock(m_bondMutex);
-  if (m_bondedDevice)
-    return m_dvbTuner.IsOpen() && m_dvbTuner.BondingOk(channel, bConsiderOccupied);
-  return true;
-}
-
-bool cDvbDevice::BondDevices(const std::string& bondings)
-{
-  UnBondDevices();
-  if (!bondings.empty())
-  {
-    vector<string> satCableNumbers;
-    StringUtils::Split(bondings, " ", satCableNumbers);
-
-    for (unsigned int i = 0; i < cDeviceManager::Get().NumDevices(); i++)
-    {
-      int d = -1;
-      if (i < satCableNumbers.size())
-      {
-        int cableNumber = StringUtils::IntVal(satCableNumbers[i], -1);
-        if (cableNumber >= 0)
-        {
-          for (unsigned int j = 0; j < satCableNumbers.size(); j++)
-          {
-            if (j < i && StringUtils::IntVal(satCableNumbers[j], -1) == cableNumber)
-            {
-              d = j;
-              break;
-            }
-          }
-        }
-      }
-
-      if (d >= 0)
-      {
-        int ErrorDevice = 0;
-        if (DevicePtr Device1 = cDeviceManager::Get().GetDevice(i))
-        {
-          if (DevicePtr Device2 = cDeviceManager::Get().GetDevice(d))
-          {
-            if (cDvbDevice *DvbDevice1 = dynamic_cast<cDvbDevice *>(Device1.get()))
-            {
-              if (cDvbDevice *DvbDevice2 = dynamic_cast<cDvbDevice *>(Device2.get()))
-              {
-                if (!DvbDevice1->Bond(DvbDevice2))
-                  return false; // Bond() has already logged the error
-              }
-              else
-                ErrorDevice = d + 1;
-            }
-            else
-              ErrorDevice = i + 1;
-
-            if (ErrorDevice)
-            {
-              esyslog("ERROR: device '%d' in device bondings '%s' is not a cDvbDevice", ErrorDevice, bondings.c_str());
-              return false;
-            }
-          }
-          else
-            ErrorDevice = d + 1;
-        }
-        else
-          ErrorDevice = i + 1;
-
-        if (ErrorDevice)
-        {
-          esyslog("ERROR: unknown device '%d' in device bondings '%s'", ErrorDevice, bondings.c_str());
-          return false;
-        }
-      }
-    }
-  }
-  return true;
-}
-
-void cDvbDevice::UnBondDevices()
-{
-  for (int i = 0; i < cDeviceManager::Get().NumDevices(); i++)
-  {
-    cDvbDevice *device = dynamic_cast<cDvbDevice*>(cDeviceManager::Get().GetDevice(i).get());
-    if (device)
-      device->UnBond();
-  }
 }
 
 string cDvbDevice::DvbName(const char *name, unsigned int adapter, unsigned int frontend)

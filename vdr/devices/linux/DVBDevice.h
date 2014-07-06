@@ -88,50 +88,6 @@ public:
   virtual std::string DeviceType() const { return m_dvbTuner.DeviceType(); }
   virtual std::string DeviceName() const;
 
-  /*!
-   * \brief Bonds this device with the given device, making both of them use the
-   *        same satellite cable and LNB
-   * \return True if the bonding was successful
-   *
-   * Only DVB-S(2) devices can be bonded. When this function is called, the
-   * calling device must not be bonded to any other device. The given device,
-   * however, may already be bonded to an other device. That way several devices
-   * can be bonded together.
-   */
-  bool Bond(cDvbDevice *Device);
-
-  /*!
-   * \brief Removes this device from any bonding it might have with other devices
-   *
-   * If this device is not bonded with any other device, nothing happens.
-   */
-  void UnBond();
-
-  /*!
-   * \brief Returns true if this device is either not bonded to any other device,
-   *        or the given Channel is on the same satellite, polarization and band
-   *        as those the bonded devices are tuned to (if any)
-   * \param bConsiderOccupied If true, any bonded devices that are currently
-   *        occupied but not otherwise receiving will cause this function to
-   *        return false
-   */
-  bool BondingOk(const cChannel &channel, bool bConsiderOccupied = false) const;
-
-  /*!
-   * \brief Bonds the devices as defined in the given string
-   * \param bondings The bondings string
-   * \return False if an error occurred
-   *
-   * A bonding is a sequence of device numbers (starting at 1), separated by '+'
-   * characters. Several bondings are separated by commas, as in "1+2,3+4+5".
-   */
-  static bool BondDevices(const std::string& bondings);
-
-  /*!
-   * \brief Unbonds all devices
-   */
-  static void UnBondDevices();
-
   cDvbChannelSubsystem         *DvbChannel() const;
   cDvbCommonInterfaceSubsystem *DvbCommonInterface() const;
   cDvbPIDSubsystem             *DvbPID() const;
@@ -168,12 +124,5 @@ public://TODO
 private:
   //int                  m_fd_dvr; // (Moved to DVBReceiverSubsystem.h)
   int                  m_fd_ca;
-
-public: // TODO
-  cDvbDevice*          m_bondedDevice;
-  mutable bool         m_bNeedsDetachBondedReceivers;
-
-public: // TODO
-  static PLATFORM::CMutex m_bondMutex;
 };
 }
