@@ -181,7 +181,7 @@ bool cDevice::ScanTransponder(const ChannelPtr& transponder)
     if (!Channel()->ProvidesTransponder(*transponder))
       throw "Failed to scan transponder: Channel is not provided by device";
 
-    if (!Channel()->MaySwitchTransponder(*transponder) && !Channel()->ProvidesTransponderExclusively(*transponder))
+    if (!Channel()->MaySwitchTransponder(*transponder))
       throw "Failed to scan transponder: Not allowed to switch transponders";
 
     if (!Channel()->SwitchChannel(transponder))

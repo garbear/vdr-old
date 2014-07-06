@@ -59,11 +59,6 @@ cDeviceChannelSubsystem::cDeviceChannelSubsystem(cDevice *device)
 {
 }
 
-bool cDeviceChannelSubsystem::ProvidesTransponderExclusively(const cChannel &channel) const
-{
-  return ProvidesTransponder(channel) && cDeviceManager::Get().CountTransponders(channel) == 1;
-}
-
 bool cDeviceChannelSubsystem::MaySwitchTransponder(const cChannel &channel) const
 {
   if (time(NULL) > m_occupiedTimeout)

@@ -199,36 +199,6 @@ DevicePtr cDeviceManager::GetDevice(const cChannel &channel, bool bLiveView, boo
   return d;
 }
 
-DevicePtr cDeviceManager::GetDeviceForTransponder(const cChannel &channel)
-{
-  DevicePtr Device = cDevice::EmptyDevice;
-  for (std::vector<DevicePtr>::const_iterator it = m_devices.begin(); it != m_devices.end(); ++it)
-  {
-    if ((*it)->Channel()->IsTunedToTransponder(channel))
-      return (*it); // if any device is tuned to the transponder, we're done
-
-    if ((*it)->Channel()->ProvidesTransponder(channel))
-    {
-      if ((*it)->Channel()->MaySwitchTransponder(channel))
-        Device = (*it); // this device may switch to the transponder without disturbing any receiver or live view
-    }
-  }
-
-  return Device;
-}
-
-size_t cDeviceManager::CountTransponders(const cChannel &channel) const
-{
-  size_t count = 0;
-  CLockObject lock(m_mutex);
-  for (vector<DevicePtr>::const_iterator it = m_devices.begin(); it != m_devices.end(); ++it)
-  {
-    if ((*it)->Channel()->ProvidesTransponder(channel))
-      count++;
-  }
-  return count;
-}
-
 void cDeviceManager::Shutdown(void)
 {
   CLockObject lock(m_mutex);
@@ -272,12 +242,6 @@ void cDeviceManager::Notify(const Observable &obs, const ObservableMessage msg)
   m_bAllDevicesReady = m_devicesReady == m_devices.size(); //XXX
   if (m_bAllDevicesReady)
     m_devicesReadyCondition.Broadcast();
-}
-
-size_t cDeviceManager::NumDevices()
-{
-  CLockObject lock(m_mutex);
-  return m_devices.size();
 }
 
 bool cDeviceManager::ScanTransponder(const ChannelPtr& transponder)

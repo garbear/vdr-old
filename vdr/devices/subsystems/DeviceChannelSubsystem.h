@@ -47,12 +47,6 @@ public:
   virtual bool ProvidesTransponder(const cChannel &channel) const { return false; }
 
   /*!
-   * \brief Returns true if this is the only device that is able to provide the
-   *        given channel's transponder
-   */
-  virtual bool ProvidesTransponderExclusively(const cChannel &channel) const;
-
-  /*!
    * \brief Returns true if this device can provide the given channel
    *
    * \param needsDetachReceivers If given, the resulting value in it will tell

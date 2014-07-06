@@ -48,11 +48,6 @@ public:
   size_t Initialise(void);
 
   /*!
-   * \brief Returns the total number of devices
-   */
-  size_t NumDevices();
-
-  /*!
    * \brief Waits until all devices have become ready, or the given Timeout has expired
    * \param timeout The timeout in seconds
    * \return True if all devices have become ready within the given timeout.
@@ -90,18 +85,6 @@ public:
    * combination will be skipped in the next call to GetDevice().
    */
   DevicePtr GetDevice(const cChannel &channel, bool bLiveView, bool bQuery = false);
-
-  /*!
-   * \brief Returns a device that is not currently "occupied" and can be tuned
-   *        to the transponder of the given Channel
-   * \return The device, or NULL if no such device is currently available
-   */
-  DevicePtr GetDeviceForTransponder(const cChannel &channel);
-
-  /*!
-   * \brief Get the number of transponders that provide the specified channel.
-   */
-  size_t CountTransponders(const cChannel &channel) const;
 
   /*!
    * \brief Closes down all devices. Must be called at the end of the program.
