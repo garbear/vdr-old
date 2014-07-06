@@ -43,8 +43,7 @@ namespace VDR
 cDeviceManager::cDeviceManager()
  : m_devicesReady(0),
    m_bAllDevicesReady(false),
-   m_nextCardIndex(0),
-   m_useDevice(0)
+   m_nextCardIndex(0)
 {
 }
 

@@ -57,9 +57,6 @@ namespace VDR
 #define MSG_HELP "Usage: vdr [OPTIONS]\n\n" \
                  "  -c DIR,   --config=DIR   read config files from DIR (default: %s)\n" \
                  "  -d,       --daemon       run in daemon mode\n" \
-                 "  -D NUM,   --device=NUM   use only the given DVB device (NUM = 0, 1, 2...)\n" \
-                 "                           there may be several -D options (default: all DVB\n" \
-                 "                           devices will be used)\n" \
                  "            --dirnames=PATH[,NAME[,ENC]]\n" \
                  "                           set the maximum directory path length to PATH\n" \
                  "                           (default: %d); if NAME is also given, it defines\n" \
@@ -403,7 +400,6 @@ bool cSettings::LoadFromCmdLine(int argc, char *argv[])
     {
       { "config",    required_argument, NULL, 'c' },
       { "daemon",    no_argument,       NULL, 'd' },
-      { "device",    required_argument, NULL, 'D' },
       { "dirnames",  required_argument, NULL, 'd' | 0x100 },
       { "edit",      required_argument, NULL, 'e' | 0x100 },
       { "filesize",  required_argument, NULL, 'f' | 0x100 },
@@ -428,7 +424,7 @@ bool cSettings::LoadFromCmdLine(int argc, char *argv[])
     };
 
   int c;
-  while ((c = getopt_long(argc, argv, "c:dD:e:g:hi:L:m:o:r:s:t:u:v:Vw:",
+  while ((c = getopt_long(argc, argv, "c:d:e:g:hi:L:m:o:r:s:t:u:v:Vw:",
       long_options, NULL)) != -1)
   {
     switch (c)
@@ -441,19 +437,6 @@ bool cSettings::LoadFromCmdLine(int argc, char *argv[])
     case 'd':
       m_DaemonMode = true;
       break;
-    // device
-    case 'D':
-      if (is_number(optarg))
-      {
-        int n = atoi(optarg);
-        if (0 <= n && n < MAXDEVICES)
-        {
-          cDeviceManager::Get().SetUseDevice(n);
-          break;
-        }
-      }
-      fprintf(stderr, "vdr: invalid DVB device number: %s\n", optarg);
-      return false;
     // dirnames
     case 'd' | 0x100:
       {

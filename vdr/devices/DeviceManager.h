@@ -103,19 +103,6 @@ public:
   //int NextCardIndex(int n = 0);
 
   /*!
-   * \brief Sets the 'useDevice' flag of the given device
-   *
-   * If this function is not called before initializing, all devices will be used.
-   */
-  void SetUseDevice(unsigned int n) { m_useDevice |= (1 << n); }
-
-  /*!
-   * \brief Tells whether the device with the given card index shall be used in
-   *        this instance of VDR
-   */
-  bool UseDevice(unsigned int n) { return m_useDevice == 0 || (m_useDevice & (1 << n)) != 0; }
-
-  /*!
    * \brief Gets the device with the given Index
    * \param index Must be in the range 0..numDevices-1
    * \return A pointer to the device, or NULL if the index was invalid
@@ -178,7 +165,6 @@ private:
   PLATFORM::CCondition<bool> m_devicesReadyCondition;
 
   unsigned int m_nextCardIndex; // Card index to give to the next new device
-  unsigned int m_useDevice; // Stupid device-use flags
 };
 
 }

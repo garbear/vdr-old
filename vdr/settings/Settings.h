@@ -35,8 +35,6 @@ class TiXmlNode;
 namespace VDR
 {
 
-#define MAXDEVICES 64
-
 // default settings
 #define ALLOWED_HOSTS_FILE  "allowed_hosts.conf"
 #define FRONTEND_DEVICE     "/dev/dvb/adapter%d/frontend%d"
