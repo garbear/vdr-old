@@ -86,6 +86,11 @@ size_t cDeviceManager::Initialise(void)
 bool cDeviceManager::WaitForAllDevicesReady(unsigned int timeout /* = 0 */)
 {
   CLockObject lock(m_mutex);
+
+  // Can't wait if there's no devices
+  if (m_devices.empty())
+    return false;
+
   return m_devicesReadyCondition.Wait(m_mutex, m_bAllDevicesReady, timeout * 1000);
 }
 
