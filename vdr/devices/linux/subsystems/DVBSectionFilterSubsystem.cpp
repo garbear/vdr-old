@@ -87,7 +87,7 @@ dmx_sct_filter_params ToFilterParams(uint16_t pid, uint8_t tid, uint8_t mask)
 
 FilterResourcePtr cDvbSectionFilterSubsystem::OpenResourceInternal(uint16_t pid, uint8_t tid, uint8_t mask)
 {
-  string fileName = cDvbDevice::DvbName(DEV_DVB_DEMUX, GetDevice<cDvbDevice>()->Adapter(), GetDevice<cDvbDevice>()->Frontend());
+  string fileName = cDvbDevice::DvbName(DEV_DVB_DEMUX, Device<cDvbDevice>()->Adapter(), Device<cDvbDevice>()->Frontend());
 
   // Don't open with O_NONBLOCK flag so that reads will wait for a full section
   int fd = open(fileName.c_str(), O_RDWR);

@@ -69,19 +69,18 @@ protected:
    * This allows subsystems of derived devices to access their device as the
    * derived class. RTTI is used to assert on invalid pointer cast, ensuring the
    * validity of the returned pointer.
+   *
+   * Member functions don't support default function template arguments, so the
+   * default (cDevice) is explicitly specified below.
    */
-  template <class DeviceType>
-  DeviceType *GetDevice() const // TODO: Rename to Define() (overloading the definition below)
+  template <class DeviceType /* = cDevice */>
+  DeviceType *Device() const
   {
     DeviceType *device = dynamic_cast<DeviceType*>(m_device);
     assert(device);
     return device;
   }
 
-  /*!
-   * \brief Provide a non-templated default (assumes cDevice) because member
-   *        functions don't support default function template arguments
-   */
   cDevice *Device() const { return m_device; }
 
   cDeviceChannelSubsystem         *Channel() const;
