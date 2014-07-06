@@ -53,19 +53,6 @@ public:
   size_t NumDevices();
 
   /*!
-   * \brief Skip the specified number of steps in the card indexing
-   *
-   * E.g. after calling AdvanceCardIndex(2), the next device might get a card
-   * index of 4 instead of 2.
-   */
-  void AdvanceCardIndex(unsigned int steps) { m_nextCardIndex += steps; }
-
-
-
-
-
-
-  /*!
    * \brief Waits until all devices have become ready, or the given Timeout has expired
    * \param timeout The timeout in seconds
    * \return True if all devices have become ready within the given timeout.
@@ -74,33 +61,6 @@ public:
    * they all return true.
    */
   bool WaitForAllDevicesReady(unsigned int timeout = 0);
-
-
-
-
-
-
-  /*!
-   * \brief Returns a monotonically-incrementing index
-   * \return An index 1 greater than the previous index returned by this function?
-   */
-  //unsigned int GetNextCardIndex();
-
-  /*!
-   * \brief Calculates the next card index
-   *
-   * Each device in a given machine must have a unique card index, which will be
-   * used to identify the device for assigning Ca parameters and deciding
-   * whether to actually use that device in this particular instance of VDR.
-   * Every time a new cDevice is created, it will be given the current
-   * nextCardIndex, and then nextCardIndex will be automatically incremented by
-   * 1. A derived class can determine whether a given device shall be used by
-   * checking UseDevice(NextCardIndex()). If a device is skipped, or if there
-   * are possible device indexes left after a derived class has set up all its
-   * devices, NextCardIndex(n) must be called, where n is the number of card
-   * indexes to skip.
-   */
-  //int NextCardIndex(int n = 0);
 
   /*!
    * \brief Gets the device with the given Index
@@ -162,8 +122,6 @@ private:
   size_t                     m_devicesReady;
   bool                       m_bAllDevicesReady; //XXX make CCondition support other things than bools...
   PLATFORM::CCondition<bool> m_devicesReadyCondition;
-
-  unsigned int m_nextCardIndex; // Card index to give to the next new device
 };
 
 }
