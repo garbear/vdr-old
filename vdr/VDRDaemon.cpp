@@ -61,9 +61,10 @@ cVDRDaemon::~cVDRDaemon()
 
 bool cVDRDaemon::LoadConfig(void)
 {
-  // XXX clean this up, so we don't need 2+ calls to every method
   if (m_bConfigLoaded)
     return true;
+
+  m_bConfigLoaded = true;
 
   if (!CSpecialProtocol::SetFileBasePath())
     return false;
