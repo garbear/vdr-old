@@ -85,11 +85,25 @@ protected:
 public:
   virtual ~cDevice();
 
+  static DevicePtr EmptyDevice;
+
+  cDeviceChannelSubsystem*         Channel(void)         const { return m_subsystems.Channel; }
+  cDeviceCommonInterfaceSubsystem* CommonInterface(void) const { return m_subsystems.CommonInterface; }
+  cDeviceImageGrabSubsystem*       ImageGrab(void)       const { return m_subsystems.ImageGrab; }
+  cDevicePIDSubsystem*             PID(void)             const { return m_subsystems.PID; }
+  cDevicePlayerSubsystem*          Player(void)          const { return m_subsystems.Player; }
+  cDeviceReceiverSubsystem*        Receiver(void)        const { return m_subsystems.Receiver; }
+  cDeviceSectionFilterSubsystem*   SectionFilter(void)   const { return m_subsystems.SectionFilter; }
+  cDeviceSPUSubsystem*             SPU(void)             const { return m_subsystems.SPU; }
+  cDeviceTrackSubsystem*           Track(void)           const { return m_subsystems.Track; }
+  cDeviceVideoFormatSubsystem*     VideoFormat(void)     const { return m_subsystems.VideoFormat; }
+
   /*!
    * \brief Returns the card index of this device
    * \return The card index in the range 0..MAXDEVICES-1
    */
   int CardIndex() const { return m_cardIndex; }
+  void SetCardIndex(size_t index) { m_cardIndex = index; }
 
   /*!
    * \brief Returns a string identifying the type of this device (like "DVB-S")
@@ -127,7 +141,11 @@ public:
    */
   virtual bool Initialised(void) const { return m_bInitialised; }
 
+  void AssertValid(void) { m_subsystems.AssertValid(); }
+
 protected:
+  virtual void *Process();
+
   /*!
    * \brief Returns true if this device is ready
    *
@@ -138,44 +156,9 @@ protected:
 public: // TODO
   virtual bool Ready() { return true; }
 
-  /*!
-   * \brief Informs a device that it will be the primary device
-   *
-   * If there is anything the device needs to set up when it becomes the primary
-   * device (bOn = true) or to shut down when it no longer is the primary device
-   * (bOn = false), it should do so in this function. A derived class must call
-   * the MakePrimaryDevice() function of its base class.
-   */
-public: // TODO
-  virtual void MakePrimaryDevice(bool bOn);
-
-  void AssertValid(void) { m_subsystems.AssertValid(); }
-
-public:
-  cDeviceChannelSubsystem         *Channel()         const { return m_subsystems.Channel; }
-  cDeviceCommonInterfaceSubsystem *CommonInterface() const { return m_subsystems.CommonInterface; }
-  cDeviceImageGrabSubsystem       *ImageGrab()       const { return m_subsystems.ImageGrab; }
-  cDevicePIDSubsystem             *PID()             const { return m_subsystems.PID; }
-  cDevicePlayerSubsystem          *Player()          const { return m_subsystems.Player; }
-  cDeviceReceiverSubsystem        *Receiver()        const { return m_subsystems.Receiver; }
-  cDeviceSectionFilterSubsystem   *SectionFilter()   const { return m_subsystems.SectionFilter; }
-  cDeviceSPUSubsystem             *SPU()             const { return m_subsystems.SPU; }
-  cDeviceTrackSubsystem           *Track()           const { return m_subsystems.Track; }
-  cDeviceVideoFormatSubsystem     *VideoFormat()     const { return m_subsystems.VideoFormat; }
-
-  void SetCardIndex(size_t index)
-  {
-    m_cardIndex = index;
-  }
-
-  static DevicePtr EmptyDevice;
-
 private:
-  virtual void *Process();
-
   const cSubsystems m_subsystems;
-
-  bool   m_bInitialised;
-  size_t m_cardIndex;
+  bool              m_bInitialised;
+  size_t            m_cardIndex;
 };
 }

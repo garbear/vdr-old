@@ -44,14 +44,6 @@ namespace VDR
 #define TS_SCRAMBLING_TIMEOUT     3 // seconds to wait until a TS becomes unscrambled
 #define TS_SCRAMBLING_TIME_OK    10 // seconds before a Channel/CAM combination is marked as known to decrypt
 
-#ifndef SAFE_DELETE
-#define SAFE_DELETE(p) \
-  do \
-  { \
-    delete p; p = NULL; \
-  } while (0)
-#endif
-
 DevicePtr cDevice::EmptyDevice;
 
 // --- cSubsystems -----------------------------------------------------------
@@ -91,13 +83,6 @@ cDevice::cDevice(const cSubsystems &subsystems)
    m_cardIndex(0)
 {
   m_subsystems.AssertValid();
-
-  //dsyslog("new device number %d", m_cardIndex + 1);
-
-  string strThreadDescription = StringUtils::Format("Receiver on device %d", m_cardIndex + 1);
-
-  // TODO: Verify that AddDevice() is called outside the constructor after constructing this class
-  //m_number = cDeviceManager::Get().AddDevice(this);
 }
 
 cDevice::~cDevice()
@@ -110,11 +95,6 @@ bool cDevice::Initialise(void)
 {
   m_bInitialised = true;
   return m_bInitialised;
-}
-
-void cDevice::MakePrimaryDevice(bool bOn)
-{
-  // XXX do we need this?
 }
 
 void *cDevice::Process()
