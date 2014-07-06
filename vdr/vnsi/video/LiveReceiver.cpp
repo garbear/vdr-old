@@ -25,6 +25,7 @@
 
 #include "LiveReceiver.h"
 #include "VideoInput.h"
+#include "devices/Device.h"
 #include "devices/subsystems/DeviceReceiverSubsystem.h"
 #include "utils/log/Log.h"
 

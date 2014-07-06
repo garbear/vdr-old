@@ -24,6 +24,7 @@
 #include "utils/Tools.h"
 #include "platform/threads/threads.h"
 
+#include <list>
 #include <stdint.h>
 
 namespace VDR

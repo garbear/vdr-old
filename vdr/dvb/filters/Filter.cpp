@@ -20,6 +20,7 @@
  */
 
 #include "Filter.h"
+#include "devices/Device.h"
 #include "devices/subsystems/DeviceChannelSubsystem.h"
 #include "devices/subsystems/DeviceSectionFilterSubsystem.h"
 

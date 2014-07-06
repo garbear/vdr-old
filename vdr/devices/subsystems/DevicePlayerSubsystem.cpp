@@ -24,6 +24,7 @@
 #include "DeviceSPUSubsystem.h"
 #include "DeviceTrackSubsystem.h"
 #include "DeviceVideoFormatSubsystem.h"
+#include "devices/Device.h"
 #include "devices/Transfer.h"
 #include "Player.h"
 #include "utils/log/Log.h"

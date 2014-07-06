@@ -20,14 +20,13 @@
  */
 #pragma once
 
-#include "Device.h"
-
 #include <assert.h>
 #include <typeinfo>
 
 namespace VDR
 {
 
+class cDevice;
 class cDeviceChannelSubsystem;
 class cDeviceCommonInterfaceSubsystem;
 class cDeviceImageGrabSubsystem;

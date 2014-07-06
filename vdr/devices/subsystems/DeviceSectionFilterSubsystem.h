@@ -24,6 +24,7 @@
 #include "dvb/DVBTypes.h"
 #include "dvb/filters/FilterResource.h"
 #include "platform/threads/mutex.h"
+#include "platform/threads/threads.h"
 
 #include <set>
 #include <shared_ptr/shared_ptr.hpp>
