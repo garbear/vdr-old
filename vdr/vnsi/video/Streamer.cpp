@@ -82,7 +82,7 @@ bool cLiveStreamer::Open(int serial)
 {
   Close();
 
-  m_Device = cDeviceManager::Get().GetDevice(*m_Channel.get(), m_Priority, true, true);
+  m_Device = cDeviceManager::Get().GetDevice(*m_Channel.get(), true, true);
 
   if (m_Device == cDevice::EmptyDevice)
   {
@@ -119,7 +119,7 @@ bool cLiveStreamer::Open(int serial)
     if (m_Channel && m_Channel->Source() == SOURCE_TYPE_ANALOG_VIDEO)
       m_IsMPEGPS = true;
 
-    if (!m_VideoInput.Open(m_Channel, m_Priority, m_VideoBuffer))
+    if (!m_VideoInput.Open(m_Channel, m_VideoBuffer))
     {
       esyslog("Can't switch to channel %i - %s", m_Channel->Number(), m_Channel->Name().c_str());
       return false;
@@ -220,7 +220,7 @@ void* cLiveStreamer::Process(void)
   return NULL;
 }
 
-bool cLiveStreamer::StreamChannel(ChannelPtr channel, int priority, cxSocket *Socket, cResponsePacket *resp)
+bool cLiveStreamer::StreamChannel(ChannelPtr channel, cxSocket *Socket, cResponsePacket *resp)
 {
   if (channel == cChannel::EmptyChannel)
   {
@@ -229,7 +229,6 @@ bool cLiveStreamer::StreamChannel(ChannelPtr channel, int priority, cxSocket *So
   }
 
   m_Channel   = channel;
-  m_Priority  = priority;
   m_Socket    = Socket;
 
   if (!Open())

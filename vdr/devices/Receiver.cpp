@@ -34,10 +34,9 @@ using namespace PLATFORM;
 namespace VDR
 {
 
-cReceiver::cReceiver(ChannelPtr Channel /* = cChannel::EmptyChannel */, int Priority)
+cReceiver::cReceiver(const ChannelPtr& Channel /* = cChannel::EmptyChannel */)
 {
   m_device = NULL;
-  m_priority = constrain(Priority, MINPRIORITY, MAXPRIORITY);
   if (Channel)
     SetPids(*Channel);
 }

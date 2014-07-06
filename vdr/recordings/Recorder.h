@@ -39,9 +39,9 @@ class cRecordingInfo;
 class cRecorder : public cReceiver, PLATFORM::CThread
 {
 public:
-  cRecorder(const std::string& strFileName, ChannelPtr Channel, int Priority);
-               // Creates a new recorder for the given Channel and
-               // the given Priority that will record into the file FileName.
+  cRecorder(const std::string& strFileName, ChannelPtr Channel);
+               // Creates a new recorder for the given Channel that will record
+               // into the file FileName.
   virtual ~cRecorder();
 
   virtual void SetEvent(const EventPtr& event);

@@ -100,11 +100,10 @@ DevicePtr cDeviceManager::GetDevice(unsigned int index)
   return (index < m_devices.size()) ? m_devices[index] : cDevice::EmptyDevice;
 }
 
-DevicePtr cDeviceManager::GetDevice(const cChannel &channel, int priority, bool bLiveView, bool bQuery /* = false */)
+DevicePtr cDeviceManager::GetDevice(const cChannel &channel, bool bLiveView, bool bQuery /* = false */)
 {
   // Collect the current priorities of all CAM slots that can decrypt the channel:
   int NumCamSlots = CamSlots.Count();
-  int SlotPriority[NumCamSlots];
   int NumUsableSlots = 0;
   bool InternalCamNeeded = false;
   CLockObject lock(m_mutex);
@@ -112,14 +111,12 @@ DevicePtr cDeviceManager::GetDevice(const cChannel &channel, int priority, bool 
   {
     for (cCamSlot *CamSlot = CamSlots.First(); CamSlot; CamSlot = CamSlots.Next(CamSlot))
     {
-      SlotPriority[CamSlot->Index()] = MAXPRIORITY + 1; // assumes it can't be used
       if (CamSlot->ModuleStatus() == msReady)
       {
         if (CamSlot->ProvidesCa(channel.GetCaIds()))
         {
           if (!ChannelCamRelations.CamChecked(channel.GetChannelID(), CamSlot->SlotNumber()))
           {
-            SlotPriority[CamSlot->Index()] = CamSlot->Priority();
             NumUsableSlots++;
           }
         }
@@ -136,10 +133,6 @@ DevicePtr cDeviceManager::GetDevice(const cChannel &channel, int priority, bool 
   uint32_t Impact = 0xFFFFFFFF; // we're looking for a device with the least impact
   for (int j = 0; j < NumCamSlots || !NumUsableSlots; j++)
   {
-    if (NumUsableSlots && SlotPriority[j] > MAXPRIORITY)
-    {
-      continue; // there is no CAM available in this slot
-    }
     dsyslog("checking %u devices", m_devices.size());
     for (int i = 0; i < m_devices.size(); i++)
     {
@@ -152,7 +145,7 @@ DevicePtr cDeviceManager::GetDevice(const cChannel &channel, int priority, bool 
       if (NumUsableSlots && !HasInternalCam && !CamSlots.Get(j)->Assign(m_devices[i], true))
         continue; // CAM slot can't be used with this device
       bool ndr;
-      if (m_devices[i]->Channel()->ProvidesChannel(channel, priority, &ndr)) // this device is basically able to do the job
+      if (m_devices[i]->Channel()->ProvidesChannel(channel, &ndr)) // this device is basically able to do the job
       {
         if (NumUsableSlots && !HasInternalCam && m_devices[i]->CommonInterface()->CamSlot() && m_devices[i]->CommonInterface()->CamSlot() != CamSlots.Get(j))
           ndr = true; // using a different CAM slot requires detaching receivers
@@ -166,8 +159,8 @@ DevicePtr cDeviceManager::GetDevice(const cChannel &channel, int priority, bool 
         imp <<= 1; imp |= bLiveView ? ndr : 0;                                  // prefer the primary device for live viewing if we don't need to detach existing receivers
         imp <<= 1; imp |= m_devices[i]->Receiver()->Receiving();                                                               // avoid devices that are receiving
         imp <<= 4; imp |= GetClippedNumProvidedSystems(4, *m_devices[i]) - 1;                                       // avoid cards which support multiple delivery systems
-        imp <<= 8; imp |= m_devices[i]->Receiver()->Priority() - IDLEPRIORITY;                                                 // use the device with the lowest priority (- IDLEPRIORITY to assure that values -100..99 can be used)
-        imp <<= 8; imp |= ((NumUsableSlots && !HasInternalCam) ? SlotPriority[j] : IDLEPRIORITY) - IDLEPRIORITY;// use the CAM slot with the lowest priority (- IDLEPRIORITY to assure that values -100..99 can be used)
+        imp <<= 8; imp |= 0;
+        imp <<= 8; imp |= 0;
         imp <<= 1; imp |= ndr;                                                                                  // avoid devices if we need to detach existing receivers
         imp <<= 1; imp |= (NumUsableSlots || InternalCamNeeded) ? 0 : m_devices[i]->CommonInterface()->HasCi();                       // avoid cards with Common Interface for FTA channels
         imp <<= 1; imp |= m_devices[i]->AvoidRecording();                                                          // avoid SD full featured cards
@@ -207,7 +200,7 @@ DevicePtr cDeviceManager::GetDevice(const cChannel &channel, int priority, bool 
   return d;
 }
 
-DevicePtr cDeviceManager::GetDeviceForTransponder(const cChannel &channel, int priority)
+DevicePtr cDeviceManager::GetDeviceForTransponder(const cChannel &channel)
 {
   DevicePtr Device = cDevice::EmptyDevice;
   for (std::vector<DevicePtr>::const_iterator it = m_devices.begin(); it != m_devices.end(); ++it)
@@ -219,11 +212,6 @@ DevicePtr cDeviceManager::GetDeviceForTransponder(const cChannel &channel, int p
     {
       if ((*it)->Channel()->MaySwitchTransponder(channel))
         Device = (*it); // this device may switch to the transponder without disturbing any receiver or live view
-      else if (!(*it)->Channel()->Occupied() && (*it)->Channel()->MaySwitchTransponder(channel)) // MaySwitchTransponder() implicitly calls Occupied()
-      {
-        if ((*it)->Receiver()->Priority() < priority && (!Device || (*it)->Receiver()->Priority() < Device->Receiver()->Priority()))
-          Device = (*it); // use this one only if no other with less impact can be found
-      }
     }
   }
 

@@ -63,24 +63,22 @@ void cVideoInput::ResetMembers(void)
     m_Channel->UnregisterObserver(this);
   m_Channel     = cChannel::EmptyChannel;
   m_VideoBuffer = NULL;
-  m_Priority    = 0;
   m_PmtChange   = false;
   m_Device      = cDevice::EmptyDevice;
   m_SeenPmt     = false;
 }
 
-bool cVideoInput::Open(ChannelPtr channel, int priority, cVideoBuffer *videoBuffer)
+bool cVideoInput::Open(ChannelPtr channel, cVideoBuffer *videoBuffer)
 {
   CLockObject lock(m_mutex);
 
-  m_Device = cDeviceManager::Get().GetDevice(*channel, priority, true);
+  m_Device = cDeviceManager::Get().GetDevice(*channel, true);
   if (m_Device)
   {
     dsyslog("found device: '%s' (%d) for channel '%s'",
         m_Device->DeviceName().c_str(), m_Device->CardIndex(), channel->Name().c_str());
 
     m_VideoBuffer = videoBuffer;
-    m_Priority    = priority;
     m_Channel     = channel;
     m_Channel->RegisterObserver(this);
 
@@ -88,7 +86,7 @@ bool cVideoInput::Open(ChannelPtr channel, int priority, cVideoBuffer *videoBuff
     {
       dsyslog("Creating new live Receiver");
       m_SeenPmt   = false;
-      m_Receiver  = new cLiveReceiver(m_Device, this, m_Channel, m_Priority);
+      m_Receiver  = new cLiveReceiver(m_Device, this, m_Channel);
       m_Device->Receiver()->AttachReceiver(m_Receiver);
       CreateThread();
       return true;

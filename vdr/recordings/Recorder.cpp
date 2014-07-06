@@ -40,8 +40,8 @@ namespace VDR
 
 // --- cRecorder -------------------------------------------------------------
 
-cRecorder::cRecorder(const std::string& strFileName, ChannelPtr Channel, int Priority)
-:cReceiver(Channel, Priority), CThread()
+cRecorder::cRecorder(const std::string& strFileName, ChannelPtr Channel)
+:cReceiver(Channel), CThread()
 {
   m_strRecordingName = strFileName;
   m_recordingInfo = NULL;

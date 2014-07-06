@@ -129,15 +129,14 @@ public:
    * receivers because the channel can't be decrypted, this device/CAM
    * combination will be skipped in the next call to GetDevice().
    */
-  DevicePtr GetDevice(const cChannel &channel, int priority, bool bLiveView, bool bQuery = false);
+  DevicePtr GetDevice(const cChannel &channel, bool bLiveView, bool bQuery = false);
 
   /*!
    * \brief Returns a device that is not currently "occupied" and can be tuned
-   *        to the transponder of the given Channel, without disturbing any
-   *        receiver at priorities higher or equal to Priority
+   *        to the transponder of the given Channel
    * \return The device, or NULL if no such device is currently available
    */
-  DevicePtr GetDeviceForTransponder(const cChannel &channel, int priority);
+  DevicePtr GetDeviceForTransponder(const cChannel &channel);
 
   /*!
    * \brief Get the number of transponders that provide the specified channel.

@@ -1866,12 +1866,6 @@ vector<uint16_t> cCamSlot::GetCaSystemIds(void)
   return caSystemIds;
 }
 
-int cCamSlot::Priority(void)
-{
-  DevicePtr d = Device();
-  return d != cDevice::EmptyDevice ? d->Receiver()->Priority() : IDLEPRIORITY;
-}
-
 bool cCamSlot::ProvidesCa(const vector<uint16_t>& caSystemIds)
 {
   CLockObject lock(mutex);

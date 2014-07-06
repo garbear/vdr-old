@@ -82,7 +82,6 @@ private:
   cVNSIDemuxer      m_Demuxer;
   cVideoBuffer     *m_VideoBuffer;
   cVideoInput       m_VideoInput;
-  int               m_Priority;
   uint8_t           m_Timeshift;
 
 protected:
@@ -96,7 +95,7 @@ public:
 
   void Activate(bool On);
 
-  bool StreamChannel(ChannelPtr channel, int priority, cxSocket *Socket, cResponsePacket* resp);
+  bool StreamChannel(ChannelPtr channel, cxSocket *Socket, cResponsePacket* resp);
   bool IsStarting() { return m_startup; }
   bool IsAudioOnly() { return m_IsAudioOnly; }
   bool IsMPEGPS() { return m_IsMPEGPS; }

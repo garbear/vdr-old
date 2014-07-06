@@ -504,7 +504,7 @@ bool cTimer::StartRecording(void)
       if (MakeDirs(recording.FileName(), true))
       {
         // start recording
-        cRecorder* recorder = new cRecorder(recording.FileName(), channel, Priority());
+        cRecorder* recorder = new cRecorder(recording.FileName(), channel);
         if (device->Receiver()->AttachReceiver(recorder))
         {
           recording.WriteInfo();

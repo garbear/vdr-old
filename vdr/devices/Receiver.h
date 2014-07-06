@@ -40,14 +40,12 @@ private:
   cChannelID         m_channelID;
   cDevice*           m_device;
   std::set<uint16_t> m_pids;
-  int                m_priority;
 
 protected:
   void Detach(void);
 
 public: // TODO
   bool WantsPid(int Pid);
-  int Priority(void) const { return m_priority; }
   bool AddToPIDSubsystem(cDevicePIDSubsystem* pidSys) const;
   void RemoveFromPIDSubsystem(cDevicePIDSubsystem* pidSys) const;
   bool DeviceAttached(cDevice* device) const;
@@ -68,8 +66,8 @@ protected:
                ///< will be delivered only ONCE, so the cReceiver must make sure that
                ///< it will be able to buffer the data if necessary.
 public:
-  cReceiver(ChannelPtr Channel = cChannel::EmptyChannel, int Priority = MINPRIORITY);
-               ///< Creates a new receiver for the given Channel with the given Priority.
+  cReceiver(const ChannelPtr& Channel = cChannel::EmptyChannel);
+               ///< Creates a new receiver for the given Channel
                ///< If Channel is not NULL, its pids are set by a call to SetPids().
                ///< Otherwise pids can be added to the receiver by separate calls to the AddPid[s]
                ///< functions.

@@ -170,10 +170,10 @@ void* cVNSIClient::Process(void)
   return NULL;
 }
 
-bool cVNSIClient::StartChannelStreaming(ChannelPtr channel, int32_t priority, uint8_t timeshift, uint32_t timeout)
+bool cVNSIClient::StartChannelStreaming(ChannelPtr channel, uint8_t timeshift, uint32_t timeout)
 {
   m_Streamer    = new cLiveStreamer(m_Id, timeshift, timeout);
-  m_isStreaming = m_Streamer->StreamChannel(channel, priority, &m_socket, m_resp);
+  m_isStreaming = m_Streamer->StreamChannel(channel, &m_socket, m_resp);
   if (!m_isStreaming)
   {
     delete m_Streamer;
@@ -713,7 +713,7 @@ bool cVNSIClient::process_StoreSetup() /* OPCODE 9 */
 bool cVNSIClient::processChannelStream_Open() /* OPCODE 20 */
 {
   uint32_t uid = m_req->extract_U32();
-  int32_t priority = m_req->extract_S32();
+  int32_t priority = m_req->extract_S32(); // Unused
   uint8_t timeshift = m_req->extract_U8();
   uint32_t timeout = m_req->extract_U32();
 
@@ -736,7 +736,7 @@ bool cVNSIClient::processChannelStream_Open() /* OPCODE 20 */
   }
   else
   {
-    if (StartChannelStreaming(channel, priority, timeshift, timeout))
+    if (StartChannelStreaming(channel, timeshift, timeout))
     {
       isyslog("Started streaming of channel %s (timeout %i seconds)", channel->Name().c_str(), timeout);
       // return here without sending the response

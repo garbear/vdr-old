@@ -43,7 +43,7 @@ friend class cLiveReceiver;
 public:
   cVideoInput();
   virtual ~cVideoInput();
-  bool Open(ChannelPtr channel, int priority, cVideoBuffer *videoBuffer);
+  bool Open(ChannelPtr channel, cVideoBuffer *videoBuffer);
   void Close();
 
   void Notify(const Observable &obs, const ObservableMessage msg);
@@ -60,7 +60,6 @@ protected:
   ChannelPtr                 m_Channel;
   cVideoBuffer*              m_VideoBuffer;
   PLATFORM::CMutex           m_mutex;
-  int                        m_Priority;
   bool                       m_PmtChange;
   bool                       m_SeenPmt;
 };

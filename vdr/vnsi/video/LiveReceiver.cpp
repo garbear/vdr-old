@@ -31,8 +31,8 @@
 namespace VDR
 {
 
-cLiveReceiver::cLiveReceiver(DevicePtr device, cVideoInput *VideoInput, ChannelPtr Channel, int Priority) :
-  cReceiver(Channel, Priority),
+cLiveReceiver::cLiveReceiver(DevicePtr device, cVideoInput *VideoInput, ChannelPtr Channel) :
+  cReceiver(Channel),
   m_device(device),
   m_VideoInput(VideoInput)
 {

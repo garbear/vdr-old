@@ -239,9 +239,6 @@ public:
        ///< Gets a pending menu, or NULL if there is no menu.
   cCiEnquiry *GetEnquiry(void);
        ///< Gets a pending enquiry, or NULL if there is no enquiry.
-  int Priority(void);
-       ///< Returns the priority if the device this slot is currently assigned
-       ///< to, or IDLEPRIORITY if it is not assigned to any device.
   bool ProvidesCa(const std::vector<uint16_t>& caSystemIds);
        ///< Returns true if the CAM in this slot provides one of the given
        ///< CaSystemIds. This doesn't necessarily mean that it will be

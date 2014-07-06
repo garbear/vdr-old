@@ -42,17 +42,6 @@ cDeviceReceiverSubsystem::cDeviceReceiverSubsystem(cDevice *device)
 {
 }
 
-int cDeviceReceiverSubsystem::Priority(void) const
-{
-  int priority = IDLEPRIORITY;
-
-  PLATFORM::CLockObject lock(m_mutexReceiver);
-  for (std::list<cReceiver*>::const_iterator it = m_receivers.begin(); it != m_receivers.end(); ++it)
-    priority = std::max((*it)->Priority(), priority);
-
-  return priority;
-}
-
 bool cDeviceReceiverSubsystem::Receiving(void) const
 {
   PLATFORM::CLockObject lock(m_mutexReceiver);

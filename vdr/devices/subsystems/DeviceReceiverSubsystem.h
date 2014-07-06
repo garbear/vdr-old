@@ -38,13 +38,6 @@ public:
 
 public:
   /*!
-   * \brief Returns the priority of the current receiving session
-   * \return Value in the range -MAXPRIORITY..MAXPRIORITY, or IDLEPRIORITY if no
-   *         receiver is currently active
-   */
-  int Priority(void) const;
-
-  /*!
    * \brief Returns true if we are currently receiving
    */
   bool Receiving(void) const;

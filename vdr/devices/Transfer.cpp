@@ -29,7 +29,7 @@ namespace VDR
 // --- cTransfer -------------------------------------------------------------
 
 cTransfer::cTransfer(ChannelPtr Channel)
-:cReceiver(Channel, TRANSFERPRIORITY)
+:cReceiver(Channel)
 {
   patPmtGenerator.SetChannel(Channel);
 }

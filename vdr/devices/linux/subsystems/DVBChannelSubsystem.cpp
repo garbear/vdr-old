@@ -101,41 +101,38 @@ bool cDvbChannelSubsystem::ProvidesTransponder(const cChannel &channel) const
   return false;
 }
 
-bool cDvbChannelSubsystem::ProvidesChannel(const cChannel &channel, int priority /* = IDLEPRIORITY */, bool *pNeedsDetachReceivers /* = NULL */) const
+bool cDvbChannelSubsystem::ProvidesChannel(const cChannel &channel, bool *pNeedsDetachReceivers /* = NULL */) const
 {
   bool result = false;
-  bool hasPriority = priority == IDLEPRIORITY || priority > this->Receiver()->Priority();
   bool needsDetachReceivers = false;
 
   if (GetDevice<cDvbDevice>()->m_dvbTuner.IsOpen() && ProvidesTransponder(channel))
   {
-    result = hasPriority;
-    if (priority > IDLEPRIORITY)
+    result = true; // XXX
+
+    if (Receiver()->Receiving())
     {
-      if (Receiver()->Receiving())
+      if (GetDevice<cDvbDevice>()->m_dvbTuner.IsTunedTo(channel))
       {
-        if (GetDevice<cDvbDevice>()->m_dvbTuner.IsTunedTo(channel))
+        if ((channel.GetVideoStream().vpid && !PID()->HasPid(channel.GetVideoStream().vpid)) ||
+            (channel.GetAudioStream(0).apid && !PID()->HasPid(channel.GetAudioStream(0).apid)) ||
+            (channel.GetDataStream(0).dpid && !PID()->HasPid(channel.GetDataStream(0).dpid)))
         {
-          if ((channel.GetVideoStream().vpid && !PID()->HasPid(channel.GetVideoStream().vpid)) ||
-              (channel.GetAudioStream(0).apid && !PID()->HasPid(channel.GetAudioStream(0).apid)) ||
-              (channel.GetDataStream(0).dpid && !PID()->HasPid(channel.GetDataStream(0).dpid)))
+          if (CommonInterface()->CamSlot() && channel.GetCaId(0) >= CA_ENCRYPTED_MIN)
           {
-            if (CommonInterface()->CamSlot() && channel.GetCaId(0) >= CA_ENCRYPTED_MIN)
-            {
-              if (CommonInterface()->CamSlot()->CanDecrypt(channel))
-                result = true;
-              else
-                needsDetachReceivers = true;
-            }
-            else
+            if (CommonInterface()->CamSlot()->CanDecrypt(channel))
               result = true;
+            else
+              needsDetachReceivers = true;
           }
           else
             result = true;
         }
         else
-          needsDetachReceivers = Receiver()->Receiving();
+          result = true;
       }
+      else
+        needsDetachReceivers = Receiver()->Receiving();
     }
   }
   if (pNeedsDetachReceivers)

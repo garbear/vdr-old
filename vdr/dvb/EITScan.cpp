@@ -164,9 +164,6 @@ bool cEITScanner::Scan(const DevicePtr& device, cScanData& scanData)
     if (!device->Channel()->ProvidesTransponder(*channel))
       throw "Failed to scan channel: Channel is not provided by device";
 
-    if (device->Receiver()->Priority() >= 0)
-      throw "Failed to scan channel: Some weird priority thing left over from VDR";
-
     if (!device->Channel()->MaySwitchTransponder(*channel) && !device->Channel()->ProvidesTransponderExclusively(*channel))
       throw "Failed to scan channel: Not allowed to switch channels";
 

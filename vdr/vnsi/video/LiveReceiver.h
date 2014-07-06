@@ -38,7 +38,7 @@ class cVideoInput;
 class cLiveReceiver: public cReceiver
 {
 public:
-  cLiveReceiver(DevicePtr device, cVideoInput *VideoInput, ChannelPtr Channel, int Priority);
+  cLiveReceiver(DevicePtr device, cVideoInput *VideoInput, ChannelPtr Channel);
   virtual ~cLiveReceiver();
 
 protected:

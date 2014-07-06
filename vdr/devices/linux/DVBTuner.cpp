@@ -802,7 +802,7 @@ bool cDvbTuner::BondingOk(const cChannel& channel, bool bConsiderOccupied) const
     string BondingParams = GetBondingParams(channel);
     do
     {
-      if (t->m_device->Receiver()->Priority() > IDLEPRIORITY || (bConsiderOccupied && t->m_device->Channel()->Occupied()))
+      if (bConsiderOccupied && t->m_device->Channel()->Occupied())
       {
         if (BondingParams != t->GetBondedMaster()->GetBondingParams())
           return false;

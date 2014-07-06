@@ -55,11 +55,6 @@ public:
   /*!
    * \brief Returns true if this device can provide the given channel
    *
-   * \param priority Used to device whether the caller's request can be honored
-   *        Only used if the device has cReceivers attached to it. The special
-   *        priority value IDLEPRIORITY will tell the caller whether this device
-   *        is principally able to provide the given channel, regardless of any
-   *        attached cReceivers.
    * \param needsDetachReceivers If given, the resulting value in it will tell
    *        the caller whether or not it will have to detach any currently
    *        attached receivers from this device before calling SwitchChannel.
@@ -68,7 +63,7 @@ public:
    * \return The default implementation always returns false, so a derived
    *         cDevice class able to provide channels must implement this function
    */
-  virtual bool ProvidesChannel(const cChannel &channel, int priority = IDLEPRIORITY, bool *needsDetachReceivers = NULL) const { return false; }
+  virtual bool ProvidesChannel(const cChannel &channel, bool *needsDetachReceivers = NULL) const { return false; }
 
   /*!
    * \brief Returns true if this device provides EIT data and thus wants to be
