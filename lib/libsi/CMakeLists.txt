@@ -13,5 +13,7 @@ IF("${OS}" STREQUAL "android")
 add_definitions(-DTARGET_ANDROID)
 ENDIF()
 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
+
 set(LIBSI_LIBRARY si)
 add_library(${LIBSI_LIBRARY} STATIC ${LIBSI_SRCS})
