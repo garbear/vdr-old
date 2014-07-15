@@ -58,6 +58,7 @@ public:
 
   void Notify(const Observable &obs, const ObservableMessage msg);
   void AddChannel(ChannelPtr channel);
+  void AddChannels(const ChannelVector& channels);
   void RemoveChannel(ChannelPtr channel);
 
   bool Load(void);

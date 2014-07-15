@@ -103,6 +103,20 @@ void cChannelManager::AddChannel(ChannelPtr channel)
   m_channels.push_back(channel);
 }
 
+void cChannelManager::AddChannels(const ChannelVector& channels)
+{
+  if (!channels.empty())
+  {
+    for (ChannelVector::const_iterator itChannel = channels.begin(); itChannel != channels.end(); ++itChannel)
+      AddChannel(*itChannel);
+
+    SetChanged();
+    NotifyObservers(ObservableMessageChannelChanged);
+
+    Save();
+  }
+}
+
 void cChannelManager::RemoveChannel(ChannelPtr channel)
 {
   assert(channel.get());

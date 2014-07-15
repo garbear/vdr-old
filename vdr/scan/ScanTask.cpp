@@ -89,11 +89,12 @@ void cScanTask::DoWork(const ChannelPtr& channel, cSynchronousAbort* abortableJo
           patChannel->SetName(vctChannel->Name(), vctChannel->ShortName(), vctChannel->Provider());
           // TODO: Copy transponder data
           // TODO: Copy major/minor channel number
-
-          cChannelManager::Get().AddChannel(patChannel);
         }
       }
     }
+
+    if (!patChannels.empty())
+      cChannelManager::Get().AddChannels(patChannels);
   }
 }
 
