@@ -128,7 +128,7 @@ bool cVDRDaemon::Init()
 
 void cVDRDaemon::Stop()
 {
-  StopThread(false);
+  StopThread(-1);
   m_sleepEvent.Signal();
 }
 
