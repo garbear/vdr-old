@@ -90,19 +90,6 @@ public:
 // I suspect that the polarization masking is involved somehow
 bool ISTRANSPONDER(int frequencyMHz1, int frequencyMHz2);
 
-enum eChannelMod
-{
-  CHANNELMOD_NONE   = 0x00,
-  CHANNELMOD_ALL    = 0xFF,
-  CHANNELMOD_NAME   = 0x01,
-  CHANNELMOD_PIDS   = 0x02,
-  CHANNELMOD_ID     = 0x04,
-  CHANNELMOD_CA     = 0x10,
-  CHANNELMOD_TRANSP = 0x20,
-  CHANNELMOD_LANGS  = 0x40,
-  CHANNELMOD_RETUNE = (CHANNELMOD_PIDS | CHANNELMOD_CA | CHANNELMOD_TRANSP)
-};
-
 #define MAXLANGCODE1 4 // a 3 letter language code, zero terminated
 #define MAXLANGCODE2 8 // up to two 3 letter language codes, separated by '+' and zero terminated
 
@@ -201,8 +188,6 @@ public:
   unsigned int Number(void) const { return m_number; }
   void SetNumber(unsigned int number) { m_number = number; }
 
-  eChannelMod Modification(eChannelMod mask = CHANNELMOD_ALL);
-
   SchedulePtr Schedule(void) const;
   bool HasSchedule(void) const;
   void SetSchedule(const SchedulePtr& schedule);
@@ -235,7 +220,6 @@ private:
 
   unsigned int                m_number;          // Sequence number assigned on load
 
-  int                         m_modification;
   SchedulePtr                 m_schedule;
   cLinkChannels*              m_linkChannels;
   //cLinkChannels               m_linkChannels;

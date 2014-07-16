@@ -129,7 +129,6 @@ void cChannel::Reset(void)
   m_videoStream    = VideoStream();
   m_teletextStream = TeletextStream();
   m_number         = 0;
-  m_modification   = CHANNELMOD_NONE,
   m_linkChannels   = NULL;
 
   m_name.clear();
@@ -160,7 +159,6 @@ cChannel& cChannel::operator=(const cChannel& rhs)
   m_number          = rhs.m_number;
 
   // TODO
-  m_modification = CHANNELMOD_ALL;
   m_schedule.reset();
   m_linkChannels = NULL;
 
@@ -182,7 +180,6 @@ void cChannel::SetId(uint16_t nid, uint16_t tsid, uint16_t sid)
 
     m_schedule.reset();
 
-    m_modification |= CHANNELMOD_ID;
     SetChanged();
   }
 }
@@ -195,7 +192,6 @@ void cChannel::SetName(const string& strName, const string& strShortName, const 
     m_shortName = strShortName;
     m_provider  = strProvider;
 
-    m_modification |= CHANNELMOD_NAME;
     SetChanged();
   }
 }
@@ -206,7 +202,6 @@ void cChannel::SetPortalName(const string& strPortalName)
   {
     m_portalName = strPortalName;
 
-    m_modification |= CHANNELMOD_NAME;
     SetChanged();
   }
 }
@@ -251,18 +246,11 @@ void cChannel::SetStreams(const VideoStream& videoStream,
                           const vector<SubtitleStream>& subtitleStreams,
                           const TeletextStream& teletextStream)
 {
-  eChannelMod mod = CHANNELMOD_NONE;
   if (m_videoStream     != videoStream ||
       m_audioStreams    != audioStreams ||
       m_dataStreams     != dataStreams ||
       m_subtitleStreams != subtitleStreams ||
       m_teletextStream  != teletextStream)
-  {
-    //TODO: check if PIDs or languages changed
-    mod = (eChannelMod)(CHANNELMOD_PIDS | CHANNELMOD_LANGS);
-  }
-
-  if (mod != CHANNELMOD_NONE)
   {
     m_videoStream     = videoStream;
     m_audioStreams    = audioStreams;;
@@ -270,7 +258,6 @@ void cChannel::SetStreams(const VideoStream& videoStream,
     m_subtitleStreams = subtitleStreams;
     m_teletextStream  = teletextStream;
 
-    m_modification |= mod;
     SetChanged();
   }
 }
@@ -285,8 +272,6 @@ void cChannel::SetSubtitlingDescriptors(const vector<SubtitleStream>& subtitleSt
   {
     m_subtitleStreams = subtitleStreams;
 
-    // TODO: Check if PIDs or language changed
-    m_modification |= CHANNELMOD_PIDS | CHANNELMOD_LANGS;
     SetChanged();
   }
 }
@@ -301,7 +286,6 @@ void cChannel::SetCaDescriptors(const CaDescriptorVector& caDescriptors)
   {
     m_caDescriptors = caDescriptors;
 
-    m_modification |= CHANNELMOD_CA;
     SetChanged();
   }
 }
@@ -321,13 +305,6 @@ unsigned int cChannel::FrequencyMHzWithPolarization() const
   }
 
   return m_transponder.FrequencyMHz();
-}
-
-eChannelMod cChannel::Modification(eChannelMod mask /* = CHANNELMOD_ALL */)
-{
-  eChannelMod result = (eChannelMod)(m_modification & mask);
-  m_modification = CHANNELMOD_NONE;
-  return result;
 }
 
 SchedulePtr cChannel::Schedule(void) const

@@ -27,7 +27,6 @@
 #include "channels/ChannelTypes.h"
 #include "devices/DeviceTypes.h"
 #include "platform/threads/threads.h"
-#include "utils/Observer.h"
 
 #include <stdint.h>
 
@@ -37,7 +36,7 @@ namespace VDR
 class cLiveReceiver;
 class cVideoBuffer;
 
-class cVideoInput : public PLATFORM::CThread, public Observer
+class cVideoInput : public PLATFORM::CThread
 {
 friend class cLiveReceiver;
 public:
@@ -45,8 +44,6 @@ public:
   virtual ~cVideoInput();
   bool Open(ChannelPtr channel, cVideoBuffer *videoBuffer);
   void Close();
-
-  void Notify(const Observable &obs, const ObservableMessage msg);
 
 protected:
   void ResetMembers(void);

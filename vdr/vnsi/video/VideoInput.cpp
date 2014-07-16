@@ -59,8 +59,6 @@ cVideoInput::~cVideoInput()
 void cVideoInput::ResetMembers(void)
 {
   DELETENULL(m_Receiver);
-  if (m_Channel)
-    m_Channel->UnregisterObserver(this);
   m_Channel     = cChannel::EmptyChannel;
   m_VideoBuffer = NULL;
   m_PmtChange   = false;
@@ -80,7 +78,6 @@ bool cVideoInput::Open(ChannelPtr channel, cVideoBuffer *videoBuffer)
 
     m_VideoBuffer = videoBuffer;
     m_Channel     = channel;
-    m_Channel->RegisterObserver(this);
 
     if (m_Device->Channel()->SwitchChannel(m_Channel))
     {
@@ -119,9 +116,7 @@ void cVideoInput::Close()
     receiver   = m_Receiver;
     m_Receiver = NULL;
 
-    if (m_Channel)
-      m_Channel->UnregisterObserver(this);
-    m_Channel = cChannel::EmptyChannel;
+    m_Channel.reset();
   }
 
   if (device)
@@ -140,12 +135,6 @@ void cVideoInput::Close()
   }
 
   ResetMembers();
-}
-
-void cVideoInput::Notify(const Observable &obs, const ObservableMessage msg)
-{
-  if (msg == ObservableMessageChannelHasPMT)
-    PmtChange();
 }
 
 void cVideoInput::PmtChange(void)
@@ -203,19 +192,12 @@ void* cVideoInput::Process()
     {
       if ((*it)->ID().Sid() == m_Channel->ID().Sid())
       {
-        // Clear modification flag
-        m_Channel->Modification();
-
         m_Channel->SetStreams((*it)->GetVideoStream(),
                               (*it)->GetAudioStreams(),
                               (*it)->GetDataStreams(),
                               (*it)->GetSubtitleStreams(),
                               (*it)->GetTeletextStream());
-
-        m_Channel->NotifyObservers(ObservableMessageChannelHasPMT);
-        if (m_Channel->Modification(CHANNELMOD_PIDS))
-          m_Channel->NotifyObservers(ObservableMessageChannelPMTChanged);
-
+        PmtChange();
         break;
       }
     }
