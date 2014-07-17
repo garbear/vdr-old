@@ -70,9 +70,9 @@ cDeviceSectionFilterSubsystem::cFilterResourceRequest::~cFilterResourceRequest(v
   Abort();
 }
 
-void cDeviceSectionFilterSubsystem::cFilterResourceRequest::WaitForSection(void)
+bool cDeviceSectionFilterSubsystem::cFilterResourceRequest::WaitForSection(void)
 {
-  m_readyEvent.Wait(SECTION_TIMEOUT_MS);
+  return m_readyEvent.Wait(SECTION_TIMEOUT_MS);
 }
 
 void cDeviceSectionFilterSubsystem::cFilterResourceRequest::HandleSection(const FilterResourcePtr& resource)
@@ -148,7 +148,8 @@ bool cDeviceSectionFilterSubsystem::GetSection(const FilterResourceCollection& f
   }
 
   // Block until a resources receives a section
-  pollRequest->WaitForSection();
+  if (!pollRequest->WaitForSection())
+    esyslog("Failed to read section: timed out");
 
   // Remove poll request so that Process() doesn't invoke it twice
   {
@@ -159,14 +160,21 @@ bool cDeviceSectionFilterSubsystem::GetSection(const FilterResourceCollection& f
   }
 
   // Read a resource if one is ready to be read
-  if (pollRequest->GetActiveResource() && ReadResource(pollRequest->GetActiveResource(), data))
+  if (pollRequest->GetActiveResource())
   {
-    pid = pollRequest->GetActiveResource()->GetPid();
-    return true;
+    if (ReadResource(pollRequest->GetActiveResource(), data))
+    {
+      pid = pollRequest->GetActiveResource()->GetPid();
+      return true;
+    }
+    else
+    {
+      dsyslog("Failed to read section: failed to read from section filter resource");
+    }
   }
   else
   {
-    dsyslog("Failed to read section!");
+    dsyslog("Failed to read section: aborted");
   }
 
   return false;

@@ -69,9 +69,12 @@ private:
 
     /*!
      * Block until a resource receives a section. Allows the thread to sleep
-     * until one of the resources has a section ready.
+     * until one of the resources has a section ready. Returns true if the
+     * request succeeded or was aborted early (in which case GetActiveResource()
+     * can be used to test for success); returns false if the request timed out.
+     * timed out
      */
-    void WaitForSection(void);
+    bool WaitForSection(void);
 
     /*!
      * Called by cDeviceSectionFilterSubsystem::HandleSection() when a section
