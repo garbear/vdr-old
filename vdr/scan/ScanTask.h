@@ -49,15 +49,10 @@ public:
   cScanTask(cDevice* device, const cFrontendCapabilities& caps);
   virtual ~cScanTask() { }
 
-  /*!
-   * \brief Scan a channel with the given parameters.
-   */
-  void DoWork(fe_modulation modulation, unsigned int iChannel, eDvbcSymbolRate symbolRate, eOffsetType freqOffset, cSynchronousAbort* abortableJob = NULL, iScanCallback* callback = NULL);
   void DoWork(const ChannelPtr& channel, cSynchronousAbort* abortableJob = NULL, iScanCallback* callback = NULL);
 
   static unsigned int ChannelToFrequency(unsigned int channel, eChannelList channelList);
 
-protected:
   /*!
    * \brief Create a channel object with the given parameters. Must be implemented
    *        by subclasses.

@@ -52,9 +52,9 @@ TEST(ScanTask, cScanTaskATSC)
       cFrontendCapabilities caps(device->m_dvbTuner.GetCapabilities());
       cScanTaskATSC task(device, caps, ATSC_QAM);
 
-      task.DoWork(VSB_8, 7, eSR_6900000, NO_OFFSET);
+      //task.DoWork(VSB_8, 7, eSR_6900000, NO_OFFSET); // TODO
 
-      EXPECT_NE(0, cChannelManager::Get().ChannelCount());
+      //EXPECT_NE(0, cChannelManager::Get().ChannelCount()); // TODO
     }
   }
 }

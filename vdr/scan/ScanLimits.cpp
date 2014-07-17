@@ -41,7 +41,8 @@ cScanLimits::cScanLimits()
 
 void cScanLimits::ForEach(cScanTask* task, const cScanConfig& config, iScanCallback* callback)
 {
-  float progress = 0;
+  // Generate list of channels
+  ChannelVector channels;
   for (vector<fe_modulation>::const_iterator modIt = m_modulations.begin(); modIt != m_modulations.end() && !IsAborting(); ++modIt)
   {
     for (unsigned int iChannel = 0; iChannel < m_channelCount && !IsAborting(); ++iChannel)
@@ -50,12 +51,20 @@ void cScanLimits::ForEach(cScanTask* task, const cScanConfig& config, iScanCallb
       {
         for (vector<eDvbcSymbolRate>::const_iterator srIt = m_dvbcSymbolRates.begin(); srIt != m_dvbcSymbolRates.end() && !IsAborting(); ++srIt)
         {
-          task->DoWork(*modIt, iChannel, *srIt, *freqIt, this, callback);
-          progress += 1.0f / (m_modulations.size() * m_channelCount * m_freqOffsets.size() * m_dvbcSymbolRates.size());
-          callback->ScanPercentage(progress * 100.0f);
+          ChannelPtr channel = task->GetChannel(*modIt, iChannel, *srIt, *freqIt);
+          if (channel)
+            channels.push_back(channel);
         }
       }
     }
+  }
+
+  float progress = 0;
+  for (ChannelVector::const_iterator itChannel = channels.begin(); itChannel != channels.end() && !IsAborting(); ++itChannel)
+  {
+    task->DoWork(*itChannel, this, callback);
+    progress += 1.0f / channels.size();
+    callback->ScanPercentage(progress * 100.0f);
   }
 
   callback->ScanPercentage(100.0f);
