@@ -120,7 +120,7 @@ bool cVDRDaemon::Init()
   if (!cDeviceManager::Get().WaitForAllDevicesReady(DEVICEREADYTIMEOUT))
     dsyslog("some devices are not ready after %d seconds", DEVICEREADYTIMEOUT);
 
-  cEITScanner::Get().CreateThread();
+  //cEITScanner::Get().CreateThread();
 
   return CreateThread(true);
 }
