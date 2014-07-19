@@ -88,7 +88,10 @@ void* cEITScanner::Process(void)
         s->Save();
     }
 
-    CreateScanList();
+    // Create scan list
+    const ChannelVector& channels = cChannelManager::Get().GetCurrent();
+    for (ChannelVector::const_iterator it = channels.begin(); it != channels.end(); it++)
+      AddTransponder(*it);
 
     ChannelVector::iterator it;
     for (it = m_scanList.begin(); it != m_scanList.end(); ++it)
@@ -118,20 +121,6 @@ void* cEITScanner::Process(void)
   m_scanList.clear();
 
   return NULL;
-}
-
-void cEITScanner::CreateScanList(void)
-{
-  m_scanList.clear();
-
-  for (ChannelVector::const_iterator it = m_transponderList.begin(); it != m_transponderList.end(); ++it)
-    AddTransponder(*it);
-
-  m_transponderList.clear();
-
-  const ChannelVector& channels = cChannelManager::Get().GetCurrent();
-  for (ChannelVector::const_iterator it = channels.begin(); it != channels.end(); it++)
-    AddTransponder(*it);
 }
 
 void cEITScanner::AddTransponder(const ChannelPtr& transponder)

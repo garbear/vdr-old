@@ -45,18 +45,11 @@ protected:
   virtual void* Process(void);
 
 private:
-  /*!
-   * If m_scanList is empty, this will populate it with channels from
-   * m_transponderList and channels being tracked by cChannelManager.
-   */
-  void CreateScanList(void);
-
   void AddTransponder(const ChannelPtr& transponder);
 
   DevicePtr          m_device;
   PLATFORM::CTimeout m_nextFullScan;
   ChannelVector      m_scanList;
-  ChannelVector      m_transponderList;
   bool               m_bScanFinished;
 };
 
