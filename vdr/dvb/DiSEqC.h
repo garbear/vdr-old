@@ -21,9 +21,8 @@
 #pragma once
 
 #include "Config.h"
-#include "channels/ChannelSource.h"
-#include "dvb/extended_frontend.h" // for fe_polarization_t
 #include "platform/threads/mutex.h"
+#include "transponders/TransponderTypes.h"
 #include "utils/List.h"
 
 #include <stdint.h>
@@ -73,7 +72,7 @@ public:
   enum { MaxDiseqcCodes = 6 };
 private:
   int devices;
-  cChannelSource source;
+  TRANSPONDER_TYPE source;
   int slof;
   fe_polarization_t m_polarization;
   int lof;
@@ -106,7 +105,7 @@ public:
       ///< Frequency must be the frequency the tuner will be tuned to, and will be
       ///< set to the proper SCR frequency upon return (if SCR is used).
   int Devices(void) const { return devices; }
-  cChannelSource Source(void) const { return source; }
+  TRANSPONDER_TYPE Source(void) const { return source; }
   int Slof(void) const { return slof; }
   fe_polarization_t Polarization(void) const { return m_polarization; }
   int Lof(void) const { return lof; }
@@ -116,7 +115,8 @@ public:
 
 class cDiseqcs : public cConfig<cDiseqc> {
 public:
-  const cDiseqc *Get(int Device, cChannelSource Source, unsigned int Frequency, char Polarization, const cScr **Scr) const;
+  // TODO: Do we also need position/direction?
+  const cDiseqc *Get(int Device, TRANSPONDER_TYPE Source, unsigned int Frequency, fe_polarization_t Polarization, const cScr **Scr) const;
       ///< Selects a DiSEqC entry suitable for the given Device and tuning parameters.
       ///< If this DiSEqC entry requires SCR and the given *Scr is NULL
       ///< a free one will be selected from the Scrs and a pointer to that will

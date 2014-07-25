@@ -52,6 +52,13 @@ using namespace std;
 namespace VDR
 {
 
+// Left over from VDR
+enum eSystemType
+{
+  DVB_SYSTEM_1 = 0, // SYS_DVBS or SYS_DVBT
+  DVB_SYSTEM_2 = 1  // SYS_DVBS2 or SYS_DVBT2
+};
+
 cNit::cNit(cDevice* device)
  : cFilter(device),
    m_networkId(NETWORK_ID_UNKNOWN)
@@ -185,18 +192,18 @@ ChannelVector cNit::GetTransponders()
             {
               SI::SatelliteDeliverySystemDescriptor* sd = (SI::SatelliteDeliverySystemDescriptor*)d;
 
-              cDvbTransponder dtp;
+              cTransponder transponder(TRANSPONDER_SATELLITE);
 
               // Symbol rate
-              dtp.SetSymbolRate(BCD2INT(sd->getSymbolRate()) / 10);
+              transponder.SatelliteParams().SetSymbolRateHz(BCD2INT(sd->getSymbolRate()) * 100);
 
               // Polarization
-              dtp.SetPolarization((fe_polarization)sd->getPolarization());
+              transponder.SatelliteParams().SetPolarization((fe_polarization)sd->getPolarization());
 
               // Rolloff
               //fe_rolloff_t rollOff = ROLLOFF_35; // Implied value in DVB-S, default for DVB-S2 (per frontend.h)
               static fe_rolloff rollOffs[] = { ROLLOFF_35, ROLLOFF_25, ROLLOFF_20, ROLLOFF_AUTO };
-              dtp.SetRollOff(sd->getModulationSystem() == DVB_SYSTEM_2 ? rollOffs[sd->getRollOff()] : ROLLOFF_AUTO);
+              transponder.SatelliteParams().SetRollOff(sd->getModulationSystem() == DVB_SYSTEM_2 ? rollOffs[sd->getRollOff()] : ROLLOFF_AUTO);
 
               // Code rate
               static fe_code_rate codeRates[] =
@@ -205,38 +212,39 @@ ChannelVector cNit::GetTransponders()
                 FEC_3_5,  FEC_4_5,  FEC_9_10, FEC_AUTO, FEC_AUTO, FEC_AUTO,
                 FEC_AUTO, FEC_AUTO, FEC_NONE
               };
-              dtp.SetCoderateH(codeRates[sd->getFecInner()]);
+              transponder.SatelliteParams().SetCoderateH(codeRates[sd->getFecInner()]);
 
               // Frequency
-              dtp.SetFrequencyHz(frequenciesKHz[0] = BCD2INT(sd->getFrequency()) / 100);
+              transponder.SetFrequencyHz(frequenciesKHz[0] = BCD2INT(sd->getFrequency()) / 100);
 
               // Modulation
               //fe_modulation modulationType = QPSK;
               static fe_modulation modulations[] = { QAM_AUTO, QPSK, PSK_8, QAM_16 };
-              dtp.SetModulation(modulations[sd->getModulationType()]);
+              transponder.SetModulation(modulations[sd->getModulationType()]);
 
               // System
-              dtp.SetSystem(sd->getModulationSystem() ? DVB_SYSTEM_2 : DVB_SYSTEM_1);
+              transponder.SetDeliverySystem(sd->getModulationSystem() ? SYS_DVBS2 : SYS_DVBS);
 
               assert(GetCurrentlyTunedTransponder().get() != NULL); // TODO
               for (vector<uint32_t>::const_iterator itKHz = frequenciesKHz.begin(); itKHz != frequenciesKHz.end(); ++itKHz)
               {
-                if (ISTRANSPONDER(cDvbTransponder::WTF(*itKHz, dtp.Polarization()), GetCurrentlyTunedTransponder()->GetTransponder().FrequencyMHz()))
+                if (ISTRANSPONDER(*itKHz / 1000, GetCurrentlyTunedTransponder()->GetTransponder().FrequencyMHz())) // TODO: ???
                 {
                   thisNetwork.bHasTransponder = true;
                   break;
                 }
               }
 
-              // Source
-              cChannelSource source(SOURCE_TYPE_SATELLITE, BCD2INT(sd->getOrbitalPosition()), sd->getWestEastFlag() ? DIRECTION_EAST : DIRECTION_WEST);
+              // Source (TODO: Do something with position)
+              //cChannelSource source(SOURCE_TYPE_SATELLITE, BCD2INT(sd->getOrbitalPosition()), sd->getWestEastFlag() ? DIRECTION_EAST : DIRECTION_WEST);
 
               for (vector<uint32_t>::const_iterator itKHz = frequenciesKHz.begin(); itKHz != frequenciesKHz.end(); ++itKHz)
               {
-                ChannelPtr transponder = ChannelPtr(new cChannel);
-                transponder->SetId(ts.getOriginalNetworkId(), ts.getTransportStreamId(), 0);
-                if (transponder->SetTransponderData(source, dtp))
-                  transponders.push_back(transponder);
+                ChannelPtr channel = ChannelPtr(new cChannel);
+                channel->SetId(ts.getOriginalNetworkId(), ts.getTransportStreamId(), 0);
+                transponder.SetFrequencyKHz(*itKHz);
+                channel->SetTransponder(transponder);
+                transponders.push_back(channel);
               }
 
               /* TODO
@@ -333,13 +341,10 @@ ChannelVector cNit::GetTransponders()
             {
               SI::CableDeliverySystemDescriptor* sd = (SI::CableDeliverySystemDescriptor*)d;
 
-              cDvbTransponder dtp;
-
-              // Source
-              cChannelSource source = SOURCE_TYPE_CABLE;
+              cTransponder transponder(TRANSPONDER_CABLE);
 
               // Frequency
-              dtp.SetFrequencyKHz(frequenciesKHz[0] = BCD2INT(sd->getFrequency()) / 10);
+              transponder.SetFrequencyKHz(frequenciesKHz[0] = BCD2INT(sd->getFrequency()) / 10);
 
               //XXX FEC_outer???
               static fe_code_rate codeRates[] =
@@ -348,15 +353,15 @@ ChannelVector cNit::GetTransponders()
                 FEC_3_5,  FEC_4_5,  FEC_9_10, FEC_AUTO, FEC_AUTO, FEC_AUTO,
                 FEC_AUTO, FEC_AUTO, FEC_NONE
               };
-              dtp.SetCoderateH(codeRates[sd->getFecInner()]);
+              transponder.CableParams().SetCoderateH(codeRates[sd->getFecInner()]);
 
               // Modulation
               static fe_modulation modulations[] =
                 { QPSK, QAM_16, QAM_32, QAM_64, QAM_128, QAM_256, QAM_AUTO };
-              dtp.SetModulation(modulations[std::min(sd->getModulation(), 6)]);
+              transponder.SetModulation(modulations[std::min(sd->getModulation(), 6)]);
 
               // Symbol rate
-              dtp.SetSymbolRate(BCD2INT(sd->getSymbolRate()) / 10);
+              transponder.CableParams().SetSymbolRateHz(BCD2INT(sd->getSymbolRate()) * 100);
 
               for (vector<uint32_t>::const_iterator itKHz = frequenciesKHz.begin(); itKHz != frequenciesKHz.end(); ++itKHz)
               {
@@ -370,10 +375,11 @@ ChannelVector cNit::GetTransponders()
 
               for (vector<uint32_t>::const_iterator itKHz = frequenciesKHz.begin(); itKHz != frequenciesKHz.end(); ++itKHz)
               {
-                ChannelPtr transponder = ChannelPtr(new cChannel);
-                transponder->SetId(ts.getOriginalNetworkId(), ts.getTransportStreamId(), 0);
-                if (transponder->SetTransponderData(source, dtp))
-                  transponders.push_back(transponder);
+                ChannelPtr channel = ChannelPtr(new cChannel);
+                channel->SetId(ts.getOriginalNetworkId(), ts.getTransportStreamId(), 0);
+                transponder.SetFrequencyKHz(*itKHz);
+                channel->SetTransponder(transponder);
+                transponders.push_back(channel);
               }
 
               /* TODO
@@ -434,25 +440,23 @@ ChannelVector cNit::GetTransponders()
             {
               SI::TerrestrialDeliverySystemDescriptor* sd = (SI::TerrestrialDeliverySystemDescriptor*)d;
 
-              cDvbTransponder dtp;
+              cTransponder transponder(TRANSPONDER_TERRESTRIAL);
 
-              cChannelSource source = SOURCE_TYPE_TERRESTRIAL;
-
-              dtp.SetFrequencyKHz(frequenciesKHz[0] = sd->getFrequency() * 10);
+              transponder.SetFrequencyKHz(frequenciesKHz[0] = sd->getFrequency() * 10);
 
               // Bandwidth
               static fe_bandwidth bandwidths[] = { BANDWIDTH_8_MHZ, BANDWIDTH_7_MHZ, BANDWIDTH_6_MHZ, BANDWIDTH_5_MHZ };
               if (sd->getBandwidth() < ARRAY_SIZE(bandwidths))
-                dtp.SetBandwidth(bandwidths[sd->getBandwidth()]);
+                transponder.TerrestrialParams().SetBandwidth(bandwidths[sd->getBandwidth()]);
               else
-                dtp.SetBandwidth(BANDWIDTH_8_MHZ); // Note: Default value was 0 Hz ??? Changed to 8 MHz instead
+                transponder.TerrestrialParams().SetBandwidth(BANDWIDTH_8_MHZ); // Note: Default value was 0 Hz ??? Changed to 8 MHz instead
 
               // Modulation
               static fe_modulation constellations[] = { QPSK, QAM_16, QAM_64, QAM_AUTO };
-              dtp.SetModulation(constellations[sd->getConstellation()]);
+              transponder.SetModulation(constellations[sd->getConstellation()]);
 
               // System
-              dtp.SetSystem(DVB_SYSTEM_1);
+              transponder.SetDeliverySystem(SYS_DVBT);
 
               // Hierarchy
               static fe_hierarchy hierarchies[] =
@@ -460,7 +464,7 @@ ChannelVector cNit::GetTransponders()
                 HIERARCHY_NONE, HIERARCHY_1,    HIERARCHY_2,    HIERARCHY_4,
                 HIERARCHY_AUTO, HIERARCHY_AUTO, HIERARCHY_AUTO, HIERARCHY_AUTO
               };
-              dtp.SetHierarchy(hierarchies[sd->getHierarchy()]);
+              transponder.TerrestrialParams().SetHierarchy(hierarchies[sd->getHierarchy()]);
 
               // Code rates
               static fe_code_rate codeRates[] =
@@ -468,8 +472,8 @@ ChannelVector cNit::GetTransponders()
                   FEC_1_2, FEC_2_3, FEC_3_4, FEC_5_6, FEC_7_8, FEC_AUTO, FEC_AUTO,
                   FEC_AUTO
               };
-              dtp.SetCoderateH(codeRates[sd->getCodeRateHP()]);
-              dtp.SetCoderateL(codeRates[sd->getCodeRateLP()]);
+              transponder.TerrestrialParams().SetCoderateH(codeRates[sd->getCodeRateHP()]);
+              transponder.TerrestrialParams().SetCoderateL(codeRates[sd->getCodeRateLP()]);
 
               // Guard interval
               static fe_guard_interval guardIntervals[] =
@@ -477,7 +481,7 @@ ChannelVector cNit::GetTransponders()
                   GUARD_INTERVAL_1_32, GUARD_INTERVAL_1_16, GUARD_INTERVAL_1_8,
                   GUARD_INTERVAL_1_4
               };
-              dtp.SetGuard(guardIntervals[sd->getGuardInterval()]);
+              transponder.TerrestrialParams().SetGuard(guardIntervals[sd->getGuardInterval()]);
 
               // Transmission mode
               static fe_transmit_mode transmissionModes[] =
@@ -485,7 +489,7 @@ ChannelVector cNit::GetTransponders()
                   TRANSMISSION_MODE_2K, TRANSMISSION_MODE_8K, TRANSMISSION_MODE_4K,
                   TRANSMISSION_MODE_AUTO
               };
-              dtp.SetTransmission(transmissionModes[sd->getTransmissionMode()]);
+              transponder.TerrestrialParams().SetTransmission(transmissionModes[sd->getTransmissionMode()]);
 
               for (vector<uint32_t>::const_iterator itKHz = frequenciesKHz.begin(); itKHz != frequenciesKHz.end(); ++itKHz)
               {
@@ -499,11 +503,11 @@ ChannelVector cNit::GetTransponders()
 
               for (vector<uint32_t>::const_iterator itKHz = frequenciesKHz.begin(); itKHz != frequenciesKHz.end(); ++itKHz)
               {
-                ChannelPtr transponder = ChannelPtr(new cChannel);
-                transponder->SetId(ts.getOriginalNetworkId(), ts.getTransportStreamId(), 0);
-                dtp.SetFrequencyKHz(*itKHz);
-                if (transponder->SetTransponderData(source, dtp))
-                  transponders.push_back(transponder);
+                ChannelPtr channel = ChannelPtr(new cChannel);
+                channel->SetId(ts.getOriginalNetworkId(), ts.getTransportStreamId(), 0);
+                transponder.SetFrequencyKHz(*itKHz);
+                channel->SetTransponder(transponder);
+                transponders.push_back(channel);
               }
 
               /* TODO

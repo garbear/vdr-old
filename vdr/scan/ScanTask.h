@@ -32,6 +32,7 @@
 #include "dvb/filters/PMT.h"
 #include "dvb/filters/SDT.h"
 #include "dvb/filters/TDT.h"
+#include "transponders/Transponder.h"
 
 #include <linux/dvb/frontend.h>
 #include <vector>
@@ -105,7 +106,7 @@ protected:
 
 private:
   static bool ValidSatFrequency(unsigned int frequencyHz, const cChannel& channel);
-  static cDiseqc* GetDiseqc(cChannelSource source, unsigned int frequency, fe_polarization_t polarization);
+  static cDiseqc* GetDiseqc(TRANSPONDER_TYPE source, unsigned int frequency, fe_polarization_t polarization);
 
   SATELLITE::eSatellite m_satelliteId;
 };

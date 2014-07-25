@@ -21,13 +21,12 @@
  */
 
 #include "dvb/filters/PSIP_STT.h"
-#include "channels/ChannelSource.h"
 #include "devices/linux/DVBDevice.h"
 #include "devices/linux/test/DVBDeviceNames.h"
 #include "devices/subsystems/DeviceChannelSubsystem.h"
-#include "linux/channels/DVBTransponder.h"
 #include "scan/ScanTask.h"
 #include "scan/ScanConfig.h"
+#include "transponders/Transponder.h"
 
 #include <gtest/gtest.h>
 #include <vector>
@@ -55,25 +54,13 @@ TEST(PSIP_STT, GetEvents)
     {
       cFrontendCapabilities caps(device->m_dvbTuner.GetCapabilities());
 
-      cDvbTransponder transponder;
+      cTransponder transponder(TRANSPONDER_ATSC);
       transponder.SetFrequencyMHz(177);
-      transponder.SetSymbolRate(cScanConfig::TranslateSymbolRate(eSR_6900000));
-      transponder.SetPolarization(POLARIZATION_VERTICAL);
-      transponder.SetPolarization(POLARIZATION_VERTICAL);
       transponder.SetInversion(caps.caps_inversion);
-      transponder.SetBandwidth(BANDWIDTH_8_MHZ); // Should probably be 8000000 (8MHz) or BANDWIDTH_8_MHZ
-      transponder.SetCoderateH(caps.caps_fec);
-      transponder.SetCoderateL(FEC_NONE);
-      transponder.SetModulation(VSB_8); // Only loop-dependent variable
-      transponder.SetSystem((eSystemType)SYS_DVBC_ANNEX_AC); // TODO: This should probably be DVB_SYSTEM_2!!!
-      transponder.SetTransmission(TRANSMISSION_MODE_2K); // (fe_transmit_mode)0
-      transponder.SetGuard(GUARD_INTERVAL_1_32); // (fe_guard_interval)0
-      transponder.SetHierarchy(HIERARCHY_NONE); // (fe_hierarchy)0
-      transponder.SetRollOff(ROLLOFF_35); // (fe_rolloff)0
+      transponder.SetModulation(VSB_8);
 
       channel = ChannelPtr(new cChannel);
-      channel->SetTransponderData(SOURCE_TYPE_ATSC, transponder);
-      channel->SetId(0, 0, 0);
+      channel->SetTransponder(transponder);
     }
 
     if (channel)

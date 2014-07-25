@@ -22,15 +22,14 @@
 
 #include "dvb/filters/PSIP_MGT.h"
 #include "channels/ChannelManager.h"
-#include "channels/ChannelSource.h"
 #include "channels/ChannelTypes.h"
 #include "devices/linux/DVBDevice.h"
 #include "devices/linux/test/DVBDeviceNames.h"
 #include "devices/subsystems/DeviceChannelSubsystem.h"
 #include "epg/Event.h"
-#include "linux/channels/DVBTransponder.h"
 #include "scan/ScanTask.h"
 #include "scan/ScanConfig.h"
+#include "transponders/Transponder.h"
 #include "utils/log/Log.h"
 
 #include <gtest/gtest.h>

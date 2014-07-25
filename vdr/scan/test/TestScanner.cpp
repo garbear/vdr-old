@@ -73,7 +73,7 @@ TEST(Scanner, Scan)
       cTestScanCallback scanCallback;
 
       cScanConfig config;
-      config.dvbType = DVB_ATSC;
+      config.dvbType = TRANSPONDER_ATSC;
       config.atscModulation = VSB_8;
       config.countryIndex = COUNTRY::US;
       config.device = *it;

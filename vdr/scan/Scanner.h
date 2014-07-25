@@ -56,7 +56,7 @@ protected:
   virtual void* Process(void);
 
 private:
-  static bool GetFrontendType(eDvbType dvbType, fe_type& frontendType);
+  static bool GetFrontendType(TRANSPONDER_TYPE dvbType, fe_type& frontendType);
 
   cScanConfig        m_setup;
   PLATFORM::CMutex   m_mutex;

@@ -125,14 +125,14 @@ void* cEITScanner::Process(void)
 
 void cEITScanner::AddTransponder(const ChannelPtr& transponder)
 {
-  assert(transponder->Source() != SOURCE_TYPE_NONE);
-  assert(transponder->FrequencyMHzWithPolarization() != 0);
+  assert(transponder->GetTransponder().Type() != TRANSPONDER_INVALID); // TODO: Move this out of the function
+  assert(transponder->FrequencyMHzWithPolarization() != 0); // TODO: Move this out of the function
 
   bool bFound = false;
 
   for (ChannelVector::const_iterator it = m_scanList.begin(); !bFound && it != m_scanList.end(); ++it)
   {
-    if (transponder->Source() == (*it)->Source() &&
+    if (transponder->GetTransponder().Type() == (*it)->GetTransponder().Type() &&
         ISTRANSPONDER(transponder->FrequencyMHzWithPolarization(), (*it)->FrequencyMHzWithPolarization()))
     {
       bFound = true;

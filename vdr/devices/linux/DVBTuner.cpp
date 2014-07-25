@@ -27,9 +27,9 @@
 #include "devices/subsystems/DeviceReceiverSubsystem.h"
 #include "dvb/DiSEqC.h"
 #include "filesystem/Poller.h"
-#include "linux/channels/DVBTransponder.h"
 #include "platform/util/timeutils.h"
 #include "settings/Settings.h"
+#include "transponders/Stringifier.h"
 #include "utils/CommonMacros.h"
 #include "utils/log/Log.h"
 #include "utils/StringUtils.h"
@@ -141,8 +141,25 @@ bool cDvbTuner::HasDeliverySystem(fe_delivery_system_t deliverySystem) const
 void cDvbTuner::SetChannel(const ChannelPtr& channel)
 {
   m_channel        = channel;
-  m_frontendType   = GetRequiredDeliverySystem(*channel);
+  m_frontendType   = channel->GetTransponder().DeliverySystem();
   m_frontendStatus = FE_STATUS_UNKNOWN;
+}
+
+vector<string> GetModulationsFromCaps(fe_caps_t caps)
+{
+  vector<string> modulations;
+
+  if (caps & FE_CAN_QPSK)      { modulations.push_back(Stringifier::ModulationToString(QPSK)); }
+  if (caps & FE_CAN_QAM_16)    { modulations.push_back(Stringifier::ModulationToString(QAM_16)); }
+  if (caps & FE_CAN_QAM_32)    { modulations.push_back(Stringifier::ModulationToString(QAM_32)); }
+  if (caps & FE_CAN_QAM_64)    { modulations.push_back(Stringifier::ModulationToString(QAM_64)); }
+  if (caps & FE_CAN_QAM_128)   { modulations.push_back(Stringifier::ModulationToString(QAM_128)); }
+  if (caps & FE_CAN_QAM_256)   { modulations.push_back(Stringifier::ModulationToString(QAM_256)); }
+  if (caps & FE_CAN_8VSB)      { modulations.push_back(Stringifier::ModulationToString(VSB_8)); }
+  if (caps & FE_CAN_16VSB)     { modulations.push_back(Stringifier::ModulationToString(VSB_16)); }
+  if (caps & FE_CAN_TURBO_FEC) { modulations.push_back("TURBO_FEC"); }
+
+  return modulations;
 }
 
 bool cDvbTuner::Open(void)
@@ -196,7 +213,7 @@ bool cDvbTuner::Open(void)
   }
 
   // TODO: Why is only the number of modulations stored?
-  vector<string> vecModulations = cDvbTransponder::GetModulationsFromCaps(m_frontendInfo.capabilities);
+  vector<string> vecModulations = GetModulationsFromCaps(m_frontendInfo.capabilities);
   m_numModulations = vecModulations.size();
 
   string modulations = StringUtils::Join(vecModulations, ",");
@@ -470,16 +487,7 @@ bool cDvbTuner::IsTunedTo(const cChannel& channel) const
   if (!HasLock())
     return false;
 
-  return m_channel->SetTransponderData(channel.Source(), channel.GetTransponder());
-
-  if (m_channel->Source()                        == channel.Source() &&
-      m_channel->GetTransponder().FrequencyMHz() == channel.GetTransponder().FrequencyMHz() &&
-      m_channel->GetTransponder().Polarization() == channel.GetTransponder().Polarization())
-  {
-    return m_channel->SetTransponderData(channel.Source(), channel.GetTransponder());
-  }
-
-  return false; // sufficient mismatch
+  return m_channel->GetTransponder() == channel.GetTransponder();
 }
 
 void cDvbTuner::ClearChannel(void)
@@ -506,6 +514,8 @@ void cDvbTuner::ClearChannel(void)
 
 bool cDvbTuner::SetFrontend(const ChannelPtr& channel)
 {
+  const cTransponder& transponder = channel->GetTransponder();
+
   // Structure to hold our frontend commands
   vector<dtv_property> frontends;
 
@@ -520,22 +530,18 @@ bool cDvbTuner::SetFrontend(const ChannelPtr& channel)
 
   frontends.clear();
 
-  // Determine the required frontend type
-  fe_delivery_system_t frontendType = GetRequiredDeliverySystem(*channel);
-  if (frontendType == SYS_UNDEFINED)
-    return false;
-  SetCommand(frontends, DTV_DELIVERY_SYSTEM, frontendType);
+  dsyslog("Tuner '%s' tuning to frequency %u", GetName().c_str(), transponder.FrequencyHz());
 
-  const cDvbTransponder& dtp = channel->GetTransponder();
+  SetCommand(frontends, DTV_DELIVERY_SYSTEM, transponder.DeliverySystem());
 
-  dsyslog("Tuner '%s' tuning to frequency %u", GetName().c_str(), dtp.FrequencyHz());
+  dsyslog("Tuner '%s' tuning to frequency %u", GetName().c_str(), transponder.FrequencyHz());
 
-  if (frontendType == SYS_DVBS || frontendType == SYS_DVBS2)
+  if (transponder.IsSatellite())
   {
-    unsigned int frequencyHz = dtp.FrequencyHz();
+    unsigned int frequencyHz = transponder.FrequencyHz();
     if (cSettings::Get().m_bDiSEqC)
     {
-      if (const cDiseqc *diseqc = Diseqcs.Get(m_device->CardIndex() + 1, channel->Source(), frequencyHz, dtp.Polarization(), &m_scr))
+      if (const cDiseqc *diseqc = Diseqcs.Get(m_device->CardIndex() + 1, transponder.Type(), frequencyHz, transponder.SatelliteParams().Polarization(), &m_scr))
       {
         frequencyHz -= diseqc->Lof();
         if (diseqc != m_lastDiseqc || diseqc->IsScr())
@@ -572,7 +578,7 @@ bool cDvbTuner::SetFrontend(const ChannelPtr& channel)
       }
 
       int volt;
-      switch (dtp.Polarization())
+      switch (transponder.SatelliteParams().Polarization())
       {
       case POLARIZATION_HORIZONTAL:
       case POLARIZATION_VERTICAL:
@@ -607,17 +613,17 @@ bool cDvbTuner::SetFrontend(const ChannelPtr& channel)
     // http://linuxtv.org/downloads/v4l-dvb-apis/FE_GET_SET_PROPERTY.html
     SetCommand(frontends, DTV_FREQUENCY,   frequencyHz * 1000UL);
 
-    SetCommand(frontends, DTV_MODULATION,  dtp.Modulation());
-    SetCommand(frontends, DTV_SYMBOL_RATE, dtp.SymbolRate() * 1000UL);
-    SetCommand(frontends, DTV_INNER_FEC,   dtp.CoderateH());
-    SetCommand(frontends, DTV_INVERSION,   dtp.Inversion());
-    if (frontendType == SYS_DVBS2)
+    SetCommand(frontends, DTV_MODULATION,  transponder.Modulation());
+    SetCommand(frontends, DTV_SYMBOL_RATE, transponder.SatelliteParams().SymbolRateHz());
+    SetCommand(frontends, DTV_INNER_FEC,   transponder.SatelliteParams().CoderateH());
+    SetCommand(frontends, DTV_INVERSION,   transponder.Inversion());
+    if (transponder.DeliverySystem() == SYS_DVBS2)
     {
       // DVB-S2
       SetCommand(frontends, DTV_PILOT,   PILOT_AUTO);
-      SetCommand(frontends, DTV_ROLLOFF, dtp.RollOff());
+      SetCommand(frontends, DTV_ROLLOFF, transponder.SatelliteParams().RollOff());
       if (m_dvbApiVersion >= 0x0508)
-        SetCommand(frontends, DTV_STREAM_ID, dtp.StreamId());
+        SetCommand(frontends, DTV_STREAM_ID, transponder.SatelliteParams().StreamId());
     }
     else
     {
@@ -625,43 +631,43 @@ bool cDvbTuner::SetFrontend(const ChannelPtr& channel)
       SetCommand(frontends, DTV_ROLLOFF,   ROLLOFF_35); // DVB-S always has a ROLLOFF of 0.35
     }
   }
-  else if (frontendType == SYS_DVBC_ANNEX_AC || frontendType == SYS_DVBC_ANNEX_B)
+  else if (transponder.IsCable())
   {
     // DVB-C
-    SetCommand(frontends, DTV_FREQUENCY,   dtp.FrequencyHz());
-    SetCommand(frontends, DTV_INVERSION,   dtp.Inversion());
-    SetCommand(frontends, DTV_SYMBOL_RATE, dtp.SymbolRate() * 1000UL);
-    SetCommand(frontends, DTV_INNER_FEC,   dtp.CoderateH());
-    SetCommand(frontends, DTV_MODULATION,  dtp.Modulation());
+    SetCommand(frontends, DTV_FREQUENCY,   transponder.FrequencyHz());
+    SetCommand(frontends, DTV_INVERSION,   transponder.Inversion());
+    SetCommand(frontends, DTV_SYMBOL_RATE, transponder.CableParams().SymbolRateHz());
+    SetCommand(frontends, DTV_INNER_FEC,   transponder.CableParams().CoderateH());
+    SetCommand(frontends, DTV_MODULATION,  transponder.Modulation());
   }
-  else if (frontendType == SYS_DVBT || frontendType == SYS_DVBT2)
+  else if (transponder.IsTerrestrial())
   {
     // DVB-T/DVB-T2 (common parts)
-    SetCommand(frontends, DTV_FREQUENCY,         dtp.FrequencyHz());
-    SetCommand(frontends, DTV_INVERSION,         dtp.Inversion());
-    SetCommand(frontends, DTV_BANDWIDTH_HZ,      dtp.BandwidthHz()); // Use hertz value, not enum
-    SetCommand(frontends, DTV_CODE_RATE_HP,      dtp.CoderateH());
-    SetCommand(frontends, DTV_CODE_RATE_LP,      dtp.CoderateL());
-    SetCommand(frontends, DTV_MODULATION,        dtp.Modulation());
-    SetCommand(frontends, DTV_TRANSMISSION_MODE, dtp.Transmission());
-    SetCommand(frontends, DTV_GUARD_INTERVAL,    dtp.Guard());
-    SetCommand(frontends, DTV_HIERARCHY,         dtp.Hierarchy());
+    SetCommand(frontends, DTV_FREQUENCY,         transponder.FrequencyHz());
+    SetCommand(frontends, DTV_INVERSION,         transponder.Inversion());
+    SetCommand(frontends, DTV_BANDWIDTH_HZ,      transponder.TerrestrialParams().BandwidthHz()); // Use hertz value, not enum
+    SetCommand(frontends, DTV_CODE_RATE_HP,      transponder.TerrestrialParams().CoderateH());
+    SetCommand(frontends, DTV_CODE_RATE_LP,      transponder.TerrestrialParams().CoderateL());
+    SetCommand(frontends, DTV_MODULATION,        transponder.Modulation());
+    SetCommand(frontends, DTV_TRANSMISSION_MODE, transponder.TerrestrialParams().Transmission());
+    SetCommand(frontends, DTV_GUARD_INTERVAL,    transponder.TerrestrialParams().Guard());
+    SetCommand(frontends, DTV_HIERARCHY,         transponder.TerrestrialParams().Hierarchy());
 
-    if (frontendType == SYS_DVBT2)
+    if (transponder.DeliverySystem() == SYS_DVBT2)
     {
       // DVB-T2
       if (m_dvbApiVersion >= 0x0508)
-        SetCommand(frontends, DTV_STREAM_ID, dtp.StreamId());
+        SetCommand(frontends, DTV_STREAM_ID, transponder.TerrestrialParams().StreamId());
       else if (m_dvbApiVersion >= 0x0503)
-        SetCommand(frontends, DTV_DVBT2_PLP_ID_LEGACY, dtp.StreamId());
+        SetCommand(frontends, DTV_DVBT2_PLP_ID_LEGACY, transponder.TerrestrialParams().StreamId());
     }
   }
-  else if (frontendType == SYS_ATSC)
+  else if (transponder.IsAtsc())
   {
     // ATSC
-    SetCommand(frontends, DTV_FREQUENCY,  dtp.FrequencyHz());
-    SetCommand(frontends, DTV_INVERSION,  dtp.Inversion());
-    SetCommand(frontends, DTV_MODULATION, dtp.Modulation());
+    SetCommand(frontends, DTV_FREQUENCY,  transponder.FrequencyHz());
+    SetCommand(frontends, DTV_INVERSION,  transponder.Inversion());
+    SetCommand(frontends, DTV_MODULATION, transponder.Modulation());
   }
   else
   {
@@ -815,20 +821,24 @@ bool cDvbTuner::BondingOk(const cChannel& channel, bool bConsiderOccupied) const
 
 string cDvbTuner::GetBondingParams(const cChannel& channel) const
 {
-  const cDvbTransponder& dtp = channel.GetTransponder();
-  if (cSettings::Get().m_bDiSEqC)
-  {
-    if (const cDiseqc* diseqc = Diseqcs.Get(m_device->CardIndex() + 1, channel.Source(), dtp.FrequencyKHz(), dtp.Polarization(), NULL))
-      return diseqc->Commands();
-  }
-  else
-  {
-    bool ToneOff = dtp.FrequencyHz() < cSettings::Get().m_iLnbSLOF;
+  const cTransponder& transponder = channel.GetTransponder();
 
-    bool VoltOff = (dtp.Polarization() == POLARIZATION_VERTICAL ||
-                    dtp.Polarization() == POLARIZATION_CIRCULAR_RIGHT);
+  if (transponder.IsSatellite())
+  {
+    if (cSettings::Get().m_bDiSEqC)
+    {
+      if (const cDiseqc* diseqc = Diseqcs.Get(m_device->CardIndex() + 1, transponder.Type(), transponder.FrequencyKHz(), transponder.SatelliteParams().Polarization(), NULL))
+        return diseqc->Commands();
+    }
+    else
+    {
+      bool ToneOff = transponder.FrequencyHz() < cSettings::Get().m_iLnbSLOF;
 
-    return StringUtils::Format("%c %c", ToneOff ? 't' : 'T', VoltOff ? 'v' : 'V');
+      bool VoltOff = (transponder.SatelliteParams().Polarization() == POLARIZATION_VERTICAL ||
+                      transponder.SatelliteParams().Polarization() == POLARIZATION_CIRCULAR_RIGHT);
+
+      return StringUtils::Format("%c %c", ToneOff ? 't' : 'T', VoltOff ? 'v' : 'V');
+    }
   }
 
   return "";
@@ -1007,24 +1017,6 @@ int cDvbTuner::GetSignalQuality(void) const
     return q;
   }
   return -1;
-}
-
-fe_delivery_system_t cDvbTuner::GetRequiredDeliverySystem(const cChannel &channel)
-{
-  const cDvbTransponder& dtp = channel.GetTransponder();
-
-  fe_delivery_system_t ds = SYS_UNDEFINED;
-  if (channel.Source() == SOURCE_TYPE_ATSC)
-    ds = SYS_ATSC;
-  else if (channel.Source() == SOURCE_TYPE_CABLE)
-    ds = SYS_DVBC_ANNEX_AC;
-  else if (channel.Source() == SOURCE_TYPE_SATELLITE)
-    ds = dtp.System() == DVB_SYSTEM_1 ? SYS_DVBS : SYS_DVBS2;
-  else if (channel.Source() == SOURCE_TYPE_TERRESTRIAL)
-    ds = dtp.System() == DVB_SYSTEM_1 ? SYS_DVBT : SYS_DVBT2;
-  else
-    esyslog("ERROR: can't determine frontend type for channel %d", channel.Number());
-  return ds;
 }
 
 string cDvbTuner::TranslateDeliverySystems(const vector<fe_delivery_system_t>& deliverySystems)

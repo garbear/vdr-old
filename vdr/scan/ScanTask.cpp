@@ -32,7 +32,6 @@
 #include "dvb/filters/SDT.h"
 #include "dvb/filters/PSIP_VCT.h"
 #include "settings/Settings.h"
-#include "linux/channels/DVBTransponder.h"
 #include "utils/log/Log.h"
 
 #include <assert.h>
@@ -126,23 +125,19 @@ ChannelPtr cScanTaskTerrestrial::GetChannel(fe_modulation modulation, unsigned i
   if (!CountryUtils::GetBandwidth(iChannel, m_channelList, bandwidth))
     return cChannel::EmptyChannel;
 
-  cDvbTransponder transponder;
+  cTransponder transponder(TRANSPONDER_TERRESTRIAL);
   transponder.SetFrequencyHz(frequencyHz);
-  transponder.SetSymbolRate(27500);
-  transponder.SetPolarization(POLARIZATION_HORIZONTAL); // (fe_polarization)0
   transponder.SetInversion(m_caps.caps_inversion);
-  transponder.SetBandwidth(bandwidth); // Only loop-dependent variable
-  transponder.SetCoderateH(m_caps.caps_fec);
-  transponder.SetCoderateL(m_caps.caps_fec);
+  transponder.TerrestrialParams().SetBandwidth(bandwidth); // Only loop-dependent variable
+  transponder.TerrestrialParams().SetCoderateH(m_caps.caps_fec);
+  transponder.TerrestrialParams().SetCoderateL(m_caps.caps_fec);
   transponder.SetModulation(m_caps.caps_qam);
-  transponder.SetSystem(DVB_SYSTEM_1);
-  transponder.SetTransmission(m_caps.caps_transmission_mode);
-  transponder.SetGuard(m_caps.caps_guard_interval);
-  transponder.SetHierarchy(m_caps.caps_hierarchy);
-  transponder.SetRollOff(ROLLOFF_35); // (fe_rolloff)0
+  transponder.SetDeliverySystem(SYS_DVBT);
+  transponder.TerrestrialParams().SetTransmission(m_caps.caps_transmission_mode);
+  transponder.TerrestrialParams().SetGuard(m_caps.caps_guard_interval);
+  transponder.TerrestrialParams().SetHierarchy(m_caps.caps_hierarchy);
 
-  channel->SetTransponderData(SOURCE_TYPE_TERRESTRIAL, transponder);
-  channel->SetId(0, 0, 0);
+  channel->SetTransponder(transponder);
 
   return channel;
 }
@@ -193,23 +188,15 @@ ChannelPtr cScanTaskCable::GetChannel(fe_modulation modulation, unsigned int iCh
     dsyslog("Searching %s...", strModulation.c_str());
   }
 
-  cDvbTransponder transponder;
+  cTransponder transponder(TRANSPONDER_CABLE);
   transponder.SetFrequencyMHz(410); // Find a dvb-c capable device using *some* channel
-  transponder.SetSymbolRate(6900);
-  transponder.SetPolarization(POLARIZATION_VERTICAL);
+  transponder.CableParams().SetSymbolRateHz(6900); // TODO: Should this be 6900 * 1000???
   transponder.SetInversion(INVERSION_OFF);
-  transponder.SetBandwidth(BANDWIDTH_8_MHZ);
-  transponder.SetCoderateH(FEC_NONE);
-  transponder.SetCoderateL(FEC_NONE);
+  transponder.CableParams().SetCoderateH(FEC_NONE);
   transponder.SetModulation(this_qam); // Only loop-dependent variable (loop-independent if caps_qam == QAM_AUTO)
-  transponder.SetSystem((eSystemType)SYS_DVBC_ANNEX_AC); // TODO: This should probably be DVB_SYSTEM_2!!!
-  transponder.SetTransmission(TRANSMISSION_MODE_2K); // (fe_transmit_mode)0
-  transponder.SetGuard(GUARD_INTERVAL_1_32); // (fe_guard_interval)0
-  transponder.SetHierarchy(HIERARCHY_NONE); // (fe_hierarchy)0
-  transponder.SetRollOff(ROLLOFF_35); // (fe_rolloff)0
+  transponder.SetDeliverySystem(SYS_DVBC_ANNEX_A);
 
-  channel->SetTransponderData(SOURCE_TYPE_CABLE, transponder);
-  channel->SetId(0, 0, 0);
+  channel->SetTransponder(transponder);
 
   return channel;
 }
@@ -228,8 +215,8 @@ bool cScanTaskSatellite::ValidSatFrequency(unsigned int frequencyHz, const cChan
 
   if (cSettings::Get().m_bDiSEqC)
   {
-    const cDvbTransponder& transponder = channel.GetTransponder();
-    cDiseqc *diseqc = GetDiseqc(channel.Source(), transponder.FrequencyHz(), transponder.Polarization());
+    const cTransponder& transponder = channel.GetTransponder();
+    cDiseqc *diseqc = GetDiseqc(transponder.Type(), transponder.FrequencyHz(), transponder.SatelliteParams().Polarization());
 
     if (diseqc)
       frequencyMHz -= diseqc->Lof();
@@ -247,11 +234,11 @@ bool cScanTaskSatellite::ValidSatFrequency(unsigned int frequencyHz, const cChan
   return frequencyMHz >= 950 && frequencyMHz <= 2150;
 }
 
-cDiseqc* cScanTaskSatellite::GetDiseqc(cChannelSource source, unsigned frequency, fe_polarization_t polarization)
+cDiseqc* cScanTaskSatellite::GetDiseqc(TRANSPONDER_TYPE source, unsigned frequency, fe_polarization_t polarization)
 {
   for (cDiseqc *p = Diseqcs.First(); p; p = Diseqcs.Next(p))
   {
-    if (p->Source() == source && p->Slof() > frequency && p->Polarization() == toupper(polarization))
+    if (p->Source() == source && p->Slof() > frequency && p->Polarization() == polarization)
       return p;
   }
 
@@ -262,25 +249,19 @@ ChannelPtr cScanTaskSatellite::GetChannel(fe_modulation modulation, unsigned int
 {
   ChannelPtr channel = ChannelPtr(new cChannel);
 
-  cDvbTransponder transponder;
+  cTransponder transponder(TRANSPONDER_SATELLITE);
   transponder.SetFrequencyHz(SatelliteUtils::GetTransponder(m_satelliteId, iChannel).intermediate_frequency);
-  transponder.SetSymbolRate(SatelliteUtils::GetTransponder(m_satelliteId, iChannel).symbol_rate);
-  transponder.SetPolarization(SatelliteUtils::GetTransponder(m_satelliteId, iChannel).polarization);
+  transponder.SatelliteParams().SetSymbolRateHz(SatelliteUtils::GetTransponder(m_satelliteId, iChannel).symbol_rate); // TODO: Should this be symbol rate * 1000???
+  transponder.SatelliteParams().SetPolarization(SatelliteUtils::GetTransponder(m_satelliteId, iChannel).polarization);
   transponder.SetInversion(INVERSION_OFF);
-  transponder.SetBandwidth(BANDWIDTH_8_MHZ); // (fe_bandwidth)0
-  transponder.SetCoderateH(SatelliteUtils::GetTransponder(m_satelliteId, iChannel).fec_inner);
-  transponder.SetCoderateL(FEC_NONE);
+  transponder.SatelliteParams().SetCoderateH(SatelliteUtils::GetTransponder(m_satelliteId, iChannel).fec_inner);
   transponder.SetModulation(SatelliteUtils::GetTransponder(m_satelliteId, iChannel).modulation_type);
-  transponder.SetSystem(SatelliteUtils::GetTransponder(m_satelliteId, iChannel).modulation_system == SYS_DVBS ? DVB_SYSTEM_1 : DVB_SYSTEM_2);
-  transponder.SetTransmission(TRANSMISSION_MODE_2K); // (fe_transmit_mode)0
-  transponder.SetGuard(GUARD_INTERVAL_1_32); // (fe_guard_interval)0
-  transponder.SetHierarchy(HIERARCHY_NONE); // (fe_hierarchy)0
-  transponder.SetRollOff(SatelliteUtils::GetTransponder(m_satelliteId, iChannel).rolloff);
+  transponder.SetDeliverySystem(SatelliteUtils::GetTransponder(m_satelliteId, iChannel).modulation_system == SYS_DVBS ? SYS_DVBS : SYS_DVBS2);
+  transponder.SatelliteParams().SetRollOff(SatelliteUtils::GetTransponder(m_satelliteId, iChannel).rolloff);
 
-  cChannelSource source;
-  source.Deserialise(SatelliteUtils::GetSatellite(m_satelliteId).source_id);
+  // TODO: Something with SatelliteUtils::GetSatellite(m_satelliteId).source_id
 
-  channel->SetTransponderData(source, transponder);
+  channel->SetTransponder(transponder);
 
   if (!ValidSatFrequency(SatelliteUtils::GetTransponder(m_satelliteId, iChannel).intermediate_frequency, *channel))
     return cChannel::EmptyChannel;
@@ -318,24 +299,13 @@ ChannelPtr cScanTaskATSC::GetChannel(fe_modulation modulation, unsigned int iCha
 
   // wirbelscan comment: "FIXME: VSB vs QAM here"
 
-  cDvbTransponder transponder;
+  cTransponder transponder(TRANSPONDER_ATSC);
   transponder.SetFrequencyHz(frequency);
-  transponder.SetSymbolRate(cScanConfig::TranslateSymbolRate(symbolRate));
-  transponder.SetPolarization(POLARIZATION_VERTICAL);
   transponder.SetInversion(m_caps.caps_inversion);
-  transponder.SetBandwidth(BANDWIDTH_8_MHZ); // Should probably be 8000000 (8MHz) or BANDWIDTH_8_MHZ
-  transponder.SetCoderateH(m_caps.caps_fec);
-  transponder.SetCoderateL(FEC_NONE);
   transponder.SetModulation(modulation); // Only loop-dependent variable
-  transponder.SetSystem((eSystemType)SYS_DVBC_ANNEX_AC); // TODO: This should probably be DVB_SYSTEM_2!!!
-  transponder.SetTransmission(TRANSMISSION_MODE_2K); // (fe_transmit_mode)0
-  transponder.SetGuard(GUARD_INTERVAL_1_32); // (fe_guard_interval)0
-  transponder.SetHierarchy(HIERARCHY_NONE); // (fe_hierarchy)0
-  transponder.SetRollOff(ROLLOFF_35); // (fe_rolloff)0
 
   ChannelPtr channel = ChannelPtr(new cChannel);
-  channel->SetTransponderData(SOURCE_TYPE_ATSC, transponder);
-  channel->SetId(0, 0, 0);
+  channel->SetTransponder(transponder);
 
   return channel;
 }

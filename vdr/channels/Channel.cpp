@@ -28,8 +28,6 @@
 #include "utils/StringUtils.h"
 #include "utils/CRC32.h"
 #include "utils/log/Log.h"
-//#include "utils/UTF8Utils.h"
-//#include "timers.h"
 
 #include <algorithm>
 #include <stdio.h>
@@ -308,49 +306,19 @@ void cChannel::SetCaDescriptors(const CaDescriptorVector& caDescriptors)
   }
 }
 
-bool cChannel::SetTransponderData(cChannelSource source, const cDvbTransponder& transponder)
-{
-  /* TODO: Move this logic elsewhere!
-  // Workarounds for broadcaster stupidity:
-  // Some providers broadcast the transponder frequency of their channels with two different
-  // values (like 12551000 and 12552000), so we need to allow for a little tolerance here
-  if (::abs(m_transponder.FrequencyHz() - transponder.FrequencyHz()) <= 1000)
-    transponder.SetFrequencyHz(m_transponder.FrequencyHz());
-
-  // Sometimes the symbol rate is off by one
-  if (::abs(m_transponder.SymbolRate() - transponder.SymbolRate()) <= 1)
-    transponder.SetSymbolRate(m_transponder.SymbolRate());
-  */
-
-  if (m_channelId.m_source != source      ||
-      m_transponder        != transponder)
-  {
-    m_channelId.m_source = source;
-    m_transponder        = transponder;
-
-    m_schedule.reset();
-
-    m_modification |= CHANNELMOD_TRANSP;
-    SetChanged();
-    return true;
-  }
-
-  return false;
-}
-
-void cChannel::CopyTransponderData(const cChannel& channel)
-{
-  m_channelId.m_source = channel.m_channelId.m_source;
-  m_transponder        = channel.m_transponder;
-
-  m_modification |= CHANNELMOD_TRANSP;
-  SetChanged();
-}
-
 unsigned int cChannel::FrequencyMHzWithPolarization() const
 {
-  if (m_channelId.m_source == SOURCE_TYPE_SATELLITE)
-    return cDvbTransponder::WTF(m_transponder.FrequencyMHz(), m_transponder.Polarization());
+  if (m_transponder.Type() == TRANSPONDER_SATELLITE)
+  {
+    // Some satellites have transponders at the same frequency, just with different polarization
+    switch (m_transponder.SatelliteParams().Polarization())
+    {
+    case POLARIZATION_HORIZONTAL:     return m_transponder.FrequencyMHz() + 100000; // WTF 100 GHZ???
+    case POLARIZATION_VERTICAL:       return m_transponder.FrequencyMHz() + 200000; // WTF 200 GHZ???
+    case POLARIZATION_CIRCULAR_LEFT:  return m_transponder.FrequencyMHz() + 300000; // WTF 300 GHZ???
+    case POLARIZATION_CIRCULAR_RIGHT: return m_transponder.FrequencyMHz() + 400000; // WTF 400 GHZ???
+    }
+  }
 
   return m_transponder.FrequencyMHz();
 }
@@ -456,13 +424,17 @@ bool cChannel::Serialise(TiXmlNode* node) const
   if (channelElement == NULL)
     return false;
 
+  if (!m_channelId.Serialise(node))
+    return false;
+
+  TiXmlElement transponderElement(CHANNEL_XML_ELM_TRANSPONDER);
+  if (!m_transponder.Serialise(channelElement->InsertEndChild(transponderElement)))
+    return false;
+
   channelElement->SetAttribute(CHANNEL_XML_ATTR_NAME,      m_name);
   channelElement->SetAttribute(CHANNEL_XML_ATTR_SHORTNAME, m_shortName);
   channelElement->SetAttribute(CHANNEL_XML_ATTR_PROVIDER,  m_provider);
   // m_portalName
-
-  if (!m_channelId.Serialise(node))
-    return false;
 
   if (m_videoStream.vpid != 0)
   {
@@ -586,23 +558,6 @@ bool cChannel::Serialise(TiXmlNode* node) const
     }
   }
 
-  TiXmlElement transponderElement(CHANNEL_XML_ELM_PARAMETERS);
-  TiXmlNode *transponderNode = channelElement->InsertEndChild(transponderElement);
-  if (transponderNode)
-  {
-    bool success = false;
-    if (Source() == SOURCE_TYPE_ATSC)
-      success = m_transponder.Serialise(DVB_ATSC, transponderNode);
-    else if (Source() == SOURCE_TYPE_CABLE)
-      success = m_transponder.Serialise(DVB_CABLE, transponderNode);
-    else if (Source() == SOURCE_TYPE_SATELLITE)
-      success = m_transponder.Serialise(DVB_SAT, transponderNode);
-    else if (Source() == SOURCE_TYPE_TERRESTRIAL)
-      success = m_transponder.Serialise(DVB_TERR, transponderNode);
-    if (!success)
-      return false;
-  }
-
   return true;
 }
 
@@ -613,11 +568,14 @@ bool cChannel::Deserialise(const TiXmlNode* node)
   if (node == NULL)
     return false;
 
+  if (!m_channelId.Deserialise(node))
+    return false;
+
   const TiXmlElement *elem = node->ToElement();
   if (elem == NULL)
     return false;
 
-  if (!m_channelId.Deserialise(node))
+  if (!m_transponder.Deserialise(elem->FirstChild(CHANNEL_XML_ELM_TRANSPONDER)))
     return false;
 
   const char *name = elem->Attribute(CHANNEL_XML_ATTR_NAME);
@@ -739,13 +697,6 @@ bool cChannel::Deserialise(const TiXmlNode* node)
         m_caDescriptors.push_back(CaDescriptorPtr(new cCaDescriptor(caSystemId)));
       }
     }
-  }
-
-  const TiXmlNode *transponderNode = elem->FirstChild(CHANNEL_XML_ELM_PARAMETERS);
-  if (transponderNode)
-  {
-    if (!m_transponder.Deserialise(transponderNode))
-      return false;
   }
 
   return true;

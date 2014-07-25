@@ -104,7 +104,7 @@ ChannelPtr cPmt::CreateChannel(/* const */ SI::PMT& pmt) const // TODO: libsi fa
   // Create a new channel to return
   ChannelPtr channel = ChannelPtr(new cChannel);
   assert(GetCurrentlyTunedTransponder().get() != NULL); // TODO
-  channel->CopyTransponderData(*GetCurrentlyTunedTransponder());
+  channel->SetTransponder(GetCurrentlyTunedTransponder()->GetTransponder());
 
   SetIds(channel);
   SetStreams(channel, pmt);
@@ -279,7 +279,7 @@ void cPmt::SetStreams(ChannelPtr channel, /* const */ SI::PMT& pmt) const // TOD
       case STREAMTYPE_13818_USR_PRIVATE_81:
       {
         if (cSettings::Get().m_iStandardCompliance == STANDARD_ANSISCTE || // ATSC A/53 AUDIO (ANSI/SCTE 57)
-            channel->Source() == SOURCE_TYPE_ATSC)                         // ATSC AC-3; kls && Alex Lasnier
+            channel->GetTransponder().Type() == TRANSPONDER_ATSC)          // ATSC AC-3; kls && Alex Lasnier
         {
           DataStream ds;
           ds.dpid  = stream.getPid();

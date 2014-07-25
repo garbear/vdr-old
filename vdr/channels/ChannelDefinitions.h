@@ -32,7 +32,7 @@
 #define CHANNEL_XML_ELM_SPID          "spid"
 #define CHANNEL_XML_ELM_CAIDS         "caids"
 #define CHANNEL_XML_ELM_CAID          "caid"
-#define CHANNEL_XML_ELM_PARAMETERS    "parameters"
+#define CHANNEL_XML_ELM_TRANSPONDER   "transponder"
 
 #define CHANNEL_XML_ATTR_NAME         "name"
 #define CHANNEL_XML_ATTR_SHORTNAME    "shortname"

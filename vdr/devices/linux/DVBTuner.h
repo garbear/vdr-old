@@ -95,8 +95,6 @@ public:
   void UnBond(void);
   bool BondingOk(const cChannel& channel, bool bConsiderOccupied = false) const;
 
-  static fe_delivery_system_t GetRequiredDeliverySystem(const cChannel& channel);
-
 protected:
   /*!
    * Tight loop to monitor the status of the frontend and fire an event when

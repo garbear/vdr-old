@@ -116,9 +116,6 @@ bool cLiveStreamer::Open(int serial)
 
   if (!recording)
   {
-    if (m_Channel && m_Channel->Source() == SOURCE_TYPE_ANALOG_VIDEO)
-      m_IsMPEGPS = true;
-
     if (!m_VideoInput.Open(m_Channel, m_VideoBuffer))
     {
       esyslog("Can't switch to channel %i - %s", m_Channel->Number(), m_Channel->Name().c_str());
@@ -434,116 +431,67 @@ void cLiveStreamer::sendSignalInfo()
     return;
   }
 
-  if (m_Channel && m_Channel->Source() == SOURCE_TYPE_ANALOG_VIDEO)
+  if (m_Frontend < 0)
   {
-    if (m_Frontend < 0)
-    {
-      for (int i = 0; i < 8; i++)
-      {
-        m_DeviceString = StringUtils::Format("/dev/video%d", i);
-        m_Frontend = open(m_DeviceString.c_str(), O_RDONLY | O_NONBLOCK);
-        if (m_Frontend >= 0)
-        {
-          if (ioctl(m_Frontend, VIDIOC_QUERYCAP, &m_vcap) < 0)
-          {
-            esyslog("cannot read analog frontend info.");
-            close(m_Frontend);
-            m_Frontend = -1;
-            memset(&m_vcap, 0, sizeof(m_vcap));
-            continue;
-          }
-          break;
-        }
-      }
-      if (m_Frontend < 0)
-        m_Frontend = STREAMER_NO_FRONTEND_FOUND;
-    }
-
+    m_DeviceString = StringUtils::Format(FRONTEND_DEVICE, m_Device->CardIndex(), 0);
+    m_Frontend = open(m_DeviceString.c_str(), O_RDONLY | O_NONBLOCK);
     if (m_Frontend >= 0)
     {
-      cResponsePacket *resp = new cResponsePacket();
-      if (!resp->initStream(VNSI_STREAM_SIGNALINFO, 0, 0, 0, 0, 0))
+      if (ioctl(m_Frontend, FE_GET_INFO, &m_FrontendInfo) < 0)
       {
-        esyslog("stream response packet init fail");
-        delete resp;
+        esyslog("cannot read frontend info.");
+        close(m_Frontend);
+        m_Frontend = STREAMER_NO_FRONTEND_FOUND;
+        memset(&m_FrontendInfo, 0, sizeof(m_FrontendInfo));
         return;
       }
-      resp->add_String(StringUtils::Format("Analog #%s - %s (%s)", m_DeviceString.c_str(), (char*)m_vcap.card, m_vcap.driver));
-      resp->add_String("");
-      resp->add_U32(0);
-      resp->add_U32(0);
-      resp->add_U32(0);
-      resp->add_U32(0);
-
-      resp->finaliseStream();
-      m_Socket->write(resp->getPtr(), resp->getLen());
-      delete resp;
     }
   }
-  else
+
+  if (m_Frontend >= 0)
   {
-    if (m_Frontend < 0)
+    cResponsePacket *resp = new cResponsePacket();
+    if (!resp->initStream(VNSI_STREAM_SIGNALINFO, 0, 0, 0, 0, 0))
     {
-      m_DeviceString = StringUtils::Format(FRONTEND_DEVICE, m_Device->CardIndex(), 0);
-      m_Frontend = open(m_DeviceString.c_str(), O_RDONLY | O_NONBLOCK);
-      if (m_Frontend >= 0)
-      {
-        if (ioctl(m_Frontend, FE_GET_INFO, &m_FrontendInfo) < 0)
-        {
-          esyslog("cannot read frontend info.");
-          close(m_Frontend);
-          m_Frontend = STREAMER_NO_FRONTEND_FOUND;
-          memset(&m_FrontendInfo, 0, sizeof(m_FrontendInfo));
-          return;
-        }
-      }
-    }
-
-    if (m_Frontend >= 0)
-    {
-      cResponsePacket *resp = new cResponsePacket();
-      if (!resp->initStream(VNSI_STREAM_SIGNALINFO, 0, 0, 0, 0, 0))
-      {
-        esyslog("stream response packet init fail");
-        delete resp;
-        return;
-      }
-
-      fe_status_t status;
-      uint16_t fe_snr;
-      uint16_t fe_signal;
-      uint32_t fe_ber;
-      uint32_t fe_unc;
-
-      memset(&status, 0, sizeof(status));
-      ioctl(m_Frontend, FE_READ_STATUS, &status);
-
-      if (ioctl(m_Frontend, FE_READ_SIGNAL_STRENGTH, &fe_signal) == -1)
-        fe_signal = -2;
-      if (ioctl(m_Frontend, FE_READ_SNR, &fe_snr) == -1)
-        fe_snr = -2;
-      if (ioctl(m_Frontend, FE_READ_BER, &fe_ber) == -1)
-        fe_ber = -2;
-      if (ioctl(m_Frontend, FE_READ_UNCORRECTED_BLOCKS, &fe_unc) == -1)
-        fe_unc = -2;
-
-      if (m_Channel->Source() == SOURCE_TYPE_SATELLITE)
-        resp->add_String(StringUtils::Format("DVB-S%s #%d - %s", (m_FrontendInfo.caps & 0x10000000) ? "2" : "",  m_Device->CardIndex(), m_FrontendInfo.name));
-      else if (m_Channel->Source() == SOURCE_TYPE_CABLE)
-        resp->add_String(StringUtils::Format("DVB-C #%d - %s", m_Device->CardIndex(), m_FrontendInfo.name));
-      else if (m_Channel->Source() == SOURCE_TYPE_TERRESTRIAL)
-        resp->add_String(StringUtils::Format("DVB-T #%d - %s", m_Device->CardIndex(), m_FrontendInfo.name));
-
-      resp->add_String(StringUtils::Format("%s:%s:%s:%s:%s", (status & FE_HAS_LOCK) ? "LOCKED" : "-", (status & FE_HAS_SIGNAL) ? "SIGNAL" : "-", (status & FE_HAS_CARRIER) ? "CARRIER" : "-", (status & FE_HAS_VITERBI) ? "VITERBI" : "-", (status & FE_HAS_SYNC) ? "SYNC" : "-"));
-      resp->add_U32(fe_snr);
-      resp->add_U32(fe_signal);
-      resp->add_U32(fe_ber);
-      resp->add_U32(fe_unc);
-
-      resp->finaliseStream();
-      m_Socket->write(resp->getPtr(), resp->getLen());
+      esyslog("stream response packet init fail");
       delete resp;
+      return;
     }
+
+    fe_status_t status;
+    uint16_t fe_snr;
+    uint16_t fe_signal;
+    uint32_t fe_ber;
+    uint32_t fe_unc;
+
+    memset(&status, 0, sizeof(status));
+    ioctl(m_Frontend, FE_READ_STATUS, &status);
+
+    if (ioctl(m_Frontend, FE_READ_SIGNAL_STRENGTH, &fe_signal) == -1)
+      fe_signal = -2;
+    if (ioctl(m_Frontend, FE_READ_SNR, &fe_snr) == -1)
+      fe_snr = -2;
+    if (ioctl(m_Frontend, FE_READ_BER, &fe_ber) == -1)
+      fe_ber = -2;
+    if (ioctl(m_Frontend, FE_READ_UNCORRECTED_BLOCKS, &fe_unc) == -1)
+      fe_unc = -2;
+
+    if (m_Channel->GetTransponder().IsSatellite())
+      resp->add_String(StringUtils::Format("DVB-S%s #%d - %s", (m_FrontendInfo.caps & 0x10000000) ? "2" : "",  m_Device->CardIndex(), m_FrontendInfo.name));
+    else if (m_Channel->GetTransponder().IsCable())
+      resp->add_String(StringUtils::Format("DVB-C #%d - %s", m_Device->CardIndex(), m_FrontendInfo.name));
+    else if (m_Channel->GetTransponder().IsTerrestrial())
+      resp->add_String(StringUtils::Format("DVB-T #%d - %s", m_Device->CardIndex(), m_FrontendInfo.name));
+
+    resp->add_String(StringUtils::Format("%s:%s:%s:%s:%s", (status & FE_HAS_LOCK) ? "LOCKED" : "-", (status & FE_HAS_SIGNAL) ? "SIGNAL" : "-", (status & FE_HAS_CARRIER) ? "CARRIER" : "-", (status & FE_HAS_VITERBI) ? "VITERBI" : "-", (status & FE_HAS_SYNC) ? "SYNC" : "-"));
+    resp->add_U32(fe_snr);
+    resp->add_U32(fe_signal);
+    resp->add_U32(fe_ber);
+    resp->add_U32(fe_unc);
+
+    resp->finaliseStream();
+    m_Socket->write(resp->getPtr(), resp->getLen());
+    delete resp;
   }
 }
 

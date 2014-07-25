@@ -123,7 +123,6 @@ set(VDR_SRCS
 	vdr/channels/ChannelGroup.cpp
 	vdr/channels/ChannelID.cpp
 	vdr/channels/ChannelManager.cpp
-	vdr/channels/ChannelSource.cpp
 	vdr/devices/commoninterface/CI.cpp
 	vdr/devices/Device.cpp
 	vdr/devices/DeviceManager.cpp
@@ -183,7 +182,6 @@ set(VDR_SRCS
 	vdr/filesystem/SpecialProtocol.cpp
 	vdr/filesystem/Videodir.cpp
 	vdr/filesystem/VideoFile.cpp
-	vdr/linux/channels/DVBTransponder.cpp
 	vdr/recordings/filesystem/FileName.cpp
 	vdr/recordings/filesystem/IndexFile.cpp
 	vdr/recordings/filesystem/ResumeFile.cpp
@@ -210,6 +208,9 @@ set(VDR_SRCS
 	vdr/timers/Timer.cpp
 	vdr/timers/Timers.cpp
 	vdr/timers/TimerTime.cpp
+	vdr/transponders/Stringifier.cpp
+	vdr/transponders/Transponder.cpp
+	vdr/transponders/TransponderParams.cpp
 	vdr/utils/CalendarUtils.cpp
 	vdr/utils/CharsetConverter.cpp
 	vdr/utils/CharSetConverterVDR.cpp
@@ -269,7 +270,6 @@ set(VDR_TEST_SRCS
 	vdr/channels/test/TestChannel.cpp
 	vdr/channels/test/TestChannelID.cpp
 	vdr/channels/test/TestChannelManager.cpp
-	vdr/channels/test/TestChannelSource.cpp
 	vdr/devices/linux/test/TestDVBDevice.cpp
 	vdr/devices/linux/test/TestDVBTuner.cpp
 	vdr/dvb/filters/test/TestPAT.cpp
@@ -280,7 +280,6 @@ set(VDR_TEST_SRCS
 	vdr/filesystem/test/TestSpecialProtocol.cpp
 	vdr/filesystem/native/test/TestHDDirectory.cpp
 	vdr/filesystem/native/test/TestHDFile.cpp
-	vdr/linux/channels/test/TestDVBTransponder.cpp
 	vdr/scan/test/TestCNICodes.cpp
 	vdr/scan/test/TestCountryUtils.cpp
 	vdr/scan/test/TestScanConfig.cpp

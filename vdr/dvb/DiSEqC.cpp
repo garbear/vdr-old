@@ -110,7 +110,7 @@ cScr *cScrs::GetUnused(int Device)
 cDiseqc::cDiseqc(void)
 {
   devices = 0;
-  source = SOURCE_TYPE_NONE;
+  source = TRANSPONDER_INVALID;
   slof = 0;
   m_polarization = POLARIZATION_HORIZONTAL;
   lof = 0;
@@ -137,9 +137,9 @@ bool cDiseqc::Parse(const char *s)
   if (fields == 4)
      commands = NULL; //XXX Apparently sscanf() doesn't work correctly if the last %a argument results in an empty string
   if (4 <= fields && fields <= 5) {
-     source = SOURCE_TYPE_NONE; // TODO: Create source from sourcebuf
+     source = TRANSPONDER_INVALID; // TODO: Create source from sourcebuf
 
-     if (source != SOURCE_TYPE_NONE) {
+     if (source != TRANSPONDER_INVALID) {
         switch (toupper(polarization))
         {
         case 'H': m_polarization = POLARIZATION_HORIZONTAL; break;
@@ -297,7 +297,7 @@ cDiseqc::eDiseqcActions cDiseqc::Execute(const char **CurrentAction, uint8_t *Co
 
 cDiseqcs Diseqcs;
 
-const cDiseqc *cDiseqcs::Get(int Device, cChannelSource Source, unsigned int Frequency, char Polarization, const cScr **Scr) const
+const cDiseqc *cDiseqcs::Get(int Device, TRANSPONDER_TYPE Source, unsigned int Frequency, fe_polarization_t Polarization, const cScr **Scr) const
 {
   int Devices = 0;
   for (const cDiseqc *p = First(); p; p = Next(p)) {
@@ -307,7 +307,8 @@ const cDiseqc *cDiseqcs::Get(int Device, cChannelSource Source, unsigned int Fre
          }
       if (Devices && !(Devices & (1 << Device - 1)))
          continue;
-      if (p->Source() == Source && p->Slof() > Frequency && p->Polarization() == toupper(Polarization)) {
+      // TODO: Should we also compare position/direction?
+      if (p->Source() == Source && p->Slof() > Frequency && p->Polarization() == Polarization) {
          if (p->IsScr() && Scr && !*Scr) {
             *Scr = Scrs.GetUnused(Device);
             if (*Scr)

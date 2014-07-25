@@ -50,21 +50,21 @@ bool cDvbChannelSubsystem::ProvidesDeliverySystem(fe_delivery_system deliverySys
   return Device<cDvbDevice>()->m_dvbTuner.HasDeliverySystem(deliverySystem);
 }
 
-bool cDvbChannelSubsystem::ProvidesSource(cChannelSource source) const
+bool cDvbChannelSubsystem::ProvidesSource(TRANSPONDER_TYPE source) const
 {
-  if (source == SOURCE_TYPE_NONE)
+  if (source == TRANSPONDER_INVALID)
     return true;
 
-  if (source == SOURCE_TYPE_ATSC && ProvidesDeliverySystem(SYS_ATSC))
+  if (source == TRANSPONDER_ATSC && ProvidesDeliverySystem(SYS_ATSC))
     return true;
 
-  if (source == SOURCE_TYPE_CABLE && (ProvidesDeliverySystem(SYS_DVBC_ANNEX_AC) || ProvidesDeliverySystem(SYS_DVBC_ANNEX_B)))
+  if (source == TRANSPONDER_CABLE && (ProvidesDeliverySystem(SYS_DVBC_ANNEX_AC) || ProvidesDeliverySystem(SYS_DVBC_ANNEX_B)))
     return true;
 
-  if (source == SOURCE_TYPE_SATELLITE && (ProvidesDeliverySystem(SYS_DVBS) || ProvidesDeliverySystem(SYS_DVBS2)))
+  if (source == TRANSPONDER_SATELLITE && (ProvidesDeliverySystem(SYS_DVBS) || ProvidesDeliverySystem(SYS_DVBS2)))
     return true;
 
-  if (source == SOURCE_TYPE_TERRESTRIAL && (ProvidesDeliverySystem(SYS_DVBT) || ProvidesDeliverySystem(SYS_DVBT2)))
+  if (source == TRANSPONDER_TERRESTRIAL && (ProvidesDeliverySystem(SYS_DVBT) || ProvidesDeliverySystem(SYS_DVBT2)))
     return true;
 
   return false;
@@ -72,33 +72,34 @@ bool cDvbChannelSubsystem::ProvidesSource(cChannelSource source) const
 
 bool cDvbChannelSubsystem::ProvidesTransponder(const cChannel &channel) const
 {
-  if (!ProvidesSource(channel.Source()))
+  const cTransponder& transponder = channel.GetTransponder();
+
+  if (!ProvidesSource(transponder.Type()))
     return false; // doesn't provide source
 
-  const cDvbTransponder& dtp = channel.GetTransponder();
-
   // requires modulation system which frontend doesn't provide - return false in these cases
-  if (!ProvidesDeliverySystem(cDvbTuner::GetRequiredDeliverySystem(channel))) return false;
-  if (dtp.StreamId()   != 0        && !Device<cDvbDevice>()->m_dvbTuner.HasCapability((fe_caps)FE_CAN_MULTISTREAM)) return false;
-  if (dtp.Modulation() == QPSK     && !Device<cDvbDevice>()->m_dvbTuner.HasCapability(FE_CAN_QPSK))        return false;
-  if (dtp.Modulation() == QAM_16   && !Device<cDvbDevice>()->m_dvbTuner.HasCapability(FE_CAN_QAM_16))      return false;
-  if (dtp.Modulation() == QAM_32   && !Device<cDvbDevice>()->m_dvbTuner.HasCapability(FE_CAN_QAM_32))      return false;
-  if (dtp.Modulation() == QAM_64   && !Device<cDvbDevice>()->m_dvbTuner.HasCapability(FE_CAN_QAM_64))      return false;
-  if (dtp.Modulation() == QAM_128  && !Device<cDvbDevice>()->m_dvbTuner.HasCapability(FE_CAN_QAM_128))     return false;
-  if (dtp.Modulation() == QAM_256  && !Device<cDvbDevice>()->m_dvbTuner.HasCapability(FE_CAN_QAM_256))     return false;
-  if (dtp.Modulation() == QAM_AUTO && !Device<cDvbDevice>()->m_dvbTuner.HasCapability(FE_CAN_QAM_AUTO))    return false;
-  if (dtp.Modulation() == VSB_8    && !Device<cDvbDevice>()->m_dvbTuner.HasCapability(FE_CAN_8VSB))        return false;
-  if (dtp.Modulation() == VSB_16   && !Device<cDvbDevice>()->m_dvbTuner.HasCapability(FE_CAN_16VSB))       return false;
+  if (!ProvidesDeliverySystem(transponder.DeliverySystem())) return false;
+  if (transponder.IsSatellite()   && transponder.SatelliteParams().StreamId()   != 0 && !Device<cDvbDevice>()->m_dvbTuner.HasCapability((fe_caps)FE_CAN_MULTISTREAM)) return false;
+  if (transponder.IsTerrestrial() && transponder.TerrestrialParams().StreamId() != 0 && !Device<cDvbDevice>()->m_dvbTuner.HasCapability((fe_caps)FE_CAN_MULTISTREAM)) return false;
+  if (transponder.Modulation() == QPSK     && !Device<cDvbDevice>()->m_dvbTuner.HasCapability(FE_CAN_QPSK))        return false;
+  if (transponder.Modulation() == QAM_16   && !Device<cDvbDevice>()->m_dvbTuner.HasCapability(FE_CAN_QAM_16))      return false;
+  if (transponder.Modulation() == QAM_32   && !Device<cDvbDevice>()->m_dvbTuner.HasCapability(FE_CAN_QAM_32))      return false;
+  if (transponder.Modulation() == QAM_64   && !Device<cDvbDevice>()->m_dvbTuner.HasCapability(FE_CAN_QAM_64))      return false;
+  if (transponder.Modulation() == QAM_128  && !Device<cDvbDevice>()->m_dvbTuner.HasCapability(FE_CAN_QAM_128))     return false;
+  if (transponder.Modulation() == QAM_256  && !Device<cDvbDevice>()->m_dvbTuner.HasCapability(FE_CAN_QAM_256))     return false;
+  if (transponder.Modulation() == QAM_AUTO && !Device<cDvbDevice>()->m_dvbTuner.HasCapability(FE_CAN_QAM_AUTO))    return false;
+  if (transponder.Modulation() == VSB_8    && !Device<cDvbDevice>()->m_dvbTuner.HasCapability(FE_CAN_8VSB))        return false;
+  if (transponder.Modulation() == VSB_16   && !Device<cDvbDevice>()->m_dvbTuner.HasCapability(FE_CAN_16VSB))       return false;
   // "turbo fec" is a non standard FEC used by North American broadcasters - this is a best guess to determine this condition
-  if (dtp.Modulation() == PSK_8    && !Device<cDvbDevice>()->m_dvbTuner.HasCapability(FE_CAN_TURBO_FEC) && dtp.System() == DVB_SYSTEM_1) return false; // TODO: Make this dtp.System() == SYS_DVBS
+  if (transponder.Modulation() == PSK_8    && !Device<cDvbDevice>()->m_dvbTuner.HasCapability(FE_CAN_TURBO_FEC) && transponder.DeliverySystem() == SYS_DVBS) return false;
 
-  if (channel.Source() != SOURCE_TYPE_SATELLITE ||
-      !cSettings::Get().m_bDiSEqC               ||
-      Diseqcs.Get(Device()->CardIndex() + 1, channel.Source(), dtp.FrequencyKHz(), dtp.Polarization(), NULL))
+  if (transponder.IsSatellite()  &&
+      cSettings::Get().m_bDiSEqC &&
+      NULL != Diseqcs.Get(Device()->CardIndex() + 1, transponder.Type(), transponder.FrequencyKHz(), transponder.SatelliteParams().Polarization(), NULL))
   {
-    return true; // TODO: Previous this checked to see if any devices provided a transponder for the channel
+    return false;
   }
-  return false;
+  return true; // TODO: Previous this checked to see if any devices provided a transponder for the channel
 }
 
 bool cDvbChannelSubsystem::ProvidesChannel(const cChannel &channel, bool *pNeedsDetachReceivers /* = NULL */) const

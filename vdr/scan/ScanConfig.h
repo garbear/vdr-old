@@ -25,7 +25,7 @@
 #include "SatelliteUtils.h"
 #include "channels/ChannelTypes.h"
 #include "devices/DeviceTypes.h"
-#include "linux/channels/DVBTransponder.h" // for eDvbType
+#include "transponders/TransponderTypes.h"
 
 #include <linux/dvb/frontend.h>
 
@@ -33,17 +33,6 @@ namespace VDR
 {
 
 class cVNSIClient;
-
-// TODO: Needs a better home. Currently lives in DVBTransponder.h
-/*
-enum eDvbType
-{
-  DVB_TERR,
-  DVB_CABLE,
-  DVB_SAT,
-  DVB_ATSC,
-};
-*/
 
 enum eScanFlags
 {
@@ -105,7 +94,7 @@ public:
   static unsigned int TranslateSymbolRate(eDvbcSymbolRate sr);
   static eDvbcSymbolRate TranslateSymbolRate(unsigned int sr);
 
-  eDvbType              dvbType;
+  TRANSPONDER_TYPE      dvbType;
   fe_spectral_inversion dvbtInversion;
   fe_spectral_inversion dvbcInversion;
   eDvbcSymbolRate       dvbcSymbolRate;

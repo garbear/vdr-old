@@ -31,12 +31,10 @@ namespace VDR
 
 const cChannelID cChannelID::InvalidID;
 
-cChannelID::cChannelID(cChannelSource  source /* = SOURCE_TYPE_NONE */,
-                       uint16_t        nid    /* = 0                */,
-                       uint16_t        tsid   /* = 0                */,
-                       uint16_t        sid    /* = 0                */)
- : m_source(source),
-   m_nid(nid),
+cChannelID::cChannelID(uint16_t nid  /* = 0 */,
+                       uint16_t tsid /* = 0 */,
+                       uint16_t sid  /* = 0 */)
+ : m_nid(nid),
    m_tsid(tsid),
    m_sid(sid)
 {
@@ -44,17 +42,14 @@ cChannelID::cChannelID(cChannelSource  source /* = SOURCE_TYPE_NONE */,
 
 bool cChannelID::operator==(const cChannelID &rhs) const
 {
-  return m_source == rhs.m_source &&
-         m_nid    == rhs.m_nid    &&
+  return m_nid    == rhs.m_nid    &&
          m_tsid   == rhs.m_tsid   &&
          m_sid    == rhs.m_sid;
 }
 
 bool cChannelID::IsValid(void) const
 {
-  return m_source != SOURCE_TYPE_NONE &&
-         (m_nid != 0 || m_tsid != 0)  &&
-         m_sid != 0;
+  return (m_nid != 0 || m_tsid != 0) && m_sid != 0;
 }
 
 void cChannelID::SetID(uint16_t nid, uint16_t tsid, uint16_t sid)
@@ -69,21 +64,18 @@ bool cChannelID::Serialise(TiXmlNode* node) const
   if (node == NULL)
     return false;
 
-  TiXmlElement *sourceElement = node->ToElement();
-  if (sourceElement == NULL)
-    return false;
-
-  if (!m_source.Serialise(node))
+  TiXmlElement *elem = node->ToElement();
+  if (elem == NULL)
     return false;
 
   if (m_nid != 0)
-    sourceElement->SetAttribute(CHANNEL_ID_XML_ATTR_NID, m_nid);
+    elem->SetAttribute(CHANNEL_ID_XML_ATTR_NID, m_nid);
 
   if (m_tsid != 0)
-    sourceElement->SetAttribute(CHANNEL_ID_XML_ATTR_TSID, m_tsid);
+    elem->SetAttribute(CHANNEL_ID_XML_ATTR_TSID, m_tsid);
 
   if (m_sid != 0)
-    sourceElement->SetAttribute(CHANNEL_ID_XML_ATTR_SID, m_sid);
+    elem->SetAttribute(CHANNEL_ID_XML_ATTR_SID, m_sid);
 
   return true;
 }
@@ -91,9 +83,6 @@ bool cChannelID::Serialise(TiXmlNode* node) const
 bool cChannelID::Deserialise(const TiXmlNode* node)
 {
   if (node == NULL)
-    return false;
-
-  if (!m_source.Deserialise(node))
     return false;
 
   const TiXmlElement *elem = node->ToElement();
@@ -119,14 +108,7 @@ uint32_t cChannelID::Hash(void) const
 
 std::string cChannelID::ToString(void) const
 {
-  std::string str;
-
-  if (m_source != SOURCE_TYPE_NONE)
-    str = m_source.ToString() + "-";
-
-  str.append(StringUtils::Format("%u-%u-%u", m_nid, m_tsid, m_sid));
-
-  return str;
+  return StringUtils::Format("%u-%u-%u", m_nid, m_tsid, m_sid);
 }
 
 }

@@ -22,10 +22,10 @@
 #pragma once
 
 #include "channels/ChannelID.h"
-#include "channels/ChannelSource.h"
 #include "devices/Device.h"
 #include "devices/DeviceTypes.h"
 #include "platform/threads/threads.h"
+#include "transponders/TransponderTypes.h"
 #include "utils/List.h"
 #include "utils/Timer.h"
 
@@ -185,7 +185,7 @@ private:
   time_t resetTime;
   cTimeMs moduleCheckTimer;
   bool resendPmt;
-  cChannelSource m_source;
+  TRANSPONDER_TYPE m_source;
   int transponder;
   cList<cCiCaProgramData> caProgramList;
   std::vector<uint16_t> GetCaSystemIds(void);

@@ -187,7 +187,7 @@ bool cDevice::ScanTransponder(const ChannelPtr& transponder)
     if (!Channel()->SwitchChannel(transponder))
       throw "Failed to scan transponder: Failed to switch transponders";
 
-    dsyslog("EIT scan: device %d source %s tp %5d MHz", CardIndex(), transponder->Source().ToString().c_str(), transponder->FrequencyMHzWithPolarization());
+    dsyslog("EIT scan: device %d tp %5d MHz", CardIndex(), transponder->FrequencyMHzWithPolarization());
 
     EventVector events;
 

@@ -73,7 +73,7 @@ private:
   std::string       m_DeviceString;                 /*!> The name of the receiving device */
   bool              m_startup;
   bool              m_IsAudioOnly;                  /*!> Set to true if streams contains only audio */
-  bool              m_IsMPEGPS;                     /*!> TS Stream contains MPEG PS data like from pvrinput */
+  bool              m_IsMPEGPS;                     /*!> TS Stream contains MPEG PS data like from pvrinput (UNUSED) */
   uint32_t          m_scanTimeout;                  /*!> Channel scanning timeout (in seconds) */
   cTimeMs           m_last_tick;
   bool              m_SignalLost;

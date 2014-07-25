@@ -30,7 +30,7 @@ namespace VDR
 {
 
 cScanConfig::cScanConfig()
- : dvbType(DVB_TERR),
+ : dvbType(TRANSPONDER_TERRESTRIAL),
    dvbtInversion(INVERSION_OFF),
    dvbcInversion(INVERSION_OFF),
    dvbcSymbolRate(eSR_AUTO),

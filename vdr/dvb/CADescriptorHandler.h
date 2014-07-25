@@ -23,7 +23,7 @@
 
 #include "DVBTypes.h"
 #include "CADescriptor.h"
-#include "channels/ChannelSource.h"
+#include "transponders/TransponderTypes.h"
 
 #include <map>
 #include "platform/threads/mutex.h"
@@ -35,9 +35,9 @@ namespace VDR
 // TODO: Should this be defined in CADescriptor.h?
 struct DescriptorId
 {
-  cChannelSource source;
-  int            transponder;
-  int            serviceId;
+  TRANSPONDER_TYPE source;
+  int              transponder;
+  int              serviceId;
 };
 
 bool operator<(const DescriptorId& lhs, const DescriptorId& rhs);
@@ -50,10 +50,10 @@ public:
   /*!
    * \brief Returns true if any descriptors were added or modified
    */
-  bool AddCaDescriptors(cChannelSource source, int transponder, int serviceId,
+  bool AddCaDescriptors(TRANSPONDER_TYPE source, int transponder, int serviceId,
       const CaDescriptorVector& caDescriptors);
 
-  int GetCaDescriptors(cChannelSource source, int transponder, uint16_t serviceId,
+  int GetCaDescriptors(TRANSPONDER_TYPE source, int transponder, uint16_t serviceId,
       const std::vector<uint16_t>& caSystemIds, std::vector<uint8_t>& data, int esPid = -1);
 
 private:

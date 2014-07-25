@@ -1875,7 +1875,7 @@ bool cVNSIClient::processSCAN_Start() /* OPCODE 143 */
   cScanConfig config;
 
   // For now, force values to ATSC
-  config.dvbType         = DVB_ATSC;
+  config.dvbType         = TRANSPONDER_ATSC;
   config.atscModulation  = VSB_8;
   config.countryIndex    = COUNTRY::US;
   config.device          = cDeviceManager::Get().GetDevice(0); // TODO: Support multiple devices

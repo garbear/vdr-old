@@ -47,14 +47,14 @@ cScanner::cScanner(void)
 {
 }
 
-bool cScanner::GetFrontendType(eDvbType dvbType, fe_type& frontendType)
+bool cScanner::GetFrontendType(TRANSPONDER_TYPE dvbType, fe_type& frontendType)
 {
   switch (dvbType)
   {
-  case DVB_TERR:  frontendType = FE_OFDM; break;
-  case DVB_CABLE: frontendType = FE_QAM;  break;
-  case DVB_SAT:   frontendType = FE_QPSK; break;
-  case DVB_ATSC:  frontendType = FE_ATSC; break; // frontendType not actually used if scanType == DVB_ATSC
+  case TRANSPONDER_TERRESTRIAL:  frontendType = FE_OFDM; break;
+  case TRANSPONDER_CABLE: frontendType = FE_QAM;  break;
+  case TRANSPONDER_SATELLITE:   frontendType = FE_QPSK; break;
+  case TRANSPONDER_ATSC:  frontendType = FE_ATSC; break; // frontendType not actually used if scanType == TRANSPONDER_ATSC
   default:
     dsyslog("Invalid scan type!!! %d", dvbType);
     return false;
@@ -87,13 +87,13 @@ void* cScanner::Process()
     eChannelList channelList;
     switch (m_setup.dvbType)
     {
-    case DVB_TERR:
-    case DVB_CABLE:
-    case DVB_ATSC:
+    case TRANSPONDER_TERRESTRIAL:
+    case TRANSPONDER_CABLE:
+    case TRANSPONDER_ATSC:
       if (!CountryUtils::GetChannelList(m_setup.countryIndex, frontendType, m_setup.atscModulation, channelList))
         throw false;
       break;
-    case DVB_SAT:
+    case TRANSPONDER_SATELLITE:
       break; // Uses satellite ID instead of channel list
     }
 
@@ -101,10 +101,10 @@ void* cScanner::Process()
     cScanLimits* scanLimits;
     switch (m_setup.dvbType)
     {
-    case DVB_TERR:  scanLimits = new cScanLimitsTerrestrial();                     break;
-    case DVB_CABLE: scanLimits = new cScanLimitsCable(m_setup.dvbcSymbolRate);     break;
-    case DVB_SAT:   scanLimits = new cScanLimitsSatellite(m_setup.satelliteIndex); break;
-    case DVB_ATSC:  scanLimits = new cScanLimitsATSC(m_setup.atscModulation);      break;
+    case TRANSPONDER_ATSC:       scanLimits = new cScanLimitsATSC(m_setup.atscModulation);      break;
+    case TRANSPONDER_CABLE:      scanLimits = new cScanLimitsCable(m_setup.dvbcSymbolRate);     break;
+    case TRANSPONDER_SATELLITE:  scanLimits = new cScanLimitsSatellite(m_setup.satelliteIndex); break;
+    case TRANSPONDER_TERRESTRIAL:scanLimits = new cScanLimitsTerrestrial();                     break;
     }
 
     // Calculate frontend capabilities
@@ -113,15 +113,15 @@ void* cScanner::Process()
     if (!device)
       throw false;
 
-    cFrontendCapabilities caps(device->m_dvbTuner.GetCapabilities(), m_setup.dvbType == DVB_TERR ? m_setup.dvbtInversion : m_setup.dvbcInversion);
+    cFrontendCapabilities caps(device->m_dvbTuner.GetCapabilities(), m_setup.dvbType == TRANSPONDER_TERRESTRIAL ? m_setup.dvbtInversion : m_setup.dvbcInversion);
 
     cScanTask* task;
     switch (m_setup.dvbType)
     {
-    case DVB_TERR:  task = new cScanTaskTerrestrial(device, caps, channelList);          break;
-    case DVB_CABLE: task = new cScanTaskCable(device, caps, channelList);                break;
-    case DVB_SAT:   task = new cScanTaskSatellite(device, caps, m_setup.satelliteIndex); break;
-    case DVB_ATSC:  task = new cScanTaskATSC(device, caps, channelList);                 break;
+    case TRANSPONDER_ATSC:        task = new cScanTaskATSC(device, caps, channelList);                 break;
+    case TRANSPONDER_CABLE:       task = new cScanTaskCable(device, caps, channelList);                break;
+    case TRANSPONDER_SATELLITE:   task = new cScanTaskSatellite(device, caps, m_setup.satelliteIndex); break;
+    case TRANSPONDER_TERRESTRIAL: task = new cScanTaskTerrestrial(device, caps, channelList);          break;
     default: throw false;
     }
 

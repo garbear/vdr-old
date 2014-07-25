@@ -20,10 +20,10 @@
  */
 #pragma once
 
-#include "ChannelSource.h"
-
 #include <stdint.h>
 #include <string>
+
+class TiXmlNode;
 
 namespace VDR
 {
@@ -31,27 +31,23 @@ namespace VDR
 class cChannelID
 {
 public:
-  cChannelID(cChannelSource  source = SOURCE_TYPE_NONE,
-             uint16_t        nid    = 0,
-             uint16_t        tsid   = 0,
-             uint16_t        sid    = 0);
+  cChannelID(uint16_t nid  = 0,
+             uint16_t tsid = 0,
+             uint16_t sid  = 0);
 
   bool operator==(const cChannelID &rhs) const;
   bool operator!=(const cChannelID &rhs) const { return !(*this == rhs); }
 
   /*!
    * Checks the validity of this channel ID. A channel ID is valid if it has
-   * a source (source != SOURCE_TYPE_NONE), an SID (non-zero), and either a
-   * TID or an NID. RID is optional and not considered here.
+   * an SID (non-zero) and either a TID or an NID.
    */
   bool IsValid(void) const;
 
-  const cChannelSource& Source() const { return m_source; }
-  uint16_t              Nid()    const { return m_nid; }
-  uint16_t              Tsid()   const { return m_tsid; }
-  uint16_t              Sid()    const { return m_sid; }
+  uint16_t Nid()  const { return m_nid; }
+  uint16_t Tsid() const { return m_tsid; }
+  uint16_t Sid()  const { return m_sid; }
 
-  //void SetSource(cChannelSource source) { m_source = source; } // TODO: Uncomment when needed
   void SetID(uint16_t nid, uint16_t tsid, uint16_t sid);
 
   bool Serialise(TiXmlNode* node) const;
@@ -67,8 +63,6 @@ public:
 
   static const cChannelID InvalidID;
 
-public:// TODO
-  cChannelSource  m_source;
 private:
   uint16_t        m_nid;  // Actually the "original" network ID
   uint16_t        m_tsid; // Transport stream ID

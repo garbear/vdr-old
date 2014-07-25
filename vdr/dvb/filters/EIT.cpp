@@ -257,7 +257,7 @@ EventVector cEit::GetEvents()
               SI::LinkageDescriptor* ld = (SI::LinkageDescriptor*)d;
 
               assert(GetCurrentlyTunedTransponder().get() != NULL); // TODO
-              cChannelID linkID(GetCurrentlyTunedTransponder()->Source(), ld->getOriginalNetworkId(), ld->getTransportStreamId(), ld->getServiceId());
+              cChannelID linkID(ld->getOriginalNetworkId(), ld->getTransportStreamId(), ld->getServiceId());
 
               // Premiere World
               if (ld->getLinkageType() == 0xB0)
@@ -286,14 +286,13 @@ EventVector cEit::GetEvents()
                     }
                     else if (cSettings::Get().m_iUpdateChannels >= 4)
                     {
-                      ChannelPtr transponder = channel;
                       if (channel->Tsid() != ld->getTransportStreamId())
-                        transponder = m_channelManager.GetByTransponderID(linkID);
+                        channel = m_channelManager.GetByTransponderID(linkID);
 
                       link = ChannelPtr(new cChannel);
                       link->SetName(linkName, "", "");
                       link->SetId(ld->getOriginalNetworkId(), ld->getTransportStreamId(), ld->getServiceId());
-                      link->CopyTransponderData(*transponder);
+                      link->SetTransponder(channel->GetTransponder());
 
                       m_channelManager.AddChannel(link);
                       m_channelManager.ReNumber();
@@ -461,8 +460,7 @@ void cEit::GetText(SI::Descriptor* d, uint8_t tid, uint16_t nid, uint16_t tsid,
     SI::TimeShiftedEventDescriptor* tsed = (SI::TimeShiftedEventDescriptor*)d;
 
     assert(GetCurrentlyTunedTransponder().get() != NULL); // TODO
-    cChannelID channelId(GetCurrentlyTunedTransponder()->Source(),
-                         nid,
+    cChannelID channelId(nid,
                          tsid,
                          tsed->getReferenceServiceId());
 

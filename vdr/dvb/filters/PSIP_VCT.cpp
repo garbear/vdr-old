@@ -23,7 +23,6 @@
 
 #include "PSIP_VCT.h"
 #include "channels/Channel.h"
-#include "linux/channels/DVBTransponder.h"
 #include "utils/log/Log.h"
 
 #include <libsi/si.h>
@@ -68,18 +67,19 @@ ChannelVector cPsipVct::GetChannels(void)
         channel->SetName(buffer, buffer, ""); // TODO: Parse descriptors for long name
 
         // Modulation mode
-        cDvbTransponder transponder;
+        cTransponder transponder(TRANSPONDER_ATSC);
+
         //unsigned int symbolRateHz = 0;
         ModulationMode modulation = (ModulationMode)channelInfo.getModulationMode();
         switch (modulation)
         {
         case ModulationModeSCTE_1:
           transponder.SetModulation(QAM_64);
-          transponder.SetSymbolRate(5057000);
+          //transponder.SetSymbolRate(5057000); // TODO: Why was symbol rate set for an ATSC transponder?
           break;
         case ModulationModeSCTE_2:
           transponder.SetModulation(QAM_256);
-          transponder.SetSymbolRate(5361000);
+          //transponder.SetSymbolRate(5361000); // TODO: Why was symbol rate set for an ATSC transponder?
           break;
         case ModulationModeATSC_VSB8:
           transponder.SetModulation(VSB_8);
@@ -90,7 +90,7 @@ ChannelVector cPsipVct::GetChannels(void)
         default:
           break;
         }
-        channel->SetTransponderData(SOURCE_TYPE_ATSC, transponder);
+        channel->SetTransponder(transponder);
 
         // Transport Stream ID (TID) and program number / service ID (SID)
         // TODO: SID is 0xFFFF for analog channels

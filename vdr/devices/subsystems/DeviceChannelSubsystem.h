@@ -21,9 +21,9 @@
 #pragma once
 
 #include "channels/Channel.h" // For cChannel::EmptyChannel
-#include "channels/ChannelSource.h"
 #include "channels/ChannelTypes.h"
 #include "devices/DeviceSubsystem.h"
+#include "transponders/TransponderTypes.h"
 #include "Config.h" // For IDLEPRIORITY
 
 namespace VDR
@@ -38,7 +38,7 @@ public:
   /*!
    * \brief Returns true if this device can provide the given source
    */
-  virtual bool ProvidesSource(cChannelSource source) const { return false; }
+  virtual bool ProvidesSource(TRANSPONDER_TYPE source) const { return false; }
 
   /*!
    * \brief Returns true if this device can provide the transponder of the given

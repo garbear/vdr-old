@@ -22,7 +22,6 @@
 
 #include "dvb/filters/PSIP_VCT.h"
 #include "channels/ChannelManager.h"
-#include "channels/ChannelSource.h"
 #include "channels/ChannelTypes.h"
 #include "devices/linux/DVBDevice.h"
 #include "devices/linux/test/DVBDeviceNames.h"

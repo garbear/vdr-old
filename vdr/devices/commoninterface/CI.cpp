@@ -601,20 +601,20 @@ private:
   int length;
   int esInfoLengthPos;
   uint8_t capmt[2048]; ///< XXX is there a specified maximum?
-  cChannelSource source;
+  TRANSPONDER_TYPE source;
   int transponder;
   int programNumber;
   std::vector<uint16_t> m_caSystemIds; // Max CA system IDs: 64
   void AddCaDescriptors(int Length, const uint8_t *Data);
 public:
-  cCiCaPmt(uint8_t CmdId, cChannelSource Source, int Transponder, int ProgramNumber, const std::vector<uint16_t>& caSystemIds = std::vector<uint16_t>());
+  cCiCaPmt(uint8_t CmdId, TRANSPONDER_TYPE Source, int Transponder, int ProgramNumber, const std::vector<uint16_t>& caSystemIds = std::vector<uint16_t>());
   uint8_t CmdId(void) { return cmdId; }
   void SetListManagement(uint8_t ListManagement);
   uint8_t ListManagement(void) { return capmt[0]; }
   void AddPid(int Pid, uint8_t StreamType);
   };
 
-cCiCaPmt::cCiCaPmt(uint8_t CmdId, cChannelSource Source, int Transponder, int ProgramNumber, const vector<uint16_t>& caSystemIds /* = vector<uint16_t>() */)
+cCiCaPmt::cCiCaPmt(uint8_t CmdId, TRANSPONDER_TYPE Source, int Transponder, int ProgramNumber, const vector<uint16_t>& caSystemIds /* = vector<uint16_t>() */)
 {
   cmdId = CmdId;
   source = Source;
@@ -810,7 +810,7 @@ void cCiConditionalAccessSupport::Process(int Length, const uint8_t *Data)
      state = 1; // enquired ca info
      }
   else if (state == 2 && timer.TimedOut()) {
-     cCiCaPmt CaPmt(CPCI_QUERY, SOURCE_TYPE_NONE, 0, 0);
+     cCiCaPmt CaPmt(CPCI_QUERY, TRANSPONDER_INVALID, 0, 0);
      SendPMT(&CaPmt);
      timer.Set(QUERY_REPLY_TIMEOUT);
      state = 3; // waiting for reply
@@ -1575,7 +1575,7 @@ cCamSlot::cCamSlot(cCiAdapter *CiAdapter)
   resetTime = 0;
   resendPmt = false;
   transponder = 0;
-  m_source = SOURCE_TYPE_NONE;
+  m_source = TRANSPONDER_INVALID;
   for (int i = 0; i <= MAX_CONNECTIONS_PER_CAM_SLOT; i++) // tc[0] is not used, but initialized anyway
       tc[i] = NULL;
   CamSlots.Add(this);
@@ -1602,7 +1602,7 @@ bool cCamSlot::Assign(DevicePtr Device, bool Query)
         if (!Query) {
            StopDecrypting();
            transponder = 0;
-           m_source = SOURCE_TYPE_NONE;
+           m_source = TRANSPONDER_INVALID;
            if (ciAdapter->Assign(Device)) {
               ciAdapter->m_assignedDevice = Device;
               if (Device) {
@@ -1845,7 +1845,7 @@ void cCamSlot::SendCaPmt(uint8_t CmdId)
            resendPmt = false;
            }
         else {
-           cCiCaPmt CaPmt(CmdId, SOURCE_TYPE_NONE, 0, 0);
+           cCiCaPmt CaPmt(CmdId, TRANSPONDER_INVALID, 0, 0);
            cas->SendPMT(&CaPmt);
            }
         }
@@ -1923,9 +1923,9 @@ void cCamSlot::SetPid(int Pid, bool Active)
 void cCamSlot::AddChannel(const cChannel& Channel)
 {
   CLockObject lock(mutex);
-  if (m_source != Channel.Source() || transponder != Channel.FrequencyMHzWithPolarization())
+  if (m_source != Channel.GetTransponder().Type() || transponder != Channel.FrequencyMHzWithPolarization())
     StopDecrypting();
-  m_source = Channel.Source();
+  m_source = Channel.GetTransponder().Type();
   transponder = Channel.FrequencyMHzWithPolarization();
   if (Channel.GetCaId(0) >= CA_ENCRYPTED_MIN)
   {
@@ -1950,7 +1950,7 @@ bool cCamSlot::CanDecrypt(const cChannel& channel)
   CLockObject lock(mutex);
   cCiConditionalAccessSupport *cas = (cCiConditionalAccessSupport *)GetSessionByResourceId(RI_CONDITIONAL_ACCESS_SUPPORT);
   if (cas && cas->RepliesToQuery()) {
-     cCiCaPmt CaPmt(CPCI_QUERY, channel.Source(), channel.FrequencyMHzWithPolarization(), channel.Sid(), GetCaSystemIds());
+     cCiCaPmt CaPmt(CPCI_QUERY, channel.GetTransponder().Type(), channel.FrequencyMHzWithPolarization(), channel.Sid(), GetCaSystemIds());
      CaPmt.SetListManagement(CPLM_ADD); // WORKAROUND: CPLM_ONLY doesn't work with Alphacrypt 3.09 (deletes existing CA_PMTs)
 
      CaPmt.AddPid(channel.GetVideoStream().vpid, STREAM_TYPE_VIDEO);

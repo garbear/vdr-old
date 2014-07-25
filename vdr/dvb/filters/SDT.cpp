@@ -130,7 +130,7 @@ ChannelVector cSdt::GetChannels()
         ChannelPtr channel = ChannelPtr(new cChannel);
         channel->SetId(sdt.getOriginalNetworkId(), sdt.getTransportStreamId(), SiSdtService.getServiceId());
         assert(GetCurrentlyTunedTransponder().get() != NULL); // TODO
-        channel->CopyTransponderData(*GetCurrentlyTunedTransponder());
+        channel->SetTransponder(GetCurrentlyTunedTransponder()->GetTransponder());
 
         SI::Descriptor * d;
         for (SI::Loop::Iterator it2; (d = SiSdtService.serviceDescriptors.getNext(it2));)
@@ -175,7 +175,7 @@ ChannelVector cSdt::GetChannels()
                   // Some cable providers don't mark short channel names according to the
                   // standard, but rather go their own way and use "name>short name" or
                   // "name, short name"
-                  if (strShortName.empty() && channel->Source() == SOURCE_TYPE_CABLE)
+                  if (strShortName.empty() && channel->GetTransponder().IsCable())
                   {
                     size_t pos = strName.find('>'); // fix for UPC Wien
                     if (pos == string::npos)

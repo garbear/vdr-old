@@ -24,7 +24,7 @@
 #include "ChannelTypes.h"
 #include "dvb/DVBTypes.h"
 #include "epg/EPGTypes.h"
-#include "linux/channels/DVBTransponder.h"
+#include "transponders/Transponder.h"
 #include "utils/List.h"
 #include "utils/Observer.h"
 
@@ -86,7 +86,7 @@ public:
 //#include "thread.h"
 //#include "tools.h"
 
-// TODO: Move to cDvbTransponder and figure out wtf this does
+// TODO: Move to cTransponder and figure out wtf this does
 // I suspect that the polarization masking is involved somehow
 bool ISTRANSPONDER(int frequencyMHz1, int frequencyMHz2);
 
@@ -154,7 +154,6 @@ public:
    * hack-of-a-hack behavior has not been retained.
    */
   const cChannelID&     GetChannelID(void) const { return m_channelId; }
-  const cChannelSource& Source(void)       const { return m_channelId.m_source; }
   uint16_t              Nid(void)          const { return m_channelId.Nid(); }
   uint16_t              Tsid(void)         const { return m_channelId.Tsid(); }
   uint16_t              Sid(void)          const { return m_channelId.Sid(); }
@@ -200,14 +199,13 @@ public:
 
   void SetCaDescriptors(const CaDescriptorVector& caDescriptors);
 
-  const cDvbTransponder& GetTransponder(void) const { return m_transponder; }
-  bool SetTransponderData(cChannelSource source, const cDvbTransponder& transponder);
-  void CopyTransponderData(const cChannel& channel);
+  const cTransponder& GetTransponder(void) const       { return m_transponder; }
+  void SetTransponder(const cTransponder& transponder) { m_transponder = transponder; }
 
   /*!
    * \brief Returns the transponder frequency in MHz, plus the polarization in
    * the case of a satellite. The polarization takes the form of a mask in the
-   * 100 GHz range (see cDvbTransponder::WTF()).
+   * 100 GHz range (see cTransponder::WTF()).
    */
   unsigned int FrequencyMHzWithPolarization() const;
 
@@ -244,7 +242,7 @@ private:
   TeletextStream              m_teletextStream;  // Max 1
   CaDescriptorVector          m_caDescriptors;   // Max 12
 
-  cDvbTransponder             m_transponder;
+  cTransponder                m_transponder;
 
   unsigned int                m_number;          // Sequence number assigned on load
 

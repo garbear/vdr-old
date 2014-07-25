@@ -24,6 +24,7 @@
 #include "ChannelTypes.h"
 #include "utils/Observer.h"
 #include "platform/threads/mutex.h"
+#include "transponders/TransponderTypes.h"
 
 #include <map>
 #include <memory>
@@ -81,8 +82,8 @@ public:
    * \param transponder A compatible transponder (see ISTRANSPONDER())
    * \return The channel, or empty pointer if the channel isn't found
    */
-  ChannelPtr GetByServiceID(int serviceID, cChannelSource source, int transponder) const;
-  static ChannelPtr GetByServiceID(const ChannelVector& channels, int serviceID, cChannelSource source, int transponder); // TODO: Remove me
+  ChannelPtr GetByServiceID(int serviceID, TRANSPONDER_TYPE source, int transponder) const;
+  static ChannelPtr GetByServiceID(const ChannelVector& channels, int serviceID, TRANSPONDER_TYPE source, int transponder); // TODO: Remove me
 
   /*!
    * \brief Find a channel by its channel ID
