@@ -30,15 +30,15 @@ namespace VDR
 class cFrontendCapabilities
 {
 public:
-  cFrontendCapabilities(fe_caps caps, fe_spectral_inversion fallback = INVERSION_OFF);
+  cFrontendCapabilities(fe_caps_t caps, fe_spectral_inversion_t fallback = INVERSION_OFF);
 
-  fe_spectral_inversion caps_inversion;
-  fe_modulation         caps_qam;
-  fe_transmit_mode      caps_transmission_mode;
-  fe_guard_interval     caps_guard_interval;
-  fe_hierarchy          caps_hierarchy;
-  fe_code_rate          caps_fec;
-  bool                  caps_s2;
+  fe_spectral_inversion_t caps_inversion;
+  fe_modulation_t         caps_qam;
+  fe_transmit_mode_t      caps_transmission_mode;
+  fe_guard_interval_t     caps_guard_interval;
+  fe_hierarchy_t          caps_hierarchy;
+  fe_code_rate_t          caps_fec;
+  bool                    caps_s2;
 };
 
 }

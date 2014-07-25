@@ -80,7 +80,7 @@ void* cScanner::Process()
 {
   try
   {
-    fe_type frontendType;
+    fe_type_t frontendType;
     if (!GetFrontendType(m_setup.dvbType, frontendType))
       throw false;
 

@@ -72,7 +72,7 @@ class cScanLimitsATSC : public cScanLimits
 {
 public:
   // atscModulation: either VSB_8 (VSB over-the-air) or QAM_256 (QAM Annex B cable TV)
-  cScanLimitsATSC(fe_modulation atscModulation);
+  cScanLimitsATSC(fe_modulation_t atscModulation);
 };
 
 }

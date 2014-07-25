@@ -27,7 +27,7 @@
 namespace VDR
 {
 
-cFrontendCapabilities::cFrontendCapabilities(fe_caps caps, fe_spectral_inversion fallback)
+cFrontendCapabilities::cFrontendCapabilities(fe_caps_t caps, fe_spectral_inversion_t fallback)
  : caps_inversion(INVERSION_AUTO),
    caps_qam(QAM_AUTO),
    caps_transmission_mode(TRANSMISSION_MODE_AUTO),

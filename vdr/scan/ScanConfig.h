@@ -94,14 +94,14 @@ public:
   static unsigned int TranslateSymbolRate(eDvbcSymbolRate sr);
   static eDvbcSymbolRate TranslateSymbolRate(unsigned int sr);
 
-  TRANSPONDER_TYPE      dvbType;
-  fe_spectral_inversion dvbtInversion;
-  fe_spectral_inversion dvbcInversion;
-  eDvbcSymbolRate       dvbcSymbolRate;
-  COUNTRY::eCountry     countryIndex;
-  SATELLITE::eSatellite satelliteIndex;
-  fe_modulation         atscModulation; // Either VSB over-the-air (VSB_8) or QAM Annex B cable TV (QAM_256)
-  DevicePtr             device;
+  TRANSPONDER_TYPE        dvbType;
+  fe_spectral_inversion_t dvbtInversion;
+  fe_spectral_inversion_t dvbcInversion;
+  eDvbcSymbolRate         dvbcSymbolRate;
+  COUNTRY::eCountry       countryIndex;
+  SATELLITE::eSatellite   satelliteIndex;
+  fe_modulation_t         atscModulation; // Either VSB over-the-air (VSB_8) or QAM Annex B cable TV (QAM_256)
+  DevicePtr               device;
 };
 
 }

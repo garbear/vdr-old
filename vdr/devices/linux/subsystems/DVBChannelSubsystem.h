@@ -36,7 +36,7 @@ public:
   virtual ~cDvbChannelSubsystem() { }
 
   // Not inherited from cDeviceChannelSubsystem
-  virtual bool ProvidesDeliverySystem(fe_delivery_system deliverySystem) const;
+  virtual bool ProvidesDeliverySystem(fe_delivery_system_t deliverySystem) const;
   virtual bool ProvidesSource(TRANSPONDER_TYPE source) const;
   virtual bool ProvidesTransponder(const cChannel &channel) const;
   virtual bool ProvidesChannel(const cChannel &channel, bool *pNeedsDetachReceivers = NULL) const;

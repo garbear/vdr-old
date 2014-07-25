@@ -124,7 +124,7 @@ cScanLimitsSatellite::cScanLimitsSatellite(eSatellite satelliteId)
   m_freqOffsets.push_back(NO_OFFSET);
 }
 
-cScanLimitsATSC::cScanLimitsATSC(fe_modulation atscModulation)
+cScanLimitsATSC::cScanLimitsATSC(fe_modulation_t atscModulation)
 {
   m_modulations.push_back(atscModulation);
 

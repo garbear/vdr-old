@@ -202,11 +202,11 @@ ChannelVector cNit::GetTransponders()
 
               // Rolloff
               //fe_rolloff_t rollOff = ROLLOFF_35; // Implied value in DVB-S, default for DVB-S2 (per frontend.h)
-              static fe_rolloff rollOffs[] = { ROLLOFF_35, ROLLOFF_25, ROLLOFF_20, ROLLOFF_AUTO };
+              static fe_rolloff_t rollOffs[] = { ROLLOFF_35, ROLLOFF_25, ROLLOFF_20, ROLLOFF_AUTO };
               transponder.SatelliteParams().SetRollOff(sd->getModulationSystem() == DVB_SYSTEM_2 ? rollOffs[sd->getRollOff()] : ROLLOFF_AUTO);
 
               // Code rate
-              static fe_code_rate codeRates[] =
+              static fe_code_rate_t codeRates[] =
               {
                 FEC_NONE, FEC_1_2,  FEC_2_3,  FEC_3_4,  FEC_5_6,  FEC_7_8,  FEC_8_9,
                 FEC_3_5,  FEC_4_5,  FEC_9_10, FEC_AUTO, FEC_AUTO, FEC_AUTO,
@@ -218,8 +218,8 @@ ChannelVector cNit::GetTransponders()
               transponder.SetFrequencyHz(frequenciesKHz[0] = BCD2INT(sd->getFrequency()) / 100);
 
               // Modulation
-              //fe_modulation modulationType = QPSK;
-              static fe_modulation modulations[] = { QAM_AUTO, QPSK, PSK_8, QAM_16 };
+              //fe_modulation_t modulationType = QPSK;
+              static fe_modulation_t modulations[] = { QAM_AUTO, QPSK, PSK_8, QAM_16 };
               transponder.SetModulation(modulations[sd->getModulationType()]);
 
               // System
@@ -347,7 +347,7 @@ ChannelVector cNit::GetTransponders()
               transponder.SetFrequencyKHz(frequenciesKHz[0] = BCD2INT(sd->getFrequency()) / 10);
 
               //XXX FEC_outer???
-              static fe_code_rate codeRates[] =
+              static fe_code_rate_t codeRates[] =
               {
                 FEC_NONE, FEC_1_2,  FEC_2_3,  FEC_3_4,  FEC_5_6,  FEC_7_8,  FEC_8_9,
                 FEC_3_5,  FEC_4_5,  FEC_9_10, FEC_AUTO, FEC_AUTO, FEC_AUTO,
@@ -356,7 +356,7 @@ ChannelVector cNit::GetTransponders()
               transponder.CableParams().SetCoderateH(codeRates[sd->getFecInner()]);
 
               // Modulation
-              static fe_modulation modulations[] =
+              static fe_modulation_t modulations[] =
                 { QPSK, QAM_16, QAM_32, QAM_64, QAM_128, QAM_256, QAM_AUTO };
               transponder.SetModulation(modulations[std::min(sd->getModulation(), 6)]);
 
@@ -445,21 +445,21 @@ ChannelVector cNit::GetTransponders()
               transponder.SetFrequencyKHz(frequenciesKHz[0] = sd->getFrequency() * 10);
 
               // Bandwidth
-              static fe_bandwidth bandwidths[] = { BANDWIDTH_8_MHZ, BANDWIDTH_7_MHZ, BANDWIDTH_6_MHZ, BANDWIDTH_5_MHZ };
+              static fe_bandwidth_t bandwidths[] = { BANDWIDTH_8_MHZ, BANDWIDTH_7_MHZ, BANDWIDTH_6_MHZ, BANDWIDTH_5_MHZ };
               if (sd->getBandwidth() < ARRAY_SIZE(bandwidths))
                 transponder.TerrestrialParams().SetBandwidth(bandwidths[sd->getBandwidth()]);
               else
                 transponder.TerrestrialParams().SetBandwidth(BANDWIDTH_8_MHZ); // Note: Default value was 0 Hz ??? Changed to 8 MHz instead
 
               // Modulation
-              static fe_modulation constellations[] = { QPSK, QAM_16, QAM_64, QAM_AUTO };
+              static fe_modulation_t constellations[] = { QPSK, QAM_16, QAM_64, QAM_AUTO };
               transponder.SetModulation(constellations[sd->getConstellation()]);
 
               // System
               transponder.SetDeliverySystem(SYS_DVBT);
 
               // Hierarchy
-              static fe_hierarchy hierarchies[] =
+              static fe_hierarchy_t hierarchies[] =
               {
                 HIERARCHY_NONE, HIERARCHY_1,    HIERARCHY_2,    HIERARCHY_4,
                 HIERARCHY_AUTO, HIERARCHY_AUTO, HIERARCHY_AUTO, HIERARCHY_AUTO
@@ -467,7 +467,7 @@ ChannelVector cNit::GetTransponders()
               transponder.TerrestrialParams().SetHierarchy(hierarchies[sd->getHierarchy()]);
 
               // Code rates
-              static fe_code_rate codeRates[] =
+              static fe_code_rate_t codeRates[] =
               {
                   FEC_1_2, FEC_2_3, FEC_3_4, FEC_5_6, FEC_7_8, FEC_AUTO, FEC_AUTO,
                   FEC_AUTO
@@ -476,7 +476,7 @@ ChannelVector cNit::GetTransponders()
               transponder.TerrestrialParams().SetCoderateL(codeRates[sd->getCodeRateLP()]);
 
               // Guard interval
-              static fe_guard_interval guardIntervals[] =
+              static fe_guard_interval_t guardIntervals[] =
               {
                   GUARD_INTERVAL_1_32, GUARD_INTERVAL_1_16, GUARD_INTERVAL_1_8,
                   GUARD_INTERVAL_1_4
@@ -484,7 +484,7 @@ ChannelVector cNit::GetTransponders()
               transponder.TerrestrialParams().SetGuard(guardIntervals[sd->getGuardInterval()]);
 
               // Transmission mode
-              static fe_transmit_mode transmissionModes[] =
+              static fe_transmit_mode_t transmissionModes[] =
               {
                   TRANSMISSION_MODE_2K, TRANSMISSION_MODE_8K, TRANSMISSION_MODE_4K,
                   TRANSMISSION_MODE_AUTO
@@ -598,7 +598,7 @@ ChannelVector cNit::GetTransponders()
                       if (td->getExtendedDataFlag())
                       {
                         // Bandwidth
-                        static fe_bandwidth T2Bandwidths[] =
+                        static fe_bandwidth_t T2Bandwidths[] =
                         {
                           BANDWIDTH_8_MHZ, BANDWIDTH_7_MHZ,  BANDWIDTH_6_MHZ,
                           BANDWIDTH_5_MHZ, BANDWIDTH_10_MHZ, BANDWIDTH_1_712_MHZ
@@ -609,7 +609,7 @@ ChannelVector cNit::GetTransponders()
                           dtp.SetBandwidth(BANDWIDTH_8_MHZ); // Note: Default value was 0 Hz ??? Changed to 8 MHz instead
 
                         // Guard interval
-                        static fe_guard_interval T2GuardIntervals[] =
+                        static fe_guard_interval_t T2GuardIntervals[] =
                         {
                             GUARD_INTERVAL_1_32,  GUARD_INTERVAL_1_16,
                             GUARD_INTERVAL_1_8,   GUARD_INTERVAL_1_4,
@@ -622,7 +622,7 @@ ChannelVector cNit::GetTransponders()
                           dtp.SetGuard(GUARD_INTERVAL_AUTO); // Note: Default value was 0 ??? Changed to GUARD_INTERVAL_AUTO instead
 
                         // Transmission mode
-                        static fe_transmit_mode T2TransmissionModes[] =
+                        static fe_transmit_mode_t T2TransmissionModes[] =
                         {
                           TRANSMISSION_MODE_2K,   TRANSMISSION_MODE_8K,
                           TRANSMISSION_MODE_4K,   TRANSMISSION_MODE_1K,

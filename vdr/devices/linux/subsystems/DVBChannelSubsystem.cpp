@@ -45,7 +45,7 @@ cDvbChannelSubsystem::cDvbChannelSubsystem(cDevice *device)
 {
 }
 
-bool cDvbChannelSubsystem::ProvidesDeliverySystem(fe_delivery_system deliverySystem) const
+bool cDvbChannelSubsystem::ProvidesDeliverySystem(fe_delivery_system_t deliverySystem) const
 {
   return Device<cDvbDevice>()->m_dvbTuner.HasDeliverySystem(deliverySystem);
 }

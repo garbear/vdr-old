@@ -58,7 +58,7 @@ public:
    * \brief Create a channel object with the given parameters. Must be implemented
    *        by subclasses.
    */
-  virtual ChannelPtr GetChannel(fe_modulation modulation, unsigned int iChannel, eDvbcSymbolRate symbolRate, eOffsetType freqOffset) = 0;
+  virtual ChannelPtr GetChannel(fe_modulation_t modulation, unsigned int iChannel, eDvbcSymbolRate symbolRate, eOffsetType freqOffset) = 0;
 
 protected:
   cFrontendCapabilities m_caps;
@@ -76,7 +76,7 @@ public:
   virtual ~cScanTaskTerrestrial() { }
 
 protected:
-  virtual ChannelPtr GetChannel(fe_modulation modulation, unsigned int iChannel, eDvbcSymbolRate symbolRate, eOffsetType freqOffset);
+  virtual ChannelPtr GetChannel(fe_modulation_t modulation, unsigned int iChannel, eDvbcSymbolRate symbolRate, eOffsetType freqOffset);
 
 private:
   eChannelList m_channelList;
@@ -89,7 +89,7 @@ public:
   virtual ~cScanTaskCable() { }
 
 protected:
-  virtual ChannelPtr GetChannel(fe_modulation modulation, unsigned int iChannel, eDvbcSymbolRate symbolRate, eOffsetType freqOffset);
+  virtual ChannelPtr GetChannel(fe_modulation_t modulation, unsigned int iChannel, eDvbcSymbolRate symbolRate, eOffsetType freqOffset);
 
 private:
   eChannelList m_channelList;
@@ -102,7 +102,7 @@ public:
   virtual ~cScanTaskSatellite() { }
 
 protected:
-  virtual ChannelPtr GetChannel(fe_modulation modulation, unsigned int iChannel, eDvbcSymbolRate symbolRate, eOffsetType freqOffset);
+  virtual ChannelPtr GetChannel(fe_modulation_t modulation, unsigned int iChannel, eDvbcSymbolRate symbolRate, eOffsetType freqOffset);
 
 private:
   static bool ValidSatFrequency(unsigned int frequencyHz, const cChannel& channel);
@@ -118,7 +118,7 @@ public:
   virtual ~cScanTaskATSC() { }
 
 protected:
-  ChannelPtr GetChannel(fe_modulation modulation, unsigned int iChannel, eDvbcSymbolRate symbolRate, eOffsetType freqOffset);
+  ChannelPtr GetChannel(fe_modulation_t modulation, unsigned int iChannel, eDvbcSymbolRate symbolRate, eOffsetType freqOffset);
 
 private:
   eChannelList m_channelList;

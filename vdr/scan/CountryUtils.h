@@ -104,7 +104,7 @@ public:
    * \param atscModulation If ATSC, the modulation is used to choose between cable and terrestrial
    * \param channelList The channel list
    */
-  static bool GetChannelList(COUNTRY::eCountry country, fe_type dvbType, fe_modulation atscModulation, eChannelList& channelList);
+  static bool GetChannelList(COUNTRY::eCountry country, fe_type_t dvbType, fe_modulation_t atscModulation, eChannelList& channelList);
 
 
   /*!

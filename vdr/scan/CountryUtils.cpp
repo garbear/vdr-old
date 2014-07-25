@@ -359,7 +359,7 @@ bool CountryUtils::GetFrontendType(eCountry countryId, eFrontendType& frontendTy
   return true;
 }
 
-bool CountryUtils::GetChannelList(eCountry country, fe_type dvbType, fe_modulation atscModulation, eChannelList& channelList)
+bool CountryUtils::GetChannelList(eCountry country, fe_type_t dvbType, fe_modulation_t atscModulation, eChannelList& channelList)
 {
   switch (country)
   {

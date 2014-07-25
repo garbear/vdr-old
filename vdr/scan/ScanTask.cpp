@@ -108,7 +108,7 @@ cScanTaskTerrestrial::cScanTaskTerrestrial(cDevice* device, const cFrontendCapab
 {
 }
 
-ChannelPtr cScanTaskTerrestrial::GetChannel(fe_modulation modulation, unsigned int iChannel, eDvbcSymbolRate symbolRate, eOffsetType freqOffset)
+ChannelPtr cScanTaskTerrestrial::GetChannel(fe_modulation_t modulation, unsigned int iChannel, eDvbcSymbolRate symbolRate, eOffsetType freqOffset)
 {
   ChannelPtr channel = ChannelPtr(new cChannel);
 
@@ -121,7 +121,7 @@ ChannelPtr cScanTaskTerrestrial::GetChannel(fe_modulation modulation, unsigned i
     return cChannel::EmptyChannel; // Skip this one
   frequencyHz += iFrequencyOffset;
 
-  fe_bandwidth bandwidth;
+  fe_bandwidth_t bandwidth;
   if (!CountryUtils::GetBandwidth(iChannel, m_channelList, bandwidth))
     return cChannel::EmptyChannel;
 
@@ -148,7 +148,7 @@ cScanTaskCable::cScanTaskCable(cDevice* device, const cFrontendCapabilities& cap
 {
 }
 
-ChannelPtr cScanTaskCable::GetChannel(fe_modulation modulation, unsigned int iChannel, eDvbcSymbolRate symbolRate, eOffsetType freqOffset)
+ChannelPtr cScanTaskCable::GetChannel(fe_modulation_t modulation, unsigned int iChannel, eDvbcSymbolRate symbolRate, eOffsetType freqOffset)
 {
   ChannelPtr channel = ChannelPtr(new cChannel);
 
@@ -161,7 +161,7 @@ ChannelPtr cScanTaskCable::GetChannel(fe_modulation modulation, unsigned int iCh
     return cChannel::EmptyChannel; // Skip this one
   frequency += iFrequencyOffset;
 
-  fe_modulation this_qam;
+  fe_modulation_t this_qam;
 
   // If caps_qam is not QAM_AUTO, then all modulations in dvbModulations will be tried
   // TODO: If caps_qam *is* QAM_AUTO, then the same code will be run multiple times (once for each dvbModulations item)
@@ -245,7 +245,7 @@ cDiseqc* cScanTaskSatellite::GetDiseqc(TRANSPONDER_TYPE source, unsigned frequen
   return NULL;
 }
 
-ChannelPtr cScanTaskSatellite::GetChannel(fe_modulation modulation, unsigned int iChannel, eDvbcSymbolRate symbolRate, eOffsetType freqOffset)
+ChannelPtr cScanTaskSatellite::GetChannel(fe_modulation_t modulation, unsigned int iChannel, eDvbcSymbolRate symbolRate, eOffsetType freqOffset)
 {
   ChannelPtr channel = ChannelPtr(new cChannel);
 
@@ -286,7 +286,7 @@ cScanTaskATSC::cScanTaskATSC(cDevice* device, const cFrontendCapabilities& caps,
 {
 }
 
-ChannelPtr cScanTaskATSC::GetChannel(fe_modulation modulation, unsigned int iChannel, eDvbcSymbolRate symbolRate, eOffsetType freqOffset)
+ChannelPtr cScanTaskATSC::GetChannel(fe_modulation_t modulation, unsigned int iChannel, eDvbcSymbolRate symbolRate, eOffsetType freqOffset)
 {
   unsigned int frequency = ChannelToFrequency(iChannel, m_channelList);
   if (frequency == 0)
