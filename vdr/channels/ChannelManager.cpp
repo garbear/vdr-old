@@ -38,29 +38,11 @@
 #include <algorithm>
 #include <assert.h>
 
-using namespace std;
-using namespace VDR;
 using namespace PLATFORM;
-
-/*
-string ChannelString(const ChannelPtr &channel, int number)
-{
-  string retval;
-  if (channel)
-    retval = StringUtils::Format("%d%s  %s", channel->Number(), number ? "-" : "", channel->Name().c_str());
-  else if (number)
-    retval = StringUtils::Format("%d-", number);
-  else
-    //retval = StringUtils::Format("%s", tr("*** Invalid Channel ***"));
-    retval = StringUtils::Format("%s", "*** Invalid Channel ***");
-  return retval;
-}
-*/
+using namespace VDR;
+using namespace std;
 
 cChannelManager::cChannelManager()
- : m_maxNumber(0),
-   m_maxChannelNameLength(0),
-   m_maxShortChannelNameLength(0)
 {
 }
 
@@ -70,70 +52,188 @@ cChannelManager &cChannelManager::Get()
   return instance;
 }
 
-void cChannelManager::Clear(void)
-{
-  CLockObject lock(m_mutex);
-  m_channels.clear();
-  m_channelSids.clear();
-}
-
-void cChannelManager::Notify(const Observable &obs, const ObservableMessage msg)
-{
-  {
-    CLockObject lock(m_mutex);
-    SetChanged();
-  }
-  NotifyObservers(msg);
-}
-
-void cChannelManager::AddChannel(ChannelPtr channel)
+void cChannelManager::AddChannel(const ChannelPtr& channel)
 {
   assert(channel.get());
 
   CLockObject lock(m_mutex);
 
   // Avoid adding two of the same channel objects to the vector
-  for (ChannelVector::iterator itChannel = m_channels.begin(); itChannel != m_channels.end(); ++itChannel)
-  {
-    if (*itChannel == channel)
-      return;
-  }
+  if (std::find(m_channels.begin(), m_channels.end(), channel) != m_channels.end())
+    return;
 
   channel->RegisterObserver(this);
   m_channels.push_back(channel);
+  SetChanged();
 }
 
 void cChannelManager::AddChannels(const ChannelVector& channels)
 {
-  if (!channels.empty())
+  for (ChannelVector::const_iterator itChannel = channels.begin(); itChannel != channels.end(); ++itChannel)
+    AddChannel(*itChannel);
+}
+
+void cChannelManager::MergeChannelProps(const ChannelPtr& channel)
+{
+  const uint16_t tsid = channel->ID().Tsid();
+  const uint16_t sid  = channel->ID().Sid();
+
+  if (tsid == 0 || sid == 0)
+    return;
+
+  CLockObject lock(m_mutex);
+
+  bool bFound = false;
+  for (ChannelVector::iterator itChannel = m_channels.begin(); itChannel != m_channels.end(); ++itChannel)
   {
-    for (ChannelVector::const_iterator itChannel = channels.begin(); itChannel != channels.end(); ++itChannel)
-      AddChannel(*itChannel);
+    if (tsid == (*itChannel)->ID().Tsid() &&
+        sid  == (*itChannel)->ID().Sid())
+    {
+      bFound = true;
+      (*itChannel)->SetStreams(channel->GetVideoStream(),
+                               channel->GetAudioStreams(),
+                               channel->GetDataStreams(),
+                               channel->GetSubtitleStreams(),
+                               channel->GetTeletextStream());
+      (*itChannel)->SetCaDescriptors(channel->GetCaDescriptors());
+      (*itChannel)->NotifyObservers();
+      break;
+    }
+  }
 
+  if (!bFound)
+  {
+    channel->RegisterObserver(this);
+    m_channels.push_back(channel);
     SetChanged();
-    NotifyObservers(ObservableMessageChannelChanged);
-
-    Save();
   }
 }
 
-void cChannelManager::RemoveChannel(ChannelPtr channel)
+void cChannelManager::MergeChannelNamesAndModulation(const ChannelPtr& channel)
 {
-  assert(channel.get());
+  const uint16_t tsid = channel->ID().Tsid();
+  const uint16_t sid  = channel->ID().Sid();
 
-  channel->UnregisterObserver(this);
+  if (tsid == 0 || sid == 0)
+    return;
+
   CLockObject lock(m_mutex);
+
+  bool bFound = false;
   for (ChannelVector::iterator itChannel = m_channels.begin(); itChannel != m_channels.end(); ++itChannel)
   {
-    if (channel == *itChannel)
+    if (tsid == (*itChannel)->ID().Tsid() &&
+        sid  == (*itChannel)->ID().Sid())
     {
-      m_channels.erase(itChannel);
+      bFound = true;
+      (*itChannel)->SetName(channel->Name(),
+                            channel->ShortName(),
+                            channel->Provider());
 
-      // TODO: Also erase from sid map
-      // TODO TODO: Get rid of sid map
+      fe_modulation_t modulation = channel->GetTransponder().Modulation();
+      if (modulation != (*itChannel)->GetTransponder().Modulation())
+      {
+        (*itChannel)->GetTransponder().SetModulation(modulation);
+        (*itChannel)->SetChanged();
+      }
 
+      (*itChannel)->NotifyObservers();
       break;
     }
+  }
+
+  if (!bFound)
+  {
+    channel->RegisterObserver(this);
+    m_channels.push_back(channel);
+    SetChanged();
+  }
+}
+
+ChannelPtr cChannelManager::GetByChannelID(const cChannelID& channelID) const
+{
+  CLockObject lock(m_mutex);
+
+  // TODO: Search m_channelSids
+  //const uint16_t serviceID = channelID.Sid();
+
+  for (ChannelVector::const_iterator itChannel = m_channels.begin(); itChannel != m_channels.end(); ++itChannel)
+  {
+    if ((*itChannel)->ID() == channelID)
+      return (*itChannel);
+  }
+
+  return cChannel::EmptyChannel;
+}
+
+ChannelPtr cChannelManager::GetByChannelUID(uint32_t channelUid) const
+{
+  CLockObject lock(m_mutex);
+
+  // maybe we need to use a lookup table
+
+  for (ChannelVector::const_iterator itChannel = m_channels.begin(); itChannel != m_channels.end(); ++itChannel)
+  {
+    if ((*itChannel)->UID() == channelUid)
+      return (*itChannel);
+  }
+
+  return cChannel::EmptyChannel;
+}
+
+ChannelVector cChannelManager::GetCurrent(void) const
+{
+  CLockObject lock(m_mutex);
+  return m_channels;
+}
+
+size_t cChannelManager::ChannelCount() const
+{
+  CLockObject lock(m_mutex);
+  return m_channels.size();
+}
+
+void cChannelManager::RemoveChannel(const ChannelPtr& channel)
+{
+  CLockObject lock(m_mutex);
+
+  ChannelVector::iterator itChannel = std::find(m_channels.begin(), m_channels.end(), channel);
+  if (itChannel != m_channels.end())
+  {
+    (*itChannel)->UnregisterObserver(this);
+    m_channels.erase(itChannel);
+    SetChanged();
+
+    // TODO: Also erase from sid map
+    // TODO TODO: Get rid of sid map
+  }
+}
+
+void cChannelManager::Clear(void)
+{
+  CLockObject lock(m_mutex);
+  m_channels.clear();
+  SetChanged();
+}
+
+void cChannelManager::Notify(const Observable &obs, const ObservableMessage msg)
+{
+  switch (msg)
+  {
+  case ObservableMessageChannelChanged:
+    SetChanged();
+    break;
+  default:
+    break;
+  }
+}
+
+void cChannelManager::NotifyObservers()
+{
+  if (Changed())
+  {
+    Observable::NotifyObservers(ObservableMessageChannelChanged);
+    Save();
   }
 }
 
@@ -189,6 +289,8 @@ bool cChannelManager::Load(const std::string &file)
     channelNode = channelNode->NextSibling(CHANNEL_XML_ELM_CHANNEL);
   }
 
+  SetChanged();
+
   // Don't continue if we didn't load any channels
   return !m_channels.empty();
 }
@@ -227,165 +329,15 @@ bool cChannelManager::Save(const string &file /* = ""*/)
   return true;
 }
 
-ChannelPtr cChannelManager::GetByNumber(int number, int skipGap /* = 0 */)
-{
-  ChannelPtr previous;
-  CLockObject lock(m_mutex);
-  for (ChannelVector::iterator itChannel = m_channels.begin(); itChannel != m_channels.end(); ++itChannel)
-  {
-    ChannelPtr &channel = *itChannel;
-
-    if (channel->Number() == number)
-      return channel;
-    else if (skipGap && channel->Number() > number)
-      return skipGap > 0 ? channel : previous;
-
-    previous = channel;
-  }
-  return cChannel::EmptyChannel;
-}
-
-ChannelPtr cChannelManager::GetByServiceID(int serviceID, TRANSPONDER_TYPE source, int transponder) const
-{
-  assert(serviceID);
-  assert(transponder);
-
-  ChannelSidMap::const_iterator it = m_channelSids.find(serviceID);
-  if (it != m_channelSids.end())
-  {
-    const ChannelVector &channelVec = it->second;
-    for (ChannelVector::const_iterator itChannel = channelVec.begin(); itChannel != channelVec.end(); ++itChannel)
-    {
-      if ((*itChannel)->ID().Sid() == serviceID && (*itChannel)->GetTransponder().Type() == source && ISTRANSPONDER((*itChannel)->FrequencyMHzWithPolarization(), transponder))
-        return (*itChannel);
-    }
-  }
-  return cChannel::EmptyChannel;
-}
-
-ChannelPtr cChannelManager::GetByServiceID(const ChannelVector& channels, int serviceID, TRANSPONDER_TYPE source, int transponder)
-{
-  assert(serviceID);
-  assert(transponder);
-
-  for (ChannelVector::const_iterator itChannel = channels.begin(); itChannel != channels.end(); ++itChannel)
-  {
-    if ((*itChannel)->ID().Sid() == serviceID && (*itChannel)->GetTransponder().Type() == source && ISTRANSPONDER((*itChannel)->FrequencyMHzWithPolarization(), transponder))
-      return (*itChannel);
-  }
-  return cChannel::EmptyChannel;
-}
-
-ChannelPtr cChannelManager::GetByChannelID(const cChannelID& channelID)
-{
-  CLockObject lock(m_mutex);
-
-  int serviceID = channelID.Sid();
-  ChannelSidMap::iterator it = m_channelSids.find(serviceID);
-  if (it != m_channelSids.end())
-  {
-    ChannelVector &channelVec = it->second;
-    for (ChannelVector::iterator itChannel = channelVec.begin(); itChannel != channelVec.end(); ++itChannel)
-    {
-      ChannelPtr &channel = *itChannel;
-      if (channel->ID().Sid() == serviceID && channel->ID() == channelID)
-        return channel;
-    }
-  }
-  return cChannel::EmptyChannel;
-}
-
-ChannelPtr cChannelManager::GetByChannelID(uint16_t nid, uint16_t tsid, uint16_t sid)
-{
-  CLockObject lock(m_mutex);
-
-  ChannelSidMap::iterator it = m_channelSids.find(sid);
-  if (it != m_channelSids.end())
-  {
-    ChannelVector &channelVec = it->second;
-    for (ChannelVector::iterator itChannel = channelVec.begin(); itChannel != channelVec.end(); ++itChannel)
-    {
-      ChannelPtr &channel = *itChannel;
-      if (channel->ID().Sid() == sid && channel->ID().Tsid() == tsid && channel->ID().Nid() == nid)
-        return channel;
-    }
-  }
-  return cChannel::EmptyChannel;
-}
-
-ChannelPtr cChannelManager::GetByTransponderID(const cChannelID& channelID)
-{
-  int nid = channelID.Nid();
-  int tid = channelID.Tsid();
-  CLockObject lock(m_mutex);
-  for (ChannelVector::iterator itChannel = m_channels.begin(); itChannel != m_channels.end(); ++itChannel)
-  {
-    ChannelPtr &channel = *itChannel;
-    if (channel->ID().Nid() == nid && channel->ID().Tsid() == tid)
-      return channel;
-  }
-  return cChannel::EmptyChannel;
-}
-
-bool cChannelManager::HasUniqueChannelID(const ChannelPtr &newChannel, const ChannelPtr &oldChannel /* = cChannel::EmptyChannel */) const
-{
-  assert(newChannel.get());
-
-  const cChannelID& newChannelID = newChannel->ID();
-  CLockObject lock(m_mutex);
-  for (ChannelVector::const_iterator itChannel = m_channels.begin(); itChannel != m_channels.end(); ++itChannel)
-  {
-    const ChannelPtr &channel = *itChannel;
-    if (channel != oldChannel && channel->ID() == newChannelID)
-      return false;
-  }
-  return true;
-}
-
-void cChannelManager::SetModified(void)
-{
-  {
-    PLATFORM::CLockObject lock(m_mutex);
-    m_maxChannelNameLength = m_maxShortChannelNameLength = 0;
-    SetChanged();
-  }
-  NotifyObservers();
-}
-
-ChannelPtr cChannelManager::GetByChannelUID(uint32_t channelUID) const
-{
-  ChannelPtr result;
-  ChannelPtr channel;
-
-  // maybe we need to use a lookup table
-  CLockObject lock(m_mutex);
-  for (ChannelVector::const_iterator it = m_channels.begin(); it != m_channels.end(); ++it)
-  {
-    channel = (*it);
-    if(channelUID == channel->UID()) {
-      result = channel;
-      break;
-    }
-  }
-
-  return result;
-}
-
-ChannelVector cChannelManager::GetCurrent(void) const
-{
-  PLATFORM::CLockObject lock(m_mutex);
-  return m_channels;
-}
-
 void cChannelManager::CreateChannelGroups(bool automatic)
 {
-  std::string groupname;
+  string groupname;
 
   CLockObject lock(m_mutex);
   for (ChannelVector::const_iterator it = m_channels.begin(); it != m_channels.end(); ++it)
   {
-    ChannelPtr channel = *it;
-    bool isRadio = CChannelFilter::IsRadio(channel);
+    const ChannelPtr& channel = *it;
+    bool bIsRadio = CChannelFilter::IsRadio(channel);
 
     if (automatic)
       groupname = channel->Provider();
@@ -393,16 +345,10 @@ void cChannelManager::CreateChannelGroups(bool automatic)
     if (groupname.empty())
       continue;
 
-    if (!CChannelGroups::Get(isRadio).HasGroup(groupname))
+    if (!CChannelGroups::Get(bIsRadio).HasGroup(groupname))
     {
-      CChannelGroup group(isRadio, groupname, automatic);
-      CChannelGroups::Get(isRadio).AddGroup(group);
+      CChannelGroup group(bIsRadio, groupname, automatic);
+      CChannelGroups::Get(bIsRadio).AddGroup(group);
     }
   }
-}
-
-unsigned int cChannelManager::ChannelCount() const
-{
-  CLockObject lock(m_mutex);
-  return m_channels.size();
 }

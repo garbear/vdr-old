@@ -40,7 +40,7 @@ public:
   /*!
    * Scan the PSIP tables for all data referenced by the MGT.
    */
-  bool GetPSIPData(EventVector& events);
+  bool ScanPSIPData(iFilterCallback* callback);
 };
 
 }

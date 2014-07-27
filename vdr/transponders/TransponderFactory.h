@@ -30,6 +30,11 @@
 namespace VDR
 {
 
+//
+// TODO: Move m_params and m_paramIt into base class, possibly using type erasure
+// if necessary (templates and inheritance don't play too well together).
+//
+
 enum ATSC_MODULATION
 {
   ATSC_MODULATION_VSB_8,
@@ -67,6 +72,7 @@ public:
   virtual ~cTransponderFactory(void) { }
 
   virtual bool HasNext(void) const = 0;
+  virtual size_t TransponderCount(void) const = 0;
   virtual cTransponder GetNext(void) = 0;
 
 protected:
@@ -86,6 +92,7 @@ public:
   virtual ~cAtscTransponderFactory(void) { }
 
   virtual bool HasNext(void) const { return m_paramIt != m_params.end(); }
+  virtual size_t TransponderCount(void) const { return m_params.size(); }
   virtual cTransponder GetNext(void);
 
 private:
@@ -109,6 +116,7 @@ public:
   virtual ~cCableTransponderFactory(void) { }
 
   virtual bool HasNext(void) const { return m_paramIt != m_params.end(); }
+  virtual size_t TransponderCount(void) const { return m_params.size(); }
   virtual cTransponder GetNext(void);
 
 private:
@@ -133,6 +141,7 @@ public:
   virtual ~cSatelliteTransponderFactory(void) { }
 
   virtual bool HasNext(void) const { return m_paramIt != m_params.end(); }
+  virtual size_t TransponderCount(void) const { return m_params.size(); }
   virtual cTransponder GetNext(void);
 
 private:
@@ -155,6 +164,7 @@ public:
   virtual ~cTerrestrialTransponderFactory(void) { }
 
   virtual bool HasNext(void) const { return m_paramIt != m_params.end(); }
+  virtual size_t TransponderCount(void) const { return m_params.size(); }
   virtual cTransponder GetNext(void);
 
 private:

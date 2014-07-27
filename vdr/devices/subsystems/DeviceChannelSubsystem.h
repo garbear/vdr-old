@@ -24,12 +24,13 @@
 #include "channels/ChannelTypes.h"
 #include "devices/DeviceSubsystem.h"
 #include "transponders/TransponderTypes.h"
+#include "utils/Observer.h"
 #include "Config.h" // For IDLEPRIORITY
 
 namespace VDR
 {
 
-class cDeviceChannelSubsystem : protected cDeviceSubsystem
+class cDeviceChannelSubsystem : protected cDeviceSubsystem, public Observable
 {
 public:
   cDeviceChannelSubsystem(cDevice *device);
@@ -118,6 +119,8 @@ public:
   bool SwitchChannel(const ChannelPtr& channel);
   bool SwitchTransponder(const cTransponder& transponder);
 
+  void ClearChannel(void);
+
   /*!
    * \brief Returns the number of seconds this device is still occupied for
    */
@@ -155,6 +158,7 @@ protected:
    *        due to a timeout).
    */
   virtual bool SetChannelDevice(const ChannelPtr& channel) { return false; }
+  virtual void ClearChannelDevice(void) { }
 
 private:
   time_t     m_occupiedTimeout;

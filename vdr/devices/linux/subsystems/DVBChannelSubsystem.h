@@ -54,5 +54,6 @@ public:
 
 protected:
   virtual bool SetChannelDevice(const ChannelPtr& channel);
+  virtual void ClearChannelDevice(void);
 };
 }

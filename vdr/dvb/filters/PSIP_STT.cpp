@@ -23,6 +23,7 @@
 
 #include "PSIP_STT.h"
 #include "channels/Channel.h"
+#include "utils/log/Log.h"
 
 #include <libsi/si.h>
 #include <libsi/si_ext.h>
@@ -44,22 +45,24 @@ cPsipStt::cPsipStt(cDevice* device)
 unsigned int cPsipStt::GetGpsUtcOffset(void)
 {
   // Static scope to cache return value
-  static unsigned int offset = 0;
+  static unsigned int gpsUtcOffset = 0;
 
-  // Skip reading the STT if offset has already been determined
-  if (offset != 0)
-    return offset;
-
-  uint16_t        pid;  // Packet ID
-  vector<uint8_t> data; // Section data
-  if (GetSection(pid, data))
+  if (gpsUtcOffset == 0)
   {
-    SI::PSIP_STT stt(data.data(), false);
-    if (stt.CheckCRCAndParse())
-      offset = stt.getGpsUtcOffset();
+    uint16_t        pid;  // Packet ID
+    vector<uint8_t> data; // Section data
+    if (GetSection(pid, data))
+    {
+      SI::PSIP_STT stt(data.data(), false);
+      if (stt.CheckCRCAndParse())
+        gpsUtcOffset = stt.getGpsUtcOffset();
+    }
+
+    if (gpsUtcOffset == 0)
+      esyslog("Error: unable to get GPS/UTC offset, assuming 0 seconds");
   }
 
-  return offset;
+  return gpsUtcOffset;
 }
 
 }

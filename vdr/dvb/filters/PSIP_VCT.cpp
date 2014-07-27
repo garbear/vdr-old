@@ -43,9 +43,9 @@ cPsipVct::cPsipVct(cDevice* device)
   OpenResource(PID_VCT, TableIdCVCT);
 }
 
-ChannelVector cPsipVct::GetChannels(void)
+bool cPsipVct::ScanChannels(iFilterCallback* callback)
 {
-  ChannelVector channels;
+  bool bSuccess = false;
 
   // TODO: Might be multiple sections, need section syncer
 
@@ -53,6 +53,8 @@ ChannelVector cPsipVct::GetChannels(void)
   vector<uint8_t> data; // Section data
   if (GetSection(pid, data))
   {
+    bSuccess = true;
+
     SI::PSIP_VCT vct(data.data(), false);
     if (vct.CheckCRCAndParse())
     {
@@ -61,36 +63,35 @@ ChannelVector cPsipVct::GetChannels(void)
       {
         ChannelPtr channel = ChannelPtr(new cChannel);
 
+        channel->SetTransponder(GetCurrentlyTunedTransponder()->GetTransponder());
+
         // Short name
         char buffer[22] = { };
         channelInfo.getShortName(buffer);
         channel->SetName(buffer, buffer, ""); // TODO: Parse descriptors for long name
 
         // Modulation mode
-        cTransponder transponder(TRANSPONDER_ATSC);
-
         //unsigned int symbolRateHz = 0;
         ModulationMode modulation = (ModulationMode)channelInfo.getModulationMode();
         switch (modulation)
         {
         case ModulationModeSCTE_1:
-          transponder.SetModulation(QAM_64);
+          channel->GetTransponder().SetModulation(QAM_64);
           //transponder.SetSymbolRate(5057000); // TODO: Why was symbol rate set for an ATSC transponder?
           break;
         case ModulationModeSCTE_2:
-          transponder.SetModulation(QAM_256);
+          channel->GetTransponder().SetModulation(QAM_256);
           //transponder.SetSymbolRate(5361000); // TODO: Why was symbol rate set for an ATSC transponder?
           break;
         case ModulationModeATSC_VSB8:
-          transponder.SetModulation(VSB_8);
+          channel->GetTransponder().SetModulation(VSB_8);
           break;
         case ModulationModeATSC_VSB16:
-          transponder.SetModulation(VSB_16);
+          channel->GetTransponder().SetModulation(VSB_16);
           break;
         default:
           break;
         }
-        channel->SetTransponder(transponder);
 
         // Transport Stream ID (TID) and program number / service ID (SID)
         // TODO: SID is 0xFFFF for analog channels
@@ -104,12 +105,11 @@ ChannelVector cPsipVct::GetChannels(void)
         if (channelInfo.isHidden())
           continue;
 
-        channels.push_back(channel);
+        callback->OnChannelNamesScanned(channel);
       }
     }
   }
-
-  return channels;
+  return bSuccess;
 }
 
 }

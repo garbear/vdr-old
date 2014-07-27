@@ -26,7 +26,6 @@
 
 #include "DeviceTypes.h"
 #include "channels/ChannelTypes.h"
-#include "platform/threads/threads.h"
 
 #include <list>
 #include <string>
@@ -40,6 +39,7 @@ class cDeviceImageGrabSubsystem;
 class cDevicePIDSubsystem;
 class cDevicePlayerSubsystem;
 class cDeviceReceiverSubsystem;
+class cDeviceScanSubsystem;
 class cDeviceSectionFilterSubsystem;
 class cDeviceSPUSubsystem;
 class cDeviceTrackSubsystem;
@@ -55,6 +55,7 @@ struct cSubsystems
   cDevicePIDSubsystem             *PID;
   cDevicePlayerSubsystem          *Player;
   cDeviceReceiverSubsystem        *Receiver;
+  cDeviceScanSubsystem            *Scan;
   cDeviceSectionFilterSubsystem   *SectionFilter;
   cDeviceSPUSubsystem             *SPU;
   cDeviceTrackSubsystem           *Track;
@@ -77,6 +78,7 @@ public:
   cDevicePIDSubsystem*             PID(void)             const { return m_subsystems.PID; }
   cDevicePlayerSubsystem*          Player(void)          const { return m_subsystems.Player; }
   cDeviceReceiverSubsystem*        Receiver(void)        const { return m_subsystems.Receiver; }
+  cDeviceScanSubsystem*            Scan(void)            const { return m_subsystems.Scan; }
   cDeviceSectionFilterSubsystem*   SectionFilter(void)   const { return m_subsystems.SectionFilter; }
   cDeviceSPUSubsystem*             SPU(void)             const { return m_subsystems.SPU; }
   cDeviceTrackSubsystem*           Track(void)           const { return m_subsystems.Track; }

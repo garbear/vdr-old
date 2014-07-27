@@ -23,12 +23,23 @@
 #include "FilterResource.h"
 #include "channels/ChannelTypes.h"
 #include "dvb/DVBTypes.h"
+#include "epg/EPGTypes.h"
 
 #include <stdint.h>
 #include <vector>
 
 namespace VDR
 {
+
+class iFilterCallback
+{
+public:
+  virtual void OnChannelPropsScanned(const ChannelPtr& channel) { }
+  virtual void OnChannelNamesScanned(const ChannelPtr& channel) { }
+  virtual void OnEventScanned(const EventPtr& event) { }
+
+  virtual ~iFilterCallback(void) { }
+};
 
 class cSectionSyncer
 {
@@ -103,8 +114,8 @@ protected:
   ChannelPtr GetCurrentlyTunedTransponder(void) const;
 
 private:
-  cDevice* const           m_device;    // Device that this filter belongs to
-  FilterResourceCollection m_resources; // Open resources held by this device
+  cDevice* const           m_device;      // Device that this filter belongs to
+  FilterResourceCollection m_resources;   // Open resources held by this device
 };
 
 }

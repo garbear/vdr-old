@@ -39,17 +39,11 @@ public:
   virtual ~cPmt(void) { }
 
   /*!
-   * Create a channel with the streams and CA descriptors discovered in the PMT.
-   * Returns the channel, or an empty pointer if the PMT table could not be read
-   * (perhaps due to a timeout).
+   * Scan for channel parameters like channel IDs, streams and CA descriptors.
+   * Returns true if the scan ran until completion, or false if it was aborted
+   * early (even if channels were found).
    */
-  ChannelPtr GetChannel();
-
-  /*!
-   * Block until the channel returned by GetChannel() has changed. Returns the
-   * modified channel, or an empty pointer if no channels were updated.
-   */
-  ChannelPtr GetChannelUpdate() { return cChannel::EmptyChannel; } // TODO
+  bool ScanChannel(iFilterCallback* callback);
 
 private:
   ChannelPtr CreateChannel(/* const */ SI::PMT& pmt) const; // TODO: libsi fails at const-correctness

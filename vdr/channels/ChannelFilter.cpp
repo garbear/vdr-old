@@ -316,30 +316,7 @@ bool CChannelFilter::PassFilter(const ChannelPtr channel)
 
 void CChannelFilter::SortChannels()
 {
-  PLATFORM::CLockObject lock(cChannelManager::Get().m_mutex);
-
-  ChannelVector channels = cChannelManager::Get().GetCurrent();
-
-  for (ChannelVector::iterator it = channels.begin(); it != channels.end(); ++it)
-  {
-    if(!PassFilter(*it))
-    {
-      ChannelVector::iterator it2 = it;
-      if (it2 != channels.end())
-        ++it2;
-      for (; it2 != channels.end(); ++it2)
-      {
-        if(PassFilter(*it2))
-        {
-//          TODO cChannelManager::Get().Move(**it2, **it);
-          it = it2;
-          break;
-        }
-      }
-    }
-  }
-
-  cChannelManager::Get().SetModified();
+  // TODO
 }
 
 CChannelFilter VNSIChannelFilter;

@@ -29,6 +29,7 @@
 #include "devices/subsystems/DevicePIDSubsystem.h"
 #include "devices/subsystems/DevicePlayerSubsystem.h"
 #include "devices/subsystems/DeviceReceiverSubsystem.h"
+#include "devices/subsystems/DeviceScanSubsystem.h"
 #include "devices/subsystems/DeviceSectionFilterSubsystem.h"
 #include "devices/subsystems/DeviceSPUSubsystem.h"
 #include "devices/subsystems/DeviceTrackSubsystem.h"
@@ -55,6 +56,7 @@ void cSubsystems::Free() const
   delete PID;
   delete Player;
   delete Receiver;
+  delete Scan;
   delete SectionFilter;
   delete SPU;
   delete Track;
@@ -69,6 +71,7 @@ void cSubsystems::AssertValid() const
   assert(PID);
   assert(Player);
   assert(Receiver);
+  assert(Scan);
   assert(SectionFilter);
   assert(SPU);
   assert(Track);
@@ -83,10 +86,12 @@ cDevice::cDevice(const cSubsystems &subsystems)
    m_cardIndex(0)
 {
   m_subsystems.AssertValid();
+  Channel()->RegisterObserver(Scan());
 }
 
 cDevice::~cDevice()
 {
+  Channel()->UnregisterObserver(Scan());
   SectionFilter()->StopSectionHandler();
   m_subsystems.Free(); // TODO: Remove me if we switch cSubsystems to use shared_ptrs
 }
@@ -122,11 +127,13 @@ bool cDevice::ScanTransponder(const ChannelPtr& transponder)
     EventVector events;
 
     cPsipMgt mgt(this);
+    /* TODO
     if (!mgt.GetPSIPData(events))
       throw "Failed to scan transponder: Tuner failed to get lock";
 
     if (events.empty())
       throw "Scanned transponder, but no events discovered!";
+    */
 
     // Finally, success! Add channels to EPG schedule
     for (EventVector::const_iterator it = events.begin(); it != events.end(); ++it)

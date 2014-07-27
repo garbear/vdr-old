@@ -30,6 +30,7 @@
 #include "devices/linux/subsystems/DVBSectionFilterSubsystem.h"
 #include "devices/subsystems/DeviceImageGrabSubsystem.h"
 #include "devices/subsystems/DevicePlayerSubsystem.h"
+#include "devices/subsystems/DeviceScanSubsystem.h"
 #include "devices/subsystems/DeviceSPUSubsystem.h"
 #include "devices/subsystems/DeviceTrackSubsystem.h"
 #include "devices/subsystems/DeviceVideoFormatSubsystem.h"
@@ -86,6 +87,7 @@ cSubsystems cDvbDevice::CreateSubsystems(cDvbDevice* device)
 
   subsystems.ImageGrab       = new cDeviceImageGrabSubsystem(device);
   subsystems.Player          = new cDevicePlayerSubsystem(device);
+  subsystems.Scan            = new cDeviceScanSubsystem(device);
   subsystems.SPU             = new cDeviceSPUSubsystem(device);
   subsystems.Track           = new cDeviceTrackSubsystem(device);
   subsystems.VideoFormat     = new cDeviceVideoFormatSubsystem(device);

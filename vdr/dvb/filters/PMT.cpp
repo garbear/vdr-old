@@ -78,10 +78,8 @@ cPmt::cPmt(cDevice* device, uint16_t tsid, uint16_t sid, uint16_t pid)
   OpenResource(pid, TableIdPMT);
 }
 
-ChannelPtr cPmt::GetChannel()
+bool cPmt::ScanChannel(iFilterCallback* callback)
 {
-  ChannelPtr channel;
-
   uint16_t        pid;  // Packet ID
   vector<uint8_t> data; // Section data
   if (GetSection(pid, data))
@@ -90,25 +88,23 @@ ChannelPtr cPmt::GetChannel()
     if (pmt.CheckCRCAndParse())
     {
       if (m_sid == pmt.getServiceId())
-        channel = CreateChannel(pmt);
+        callback->OnChannelPropsScanned(CreateChannel(pmt));
       else
         esyslog("PMT service ID mismatch! Expected %u, found %d", m_sid, pmt.getServiceId());
     }
+    return true;
   }
-
-  return channel;
+  return false;
 }
 
 ChannelPtr cPmt::CreateChannel(/* const */ SI::PMT& pmt) const // TODO: libsi fails at const-correctness
 {
-  // Create a new channel to return
   ChannelPtr channel = ChannelPtr(new cChannel);
-  assert(GetCurrentlyTunedTransponder().get() != NULL); // TODO
-  channel->SetTransponder(GetCurrentlyTunedTransponder()->GetTransponder());
 
   SetIds(channel);
   SetStreams(channel, pmt);
   SetCaDescriptors(channel, pmt);
+  channel->SetTransponder(GetCurrentlyTunedTransponder()->GetTransponder());
 
   // Log a comma-separated list of streams we found in the channel
   stringstream logStreams;

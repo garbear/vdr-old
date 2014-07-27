@@ -79,10 +79,15 @@ EventVector cEit::GetEvents()
     {
       // We need the current time for handling PDC descriptors
       CDateTime now = CDateTime::GetUTCDateTime();
+      /*
       ChannelPtr channel = m_channelManager.GetByChannelID(tsEIT.getOriginalNetworkId(),
                                                            tsEIT.getTransportStreamId(),
                                                            tsEIT.getServiceId());
-      if (channel && now.IsValid())
+      */
+      ChannelPtr channel = ChannelPtr(new cChannel);
+      channel->SetId(tsEIT.getOriginalNetworkId(), tsEIT.getTransportStreamId(), tsEIT.getServiceId());
+
+      if (now.IsValid())
       {
         SI::EIT::Event eitEvent;
         for (SI::Loop::Iterator it; tsEIT.eventLoop.getNext(eitEvent, it); )
@@ -270,44 +275,18 @@ EventVector cEit::GetEvents()
                   string linkName = (const char*)ld->privateData.getData();
 
                   // TODO is there a standard way to determine the character set of this string?
-                  ChannelPtr link = m_channelManager.GetByChannelID(linkID);
+
+                  //ChannelPtr link = m_channelManager.GetByChannelID(linkID); // TODO
+                  ChannelPtr link = channel; // TODO
 
                   // Only link to other channels, not the same one
                   if (link != channel)
                   {
-                    //fprintf(stderr, "Linkage %s %4d %4d %5d %5d %5d %5d  %02X  '%s'\n", hit ? "*" : "", channel->Number(), link ? link->Number() : -1, SiEitEvent.getEventId(), ld->getOriginalNetworkId(), ld->getTransportStreamId(), ld->getServiceId(), ld->getLinkageType(), linkName);//XXX
-                    if (link)
-                    {
-                      if (cSettings::Get().m_iUpdateChannels == 1 || cSettings::Get().m_iUpdateChannels >= 3)
-                      {
-                        link->SetName(linkName, "", "");
-                        link->NotifyObservers(ObservableMessageChannelChanged);
-                      }
-                    }
-                    else if (cSettings::Get().m_iUpdateChannels >= 4)
-                    {
-                      if (channel->ID().Tsid() != ld->getTransportStreamId())
-                        channel = m_channelManager.GetByTransponderID(linkID);
-
-                      link = ChannelPtr(new cChannel);
-                      link->SetName(linkName, "", "");
-                      link->SetId(ld->getOriginalNetworkId(), ld->getTransportStreamId(), ld->getServiceId());
-                      link->SetTransponder(channel->GetTransponder());
-
-                      m_channelManager.AddChannel(link);
-
-                      //patFilter->Trigger();
-                    }
-
-                    if (link)
-                    {
-                      //linkChannels.push_back(new cLinkChannel(link)); // TODO
-                    }
+                    // TODO
                   }
                   else
                   {
                     channel->SetPortalName(linkName);
-                    channel->NotifyObservers(ObservableMessageChannelChanged);
                   }
                 }
               }

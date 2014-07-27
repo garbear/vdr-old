@@ -33,14 +33,6 @@
 
 namespace VDR
 {
-enum eLastModifiedType
-{
-  CHANNELSMOD_NONE = 0, // Assigned values are for compatibility
-  CHANNELSMOD_AUTO = 1,
-  CHANNELSMOD_USER = 2,
-};
-
-//std::string ChannelString(const ChannelPtr &channel, int number);
 
 class cScanList;
 class CChannelFilter;
@@ -50,98 +42,52 @@ class cChannelManager : public Observer, public Observable
   friend class CChannelFilter;
 
 public:
-  cChannelManager();
-  ~cChannelManager() { }
+  cChannelManager(void);
+  ~cChannelManager(void) { }
 
-  static cChannelManager &Get();
+  static cChannelManager &Get(void);
 
+  void AddChannel(const ChannelPtr& channel);
+  void AddChannels(const ChannelVector& channels);
+
+  /*!
+   * Merge discovered channel data into matching channel (per TSID and SID).
+   * Merges channel params:
+   *   - NID, TSID and SID
+   *   - Stream details
+   *   - CA Descriptors
+   */
+  void MergeChannelProps(const ChannelPtr& channel);
+
+  /*!
+   * Merge discovered channel names and transponder modulation mode into
+   * matching channel (per TSID and SID). Merges channel params:
+   *   - Name, short name and provider
+   *   - Transponder modulation mode
+   * TODO: Separate names and modulation
+   */
+  void MergeChannelNamesAndModulation(const ChannelPtr& channel);
+
+  ChannelPtr GetByChannelID(const cChannelID& channelID) const;
+  ChannelPtr GetByChannelUID(uint32_t channelUid) const;
+  ChannelVector GetCurrent(void) const;
+  size_t ChannelCount() const;
+
+  void RemoveChannel(const ChannelPtr& channel);
   void Clear(void);
 
   void Notify(const Observable &obs, const ObservableMessage msg);
-  void AddChannel(ChannelPtr channel);
-  void AddChannels(const ChannelVector& channels);
-  void RemoveChannel(ChannelPtr channel);
+  void NotifyObservers(void);
 
   bool Load(void);
   bool Load(const std::string &file);
   bool Save(const std::string &file = "");
 
-  /*!
-   * \brief Find a channel by its number
-   * \param number The channel number
-   * \param skipGap Positive for channel following gap, negative for channel
-   *        Default (0) will return an empty pointer if the channel is a separator
-   * \return The channel, or empty pointer if the number is missing or a group separator
-   */
-  ChannelPtr GetByNumber(int number, int skipGap = 0);
-
-  /*!
-   * \brief Find a channel by its service ID, source and transponder
-   * \param serviceID The matching service ID
-   * \param source The matching source
-   * \param transponder A compatible transponder (see ISTRANSPONDER())
-   * \return The channel, or empty pointer if the channel isn't found
-   */
-  ChannelPtr GetByServiceID(int serviceID, TRANSPONDER_TYPE source, int transponder) const;
-  static ChannelPtr GetByServiceID(const ChannelVector& channels, int serviceID, TRANSPONDER_TYPE source, int transponder); // TODO: Remove me
-
-  /*!
-   * \brief Find a channel by its channel ID
-   * \param channelID The channel ID tag
-   * \param bTryWithoutRid If the search fails, repeat without comparing the RID
-   * \return The channel, or empty pointer if the channel isn't found
-   */
-  ChannelPtr GetByChannelID(const cChannelID& channelID);
-
-  /*!
-   * \brief Find a channel by its channel ID
-   * \param nid TODO
-   * \param tid TODO
-   * \param sid TODO
-   * \return The channel, or empty pointer if the channel isn't found
-   */
-  ChannelPtr GetByChannelID(uint16_t nid, uint16_t tsid, uint16_t sid);
-
-  ChannelPtr GetByChannelUID(uint32_t channelUID) const;
-
-  /*!
-   * \brief Find a channel by the source, NID and TID of a transponder ID
-   * \param channelID The channel ID tag (TODO: Is this the transponder ID?)
-   * \return The channel, or empty pointer if the channel isn't found
-   */
-  ChannelPtr GetByTransponderID(const cChannelID& channelID);
-
-  /*!
-   * \brief Returns false if another channel has the same cChannelID tag
-   * \param newChannel The channel whose channel ID will be used in the search
-   * \param oldChannel Skip comparing channel IDs with this channel
-   * \return true if no other channels (excluding oldChannel) have the same channel ID
-   */
-  bool HasUniqueChannelID(const ChannelPtr &newChannel, const ChannelPtr &oldChannel = cChannel::EmptyChannel) const;
-
-  /*!
-   * \brief Return the number of the highest channel (I think - TODO)
-   */
-  unsigned int MaxNumber() const { return m_maxNumber; }
-
-  void SetModified(void);
-
-  ChannelVector GetCurrent(void) const;
   void CreateChannelGroups(bool automatic);
 
-  unsigned int ChannelCount() const;
-
 private:
-  typedef std::map<int, ChannelVector> ChannelSidMap;
-  ::PLATFORM::CMutex m_mutex;
-
-  ChannelVector m_channels;
-  ChannelSidMap m_channelSids; // Index channels by SID for fast lookups in GetBy*() methods
-
-  unsigned int  m_maxNumber;
-  unsigned int  m_maxChannelNameLength;
-  unsigned int  m_maxShortChannelNameLength;
-
-  std::string   m_strFilename;
+  ChannelVector    m_channels;
+  std::string      m_strFilename;
+  PLATFORM::CMutex m_mutex;
 };
 }

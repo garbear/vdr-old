@@ -34,7 +34,7 @@ public:
   cPsipVct(cDevice* device);
   virtual ~cPsipVct(void) { }
 
-  ChannelVector GetChannels(void);
+  bool ScanChannels(iFilterCallback* callback);
 };
 
 }

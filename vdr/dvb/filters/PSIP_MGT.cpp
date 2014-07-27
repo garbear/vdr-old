@@ -43,8 +43,10 @@ cPsipMgt::cPsipMgt(cDevice* device)
   OpenResource(PID_MGT, TableIdMGT);
 }
 
-bool cPsipMgt::GetPSIPData(EventVector& events)
+bool cPsipMgt::ScanPSIPData(iFilterCallback* callback)
 {
+  bool bSuccess = false;
+
   uint16_t        pid;  // Packet ID
   vector<uint8_t> data; // Section data
 
@@ -101,17 +103,12 @@ bool cPsipMgt::GetPSIPData(EventVector& events)
       // Get the/UTC offset for calculating event start times
       cPsipStt psipStt(GetDevice());
       const unsigned int gpsUtcOffset = psipStt.GetGpsUtcOffset();
-      if (gpsUtcOffset == 0)
-        esyslog("Error: unable to get GPS/UTC offset, assuming 0 seconds");
 
-      cPsipEit psipEit(GetDevice(), eitPids, gpsUtcOffset);
-      events = psipEit.GetEvents();
-
-      return true;
+      cPsipEit psipEit(GetDevice(), eitPids);
+      bSuccess = psipEit.ScanEvents(callback, gpsUtcOffset);
     }
   }
-
-  return false;
+  return bSuccess;
 }
 
 }

@@ -34,17 +34,10 @@ namespace VDR
 class cPsipEit : public cFilter
 {
 public:
-  cPsipEit(cDevice* device, const std::vector<uint16_t>& pids, unsigned int gpsUtcOffset);
+  cPsipEit(cDevice* device, const std::vector<uint16_t>& pids);
   virtual ~cPsipEit(void) { }
 
-  EventVector GetEvents();
-
-private:
-  /*!
-   * Number of leap-seconds between GPS and UTC time systems. This is 15 seconds
-   * as of 1 January 2009.
-   */
-  const unsigned int m_gpsUtcOffset;
+  bool ScanEvents(iFilterCallback* callback, unsigned int gpsUtcOffset);
 };
 
 }

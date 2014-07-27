@@ -23,16 +23,22 @@
 #include "Scanner.h"
 #include "channels/ChannelManager.h"
 #include "devices/Device.h"
+#include "devices/linux/DVBDevice.h" // TODO: Remove me
 #include "devices/subsystems/DeviceChannelSubsystem.h"
+#include "devices/subsystems/DeviceScanSubsystem.h"
 #include "dvb/filters/PAT.h"
 #include "dvb/filters/PSIP_VCT.h"
 #include "transponders/TransponderFactory.h"
+#include "utils/log/Log.h"
 
 #include <assert.h>
+#include <memory> // TODO: Remove me
 #include <vector>
 
 using namespace PLATFORM;
 using namespace std;
+
+#define TRANSPONDER_TIMEOUT  1000
 
 namespace VDR
 {
@@ -50,7 +56,7 @@ bool cScanner::Start(const cScanConfig& setup)
   if (!IsRunning())
   {
     m_setup = setup;
-    CreateThread();
+    CreateThread(true);
     return true;
   }
 
@@ -59,9 +65,16 @@ bool cScanner::Start(const cScanConfig& setup)
 
 void* cScanner::Process()
 {
+  m_percentage = 0.0f;
+
   cTransponderFactory* transponders = NULL;
 
-  fe_caps_t caps; // TODO
+  // TODO: Need to get caps from cDevice class
+  const DevicePtr& device = m_setup.device;
+  shared_ptr<cDvbDevice> dvbDevice = dynamic_pointer_cast<cDvbDevice>(m_setup.device);
+  if (!dvbDevice)
+    return NULL;
+  const fe_caps_t caps = dvbDevice->m_dvbTuner.GetCapabilities();
 
   switch (m_setup.dvbType)
   {
@@ -85,38 +98,15 @@ void* cScanner::Process()
   while (transponders->HasNext())
   {
     cTransponder transponder = transponders->GetNext();
-
     m_frequencyHz = transponder.FrequencyHz();
 
-    const DevicePtr& device = m_setup.device;
     if (device->Channel()->SwitchTransponder(transponder))
     {
-      cPat pat(device.get());
-      ChannelVector patChannels = pat.GetChannels();
-
-      // TODO: Use SDT for non-ATSC tuners
-      cPsipVct vct(device.get());
-      ChannelVector vctChannels = vct.GetChannels();
-
-      for (ChannelVector::const_iterator it = patChannels.begin(); it != patChannels.end(); ++it)
-      {
-        const ChannelPtr& patChannel = *it;
-        for (ChannelVector::const_iterator it2 = vctChannels.begin(); it2 != vctChannels.end(); ++it2)
-        {
-          const ChannelPtr& vctChannel = *it2;
-          if (patChannel->ID().Tsid() == vctChannel->ID().Tsid() &&
-              patChannel->ID().Sid()  == vctChannel->ID().Sid())
-          {
-            patChannel->SetName(vctChannel->Name(), vctChannel->ShortName(), vctChannel->Provider());
-            // TODO: Copy transponder data
-            // TODO: Copy major/minor channel number
-          }
-        }
-      }
-
-      if (!patChannels.empty())
-        cChannelManager::Get().AddChannels(patChannels);
+      bool bSuccess = device->Scan()->WaitForChannelScan(TRANSPONDER_TIMEOUT);
+      dsyslog("%s %d MHz", bSuccess ? "Successfully scanned" : "Failed to scan", transponder.FrequencyMHz());
     }
+
+    m_percentage += 1.0f / transponders->TransponderCount();
   }
 
   m_percentage = 100.0f;

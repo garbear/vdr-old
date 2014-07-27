@@ -726,10 +726,6 @@ bool cVNSIClient::processChannelStream_Open() /* OPCODE 20 */
   // try to find channel by uid first
   ChannelPtr channel = cChannelManager::Get().GetByChannelUID(uid);
 
-  // try channelnumber
-  if (!channel)
-    channel = cChannelManager::Get().GetByNumber(uid);
-
   if (!channel) {
     esyslog("Can't find channel %08x", uid);
     m_resp->add_U32(VNSI_RET_DATAINVALID);
@@ -945,7 +941,7 @@ bool cVNSIClient::processRecStream_GetLength() /* OPCODE 46 */
 
 bool cVNSIClient::processCHANNELS_ChannelsCount() /* OPCODE 61 */
 {
-  int count = cChannelManager::Get().MaxNumber();
+  const size_t count = cChannelManager::Get().ChannelCount();
 
   m_resp->add_U32(count);
 
@@ -972,12 +968,12 @@ bool cVNSIClient::processCHANNELS_GetChannels() /* OPCODE 63 */
   ChannelVector channels = cChannelManager::Get().GetCurrent();
   for (ChannelVector::const_iterator it = channels.begin(); it != channels.end(); ++it)
   {
-    ChannelPtr channel = *it;
+    const ChannelPtr& channel = *it;
     if (radio != CChannelFilter::IsRadio(channel))
       continue;
 
     // skip invalid channels
-    if (channel->ID().Sid() == 0)
+    if (!channel->ID().IsValid())
       continue;
 
     // check filter

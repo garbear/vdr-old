@@ -44,9 +44,9 @@ cPat::cPat(cDevice* device)
   OpenResource(PID_PAT, TableIdPAT);
 }
 
-ChannelVector cPat::GetChannels(void)
+bool cPat::ScanChannels(iFilterCallback* callback)
 {
-  ChannelVector channels;
+  bool bSuccess = true;
 
   uint16_t        pid;  // Packet ID
   vector<uint8_t> data; // Section data
@@ -63,16 +63,13 @@ ChannelVector cPat::GetChannels(void)
           continue;
 
         dsyslog("PAT: Scanning for PMT table with TSID=%d, SID=%d", tsPAT.getTransportStreamId(), assoc.getServiceId());
-        cPmt pmt(GetDevice(), tsPAT.getTransportStreamId(), assoc.getServiceId(), assoc.getPid());
 
-        ChannelPtr channel = pmt.GetChannel();
-        if (channel)
-          channels.push_back(channel);
+        cPmt pmt(GetDevice(), tsPAT.getTransportStreamId(), assoc.getServiceId(), assoc.getPid());
+        bSuccess &= pmt.ScanChannel(callback);
       }
     }
   }
-
-  return channels;
+  return bSuccess;
 }
 
 }

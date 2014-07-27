@@ -88,6 +88,9 @@ bool cDeviceChannelSubsystem::SwitchChannel(const ChannelPtr& channel)
     if (CommonInterface()->m_camSlot)
       CommonInterface()->m_camSlot->StartDecrypting();
 
+    SetChanged();
+    NotifyObservers(ObservableMessageChannelLock);
+
     return true;
   }
 
@@ -99,6 +102,11 @@ bool cDeviceChannelSubsystem::SwitchTransponder(const cTransponder& transponder)
   ChannelPtr channel = ChannelPtr(new cChannel);
   channel->SetTransponder(transponder);
   return SwitchChannel(channel);
+}
+
+void cDeviceChannelSubsystem::ClearChannel(void)
+{
+  ClearChannelDevice();
 }
 
 unsigned int cDeviceChannelSubsystem::Occupied() const

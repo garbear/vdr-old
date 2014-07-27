@@ -185,4 +185,9 @@ bool cDvbChannelSubsystem::SetChannelDevice(const ChannelPtr& channel)
   return Device<cDvbDevice>()->m_dvbTuner.SwitchChannel(channel);
 }
 
+void cDvbChannelSubsystem::ClearChannelDevice(void)
+{
+  return Device<cDvbDevice>()->m_dvbTuner.ClearChannel();
+}
+
 }

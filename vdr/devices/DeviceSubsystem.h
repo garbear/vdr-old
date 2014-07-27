@@ -33,6 +33,7 @@ class cDeviceImageGrabSubsystem;
 class cDevicePIDSubsystem;
 class cDevicePlayerSubsystem;
 class cDeviceReceiverSubsystem;
+class cDeviceScanSubsystem;
 class cDeviceSectionFilterSubsystem;
 class cDeviceSPUSubsystem;
 class cDeviceTrackSubsystem;
@@ -89,6 +90,7 @@ protected:
   cDevicePIDSubsystem             *PID() const;
   cDevicePlayerSubsystem          *Player() const;
   cDeviceReceiverSubsystem        *Receiver() const;
+  cDeviceScanSubsystem            *Scan() const;
   cDeviceSectionFilterSubsystem   *SectionFilter() const;
   cDeviceSPUSubsystem             *SPU() const;
   cDeviceTrackSubsystem           *Track() const;

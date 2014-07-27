@@ -145,6 +145,7 @@ set(VDR_SRCS
 	vdr/devices/subsystems/DevicePIDSubsystem.cpp
 	vdr/devices/subsystems/DevicePlayerSubsystem.cpp
 	vdr/devices/subsystems/DeviceReceiverSubsystem.cpp
+	vdr/devices/subsystems/DeviceScanSubsystem.cpp
 	vdr/devices/subsystems/DeviceSectionFilterSubsystem.cpp
 	vdr/devices/subsystems/DeviceSPUSubsystem.cpp
 	vdr/devices/subsystems/DeviceTrackSubsystem.cpp
@@ -269,8 +270,6 @@ set(VDR_TEST_SRCS
 	vdr/channels/test/TestChannelManager.cpp
 	vdr/devices/linux/test/TestDVBDevice.cpp
 	vdr/devices/linux/test/TestDVBTuner.cpp
-	vdr/dvb/filters/test/TestPSIP_MGT.cpp
-	vdr/dvb/filters/test/TestPSIP_VCT.cpp
 	vdr/dvb/test/TestEITScan.cpp
 	vdr/filesystem/test/TestSpecialProtocol.cpp
 	vdr/filesystem/native/test/TestHDDirectory.cpp

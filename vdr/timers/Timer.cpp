@@ -52,7 +52,7 @@ cTimer::cTimer(void)
   m_bPending      = false;
   m_bInVpsMargin  = false;
   m_iTimerFlags   = tfNone;
-  m_channel       = cChannelManager::Get().GetByNumber(1 /* XXX */);
+  //m_channel       = cChannelManager::Get().GetByNumber(1 /* XXX */);
   m_index         = 0;
   m_iPriority     = cSettings::Get().m_iDefaultPriority;
   m_iLifetimeDays = cSettings::Get().m_iDefaultLifetime;

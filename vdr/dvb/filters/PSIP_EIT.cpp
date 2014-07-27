@@ -46,24 +46,21 @@ using namespace std;
 namespace VDR
 {
 
-cPsipEit::cPsipEit(cDevice* device, const vector<uint16_t>& pids, unsigned int gpsUtcOffset)
- : cFilter(device),
-   m_gpsUtcOffset(gpsUtcOffset)
+cPsipEit::cPsipEit(cDevice* device, const vector<uint16_t>& pids)
+ : cFilter(device)
 {
   for (vector<uint16_t>::const_iterator itPid = pids.begin(); itPid != pids.end(); ++itPid)
     OpenResource(*itPid, TableIdEIT);
 }
 
-EventVector cPsipEit::GetEvents()
+bool cPsipEit::ScanEvents(iFilterCallback* callback, unsigned int gpsUtcOffset)
 {
-  EventVector events;
-
   uint16_t        pid;  // Packet ID
   vector<uint8_t> data; // Section data
   while (!GetResources().empty() && GetSection(pid, data))
   {
     // For logging purposes
-    const size_t numEvents = events.size();
+    unsigned int numEvents = 0;
 
     SI::PSIP_EIT psipEit(data.data(), false);
     if (psipEit.CheckCRCAndParse())
@@ -82,7 +79,7 @@ EventVector cPsipEit::GetEvents()
 
         CDateTime startTimeGps(psipEitEvent.getStartTime());
 
-        CDateTime startTimePosix = startTimeGps + (gpsEpoch - posixEpoch) - CDateTimeSpan(0, 0, 0, m_gpsUtcOffset);
+        CDateTime startTimePosix = startTimeGps + (gpsEpoch - posixEpoch) - CDateTimeSpan(0, 0, 0, gpsUtcOffset);
         thisEvent->SetStartTime(startTimePosix.GetAsUTCDateTime());
 
         // Set IDs and duration
@@ -101,17 +98,18 @@ EventVector cPsipEit::GetEvents()
 
         thisEvent->SetTitle(StringUtils::Join(titleStrings, "/"));
 
-        events.push_back(thisEvent);
+        callback->OnEventScanned(thisEvent);
+        numEvents++;
       }
     }
 
-    dsyslog("EIT: Found PID %u (%u bytes) with %u events (%u total)",
-        pid, data.size(), events.size() - numEvents, events.size());
+    dsyslog("EIT: Found PID %u (%u bytes) with %u events", pid, data.size(), numEvents);
 
     CloseResource(pid, TableIdEIT);
   }
 
-  return events;
+  // Scan was successful if all resources were encountered and closed
+  return GetResources().empty();
 }
 
 }

@@ -93,11 +93,15 @@ cVNSIServer::cVNSIServer(int listenPort)
 
   listen(m_ServerFD, 10);
 
+  cChannelManager::Get().RegisterObserver(this);
+
   CreateThread();
 }
 
 cVNSIServer::~cVNSIServer()
 {
+  cChannelManager::Get().UnregisterObserver(this);
+
   StopThread(-1);
   for (ClientList::iterator i = m_clients.begin(); i != m_clients.end(); i++)
   {

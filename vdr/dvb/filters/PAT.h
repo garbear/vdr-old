@@ -30,14 +30,7 @@
 namespace VDR
 {
 
-/*
-struct PatAssociation
-{
-  uint16_t tid; // Transport stream ID
-  uint16_t sid; // Service ID
-  uint16_t pid; // Packet ID
-};
-*/
+class iFilterCallback;
 
 class cPat : public cFilter
 {
@@ -46,9 +39,11 @@ public:
   virtual ~cPat(void) { }
 
   /*!
-   * Scan for channels.
+   * Scan for channel parameters like channel IDs, streams and CA descriptors.
+   * Returns true if the scan ran until completion, or false if it was aborted
+   * early (even if channels were found).
    */
-  ChannelVector GetChannels(void);
+  bool ScanChannels(iFilterCallback* callback);
 };
 
 }

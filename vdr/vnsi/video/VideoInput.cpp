@@ -178,9 +178,9 @@ void* cVideoInput::Process()
 {
   cPat pat(m_Device.get());
 
-  ChannelVector channels;
-  while (!IsStopped() && channels.empty())
-    channels = pat.GetChannels();
+  m_channels.clear();
+  while (!IsStopped() && m_channels.empty())
+    pat.ScanChannels(this);
 
   if (IsStopped())
     return NULL;
@@ -188,7 +188,7 @@ void* cVideoInput::Process()
   CLockObject lock(m_mutex);
   if (m_Channel)
   {
-    for (ChannelVector::const_iterator it = channels.begin(); it != channels.end(); ++it)
+    for (ChannelVector::const_iterator it = m_channels.begin(); it != m_channels.end(); ++it)
     {
       if ((*it)->ID().Sid() == m_Channel->ID().Sid())
       {

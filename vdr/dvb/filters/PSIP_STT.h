@@ -34,8 +34,10 @@ public:
   virtual ~cPsipStt() { }
 
   /*!
-   * Get the current offset in seconds between GPS and UTC time standards. To
-   * convert GPS time to UTC, subtract the offset from GPS time. According to
+   * Get the current number of leap-seconds between GPS and UTC time standards.
+   * This is 15 seconds as of 1 January 2009.
+   *
+   * To convert GPS time to UTC, subtract the offset from GPS time. According to
    * A/65:2009, whenever the International Bureau of Weights and Measures
    * decides that the current offset is too far in error, an additional leap
    * second may be added (or subtracted). If an error or timeout occurred, this
