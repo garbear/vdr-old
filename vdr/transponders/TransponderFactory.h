@@ -21,9 +21,9 @@
 #pragma once
 
 #include "Transponder.h"
+#include "CountryUtils.h"
+#include "SatelliteUtils.h"
 #include "TransponderTypes.h"
-#include "scan/CountryUtils.h"
-#include "scan/SatelliteUtils.h"
 
 #include <vector>
 

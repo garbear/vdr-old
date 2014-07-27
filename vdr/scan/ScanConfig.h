@@ -21,10 +21,10 @@
  */
 #pragma once
 
-#include "CountryUtils.h"
-#include "SatelliteUtils.h"
 #include "channels/ChannelTypes.h"
 #include "devices/DeviceTypes.h"
+#include "transponders/CountryUtils.h"
+#include "transponders/SatelliteUtils.h"
 #include "transponders/TransponderTypes.h"
 #include "transponders/TransponderFactory.h" // TODO
 
