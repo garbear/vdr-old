@@ -26,7 +26,6 @@
 #include "devices/linux/DVBDevice.h"
 #include "devices/linux/test/DVBDeviceNames.h"
 #include "devices/subsystems/DeviceChannelSubsystem.h"
-#include "scan/ScanTask.h"
 #include "scan/ScanConfig.h"
 
 #include <gtest/gtest.h>

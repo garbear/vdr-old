@@ -22,18 +22,12 @@
 #pragma once
 
 #include "ScanConfig.h"
-
-#include <linux/dvb/frontend.h>
-#include <platform/threads/threads.h>
+#include "lib/platform/threads/threads.h"
 
 namespace VDR
 {
 
-//class cDevice;
-class cScanLimits;
-class cSynchronousAbort;
-
-class cScanner : public PLATFORM::CThread, public iScanCallback
+class cScanner : public PLATFORM::CThread
 {
 public:
   cScanner(void);
@@ -44,7 +38,7 @@ public:
    * previous scan is still running.
    */
   bool Start(const cScanConfig& setup);
-  void Stop(bool bWait = false);
+  void Stop(bool bWait = false) { }
 
   float GetPercentage() const { return m_percentage; }
   virtual void ScanPercentage(float percentage) { m_percentage = percentage; }
@@ -56,13 +50,9 @@ protected:
   virtual void* Process(void);
 
 private:
-  static bool GetFrontendType(TRANSPONDER_TYPE dvbType, fe_type& frontendType);
-
   cScanConfig        m_setup;
-  PLATFORM::CMutex   m_mutex;
-  cSynchronousAbort* m_abortableJob;
-  float              m_percentage;
   unsigned int       m_frequencyHz;
+  float              m_percentage;
 };
 
 }

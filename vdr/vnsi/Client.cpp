@@ -1858,7 +1858,7 @@ bool cVNSIClient::processSCAN_GetSatellites() /* OPCODE 142 */
 {
   m_resp->add_U32(VNSI_RET_OK);
 
-  for (unsigned int i = 0; i < SatelliteUtils::SatelliteCount(); i++)
+  for (unsigned int i = 0; SatelliteUtils::HasSatellite((SATELLITE::eSatellite)i); i++)
   {
     m_resp->add_U32(SatelliteUtils::GetSatellite((SATELLITE::eSatellite)i).id);
     m_resp->add_String(SatelliteUtils::GetSatellite((SATELLITE::eSatellite)i).short_name);
@@ -1876,10 +1876,9 @@ bool cVNSIClient::processSCAN_Start() /* OPCODE 143 */
 
   // For now, force values to ATSC
   config.dvbType         = TRANSPONDER_ATSC;
-  config.atscModulation  = VSB_8;
+  config.atscModulation  = ATSC_MODULATION_VSB_8;
   config.countryIndex    = COUNTRY::US;
   config.device          = cDeviceManager::Get().GetDevice(0); // TODO: Support multiple devices
-  //config.callback        = this;
 
   if (m_scanner.Start(config))
     m_resp->add_U32(VNSI_RET_OK);

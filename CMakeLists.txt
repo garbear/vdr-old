@@ -196,12 +196,9 @@ set(VDR_SRCS
 	vdr/scan/CNICodes.cpp
 	vdr/scan/CountryUtils.cpp
 	vdr/scan/dvb_wrapper.cpp
-	vdr/scan/FrontendCapabilities.cpp
 	vdr/scan/SatelliteUtils.cpp
 	vdr/scan/ScanConfig.cpp
-	vdr/scan/ScanLimits.cpp
 	vdr/scan/Scanner.cpp
-	vdr/scan/ScanTask.cpp
 	vdr/scan/SWReceiver.cpp
 	vdr/settings/AllowedHosts.cpp
 	vdr/settings/Settings.cpp
@@ -210,6 +207,7 @@ set(VDR_SRCS
 	vdr/timers/TimerTime.cpp
 	vdr/transponders/Stringifier.cpp
 	vdr/transponders/Transponder.cpp
+	vdr/transponders/TransponderFactory.cpp
 	vdr/transponders/TransponderParams.cpp
 	vdr/utils/CalendarUtils.cpp
 	vdr/utils/CharsetConverter.cpp
@@ -272,19 +270,14 @@ set(VDR_TEST_SRCS
 	vdr/channels/test/TestChannelManager.cpp
 	vdr/devices/linux/test/TestDVBDevice.cpp
 	vdr/devices/linux/test/TestDVBTuner.cpp
-	vdr/dvb/filters/test/TestPAT.cpp
 	vdr/dvb/filters/test/TestPSIP_MGT.cpp
-	vdr/dvb/filters/test/TestPSIP_STT.cpp
 	vdr/dvb/filters/test/TestPSIP_VCT.cpp
 	vdr/dvb/test/TestEITScan.cpp
 	vdr/filesystem/test/TestSpecialProtocol.cpp
 	vdr/filesystem/native/test/TestHDDirectory.cpp
 	vdr/filesystem/native/test/TestHDFile.cpp
 	vdr/scan/test/TestCNICodes.cpp
-	vdr/scan/test/TestCountryUtils.cpp
-	vdr/scan/test/TestScanConfig.cpp
 	vdr/scan/test/TestScanner.cpp
-	vdr/scan/test/TestScanTask.cpp
 	vdr/test/gtest/TestBasicEnvironment.cpp
 	vdr/test/gtest/TestUtils.cpp
 	vdr/test/gtest/vdr-test.cpp

@@ -116,6 +116,7 @@ public:
    *        (perhaps due to a timeout).
    */
   bool SwitchChannel(const ChannelPtr& channel);
+  bool SwitchTransponder(const cTransponder& transponder);
 
   /*!
    * \brief Returns the number of seconds this device is still occupied for

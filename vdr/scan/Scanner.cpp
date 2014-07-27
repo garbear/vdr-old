@@ -21,45 +21,26 @@
  */
 
 #include "Scanner.h"
-#include "FrontendCapabilities.h"
-#include "SatelliteUtils.h"
-#include "ScanLimits.h"
-#include "ScanTask.h"
 #include "channels/ChannelManager.h"
-#include "devices/linux/DVBDevice.h"
-#include "utils/log/Log.h"
-#include "utils/SynchronousAbort.h"
-#include "utils/Tools.h"
+#include "devices/Device.h"
+#include "devices/subsystems/DeviceChannelSubsystem.h"
+#include "dvb/filters/PAT.h"
+#include "dvb/filters/PSIP_VCT.h"
+#include "transponders/TransponderFactory.h"
 
 #include <assert.h>
+#include <vector>
 
 using namespace PLATFORM;
-using namespace VDR::SATELLITE;
 using namespace std;
 
 namespace VDR
 {
 
 cScanner::cScanner(void)
- : m_abortableJob(NULL),
-   m_percentage(0.0f),
-   m_frequencyHz(0)
+ : m_frequencyHz(0),
+   m_percentage(0.0f)
 {
-}
-
-bool cScanner::GetFrontendType(TRANSPONDER_TYPE dvbType, fe_type& frontendType)
-{
-  switch (dvbType)
-  {
-  case TRANSPONDER_TERRESTRIAL:  frontendType = FE_OFDM; break;
-  case TRANSPONDER_CABLE: frontendType = FE_QAM;  break;
-  case TRANSPONDER_SATELLITE:   frontendType = FE_QPSK; break;
-  case TRANSPONDER_ATSC:  frontendType = FE_ATSC; break; // frontendType not actually used if scanType == TRANSPONDER_ATSC
-  default:
-    dsyslog("Invalid scan type!!! %d", dvbType);
-    return false;
-  }
-  return true;
 }
 
 bool cScanner::Start(const cScanConfig& setup)
@@ -78,87 +59,70 @@ bool cScanner::Start(const cScanConfig& setup)
 
 void* cScanner::Process()
 {
-  try
+  cTransponderFactory* transponders = NULL;
+
+  fe_caps_t caps; // TODO
+
+  switch (m_setup.dvbType)
   {
-    fe_type_t frontendType;
-    if (!GetFrontendType(m_setup.dvbType, frontendType))
-      throw false;
-
-    eChannelList channelList;
-    switch (m_setup.dvbType)
-    {
-    case TRANSPONDER_TERRESTRIAL:
-    case TRANSPONDER_CABLE:
-    case TRANSPONDER_ATSC:
-      if (!CountryUtils::GetChannelList(m_setup.countryIndex, frontendType, m_setup.atscModulation, channelList))
-        throw false;
-      break;
-    case TRANSPONDER_SATELLITE:
-      break; // Uses satellite ID instead of channel list
-    }
-
-    // Calculate scan space
-    cScanLimits* scanLimits;
-    switch (m_setup.dvbType)
-    {
-    case TRANSPONDER_ATSC:       scanLimits = new cScanLimitsATSC(m_setup.atscModulation);      break;
-    case TRANSPONDER_CABLE:      scanLimits = new cScanLimitsCable(m_setup.dvbcSymbolRate);     break;
-    case TRANSPONDER_SATELLITE:  scanLimits = new cScanLimitsSatellite(m_setup.satelliteIndex); break;
-    case TRANSPONDER_TERRESTRIAL:scanLimits = new cScanLimitsTerrestrial();                     break;
-    }
-
-    // Calculate frontend capabilities
-    //cDvbDevice* device = dynamic_cast<cDvbDevice*>(m_setup.device);
-    cDvbDevice* device = static_cast<cDvbDevice*>(m_setup.device.get());
-    if (!device)
-      throw false;
-
-    cFrontendCapabilities caps(device->m_dvbTuner.GetCapabilities(), m_setup.dvbType == TRANSPONDER_TERRESTRIAL ? m_setup.dvbtInversion : m_setup.dvbcInversion);
-
-    cScanTask* task;
-    switch (m_setup.dvbType)
-    {
-    case TRANSPONDER_ATSC:        task = new cScanTaskATSC(device, caps, channelList);                 break;
-    case TRANSPONDER_CABLE:       task = new cScanTaskCable(device, caps, channelList);                break;
-    case TRANSPONDER_SATELLITE:   task = new cScanTaskSatellite(device, caps, m_setup.satelliteIndex); break;
-    case TRANSPONDER_TERRESTRIAL: task = new cScanTaskTerrestrial(device, caps, channelList);          break;
-    default: throw false;
-    }
-
-    {
-      CLockObject lock(m_mutex);
-      m_abortableJob = scanLimits;
-    }
-
-    scanLimits->ForEach(task, m_setup, this);
-
-    {
-      CLockObject lock(m_mutex);
-      m_abortableJob = NULL;
-    }
-
-    delete task;
-    delete scanLimits;
-
-    cChannelManager::Get().Save();
+  case TRANSPONDER_ATSC:
+    transponders = new cAtscTransponderFactory(caps, m_setup.atscModulation);
+    break;
+  case TRANSPONDER_CABLE:
+    transponders = new cCableTransponderFactory(caps, m_setup.dvbcSymbolRate);
+    break;
+  case TRANSPONDER_SATELLITE:
+    transponders = new cSatelliteTransponderFactory(caps, m_setup.satelliteIndex);
+    break;
+  case TRANSPONDER_TERRESTRIAL:
+    transponders = new cTerrestrialTransponderFactory(caps);
+    break;
   }
-  catch (bool bSucess)
-  {
+
+  if (!transponders)
     return NULL;
+
+  //vector<cTransponder> transponders = m_setup.device->GetTransponders(m_setup);
+
+  while (transponders->HasNext())
+  {
+    cTransponder transponder = transponders->GetNext();
+
+    m_frequencyHz = transponder.FrequencyHz();
+
+    if (m_setup.device->Channel()->SwitchTransponder(transponder))
+    {
+      cPat pat(m_setup.device.get());
+      ChannelVector patChannels = pat.GetChannels();
+
+      // TODO: Use SDT for non-ATSC tuners
+      cPsipVct vct(m_setup.device.get());
+      ChannelVector vctChannels = vct.GetChannels();
+
+      for (ChannelVector::const_iterator it = patChannels.begin(); it != patChannels.end(); ++it)
+      {
+        const ChannelPtr& patChannel = *it;
+        for (ChannelVector::const_iterator it2 = vctChannels.begin(); it2 != vctChannels.end(); ++it2)
+        {
+          const ChannelPtr& vctChannel = *it2;
+          if (patChannel->Tsid() == vctChannel->Tsid() &&
+              patChannel->Sid()  == vctChannel->Sid())
+          {
+            patChannel->SetName(vctChannel->Name(), vctChannel->ShortName(), vctChannel->Provider());
+            // TODO: Copy transponder data
+            // TODO: Copy major/minor channel number
+          }
+        }
+      }
+
+      if (!patChannels.empty())
+        cChannelManager::Get().AddChannels(patChannels);
+    }
   }
+
+  m_percentage = 100.0f;
 
   return NULL;
-}
-
-void cScanner::Stop(bool bWait /* = false */)
-{
-  cSynchronousAbort* abortableJob;
-  {
-    CLockObject lock(m_mutex);
-    abortableJob = m_abortableJob;
-  }
-  if (abortableJob)
-    abortableJob->Abort(bWait);
 }
 
 }

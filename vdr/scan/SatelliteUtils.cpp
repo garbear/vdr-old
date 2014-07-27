@@ -21,6 +21,8 @@
  */
 
 #include "SatelliteUtils.h"
+#include "dvb/DiSEqC.h"
+#include "settings/Settings.h"
 #include "utils/CommonMacros.h" // for ARRAY_SIZE()
 
 #include <assert.h>
@@ -2040,27 +2042,58 @@ struct cSat sat_list[] = {
 { "S97W0", S97W0, "97.0 west Telstar 5"                         , TELSTAR97_0W,         ARRAY_SIZE(TELSTAR97_0W),            WEST_FLAG,  0x970, -1, "S97.0W" }};
 /**********************************************************************************************************************************************/
 
-unsigned int SatelliteUtils::SatelliteCount()
-{
-  return ARRAY_SIZE(sat_list);
-}
-
 const cSat& SatelliteUtils::GetSatellite(eSatellite satelliteId)
 {
+  assert(HasSatellite(satelliteId));
   return sat_list[satelliteId];
 }
 
 const __sat_transponder& SatelliteUtils::GetTransponder(eSatellite satelliteId, unsigned int iChannelNumber)
 {
-  const cSat& sat = GetSatellite(satelliteId);
-  assert(iChannelNumber < sat.item_count);
-  return sat.items[iChannelNumber];
+  assert(HasTransponder(satelliteId, iChannelNumber));
+  return GetSatellite(satelliteId).items[iChannelNumber];
 }
 
-unsigned int SatelliteUtils::GetTransponderCount(eSatellite satelliteId)
+bool SatelliteUtils::IsValidFrequency(unsigned int frequencyHz, fe_polarization_t polarization)
 {
-  const cSat& sat = GetSatellite(satelliteId);
-  return sat.item_count;
+  if (cSettings::Get().m_bDiSEqC)
+  {
+    cDiseqc *diseqc = NULL;
+    for (cDiseqc *p = Diseqcs.First(); p; p = Diseqcs.Next(p))
+    {
+      if (p->Source() == TRANSPONDER_SATELLITE && (p->Slof() * 1000 * 1000) > frequencyHz && p->Polarization() == polarization)
+      {
+        diseqc = p;
+        break;
+      }
+    }
+
+    if (!diseqc)
+      return false;
+    else
+      return frequencyHz -= (diseqc->Lof() * 1000 * 1000);
+  }
+  else
+  {
+    if (frequencyHz < cSettings::Get().m_iLnbSLOF * 1000 * 1000)
+      frequencyHz -= (cSettings::Get().m_iLnbFreqLow * 1000 * 1000);
+    else
+      frequencyHz -= (cSettings::Get().m_iLnbFreqHigh & 1000 * 1000);
+  }
+
+  unsigned int frequencyMHz = frequencyHz / (1000 * 1000);
+
+  return 950 <= frequencyMHz && frequencyMHz <= 2150;
+}
+
+unsigned int SatelliteUtils::SatelliteCount()
+{
+  return ARRAY_SIZE(sat_list);
+}
+
+unsigned int SatelliteUtils::TransponderCount(eSatellite satelliteId)
+{
+  return GetSatellite(satelliteId).item_count;
 }
 
 }

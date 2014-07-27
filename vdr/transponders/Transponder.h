@@ -33,7 +33,7 @@ class cTransponder
 public:
   cTransponder(TRANSPONDER_TYPE type = TRANSPONDER_INVALID);
 
-  void Reset(void);
+  void Reset(TRANSPONDER_TYPE type = TRANSPONDER_INVALID);
 
   bool operator==(const cTransponder& rhs) const;
   bool operator!=(const cTransponder& rhs) const { return !(*this == rhs); }

@@ -26,46 +26,14 @@
 #include "channels/ChannelTypes.h"
 #include "devices/DeviceTypes.h"
 #include "transponders/TransponderTypes.h"
+#include "transponders/TransponderFactory.h" // TODO
 
 #include <linux/dvb/frontend.h>
 
 namespace VDR
 {
 
-class cVNSIClient;
-
-enum eScanFlags
-{
-  SCAN_TV =        ( 1 << 0 ),
-  SCAN_RADIO =     ( 1 << 1 ),
-  SCAN_FTA =       ( 1 << 2 ),
-  SCAN_SCRAMBLED = ( 1 << 3 ),
-  SCAN_HD =        ( 1 << 4 ),
-};
-
-enum eDvbcSymbolRate
-{
-  eSR_AUTO,
-  eSR_ALL,
-  eSR_BEGIN,
-  eSR_6900000 = eSR_BEGIN,
-  eSR_6875000,
-  eSR_6111000,
-  eSR_6250000,
-  eSR_6790000,
-  eSR_6811000,
-  eSR_5900000,
-  eSR_5000000,
-  eSR_3450000,
-  eSR_4000000,
-  eSR_6950000,
-  eSR_7000000,
-  eSR_6952000,
-  eSR_5156000,
-  eSR_5483000,
-  eSR_END = eSR_5483000
-};
-
+/*
 class iScanCallback
 {
 public:
@@ -80,6 +48,7 @@ public:
   virtual void ScanFinished(bool bAborted) { }
   virtual void ScanStatus(int status) { }
 };
+*/
 
 class cScanConfig
 {
@@ -95,12 +64,10 @@ public:
   static eDvbcSymbolRate TranslateSymbolRate(unsigned int sr);
 
   TRANSPONDER_TYPE        dvbType;
-  fe_spectral_inversion_t dvbtInversion;
-  fe_spectral_inversion_t dvbcInversion;
   eDvbcSymbolRate         dvbcSymbolRate;
   COUNTRY::eCountry       countryIndex;
   SATELLITE::eSatellite   satelliteIndex;
-  fe_modulation_t         atscModulation; // Either VSB over-the-air (VSB_8) or QAM Annex B cable TV (QAM_256)
+  ATSC_MODULATION         atscModulation; // Either VSB over-the-air (VSB_8) or QAM Annex B cable TV (QAM_256)
   DevicePtr               device;
 };
 

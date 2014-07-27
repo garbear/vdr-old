@@ -33,7 +33,7 @@ namespace VDR
 struct __sat_transponder
 {
   fe_delivery_system_t modulation_system;
-  uint32_t             intermediate_frequency;
+  uint32_t             intermediate_frequency; // TODO: Units?
   fe_polarization_t    polarization;
   uint32_t             symbol_rate;
   fe_code_rate_t       fec_inner;
@@ -130,15 +130,14 @@ struct cSat
   const char*                 source_id;        // VDR sources.conf
 };
 
-class SatelliteUtils
+class SatelliteUtils // TODO: Some of these functions assert on invalid input
 {
 public:
-  static unsigned int SatelliteCount();
-
   /*!
    * \brief Get information about a satellite
    */
   static const cSat& GetSatellite(SATELLITE::eSatellite satelliteId);
+  static bool HasSatellite(SATELLITE::eSatellite satelliteId) { return satelliteId < SatelliteCount(); }
 
   /*!
    * \brief Get information about a satellite transponder
@@ -146,7 +145,14 @@ public:
    * \param iChannelNumber The transponder index. Will assert if >= GetTransponderCount()
    */
   static const __sat_transponder& GetTransponder(SATELLITE::eSatellite satelliteId, unsigned int iChannelNumber);
-  static unsigned int GetTransponderCount(SATELLITE::eSatellite satelliteId);
+  static bool HasTransponder(SATELLITE::eSatellite satelliteId, unsigned int channel) { return HasSatellite(satelliteId) && channel < GetSatellite(satelliteId).item_count; }
+
+  // TODO: Left over from Wirbelscan
+  static bool IsValidFrequency(unsigned int frequencyHz, fe_polarization_t polarization);
+
+private:
+  static unsigned int SatelliteCount();
+  static unsigned int TransponderCount(SATELLITE::eSatellite satelliteId);
 };
 
 }

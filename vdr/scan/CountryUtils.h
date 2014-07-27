@@ -21,9 +21,12 @@
  */
 #pragma once
 
+#include "transponders/TransponderTypes.h"
+
 #include <sys/time.h>
 #include <linux/dvb/frontend.h>
 #include <string>
+#include <vector>
 
 namespace VDR
 {
@@ -36,6 +39,7 @@ enum eFrontendType
 
 enum eChannelList
 {
+  UNKNOWN   = 0,
   ATSC_VSB  = 1, // ATSC terrestrial, US NTSC center freqs
   ATSC_QAM  = 2, // ATSC cable, US EIA/NCTA Std Cable center freqs + IRC list
   DVBT_AU   = 3, // AUSTRALIA, 7MHz step list
@@ -98,29 +102,41 @@ public:
   static bool GetFrontendType(COUNTRY::eCountry countryId, eFrontendType& frontendType);
 
   /*!
+   * \brief Get valid countries for the specified DVB type (not implemented for satellite)
+   */
+  static std::vector<COUNTRY::eCountry> GetCountries(TRANSPONDER_TYPE dvbType);
+
+  /*!
    * \brief Get a country-specific channel list
    * \param country The country ID
    * \param dvbType If DVB, the frontend type is used to choose between cable and terrestrial
    * \param atscModulation If ATSC, the modulation is used to choose between cable and terrestrial
    * \param channelList The channel list
    */
-  static bool GetChannelList(COUNTRY::eCountry country, fe_type_t dvbType, fe_modulation_t atscModulation, eChannelList& channelList);
+  static eChannelList GetChannelList(fe_modulation_t atscModulation);
+  static eChannelList GetChannelList(TRANSPONDER_TYPE dvbType, COUNTRY::eCountry country);
 
+  static bool HasChannelList(fe_modulation_t atscModulation) { return GetChannelList(atscModulation) != UNKNOWN; }
+  static bool HasChannelList(TRANSPONDER_TYPE dvbType, COUNTRY::eCountry country) { return GetChannelList(dvbType, country) != UNKNOWN; }
 
   /*!
    * \brief Get the base offset for specified channel and channel list
    */
-  static bool GetBaseOffset(unsigned int channel, eChannelList channelList, int& offset);
+  static int GetBaseOffset(eChannelList channelList, unsigned int channel);
+  static bool HasBaseOffset(eChannelList channelList, unsigned int channel) { return GetBaseOffset(channelList, channel) != 0; }
 
 
-  static bool GetFrequencyStep(unsigned int channel, eChannelList channelList, unsigned int& frequencyStep);
+  static unsigned int GetFrequencyStep(eChannelList channelList, unsigned int channel);
+  static bool HasFrequencyStep(eChannelList channelList, unsigned int channel) { return GetFrequencyStep(channelList, channel) != 0; }
 
   /*!
    * \brief Some countries use constant offsets around center frequency
    */
-  static bool GetFrequencyOffset(unsigned int channel, eChannelList channelList, eOffsetType offsetType, int& offset);
+  static bool GetFrequencyOffset(eChannelList channelList, unsigned int channel, eOffsetType offsetType, int& offset);
+  static bool HasFrequencyOffset(eChannelList channelList, unsigned int channel, eOffsetType offsetType) { int offset; return GetFrequencyOffset(channelList, channel, offsetType, offset) != false; }
 
   static bool GetBandwidth(unsigned int channel, eChannelList channelList, fe_bandwidth& bandwidth);
+  static bool HasBandwidth(unsigned int channel, eChannelList channelList) { fe_bandwidth bandwidth; return GetBandwidth(channel, channelList, bandwidth); }
 
   /*!
    * \brief Convert between ISO 3166-1 two-letter constant, index number and full name

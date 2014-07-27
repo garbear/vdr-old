@@ -99,6 +99,13 @@ bool cDeviceChannelSubsystem::SwitchChannel(const ChannelPtr& channel)
   return false;
 }
 
+bool cDeviceChannelSubsystem::SwitchTransponder(const cTransponder& transponder)
+{
+  ChannelPtr channel = ChannelPtr(new cChannel);
+  channel->SetTransponder(transponder);
+  return SwitchChannel(channel);
+}
+
 unsigned int cDeviceChannelSubsystem::Occupied() const
 {
   int seconds = m_occupiedTimeout - time(NULL);

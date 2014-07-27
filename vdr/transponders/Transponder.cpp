@@ -39,9 +39,9 @@ cTransponder::cTransponder(TRANSPONDER_TYPE type /* = TRANSPONDER_INVALID */)
   SetType(type);
 }
 
-void cTransponder::Reset(void)
+void cTransponder::Reset(TRANSPONDER_TYPE type /* = TRANSPONDER_INVALID */)
 {
-  cTransponder defaults;
+  cTransponder defaults(type);
   *this = defaults;
 }
 

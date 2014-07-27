@@ -35,20 +35,6 @@
 namespace VDR
 {
 
-class cTestScanCallback : public iScanCallback
-{
-public:
-  virtual ~cTestScanCallback() { }
-
-  virtual void ScanProgress(float percent) { }
-  virtual void ScanSignalStrength(int strength, bool bLocked) { }
-  virtual void ScanDeviceInfo(const std::string& strInfo) { }
-  virtual void ScanTransponder(const std::string strInfo) { }
-  virtual void ScanFoundChannel(ChannelPtr channel) { }
-  virtual void ScanFinished(bool bAborted) { }
-  virtual void ScanStatus(int status) { }
-};
-
 TEST(Scanner, Scan)
 {
   CFile::Delete(CHANNELS_XML);
@@ -70,14 +56,11 @@ TEST(Scanner, Scan)
 
     if (cDvbDevices::IsATSC(device->DeviceName()))
     {
-      cTestScanCallback scanCallback;
-
       cScanConfig config;
       config.dvbType = TRANSPONDER_ATSC;
-      config.atscModulation = VSB_8;
+      config.atscModulation = ATSC_MODULATION_VSB_8;
       config.countryIndex = COUNTRY::US;
       config.device = *it;
-      //config.callback = &scanCallback;
 
       cScanner scanner;
 

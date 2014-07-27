@@ -359,8 +359,65 @@ bool CountryUtils::GetFrontendType(eCountry countryId, eFrontendType& frontendTy
   return true;
 }
 
-bool CountryUtils::GetChannelList(eCountry country, fe_type_t dvbType, fe_modulation_t atscModulation, eChannelList& channelList)
+vector<eCountry> CountryUtils::GetCountries(TRANSPONDER_TYPE dvbType)
 {
+  vector<eCountry> countries;
+
+  switch (dvbType)
+  {
+  case TRANSPONDER_ATSC:
+    countries.push_back(US); // UNITED STATES
+    countries.push_back(CA); // CANADA
+    countries.push_back(TW); // TAIWAN, DVB-T w. ATSC freq list
+    break;
+  case TRANSPONDER_CABLE:
+  case TRANSPONDER_TERRESTRIAL:
+    countries.push_back(AT); // AUSTRIA
+    countries.push_back(BE); // BELGIUM
+    countries.push_back(CH); // SWITZERLAND
+    countries.push_back(DE); // GERMANY
+    countries.push_back(DK); // DENMARK
+    countries.push_back(ES); // SPAIN
+    countries.push_back(GR); // GREECE
+    countries.push_back(HR); // CROATIA
+    countries.push_back(HK); // HONG KONG
+    countries.push_back(IS); // ICELAND
+    countries.push_back(IT); // ITALY
+    countries.push_back(LU); // LUXEMBOURG
+    countries.push_back(LV); // LATVIA
+    countries.push_back(NL); // NETHERLANDS
+    countries.push_back(NO); // NORWAY
+    countries.push_back(NZ); // NEW ZEALAND
+    countries.push_back(PL); // POLAND
+    countries.push_back(SE); // SWEDEN
+    countries.push_back(SK); // SLOVAKIA
+    countries.push_back(CZ); // CZECH REPUBLIC
+    countries.push_back(FI); // FINLAND
+    countries.push_back(FR); // FRANCE
+    countries.push_back(GB); // UNITED KINGDOM
+    countries.push_back(AU); // AUSTRALIA
+    break;
+  case TRANSPONDER_SATELLITE:
+    break;
+  }
+
+  return countries;
+}
+
+eChannelList CountryUtils::GetChannelList(fe_modulation_t atscModulation)
+{
+  switch (atscModulation)
+  {
+    case VSB_8:   return ATSC_VSB;
+    case QAM_256: return ATSC_QAM;
+    default:      return UNKNOWN;
+  }
+}
+
+eChannelList CountryUtils::GetChannelList(TRANSPONDER_TYPE dvbType, eCountry country)
+{
+  assert(dvbType == TRANSPONDER_CABLE || dvbType == TRANSPONDER_TERRESTRIAL);
+
   switch (country)
   {
     //**********DVB freq lists*******************************************//
@@ -383,119 +440,51 @@ bool CountryUtils::GetChannelList(eCountry country, fe_type_t dvbType, fe_modula
     case    PL:     //      POLAND
     case    SE:     //      SWEDEN
     case    SK:     //      SLOVAKIA
-      switch (dvbType)
-      {
-        case FE_QAM:
-          channelList = DVBC_QAM;
-          break;
-        default:
-          channelList = DVBT_DE;
-          break;
-      }
-      break;
+      return dvbType == TRANSPONDER_CABLE ? DVBC_QAM : DVBT_DE;
     case    CZ:     //      CZECH REPUBLIC
     case    FI:     //      FINLAND
-      switch (dvbType)
-      {
-        case FE_QAM:
-          channelList = DVBC_FI;
-          break;
-        default:
-          channelList = DVBT_DE;
-          break;
-      }
-      break;
+      return dvbType == TRANSPONDER_CABLE ? DVBC_FI : DVBT_DE;
     case    FR:     //      FRANCE
-      switch (dvbType)
-      {
-        case FE_QAM:
-          channelList = DVBC_FR;
-          break;
-        default:
-          channelList = DVBT_FR;
-          break;
-      }
-      break;
+      return dvbType == TRANSPONDER_CABLE ? DVBC_FR : DVBT_FR;
     case    GB:     //      UNITED KINGDOM
-      switch (dvbType)
-      {
-      case FE_QAM:
-        channelList = DVBC_QAM;
-        break;
-      default:
-        channelList = DVBT_GB;
-        break;
-      }
-      break;
+      return dvbType == TRANSPONDER_CABLE ? DVBC_QAM : DVBT_GB;
     case    AU:     //      AUSTRALIA
-      switch (dvbType)
-      {
-      case FE_QAM:
-        break;
-      default:
-        channelList = DVBT_AU;
-        break;
-      }
-      break;
-
-    //**********ATSC freq lists******************************************//
-    case    US:     //      UNITED STATES
-    case    CA:     //      CANADA
-    case    TW:     //      TAIWAN, DVB-T w. ATSC freq list
-      switch (atscModulation)
-      {
-        case VSB_8:
-          channelList = ATSC_VSB;
-          break;
-        case QAM_256:
-          channelList = ATSC_QAM;
-          break;
-        default:
-          return false;
-      }
-      break;
-
-    //*******************************************************************//
+      return dvbType == TRANSPONDER_CABLE ? UNKNOWN : DVBT_AU; // Cable Australia not yet defined in Wirbelscan
     default:
-      return false;
+      return UNKNOWN;
   }
-
-  return true;
 }
 
-bool CountryUtils::GetBaseOffset(unsigned int channel, eChannelList channelList, int& offset)
+int CountryUtils::GetBaseOffset(eChannelList channelList, unsigned int channel)
 {
   switch (channelList)
   {
     case ATSC_QAM: // ATSC cable, US EIA/NCTA Std Cable center freqs + IRC list
       switch (channel)
       {
-        case   2 ...   4: offset =    45000000; return true;
-        case   5 ...   6: offset =    49000000; return true;
-        case   7 ...  13: offset =   135000000; return true;
-        case  14 ...  22: offset =    39000000; return true;
-        case  23 ...  94: offset =    81000000; return true;
-        case  95 ...  99: offset =  -477000000; return true;
-        case 100 ... 133: offset =    51000000; return true;
-        default:                                return false;
+        case   2 ...   4: return     45000000;
+        case   5 ...   6: return     49000000;
+        case   7 ...  13: return    135000000;
+        case  14 ...  22: return     39000000;
+        case  23 ...  94: return     81000000;
+        case  95 ...  99: return   -477000000;
+        case 100 ... 133: return     51000000;
       }
       break;
     case ATSC_VSB: // ATSC terrestrial, US NTSC center freqs
       switch (channel)
       {
-        case  2 ...  4:   offset =   45000000; return true;
-        case  5 ...  6:   offset =   49000000; return true;
-        case  7 ... 13:   offset =  135000000; return true;
-        case 14 ... 69:   offset =  389000000; return true;
-        default:                               return false;
+        case  2 ...  4:   return     45000000;
+        case  5 ...  6:   return     49000000;
+        case  7 ... 13:   return    135000000;
+        case 14 ... 69:   return    389000000;
       }
       break;
     case DVBT_AU: // AUSTRALIA, 7MHz step list
       switch (channel)
       {
-        case  5 ... 12:   offset =  142500000; return true;
-        case 21 ... 69:   offset =  333500000; return true;
-        default:                               return false;
+        case  5 ... 12:   return    142500000;
+        case 21 ... 69:   return    333500000;
       }
       break;
     case DVBT_DE: // GERMANY
@@ -503,70 +492,74 @@ bool CountryUtils::GetBaseOffset(unsigned int channel, eChannelList channelList,
     case DVBT_GB: // UNITED KINGDOM, +/- offset
       switch (channel)
       {
-        case  5 ... 12:   offset =  142500000; return true;
-        case 21 ... 69:   offset =  306000000; return true;
-        default:                               return false;
+        case  5 ... 12:   return    142500000;
+        case 21 ... 69:   return    306000000;
       }
       break;
     case DVBC_QAM: // EUROPE
       switch (channel)
       {
-        case  0 ... 1:    offset =   73000000; return true;
-        case  5 ... 12:   offset =   73000000; return true;
-        case 22 ... 90:   offset =  138000000; return true;
-        default:                               return false;
+        case  0 ... 1:    return     73000000;
+        case  5 ... 12:   return     73000000;
+        case 22 ... 90:   return    138000000;
       }
       break;
     case DVBC_FI: // FINLAND, QAM128
       switch (channel)
       {
-        case  1 ... 90:   offset =  138000000; return true;
-        default:                               return false;
+        case  1 ... 90:   return    138000000;
       }
       break;
     case DVBC_FR: // FRANCE, needs user response.
       switch (channel)
       {
-        case  1 ... 39:   offset =  107000000; return true;
-        case 40 ... 89:   offset =  138000000; return true;
-        default:                               return false;
+        case  1 ... 39:   return    107000000;
+        case 40 ... 89:   return    138000000;
       }
       break;
     default:
-      return false;
+      break;
   }
+
+  return 0;
 }
 
-bool CountryUtils::GetFrequencyStep(unsigned int channel, eChannelList channelList, unsigned int& frequencyStep)
+unsigned int CountryUtils::GetFrequencyStep(eChannelList channelList, unsigned int channel)
 {
   switch (channelList)
   {
     case ATSC_QAM:
-    case ATSC_VSB:         frequencyStep = 6000000; return true; // ATSC, 6MHz step
-    case DVBT_AU:          frequencyStep = 7000000; return true; // DVB-T Australia, 7MHz step
+    case ATSC_VSB:
+      return 6000000; // ATSC, 6MHz step
+
+    case DVBT_AU:
+      return 7000000; // DVB-T Australia, 7MHz step
+
     case DVBT_DE:
     case DVBT_FR:
     case DVBT_GB:
       switch (channel) // DVB-T Europe, 7MHz VHF ch5..12, all other 8MHz
       {
-        case  5 ... 12:    frequencyStep = 7000000; return true;
-        case 21 ... 69:    frequencyStep = 8000000; return true;
-        default:           frequencyStep = 8000000; return true; // Should be never reached.
+        case  5 ... 12: return 7000000;
+        case 21 ... 69: return 8000000;
       }
-      break;
+      return 8000000; // Should be never reached
+
     case DVBC_QAM:
     case DVBC_FI:
-    case DVBC_FR:  frequencyStep = 8000000; return true; // DVB-C, 8MHz step
-    default:
-       return false;
+    case DVBC_FR:
+      return 8000000; // DVB-C, 8MHz step
   }
+
+  return 0;
 }
 
-bool CountryUtils::GetFrequencyOffset(unsigned int channel, eChannelList channelList, eOffsetType offsetType, int& offset)
+bool CountryUtils::GetFrequencyOffset(eChannelList channelList, unsigned int channel, eOffsetType offsetType, int& offset)
 {
   switch (channelList)
   {
     case ATSC_QAM:
+    {
       switch (channel)
       {
         case 14 ... 16:
@@ -576,27 +569,27 @@ bool CountryUtils::GetFrequencyOffset(unsigned int channel, eChannelList channel
           {
             case NO_OFFSET:   offset =       0; return true; // Incrementally Related Carriers (IRC)
             case POS_OFFSET:  offset =   12500; return true; // US EIA/NCTA Standard Cable center frequencies
-            default:                            return false;
           }
-        break;
+          break;
         default: // IRC = standard cable center
           switch (offsetType)
           {
             case NO_OFFSET:   offset =       0; return true; // center freq
-            default:                            return false;
           }
           break;
       }
       break;
+    }
+
     case DVBT_FR:
     case DVBT_GB:
+    {
       switch (channel)
       {
         case  5 ... 12: // VHF channels
         switch (offsetType)
         {
           case NO_OFFSET:     offset =       0; return true; // no offset
-          default:                              return false;
         }
         break;
       default: // UHF channels
@@ -605,20 +598,24 @@ bool CountryUtils::GetFrequencyOffset(unsigned int channel, eChannelList channel
           case NO_OFFSET:     offset =       0; return true; // center freq
           case POS_OFFSET:    offset = +167000; return true; // center+offset
           case NEG_OFFSET:    offset = -167000; return true; // center-offset
-          default:                              return false;
         }
         break;
       }
       break;
+    }
+
     case DVBT_AU:
+    {
       switch (offsetType)
       {
         case NO_OFFSET:       offset =       0; return true; // center freq
         case POS_OFFSET:      offset = +125000; return true; // center+offset
-        default:                                return false;
       }
       break;
+    }
+
     case DVBC_FR:
+    {
       switch (channel)
       {
         case 1 ... 39:
@@ -626,7 +623,6 @@ bool CountryUtils::GetFrequencyOffset(unsigned int channel, eChannelList channel
           {
             case NO_OFFSET:   offset =       0; return true; // center freq
             case POS_OFFSET:  offset = +125000; return true; // center+offset
-            default:                            return false;
           }
           break;
         case 40 ... 89:
@@ -634,37 +630,37 @@ bool CountryUtils::GetFrequencyOffset(unsigned int channel, eChannelList channel
           switch (offsetType)
           {
             case NO_OFFSET:   offset =       0; return true;
-            default:                            return false;
           }
           break;
       }
       break;
+    }
 
     default:
+    {
       switch (offsetType)
       {
         case NO_OFFSET:       offset =       0; return true;
-        default:                                return false;
       }
       break;
+    }
   }
+
+  return false;
 }
 
 bool CountryUtils::GetBandwidth(unsigned int channel, eChannelList channelList, fe_bandwidth& bandwidth)
 {
-  unsigned int frequencyStep;
-  if (!GetFrequencyStep(channel, channelList, frequencyStep))
-    return false;
-
+  unsigned int frequencyStep = GetFrequencyStep(channelList, channel);
   switch (frequencyStep)
   {
-    case 8000000:    bandwidth = BANDWIDTH_8_MHZ; return true;
-    case 7000000:    bandwidth = BANDWIDTH_7_MHZ; return true;
-    case 6000000:    bandwidth = BANDWIDTH_6_MHZ; return true;
+    case 8000000: bandwidth = BANDWIDTH_8_MHZ; return true;
+    case 7000000: bandwidth = BANDWIDTH_7_MHZ; return true;
+    case 6000000: bandwidth = BANDWIDTH_6_MHZ; return true;
     // Missing in Linux DVB API
-    case 5000000:    bandwidth = BANDWIDTH_5_MHZ; return true;
-    default:                                      return false;
+    case 5000000: bandwidth = BANDWIDTH_5_MHZ; return true;
   }
+  return false;
 }
 
 bool CountryUtils::GetIdFromShortName(string shortName, eCountry& countryId)
