@@ -23,7 +23,6 @@
 
 #include "NIT.h"
 #include "channels/Channel.h"
-#include "scan/dvb_wrapper.h"
 #include "utils/CommonMacros.h"
 #include "utils/log/Log.h"
 #include "utils/StringUtils.h"

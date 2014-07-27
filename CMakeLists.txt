@@ -194,7 +194,6 @@ set(VDR_SRCS
 	vdr/recordings/RecordingUserCommand.cpp
 	vdr/recordings/Recordings.cpp
 	vdr/scan/CNICodes.cpp
-	vdr/scan/dvb_wrapper.cpp
 	vdr/scan/ScanConfig.cpp
 	vdr/scan/Scanner.cpp
 	vdr/scan/SWReceiver.cpp
@@ -204,6 +203,7 @@ set(VDR_SRCS
 	vdr/timers/Timers.cpp
 	vdr/timers/TimerTime.cpp
 	vdr/transponders/CountryUtils.cpp
+	vdr/transponders/dvb_wrapper.cpp
 	vdr/transponders/SatelliteUtils.cpp
 	vdr/transponders/Stringifier.cpp
 	vdr/transponders/Transponder.cpp

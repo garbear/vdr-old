@@ -40,4 +40,128 @@ enum TRANSPONDER_TYPE
   TRANSPONDER_TERRESTRIAL,
 };
 
+// TODO: Adopt API-independent types
+// Bandwidth
+enum eTerrBandwidths {
+  eBandwidth8Mhz = 0,
+  eBandwidth7Mhz = 1,
+  eBandwidth6Mhz = 2,
+  eBandwidth5Mhz = 3,
+  eBandwidthAuto = 4
+};
+
+// CodeRate
+enum eCableSatCodeRates {
+  eCoderateAuto = 0,
+  eCoderate12   = 1,
+  eCoderate23   = 2,
+  eCoderate34   = 3,
+  eCoderate56   = 4,
+  eCoderate78   = 5,
+  eCoderate89   = 6,
+  eCoderate35   = 7,
+  eCoderate45   = 8,
+  eCoderate910  = 9,
+  eCoderateNone = 15
+};
+
+enum eTerrCodeRates {
+  eTerrCoderate12   = 0,
+  eTerrCoderate23   = 1,
+  eTerrCoderate34   = 2,
+  eTerrCoderate56   = 3,
+  eTerrCoderate78   = 4,
+  eTerrCoderateAuto = 5,
+  eTerrCoderateNone = 6
+};
+
+// DeliverySystem
+enum eSatSystems {
+  eDvbs  = 0,
+  eDvbs2 = 1
+};
+
+// Guard
+enum eTerrGuardIntervals {
+  eGuardinterval32   = 0,
+  eGuardinterval16   = 1,
+  eGuardinterval8    = 2,
+  eGuardinterval4    = 3,
+  eGuardintervalAuto = 4
+};
+
+// Hierarchy
+enum eTerrHierarchies {
+  eHierarchyNone = 0,
+  eHierarchy1    = 1,
+  eHierarchy2    = 2,
+  eHierarchy4    = 3,
+  eHierarchyAuto = 8
+};
+
+// Inversion
+enum eCableTerrInversions {
+  eInversionOff  = 0,
+  eInversionOn   = 1,
+  eInversionAuto = 2
+};
+
+// Modulation
+enum eCableModulations {
+  eModulationQamAuto = 0,
+  eModulationQam16   = 1,
+  eModulationQam32   = 2,
+  eModulationQam64   = 3,
+  eModulationQam128  = 4,
+  eModulationQam256  = 5,
+  eModulationQam512  = 6,
+  eModulationQam1024 = 7
+};
+
+enum eAtscModulations {
+  eVsb8   = 0,
+  eVsb16  = 1,
+  eQam64  = 2,
+  eQam256 = 3,
+  eQamAuto= 4,
+};
+
+enum eSatModulationTypes {
+  eSatModulationAuto  = 0,
+  eSatModulationQpsk  = 1,
+  eSatModulation8psk  = 2,
+  eSatModulationQam16 = 3
+};
+
+enum eTerrConstellations {
+  eModulationQpsk = 0,
+  eModulation16   = 1,
+  eModulation64   = 2,
+  eModulationAuto = 3
+};
+
+// Polarization
+enum eSatPolarizations {
+  eHorizontal = 0,
+  eVertical   = 1,
+  eLeft       = 2,
+  eRight      = 3
+};
+
+// RollOff
+enum eSatRollOffs {
+  eRolloff35   = 0,
+  eRolloff25   = 1,
+  eRolloff20   = 2,
+  eRolloffAuto = 3
+};
+
+// Transmission
+enum eTerrTransmissionModes {
+  eTransmissionmode2K   = 0,
+  eTransmissionmode8K   = 1,
+  eTransmissionmode4K   = 2,
+  eTransmissionmodeAuto = 3
+};
+
 }
