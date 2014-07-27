@@ -34,7 +34,8 @@ class cDevice;
 class cDevicePIDSubsystem;
 
 class cReceiver {
-  friend class cDevice;
+  friend class cDeviceReceiverSubsystem;
+
 private:
   PLATFORM::CMutex   m_mutex;
   cChannelID         m_channelID;

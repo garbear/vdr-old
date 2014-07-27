@@ -28,11 +28,16 @@
 #include "devices/commoninterface/CI.h"
 #include "devices/Device.h"
 #include "devices/Receiver.h"
+#include "devices/Remux.h"
 #include "utils/log/Log.h"
 
 #include <algorithm>
 
+using namespace PLATFORM;
 using namespace std;
+
+#define TS_SCRAMBLING_TIMEOUT     3 // seconds to wait until a TS becomes unscrambled
+#define TS_SCRAMBLING_TIME_OK    10 // seconds before a Channel/CAM combination is marked as known to decrypt
 
 namespace VDR
 {
@@ -40,6 +45,72 @@ namespace VDR
 cDeviceReceiverSubsystem::cDeviceReceiverSubsystem(cDevice *device)
  : cDeviceSubsystem(device)
 {
+}
+
+void *cDeviceReceiverSubsystem::Process()
+{
+  if (!IsStopped() && OpenDvr())
+  {
+    while (!IsStopped())
+    {
+      // Read data from the DVR device:
+      uint8_t *b = NULL;
+      if (!GetTSPacket(b))
+        break;
+
+      if (!b)
+        continue;
+
+      int Pid = TsPid(b);
+
+      // Check whether the TS packets are scrambled:
+      bool DetachReceivers = false;
+      bool DescramblingOk = false;
+      int CamSlotNumber = 0;
+      if (CommonInterface()->m_startScrambleDetection)
+      {
+        cCamSlot *cs = CommonInterface()->CamSlot();
+        CamSlotNumber = cs ? cs->SlotNumber() : 0;
+        if (CamSlotNumber)
+        {
+          bool Scrambled = b[3] & TS_SCRAMBLING_CONTROL;
+          int t = time(NULL) - CommonInterface()->m_startScrambleDetection;
+          if (Scrambled)
+          {
+            if (t > TS_SCRAMBLING_TIMEOUT)
+              DetachReceivers = true;
+          }
+          else if (t > TS_SCRAMBLING_TIME_OK)
+          {
+            DescramblingOk = true;
+            CommonInterface()->m_startScrambleDetection = 0;
+          }
+        }
+      }
+
+      // Distribute the packet to all attached receivers:
+      CLockObject lock(m_mutexReceiver);
+      for (std::list<cReceiver*>::iterator it = m_receivers.begin(); it != m_receivers.end(); ++it)
+      {
+        cReceiver* receiver = *it;
+//        dsyslog("received packet: pid=%d scrambled=%d check receiver %p", Pid, b[3] & TS_SCRAMBLING_CONTROL?1:0, receiver);
+        if (receiver->WantsPid(Pid))
+        {
+          if (DetachReceivers)
+          {
+            ChannelCamRelations.SetChecked(receiver->ChannelID(), CamSlotNumber);
+            Detach(receiver);
+          }
+          else
+            receiver->Receive(b, TS_SIZE);
+          if (DescramblingOk)
+            ChannelCamRelations.SetDecrypt(receiver->ChannelID(), CamSlotNumber);
+        }
+      }
+    }
+    CloseDvr();
+  }
+  return NULL;
 }
 
 bool cDeviceReceiverSubsystem::Receiving(void) const
@@ -67,10 +138,12 @@ bool cDeviceReceiverSubsystem::AttachReceiver(cReceiver *receiver)
   }
 
   receiver->Activate(true);
-  Device()->Lock();
-  receiver->AttachDevice(Device());
-  m_receivers.push_back(receiver);
-  Device()->Unlock();
+
+  {
+    CLockObject lock(m_mutexReceiver);
+    receiver->AttachDevice(Device());
+    m_receivers.push_back(receiver);
+  }
 
   if (CommonInterface()->m_camSlot)
   {
@@ -78,7 +151,7 @@ bool cDeviceReceiverSubsystem::AttachReceiver(cReceiver *receiver)
     CommonInterface()->m_startScrambleDetection = time(NULL);
   }
 
-  Device()->CreateThread();
+  CreateThread();
   dsyslog("receiver %p attached to %p", receiver, this);
   return true;
 }
@@ -98,9 +171,11 @@ void cDeviceReceiverSubsystem::Detach(cReceiver *receiver)
   {
     if (*it == receiver)
     {
-      Device()->Lock();
-      receiver->DetachDevice();
-      Device()->Unlock();
+      {
+        CLockObject lock(m_mutexReceiver);
+        receiver->DetachDevice();
+      }
+
       receiver->Activate(false);
       receiver->RemoveFromPIDSubsystem(PID());
       m_receivers.erase(it);
@@ -110,7 +185,7 @@ void cDeviceReceiverSubsystem::Detach(cReceiver *receiver)
   if (CommonInterface()->m_camSlot)
     CommonInterface()->m_camSlot->StartDecrypting();
   if (m_receivers.empty())
-    Device()->StopThread(0);
+    StopThread(0);
   dsyslog("receiver %p detached from %p", receiver, this);
 }
 

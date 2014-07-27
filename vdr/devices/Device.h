@@ -61,26 +61,9 @@ struct cSubsystems
   cDeviceVideoFormatSubsystem     *VideoFormat;
 };
 
-//class cDvbSubtitleConverter;
-
-/// The cDevice class is the base from which actual devices can be derived.
-
-class cPlayer;
-class cReceiver;
-
-class cDevice : public PLATFORM::CThread
+class cDevice
 {
-  // TODO
-public:
-  void Lock() { m_threadMutex.Lock(); }
-  void Unlock() { m_threadMutex.Unlock(); }
-
 protected:
-  /*!
-   * \brief
-   * \param subsystems
-   * \param index
-   */
   cDevice(const cSubsystems &subsystems);
 
 public:
@@ -147,8 +130,6 @@ public:
   void AssertValid(void) { m_subsystems.AssertValid(); }
 
 protected:
-  virtual void *Process();
-
   /*!
    * \brief Returns true if this device is ready
    *

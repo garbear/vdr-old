@@ -22,6 +22,7 @@
 
 #include "devices/DeviceSubsystem.h"
 #include "utils/Tools.h"
+#include "platform/threads/mutex.h"
 #include "platform/threads/threads.h"
 
 #include <list>
@@ -31,7 +32,7 @@ namespace VDR
 {
 class cReceiver;
 
-class cDeviceReceiverSubsystem : protected cDeviceSubsystem
+class cDeviceReceiverSubsystem : protected cDeviceSubsystem, public PLATFORM::CThread
 {
 public:
   cDeviceReceiverSubsystem(cDevice *device);
@@ -63,7 +64,9 @@ public:
    */
   virtual void DetachAllReceivers();
 
-//protected:
+protected:
+  virtual void* Process(void);
+
   /*!
    * \brief Opens the DVR of this device and prepares it to deliver a Transport
    *        Stream for use in a cReceiver

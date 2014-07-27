@@ -44,9 +44,6 @@ using namespace std;
 namespace VDR
 {
 
-#define TS_SCRAMBLING_TIMEOUT     3 // seconds to wait until a TS becomes unscrambled
-#define TS_SCRAMBLING_TIME_OK    10 // seconds before a Channel/CAM combination is marked as known to decrypt
-
 DevicePtr cDevice::EmptyDevice;
 
 // --- cSubsystems -----------------------------------------------------------
@@ -98,73 +95,6 @@ bool cDevice::Initialise(void)
 {
   m_bInitialised = true;
   return m_bInitialised;
-}
-
-void *cDevice::Process()
-{
-  if (!IsStopped() && Receiver()->OpenDvr())
-  {
-    while (!IsStopped())
-    {
-      // Read data from the DVR device:
-      uint8_t *b = NULL;
-      if (!Receiver()->GetTSPacket(b))
-        break;
-
-      if (!b)
-        continue;
-
-      int Pid = TsPid(b);
-
-      // Check whether the TS packets are scrambled:
-      bool DetachReceivers = false;
-      bool DescramblingOk = false;
-      int CamSlotNumber = 0;
-      if (CommonInterface()->m_startScrambleDetection)
-      {
-        cCamSlot *cs = CommonInterface()->CamSlot();
-        CamSlotNumber = cs ? cs->SlotNumber() : 0;
-        if (CamSlotNumber)
-        {
-          bool Scrambled = b[3] & TS_SCRAMBLING_CONTROL;
-          int t = time(NULL) - CommonInterface()->m_startScrambleDetection;
-          if (Scrambled)
-          {
-            if (t > TS_SCRAMBLING_TIMEOUT)
-              DetachReceivers = true;
-          }
-          else if (t > TS_SCRAMBLING_TIME_OK)
-          {
-            DescramblingOk = true;
-            CommonInterface()->m_startScrambleDetection = 0;
-          }
-        }
-      }
-
-      // Distribute the packet to all attached receivers:
-      Lock();
-      for (std::list<cReceiver*>::iterator it = Receiver()->m_receivers.begin(); it != Receiver()->m_receivers.end(); ++it)
-      {
-        cReceiver* receiver = *it;
-//        dsyslog("received packet: pid=%d scrambled=%d check receiver %p", Pid, b[3] & TS_SCRAMBLING_CONTROL?1:0, receiver);
-        if (receiver->WantsPid(Pid))
-        {
-          if (DetachReceivers)
-          {
-            ChannelCamRelations.SetChecked(receiver->ChannelID(), CamSlotNumber);
-            Receiver()->Detach(receiver);
-          }
-          else
-            receiver->Receive(b, TS_SIZE);
-          if (DescramblingOk)
-            ChannelCamRelations.SetDecrypt(receiver->ChannelID(), CamSlotNumber);
-        }
-      }
-      Unlock();
-    }
-    Receiver()->CloseDvr();
-  }
-  return NULL;
 }
 
 bool cDevice::ScanTransponder(const ChannelPtr& transponder)
