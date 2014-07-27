@@ -528,13 +528,10 @@ bool cDvbTuner::SetFrontend(const ChannelPtr& channel)
     return false;
   }
 
+  dsyslog("Tuner '%s' tuning to frequency %u", GetName().c_str(), transponder.FrequencyHz());
+
   frontends.clear();
-
-  dsyslog("Tuner '%s' tuning to frequency %u", GetName().c_str(), transponder.FrequencyHz());
-
   SetCommand(frontends, DTV_DELIVERY_SYSTEM, transponder.DeliverySystem());
-
-  dsyslog("Tuner '%s' tuning to frequency %u", GetName().c_str(), transponder.FrequencyHz());
 
   if (transponder.IsSatellite())
   {
