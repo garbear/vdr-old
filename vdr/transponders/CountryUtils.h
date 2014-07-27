@@ -135,8 +135,8 @@ public:
   static bool GetFrequencyOffset(eChannelList channelList, unsigned int channel, eOffsetType offsetType, int& offset);
   static bool HasFrequencyOffset(eChannelList channelList, unsigned int channel, eOffsetType offsetType) { int offset; return GetFrequencyOffset(channelList, channel, offsetType, offset) != false; }
 
-  static bool GetBandwidth(unsigned int channel, eChannelList channelList, fe_bandwidth& bandwidth);
-  static bool HasBandwidth(unsigned int channel, eChannelList channelList) { fe_bandwidth bandwidth; return GetBandwidth(channel, channelList, bandwidth); }
+  static bool GetBandwidth(unsigned int channel, eChannelList channelList, fe_bandwidth_t& bandwidth);
+  static bool HasBandwidth(unsigned int channel, eChannelList channelList) { fe_bandwidth_t bandwidth; return GetBandwidth(channel, channelList, bandwidth); }
 
   /*!
    * \brief Convert between ISO 3166-1 two-letter constant, index number and full name

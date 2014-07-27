@@ -649,7 +649,7 @@ bool CountryUtils::GetFrequencyOffset(eChannelList channelList, unsigned int cha
   return false;
 }
 
-bool CountryUtils::GetBandwidth(unsigned int channel, eChannelList channelList, fe_bandwidth& bandwidth)
+bool CountryUtils::GetBandwidth(unsigned int channel, eChannelList channelList, fe_bandwidth_t& bandwidth)
 {
   unsigned int frequencyStep = GetFrequencyStep(channelList, channel);
   switch (frequencyStep)
