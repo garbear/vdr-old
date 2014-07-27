@@ -32,7 +32,6 @@ namespace VDR
 cScanConfig::cScanConfig()
  : dvbType(TRANSPONDER_TERRESTRIAL),
    dvbcSymbolRate(eSR_AUTO),
-   countryIndex(COUNTRY::DE),        // Default to Germany
    satelliteIndex(SATELLITE::S19E2), // Default to Astra 19.2
    atscModulation(ATSC_MODULATION_BOTH)
 {

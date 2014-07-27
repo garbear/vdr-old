@@ -59,7 +59,6 @@ TEST(Scanner, Scan)
       cScanConfig config;
       config.dvbType = TRANSPONDER_ATSC;
       config.atscModulation = ATSC_MODULATION_VSB_8;
-      config.countryIndex = COUNTRY::US;
       config.device = *it;
 
       cScanner scanner;

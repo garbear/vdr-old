@@ -65,7 +65,6 @@ public:
 
   TRANSPONDER_TYPE        dvbType;
   eDvbcSymbolRate         dvbcSymbolRate;
-  COUNTRY::eCountry       countryIndex;
   SATELLITE::eSatellite   satelliteIndex;
   ATSC_MODULATION         atscModulation; // Either VSB over-the-air (VSB_8) or QAM Annex B cable TV (QAM_256)
   DevicePtr               device;

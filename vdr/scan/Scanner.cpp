@@ -82,21 +82,20 @@ void* cScanner::Process()
   if (!transponders)
     return NULL;
 
-  //vector<cTransponder> transponders = m_setup.device->GetTransponders(m_setup);
-
   while (transponders->HasNext())
   {
     cTransponder transponder = transponders->GetNext();
 
     m_frequencyHz = transponder.FrequencyHz();
 
-    if (m_setup.device->Channel()->SwitchTransponder(transponder))
+    const DevicePtr& device = m_setup.device;
+    if (device->Channel()->SwitchTransponder(transponder))
     {
-      cPat pat(m_setup.device.get());
+      cPat pat(device.get());
       ChannelVector patChannels = pat.GetChannels();
 
       // TODO: Use SDT for non-ATSC tuners
-      cPsipVct vct(m_setup.device.get());
+      cPsipVct vct(device.get());
       ChannelVector vctChannels = vct.GetChannels();
 
       for (ChannelVector::const_iterator it = patChannels.begin(); it != patChannels.end(); ++it)
