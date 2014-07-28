@@ -1929,13 +1929,13 @@ void cCamSlot::AddChannel(const cChannel& Channel)
   transponder = Channel.FrequencyMHzWithPolarization();
   if (Channel.GetCaId(0) >= CA_ENCRYPTED_MIN)
   {
-    AddPid(Channel.Sid(), Channel.GetVideoStream().vpid, STREAM_TYPE_VIDEO);
+    AddPid(Channel.ID().Sid(), Channel.GetVideoStream().vpid, STREAM_TYPE_VIDEO);
     for (vector<AudioStream>::const_iterator it = Channel.GetAudioStreams().begin(); it != Channel.GetAudioStreams().end(); ++it)
-      AddPid(Channel.Sid(), it->apid, STREAM_TYPE_AUDIO);
+      AddPid(Channel.ID().Sid(), it->apid, STREAM_TYPE_AUDIO);
     for (vector<DataStream>::const_iterator it = Channel.GetDataStreams().begin(); it != Channel.GetDataStreams().end(); ++it)
-      AddPid(Channel.Sid(), it->dpid, STREAM_TYPE_PRIVATE);
+      AddPid(Channel.ID().Sid(), it->dpid, STREAM_TYPE_PRIVATE);
     for (vector<SubtitleStream>::const_iterator it = Channel.GetSubtitleStreams().begin(); it != Channel.GetSubtitleStreams().end(); ++it)
-      AddPid(Channel.Sid(), it->spid, STREAM_TYPE_PRIVATE);
+      AddPid(Channel.ID().Sid(), it->spid, STREAM_TYPE_PRIVATE);
   }
 }
 
@@ -1950,7 +1950,7 @@ bool cCamSlot::CanDecrypt(const cChannel& channel)
   CLockObject lock(mutex);
   cCiConditionalAccessSupport *cas = (cCiConditionalAccessSupport *)GetSessionByResourceId(RI_CONDITIONAL_ACCESS_SUPPORT);
   if (cas && cas->RepliesToQuery()) {
-     cCiCaPmt CaPmt(CPCI_QUERY, channel.GetTransponder().Type(), channel.FrequencyMHzWithPolarization(), channel.Sid(), GetCaSystemIds());
+     cCiCaPmt CaPmt(CPCI_QUERY, channel.GetTransponder().Type(), channel.FrequencyMHzWithPolarization(), channel.ID().Sid(), GetCaSystemIds());
      CaPmt.SetListManagement(CPLM_ADD); // WORKAROUND: CPLM_ONLY doesn't work with Alphacrypt 3.09 (deletes existing CA_PMTs)
 
      CaPmt.AddPid(channel.GetVideoStream().vpid, STREAM_TYPE_VIDEO);

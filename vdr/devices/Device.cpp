@@ -130,7 +130,7 @@ bool cDevice::ScanTransponder(const ChannelPtr& transponder)
 
     // Finally, success! Add channels to EPG schedule
     for (EventVector::const_iterator it = events.begin(); it != events.end(); ++it)
-      cSchedulesLock::AddEvent(transponder->GetChannelID(), *it);
+      cSchedulesLock::AddEvent(transponder->ID(), *it);
   }
   catch (const char* errorMsg)
   {

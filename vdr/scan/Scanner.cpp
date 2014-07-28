@@ -104,8 +104,8 @@ void* cScanner::Process()
         for (ChannelVector::const_iterator it2 = vctChannels.begin(); it2 != vctChannels.end(); ++it2)
         {
           const ChannelPtr& vctChannel = *it2;
-          if (patChannel->Tsid() == vctChannel->Tsid() &&
-              patChannel->Sid()  == vctChannel->Sid())
+          if (patChannel->ID().Tsid() == vctChannel->ID().Tsid() &&
+              patChannel->ID().Sid()  == vctChannel->ID().Sid())
           {
             patChannel->SetName(vctChannel->Name(), vctChannel->ShortName(), vctChannel->Provider());
             // TODO: Copy transponder data

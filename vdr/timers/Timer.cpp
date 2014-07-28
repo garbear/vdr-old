@@ -142,7 +142,7 @@ bool cTimer::operator==(const cTimer &Timer)
 
   return (StartTime() == Timer.StartTime() &&
           EndTime() == Timer.EndTime() &&
-          m_channel->GetChannelID() == Timer.Channel()->GetChannelID());
+          m_channel->ID() == Timer.Channel()->ID());
 }
 
 int cTimer::Compare(const cTimer &Timer) const
@@ -162,7 +162,7 @@ bool cTimer::SerialiseTimer(TiXmlNode *node) const
   if (timerElement == NULL)
     return false;
 
-  if (!Channel()->GetChannelID().Serialise(node))
+  if (!Channel()->ID().Serialise(node))
     return false;
 
   timerElement->SetAttribute(TIMER_XML_ATTR_ID,       m_index);
@@ -251,7 +251,7 @@ eTimerMatch cTimer::MatchesEvent(const EventPtr& Event, int *Overlap)
   // To make sure a VPS timer can be distinguished from a plain 100% overlap,
   // it gets an additional 100 added, and a VPS event that is actually running
   // gets 200 added to the FULLMATCH.
-  if (HasFlags(tfActive) && m_channel->GetChannelID() == Event->ChannelID())
+  if (HasFlags(tfActive) && m_channel->ID() == Event->ChannelID())
   {
     bool UseVps = HasFlags(tfVps) && Event->HasVps();
     Matches(UseVps ? Event->Vps() : Event->StartTime(), true);
@@ -561,7 +561,7 @@ void cTimer::SwitchTransponder(const CDateTime& Now)
         cSchedules *Schedules = SchedulesLock.Get();
         if (Schedules)
         {
-          SchedulePtr Schedule = Schedules->GetSchedule(channel->GetChannelID());
+          SchedulePtr Schedule = Schedules->GetSchedule(channel->ID());
           InVpsMargin = !Schedule; // we must make sure we have the schedule
           NeedsTransponder = Schedule && !Schedule->PresentSeenWithin(VPSUPTODATETIME);
         }

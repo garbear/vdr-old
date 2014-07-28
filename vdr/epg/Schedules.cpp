@@ -317,9 +317,9 @@ SchedulePtr cSchedules::GetSchedule(ChannelPtr channel, bool bAddIfMissing)
 
   if (!channel->HasSchedule() && bAddIfMissing)
   {
-    schedule = GetSchedule(channel->GetChannelID());
+    schedule = GetSchedule(channel->ID());
     if (!schedule)
-      schedule = AddSchedule(channel->GetChannelID());
+      schedule = AddSchedule(channel->ID());
     channel->SetSchedule(schedule);
   }
 

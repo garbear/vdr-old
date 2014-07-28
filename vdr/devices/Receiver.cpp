@@ -116,10 +116,10 @@ void cReceiver::SetPids(const cChannel& Channel)
 
   CLockObject lock(m_mutex);
 
-  if (m_channelID != Channel.GetChannelID())
+  if (m_channelID != Channel.ID())
   {
     dsyslog("set PIDs for channel '%s'", Channel.Name().c_str());
-    m_channelID = Channel.GetChannelID();
+    m_channelID = Channel.ID();
     m_pids.clear();
     AddPids(newPids);
   }

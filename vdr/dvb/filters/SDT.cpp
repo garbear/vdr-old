@@ -51,7 +51,7 @@ ChannelPtr SdtGetByService(int source, int tid, int sid)
   for (ChannelVector::iterator channelIt = m_newChannels.begin(); channelIt != m_newChannels.end(); ++channelIt)
   {
     ChannelPtr& channel = *channelIt;
-    if (channel->Source() == source && channel->Tid() == tid && channel->Sid() == sid)
+    if (channel->Source() == source && channel->ID().Tsid() == tid && channel->ID().Sid() == sid)
       return channel;
   }
   return cChannel::EmptyChannel;

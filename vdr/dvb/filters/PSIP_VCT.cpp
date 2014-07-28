@@ -99,7 +99,7 @@ ChannelVector cPsipVct::GetChannels(void)
         dsyslog("VCT: Found %s: %s (%d.%d, TSID=%u, SID=%u)",
             channelInfo.isHidden() ? "hidden channel" : "channel", channel->ShortName().c_str(),
             channelInfo.getMajorNumber(), channelInfo.getMinorNumber(),
-            channel->Tsid(), channel->Sid());
+            channel->ID().Tsid(), channel->ID().Sid());
 
         if (channelInfo.isHidden())
           continue;

@@ -176,7 +176,7 @@ ChannelPtr cChannel::Clone(void) const
 
 void cChannel::SetId(uint16_t nid, uint16_t tsid, uint16_t sid)
 {
-  if (nid != Nid() || tsid != Tsid() || sid != Sid())
+  if (nid != m_channelId.Nid() || tsid != m_channelId.Tsid() || sid != m_channelId.Sid())
   {
     m_channelId.SetID(nid, tsid, sid);
 

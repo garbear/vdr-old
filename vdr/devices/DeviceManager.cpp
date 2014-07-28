@@ -114,7 +114,7 @@ DevicePtr cDeviceManager::GetDevice(const cChannel &channel, bool bLiveView, boo
       {
         if (CamSlot->ProvidesCa(channel.GetCaIds()))
         {
-          if (!ChannelCamRelations.CamChecked(channel.GetChannelID(), CamSlot->SlotNumber()))
+          if (!ChannelCamRelations.CamChecked(channel.ID(), CamSlot->SlotNumber()))
           {
             NumUsableSlots++;
           }
@@ -163,7 +163,7 @@ DevicePtr cDeviceManager::GetDevice(const cChannel &channel, bool bLiveView, boo
         imp <<= 1; imp |= ndr;                                                                                  // avoid devices if we need to detach existing receivers
         imp <<= 1; imp |= (NumUsableSlots || InternalCamNeeded) ? 0 : m_devices[i]->CommonInterface()->HasCi();                       // avoid cards with Common Interface for FTA channels
         imp <<= 1; imp |= m_devices[i]->AvoidRecording();                                                          // avoid SD full featured cards
-        imp <<= 1; imp |= (NumUsableSlots && !HasInternalCam) ? !ChannelCamRelations.CamDecrypt(channel.GetChannelID(), j + 1) : 0; // prefer CAMs that are known to decrypt this channel
+        imp <<= 1; imp |= (NumUsableSlots && !HasInternalCam) ? !ChannelCamRelations.CamDecrypt(channel.ID(), j + 1) : 0; // prefer CAMs that are known to decrypt this channel
         if (imp < Impact)
         {
           // This device has less impact than any previous one, so we take it.

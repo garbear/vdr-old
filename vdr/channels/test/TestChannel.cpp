@@ -62,9 +62,9 @@ TEST(Channel, Construction)
   EXPECT_EQ(channel.Tpid(), 0);
   EXPECT_NE(channel.Caids(), (const int*)NULL);
   EXPECT_EQ(channel.Ca(0), 0);
-  EXPECT_EQ(channel.Nid(), 0);
-  EXPECT_EQ(channel.Tid(), 0);
-  EXPECT_EQ(channel.Sid(), 0);
+  EXPECT_EQ(channel.ID().Nid(), 0);
+  EXPECT_EQ(channel.ID().Tsid(), 0);
+  EXPECT_EQ(channel.ID().Sid(), 0);
   EXPECT_EQ(channel.Rid(), 0);
   EXPECT_EQ(channel.Number(), 0);
   */
@@ -102,9 +102,9 @@ TEST(Channel, SerialiseDeserialise)
     EXPECT_EQ(channel.Tpid(), 0);
     EXPECT_NE(channel.Caids(), (const int*)NULL);
     EXPECT_EQ(channel.Ca(0), 0);
-    EXPECT_EQ(channel.Nid(), 0);
-    EXPECT_EQ(channel.Tid(), 0);
-    EXPECT_EQ(channel.Sid(), 1);
+    EXPECT_EQ(channel.ID().Nid(), 0);
+    EXPECT_EQ(channel.ID().Tsid(), 0);
+    EXPECT_EQ(channel.ID().Sid(), 1);
     EXPECT_EQ(channel.Rid(), 0);
     EXPECT_EQ(channel.Number(), 0);
 
@@ -235,9 +235,9 @@ TEST(Channel, SerialiseDeserialise)
     EXPECT_EQ(channel.Tpid(), 0);
     EXPECT_NE(channel.Caids(), (const int*)NULL);
     EXPECT_EQ(channel.Ca(0), 0);
-    EXPECT_EQ(channel.Nid(), 0);
-    EXPECT_EQ(channel.Tid(), 0);
-    EXPECT_EQ(channel.Sid(), 1);
+    EXPECT_EQ(channel.ID().Nid(), 0);
+    EXPECT_EQ(channel.ID().Tsid(), 0);
+    EXPECT_EQ(channel.ID().Sid(), 1);
     EXPECT_EQ(channel.Rid(), 0);
     EXPECT_EQ(channel.Number(), 0);
   }
@@ -276,9 +276,9 @@ TEST(Channel, SerialiseDeserialise)
     EXPECT_EQ(channel.Tpid(), 0);
     EXPECT_NE(channel.Caids(), (const int*)NULL);
     EXPECT_EQ(channel.Ca(0), 0x1863);
-    EXPECT_EQ(channel.Nid(), 0);
-    EXPECT_EQ(channel.Tid(), 0);
-    EXPECT_EQ(channel.Sid(), 88);
+    EXPECT_EQ(channel.ID().Nid(), 0);
+    EXPECT_EQ(channel.ID().Tsid(), 0);
+    EXPECT_EQ(channel.ID().Sid(), 88);
     EXPECT_EQ(channel.Rid(), 0);
     EXPECT_EQ(channel.Number(), 0);
 
@@ -320,9 +320,9 @@ TEST(Channel, SerialiseDeserialise)
     EXPECT_EQ(channel.Tpid(), 0);
     EXPECT_NE(channel.Caids(), (const int*)NULL);
     EXPECT_EQ(channel.Ca(0), 0x1863);
-    EXPECT_EQ(channel.Nid(), 0);
-    EXPECT_EQ(channel.Tid(), 0);
-    EXPECT_EQ(channel.Sid(), 88);
+    EXPECT_EQ(channel.ID().Nid(), 0);
+    EXPECT_EQ(channel.ID().Tsid(), 0);
+    EXPECT_EQ(channel.ID().Sid(), 88);
     EXPECT_EQ(channel.Rid(), 0);
     EXPECT_EQ(channel.Number(), 0);
   }

@@ -56,7 +56,7 @@ std::string dtoa(double d, const char *Format = "%f")
 cRecordingInfo::cRecordingInfo(ChannelPtr channel, const EventPtr& event)
 {
   m_channel          = channel;
-  m_channelID        = m_channel ? m_channel->GetChannelID() : cChannelID::InvalidID;
+  m_channelID        = m_channel ? m_channel->ID() : cChannelID::InvalidID;
 
   if (event.get() != NULL)
   {

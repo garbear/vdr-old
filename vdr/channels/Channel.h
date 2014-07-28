@@ -147,19 +147,8 @@ public:
 
   static ChannelPtr EmptyChannel;
 
-  /*!
-   * Before one (of many) channel refactors, GetChannelID() would report its
-   * frequency in the TSID field if no VDR would use Previously, if NID and TSID were 0, then GetChannelID() would set TSID to
-   * the frequency in MHz, masked with polarization in the 100 GHz range. This
-   * hack-of-a-hack behavior has not been retained.
-   */
-  const cChannelID&     GetChannelID(void) const { return m_channelId; }
-  uint16_t              Nid(void)          const { return m_channelId.Nid(); }
-  uint16_t              Tsid(void)         const { return m_channelId.Tsid(); }
-  uint16_t              Sid(void)          const { return m_channelId.Sid(); }
-
+  const cChannelID& ID(void) const { return m_channelId; }
   uint32_t Hash(void) const { return m_channelId.Hash(); }
-
   void SetId(uint16_t nid, uint16_t tsid, uint16_t sid);
 
   const std::string& Name(void)       const { return m_name; }

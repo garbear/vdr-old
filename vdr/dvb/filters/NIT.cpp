@@ -260,8 +260,8 @@ ChannelVector cNit::GetTransponders()
                 {
                   ChannelPtr& channel = *it;
                   if (channel->Source() == source &&
-                      channel->Nid() == ts.getOriginalNetworkId() &&
-                      channel->Tid() == ts.getTransportStreamId())
+                      channel->ID().Nid() == ts.getOriginalNetworkId() &&
+                      channel->ID().Tsid() == ts.getTransportStreamId())
                   {
                     int transponder = channel->TransponderFrequencyMHz();
                     bFound = true;
@@ -320,8 +320,8 @@ ChannelVector cNit::GetTransponders()
                 {
                   ChannelPtr& channel = *it;
                   if (cSource::IsSat(channel->Source()) &&
-                      channel->Nid()    == ts.getOriginalNetworkId() &&
-                      channel->Tid()    == ts.getTransportStreamId())
+                      channel->ID().Nid()    == ts.getOriginalNetworkId() &&
+                      channel->ID().Tsid()    == ts.getTransportStreamId())
                   {
                     SI::S2SatelliteDeliverySystemDescriptor* sd = (SI::S2SatelliteDeliverySystemDescriptor*)d;
                     cDvbTransponder dtp(channel->Parameters());
@@ -392,8 +392,8 @@ ChannelVector cNit::GetTransponders()
                 {
                   ChannelPtr& channel = *it;
                   if (channel->Source() == source &&
-                      channel->Nid() == ts.getOriginalNetworkId() &&
-                      channel->Tid() == ts.getTransportStreamId())
+                      channel->ID().Nid() == ts.getOriginalNetworkId() &&
+                      channel->ID().Tsid() == ts.getTransportStreamId())
                   {
                     int transponder = channel->TransponderFrequencyMHz();
 
@@ -519,8 +519,8 @@ ChannelVector cNit::GetTransponders()
                 {
                   ChannelPtr& channel = *it;
                   if (channel->Source() == source &&
-                      channel->Nid() == ts.getOriginalNetworkId() &&
-                      channel->Tid() == ts.getTransportStreamId())
+                      channel->ID().Nid() == ts.getOriginalNetworkId() &&
+                      channel->ID().Tsid() == ts.getTransportStreamId())
                   {
                     int transponder = channel->TransponderFrequencyMHz();
                     bFound = true;
@@ -579,8 +579,8 @@ ChannelVector cNit::GetTransponders()
                     int source = cSource::FromData(cSource::stTerr);
 
                     if (channel->Source() == source &&
-                        channel->Nid() == ts.getOriginalNetworkId() &&
-                        channel->Tid() == ts.getTransportStreamId())
+                        channel->ID().Nid() == ts.getOriginalNetworkId() &&
+                        channel->ID().Tsid() == ts.getTransportStreamId())
                     {
                       SI::T2DeliverySystemDescriptor* td = (SI::T2DeliverySystemDescriptor*)d;
 
@@ -678,7 +678,7 @@ ChannelVector cNit::GetTransponders()
                   if (channel && !(channel->Rid() & INVALID_CHANNEL))
                   {
                     dsyslog("   NIT: invalid (service_type=0x%.2x)", service.getServiceType());
-                    channel->SetId(channel->Nid(), channel->Tid(), channel->Sid(), INVALID_CHANNEL);
+                    channel->SetId(channel->ID().Nid(), channel->ID().Tsid(), channel->ID().Sid(), INVALID_CHANNEL);
                   }
                   */
                 }

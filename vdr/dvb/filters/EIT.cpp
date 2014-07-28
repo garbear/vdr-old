@@ -286,7 +286,7 @@ EventVector cEit::GetEvents()
                     }
                     else if (cSettings::Get().m_iUpdateChannels >= 4)
                     {
-                      if (channel->Tsid() != ld->getTransportStreamId())
+                      if (channel->ID().Tsid() != ld->getTransportStreamId())
                         channel = m_channelManager.GetByTransponderID(linkID);
 
                       link = ChannelPtr(new cChannel);
