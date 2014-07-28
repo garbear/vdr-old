@@ -70,9 +70,9 @@ void LogVtype(uint8_t oldVtype, uint8_t newVtype)
       GetVtype(oldVtype), GetVtype(newVtype));
 }
 
-cPmt::cPmt(cDevice* device, uint16_t tid, uint16_t sid, uint16_t pid)
+cPmt::cPmt(cDevice* device, uint16_t tsid, uint16_t sid, uint16_t pid)
  : cFilter(device),
-   m_tid(tid),
+   m_tsid(tsid),
    m_sid(sid)
 {
   OpenResource(pid, TableIdPMT);
@@ -126,13 +126,13 @@ ChannelPtr cPmt::CreateChannel(/* const */ SI::PMT& pmt) const // TODO: libsi fa
   return channel;
 }
 
-void cPmt::SetIds(ChannelPtr channel) const
+void cPmt::SetIds(const ChannelPtr& channel) const
 {
   const uint16_t nit = 0; // TODO: How to find the NIT of a new channel?
-  channel->SetId(nit, m_tid, m_sid);
+  channel->SetId(nit, m_tsid, m_sid);
 }
 
-void cPmt::SetStreams(ChannelPtr channel, /* const */ SI::PMT& pmt) const // TODO: libsi fails at const-correctness
+void cPmt::SetStreams(const ChannelPtr& channel, /* const */ SI::PMT& pmt) const // TODO: libsi fails at const-correctness
 {
   VideoStream            videoStream = { };
   vector<AudioStream>    audioStreams;
@@ -369,7 +369,7 @@ void cPmt::SetStreams(ChannelPtr channel, /* const */ SI::PMT& pmt) const // TOD
   channel->SetStreams(videoStream, audioStreams, dataStreams, subtitleStreams, teletextStream);
 }
 
-void cPmt::SetCaDescriptors(ChannelPtr channel, /* const */ SI::PMT& pmt) const // TODO: libsi fails at const-correctness
+void cPmt::SetCaDescriptors(const ChannelPtr& channel, /* const */ SI::PMT& pmt) const // TODO: libsi fails at const-correctness
 {
   CaDescriptorVector caDescriptors;
 

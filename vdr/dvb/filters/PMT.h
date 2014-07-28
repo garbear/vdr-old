@@ -35,8 +35,8 @@ namespace VDR
 class cPmt : public cFilter
 {
 public:
-  cPmt(cDevice* device, uint16_t tid, uint16_t sid, uint16_t pid);
-  virtual ~cPmt() { }
+  cPmt(cDevice* device, uint16_t tsid, uint16_t sid, uint16_t pid);
+  virtual ~cPmt(void) { }
 
   /*!
    * Create a channel with the streams and CA descriptors discovered in the PMT.
@@ -54,11 +54,11 @@ public:
 private:
   ChannelPtr CreateChannel(/* const */ SI::PMT& pmt) const; // TODO: libsi fails at const-correctness
 
-  void SetIds(ChannelPtr channel) const;
-  void SetStreams(ChannelPtr channel, /* const */ SI::PMT& pmt) const; // TODO: libsi fails at const-correctness
-  void SetCaDescriptors(ChannelPtr channel, /* const */ SI::PMT& pmt) const; // TODO: libsi fails at const-correctness
+  void SetIds(const ChannelPtr& channel) const;
+  void SetStreams(const ChannelPtr& channel, /* const */ SI::PMT& pmt) const; // TODO: libsi fails at const-correctness
+  void SetCaDescriptors(const ChannelPtr& channel, /* const */ SI::PMT& pmt) const; // TODO: libsi fails at const-correctness
 
-  const uint16_t m_tid; // Transport stream ID
+  const uint16_t m_tsid; // Transport stream ID
   const uint16_t m_sid; // Service ID
 };
 
