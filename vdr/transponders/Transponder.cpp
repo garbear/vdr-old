@@ -35,6 +35,7 @@ cTransponder::cTransponder(TRANSPONDER_TYPE type /* = TRANSPONDER_INVALID */)
  : m_channelNumber(0),
    m_deliverySystem(SYS_UNDEFINED),
    m_frequencyHz(0),
+   m_inversion(INVERSION_AUTO),
    m_modulation(QPSK)
 {
   SetType(type);
@@ -128,7 +129,8 @@ bool cTransponder::Serialise(TiXmlNode* node) const
     if (m_frequencyHz != 0)
       elem->SetAttribute(TRANSPONDER_XML_ATTR_FREQUENCY, m_frequencyHz);
 
-    elem->SetAttribute(TRANSPONDER_XML_ATTR_INVERSION, Stringifier::InversionToString(m_inversion));
+    if (m_inversion != INVERSION_AUTO)
+      elem->SetAttribute(TRANSPONDER_XML_ATTR_INVERSION, Stringifier::InversionToString(m_inversion));
 
     elem->SetAttribute(TRANSPONDER_XML_ATTR_MODULATION, Stringifier::ModulationToString(m_modulation));
 
