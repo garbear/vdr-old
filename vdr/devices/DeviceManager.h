@@ -93,12 +93,6 @@ public:
 
   void Notify(const Observable &obs, const ObservableMessage msg);
 
-  /**
-   * Scan a transponder using all devices known to cDeviceManager. Returns false if there are no more channels to
-   * scan, or all devices fail to tune to the channel.
-   */
-  bool ScanTransponder(const ChannelPtr& transponder);
-
 private:
   static int GetClippedNumProvidedSystems(int availableBits, const cDevice& device);
 

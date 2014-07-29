@@ -30,7 +30,6 @@
 #include "settings/AllowedHosts.h"
 #include "settings/Settings.h"
 #include "timers/Timers.h"
-#include "dvb/EITScan.h"
 #include "utils/log/Log.h"
 #include "utils/Shutdown.h"
 #include "vnsi/Server.h"
@@ -121,8 +120,6 @@ bool cVDRDaemon::Init()
   if (!cDeviceManager::Get().WaitForAllDevicesReady(DEVICEREADYTIMEOUT))
     dsyslog("some devices are not ready after %d seconds", DEVICEREADYTIMEOUT);
 
-  //cEITScanner::Get().CreateThread();
-
   return CreateThread(true);
 }
 
@@ -163,8 +160,6 @@ void cVDRDaemon::OnSignal(int signum)
 
 void cVDRDaemon::DeInit()
 {
-  cEITScanner::Get().StopThread();
-
   cDeviceManager::Get().Shutdown();
 
   cChannelManager::Get().Clear();

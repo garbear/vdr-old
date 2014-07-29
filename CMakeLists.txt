@@ -153,7 +153,6 @@ set(VDR_SRCS
 	vdr/dvb/CADescriptor.cpp
 	vdr/dvb/CADescriptorHandler.cpp
 	vdr/dvb/DiSEqC.cpp
-	vdr/dvb/EITScan.cpp
 	vdr/dvb/filters/EIT.cpp
 	vdr/dvb/filters/Filter.cpp
 	vdr/dvb/filters/FilterResource.cpp
@@ -270,7 +269,6 @@ set(VDR_TEST_SRCS
 	vdr/channels/test/TestChannelManager.cpp
 	vdr/devices/linux/test/TestDVBDevice.cpp
 	vdr/devices/linux/test/TestDVBTuner.cpp
-	vdr/dvb/test/TestEITScan.cpp
 	vdr/filesystem/test/TestSpecialProtocol.cpp
 	vdr/filesystem/native/test/TestHDDirectory.cpp
 	vdr/filesystem/native/test/TestHDFile.cpp
