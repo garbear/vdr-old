@@ -82,7 +82,7 @@ bool cPsipMgt::GetPSIPData(EventVector& events)
         {
           //filters.push_back(shared_ptr<cFilter>(new cEitPsip(GetDevice(), tablePid, tableType - 0x0100)));
           const unsigned short eitNumber = tableType - 0x0100;
-          dsyslog("Discovered EIT%d, pid=%u", eitNumber, tablePid);
+          dsyslog("MGT: Discovered EIT%d, pid=%u", eitNumber, tablePid);
           eitPids.push_back(tablePid);
           break;
         }
