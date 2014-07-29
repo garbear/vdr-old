@@ -348,12 +348,12 @@ void* cDvbTuner::Process(void)
     if (newStatus != m_frontendStatus)
     {
       vector<string> statusFlags;
-      if (newStatus == FE_STATUS_UNKNOWN) statusFlags.push_back("STATUS_UNKNOWN");
-      if (newStatus & FE_HAS_SIGNAL)      statusFlags.push_back("HAS_SIGNAL");
-      if (newStatus & FE_HAS_CARRIER)     statusFlags.push_back("HAS_CARRIER");
-      if (newStatus & FE_HAS_VITERBI)     statusFlags.push_back("HAS_VITERBI");
-      if (newStatus & FE_HAS_SYNC)        statusFlags.push_back("HAS_SYNC");
-      if (newStatus & FE_HAS_LOCK)        statusFlags.push_back("HAS_LOCK");
+      if (newStatus == FE_STATUS_UNKNOWN) statusFlags.push_back("UNKNOWN");
+      if (newStatus & FE_HAS_SIGNAL)      statusFlags.push_back("SIGNAL");
+      if (newStatus & FE_HAS_CARRIER)     statusFlags.push_back("CARRIER");
+      if (newStatus & FE_HAS_VITERBI)     statusFlags.push_back("VITERBI");
+      if (newStatus & FE_HAS_SYNC)        statusFlags.push_back("SYNC");
+      if (newStatus & FE_HAS_LOCK)        statusFlags.push_back("LOCK");
       if (newStatus & FE_TIMEDOUT)        statusFlags.push_back("TIMEDOUT");
       if (newStatus & FE_REINIT)          statusFlags.push_back("REINIT");
       dsyslog("Frontend %u/%u status updated to %s", m_device->Frontend(), m_device->Adapter(),
