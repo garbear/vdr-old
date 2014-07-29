@@ -27,7 +27,6 @@
 #include "epg/Schedules.h"
 #include "recordings/Recordings.h"
 #include "utils/log/Log.h"
-#include "utils/Status.h"
 #include "utils/UTF8Utils.h"
 #include "utils/XBMCTinyXML.h"
 

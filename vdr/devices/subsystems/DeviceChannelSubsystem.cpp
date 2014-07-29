@@ -32,7 +32,6 @@
 #include "devices/Transfer.h"
 #include "Player.h"
 #include "utils/log/Log.h"
-#include "utils/Status.h"
 #include "utils/Tools.h"
 #include "utils/I18N.h"
 
@@ -72,8 +71,6 @@ bool cDeviceChannelSubsystem::MaySwitchTransponder(const cChannel &channel) cons
 
 bool cDeviceChannelSubsystem::SwitchChannel(const ChannelPtr& channel)
 {
-  cStatus::MsgChannelSwitch(Device(), 0);
-
   // Stop section handling
   SectionFilter()->StopSectionHandler();
 
@@ -90,8 +87,6 @@ bool cDeviceChannelSubsystem::SwitchChannel(const ChannelPtr& channel)
     // Start decrypting any PIDs that might have been set in SetChannelDevice():
     if (CommonInterface()->m_camSlot)
       CommonInterface()->m_camSlot->StartDecrypting();
-
-    cStatus::MsgChannelSwitch(Device(), channel->Number());
 
     return true;
   }

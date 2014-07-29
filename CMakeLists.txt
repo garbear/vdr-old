@@ -225,7 +225,6 @@ set(VDR_SRCS
 	vdr/utils/XBMCTinyXML.cpp
 	vdr/utils/XMLUtils.cpp
 	vdr/utils/UTF8Utils.cpp
-	vdr/utils/Status.cpp
 	vdr/utils/SynchronousAbort.cpp
 	vdr/utils/CRC32.cpp
 	vdr/utils/List.cpp
