@@ -24,38 +24,36 @@
 
 #define CHANNEL_XML_ELM_CHANNEL       "channel"
 #define CHANNEL_XML_ELM_SEPARATOR     "separator"
-#define CHANNEL_XML_ELM_APIDS         "apids"
-#define CHANNEL_XML_ELM_APID          "apid"
-#define CHANNEL_XML_ELM_DPIDS         "dpids"
-#define CHANNEL_XML_ELM_DPID          "dpid"
-#define CHANNEL_XML_ELM_SPIDS         "spids"
-#define CHANNEL_XML_ELM_SPID          "spid"
-#define CHANNEL_XML_ELM_CAIDS         "caids"
-#define CHANNEL_XML_ELM_CAID          "caid"
+#define CHANNEL_XML_ELM_VPID          "video-pid"     // Video stream packet ID
+#define CHANNEL_XML_ELM_APID          "audio-pid"     // Audio stream packet ID
+#define CHANNEL_XML_ELM_APIDS         "audio-pids"
+#define CHANNEL_XML_ELM_DPID          "data-pid"      // Data stream packet ID
+#define CHANNEL_XML_ELM_DPIDS         "data-pids"
+#define CHANNEL_XML_ELM_SPID          "subtitle-pid"  // Subtitle stream packet ID
+#define CHANNEL_XML_ELM_SPIDS         "subtitle-pids"
+#define CHANNEL_XML_ELM_TPID          "teletext-pid"  // Teletext stream packet ID
+#define CHANNEL_XML_ELM_CAIDS         "ca-ids"
+#define CHANNEL_XML_ELM_CAID          "ca-id"
 #define CHANNEL_XML_ELM_TRANSPONDER   "transponder"
 
 #define CHANNEL_XML_ATTR_NAME         "name"
 #define CHANNEL_XML_ATTR_SHORTNAME    "shortname"
 #define CHANNEL_XML_ATTR_PROVIDER     "provider"
-#define CHANNEL_XML_ATTR_SEPARATOR    "separator"
 #define CHANNEL_XML_ATTR_NUMBER       "number"
-#define CHANNEL_XML_ATTR_PARAMETERS   "parameters"
-#define CHANNEL_XML_ATTR_VPID         "vpid"
-#define CHANNEL_XML_ATTR_PPID         "ppid"
-#define CHANNEL_XML_ATTR_VTYPE        "vtype"
-#define CHANNEL_XML_ATTR_TPID         "tpid"
-#define CHANNEL_XML_ATTR_ALANG        "alang"
-#define CHANNEL_XML_ATTR_ATYPE        "atype"
-#define CHANNEL_XML_ATTR_DLANG        "dlang"
-#define CHANNEL_XML_ATTR_DTYPE        "dtype"
-#define CHANNEL_XML_ATTR_SLANG        "slang"
+#define CHANNEL_XML_ATTR_PPID         "pcr-pid"       // Program clock reference packet ID
+#define CHANNEL_XML_ATTR_VTYPE        "video-type"    // Video stream type
+#define CHANNEL_XML_ATTR_ALANG        "audio-lang"    // Audio stream language
+#define CHANNEL_XML_ATTR_ATYPE        "audio-type"    // Audio stream type
+#define CHANNEL_XML_ATTR_DLANG        "data-lang"     // Data stream language
+#define CHANNEL_XML_ATTR_DTYPE        "data-type"     // Data stream type
+#define CHANNEL_XML_ATTR_SLANG        "subtitle-lang" // Subtitle stream language
 
 #define CHANNEL_SOURCE_XML_ATTR_SOURCE    "source"
-#define CHANNEL_SOURCE_XML_ATTR_POSITION  "satellite_position"
+#define CHANNEL_SOURCE_XML_ATTR_POSITION  "satellite-position" // TODO: Add this property to cTransponder
 
-#define CHANNEL_ID_XML_ATTR_NID  "nid"  // Network ID
-#define CHANNEL_ID_XML_ATTR_TSID "tsid" // Transport stream ID
-#define CHANNEL_ID_XML_ATTR_SID  "sid"  // Service ID
+#define CHANNEL_ID_XML_ATTR_NID  "network-id"
+#define CHANNEL_ID_XML_ATTR_TSID "transport-stream-id"
+#define CHANNEL_ID_XML_ATTR_SID  "service-id"
 
 #define TRANSPONDER_XML_ATTR_FREQUENCY    "frequency"
 #define TRANSPONDER_XML_ATTR_SYMBOL_RATE  "symbolrate"

@@ -438,9 +438,22 @@ bool cChannel::Serialise(TiXmlNode* node) const
 
   if (m_videoStream.vpid != 0)
   {
-    channelElement->SetAttribute(CHANNEL_XML_ATTR_VPID,  m_videoStream.vpid);
-    channelElement->SetAttribute(CHANNEL_XML_ATTR_PPID,  m_videoStream.ppid);
-    channelElement->SetAttribute(CHANNEL_XML_ATTR_VTYPE, m_videoStream.vtype);
+    TiXmlElement vpidElement(CHANNEL_XML_ELM_VPID);
+    TiXmlNode *vpidNode = channelElement->InsertEndChild(vpidElement);
+    if (vpidNode)
+    {
+      TiXmlElement *vpidElem = vpidNode->ToElement();
+      if (vpidElem)
+      {
+        TiXmlText *vpidText = new TiXmlText(StringUtils::Format("%d", m_videoStream.vpid));
+        if (vpidText)
+        {
+          vpidElem->LinkEndChild(vpidText);
+          vpidElem->SetAttribute(CHANNEL_XML_ATTR_PPID, m_videoStream.ppid);
+          vpidElem->SetAttribute(CHANNEL_XML_ATTR_VTYPE, m_videoStream.vtype);
+        }
+      }
+    }
   }
 
   if (!m_audioStreams.empty())
@@ -531,7 +544,20 @@ bool cChannel::Serialise(TiXmlNode* node) const
   }
 
   if (m_teletextStream.tpid != 0)
-    channelElement->SetAttribute(CHANNEL_XML_ATTR_TPID, m_teletextStream.tpid);
+  {
+    TiXmlElement tpidElement(CHANNEL_XML_ELM_TPID);
+    TiXmlNode *tpidNode = channelElement->InsertEndChild(tpidElement);
+    if (tpidNode)
+    {
+      TiXmlElement *tpidElem = tpidNode->ToElement();
+      if (tpidElem)
+      {
+        TiXmlText *tpidText = new TiXmlText(StringUtils::Format("%d", m_teletextStream.tpid));
+        if (tpidText)
+          tpidElem->LinkEndChild(tpidText);
+      }
+    }
+  }
 
   if (!m_caDescriptors.empty())
   {
@@ -590,16 +616,26 @@ bool cChannel::Deserialise(const TiXmlNode* node)
   if (provider != NULL)
     m_provider = provider;
 
-  const char *vpid  = elem->Attribute(CHANNEL_XML_ATTR_VPID);
-  const char *ppid  = elem->Attribute(CHANNEL_XML_ATTR_PPID);
-  const char *vtype = elem->Attribute(CHANNEL_XML_ATTR_VTYPE);
-  if (vpid != NULL && ppid != NULL && vtype != NULL)
+  const TiXmlNode *vpidNode = elem->FirstChild(CHANNEL_XML_ELM_VPID);
+  if (vpidNode)
   {
-    VideoStream vs;
-    vs.vpid       = StringUtils::IntVal(vpid);
-    vs.ppid       = StringUtils::IntVal(ppid);
-    vs.vtype      = StringUtils::IntVal(vtype);
-    m_videoStream = vs;
+      const TiXmlElement *vpidElem = vpidNode->ToElement();
+      if (vpidElem != NULL)
+      {
+        VideoStream vs = { };
+
+        vs.vpid = StringUtils::IntVal(vpidElem->GetText());
+
+        const char *ppid = vpidElem->Attribute(CHANNEL_XML_ATTR_PPID);
+        if (ppid != NULL)
+          vs.ppid = StringUtils::IntVal(ppid);
+
+        const char *vtype = vpidElem->Attribute(CHANNEL_XML_ATTR_VTYPE);
+        if (vtype != NULL)
+          vs.vtype = StringUtils::IntVal(vtype);
+
+        m_videoStream = vs;
+      }
   }
 
   const TiXmlNode *apidsNode = elem->FirstChild(CHANNEL_XML_ELM_APIDS);
@@ -676,12 +712,18 @@ bool cChannel::Deserialise(const TiXmlNode* node)
     }
   }
 
-  const char *tpid = elem->Attribute(CHANNEL_XML_ATTR_TPID);
-  if (tpid != NULL)
+  const TiXmlNode *tpidNode = elem->FirstChild(CHANNEL_XML_ELM_TPID);
+  if (tpidNode)
   {
-    TeletextStream ts;
-    ts.tpid          = StringUtils::IntVal(tpid);
-    m_teletextStream = ts;
+    const TiXmlElement *tpidElem = tpidNode->ToElement();
+    if (tpidElem != NULL)
+    {
+      TeletextStream ts = { };
+
+      ts.tpid = StringUtils::IntVal(tpidElem->GetText());
+
+      m_teletextStream = ts;
+    }
   }
 
   const TiXmlNode *caidsNode = elem->FirstChild(CHANNEL_XML_ELM_CAIDS);
