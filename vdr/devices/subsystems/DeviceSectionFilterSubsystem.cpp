@@ -60,29 +60,29 @@ namespace VDR
 
 // --- cDeviceSectionFilterSubsystem::cFilterHandlePollRequest-----------------
 
-cDeviceSectionFilterSubsystem::cFilterResourceRequest::cFilterResourceRequest(const FilterResourceCollection& filterResources)
+cDeviceSectionFilterSubsystem::cResourceRequest::cResourceRequest(const FilterResourceCollection& filterResources)
  : m_resources(filterResources)
 {
 }
 
-cDeviceSectionFilterSubsystem::cFilterResourceRequest::~cFilterResourceRequest(void)
+cDeviceSectionFilterSubsystem::cResourceRequest::~cResourceRequest(void)
 {
   Abort();
 }
 
-bool cDeviceSectionFilterSubsystem::cFilterResourceRequest::WaitForSection(void)
+bool cDeviceSectionFilterSubsystem::cResourceRequest::WaitForSection(void)
 {
   return m_readyEvent.Wait(SECTION_TIMEOUT_MS);
 }
 
-void cDeviceSectionFilterSubsystem::cFilterResourceRequest::HandleSection(const FilterResourcePtr& resource)
+void cDeviceSectionFilterSubsystem::cResourceRequest::HandleSection(const FilterResourcePtr& resource)
 {
   // Record the resource that is ready to provide a section
   m_activeResource = resource;
   m_readyEvent.Broadcast();
 }
 
-void cDeviceSectionFilterSubsystem::cFilterResourceRequest::Abort(void)
+void cDeviceSectionFilterSubsystem::cResourceRequest::Abort(void)
 {
   m_readyEvent.Broadcast();
 }
@@ -139,7 +139,7 @@ bool cDeviceSectionFilterSubsystem::GetSection(const FilterResourceCollection& f
     return false;
 
   // Create a new request to poll filter resources
-  shared_ptr<cFilterResourceRequest> pollRequest = shared_ptr<cFilterResourceRequest>(new cFilterResourceRequest(filterResources));
+  shared_ptr<cResourceRequest> pollRequest = shared_ptr<cResourceRequest>(new cResourceRequest(filterResources));
 
   // Record it so that Process() can access it
   {

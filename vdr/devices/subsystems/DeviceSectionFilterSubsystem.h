@@ -50,11 +50,11 @@ private:
    * one of the resources is ready to provide a section, it will be placed in
    * m_activeResource and WaitForSection() will finish blocking.
    */
-  class cFilterResourceRequest
+  class cResourceRequest
   {
   public:
-    cFilterResourceRequest(const FilterResourceCollection& filterResources);
-    ~cFilterResourceRequest(void);
+    cResourceRequest(const FilterResourceCollection& filterResources);
+    ~cResourceRequest(void);
 
     /*!
      * Return all resources being polled.
@@ -91,7 +91,7 @@ private:
     PLATFORM::CEvent         m_readyEvent;     // Fired when resource is ready to be read
   };
 
-  typedef std::vector<shared_ptr<cFilterResourceRequest> > ResourceRequestCollection;
+  typedef std::vector<shared_ptr<cResourceRequest> > ResourceRequestCollection;
 
 public:
   cDeviceSectionFilterSubsystem(cDevice* device);
