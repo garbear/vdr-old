@@ -38,10 +38,29 @@ public:
   bool operator==(const cTransponder& rhs) const;
   bool operator!=(const cTransponder& rhs) const { return !(*this == rhs); }
 
+  /*
+   * Parameters common to all transponders
+   *   - Type
+   *   - Channel number
+   *   - Delivery system
+   *   - Frequency
+   *   - Inversion
+   *   - Modulation
+   */
+
   TRANSPONDER_TYPE Type(void) const { return m_type; }
   void SetType(TRANSPONDER_TYPE type);
 
-  // Parameters common to all transponders
+  unsigned int ChannelNumber(void) const     { return m_channelNumber; }
+  void SetChannelNumber(unsigned int number) { m_channelNumber = number; }
+
+  /*!
+   * Valid delivery systems
+   *   ATSC:        SYS_ATSC
+   *   Cable:       SYS_DVBC_ANNEX_A
+   *   Satellite:   SYS_DVBS or SYS_DVBS2
+   *   Terrestrial: SYS_DVBT or SYS_DVBT2
+   */
   fe_delivery_system_t DeliverySystem(void) const;
   void SetDeliverySystem(fe_delivery_system_t ds) { m_deliverySystem = ds; }
 
@@ -58,7 +77,10 @@ public:
   fe_modulation_t Modulation(void) const         { return m_modulation; }
   void SetModulation(fe_modulation_t modulation) { m_modulation = modulation; }
 
-  // Parameters specific to transponder type
+  /*
+   * Parameters specific to transponder type
+   */
+
   const cAtscParams& AtscParams(void) const               { return m_atscParams; }
         cAtscParams& AtscParams(void)                     { return m_atscParams; }
   const cCableParams&       CableParams(void) const       { return m_cableParams; }
@@ -81,6 +103,7 @@ private:
   TRANSPONDER_TYPE        m_type;
 
   // Parameters common to all transponders
+  unsigned int            m_channelNumber; // Channel number
   fe_delivery_system_t    m_deliverySystem;
   unsigned int            m_frequencyHz;
   fe_spectral_inversion_t m_inversion;

@@ -24,6 +24,7 @@
 
 #define TRANSPONDER_XML_ATTR_TYPE                  "type"
 #define TRANSPONDER_XML_ATTR_BANDWIDTH             "bandwidth"
+#define TRANSPONDER_XML_ATTR_CHANNEL_NUMBER        "channel"
 #define TRANSPONDER_XML_ATTR_CODERATEH             "coderateh"
 #define TRANSPONDER_XML_ATTR_CODERATEL             "coderatel"
 #define TRANSPONDER_XML_ATTR_DELIVERY_SYSTEM       "delivery"

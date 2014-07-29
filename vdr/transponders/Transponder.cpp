@@ -32,7 +32,8 @@ namespace VDR
 {
 
 cTransponder::cTransponder(TRANSPONDER_TYPE type /* = TRANSPONDER_INVALID */)
- : m_deliverySystem(SYS_UNDEFINED),
+ : m_channelNumber(0),
+   m_deliverySystem(SYS_UNDEFINED),
    m_frequencyHz(0),
    m_modulation(QPSK)
 {
@@ -51,7 +52,8 @@ bool cTransponder::operator==(const cTransponder& rhs) const
   {
     if (Type() != TRANSPONDER_INVALID)
     {
-      if (m_deliverySystem != rhs.m_deliverySystem ||
+      if (m_channelNumber  != rhs.m_channelNumber  ||
+          m_deliverySystem != rhs.m_deliverySystem ||
           m_frequencyHz    != rhs.m_frequencyHz    ||
           m_modulation     != rhs.m_modulation)
       {
@@ -118,6 +120,8 @@ bool cTransponder::Serialise(TiXmlNode* node) const
   {
     elem->SetAttribute(TRANSPONDER_XML_ATTR_TYPE, Stringifier::TypeToString(m_type));
 
+    elem->SetAttribute(TRANSPONDER_XML_ATTR_CHANNEL_NUMBER, m_channelNumber);
+
     if (m_deliverySystem != SYS_UNDEFINED)
       elem->SetAttribute(TRANSPONDER_XML_ATTR_DELIVERY_SYSTEM, Stringifier::DeliverySystemToString(m_deliverySystem));
 
@@ -155,6 +159,9 @@ bool cTransponder::Deserialise(const TiXmlNode* node)
 
   if (m_type != TRANSPONDER_INVALID)
   {
+    const char* strNumber = elem->Attribute(TRANSPONDER_XML_ATTR_CHANNEL_NUMBER);
+    m_channelNumber = strNumber ? StringUtils::IntVal(strNumber) : 0;
+
     m_deliverySystem = Stringifier::StringToDeliverySystem(elem->Attribute(TRANSPONDER_XML_ATTR_DELIVERY_SYSTEM));
 
     const char* strFrequencyHz = elem->Attribute(TRANSPONDER_XML_ATTR_FREQUENCY);

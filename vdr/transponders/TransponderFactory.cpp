@@ -48,6 +48,7 @@ const std::vector<unsigned int>& GetChannelNumbers(void)
     for (unsigned int i = 0; i <= MAX_CHANNEL_NUMBER; i++)
       channelNumbers.push_back(i);
 
+    // Check for off-by-1 error
     assert(channelNumbers.size() == MAX_CHANNEL_NUMBER + 1);
   }
 
@@ -144,6 +145,7 @@ cTransponder cAtscTransponderFactory::GetNext(void)
     const unsigned int frequencyHz = offset + vars.channel * frequencyStep + iFrequencyOffset;
 
     transponder.Reset(TRANSPONDER_ATSC);
+    transponder.SetChannelNumber(vars.channel);
     transponder.SetFrequencyHz(frequencyHz);
     transponder.SetInversion(m_bCanInversionAuto ? INVERSION_AUTO : INVERSION_OFF);
     transponder.SetModulation(vars.modulation);
@@ -251,6 +253,7 @@ cTransponder cCableTransponderFactory::GetNext(void)
     const unsigned int frequencyHz = offset + vars.channel * frequencyStep + iFrequencyOffset;
 
     transponder.Reset(TRANSPONDER_CABLE);
+    transponder.SetChannelNumber(vars.channel);
     transponder.SetDeliverySystem(SYS_DVBC_ANNEX_A);
     transponder.SetFrequencyHz(frequencyHz);
     transponder.SetInversion(m_bCanInversionAuto ? INVERSION_AUTO : CABLE_INVERSION_FALLBACK);
@@ -308,6 +311,7 @@ cTransponder cSatelliteTransponderFactory::GetNext(void)
     const __sat_transponder& satTransponder = SatelliteUtils::GetTransponder(vars.satelliteIndex, vars.channel);
 
     transponder.Reset(TRANSPONDER_SATELLITE);
+    transponder.SetChannelNumber(vars.channel);
     transponder.SetDeliverySystem(satTransponder.modulation_system);
     transponder.SetFrequencyHz(satTransponder.intermediate_frequency);
     transponder.SetInversion(INVERSION_OFF);
@@ -392,6 +396,7 @@ cTransponder cTerrestrialTransponderFactory::GetNext(void)
     const unsigned int frequencyHz = offset + vars.channel * frequencyStep + iFrequencyOffset;
 
     transponder.Reset(TRANSPONDER_TERRESTRIAL);
+    transponder.SetChannelNumber(vars.channel);
     transponder.SetDeliverySystem(SYS_DVBT);
     transponder.SetFrequencyHz(frequencyHz);
     transponder.SetInversion(m_bCanInversionAuto ? INVERSION_AUTO : TERR_INVERSION_FALLBACK);
