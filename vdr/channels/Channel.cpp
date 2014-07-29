@@ -464,26 +464,26 @@ bool cChannel::Serialise(TiXmlNode* node) const
 
   if (!m_dataStreams.empty())
   {
-    TiXmlElement apidsElement(CHANNEL_XML_ELM_APIDS);
-    TiXmlNode *apidsNode = channelElement->InsertEndChild(apidsElement);
-    if (apidsNode)
+    TiXmlElement dpidsElement(CHANNEL_XML_ELM_DPIDS);
+    TiXmlNode *dpidsNode = channelElement->InsertEndChild(dpidsElement);
+    if (dpidsNode)
     {
       for (vector<DataStream>::const_iterator it = m_dataStreams.begin(); it != m_dataStreams.end(); ++it)
       {
         const DataStream& dataStream = *it;
-        TiXmlElement apidElement(CHANNEL_XML_ELM_APID);
-        TiXmlNode *apidNode = apidsNode->InsertEndChild(apidElement);
-        if (apidNode)
+        TiXmlElement dpidElement(CHANNEL_XML_ELM_DPID);
+        TiXmlNode *dpidNode = dpidsNode->InsertEndChild(dpidElement);
+        if (dpidNode)
         {
-          TiXmlElement *apidElem = apidNode->ToElement();
-          if (apidElem)
+          TiXmlElement *dpidElem = dpidNode->ToElement();
+          if (dpidElem)
           {
-            TiXmlText *apidText = new TiXmlText(StringUtils::Format("%d", dataStream.dpid));
-            if (apidText)
+            TiXmlText *dpidText = new TiXmlText(StringUtils::Format("%d", dataStream.dpid));
+            if (dpidText)
             {
-              apidElem->LinkEndChild(apidText);
-              apidElem->SetAttribute(CHANNEL_XML_ATTR_ALANG, dataStream.dlang);
-              apidElem->SetAttribute(CHANNEL_XML_ATTR_ATYPE, dataStream.dtype);
+              dpidElem->LinkEndChild(dpidText);
+              dpidElem->SetAttribute(CHANNEL_XML_ATTR_ALANG, dataStream.dlang);
+              dpidElem->SetAttribute(CHANNEL_XML_ATTR_ATYPE, dataStream.dtype);
             }
           }
         }
@@ -493,25 +493,25 @@ bool cChannel::Serialise(TiXmlNode* node) const
 
   if (!m_subtitleStreams.empty())
   {
-    TiXmlElement apidsElement(CHANNEL_XML_ELM_APIDS);
-    TiXmlNode *apidsNode = channelElement->InsertEndChild(apidsElement);
-    if (apidsNode)
+    TiXmlElement spidsElement(CHANNEL_XML_ELM_SPIDS);
+    TiXmlNode *spidsNode = channelElement->InsertEndChild(spidsElement);
+    if (spidsNode)
     {
       for (vector<SubtitleStream>::const_iterator it = m_subtitleStreams.begin(); it != m_subtitleStreams.end(); ++it)
       {
         const SubtitleStream& subtitleStream = *it;
-        TiXmlElement apidElement(CHANNEL_XML_ELM_APID);
-        TiXmlNode *apidNode = apidsNode->InsertEndChild(apidElement);
-        if (apidNode)
+        TiXmlElement spidElement(CHANNEL_XML_ELM_SPID);
+        TiXmlNode *spidNode = spidsNode->InsertEndChild(spidElement);
+        if (spidNode)
         {
-          TiXmlElement *apidElem = apidNode->ToElement();
-          if (apidElem)
+          TiXmlElement *spidElem = spidNode->ToElement();
+          if (spidElem)
           {
-            TiXmlText *apidText = new TiXmlText(StringUtils::Format("%d", subtitleStream.spid));
-            if (apidText)
+            TiXmlText *spidText = new TiXmlText(StringUtils::Format("%d", subtitleStream.spid));
+            if (spidText)
             {
-              apidElem->LinkEndChild(apidText);
-              apidElem->SetAttribute(CHANNEL_XML_ATTR_ALANG, subtitleStream.slang);
+              spidElem->LinkEndChild(spidText);
+              spidElem->SetAttribute(CHANNEL_XML_ATTR_ALANG, subtitleStream.slang);
               // TODO: Should we also store subtitlingType, compositionPageId and ancillaryPageId?
             }
           }
