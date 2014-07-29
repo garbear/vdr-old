@@ -482,8 +482,8 @@ bool cChannel::Serialise(TiXmlNode* node) const
             if (dpidText)
             {
               dpidElem->LinkEndChild(dpidText);
-              dpidElem->SetAttribute(CHANNEL_XML_ATTR_ALANG, dataStream.dlang);
-              dpidElem->SetAttribute(CHANNEL_XML_ATTR_ATYPE, dataStream.dtype);
+              dpidElem->SetAttribute(CHANNEL_XML_ATTR_DLANG, dataStream.dlang);
+              dpidElem->SetAttribute(CHANNEL_XML_ATTR_DTYPE, dataStream.dtype);
             }
           }
         }
@@ -511,7 +511,7 @@ bool cChannel::Serialise(TiXmlNode* node) const
             if (spidText)
             {
               spidElem->LinkEndChild(spidText);
-              spidElem->SetAttribute(CHANNEL_XML_ATTR_ALANG, subtitleStream.slang);
+              spidElem->SetAttribute(CHANNEL_XML_ATTR_SLANG, subtitleStream.slang);
               // TODO: Should we also store subtitlingType, compositionPageId and ancillaryPageId?
             }
           }
