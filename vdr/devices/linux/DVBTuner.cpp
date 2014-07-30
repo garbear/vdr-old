@@ -366,8 +366,13 @@ void* cDvbTuner::Process(void)
 
       if (bHadLock && !HasLock())
       {
-        // TODO: Handle a lost lock, possibly by invoking a callback
-        // We probably want to cancel any blocking DVB table filters
+        //SetChanged();
+        //NotifyObservers(ObservableMessageChannelLostLock);
+      }
+      else if (!bHadLock && HasLock())
+      {
+        //SetChanged();
+        //NotifyObservers(ObservableMessageChannelLock);
       }
 
       // Check for frontend re-initialisation
@@ -380,6 +385,9 @@ void* cDvbTuner::Process(void)
     }
     m_sleepEvent.Wait(STATUS_POLL_PERIOD_MS);
   }
+
+  //SetChanged();
+  //NotifyObservers(ObservableMessageChannelLostLock);
 
   m_lastDiseqc = NULL;
 
