@@ -63,35 +63,37 @@ bool cPsipVct::ScanChannels(iFilterCallback* callback)
       {
         ChannelPtr channel = ChannelPtr(new cChannel);
 
-        channel->SetTransponder(GetCurrentlyTunedTransponder()->GetTransponder());
-
         // Short name
         char buffer[22] = { };
         channelInfo.getShortName(buffer);
         channel->SetName(buffer, buffer, ""); // TODO: Parse descriptors for long name
 
-        // Modulation mode
-        //unsigned int symbolRateHz = 0;
+        // Transponder and modulation mode
+        cTransponder transponder(GetCurrentlyTunedTransponder()->GetTransponder());
+
         ModulationMode modulation = (ModulationMode)channelInfo.getModulationMode();
+        //unsigned int symbolRateHz = 0;
         switch (modulation)
         {
         case ModulationModeSCTE_1:
-          channel->GetTransponder().SetModulation(QAM_64);
+          transponder.SetModulation(QAM_64);
           //transponder.SetSymbolRate(5057000); // TODO: Why was symbol rate set for an ATSC transponder?
           break;
         case ModulationModeSCTE_2:
-          channel->GetTransponder().SetModulation(QAM_256);
+          transponder.SetModulation(QAM_256);
           //transponder.SetSymbolRate(5361000); // TODO: Why was symbol rate set for an ATSC transponder?
           break;
         case ModulationModeATSC_VSB8:
-          channel->GetTransponder().SetModulation(VSB_8);
+          transponder.SetModulation(VSB_8);
           break;
         case ModulationModeATSC_VSB16:
-          channel->GetTransponder().SetModulation(VSB_16);
+          transponder.SetModulation(VSB_16);
           break;
         default:
           break;
         }
+
+        channel->SetTransponder(transponder);
 
         // Transport Stream ID (TID) and program number / service ID (SID)
         // TODO: SID is 0xFFFF for analog channels
