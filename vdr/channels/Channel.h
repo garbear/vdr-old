@@ -176,7 +176,10 @@ public:
   void SetCaDescriptors(const CaDescriptorVector& caDescriptors);
 
   const cTransponder& GetTransponder(void) const       { return m_transponder; }
+        cTransponder& GetTransponder(void)             { return m_transponder; }
   void SetTransponder(const cTransponder& transponder) { m_transponder = transponder; }
+
+  unsigned int Number(void) const { return m_transponder.ChannelNumber() * 10 + m_channelId.Sid(); } // TODO
 
   /*!
    * \brief Returns the transponder frequency in MHz, plus the polarization in
@@ -184,9 +187,6 @@ public:
    * 100 GHz range (see cTransponder::WTF()).
    */
   unsigned int FrequencyMHzWithPolarization() const;
-
-  unsigned int Number(void) const { return m_number; }
-  void SetNumber(unsigned int number) { m_number = number; }
 
   SchedulePtr Schedule(void) const;
   bool HasSchedule(void) const;
@@ -217,8 +217,6 @@ private:
   CaDescriptorVector          m_caDescriptors;   // Max 12
 
   cTransponder                m_transponder;
-
-  unsigned int                m_number;          // Sequence number assigned on load
 
   SchedulePtr                 m_schedule;
   cLinkChannels*              m_linkChannels;

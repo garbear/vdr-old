@@ -295,7 +295,6 @@ EventVector cEit::GetEvents()
                       link->SetTransponder(channel->GetTransponder());
 
                       m_channelManager.AddChannel(link);
-                      m_channelManager.ReNumber();
 
                       //patFilter->Trigger();
                     }

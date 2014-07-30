@@ -128,7 +128,6 @@ void cChannel::Reset(void)
   m_channelId      = cChannelID();
   m_videoStream    = VideoStream();
   m_teletextStream = TeletextStream();
-  m_number         = 0;
   m_linkChannels   = NULL;
 
   m_name.clear();
@@ -156,7 +155,6 @@ cChannel& cChannel::operator=(const cChannel& rhs)
   m_teletextStream  = rhs.m_teletextStream;
   m_caDescriptors   = rhs.m_caDescriptors;
   m_transponder     = rhs.m_transponder;
-  m_number          = rhs.m_number;
 
   // TODO
   m_schedule.reset();
@@ -174,9 +172,11 @@ ChannelPtr cChannel::Clone(void) const
 
 void cChannel::SetId(uint16_t nid, uint16_t tsid, uint16_t sid)
 {
-  if (nid != m_channelId.Nid() || tsid != m_channelId.Tsid() || sid != m_channelId.Sid())
+  const cChannelID newId(nid, tsid, sid);
+
+  if (m_channelId != newId)
   {
-    m_channelId.SetID(nid, tsid, sid);
+    m_channelId = newId;
 
     m_schedule.reset();
 

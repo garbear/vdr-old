@@ -189,8 +189,6 @@ bool cChannelManager::Load(const std::string &file)
     channelNode = channelNode->NextSibling(CHANNEL_XML_ELM_CHANNEL);
   }
 
-  ReNumber();
-
   // Don't continue if we didn't load any channels
   return !m_channels.empty();
 }
@@ -327,22 +325,6 @@ ChannelPtr cChannelManager::GetByTransponderID(const cChannelID& channelID)
       return channel;
   }
   return cChannel::EmptyChannel;
-}
-
-void cChannelManager::ReNumber()
-{
-  CLockObject lock(m_mutex);
-  m_channelSids.clear();
-  m_maxNumber = 0;
-
-  unsigned int number = 1;
-  for (ChannelVector::const_iterator itChannel = m_channels.begin(); itChannel != m_channels.end(); ++itChannel)
-  {
-    const ChannelPtr &channel = *itChannel;
-    m_channelSids[channel->ID().Sid()].push_back(channel);
-    m_maxNumber = number;
-    channel->SetNumber(number++);
-  }
 }
 
 bool cChannelManager::HasUniqueChannelID(const ChannelPtr &newChannel, const ChannelPtr &oldChannel /* = cChannel::EmptyChannel */) const

@@ -112,11 +112,6 @@ public:
   ChannelPtr GetByTransponderID(const cChannelID& channelID);
 
   /*!
-   * \brief The documentation claims: "Recalculate 'number' based on channel type" (TODO)
-   */
-  void ReNumber();
-
-  /*!
    * \brief Returns false if another channel has the same cChannelID tag
    * \param newChannel The channel whose channel ID will be used in the search
    * \param oldChannel Skip comparing channel IDs with this channel
