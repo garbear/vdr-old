@@ -148,8 +148,7 @@ bool cDeviceSectionFilterSubsystem::GetSection(const FilterResourceCollection& f
   }
 
   // Block until a resources receives a section
-  if (!pollRequest->WaitForSection())
-    esyslog("Failed to read section: timed out");
+  const bool bTimedOut = !pollRequest->WaitForSection();
 
   // Remove poll request so that Process() doesn't invoke it twice
   {
@@ -174,7 +173,7 @@ bool cDeviceSectionFilterSubsystem::GetSection(const FilterResourceCollection& f
   }
   else
   {
-    dsyslog("Failed to read section: aborted");
+    esyslog("Failed to read section: %s", bTimedOut ? "timed out" : "aborted");
   }
 
   return false;
