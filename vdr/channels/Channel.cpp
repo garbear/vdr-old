@@ -82,7 +82,7 @@ bool ISTRANSPONDER(int frequencyMHz1, int frequencyMHz2)
   return std::abs(frequencyMHz1 - frequencyMHz2) < 4;
 }
 
-ChannelPtr cChannel::EmptyChannel;
+const ChannelPtr cChannel::EmptyChannel;
 
 cChannel::cChannel(void)
 {

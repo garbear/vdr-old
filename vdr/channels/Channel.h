@@ -132,7 +132,7 @@ public:
 
   ChannelPtr Clone(void) const;
 
-  static ChannelPtr EmptyChannel;
+  static const ChannelPtr EmptyChannel;
 
   const cChannelID& ID(void) const { return m_channelId; }
   void SetId(uint16_t nid, uint16_t tsid, uint16_t sid);

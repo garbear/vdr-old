@@ -45,7 +45,7 @@ using namespace std;
 namespace VDR
 {
 
-DevicePtr cDevice::EmptyDevice;
+const DevicePtr cDevice::EmptyDevice;
 
 // --- cSubsystems -----------------------------------------------------------
 void cSubsystems::Free() const

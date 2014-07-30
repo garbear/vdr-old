@@ -45,7 +45,7 @@
 namespace VDR
 {
 
-TimerPtr cTimer::EmptyTimer;
+const TimerPtr cTimer::EmptyTimer;
 
 cTimer::cTimer(void)
 {

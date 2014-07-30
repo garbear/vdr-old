@@ -70,7 +70,7 @@ protected:
 public:
   virtual ~cDevice();
 
-  static DevicePtr EmptyDevice;
+  static const DevicePtr EmptyDevice;
 
   cDeviceChannelSubsystem*         Channel(void)         const { return m_subsystems.Channel; }
   cDeviceCommonInterfaceSubsystem* CommonInterface(void) const { return m_subsystems.CommonInterface; }

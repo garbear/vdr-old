@@ -46,7 +46,7 @@ namespace VDR
 
 // --- cSchedulesLock --------------------------------------------------------
 
-SchedulePtr cSchedules::EmptySchedule = SchedulePtr();
+const SchedulePtr cSchedules::EmptySchedule;
 
 cSchedulesLock::cSchedulesLock(bool WriteLock, int TimeoutMs)
 {

@@ -64,7 +64,7 @@ public:
   cTimer(const cTimer &Timer);
   virtual ~cTimer();
 
-  static TimerPtr EmptyTimer;
+  static const TimerPtr EmptyTimer;
 
   cTimer& operator= (const cTimer &Timer);
   bool operator==(const cTimer &Timer);

@@ -75,7 +75,7 @@ public:
   SchedulePtr GetSchedule(ChannelPtr Channel, bool AddIfMissing = false);
   ScheduleVector GetUpdatedSchedules(const std::map<int, CDateTime>& lastUpdated, CChannelFilter& filter);
 
-  static SchedulePtr EmptySchedule;
+  static const SchedulePtr EmptySchedule;
 protected:
   static cSchedules& Get(void);
 
