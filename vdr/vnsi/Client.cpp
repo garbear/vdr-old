@@ -1903,6 +1903,7 @@ bool cVNSIClient::processSCAN_Progress() /* OPCODE 145 */
     m_resp->add_U32(VNSI_RET_OK);
     m_resp->add_double(m_scanner.GetPercentage());
     m_resp->add_U32(m_scanner.GetFrequency());
+    m_resp->add_U32(m_scanner.GetChannelNumber());
   }
   else
     m_resp->add_U32(VNSI_RET_ERROR);

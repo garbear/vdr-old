@@ -40,11 +40,9 @@ public:
   bool Start(const cScanConfig& setup);
   void Stop(bool bWait = false) { }
 
-  float GetPercentage() const { return m_percentage; }
-  virtual void ScanPercentage(float percentage) { m_percentage = percentage; }
-
   float GetFrequency() const { return m_frequencyHz; }
-  virtual void ScanFrequency(unsigned int frequencyHz) { m_frequencyHz = frequencyHz; }
+  unsigned int GetChannelNumber() const { return m_number; }
+  float GetPercentage() const { return m_percentage; }
 
 protected:
   virtual void* Process(void);
@@ -52,6 +50,7 @@ protected:
 private:
   cScanConfig        m_setup;
   unsigned int       m_frequencyHz;
+  unsigned int       m_number;
   float              m_percentage;
 };
 

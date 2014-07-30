@@ -46,6 +46,7 @@ namespace VDR
 
 cScanner::cScanner(void)
  : m_frequencyHz(0),
+   m_number(0),
    m_percentage(0.0f)
 {
 }
@@ -99,7 +100,9 @@ void* cScanner::Process()
   while (transponders->HasNext())
   {
     cTransponder transponder = transponders->GetNext();
+
     m_frequencyHz = transponder.FrequencyHz();
+    m_number      = transponder.ChannelNumber();
 
     if (device->Channel()->SwitchTransponder(transponder))
     {
