@@ -61,7 +61,7 @@ class cDvbSectionFilterSubsystem;
 
 /// The cDvbDevice implements a DVB device which can be accessed through the Linux DVB driver API.
 
-class cDvbDevice : public cDevice, public Observable, public Observer
+class cDvbDevice : public cDevice, public Observer
 {
 public:
   cDvbDevice(unsigned int adapter, unsigned int frontend);
