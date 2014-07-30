@@ -135,8 +135,8 @@ public:
   static ChannelPtr EmptyChannel;
 
   const cChannelID& ID(void) const { return m_channelId; }
-  uint32_t Hash(void) const { return m_channelId.Hash(); }
   void SetId(uint16_t nid, uint16_t tsid, uint16_t sid);
+  uint32_t UID(void) const { return m_channelId.Hash(); }
 
   const std::string& Name(void)       const { return m_name; }
   const std::string& ShortName(void)  const { return m_shortName; }

@@ -300,13 +300,13 @@ bool CChannelFilter::PassFilter(const ChannelPtr channel)
   std::vector<int>::iterator it;
   if (IsRadio(channel))
   {
-    it = std::find(m_channelsRadio.begin(), m_channelsRadio.end(), channel->Hash());
+    it = std::find(m_channelsRadio.begin(), m_channelsRadio.end(), channel->UID());
     if(it!=m_channelsRadio.end())
       return false;
   }
   else
   {
-    it = std::find(m_channelsVideo.begin(), m_channelsVideo.end(), channel->Hash());
+    it = std::find(m_channelsVideo.begin(), m_channelsVideo.end(), channel->UID());
     if(it!=m_channelsVideo.end())
       return false;
   }

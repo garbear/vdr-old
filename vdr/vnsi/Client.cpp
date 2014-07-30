@@ -987,7 +987,7 @@ bool cVNSIClient::processCHANNELS_GetChannels() /* OPCODE 63 */
     m_resp->add_U32(channel->Number());
     m_resp->add_String(m_toUTF8.Convert(channel->Name().c_str()));
     m_resp->add_String(m_toUTF8.Convert(channel->Provider().c_str()));
-    m_resp->add_U32(channel->Hash());
+    m_resp->add_U32(channel->UID());
     m_resp->add_U32(channel->GetCaId(0));
     caid_idx = 0;
     caids = "caids:";
@@ -1088,7 +1088,7 @@ bool cVNSIClient::processCHANNELS_GetGroupMembers()
 
     if(name == groupname)
     {
-      m_resp->add_U32(channel->Hash());
+      m_resp->add_U32(channel->UID());
       m_resp->add_U32(++index);
     }
   }
@@ -1262,7 +1262,7 @@ bool cVNSIClient::processTIMER_Get() /* OPCODE 81 */
       m_resp->add_U32(timer->Priority());
       m_resp->add_U32(timer->LifetimeDays());
       m_resp->add_U32(timer->Channel()->Number());
-      m_resp->add_U32(timer->Channel()->Hash());
+      m_resp->add_U32(timer->Channel()->UID());
       m_resp->add_U32(timer->StartTimeAsTime());
       m_resp->add_U32(timer->EndTimeAsTime());
       m_resp->add_U32(timer->Day());
@@ -1297,7 +1297,7 @@ bool cVNSIClient::processTIMER_GetList() /* OPCODE 82 */
     m_resp->add_U32((*it)->Priority());
     m_resp->add_U32((*it)->LifetimeDays());
     m_resp->add_U32((*it)->Channel()->Number());
-    m_resp->add_U32((*it)->Channel()->Hash());
+    m_resp->add_U32((*it)->Channel()->UID());
     m_resp->add_U32((*it)->StartTimeAsTime());
     m_resp->add_U32((*it)->EndTimeAsTime());
     m_resp->add_U32((*it)->Day());

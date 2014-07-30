@@ -380,7 +380,7 @@ ChannelPtr cChannelManager::GetByChannelUID(uint32_t channelUID) const
   for (ChannelVector::const_iterator it = m_channels.begin(); it != m_channels.end(); ++it)
   {
     channel = (*it);
-    if(channelUID == channel->Hash()) {
+    if(channelUID == channel->UID()) {
       result = channel;
       break;
     }

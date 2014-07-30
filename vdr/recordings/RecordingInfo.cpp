@@ -246,7 +246,7 @@ bool cRecordingInfo::Write(const std::string& strFilename /* = "" */) const
   if (m_channel)
   {
     recordingElement.SetAttribute(RECORDING_XML_ATTR_CHANNEL_NAME, m_channel->Name().c_str());
-    recordingElement.SetAttribute(RECORDING_XML_ATTR_CHANNEL_UID,  m_channel->Hash());
+    recordingElement.SetAttribute(RECORDING_XML_ATTR_CHANNEL_UID,  m_channel->UID());
   }
 
   recordingElement.SetAttribute(RECORDING_XML_ATTR_FPS,      dtoa(m_dFramesPerSecond, "%.10g").c_str());
