@@ -77,7 +77,7 @@ cDvbDevice::cDvbDevice(unsigned int adapter, unsigned int frontend)
 
 cSubsystems cDvbDevice::CreateSubsystems(cDvbDevice* device)
 {
-  cSubsystems subsystems;
+  cSubsystems subsystems = { };
 
   subsystems.Channel         = new cDvbChannelSubsystem(device);
   subsystems.CommonInterface = new cDvbCommonInterfaceSubsystem(device);
