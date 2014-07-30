@@ -108,9 +108,9 @@ cDeviceScanSubsystem::cDeviceScanSubsystem(cDevice* device)
 
 void cDeviceScanSubsystem::StartScan()
 {
-  m_channelPropsScanner.CreateThread(false);
-  m_channelNamesScanner.CreateThread(false);
-  m_eventScanner.CreateThread(false);
+  m_channelPropsScanner.CreateThread(true);
+  m_channelNamesScanner.CreateThread(true);
+  m_eventScanner.CreateThread(true);
 }
 
 bool cDeviceScanSubsystem::WaitForChannelScan(unsigned int timeoutMs)

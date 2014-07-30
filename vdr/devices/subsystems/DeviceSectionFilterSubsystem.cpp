@@ -97,7 +97,7 @@ cDeviceSectionFilterSubsystem::cDeviceSectionFilterSubsystem(cDevice* device)
 void cDeviceSectionFilterSubsystem::StartSectionHandler(void)
 {
   if (!IsRunning())
-    CreateThread();
+    CreateThread(true);
 }
 
 void cDeviceSectionFilterSubsystem::StopSectionHandler(void)

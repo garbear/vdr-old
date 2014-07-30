@@ -38,7 +38,8 @@
 using namespace PLATFORM;
 using namespace std;
 
-#define TRANSPONDER_TIMEOUT  1000
+// TODO: This can be shorted by fetching PMT tables in parallel
+#define TRANSPONDER_TIMEOUT 5000
 
 namespace VDR
 {
