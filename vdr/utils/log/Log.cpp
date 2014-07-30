@@ -23,7 +23,7 @@
 #include "settings/Settings.h"
 #include "LogConsole.h"
 #include "LogSyslog.h"
-#include "platform/threads/threads.h"
+#include "lib/platform/threads/threads.h"
 #include <stdarg.h>
 
 #define MAXSYSLOGBUF (256)

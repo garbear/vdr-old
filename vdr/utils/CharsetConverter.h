@@ -26,7 +26,7 @@
 //#include "threads/CriticalSection.h"
 #include "uXstrings.h"
 
-//#include "platform/threads/mutex.h"
+//#include "lib/platform/threads/mutex.h"
 
 #include <string>
 #include <vector>

@@ -22,7 +22,7 @@
 #include "Transfer.h"
 #include "Device.h"
 #include "devices/subsystems/DeviceReceiverSubsystem.h"
-#include "platform/threads/mutex.h"
+#include "lib/platform/threads/mutex.h"
 #include "utils/log/Log.h"
 
 namespace VDR

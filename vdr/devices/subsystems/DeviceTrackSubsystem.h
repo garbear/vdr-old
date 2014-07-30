@@ -22,7 +22,7 @@
 
 #include "devices/DeviceSubsystem.h"
 #include "devices/Receiver.h"
-#include "platform/threads/threads.h"
+#include "lib/platform/threads/threads.h"
 
 #include <string>
 

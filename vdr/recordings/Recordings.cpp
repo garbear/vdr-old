@@ -23,7 +23,7 @@
 #include "filesystem/Directory.h"
 #include "filesystem/LockFile.h"
 #include "filesystem/Videodir.h"
-#include "platform/threads/throttle.h"
+#include "lib/platform/threads/throttle.h"
 #include "utils/CommonMacros.h"
 #include "utils/I18N.h"
 #include "utils/log/Log.h"

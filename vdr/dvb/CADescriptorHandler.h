@@ -26,7 +26,7 @@
 #include "transponders/TransponderTypes.h"
 
 #include <map>
-#include "platform/threads/mutex.h"
+#include "lib/platform/threads/mutex.h"
 #include <stdint.h>
 #include <vector>
 

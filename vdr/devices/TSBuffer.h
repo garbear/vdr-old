@@ -21,7 +21,7 @@
  */
 #pragma once
 
-#include "platform/threads/threads.h"
+#include "lib/platform/threads/threads.h"
 
 #include <stdint.h>
 

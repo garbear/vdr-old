@@ -23,7 +23,7 @@
 #include "Channel.h"
 #include "ChannelTypes.h"
 #include "utils/Observer.h"
-#include "platform/threads/mutex.h"
+#include "lib/platform/threads/mutex.h"
 #include "transponders/TransponderTypes.h"
 
 #include <map>

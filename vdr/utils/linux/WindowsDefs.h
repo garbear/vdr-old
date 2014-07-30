@@ -23,7 +23,7 @@
 
 #ifdef TARGET_POSIX
 
-#include "platform/os.h"
+#include "lib/platform/os.h"
 
 namespace VDR
 {

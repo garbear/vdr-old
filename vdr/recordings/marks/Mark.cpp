@@ -21,7 +21,7 @@
 
 #include "Mark.h"
 #include "MarksDefinitions.h"
-#include "platform/threads/mutex.h"
+#include "lib/platform/threads/mutex.h"
 #include "utils/XBMCTinyXML.h"
 #include "utils/StringUtils.h"
 

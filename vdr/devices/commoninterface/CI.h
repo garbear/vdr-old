@@ -24,7 +24,7 @@
 #include "channels/ChannelID.h"
 #include "devices/Device.h"
 #include "devices/DeviceTypes.h"
-#include "platform/threads/threads.h"
+#include "lib/platform/threads/threads.h"
 #include "transponders/TransponderTypes.h"
 #include "utils/List.h"
 #include "utils/Timer.h"

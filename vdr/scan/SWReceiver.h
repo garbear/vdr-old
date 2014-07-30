@@ -23,7 +23,7 @@
 
 #include "channels/ChannelTypes.h"
 #include "devices/Receiver.h"
-#include "platform/threads/threads.h"
+#include "lib/platform/threads/threads.h"
 #include "utils/DateTime.h"
 
 #include <stdint.h>

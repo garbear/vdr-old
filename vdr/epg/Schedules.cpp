@@ -24,7 +24,7 @@
 #include "Event.h"
 #include "channels/ChannelFilter.h"
 #include "channels/ChannelManager.h"
-#include "platform/threads/threads.h"
+#include "lib/platform/threads/threads.h"
 #include "settings/Settings.h"
 #include "timers/Timers.h"
 #include "utils/CalendarUtils.h"

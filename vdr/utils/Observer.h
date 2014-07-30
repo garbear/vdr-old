@@ -20,7 +20,7 @@
  *
  */
 
-#include "platform/threads/threads.h"
+#include "lib/platform/threads/threads.h"
 
 #include <vector>
 

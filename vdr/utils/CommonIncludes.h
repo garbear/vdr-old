@@ -20,7 +20,7 @@
  */
 #pragma once
 
-#include "platform/os.h"
+#include "lib/platform/os.h"
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>

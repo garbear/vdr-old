@@ -21,7 +21,7 @@
 #pragma once
 
 #include "recordings/RecordingConfig.h" // for DEFAULTFRAMESPERSECOND
-#include "platform/threads/mutex.h"
+#include "lib/platform/threads/mutex.h"
 #include "utils/List.h"
 
 #include <string>

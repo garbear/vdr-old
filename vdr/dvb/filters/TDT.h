@@ -23,7 +23,7 @@
 #pragma once
 
 #include "dvb/filters/Filter.h"
-#include "platform/threads/mutex.h"
+#include "lib/platform/threads/mutex.h"
 
 namespace VDR
 {

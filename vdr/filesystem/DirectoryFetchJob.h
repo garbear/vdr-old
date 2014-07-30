@@ -22,8 +22,8 @@
 
 #include "IDirectory.h"
 
-#include "platform/threads/threads.h"
-#include "platform/threads/mutex.h"
+#include "lib/platform/threads/threads.h"
+#include "lib/platform/threads/mutex.h"
 
 #include <string>
 

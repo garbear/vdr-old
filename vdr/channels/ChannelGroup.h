@@ -20,7 +20,7 @@
  */
 #pragma once
 
-#include "platform/threads/mutex.h"
+#include "lib/platform/threads/mutex.h"
 
 #include <string>
 #include <vector>

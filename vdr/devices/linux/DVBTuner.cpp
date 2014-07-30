@@ -27,7 +27,7 @@
 #include "devices/subsystems/DeviceReceiverSubsystem.h"
 #include "dvb/DiSEqC.h"
 #include "filesystem/Poller.h"
-#include "platform/util/timeutils.h"
+#include "lib/platform/util/timeutils.h"
 #include "settings/Settings.h"
 #include "transponders/Stringifier.h"
 #include "utils/CommonMacros.h"

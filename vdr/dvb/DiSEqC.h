@@ -21,7 +21,7 @@
 #pragma once
 
 #include "Config.h"
-#include "platform/threads/mutex.h"
+#include "lib/platform/threads/mutex.h"
 #include "transponders/TransponderTypes.h"
 #include "utils/List.h"
 

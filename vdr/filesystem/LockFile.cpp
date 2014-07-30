@@ -21,7 +21,7 @@
 
 #include "LockFile.h"
 #include "Directory.h"
-#include "platform/threads/mutex.h"
+#include "lib/platform/threads/mutex.h"
 #include "utils/DateTime.h"
 #include "utils/log/Log.h"
 #include "utils/Tools.h" // for AddDirectory()

@@ -24,7 +24,7 @@
 #include "Schedule.h"
 #include "channels/ChannelID.h"
 #include "channels/ChannelTypes.h"
-#include "platform/threads/mutex.h"
+#include "lib/platform/threads/mutex.h"
 #include "utils/DateTime.h"
 
 #include <map>

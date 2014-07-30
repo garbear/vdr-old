@@ -23,7 +23,7 @@
 #include "URL.h"
 #include "URLUtils.h"
 #include "filesystem/File.h"
-#include "platform/os.h"
+#include "lib/platform/os.h"
 #include "utils/StringUtils.h"
 //#include "utils/RegExp.h"
 //#include "utils/log.h"

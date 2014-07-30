@@ -20,8 +20,8 @@
  */
 #pragma once
 
-#include "platform/threads/mutex.h"
-#include "platform/threads/throttle.h"
+#include "lib/platform/threads/mutex.h"
+#include "lib/platform/threads/throttle.h"
 
 namespace VDR
 {

@@ -22,7 +22,7 @@
 #include "DeviceSectionFilterSubsystem.h"
 #include "DeviceChannelSubsystem.h"
 #include "dvb/filters/Filter.h"
-#include "platform/util/timeutils.h"
+#include "lib/platform/util/timeutils.h"
 #include "utils/log/Log.h"
 #include "utils/Tools.h"
 

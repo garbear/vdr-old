@@ -22,7 +22,7 @@
 
 #include "channels/Channel.h"
 #include "channels/ChannelID.h"
-#include "platform/threads/mutex.h"
+#include "lib/platform/threads/mutex.h"
 #include "Config.h"
 
 #include <set>

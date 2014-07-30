@@ -24,7 +24,7 @@
 
 #include "ResumeFile.h"
 #include "filesystem/File.h"
-#include "platform/threads/threads.h"
+#include "lib/platform/threads/threads.h"
 
 #include <stdint.h>
 #include <string>

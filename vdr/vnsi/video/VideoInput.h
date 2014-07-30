@@ -27,7 +27,7 @@
 #include "channels/ChannelTypes.h"
 #include "devices/DeviceTypes.h"
 #include "dvb/filters/Filter.h"
-#include "platform/threads/threads.h"
+#include "lib/platform/threads/threads.h"
 
 #include <stdint.h>
 

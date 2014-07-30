@@ -27,7 +27,7 @@
 #include "RecPlayer.h"
 #include "devices/Remux.h"
 #include "filesystem/Videodir.h"
-#include "platform/threads/mutex.h"
+#include "lib/platform/threads/mutex.h"
 #include "recordings/Recording.h"
 #include "settings/Settings.h"
 #include "utils/CommonMacros.h"

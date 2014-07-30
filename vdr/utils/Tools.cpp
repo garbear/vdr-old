@@ -30,7 +30,7 @@
 #include "filesystem/Poller.h"
 #include "filesystem/ReadDir.h"
 #include "filesystem/SpecialProtocol.h"
-#include "platform/threads/threads.h"
+#include "lib/platform/threads/threads.h"
 #include "utils/log/Log.h"
 
 #include <algorithm>

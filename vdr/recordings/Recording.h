@@ -25,7 +25,7 @@
 #include "Config.h"
 #include "filesystem/File.h"
 #include "filesystem/ResumeFile.h"
-#include "platform/threads/threads.h"
+#include "lib/platform/threads/threads.h"
 #include "timers/Timers.h"
 #include "timers/TimerTypes.h"
 

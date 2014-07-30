@@ -24,7 +24,7 @@
 #include "devices/DeviceTypes.h"
 #include "DVBLegacy.h"
 #include "DVBTuner.h"
-#include "platform/threads/threads.h"
+#include "lib/platform/threads/threads.h"
 #include "utils/Observer.h"
 
 #include <linux/dvb/frontend.h>

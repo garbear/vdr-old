@@ -31,7 +31,7 @@
 //#include "threads/SingleLock.h"
 //#include "log.h"
 
-#include "platform/threads/mutex.h"
+#include "lib/platform/threads/mutex.h"
 
 #include <errno.h>
 #include <iconv.h>

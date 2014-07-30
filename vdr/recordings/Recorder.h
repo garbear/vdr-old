@@ -25,7 +25,7 @@
 #include "devices/Receiver.h"
 #include "devices/Remux.h"
 #include "epg/EPGTypes.h"
-#include "platform/threads/threads.h"
+#include "lib/platform/threads/threads.h"
 #include "utils/Ringbuffer.h"
 
 #include <stdint.h>

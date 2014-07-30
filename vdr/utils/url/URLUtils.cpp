@@ -22,7 +22,7 @@
 
 #include "URLUtils.h"
 //#include "filesystem/SpecialProtocol.h" // TODO
-#include "platform/os.h"
+#include "lib/platform/os.h"
 #include "utils/StringUtils.h"
 /*
 #include "network/Network.h"
