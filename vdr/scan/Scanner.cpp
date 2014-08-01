@@ -66,6 +66,11 @@ bool cScanner::Start(const cScanConfig& setup)
   return false;
 }
 
+void cScanner::Stop(bool bWait)
+{
+  StopThread(bWait ? 0 : -1);
+}
+
 void* cScanner::Process()
 {
   m_percentage = 0.0f;
@@ -73,7 +78,6 @@ void* cScanner::Process()
   cTransponderFactory* transponders = NULL;
 
   // TODO: Need to get caps from cDevice class
-  const DevicePtr& device = m_setup.device;
   shared_ptr<cDvbDevice> dvbDevice = dynamic_pointer_cast<cDvbDevice>(m_setup.device);
   if (!dvbDevice)
     return NULL;
@@ -100,16 +104,16 @@ void* cScanner::Process()
 
   const int64_t startMs = GetTimeMs();
 
-  while (transponders->HasNext())
+  while (!IsStopped() && transponders->HasNext())
   {
     cTransponder transponder = transponders->GetNext();
 
     m_frequencyHz = transponder.FrequencyHz();
     m_number      = transponder.ChannelNumber();
 
-    if (device->Channel()->SwitchTransponder(transponder))
+    if (m_setup.device->Channel()->SwitchTransponder(transponder))
     {
-      bool bSuccess = device->Scan()->WaitForChannelScan(TRANSPONDER_TIMEOUT);
+      bool bSuccess = m_setup.device->Scan()->WaitForChannelScan(TRANSPONDER_TIMEOUT);
       dsyslog("%s %d MHz", bSuccess ? "Successfully scanned" : "Failed to scan", transponder.FrequencyMHz());
     }
 

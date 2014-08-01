@@ -38,7 +38,7 @@ public:
    * previous scan is still running.
    */
   bool Start(const cScanConfig& setup);
-  void Stop(bool bWait = false) { }
+  void Stop(bool bWait);
 
   float GetFrequency() const { return m_frequencyHz; }
   unsigned int GetChannelNumber() const { return m_number; }
