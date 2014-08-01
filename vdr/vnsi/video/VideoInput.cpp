@@ -32,7 +32,6 @@
 #include "devices/subsystems/DeviceReceiverSubsystem.h"
 #include "devices/subsystems/DeviceSectionFilterSubsystem.h"
 #include "devices/Remux.h"
-#include "dvb/filters/PAT.h"
 #include "channels/ChannelManager.h"
 #include "devices/Device.h"
 #include "devices/Receiver.h"
@@ -63,7 +62,6 @@ void cVideoInput::ResetMembers(void)
   m_VideoBuffer = NULL;
   m_PmtChange   = false;
   m_Device      = cDevice::EmptyDevice;
-  m_SeenPmt     = false;
 }
 
 bool cVideoInput::Open(ChannelPtr channel, cVideoBuffer *videoBuffer)
@@ -82,30 +80,19 @@ bool cVideoInput::Open(ChannelPtr channel, cVideoBuffer *videoBuffer)
     if (m_Device->Channel()->SwitchChannel(m_Channel))
     {
       dsyslog("Creating new live Receiver");
-      m_SeenPmt   = false;
       m_Receiver  = new cLiveReceiver(m_Device, this, m_Channel);
       m_Device->Receiver()->AttachReceiver(m_Receiver);
-      CreateThread();
+
+      PmtChange();
+
       return true;
     }
   }
   return false;
 }
 
-void cVideoInput::CancelPMTThread(void)
-{
-  StopThread(-1);
-  {
-    CLockObject lock(m_mutex);
-    m_SeenPmt = true;
-  }
-  StopThread(0);
-}
-
 void cVideoInput::Close()
 {
-  CancelPMTThread();
-
   DevicePtr device;
   cLiveReceiver* receiver;
   {
@@ -139,14 +126,11 @@ void cVideoInput::Close()
 
 void cVideoInput::PmtChange(void)
 {
-  isyslog("VideoInput - new pmt, attaching receiver");
-
   if (m_Receiver)
     m_Receiver->SetPids(*m_Channel);
 
   CLockObject lock(m_mutex);
   m_PmtChange = true;
-  m_SeenPmt   = true;
 }
 
 void cVideoInput::Receive(uint8_t *data, int length)
@@ -172,44 +156,6 @@ void cVideoInput::Attach(bool on)
 {
   CLockObject lock(m_mutex);
   m_VideoBuffer->AttachInput(on);
-}
-
-void* cVideoInput::Process()
-{
-  cPat pat(m_Device.get());
-
-  m_channels.clear();
-  while (!IsStopped() && m_channels.empty())
-    pat.ScanChannels(this);
-
-  if (IsStopped())
-    return NULL;
-
-  CLockObject lock(m_mutex);
-  if (m_Channel)
-  {
-    for (ChannelVector::const_iterator it = m_channels.begin(); it != m_channels.end(); ++it)
-    {
-      if ((*it)->ID().Sid() == m_Channel->ID().Sid())
-      {
-        m_Channel->SetStreams((*it)->GetVideoStream(),
-                              (*it)->GetAudioStreams(),
-                              (*it)->GetDataStreams(),
-                              (*it)->GetSubtitleStreams(),
-                              (*it)->GetTeletextStream());
-        PmtChange();
-        break;
-      }
-    }
-  }
-
-  if (!m_SeenPmt)
-  {
-    isyslog("VideoInput: no pat/pmt within timeout, falling back to channel pids");
-    PmtChange();
-  }
-
-  return NULL;
 }
 
 }

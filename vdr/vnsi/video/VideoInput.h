@@ -26,8 +26,7 @@
 
 #include "channels/ChannelTypes.h"
 #include "devices/DeviceTypes.h"
-#include "dvb/filters/Filter.h"
-#include "lib/platform/threads/threads.h"
+#include "lib/platform/threads/mutex.h"
 
 #include <stdint.h>
 
@@ -37,7 +36,7 @@ namespace VDR
 class cLiveReceiver;
 class cVideoBuffer;
 
-class cVideoInput : public PLATFORM::CThread, public iFilterCallback
+class cVideoInput
 {
 friend class cLiveReceiver;
 public:
@@ -46,23 +45,18 @@ public:
   bool Open(ChannelPtr channel, cVideoBuffer *videoBuffer);
   void Close();
 
-  virtual void OnChannelParamsScanned(const ChannelPtr& channel) { m_channels.push_back(channel); } // TODO
-
 protected:
   void ResetMembers(void);
-  virtual void* Process(void);
   void PmtChange(void);
   void Receive(uint8_t *data, int length);
   void Attach(bool on);
-  void CancelPMTThread(void);
+
   DevicePtr                  m_Device;
   cLiveReceiver*             m_Receiver;
   ChannelPtr                 m_Channel;
   cVideoBuffer*              m_VideoBuffer;
   PLATFORM::CMutex           m_mutex;
   bool                       m_PmtChange;
-  bool                       m_SeenPmt;
-  ChannelVector              m_channels;
 };
 
 }
