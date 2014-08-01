@@ -128,7 +128,7 @@ const char* Stringifier::DeliverySystemToString(fe_delivery_system_t deliverySys
   switch (deliverySystem)
   {
   case SYS_UNDEFINED:    return TRANSPONDER_STRING_SYSTEM_UNDEFINED;
-  case SYS_DVBC_ANNEX_A: return TRANSPONDER_STRING_SYSTEM_DVBC_ANNEX_A;
+  case SYS_DVBC_ANNEX_AC:return TRANSPONDER_STRING_SYSTEM_DVBC_ANNEX_A;
   case SYS_DVBC_ANNEX_B: return TRANSPONDER_STRING_SYSTEM_DVBC_ANNEX_B;
   case SYS_DVBT:         return TRANSPONDER_STRING_SYSTEM_DVBT;
   case SYS_DSS:          return TRANSPONDER_STRING_SYSTEM_DSS;
@@ -155,7 +155,7 @@ fe_delivery_system_t Stringifier::StringToDeliverySystem(const char* strDelivery
   if (strDeliverySystem)
   {
     if (strcmp(strDeliverySystem, TRANSPONDER_STRING_SYSTEM_UNDEFINED)    == 0) return SYS_UNDEFINED;
-    if (strcmp(strDeliverySystem, TRANSPONDER_STRING_SYSTEM_DVBC_ANNEX_A) == 0) return SYS_DVBC_ANNEX_A;
+    if (strcmp(strDeliverySystem, TRANSPONDER_STRING_SYSTEM_DVBC_ANNEX_A) == 0) return SYS_DVBC_ANNEX_AC;
     if (strcmp(strDeliverySystem, TRANSPONDER_STRING_SYSTEM_DVBC_ANNEX_B) == 0) return SYS_DVBC_ANNEX_B;
     if (strcmp(strDeliverySystem, TRANSPONDER_STRING_SYSTEM_DVBT)         == 0) return SYS_DVBT;
     if (strcmp(strDeliverySystem, TRANSPONDER_STRING_SYSTEM_DSS)          == 0) return SYS_DSS;
