@@ -483,7 +483,7 @@ bool cTimer::StartRecording(void)
   ChannelPtr channel = Channel();
   if (channel)
   {
-    DevicePtr device = cDeviceManager::Get().GetDevice(*channel, Priority(), false);
+    DevicePtr device = cDeviceManager::Get().GetDevice(0); // TODO
     if (device)
     {
       // switch channels
@@ -576,9 +576,9 @@ void cTimer::SwitchTransponder(const CDateTime& Now)
   if (NeedsTransponder || InVpsMargin)
   {
     // Find a device that provides the required transponder:
-    DevicePtr device = cDeviceManager::Get().GetDevice(*channel, MINPRIORITY, false);
+    DevicePtr device = cDeviceManager::Get().GetDevice(0); // TODO
     if (!device && InVpsMargin)
-      device = cDeviceManager::Get().GetDevice(*channel, LIVEPRIORITY, false);
+      device = cDeviceManager::Get().GetDevice(0); // TODO
 
     // Switch the device to the transponder:
     if (device)

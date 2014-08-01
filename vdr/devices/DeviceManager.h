@@ -65,28 +65,6 @@ public:
   DevicePtr GetDevice(unsigned int index);
 
   /*!
-   * \brief Returns a device that is able to receive the given Channel at the
-   *        given Priority, with the least impact on active recordings and live
-   *        viewing
-   * \param bQuery If true, no actual CAM assignments or receiver detachments
-   *        will be done, so that this function can be called without any side
-   *        effects in order to just determine whether a device is available for
-   *        the given Channel
-   * \sa ProvidesChannel()
-   *
-   * The LiveView parameter tells whether the device will be used for live
-   * viewing or a recording. If the Channel is encrypted, a CAM slot that claims
-   * to be able to decrypt the channel is automatically selected and assigned to
-   * the returned device. Whether or not this combination of device and CAM slot
-   * is actually able to decrypt the channel can only be determined by checking
-   * the "scrambling control" bits of the received TS packets. The Action()
-   * function automatically does this and takes care that after detaching any
-   * receivers because the channel can't be decrypted, this device/CAM
-   * combination will be skipped in the next call to GetDevice().
-   */
-  DevicePtr GetDevice(const cChannel &channel, bool bLiveView, bool bQuery = false);
-
-  /*!
    * \brief Closes down all devices. Must be called at the end of the program.
    */
   void Shutdown();
@@ -94,8 +72,6 @@ public:
   void Notify(const Observable &obs, const ObservableMessage msg);
 
 private:
-  static int GetClippedNumProvidedSystems(int availableBits, const cDevice& device);
-
   PLATFORM::CMutex           m_mutex;
   DeviceVector               m_devices;
   size_t                     m_devicesReady;

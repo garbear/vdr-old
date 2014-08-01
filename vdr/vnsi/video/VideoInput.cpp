@@ -68,7 +68,7 @@ bool cVideoInput::Open(ChannelPtr channel, cVideoBuffer *videoBuffer)
 {
   CLockObject lock(m_mutex);
 
-  m_Device = cDeviceManager::Get().GetDevice(*channel, true);
+  m_Device = cDeviceManager::Get().GetDevice(0); // TODO
   if (m_Device)
   {
     dsyslog("found device: '%s' (%d) for channel '%s'",

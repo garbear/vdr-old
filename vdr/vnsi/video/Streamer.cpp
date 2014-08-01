@@ -82,7 +82,7 @@ bool cLiveStreamer::Open(int serial)
 {
   Close();
 
-  m_Device = cDeviceManager::Get().GetDevice(*m_Channel.get(), true, true);
+  m_Device = cDeviceManager::Get().GetDevice(0); // TODO
 
   if (m_Device == cDevice::EmptyDevice)
   {
