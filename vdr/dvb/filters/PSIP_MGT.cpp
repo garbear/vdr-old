@@ -84,7 +84,6 @@ bool cPsipMgt::ScanPSIPData(iFilterCallback* callback)
         {
           //filters.push_back(shared_ptr<cFilter>(new cEitPsip(GetDevice(), tablePid, tableType - 0x0100)));
           const unsigned short eitNumber = tableType - 0x0100;
-          dsyslog("MGT: Discovered EIT%d, pid=%u", eitNumber, tablePid);
           eitPids.push_back(tablePid);
           break;
         }
@@ -99,6 +98,8 @@ bool cPsipMgt::ScanPSIPData(iFilterCallback* callback)
           break;
         }
       }
+
+      dsyslog("MGT: Discovered %d EIT tables", eitPids.size());
 
       // Get the/UTC offset for calculating event start times
       cPsipStt psipStt(GetDevice());
