@@ -22,6 +22,7 @@
 
 #include "channels/Channel.h"
 #include "lib/platform/threads/threads.h"
+#include "transponders/TransponderTypes.h" // for fe_caps_t
 
 #include <linux/dvb/frontend.h>
 #include <stdint.h>

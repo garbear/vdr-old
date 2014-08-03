@@ -20,6 +20,7 @@
  */
 #pragma once
 
+#include "devices/linux/DVBLegacy.h"
 #include "dvb/extended_frontend.h"
 #include <linux/dvb/frontend.h>
 

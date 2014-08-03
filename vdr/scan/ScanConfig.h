@@ -22,13 +22,12 @@
 #pragma once
 
 #include "channels/ChannelTypes.h"
+#include "devices/Device.h"
 #include "devices/DeviceTypes.h"
 #include "transponders/CountryUtils.h"
 #include "transponders/SatelliteUtils.h"
 #include "transponders/TransponderTypes.h"
 #include "transponders/TransponderFactory.h" // TODO
-
-#include <linux/dvb/frontend.h>
 
 namespace VDR
 {
