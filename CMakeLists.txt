@@ -100,10 +100,14 @@ else()
 endif()
 
 # Enable C++11
-ADD_DEFINITIONS(-std=gnu++11
-                -DHAVE_STD_SHARED_PTR
-                -DHAVE_STD__U16STRING
-                -DHAVE_STD__U32STRING)
+set(USE_CPP11 1)
+
+if(USE_CPP11)
+    ADD_DEFINITIONS(-std=gnu++11
+                    -DHAVE_STD_SHARED_PTR
+                    -DHAVE_STD__U16STRING
+                    -DHAVE_STD__U32STRING)
+endif()
 
 set(VDR_FS_SRC_NATIVE
 	vdr/filesystem/native/HDFile.cpp
