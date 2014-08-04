@@ -243,6 +243,7 @@ set(VDR_SRCS
 	vdr/utils/XSocket.cpp
 	vdr/utils/XTimeUtils.cpp
 	vdr/utils/linux/ConvUtils.cpp
+	vdr/utils/Version.cpp
 	vdr/Player.cpp
 	vdr/vnsi/net/RequestPacket.cpp
 	vdr/vnsi/net/ResponsePacket.cpp
