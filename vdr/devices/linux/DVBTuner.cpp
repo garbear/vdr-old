@@ -99,8 +99,6 @@ void SetCommand(vector<dtv_property>& frontends, uint32_t command, uint32_t data
   frontends.push_back(frontend);
 }
 
-CMutex cDvbTuner::m_bondMutex;
-
 cDvbTuner::cDvbTuner(cDvbDevice *device)
  : m_device(device),
    m_frontendInfo(),
@@ -112,9 +110,7 @@ cDvbTuner::cDvbTuner(cDvbDevice *device)
    m_frontendStatus(FE_STATUS_UNKNOWN),
    m_lastDiseqc(NULL),
    m_scr(NULL),
-   m_bLnbPowerTurnedOn(false),
-   m_bondedTuner(NULL),
-   m_bBondedMaster(false)
+   m_bLnbPowerTurnedOn(false)
 {
   assert(m_device);
 }
@@ -324,8 +320,6 @@ void cDvbTuner::Close(void)
     close(m_fileDescriptor);
     m_fileDescriptor = INVALID_FD;
 
-    UnBond();
-
     /* looks like this irritates the SCR switch, so let's leave it out for now
     if (m_lastDiseqc && m_lastDiseqc->IsScr())
     {
@@ -428,23 +422,6 @@ bool cDvbTuner::GetFrontendStatus(fe_status_t &status) const
 bool cDvbTuner::SwitchChannel(const ChannelPtr& channel)
 {
   assert(channel.get());
-
-  if (m_bondedTuner)
-  {
-    CLockObject lock(m_bondMutex);
-    cDvbTuner *BondedMaster = GetBondedMaster();
-    if (BondedMaster == this)
-    {
-      if (GetBondingParams(*channel) != GetBondingParams())
-      {
-        // switching to a completely different band, so set all others to idle:
-        for (cDvbTuner *t = m_bondedTuner; t && t != this; t = t->m_bondedTuner)
-          t->ClearChannel();
-      }
-    }
-    else if (GetBondingParams(*channel) != BondedMaster->GetBondingParams())
-      BondedMaster->SetChannel(channel);
-  }
 
   {
     CLockObject lock(m_mutex);
@@ -694,11 +671,13 @@ bool cDvbTuner::SetFrontend(const ChannelPtr& channel)
 
 void cDvbTuner::ResetToneAndVoltage(void)
 {
+  /*
   if (ioctl(m_fileDescriptor, FE_SET_VOLTAGE, m_bondedTuner ? SEC_VOLTAGE_OFF : SEC_VOLTAGE_13) < 0)
     LOG_ERROR;
 
   if (ioctl(m_fileDescriptor, FE_SET_TONE, SEC_TONE_OFF) < 0)
     LOG_ERROR;
+  */
 }
 
 void cDvbTuner::ExecuteDiseqc(const cDiseqc* Diseqc, unsigned int* Frequency)
@@ -766,110 +745,6 @@ void cDvbTuner::ExecuteDiseqc(const cDiseqc* Diseqc, unsigned int* Frequency)
 
   if (Diseqc->IsScr())
     Mutex.Unlock();
-}
-
-bool cDvbTuner::Bond(cDvbTuner* tuner)
-{
-  CLockObject lock(m_bondMutex);
-
-  if (!m_bondedTuner)
-  {
-    ResetToneAndVoltage();
-    m_bBondedMaster = false; // makes sure we don't disturb an existing master
-    m_bondedTuner = tuner->m_bondedTuner ? tuner->m_bondedTuner : tuner;
-    tuner->m_bondedTuner = this;
-    dsyslog("tuner %d/%d bonded with tuner %d/%d", m_device->Adapter(), m_device->Frontend(), m_bondedTuner->m_device->Adapter(), m_bondedTuner->m_device->Frontend());
-    return true;
-  }
-  else
-    esyslog("ERROR: tuner %d/%d already bonded with tuner %d/%d, can't bond with tuner %d/%d",
-        m_device->Adapter(), m_device->Frontend(), m_bondedTuner->m_device->Adapter(), m_bondedTuner->m_device->Frontend(), tuner->m_device->Adapter(), tuner->m_device->Frontend());
-  return false;
-}
-
-void cDvbTuner::UnBond(void)
-{
-  CLockObject lock(m_bondMutex);
-
-  if (cDvbTuner *t = m_bondedTuner)
-  {
-    dsyslog("tuner %d/%d unbonded from tuner %d/%d", m_device->Adapter(), m_device->Frontend(), m_bondedTuner->m_device->Adapter(), m_bondedTuner->m_device->Frontend());
-    while (t->m_bondedTuner != this)
-      t = t->m_bondedTuner;
-    if (t == m_bondedTuner)
-      t->m_bondedTuner = NULL;
-    else
-      t->m_bondedTuner = m_bondedTuner;
-    m_bBondedMaster = false; // another one will automatically become master whenever necessary
-    m_bondedTuner = NULL;
-  }
-}
-
-bool cDvbTuner::BondingOk(const cChannel& channel, bool bConsiderOccupied) const
-{
-  CLockObject lock(m_bondMutex);
-  if (cDvbTuner *t = m_bondedTuner)
-  {
-    string BondingParams = GetBondingParams(channel);
-    do
-    {
-      if (bConsiderOccupied && t->m_device->Channel()->Occupied())
-      {
-        if (BondingParams != t->GetBondedMaster()->GetBondingParams())
-          return false;
-      }
-      t = t->m_bondedTuner;
-    } while (t != m_bondedTuner);
-  }
-  return true;
-}
-
-string cDvbTuner::GetBondingParams(const cChannel& channel) const
-{
-  const cTransponder& transponder = channel.GetTransponder();
-
-  if (transponder.IsSatellite())
-  {
-    if (cSettings::Get().m_bDiSEqC)
-    {
-      if (const cDiseqc* diseqc = Diseqcs.Get(m_device->CardIndex() + 1, transponder.Type(), transponder.FrequencyKHz(), transponder.SatelliteParams().Polarization(), NULL))
-        return diseqc->Commands();
-    }
-    else
-    {
-      bool ToneOff = transponder.FrequencyHz() < cSettings::Get().m_iLnbSLOF;
-
-      bool VoltOff = (transponder.SatelliteParams().Polarization() == POLARIZATION_VERTICAL ||
-                      transponder.SatelliteParams().Polarization() == POLARIZATION_CIRCULAR_RIGHT);
-
-      return StringUtils::Format("%c %c", ToneOff ? 't' : 'T', VoltOff ? 'v' : 'V');
-    }
-  }
-
-  return "";
-}
-
-cDvbTuner *cDvbTuner::GetBondedMaster(void)
-{
-  if (!m_bondedTuner)
-    return this; // an unbonded tuner is always "master"
-  CLockObject lock(m_bondMutex);
-  if (m_bBondedMaster)
-    return this;
-  // This tuner is bonded, but it's not the master, so let's see if there is a master at all:
-  if (cDvbTuner *t = m_bondedTuner)
-  {
-    while (t != this)
-    {
-      if (t->m_bBondedMaster)
-        return t;
-      t = t->m_bondedTuner;
-    }
-  }
-  // None of the other bonded tuners is master, so make this one the master:
-  m_bBondedMaster = true;
-  dsyslog("tuner %d/%d is now bonded master", m_device->Adapter(), m_device->Frontend());
-  return this;
 }
 
 int cDvbTuner::GetSignalStrength(void) const

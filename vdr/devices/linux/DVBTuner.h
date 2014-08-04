@@ -131,10 +131,7 @@ private:
 
   void ExecuteDiseqc(const cDiseqc* Diseqc, unsigned int* Frequency);
 
-  std::string GetBondingParams(void) const { return GetBondingParams(*m_channel); }
-  std::string GetBondingParams(const cChannel& channel) const;
-  cDvbTuner *GetBondedMaster(void);
-  bool IsBondedMaster(void) const { return !m_bondedTuner || m_bBondedMaster; }
+  bool IsBondedMaster(void) const { return false; } // TODO
 
   /*!
    * Translate delivery system enums into a comma-separated string of delivery
@@ -171,10 +168,6 @@ private:
   const cDiseqc*                    m_lastDiseqc;
   const cScr*                       m_scr;
   bool                              m_bLnbPowerTurnedOn;
-  cDvbTuner*                        m_bondedTuner;
-  bool                              m_bBondedMaster;
-
-  static PLATFORM::CMutex           m_bondMutex;
 };
 
 }
