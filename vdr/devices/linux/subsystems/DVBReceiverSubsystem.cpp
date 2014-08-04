@@ -40,9 +40,9 @@ cDvbReceiverSubsystem::cDvbReceiverSubsystem(cDevice *device)
 bool cDvbReceiverSubsystem::OpenDvr()
 {
   CloseDvr();
-  m_fd_dvr = Device<cDvbDevice>()->DvbOpen(DEV_DVB_DVR, O_RDONLY | O_NONBLOCK);
+  m_fd_dvr = open(Device<cDvbDevice>()->DvbPath(DEV_DVB_DVR).c_str(), O_RDONLY | O_NONBLOCK);
   if (m_fd_dvr >= 0)
-    m_tsBuffer = new cTSBuffer(m_fd_dvr, MEGABYTE(5), Device()->CardIndex() + 1);
+    m_tsBuffer = new cTSBuffer(m_fd_dvr, MEGABYTE(5), Device()->Index());
   return m_fd_dvr >= 0;
 }
 

@@ -34,7 +34,6 @@
 #include "devices/subsystems/DeviceSPUSubsystem.h"
 #include "devices/subsystems/DeviceTrackSubsystem.h"
 #include "devices/subsystems/DeviceVideoFormatSubsystem.h"
-#include "filesystem/File.h"
 #include "filesystem/Directory.h"
 #include "filesystem/ReadDir.h"
 #include "utils/CommonMacros.h" // for ARRAY_SIZE()
@@ -95,12 +94,31 @@ cSubsystems cDvbDevice::CreateSubsystems(cDvbDevice* device)
   return subsystems;
 }
 
-cDvbDevice::~cDvbDevice()
+cDvbDevice::~cDvbDevice(void)
 {
   SectionFilter()->StopSectionHandler();
 
   // We're not explicitly closing any device files here, since this sometimes
   // caused segfaults. Besides, the program is about to terminate anyway...
+}
+
+string cDvbDevice::DvbPath(const char *dvbDeviceName) const
+{
+#if defined(TARGET_ANDROID)
+  return StringUtils::Format("%s/%s%d.%s%d", DEV_DVB_BASE, DEV_DVB_ADAPTER, m_adapter, dvbDeviceName, m_frontend);
+#else
+  return StringUtils::Format("%s/%s%d/%s%d", DEV_DVB_BASE, DEV_DVB_ADAPTER, m_adapter, dvbDeviceName, m_frontend);
+#endif
+}
+
+string cDvbDevice::ID() const
+{
+  return DvbPath(DEV_DVB_FRONTEND);
+}
+
+string cDvbDevice::Name() const
+{
+  return m_dvbTuner.Name();
 }
 
 DeviceVector cDvbDevice::FindDevicesMdev(void)
@@ -140,7 +158,6 @@ DeviceVector cDvbDevice::FindDevicesMdev(void)
       if (frontend == INVALID)
         continue;
 
-      dsyslog("found adapter %ld frontend %ld", adapter, frontend);
       devices.push_back(DevicePtr(new cDvbDevice(adapter, frontend)));
     }
   }
@@ -192,7 +209,6 @@ DeviceVector cDvbDevice::FindDevices()
         if (frontend == INVALID)
           continue;
 
-        dsyslog("found adapter %ld frontend %ld", adapter, frontend);
         devices.push_back(DevicePtr(new cDvbDevice(adapter, frontend)));
       }
     }
@@ -201,104 +217,33 @@ DeviceVector cDvbDevice::FindDevices()
   return devices;
 }
 
-bool cDvbDevice::Exists(unsigned int adapter, unsigned int frontend)
+bool cDvbDevice::Initialise(unsigned int index)
 {
-  return CFile::Exists(DvbName(DEV_DVB_FRONTEND, adapter, frontend));
-}
+  if (!cDevice::Initialise(index))
+    return false;
 
-unsigned int cDvbDevice::GetSubsystemId() const
-{
-  static unsigned int subsystemId = 0;
+  if (!m_dvbTuner.Open())
+    return false;
 
-  // Only attempt once
-  static unsigned int attempts = 0;
-  if (attempts++ == 0)
+  // Common Interface:
+  m_fd_ca = open(DvbPath(DEV_DVB_CA).c_str(), O_RDWR);
+  if (m_fd_ca >= 0)
+    DvbCommonInterface()->m_ciAdapter = cDvbCiAdapter::CreateCiAdapter(this, m_fd_ca);
+
+  SectionFilter()->StartSectionHandler();
+
+  if (!Ready())
   {
-    string dvbName = DvbName(DEV_DVB_FRONTEND, m_adapter, m_frontend);
-    struct __stat64 st;
-    if (CFile::Stat(dvbName, &st) == 0)
-    {
-      DirectoryListing items;
-      if (CDirectory::GetDirectory("/sys/class/dvb", items))
-      {
-        for (DirectoryListing::const_iterator itItem = items.begin(); itItem != items.end(); ++itItem)
-        {
-          string name = itItem->Name(); // name looks like "dvb0.frontend0"
-          if (name.find(DEV_DVB_FRONTEND) == string::npos)
-            continue;
-
-          string frontendDev = StringUtils::Format("/sys/class/dvb/%s/dev", name.c_str());
-          CFile file;
-          string line;
-          if (!file.Open(frontendDev) || !file.ReadLine(line))
-            continue;
-
-          vector<string> devParts;
-          StringUtils::Split(line, ":", devParts);
-          if (devParts.size() <= 2)
-            continue;
-
-          unsigned int major = StringUtils::IntVal(devParts[0]);
-          unsigned int minor = StringUtils::IntVal(devParts[1]);
-          unsigned int version = ((major << 8) | minor);
-          if (version != st.st_rdev)
-            continue;
-
-          if (file.Open(StringUtils::Format("/sys/class/dvb/%s/device/subsystem_device", name.c_str())) && file.ReadLine(line))
-          {
-            subsystemId = StringUtils::IntVal(line);
-            break;
-          }
-          else if (file.Open(StringUtils::Format("/sys/class/dvb/%s/device/subsystem_vendor", name.c_str())) && file.ReadLine(line))
-          {
-            subsystemId = StringUtils::IntVal(line) << 16;
-            break;
-          }
-        }
-      }
-    }
+    dsyslog("Device %u: waiting for the CA slot to initialise", Index());
+    return false;
   }
 
-  return subsystemId;
+  return true;
 }
 
-bool cDvbDevice::Ready()
+void cDvbDevice::Notify(const Observable &obs, const ObservableMessage msg)
 {
-  if (Initialised())
-  {
-    if (DvbCommonInterface()->m_ciAdapter)
-      return DvbCommonInterface()->m_ciAdapter->Ready();
-    return true;
-  }
-  return false;
-}
-
-string cDvbDevice::DeviceName() const
-{
-  return m_dvbTuner.IsOpen() ? m_dvbTuner.GetName() : DvbName(DEV_DVB_FRONTEND, m_adapter, m_frontend);
-}
-
-string cDvbDevice::DvbName(const char *name, unsigned int adapter, unsigned int frontend)
-{
-#if defined(TARGET_ANDROID)
-  return StringUtils::Format("%s/%s%d.%s%d", DEV_DVB_BASE, DEV_DVB_ADAPTER, adapter, name, frontend);
-#else
-  return StringUtils::Format("%s/%s%d/%s%d", DEV_DVB_BASE, DEV_DVB_ADAPTER, adapter, name, frontend);
-#endif
-}
-
-int cDvbDevice::DvbOpen(const char *name, int mode) const
-{
-  string dvbName = DvbName(name, m_adapter, m_frontend);
-
-  int fd = open(dvbName.c_str(), mode);
-
-  if (fd >= 0)
-    isyslog("DVB: Opening %s", dvbName.c_str());
-  else
-    esyslog("DVB: Failed to open %s (%s)", dvbName.c_str(), strerror(errno));
-
-  return fd;
+  //XXX implement "CA ready"
 }
 
 cDvbChannelSubsystem *cDvbDevice::DvbChannel() const
@@ -334,41 +279,6 @@ cDvbSectionFilterSubsystem *cDvbDevice::DvbSectionFilter() const
   cDvbSectionFilterSubsystem *sectionFilter = dynamic_cast<cDvbSectionFilterSubsystem*>(SectionFilter());
   assert(sectionFilter);
   return sectionFilter;
-}
-
-bool cDvbDevice::Initialise(void)
-{
-  if (!m_dvbTuner.Open())
-  {
-    isyslog("could not open tuner '%s'", DvbName(DEV_DVB_FRONTEND, m_adapter, m_frontend).c_str());
-    return false;
-  }
-
-  // Common Interface:
-  m_fd_ca = DvbOpen(DEV_DVB_CA, O_RDWR);
-  if (m_fd_ca >= 0)
-    DvbCommonInterface()->m_ciAdapter = cDvbCiAdapter::CreateCiAdapter(this, m_fd_ca);
-
-  SectionFilter()->StartSectionHandler();
-
-  if (cDevice::Initialise())
-  {
-    if (!Ready())
-    {
-      dsyslog("tuner '%s' is waiting for the CA slot to initialise", DeviceName().c_str());
-      return false;
-    }
-
-    return true;
-  }
-
-  esyslog("failed to initialise device '%s'", DeviceName().c_str());
-  return false;
-}
-
-void cDvbDevice::Notify(const Observable &obs, const ObservableMessage msg)
-{
-  //XXX implement "CA ready"
 }
 
 }

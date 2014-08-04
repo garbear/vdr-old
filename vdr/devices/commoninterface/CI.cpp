@@ -1607,7 +1607,7 @@ bool cCamSlot::Assign(DevicePtr Device, bool Query)
               ciAdapter->m_assignedDevice = Device;
               if (Device) {
                  Device->CommonInterface()->SetCamSlot(this);
-                 dsyslog("CAM %d: assigned to device %d", slotNumber, Device->CardIndex());
+                 dsyslog("CAM %d: assigned to device %d", slotNumber, Device->Index());
                  }
               else
                  dsyslog("CAM %d: unassigned", slotNumber);

@@ -58,23 +58,26 @@ cDeviceManager::~cDeviceManager()
 
 size_t cDeviceManager::Initialise(void)
 {
-  dsyslog("initialising DVB devices");
+  isyslog("Searching for DVB devices");
 
   DeviceVector devices = cDvbDevice::FindDevices();
 
-  dsyslog("%u DVB devices found", devices.size());
+  isyslog("%u DVB devices found", devices.size());
 
   CLockObject lock(m_mutex);
 
+  unsigned int index = 0;
   for (DeviceVector::iterator it = devices.begin(); it != devices.end(); ++it)
   {
     const DevicePtr& device = *it;
-    device->AssertValid();
-    device->SetCardIndex(m_devices.size());
-    m_devices.push_back(device);
 
-    if (device->Initialise())
+    bool bReady = device->Initialise(index++);
+    if (bReady)
       ++m_devicesReady;
+
+    isyslog("Device %u: \"%s\" is %s", device->Index(), device->Name().c_str(), bReady ? "ready" : "NOT ready");
+
+    m_devices.push_back(device);
   }
 
   m_bAllDevicesReady = m_devices.size() == m_devicesReady;

@@ -51,7 +51,7 @@ class cScrs : public cConfig<cScr> {
 private:
   PLATFORM::CMutex mutex;
 public:
-  cScr *GetUnused(int Device);
+  cScr *GetUnused(unsigned int Device);
   };
 
 extern cScrs Scrs;
@@ -116,7 +116,7 @@ public:
 class cDiseqcs : public cConfig<cDiseqc> {
 public:
   // TODO: Do we also need position/direction?
-  const cDiseqc *Get(int Device, TRANSPONDER_TYPE Source, unsigned int Frequency, fe_polarization_t Polarization, const cScr **Scr) const;
+  const cDiseqc *Get(unsigned int Device, TRANSPONDER_TYPE Source, unsigned int Frequency, fe_polarization_t Polarization, const cScr **Scr) const;
       ///< Selects a DiSEqC entry suitable for the given Device and tuning parameters.
       ///< If this DiSEqC entry requires SCR and the given *Scr is NULL
       ///< a free one will be selected from the Scrs and a pointer to that will

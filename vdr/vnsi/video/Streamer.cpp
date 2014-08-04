@@ -433,7 +433,7 @@ void cLiveStreamer::sendSignalInfo()
 
   if (m_Frontend < 0)
   {
-    m_DeviceString = StringUtils::Format(FRONTEND_DEVICE, m_Device->CardIndex(), 0);
+    m_DeviceString = StringUtils::Format(FRONTEND_DEVICE, m_Device->Index(), 0);
     m_Frontend = open(m_DeviceString.c_str(), O_RDONLY | O_NONBLOCK);
     if (m_Frontend >= 0)
     {
@@ -477,11 +477,11 @@ void cLiveStreamer::sendSignalInfo()
       fe_unc = -2;
 
     if (m_Channel->GetTransponder().IsSatellite())
-      resp->add_String(StringUtils::Format("DVB-S%s #%d - %s", (m_FrontendInfo.caps & 0x10000000) ? "2" : "",  m_Device->CardIndex(), m_FrontendInfo.name));
+      resp->add_String(StringUtils::Format("DVB-S%s #%d - %s", (m_FrontendInfo.caps & 0x10000000) ? "2" : "",  m_Device->Index(), m_FrontendInfo.name));
     else if (m_Channel->GetTransponder().IsCable())
-      resp->add_String(StringUtils::Format("DVB-C #%d - %s", m_Device->CardIndex(), m_FrontendInfo.name));
+      resp->add_String(StringUtils::Format("DVB-C #%d - %s", m_Device->Index(), m_FrontendInfo.name));
     else if (m_Channel->GetTransponder().IsTerrestrial())
-      resp->add_String(StringUtils::Format("DVB-T #%d - %s", m_Device->CardIndex(), m_FrontendInfo.name));
+      resp->add_String(StringUtils::Format("DVB-T #%d - %s", m_Device->Index(), m_FrontendInfo.name));
 
     resp->add_String(StringUtils::Format("%s:%s:%s:%s:%s", (status & FE_HAS_LOCK) ? "LOCKED" : "-", (status & FE_HAS_SIGNAL) ? "SIGNAL" : "-", (status & FE_HAS_CARRIER) ? "CARRIER" : "-", (status & FE_HAS_VITERBI) ? "VITERBI" : "-", (status & FE_HAS_SYNC) ? "SYNC" : "-"));
     resp->add_U32(fe_snr);

@@ -22,8 +22,11 @@
 
 #include "channels/Channel.h"
 #include "lib/platform/threads/threads.h"
-#include "transponders/TransponderTypes.h" // for fe_caps_t
+#include "transponders/Transponder.h"
+#include "utils/Observer.h"
+#include "utils/Version.h"
 
+#include <algorithm>
 #include <linux/dvb/frontend.h>
 #include <stdint.h>
 #include <string>
@@ -35,7 +38,7 @@ class cDvbDevice;
 class cDiseqc;
 class cScr;
 
-class cDvbTuner : public PLATFORM::CThread
+class cDvbTuner : public PLATFORM::CThread, public Observable
 {
 public:
   cDvbTuner(cDvbDevice *device);
@@ -50,124 +53,97 @@ public:
   void Close(void);
 
   /*!
-   * Query info about the tuner. Should only be called after Open() succeeds.
+   * Properties available after calling Open()
+   *   - Name
+   *   - Capabilities
+   *   - Delivery Systems (the digital television systems offered by this tuner)
+   *   - Modulations (TODO)
+   *   - Version of the DVB API in use
    */
-  const std::string&   GetName(void) const { return m_frontendInfo.strName; }
-  fe_caps_t            GetCapabilities(void) const { return m_frontendInfo.capabilities; }
-  bool                 HasCapability(fe_caps_t capability) const { return m_frontendInfo.capabilities & capability; }
-  fe_delivery_system_t FrontendType(void) const { return m_frontendType; }
-  std::string          DeviceType(void) const;
+  const std::string&   Name(void) const { return m_strName; }
+  fe_caps_t            Capabilities(void) const { return m_capabilities; }
+  bool                 HasCapability(fe_caps_t capability) const { return m_capabilities & capability; }
+  const std::vector<fe_delivery_system_t>& DeliverySystems(void) const { return m_deliverySystems; }
   bool                 HasDeliverySystem(fe_delivery_system_t deliverySystem) const;
-  unsigned int         ModulationCount(void) const { return m_numModulations; }
-  unsigned int         DeliverySystemCount(void) const { return m_deliverySystems.size(); }
+  const std::vector<fe_modulation_t>& Modulations(void) const { return m_modulations; }
+  bool                 HasModulation(fe_modulation_t modulation) const;
+  unsigned int         SubsystemId(void) const { return m_subsystemId; }
+  const Version&       ApiVersion(void) const { return m_apiVersion; }
 
   /*!
-   * Switch the tuner to the specified channel. Blocks until channel is switched
-   * (returns true) or the switch fails/times out (returns false).
+   * Switch the tuner to the specified transponder. Blocks until transponder is
+   * switched (returns true) or the switch fails/times out (returns false).
    */
-  bool SwitchChannel(const ChannelPtr& channel);
+  bool Tune(const cTransponder& transponder);
 
   /*!
    * Get the transponder that the tuner is locking/has locked onto. Returns an
    * empty pointer if tuner is idling (before calling SetChannel() and after
    * calling ClearChannel()).
    */
-  ChannelPtr GetTransponder(void);
+  cTransponder GetTransponder(void) const;
 
   /*!
    * Check if the tuner has a lock on any channel.
    */
-  bool HasLock(void) const { return m_frontendStatus & FE_HAS_LOCK; }
+  bool HasLock(void) const { return m_status & FE_HAS_LOCK; }
 
   /*!
    * Check if the tuner has a lock on a specified channel.
    */
-  bool IsTunedTo(const cChannel& channel) const;
+  bool IsTunedTo(const cTransponder& transponder) const;
 
   /*!
    * Untune (detune?) the tuner.
    */
-  void ClearChannel(void);
+  void ClearTransponder(void);
 
   int GetSignalStrength(void) const;
   int GetSignalQuality(void) const;
 
-  bool Bond(cDvbTuner* tuner);
-  void UnBond(void);
-  bool BondingOk(const cChannel& channel, bool bConsiderOccupied = false) const;
-
 protected:
-  /*!
-   * Tight loop to monitor the status of the frontend and fire an event when
-   * changed. Loop is active after calling SwitchChannel() (while tuning/locked)
-   * and until ClearChannel() is called.
-   */
   virtual void* Process(void);
 
 private:
-  /*!
-   * Get the version of the DVB driver actually in use. Compare to DVBAPIVERSION
-   * in DVBLegacy.h
-   */
-  uint32_t GetDvbApiVersion(void) const;
-
-  std::vector<fe_delivery_system_t> GetDeliverySystems(void) const;
-
-  /*!
-   * Set m_channel and reset other parameters in preparation for a channel switch.
-   */
-  void SetChannel(const ChannelPtr& channel);
-
-  void ClearEventQueue(void) const;
-
-  bool GetFrontendStatus(fe_status_t &Status) const;
-
-  /*!
-   * Instruct the frontend to tune to a channel.
-   */
-  bool SetFrontend(const ChannelPtr& channel);
+  // Called on Open()
+  bool SetProperties(void);
+  static std::vector<fe_delivery_system_t> GetDeliverySystems(int fileDescriptor, const Version& apiVersion, fe_type_t fallbackType, bool bCan2G);
+  static std::vector<fe_modulation_t> GetModulations(fe_caps_t capabilities);
+  static bool GetSubsystemId(const std::string& frontendPath, unsigned int& subsystemId);
+  static Version GetApiVersion(int fileDescriptor);
 
   void ResetToneAndVoltage(void);
-
   void ExecuteDiseqc(const cDiseqc* Diseqc, unsigned int* Frequency);
-
   bool IsBondedMaster(void) const { return false; } // TODO
 
-  /*!
-   * Translate delivery system enums into a comma-separated string of delivery
-   * systems, e.g. "ATSC,DVB-C".
-   */
-  static std::string TranslateDeliverySystems(const std::vector<fe_delivery_system_t>& deliverySystems);
-
-  /*!
-   * Return the maximum time to wait for a lock for the given frontend type.
-   */
-  static unsigned int GetLockTimeout(fe_delivery_system_t frontendType);
-
-  struct FrontendInfo
-  {
-    std::string strName;
-    fe_caps_t   capabilities;
-    fe_type_t   type; // Deprecated, for legacy mode (DVB-API < 5.5)
-  };
+  // Adjust for satellite receivers that offset the frequency
+  unsigned int GetTunedFrequencyHz(const cTransponder& transponder); // TODO: const
 
   cDvbDevice* const                 m_device;
-  FrontendInfo                      m_frontendInfo;
-  fe_delivery_system_t              m_frontendType;
   bool                              m_bIsOpen;
-  int                               m_fileDescriptor;
-  uint32_t                          m_dvbApiVersion;
-  std::vector<fe_delivery_system_t> m_deliverySystems; // Will be non-empty if m_bIsOpen == true
-  unsigned int                      m_numModulations;
-  ChannelPtr                        m_channel;         // Channel currently tuned/tuning to
-  fe_status_t                       m_frontendStatus;
-  PLATFORM::CEvent                  m_statusChangeEvent;
-  PLATFORM::CEvent                  m_sleepEvent;      // Wait on this event in thread loop
+
+  // Properties available after calling Open()
+  std::string                       m_strName;
+  fe_caps_t                         m_capabilities;
+  std::vector<fe_delivery_system_t> m_deliverySystems;
+  std::vector<fe_modulation_t>      m_modulations;
+  unsigned int                      m_subsystemId;
+  Version                           m_apiVersion;
+
+  // Tuning properties
+  cTransponder                      m_transponder;
+  volatile fe_status_t              m_status;
+  PLATFORM::CEvent                  m_lockEvent;
   PLATFORM::CMutex                  m_mutex;
 
+  // Satellite properties
   const cDiseqc*                    m_lastDiseqc;
   const cScr*                       m_scr;
   bool                              m_bLnbPowerTurnedOn;
+  PLATFORM::CMutex                  m_diseqcMutex;
+
+  // Internal
+  int                               m_fileDescriptor;
 };
 
 }

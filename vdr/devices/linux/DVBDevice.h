@@ -31,26 +31,23 @@
 #include <stdint.h>
 #include <string>
 
-namespace VDR
-{
-#define MAXDELIVERYSYSTEMS 8
-
-#define DEV_VIDEO         "/dev/video"
-
 #if defined(TARGET_ANDROID)
-#define DEV_DVB_BASE      "/dev"
-#define DEV_DVB_ADAPTER   "dvb"
+  #define DEV_DVB_BASE    "/dev"
+  #define DEV_DVB_ADAPTER "dvb"
 #else
-#define DEV_DVB_BASE      "/dev/dvb"
-#define DEV_DVB_ADAPTER   "adapter"
+  #define DEV_DVB_BASE    "/dev/dvb"
+  #define DEV_DVB_ADAPTER "adapter"
 #endif
-#define DEV_DVB_OSD       "osd"
 #define DEV_DVB_FRONTEND  "frontend"
+#define DEV_DVB_OSD       "osd"
 #define DEV_DVB_DVR       "dvr"
 #define DEV_DVB_DEMUX     "demux"
 #define DEV_DVB_VIDEO     "video"
 #define DEV_DVB_AUDIO     "audio"
 #define DEV_DVB_CA        "ca"
+
+namespace VDR
+{
 
 class cDvbAudioSubsystem;
 class cDvbChannelSubsystem;
@@ -59,13 +56,16 @@ class cDvbPIDSubsystem;
 class cDvbReceiverSubsystem;
 class cDvbSectionFilterSubsystem;
 
-/// The cDvbDevice implements a DVB device which can be accessed through the Linux DVB driver API.
-
 class cDvbDevice : public cDevice, public Observer
 {
 public:
   cDvbDevice(unsigned int adapter, unsigned int frontend);
-  virtual ~cDvbDevice();
+  virtual ~cDvbDevice(void);
+
+  unsigned int Adapter() const { return m_adapter; }
+  unsigned int Frontend() const { return m_frontend; }
+  std::string DvbPath(const char *dvbDeviceName) const;
+  virtual std::string ID() const;
 
   /*!
    * \brief Discover DVB devices on the system. This scans for frontends of the
@@ -75,36 +75,24 @@ public:
    */
   static DeviceVector FindDevices();
 
-  unsigned int Adapter() const { return m_adapter; }
-  unsigned int Frontend() const { return m_frontend; }
+  virtual bool Initialise(unsigned int index);
 
-  /*!
-   * \brief Computes the subsystem ID for this device.
-   */
-  unsigned int GetSubsystemId() const;
+  // Available after calling Initialise()
+  virtual std::string Name() const;
+  bool HasCam(void) const { return m_fd_ca > 0; }
 
-  virtual bool Ready();
+  // Inherited from Observer
+  virtual void Notify(const Observable &obs, const ObservableMessage msg);
 
-  virtual std::string DeviceType() const { return m_dvbTuner.DeviceType(); }
-  virtual std::string DeviceName() const;
-
+  // Safely access subsystem DVB subclasses
   cDvbChannelSubsystem         *DvbChannel() const;
   cDvbCommonInterfaceSubsystem *DvbCommonInterface() const;
   cDvbPIDSubsystem             *DvbPID() const;
   cDvbReceiverSubsystem        *DvbReceiver() const;
   cDvbSectionFilterSubsystem   *DvbSectionFilter() const;
 
-  bool HasCam(void) const { return m_fd_ca > 0; }
-  bool Initialise(void);
-  void Notify(const Observable &obs, const ObservableMessage msg);
-
-protected:
-public: // TODO
-  static std::string DvbName(const char *name, unsigned int adapter, unsigned int frontend);
-  int DvbOpen(const char *name, int mode) const;
-
-protected:
-  static bool Exists(unsigned int adapter, unsigned int frontend);
+public: // TODO: Make private!
+  cDvbTuner    m_dvbTuner;
 
 private:
   /*!
@@ -116,13 +104,9 @@ private:
 
   static DeviceVector FindDevicesMdev(void);
 
-  unsigned int         m_adapter;
-  unsigned int         m_frontend;
-
-public://TODO
-  cDvbTuner            m_dvbTuner;
-private:
-  //int                  m_fd_dvr; // (Moved to DVBReceiverSubsystem.h)
-  int                  m_fd_ca;
+  unsigned int m_adapter;
+  unsigned int m_frontend;
+  //int          m_fd_dvr; // (Moved to DVBReceiverSubsystem.h)
+  int          m_fd_ca;
 };
 }

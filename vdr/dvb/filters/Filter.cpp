@@ -110,7 +110,7 @@ bool cFilter::GetSection(uint16_t& pid, std::vector<uint8_t>& data)
   return m_device->SectionFilter()->GetSection(m_resources, pid, data);
 }
 
-ChannelPtr cFilter::GetCurrentlyTunedTransponder(void) const
+cTransponder cFilter::GetCurrentlyTunedTransponder(void) const
 {
   return m_device->Channel()->GetCurrentlyTunedTransponder();
 }

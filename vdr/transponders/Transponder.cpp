@@ -31,6 +31,8 @@ using namespace std;
 namespace VDR
 {
 
+const cTransponder cTransponder::EmptyTransponder;
+
 cTransponder::cTransponder(TRANSPONDER_TYPE type /* = TRANSPONDER_INVALID */)
  : m_channelNumber(0),
    m_deliverySystem(SYS_UNDEFINED),

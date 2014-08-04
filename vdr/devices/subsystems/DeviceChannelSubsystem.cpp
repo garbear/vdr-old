@@ -79,7 +79,7 @@ bool cDeviceChannelSubsystem::SwitchChannel(const ChannelPtr& channel)
   if (CommonInterface()->m_camSlot)
     CommonInterface()->m_camSlot->AddChannel(*channel);
 
-  if (SetChannelDevice(channel))
+  if (Tune(channel->GetTransponder()))
   {
     // Start section handling
     SectionFilter()->StartSectionHandler();
@@ -106,7 +106,7 @@ bool cDeviceChannelSubsystem::SwitchTransponder(const cTransponder& transponder)
 
 void cDeviceChannelSubsystem::ClearChannel(void)
 {
-  ClearChannelDevice();
+  ClearTransponder();
 }
 
 unsigned int cDeviceChannelSubsystem::Occupied() const

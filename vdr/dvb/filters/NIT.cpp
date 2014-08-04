@@ -224,10 +224,9 @@ ChannelVector cNit::GetTransponders()
               // System
               transponder.SetDeliverySystem(sd->getModulationSystem() ? SYS_DVBS2 : SYS_DVBS);
 
-              assert(GetCurrentlyTunedTransponder().get() != NULL); // TODO
               for (vector<uint32_t>::const_iterator itKHz = frequenciesKHz.begin(); itKHz != frequenciesKHz.end(); ++itKHz)
               {
-                if (ISTRANSPONDER(*itKHz / 1000, GetCurrentlyTunedTransponder()->GetTransponder().FrequencyMHz())) // TODO: ???
+                if (ISTRANSPONDER(*itKHz / 1000, GetCurrentlyTunedTransponder().FrequencyMHz())) // TODO: ???
                 {
                   thisNetwork.bHasTransponder = true;
                   break;
@@ -364,8 +363,7 @@ ChannelVector cNit::GetTransponders()
 
               for (vector<uint32_t>::const_iterator itKHz = frequenciesKHz.begin(); itKHz != frequenciesKHz.end(); ++itKHz)
               {
-                assert(GetCurrentlyTunedTransponder().get() != NULL); // TODO
-                if (ISTRANSPONDER(*itKHz / 1000, GetCurrentlyTunedTransponder()->FrequencyMHzWithPolarization()))
+                if (*itKHz / 1000 == GetCurrentlyTunedTransponder().FrequencyMHz()) // TODO
                 {
                   thisNetwork.bHasTransponder = true;
                   break;
@@ -492,8 +490,7 @@ ChannelVector cNit::GetTransponders()
 
               for (vector<uint32_t>::const_iterator itKHz = frequenciesKHz.begin(); itKHz != frequenciesKHz.end(); ++itKHz)
               {
-                assert(GetCurrentlyTunedTransponder().get() != NULL); // TODO
-                if (ISTRANSPONDER(*itKHz / (1000 * 1000), GetCurrentlyTunedTransponder()->FrequencyMHzWithPolarization()))
+                if (*itKHz / (1000 * 1000) == GetCurrentlyTunedTransponder().FrequencyMHz()) // TODO
                 {
                   thisNetwork.bHasTransponder = true;
                   break;

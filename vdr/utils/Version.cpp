@@ -155,11 +155,6 @@ bool Version::operator<(const Version& other) const
   return (CompareComponent(Revision(), other.Revision()) < 0);
 }
 
-bool Version::empty() const
-{
-  return m_originalVersion.empty() || m_originalVersion == "0.0.0";
-}
-
 bool Version::SplitFileName(std::string& ID, std::string& version, const std::string& filename)
 {
   size_t dpos = filename.rfind("-");

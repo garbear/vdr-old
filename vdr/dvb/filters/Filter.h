@@ -24,6 +24,7 @@
 #include "channels/ChannelTypes.h"
 #include "dvb/DVBTypes.h"
 #include "epg/EPGTypes.h"
+#include "transponders/Transponder.h"
 
 #include <stdint.h>
 #include <vector>
@@ -110,7 +111,7 @@ protected:
    * Get the channel that this filter's device is tuned to, or an empty pointer
    * if the device is not tuned to a channel.
    */
-  ChannelPtr GetCurrentlyTunedTransponder(void) const;
+  cTransponder GetCurrentlyTunedTransponder(void) const;
 
 private:
   cDevice* const           m_device;      // Device that this filter belongs to

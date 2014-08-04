@@ -39,9 +39,6 @@
 using namespace PLATFORM;
 using namespace std;
 
-// TODO: This can be shorted by fetching PMT tables in parallel
-#define TRANSPONDER_TIMEOUT 5000
-
 namespace VDR
 {
 
@@ -81,7 +78,7 @@ void* cScanner::Process()
   shared_ptr<cDvbDevice> dvbDevice = dynamic_pointer_cast<cDvbDevice>(m_setup.device);
   if (!dvbDevice)
     return NULL;
-  const fe_caps_t caps = dvbDevice->m_dvbTuner.GetCapabilities();
+  const fe_caps_t caps = dvbDevice->m_dvbTuner.Capabilities();
 
   switch (m_setup.dvbType)
   {
@@ -113,7 +110,7 @@ void* cScanner::Process()
 
     if (m_setup.device->Channel()->SwitchTransponder(transponder))
     {
-      bool bSuccess = m_setup.device->Scan()->WaitForChannelScan(TRANSPONDER_TIMEOUT);
+      bool bSuccess = m_setup.device->Scan()->WaitForTransponderScan();
       dsyslog("%s %d MHz", bSuccess ? "Successfully scanned" : "Failed to scan", transponder.FrequencyMHz());
     }
 

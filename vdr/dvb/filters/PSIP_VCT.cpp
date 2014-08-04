@@ -69,7 +69,7 @@ bool cPsipVct::ScanChannels(iFilterCallback* callback)
         channel->SetName(buffer, buffer, ""); // TODO: Parse descriptors for long name
 
         // Transponder and modulation mode
-        cTransponder transponder(GetCurrentlyTunedTransponder()->GetTransponder());
+        cTransponder transponder(GetCurrentlyTunedTransponder());
 
         ModulationMode modulation = (ModulationMode)channelInfo.getModulationMode();
         //unsigned int symbolRateHz = 0;

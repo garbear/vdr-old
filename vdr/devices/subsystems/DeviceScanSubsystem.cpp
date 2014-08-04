@@ -29,8 +29,13 @@
 #include "epg/Schedules.h"
 #include "lib/platform/util/timeutils.h"
 
+#include <algorithm>
+
 using namespace PLATFORM;
 using namespace std;
+
+// TODO: This can be shorted by fetching PMT tables in parallel
+#define TRANSPONDER_TIMEOUT 5000
 
 namespace VDR
 {
@@ -113,14 +118,16 @@ void cDeviceScanSubsystem::StartScan()
   m_eventScanner.CreateThread(true);
 }
 
-bool cDeviceScanSubsystem::WaitForChannelScan(unsigned int timeoutMs)
+bool cDeviceScanSubsystem::WaitForTransponderScan()
 {
-  int64_t time = GetTimeMs();
+  const int64_t startMs = GetTimeMs();
+  const int64_t timeoutMs = TRANSPONDER_TIMEOUT;
 
   if (m_channelPropsScanner.WaitForExit(timeoutMs))
   {
-    unsigned int duration = GetTimeMs() - time;
-    return m_channelNamesScanner.WaitForExit(timeoutMs > duration ? timeoutMs - duration : 1);
+    const int64_t duration = GetTimeMs() - startMs;
+    const int64_t timeLeft = timeoutMs - duration;
+    return m_channelNamesScanner.WaitForExit(std::max(timeLeft, (int64_t)1));
   }
 
   return false;

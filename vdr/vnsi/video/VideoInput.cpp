@@ -71,9 +71,6 @@ bool cVideoInput::Open(ChannelPtr channel, cVideoBuffer *videoBuffer)
   m_Device = cDeviceManager::Get().GetDevice(0); // TODO
   if (m_Device)
   {
-    dsyslog("found device: '%s' (%d) for channel '%s'",
-        m_Device->DeviceName().c_str(), m_Device->CardIndex(), channel->Name().c_str());
-
     m_VideoBuffer = videoBuffer;
     m_Channel     = channel;
 

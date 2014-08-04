@@ -82,8 +82,7 @@ void cSubsystems::AssertValid() const
 
 cDevice::cDevice(const cSubsystems &subsystems)
  : m_subsystems(subsystems),
-   m_bInitialised(false),
-   m_cardIndex(0)
+   m_index(0)
 {
   m_subsystems.AssertValid();
   Channel()->RegisterObserver(Scan());
@@ -96,57 +95,11 @@ cDevice::~cDevice()
   m_subsystems.Free(); // TODO: Remove me if we switch cSubsystems to use shared_ptrs
 }
 
-bool cDevice::Initialise(void)
+bool cDevice::Initialise(unsigned int index)
 {
+  m_index = index;
   m_bInitialised = true;
   return m_bInitialised;
-}
-
-bool cDevice::ScanTransponder(const ChannelPtr& transponder)
-{
-  try
-  {
-    if (transponder->GetCaId(0) &&
-        transponder->GetCaId(0) != CardIndex() &&
-        transponder->GetCaId(0) < CA_ENCRYPTED_MIN)
-    {
-      throw "Failed to scan transponder: Channel cannot be decrypted";
-    }
-
-    if (!Channel()->ProvidesTransponder(*transponder))
-      throw "Failed to scan transponder: Channel is not provided by device";
-
-    if (!Channel()->MaySwitchTransponder(*transponder))
-      throw "Failed to scan transponder: Not allowed to switch transponders";
-
-    if (!Channel()->SwitchChannel(transponder))
-      throw "Failed to scan transponder: Failed to switch transponders";
-
-    dsyslog("EIT scan: device %d tp %5d MHz", CardIndex(), transponder->FrequencyMHzWithPolarization());
-
-    EventVector events;
-
-    cPsipMgt mgt(this);
-    /* TODO
-    if (!mgt.GetPSIPData(events))
-      throw "Failed to scan transponder: Tuner failed to get lock";
-
-    if (events.empty())
-      throw "Scanned transponder, but no events discovered!";
-    */
-
-    // Finally, success! Add channels to EPG schedule
-    for (EventVector::const_iterator it = events.begin(); it != events.end(); ++it)
-      cSchedulesLock::AddEvent(transponder->ID(), *it);
-  }
-  catch (const char* errorMsg)
-  {
-    dsyslog("%s", errorMsg);
-    return false;
-  }
-
-  return true;
-
 }
 
 }

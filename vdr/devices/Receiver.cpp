@@ -163,9 +163,11 @@ bool cReceiver::IsAttached(void) const
 
 void cReceiver::AttachDevice(cDevice* device)
 {
+  assert(device);
+
   CLockObject lock(m_mutex);
 
-  dsyslog("attaching device '%s' to receiver '%p'", device ? device->DeviceName().c_str() : "<nil>", this);
+  dsyslog("Attaching device %u to receiver '%p'", device->Index(), this);
   m_device = device;
 }
 
@@ -173,8 +175,11 @@ void cReceiver::DetachDevice(void)
 {
   CLockObject lock(m_mutex);
 
-  dsyslog("detaching device '%s' from receiver '%p'", m_device ? m_device->DeviceName().c_str() : "<nil>", this);
-  m_device = NULL;
+  if (m_device)
+  {
+    dsyslog("Detaching device %u from receiver '%p'", m_device->Index(), this);
+    m_device = NULL;
+  }
 }
 
 bool cReceiver::AddToPIDSubsystem(cDevicePIDSubsystem* pidSys) const

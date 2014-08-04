@@ -35,6 +35,8 @@ public:
 
   void Reset(TRANSPONDER_TYPE type = TRANSPONDER_INVALID);
 
+  static const cTransponder EmptyTransponder; // EmptyTransponder.Isvalid() == false
+
   bool operator==(const cTransponder& rhs) const;
   bool operator!=(const cTransponder& rhs) const { return !(*this == rhs); }
 

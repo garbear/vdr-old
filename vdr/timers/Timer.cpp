@@ -487,7 +487,7 @@ bool cTimer::StartRecording(void)
     if (device)
     {
       // switch channels
-      dsyslog("switching device %d to channel %d", device->CardIndex(), channel->Number());
+      dsyslog("switching device %d to channel %d", device->Index(), channel->Number());
       if (!device->Channel()->SwitchChannel(channel))
       {
 //        XXX why? ShutdownHandler.RequestEmergencyExit();
@@ -585,7 +585,7 @@ void cTimer::SwitchTransponder(const CDateTime& Now)
     {
       if (!device->Channel()->IsTunedToTransponder(*channel))
       {
-        dsyslog("switching device %d to channel '%s'", device->CardIndex(), Channel()->Name().c_str());
+        dsyslog("switching device %d to channel '%s'", device->Index(), Channel()->Name().c_str());
         if (device->Channel()->SwitchChannel(channel))
           device->Channel()->SetOccupied(TIMERDEVICETIMEOUT);
       }

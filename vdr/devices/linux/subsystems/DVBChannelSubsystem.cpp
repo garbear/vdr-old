@@ -95,7 +95,7 @@ bool cDvbChannelSubsystem::ProvidesTransponder(const cChannel &channel) const
 
   if (transponder.IsSatellite()  &&
       cSettings::Get().m_bDiSEqC &&
-      NULL != Diseqcs.Get(Device()->CardIndex() + 1, transponder.Type(), transponder.FrequencyKHz(), transponder.SatelliteParams().Polarization(), NULL))
+      NULL != Diseqcs.Get(Device()->Index(), transponder.Type(), transponder.FrequencyKHz(), transponder.SatelliteParams().Polarization(), NULL))
   {
     return false;
   }
@@ -113,7 +113,7 @@ bool cDvbChannelSubsystem::ProvidesChannel(const cChannel &channel, bool *pNeeds
 
     if (Receiver()->Receiving())
     {
-      if (Device<cDvbDevice>()->m_dvbTuner.IsTunedTo(channel))
+      if (Device<cDvbDevice>()->m_dvbTuner.IsTunedTo(channel.GetTransponder()))
       {
         if ((channel.GetVideoStream().vpid && !PID()->HasPid(channel.GetVideoStream().vpid)) ||
             (channel.GetAudioStream(0).apid && !PID()->HasPid(channel.GetAudioStream(0).apid)) ||
@@ -148,7 +148,7 @@ bool cDvbChannelSubsystem::ProvidesEIT() const
 
 unsigned int cDvbChannelSubsystem::NumProvidedSystems() const
 {
-  return Device<cDvbDevice>()->m_dvbTuner.DeliverySystemCount() + Device<cDvbDevice>()->m_dvbTuner.ModulationCount();
+  return Device<cDvbDevice>()->m_dvbTuner.DeliverySystems().size() + Device<cDvbDevice>()->m_dvbTuner.Modulations().size();
 }
 
 int cDvbChannelSubsystem::SignalStrength() const
@@ -165,14 +165,14 @@ int cDvbChannelSubsystem::SignalQuality() const
   return -1;
 }
 
-ChannelPtr cDvbChannelSubsystem::GetCurrentlyTunedTransponder() const
+cTransponder cDvbChannelSubsystem::GetCurrentlyTunedTransponder() const
 {
   return Device<cDvbDevice>()->m_dvbTuner.GetTransponder();
 }
 
-bool cDvbChannelSubsystem::IsTunedToTransponder(const cChannel &channel) const
+bool cDvbChannelSubsystem::IsTunedToTransponder(const cTransponder& transponder) const
 {
-  return Device<cDvbDevice>()->m_dvbTuner.IsTunedTo(channel);
+  return Device<cDvbDevice>()->m_dvbTuner.IsTunedTo(transponder);
 }
 
 bool cDvbChannelSubsystem::HasLock(void) const
@@ -180,14 +180,14 @@ bool cDvbChannelSubsystem::HasLock(void) const
   return Device<cDvbDevice>()->m_dvbTuner.HasLock();
 }
 
-bool cDvbChannelSubsystem::SetChannelDevice(const ChannelPtr& channel)
+bool cDvbChannelSubsystem::Tune(const cTransponder& transponder)
 {
-  return Device<cDvbDevice>()->m_dvbTuner.SwitchChannel(channel);
+  return Device<cDvbDevice>()->m_dvbTuner.Tune(transponder);
 }
 
-void cDvbChannelSubsystem::ClearChannelDevice(void)
+void cDvbChannelSubsystem::ClearTransponder(void)
 {
-  return Device<cDvbDevice>()->m_dvbTuner.ClearChannel();
+  return Device<cDvbDevice>()->m_dvbTuner.ClearTransponder();
 }
 
 }

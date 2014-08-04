@@ -104,7 +104,7 @@ ChannelPtr cPmt::CreateChannel(/* const */ SI::PMT& pmt) const // TODO: libsi fa
   SetIds(channel);
   SetStreams(channel, pmt);
   SetCaDescriptors(channel, pmt);
-  channel->SetTransponder(GetCurrentlyTunedTransponder()->GetTransponder());
+  channel->SetTransponder(GetCurrentlyTunedTransponder());
 
   // Log a comma-separated list of streams we found in the channel
   stringstream logStreams;

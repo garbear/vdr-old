@@ -85,7 +85,7 @@ bool cDevicePIDSubsystem::AddPid(int pid, ePidType pidType /* = ptOther */, int 
         PrintPIDs("A");
         if (!SetPid(m_pidHandles[n], (ePidType)n, true))
         {
-          esyslog("ERROR: can't set PID %d on device %d", pid, Device()->CardIndex() + 1);
+          esyslog("ERROR: can't set PID %d on device %d", pid, Device()->Index());
           if (pidType <= ptTeletext)
             Receiver()->DetachAll(pid);
           DelPid(pid, pidType);
@@ -109,7 +109,7 @@ bool cDevicePIDSubsystem::AddPid(int pid, ePidType pidType /* = ptOther */, int 
     }
     else
     {
-      esyslog("ERROR: no free slot for PID %d on device %d", pid, Device()->CardIndex() + 1);
+      esyslog("ERROR: no free slot for PID %d on device %d", pid, Device()->Index());
       return false;
     }
     if (n >= 0)
@@ -120,7 +120,7 @@ bool cDevicePIDSubsystem::AddPid(int pid, ePidType pidType /* = ptOther */, int 
       PrintPIDs("C");
       if (!SetPid(m_pidHandles[n], (ePidType)n, true))
       {
-        esyslog("ERROR: can't set PID %d on device %d", pid, Device()->CardIndex() + 1);
+        esyslog("ERROR: can't set PID %d on device %d", pid, Device()->Index());
         if (pidType <= ptTeletext)
           Receiver()->DetachAll(pid);
         DelPid(pid, pidType);

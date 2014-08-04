@@ -72,6 +72,42 @@ public:
 
   static const DevicePtr EmptyDevice;
 
+  /*!
+   * Initialise the device. Must be called by subclass if overloaded.
+   * @param index The device index (chosen by cDeviceManager)
+   * @return True when initialised, false otherwise.
+   */
+  virtual bool Initialise(unsigned int index);
+
+  /*!
+   * @return True when initialised, false otherwise
+   */
+  virtual bool Initialised(void) const { return m_bInitialised; }
+
+  /*!
+   * \brief Returns true if this device is ready
+   *
+   * Devices with conditional access hardware may need some time until they are
+   * up and running.
+   */
+  virtual bool Ready() { return true; }
+
+  /*!
+   * Properties available after calling Initialise():
+   *   - Index
+   *   - Name
+   *   - ID (string uniquely identifying this device, e.g. /dev/dvb/adapter0/frontend0
+   *     on linux)
+   */
+  int Index() const { return m_index; }
+  virtual std::string Name() const = 0;
+  virtual std::string ID() const = 0;
+
+  /*!
+   * \brief Tells whether this device has an MPEG decoder
+   */
+  virtual bool HasDecoder() const { return false; }
+
   cDeviceChannelSubsystem*         Channel(void)         const { return m_subsystems.Channel; }
   cDeviceCommonInterfaceSubsystem* CommonInterface(void) const { return m_subsystems.CommonInterface; }
   cDeviceImageGrabSubsystem*       ImageGrab(void)       const { return m_subsystems.ImageGrab; }
@@ -84,67 +120,9 @@ public:
   cDeviceTrackSubsystem*           Track(void)           const { return m_subsystems.Track; }
   cDeviceVideoFormatSubsystem*     VideoFormat(void)     const { return m_subsystems.VideoFormat; }
 
-  /*!
-   * \brief Returns the card index of this device
-   * \return The card index in the range 0..MAXDEVICES-1
-   */
-  int CardIndex() const { return m_cardIndex; }
-  void SetCardIndex(size_t index) { m_cardIndex = index; }
-
-  /*!
-   * \brief Returns a string identifying the type of this device (like "DVB-S")
-   *
-   * If this device can receive different delivery systems, the returned string
-   * shall be that of the currently used system. The length of the returned
-   * string should not exceed 6 characters.
-   */
-  virtual std::string DeviceType() const = 0;
-
-  /*!
-   * \brief Returns a string identifying the name of this device
-   */
-  virtual std::string DeviceName() const = 0;
-
-  /*!
-   * \brief Tells whether this device has an MPEG decoder
-   */
-  virtual bool HasDecoder() const { return false; }
-
-  /*!
-   * \brief Returns true if this device should only be used for recording if no
-   *        other device is available
-   */
-  virtual bool AvoidRecording() const { return false; }
-
-  /*!
-   * Initialise the device
-   * @return True when initialised, false otherwise.
-   */
-  virtual bool Initialise(void);
-
-  /*!
-   * @return True when initialised, false otherwise
-   */
-  virtual bool Initialised(void) const { return m_bInitialised; }
-
-  bool ScanTransponder(const ChannelPtr& transponder);
-
-  void AssertValid(void) { m_subsystems.AssertValid(); }
-
-protected:
-  /*!
-   * \brief Returns true if this device is ready
-   *
-   * Devices with conditional access hardware may need some time until they are
-   * up and running. This function is called in a loop at startup until all
-   * devices are ready (see WaitForAllDevicesReady()).
-   */
-public: // TODO
-  virtual bool Ready() { return true; }
-
 private:
   const cSubsystems m_subsystems;
   bool              m_bInitialised;
-  size_t            m_cardIndex;
+  size_t            m_index;
 };
 }

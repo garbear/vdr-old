@@ -88,7 +88,7 @@ int cDvbCiAdapter::Read(uint8_t *buffer, int maxLength)
         int n = safe_read(m_fd, buffer, maxLength);
         if (n >= 0)
            return n;
-        esyslog("ERROR: can't read from CI adapter on device %d: %m", m_device->CardIndex());
+        esyslog("ERROR: can't read from CI adapter on device %d: %m", m_device->Index());
         }
      }
   return 0;
@@ -98,7 +98,7 @@ void cDvbCiAdapter::Write(const uint8_t *buffer, int length)
 {
   if (buffer && length > 0) {
      if (safe_write(m_fd, buffer, length) != length)
-        esyslog("ERROR: can't write to CI adapter on device %d: %m", m_device->CardIndex());
+        esyslog("ERROR: can't write to CI adapter on device %d: %m", m_device->Index());
      }
 }
 
@@ -107,7 +107,7 @@ bool cDvbCiAdapter::Reset(int slot)
   if (ioctl(m_fd, CA_RESET, 1 << slot) != -1)
      return true;
   else
-     esyslog("ERROR: can't reset CAM slot %d on device %d: %m", slot, m_device->CardIndex());
+     esyslog("ERROR: can't reset CAM slot %d on device %d: %m", slot, m_device->Index());
   return false;
 }
 
@@ -122,7 +122,7 @@ eModuleStatus cDvbCiAdapter::ModuleStatus(int slot)
         return msPresent;
      }
   else
-     esyslog("ERROR: can't get info of CAM slot %d on device %d: %m", slot, m_device->CardIndex());
+     esyslog("ERROR: can't get info of CAM slot %d on device %d: %m", slot, m_device->Index());
   return msNone;
 }
 

@@ -97,7 +97,7 @@ public:
    * \return A local copy of one of the channels in the global cChannels list.
    *         May be NULL if the device is not tuned to any transponder.
    */
-  virtual ChannelPtr GetCurrentlyTunedTransponder() const { return cChannel::EmptyChannel; }
+  virtual cTransponder GetCurrentlyTunedTransponder() const { return cTransponder::EmptyTransponder; }
 
   /*!
    * \brief Returns true if this device is currently tuned to the given Channel's transponder
@@ -157,8 +157,8 @@ protected:
    *        until the channel is successfully set or the action fails (perhaps
    *        due to a timeout).
    */
-  virtual bool SetChannelDevice(const ChannelPtr& channel) { return false; }
-  virtual void ClearChannelDevice(void) { }
+  virtual bool Tune(const cTransponder& transponder) = 0;
+  virtual void ClearTransponder(void) = 0;
 
 private:
   time_t     m_occupiedTimeout;

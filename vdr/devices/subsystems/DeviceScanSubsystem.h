@@ -91,7 +91,7 @@ public:
 
   void StartScan(void);
 
-  bool WaitForChannelScan(unsigned int timeoutMs);
+  bool WaitForTransponderScan();
   bool WaitForEPGScan(unsigned int timeoutMs);
 
   virtual void Notify(const Observable &obs, const ObservableMessage msg);

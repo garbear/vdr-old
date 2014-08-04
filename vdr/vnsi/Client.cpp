@@ -309,7 +309,7 @@ void cVNSIClient::Recording(const cDevice *Device, const char *Name, const char 
       return;
     }
 
-    resp->add_U32(Device->CardIndex());
+    resp->add_U32(Device->Index());
     resp->add_U32(On);
     if (Name)
       resp->add_String(Name);

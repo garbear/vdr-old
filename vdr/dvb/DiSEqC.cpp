@@ -38,8 +38,8 @@ static bool ParseDeviceNumbers(const char *s, int &Devices)
            char *t = NULL;
            int d = strtol(p, &t, 10);
            p = t;
-           if (0 < d && d < 31)
-              Devices |= (1 << d - 1);
+           if (0 <= d && d < 31)
+              Devices |= (1 << d);
            else {
               esyslog("ERROR: invalid device number %d in '%s'", d, s);
               return false;
@@ -86,7 +86,7 @@ bool cScr::Parse(const char *s)
 
 cScrs Scrs;
 
-cScr *cScrs::GetUnused(int Device)
+cScr *cScrs::GetUnused(unsigned int Device)
 {
   CLockObject lock(mutex);
   int Devices = 0;
@@ -95,7 +95,7 @@ cScr *cScrs::GetUnused(int Device)
          Devices = p->Devices();
          continue;
          }
-      if (Devices && !(Devices & (1 << Device - 1)))
+      if (Devices && !(Devices & (1 << Device)))
          continue;
       if (!p->Used()) {
         p->SetUsed(true);
@@ -297,7 +297,7 @@ cDiseqc::eDiseqcActions cDiseqc::Execute(const char **CurrentAction, uint8_t *Co
 
 cDiseqcs Diseqcs;
 
-const cDiseqc *cDiseqcs::Get(int Device, TRANSPONDER_TYPE Source, unsigned int Frequency, fe_polarization_t Polarization, const cScr **Scr) const
+const cDiseqc *cDiseqcs::Get(unsigned int Device, TRANSPONDER_TYPE Source, unsigned int Frequency, fe_polarization_t Polarization, const cScr **Scr) const
 {
   int Devices = 0;
   for (const cDiseqc *p = First(); p; p = Next(p)) {
@@ -305,16 +305,16 @@ const cDiseqc *cDiseqcs::Get(int Device, TRANSPONDER_TYPE Source, unsigned int F
          Devices = p->Devices();
          continue;
          }
-      if (Devices && !(Devices & (1 << Device - 1)))
+      if (Devices && !(Devices & (1 << Device)))
          continue;
       // TODO: Should we also compare position/direction?
       if (p->Source() == Source && p->Slof() > Frequency && p->Polarization() == Polarization) {
          if (p->IsScr() && Scr && !*Scr) {
             *Scr = Scrs.GetUnused(Device);
             if (*Scr)
-               dsyslog("SCR %d assigned to device %d", (*Scr)->Channel(), Device);
+               dsyslog("SCR %d assigned to device %u", (*Scr)->Channel(), Device);
             else
-               esyslog("ERROR: no free SCR entry available for device %d", Device);
+               esyslog("ERROR: no free SCR entry available for device %u", Device);
             }
          return p;
          }
