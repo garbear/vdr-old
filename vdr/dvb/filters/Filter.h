@@ -106,7 +106,6 @@ protected:
    */
   cDevice* GetDevice(void) const { return m_device; }
 
-  // TODO: Convert to ChannelPtr after m_chanbnel is switched to ChannelPtr in cDvbTransponder
   /*!
    * Get the channel that this filter's device is tuned to, or an empty pointer
    * if the device is not tuned to a channel.
