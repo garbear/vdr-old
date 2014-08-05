@@ -58,7 +58,6 @@ public:
   virtual ~cDvbFilterResource()
   {
     close(m_fileDescriptor);
-    dsyslog("Closed handle for filter PID=%u, TID=0x%02X", GetPid(), GetTid());
   }
 
   int GetFileDescriptor() const { return m_fileDescriptor; }
@@ -97,7 +96,6 @@ FilterResourcePtr cDvbSectionFilterSubsystem::OpenResourceInternal(uint16_t pid,
 
     if (ioctl(fd, DMX_SET_FILTER, &sctFilterParams) >= 0)
     {
-      dsyslog("Opened handle for filter PID=%u, TID=0x%02X, mask=0x%02X", pid, tid, mask);
       return FilterResourcePtr(new cDvbFilterResource(pid, tid, mask, fd));
     }
     else
