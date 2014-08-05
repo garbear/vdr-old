@@ -63,6 +63,8 @@ using namespace PLATFORM;
 #define DEBUG_SIGNALSTRENGTH       1
 #define DEBUG_SIGNALQUALITY        1
 
+#define TUNE_DELAY_MS              100 // Some drivers report stale status immediately after FE_SET_FRONTEND
+
 namespace VDR
 {
 
@@ -416,116 +418,28 @@ bool cDvbTuner::Tune(const cTransponder& transponder)
 {
   ClearTransponder();
 
-  {
-    CLockObject lock(m_mutex);
+  if (!TuneDevice(transponder))
+    return false;
 
-    if (!m_bIsOpen)
-      return false;
+  int64_t startMs = GetTimeMs();
 
-    dsyslog("#####");
-    dsyslog("##### Dvb tuner: tuning to channel %u (%u MHz)", transponder.ChannelNumber(), transponder.FrequencyMHz());
-    dsyslog("#####");
+  CTimeout timeout(GetLockTimeout(transponder.Type()));
 
-    cFrontendCommands frontendCmds(m_fileDescriptor);
+  usleep(TUNE_DELAY_MS * 1000);
 
-    // Reset frontend's cache of data
-    frontendCmds.AddCommand(DTV_CLEAR);
-    if (!frontendCmds.Execute())
-      return false;
-
-    // Set common parameters
-    frontendCmds.AddCommand(DTV_DELIVERY_SYSTEM, transponder.DeliverySystem());
-    frontendCmds.AddCommand(DTV_MODULATION,      transponder.Modulation());
-    frontendCmds.AddCommand(DTV_INVERSION,       transponder.Inversion());
-
-    // For satellital delivery systems, DTV_FREQUENCY is measured in kHz. For
-    // the other ones, it is measured in Hz.
-    // http://linuxtv.org/downloads/v4l-dvb-apis/FE_GET_SET_PROPERTY.html
-    if (transponder.IsSatellite())
-    {
-      unsigned int frequencyHz = GetTunedFrequencyHz(transponder);
-      if (frequencyHz == 0) // TODO
-        return false;       // TODO
-      frontendCmds.AddCommand(DTV_FREQUENCY, frequencyHz / 1000);
-    }
-    else
-    {
-      frontendCmds.AddCommand(DTV_FREQUENCY, transponder.FrequencyHz());
-    }
-
-    // Set delivery-system-specific parameters
-    if (transponder.IsSatellite())
-    {
-      // DVB-S/DVB-S2 (common parts)
-      frontendCmds.AddCommand(DTV_SYMBOL_RATE, transponder.SatelliteParams().SymbolRateHz());
-      frontendCmds.AddCommand(DTV_INNER_FEC,   transponder.SatelliteParams().CoderateH());
-      if (transponder.DeliverySystem() != SYS_DVBS2)
-      {
-        // DVB-S
-        frontendCmds.AddCommand(DTV_ROLLOFF,   ROLLOFF_35); // DVB-S always has a ROLLOFF of 0.35
-      }
-      else
-      {
-        // DVB-S2
-        frontendCmds.AddCommand(DTV_PILOT,   PILOT_AUTO);
-        frontendCmds.AddCommand(DTV_ROLLOFF, transponder.SatelliteParams().RollOff());
-        if (m_apiVersion >= "5.8")
-          frontendCmds.AddCommand(DTV_STREAM_ID, transponder.SatelliteParams().StreamId());
-      }
-    }
-    else if (transponder.IsCable())
-    {
-      // DVB-C
-      frontendCmds.AddCommand(DTV_SYMBOL_RATE, transponder.CableParams().SymbolRateHz());
-      frontendCmds.AddCommand(DTV_INNER_FEC,   transponder.CableParams().CoderateH());
-    }
-    else if (transponder.IsTerrestrial())
-    {
-      // DVB-T/DVB-T2 (common parts)
-      frontendCmds.AddCommand(DTV_BANDWIDTH_HZ,      transponder.TerrestrialParams().BandwidthHz()); // Use hertz value, not enum
-      frontendCmds.AddCommand(DTV_CODE_RATE_HP,      transponder.TerrestrialParams().CoderateH());
-      frontendCmds.AddCommand(DTV_CODE_RATE_LP,      transponder.TerrestrialParams().CoderateL());
-      frontendCmds.AddCommand(DTV_TRANSMISSION_MODE, transponder.TerrestrialParams().Transmission());
-      frontendCmds.AddCommand(DTV_GUARD_INTERVAL,    transponder.TerrestrialParams().Guard());
-      frontendCmds.AddCommand(DTV_HIERARCHY,         transponder.TerrestrialParams().Hierarchy());
-
-      if (transponder.DeliverySystem() == SYS_DVBT2)
-      {
-        // DVB-T2
-        if (m_apiVersion >= "5.8")
-          frontendCmds.AddCommand(DTV_STREAM_ID, transponder.TerrestrialParams().StreamId());
-        else if (m_apiVersion >= "5.3")
-          frontendCmds.AddCommand(DTV_DVBT2_PLP_ID_LEGACY, transponder.TerrestrialParams().StreamId());
-      }
-    }
-    else if (transponder.IsAtsc())
-    {
-      // ATSC - no delivery-system-specific parameters
-    }
-    else
-    {
-      esyslog("ERROR: attempt to set channel with unknown DVB frontend type");
-      return false;
-    }
-
-    // Perform the tune
-    frontendCmds.AddCommand(DTV_TUNE);
-    if (!frontendCmds.Execute())
-      return false;
-  }
-
-  // Create the status-monitoring thread if not already running. Thread stays
-  // running even after tuner gets lock until ClearChannel() is called.
+  // Device is tuning. Create the event-handling thread. Thread stays running
+  // even after tuner gets lock until ClearTransponder() is called.
   CreateThread(false);
 
-  // Wait for HasLock() to return true
-  CTimeout timeout(GetLockTimeout(transponder.Type()));
   while (timeout.TimeLeft() > 0)
   {
     if (HasLock())
     {
+      dsyslog("Dvb tuner: tuned to channel %u in %d ms", transponder.ChannelNumber(), GetTimeMs() - startMs);
+
       //if (m_bondedTuner && m_device->IsPrimaryDevice())
       //  cDeviceManager::Get().PrimaryDevice()->PID()->DelLivePids(); // 'device' is const, so we must do it this way
+
       return true;
     }
 
@@ -534,8 +448,114 @@ bool cDvbTuner::Tune(const cTransponder& transponder)
       m_lockEvent.Wait(timeLeftMs);
   }
 
+  dsyslog("Dvb tuner: tuning timed out after %d ms", GetTimeMs() - startMs);
+
   return false;
 }
+
+bool cDvbTuner::TuneDevice(const cTransponder& transponder)
+{
+  CLockObject lock(m_mutex);
+
+  if (!m_bIsOpen)
+    return false;
+
+  dsyslog("#####");
+  dsyslog("##### Dvb tuner: tuning to channel %u (%u MHz)", transponder.ChannelNumber(), transponder.FrequencyMHz());
+  dsyslog("#####");
+
+  cFrontendCommands frontendCmds(m_fileDescriptor);
+
+  // Reset frontend's cache of data
+  frontendCmds.AddCommand(DTV_CLEAR);
+  if (!frontendCmds.Execute())
+    return false;
+
+  // Set common parameters
+  frontendCmds.AddCommand(DTV_DELIVERY_SYSTEM, transponder.DeliverySystem());
+  frontendCmds.AddCommand(DTV_MODULATION,      transponder.Modulation());
+  frontendCmds.AddCommand(DTV_INVERSION,       transponder.Inversion());
+
+  // For satellital delivery systems, DTV_FREQUENCY is measured in kHz. For
+  // the other ones, it is measured in Hz.
+  // http://linuxtv.org/downloads/v4l-dvb-apis/FE_GET_SET_PROPERTY.html
+  if (transponder.IsSatellite())
+  {
+    unsigned int frequencyHz = GetTunedFrequencyHz(transponder);
+    if (frequencyHz == 0) // TODO
+      return false;       // TODO
+    frontendCmds.AddCommand(DTV_FREQUENCY, frequencyHz / 1000);
+  }
+  else
+  {
+    frontendCmds.AddCommand(DTV_FREQUENCY, transponder.FrequencyHz());
+  }
+
+  // Set delivery-system-specific parameters
+  if (transponder.IsSatellite())
+  {
+    // DVB-S/DVB-S2 (common parts)
+    frontendCmds.AddCommand(DTV_SYMBOL_RATE, transponder.SatelliteParams().SymbolRateHz());
+    frontendCmds.AddCommand(DTV_INNER_FEC,   transponder.SatelliteParams().CoderateH());
+    if (transponder.DeliverySystem() != SYS_DVBS2)
+    {
+      // DVB-S
+      frontendCmds.AddCommand(DTV_ROLLOFF,   ROLLOFF_35); // DVB-S always has a ROLLOFF of 0.35
+    }
+    else
+    {
+      // DVB-S2
+      frontendCmds.AddCommand(DTV_PILOT,   PILOT_AUTO);
+      frontendCmds.AddCommand(DTV_ROLLOFF, transponder.SatelliteParams().RollOff());
+      if (m_apiVersion >= "5.8")
+        frontendCmds.AddCommand(DTV_STREAM_ID, transponder.SatelliteParams().StreamId());
+    }
+  }
+  else if (transponder.IsCable())
+  {
+    // DVB-C
+    frontendCmds.AddCommand(DTV_SYMBOL_RATE, transponder.CableParams().SymbolRateHz());
+    frontendCmds.AddCommand(DTV_INNER_FEC,   transponder.CableParams().CoderateH());
+  }
+  else if (transponder.IsTerrestrial())
+  {
+    // DVB-T/DVB-T2 (common parts)
+    frontendCmds.AddCommand(DTV_BANDWIDTH_HZ,      transponder.TerrestrialParams().BandwidthHz()); // Use hertz value, not enum
+    frontendCmds.AddCommand(DTV_CODE_RATE_HP,      transponder.TerrestrialParams().CoderateH());
+    frontendCmds.AddCommand(DTV_CODE_RATE_LP,      transponder.TerrestrialParams().CoderateL());
+    frontendCmds.AddCommand(DTV_TRANSMISSION_MODE, transponder.TerrestrialParams().Transmission());
+    frontendCmds.AddCommand(DTV_GUARD_INTERVAL,    transponder.TerrestrialParams().Guard());
+    frontendCmds.AddCommand(DTV_HIERARCHY,         transponder.TerrestrialParams().Hierarchy());
+
+    if (transponder.DeliverySystem() == SYS_DVBT2)
+    {
+      // DVB-T2
+      if (m_apiVersion >= "5.8")
+        frontendCmds.AddCommand(DTV_STREAM_ID, transponder.TerrestrialParams().StreamId());
+      else if (m_apiVersion >= "5.3")
+        frontendCmds.AddCommand(DTV_DVBT2_PLP_ID_LEGACY, transponder.TerrestrialParams().StreamId());
+    }
+  }
+  else if (transponder.IsAtsc())
+  {
+    // ATSC - no delivery-system-specific parameters
+  }
+  else
+  {
+    esyslog("ERROR: attempt to set channel with unknown DVB frontend type");
+    return false;
+  }
+
+  // Perform the tune
+  frontendCmds.AddCommand(DTV_TUNE);
+  if (!frontendCmds.Execute())
+    return false;
+
+  m_transponder = transponder;
+
+  return true;
+}
+
 
 unsigned int cDvbTuner::GetTunedFrequencyHz(const cTransponder& transponder)
 {

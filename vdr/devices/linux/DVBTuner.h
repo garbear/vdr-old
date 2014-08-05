@@ -112,6 +112,8 @@ private:
   static bool GetSubsystemId(const std::string& frontendPath, unsigned int& subsystemId);
   static Version GetApiVersion(int fileDescriptor);
 
+  bool TuneDevice(const cTransponder& transponder);
+
   void ResetToneAndVoltage(void);
   void ExecuteDiseqc(const cDiseqc* Diseqc, unsigned int* Frequency);
   bool IsBondedMaster(void) const { return false; } // TODO
