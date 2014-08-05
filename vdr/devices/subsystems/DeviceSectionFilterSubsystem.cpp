@@ -173,7 +173,7 @@ bool cDeviceSectionFilterSubsystem::GetSection(const FilterResourceCollection& f
   }
   else
   {
-    esyslog("Failed to read section: %s", bTimedOut ? "timed out" : "aborted");
+    dsyslog("Failed to read section: %s", bTimedOut ? "timed out" : "aborted");
   }
 
   return false;
