@@ -111,10 +111,11 @@ protected:
    * Get the channel that this filter's device is tuned to, or an empty pointer
    * if the device is not tuned to a channel.
    */
-  cTransponder GetCurrentlyTunedTransponder(void) const;
+  cTransponder GetTransponder(void) const { return m_transponder; }
 
 private:
   cDevice* const           m_device;      // Device that this filter belongs to
+  const cTransponder       m_transponder; // Transponder that the device is tuned to
   FilterResourceCollection m_resources;   // Open resources held by this device
 };
 

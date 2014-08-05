@@ -68,7 +68,8 @@ cSectionSyncer::SYNC_STATUS cSectionSyncer::Sync(uint8_t version, int sectionNum
 // --- cFilter ----------------------------------------------------------------
 
 cFilter::cFilter(cDevice* device)
- : m_device(device)
+ : m_device(device),
+   m_transponder(device->Channel()->GetCurrentlyTunedTransponder())
 {
   assert(m_device);
   m_device->SectionFilter()->RegisterFilter(this);
@@ -108,11 +109,6 @@ void cFilter::CloseResource(u_short pid, u_char tid, u_char mask /* = 0xFF */)
 bool cFilter::GetSection(uint16_t& pid, std::vector<uint8_t>& data)
 {
   return m_device->SectionFilter()->GetSection(m_resources, pid, data);
-}
-
-cTransponder cFilter::GetCurrentlyTunedTransponder(void) const
-{
-  return m_device->Channel()->GetCurrentlyTunedTransponder();
 }
 
 }

@@ -226,7 +226,7 @@ ChannelVector cNit::GetTransponders()
 
               for (vector<uint32_t>::const_iterator itKHz = frequenciesKHz.begin(); itKHz != frequenciesKHz.end(); ++itKHz)
               {
-                if (ISTRANSPONDER(*itKHz / 1000, GetCurrentlyTunedTransponder().FrequencyMHz())) // TODO: ???
+                if (ISTRANSPONDER(*itKHz / 1000, GetTransponder().FrequencyMHz())) // TODO: ???
                 {
                   thisNetwork.bHasTransponder = true;
                   break;
@@ -363,7 +363,7 @@ ChannelVector cNit::GetTransponders()
 
               for (vector<uint32_t>::const_iterator itKHz = frequenciesKHz.begin(); itKHz != frequenciesKHz.end(); ++itKHz)
               {
-                if (*itKHz / 1000 == GetCurrentlyTunedTransponder().FrequencyMHz()) // TODO
+                if (*itKHz / 1000 == GetTransponder().FrequencyMHz()) // TODO
                 {
                   thisNetwork.bHasTransponder = true;
                   break;
@@ -490,7 +490,7 @@ ChannelVector cNit::GetTransponders()
 
               for (vector<uint32_t>::const_iterator itKHz = frequenciesKHz.begin(); itKHz != frequenciesKHz.end(); ++itKHz)
               {
-                if (*itKHz / (1000 * 1000) == GetCurrentlyTunedTransponder().FrequencyMHz()) // TODO
+                if (*itKHz / (1000 * 1000) == GetTransponder().FrequencyMHz()) // TODO
                 {
                   thisNetwork.bHasTransponder = true;
                   break;
