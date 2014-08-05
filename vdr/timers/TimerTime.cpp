@@ -195,4 +195,19 @@ std::string CTimerTime::GetTimeDescription(void) const
   return StringUtils::Format("%02u%02u-%02u%02u", m_firstStartTime.GetHour(), m_firstStartTime.GetMinute(), end.GetHour(), end.GetMinute());
 }
 
+void CTimerTime::ClearEPGEvent(void)
+{
+  m_event.reset();
+}
+
+void CTimerTime::SetEPGEvent(const EventPtr& event)
+{
+  m_event = event;
+}
+
+EventPtr CTimerTime::EPGEvent(void) const
+{
+  return m_event;
+}
+
 }

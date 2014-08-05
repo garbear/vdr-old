@@ -66,9 +66,9 @@ public:
   void      Skip(void);
   std::string GetTimeDescription(void) const;
 
-  void          ClearEPGEvent(void) { m_event.reset(); }
-  void          SetEPGEvent(const EventPtr& event) { m_event = event; }
-  EventPtr      EPGEvent(void) const { return m_event; }
+  void          ClearEPGEvent(void);
+  void          SetEPGEvent(const EventPtr& event);
+  EventPtr      EPGEvent(void) const;
 
   static CTimerTime FromVNSI(time_t startTime, time_t stopTime, time_t day, uint32_t weekdays);
 private:

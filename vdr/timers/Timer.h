@@ -84,7 +84,7 @@ public:
   int Priority(void) const                  { return m_iPriority; }
   int LifetimeDays(void) const              { return m_iLifetimeDays; }
   std::string RecordingFilename(void) const { return m_strRecordingFilename; }
-  EventPtr Event(void) const                { return m_time.EPGEvent(); }
+  EventPtr Event(void) const;
 
   std::string ToDescr(void) const;
 

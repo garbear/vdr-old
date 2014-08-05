@@ -24,6 +24,7 @@
 #include "channels/ChannelID.h"
 #include "channels/ChannelTypes.h"
 #include "epg/EPGTypes.h"
+#include "epg/Event.h"
 
 #include <stddef.h>
 
@@ -37,7 +38,7 @@ class CFile;
 class cRecordingInfo
 {
 public:
-  cRecordingInfo(ChannelPtr channel, const EventPtr& Event = EventPtr());
+  cRecordingInfo(ChannelPtr channel, const EventPtr& Event = cEvent::EmptyEvent);
   cRecordingInfo(const std::string& strFileName);
   ~cRecordingInfo() { }
   const cChannelID& ChannelID(void) const { return m_channelID; }

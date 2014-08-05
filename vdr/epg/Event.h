@@ -80,6 +80,9 @@ private:
 public:
   cEvent(tEventID EventID);
   ~cEvent();
+
+  static const EventPtr EmptyEvent;
+
   virtual int Compare(const cListObject &ListObject) const;
   cChannelID ChannelID(void) const;
   const cSchedule *Schedule(void) const { return schedule; }

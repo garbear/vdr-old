@@ -34,6 +34,8 @@
 namespace VDR
 {
 
+const EventPtr cEvent::EmptyEvent;
+
 cEvent::cEvent(tEventID EventID)
 {
   schedule = NULL;

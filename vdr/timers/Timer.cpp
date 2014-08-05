@@ -616,4 +616,9 @@ bool cTimer::RecordingAttemptAllowed(void) const
       (CDateTime::GetCurrentDateTime() - m_lastRecordingAttempt).GetSecondsTotal() > RECORDING_START_INTERVAL_SECS;
 }
 
+EventPtr cTimer::Event(void) const
+{
+  return m_time.EPGEvent();
+}
+
 }
