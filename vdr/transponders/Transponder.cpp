@@ -100,7 +100,7 @@ fe_delivery_system_t cTransponder::DeliverySystem(void) const
   case TRANSPONDER_ATSC:
     return SYS_ATSC;
   case TRANSPONDER_CABLE:
-    return SYS_DVBC_ANNEX_AC;
+    return SYS_DVBC_ANNEX_A;
   case TRANSPONDER_SATELLITE:
     return m_deliverySystem == SYS_DVBS2 ? SYS_DVBS2 : SYS_DVBS;
   case TRANSPONDER_TERRESTRIAL:

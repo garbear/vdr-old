@@ -254,7 +254,7 @@ cTransponder cCableTransponderFactory::GetNext(void)
 
     transponder.Reset(TRANSPONDER_CABLE);
     transponder.SetChannelNumber(vars.channel);
-    transponder.SetDeliverySystem(SYS_DVBC_ANNEX_AC);
+    transponder.SetDeliverySystem(SYS_DVBC_ANNEX_A);
     transponder.SetFrequencyHz(frequencyHz);
     transponder.SetInversion(m_bCanInversionAuto ? INVERSION_AUTO : CABLE_INVERSION_FALLBACK);
     transponder.SetModulation(vars.modulation);

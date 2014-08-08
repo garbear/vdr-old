@@ -78,7 +78,7 @@ TEST(DvbTuner, Getters)
     if (cDvbDevices::IsATSC(tuner.GetName()))
     {
       EXPECT_FALSE(tuner.HasDeliverySystem(SYS_UNDEFINED));
-      EXPECT_FALSE(tuner.HasDeliverySystem(SYS_DVBC_ANNEX_AC));
+      EXPECT_FALSE(tuner.HasDeliverySystem(SYS_DVBC_ANNEX_A));
       EXPECT_TRUE(tuner.HasDeliverySystem(SYS_DVBC_ANNEX_B));
       EXPECT_FALSE(tuner.HasDeliverySystem(SYS_DVBT));
       EXPECT_FALSE(tuner.HasDeliverySystem(SYS_DSS));

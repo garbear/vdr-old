@@ -59,7 +59,7 @@ public:
   /*!
    * Valid delivery systems
    *   ATSC:        SYS_ATSC
-   *   Cable:       SYS_DVBC_ANNEX_AC
+   *   Cable:       SYS_DVBC_ANNEX_A
    *   Satellite:   SYS_DVBS or SYS_DVBS2
    *   Terrestrial: SYS_DVBT or SYS_DVBT2
    */
