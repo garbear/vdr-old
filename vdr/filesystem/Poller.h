@@ -28,9 +28,9 @@ namespace VDR
 class cPoller
 {
 public:
-  cPoller(int fileHandle = -1, bool bOut = false);
+  cPoller(int fileHandle = -1, bool bOut = false, bool bPriorityOnly = false);
 
-  bool Add(int fileHandle, bool bOut);
+  bool Add(int fileHandle, bool bOut, bool bPriorityOnly = false);
 
   bool Poll(int timeoutMs = 0);
 

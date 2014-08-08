@@ -27,29 +27,34 @@
 namespace VDR
 {
 
-cPoller::cPoller(int fileHandle, bool bOut)
+cPoller::cPoller(int fileHandle, bool bOut, bool bPriorityOnly /* = false */)
  : m_numFileHandles(0)
 {
-  Add(fileHandle, bOut);
+  Add(fileHandle, bOut, bPriorityOnly);
 }
 
-bool cPoller::Add(int fileHandle, bool bOut)
+bool cPoller::Add(int fileHandle, bool bOut, bool bPriorityOnly /* = false */)
 {
   if (fileHandle >= 0)
   {
+    const short int requestedEvents = (bOut ? POLLOUT : POLLIN) | (bPriorityOnly ? POLLPRI : 0);
+
+    // Look for duplicates
     for (int i = 0; i < m_numFileHandles; i++)
     {
-      if (m_pfd[i].fd == fileHandle && m_pfd[i].events == (bOut ? POLLOUT : POLLIN))
+      if (m_pfd[i].fd == fileHandle && m_pfd[i].events == requestedEvents)
         return true;
     }
+
     if (m_numFileHandles < MaxPollFiles)
     {
       m_pfd[m_numFileHandles].fd = fileHandle;
-      m_pfd[m_numFileHandles].events = bOut ? POLLOUT : POLLIN;
+      m_pfd[m_numFileHandles].events = requestedEvents;
       m_pfd[m_numFileHandles].revents = 0;
       m_numFileHandles++;
       return true;
     }
+
     esyslog("ERROR: too many file handles in cPoller");
   }
   return false;
