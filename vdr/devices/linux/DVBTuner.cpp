@@ -682,19 +682,6 @@ void* cDvbTuner::Process(void)
       m_status = status;
       const bool bHasLock = HasLock();
 
-      // Report new status to debug log
-      vector<string> statusFlags;
-      if (m_status == FE_STATUS_UNKNOWN) statusFlags.push_back("UNKNOWN");
-      if (m_status & FE_HAS_SIGNAL)      statusFlags.push_back("SIGNAL");
-      if (m_status & FE_HAS_CARRIER)     statusFlags.push_back("CARRIER");
-      if (m_status & FE_HAS_VITERBI)     statusFlags.push_back("VITERBI");
-      if (m_status & FE_HAS_SYNC)        statusFlags.push_back("SYNC");
-      if (m_status & FE_HAS_LOCK)        statusFlags.push_back("LOCK");
-      if (m_status & FE_TIMEDOUT)        statusFlags.push_back("TIMEDOUT");
-      if (m_status & FE_REINIT)          statusFlags.push_back("REINIT");
-      dsyslog("Frontend %u/%u status updated to %s", m_device->Frontend(), m_device->Adapter(),
-          StringUtils::Join(statusFlags, " | ").c_str());
-
       // Report new lock status to observers
       if (!bHadLock && bHasLock)
       {
