@@ -641,8 +641,6 @@ void* cDvbTuner::Process(void)
 {
   while (!IsStopped())
   {
-    const int64_t startMs = GetTimeMs();
-
     // Wait for backend to get a tune message
 
     // According to MythTv, waiting for DVB events fails with several DVB cards.
@@ -662,9 +660,7 @@ void* cDvbTuner::Process(void)
     // Read all the events off the queue, so we can poll until backend gets
     // another tune message
     struct dvb_frontend_event event;
-    unsigned int events = 0;
-    while (ioctl(m_fileDescriptor, FE_GET_EVENT, &event) == 0) events++;
-    dsyslog("Dvb tuner: Received %u event%s in %d ms", events, events == 1 ? "" : "s", GetTimeMs() - startMs);
+    while (ioctl(m_fileDescriptor, FE_GET_EVENT, &event) == 0); // empty
 
     CLockObject lock(m_mutex);
 
