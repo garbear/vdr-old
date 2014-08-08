@@ -20,6 +20,7 @@
  */
 #pragma once
 
+#include <sys/time.h> // Fix compile error "field 'timestamp' has incomplete type"
 #include <linux/dvb/frontend.h>
 #include <linux/dvb/version.h>
 
