@@ -153,7 +153,7 @@ FilterResourcePtr cDvbSectionFilterSubsystem::Poll(const FilterResourceCollectio
 
     pollfd pfd;
     pfd.fd = handle->GetFileDescriptor();
-    pfd.events = POLLIN;
+    pfd.events = POLLIN | POLLERR;
     pfd.revents = 0;
     vecPfds.push_back(pfd);
   }
@@ -166,7 +166,7 @@ FilterResourcePtr cDvbSectionFilterSubsystem::Poll(const FilterResourceCollectio
       int signaledFd = -1;
       for (unsigned int i = 0; i < vecPfds.size(); i++)
       {
-        if (vecPfds[i].revents & POLLIN)
+        if (vecPfds[i].revents & (POLLIN | POLLERR))
         {
           signaledFd = vecPfds[i].fd;
           break;
