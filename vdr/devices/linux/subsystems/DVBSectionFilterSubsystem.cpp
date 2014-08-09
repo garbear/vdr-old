@@ -78,7 +78,7 @@ dmx_sct_filter_params ToFilterParams(uint16_t pid, uint8_t tid, uint8_t mask)
   dmx_sct_filter_params sctFilterParams = { };
   sctFilterParams.pid = pid;
   sctFilterParams.timeout = 0; // seconds to wait for section to be loaded, 0 == no timeout
-  sctFilterParams.flags = DMX_IMMEDIATE_START;
+  sctFilterParams.flags = 0; // amlogic dvbplayer uses DMX_CHECK_CRC
   sctFilterParams.filter.filter[0] = tid;
   sctFilterParams.filter.mask[0] = mask;
   return sctFilterParams;
@@ -94,7 +94,7 @@ FilterResourcePtr cDvbSectionFilterSubsystem::OpenResourceInternal(uint16_t pid,
   {
     dmx_sct_filter_params sctFilterParams = ToFilterParams(pid, tid, mask);
 
-    if (ioctl(fd, DMX_SET_FILTER, &sctFilterParams) >= 0)
+    if (ioctl(fd, DMX_SET_FILTER, &sctFilterParams) >= 0 && ioctl(fd, DMX_START, 0) >= 0)
     {
       return FilterResourcePtr(new cDvbFilterResource(pid, tid, mask, fd));
     }
