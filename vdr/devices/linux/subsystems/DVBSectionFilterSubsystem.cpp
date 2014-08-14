@@ -24,6 +24,7 @@
 #include "dvb/filters/FilterResource.h"
 //#include "../../../../sections.h"
 #include "utils/log/Log.h"
+#include "utils/StringUtils.h"
 #include "utils/Tools.h"
 
 #include <errno.h>
@@ -42,6 +43,14 @@ using namespace std;
 
 namespace VDR
 {
+
+enum AM_AMX_SOURCE
+{
+  AM_DMX_SRC_TS0,
+  AM_DMX_SRC_TS1,
+  AM_DMX_SRC_TS2,
+  AM_DMX_SRC_HIU
+};
 
 // --- cDvbFilterResource -------------------------------------------------------
 
@@ -96,6 +105,47 @@ FilterResourcePtr cDvbSectionFilterSubsystem::OpenResourceInternal(uint16_t pid,
 
     if (ioctl(fd, DMX_SET_FILTER, &sctFilterParams) >= 0 && ioctl(fd, DMX_START, 0) >= 0)
     {
+      static bool bSetSourceOnce = false;
+      if (!bSetSourceOnce)
+      {
+        bSetSourceOnce = true;
+
+        CFile demuxSource;
+        string strPath = StringUtils::Format("/sys/class/stb/demux%d_source", Device<cDvbDevice>()->Frontend());
+
+        if (demuxSource.OpenForWrite(strPath, false))
+        {
+          AM_AMX_SOURCE src = AM_DMX_SRC_TS2;
+          string cmd;
+
+          switch(src)
+          {
+          case AM_DMX_SRC_TS0:
+            cmd = "ts0";
+            break;
+          case AM_DMX_SRC_TS1:
+            cmd = "ts1";
+            break;
+          case AM_DMX_SRC_TS2:
+            cmd = "ts2";
+            break;
+          case AM_DMX_SRC_HIU:
+            cmd = "hiu";
+            break;
+          default:
+            dsyslog("Demux source not supported: %d", src);
+          }
+
+          if (!cmd.empty())
+            demuxSource.Write(cmd.c_str(), cmd.length());
+          demuxSource.Close();
+        }
+        else
+        {
+          dsyslog("Can't open %s", strPath.c_str());
+        }
+      }
+
       return FilterResourcePtr(new cDvbFilterResource(pid, tid, mask, fd));
     }
     else
