@@ -52,9 +52,9 @@ TEST(Scanner, Scan)
     if (!device)
       continue;
 
-    ASSERT_TRUE(device->Initialise());
+    ASSERT_TRUE(device->Initialise(0));
 
-    if (cDvbDevices::IsATSC(device->DeviceName()))
+    if (cDvbDevices::IsATSC(device->Name()))
     {
       cScanConfig config;
       config.dvbType = TRANSPONDER_ATSC;
