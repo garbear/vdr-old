@@ -37,7 +37,7 @@ namespace VDR
 class cScanList;
 class CChannelFilter;
 
-class cChannelManager : public Observer, public Observable
+class cChannelManager : protected Observer, public Observable
 {
   friend class CChannelFilter;
 
@@ -76,7 +76,7 @@ public:
   void RemoveChannel(const ChannelPtr& channel);
   void Clear(void);
 
-  void Notify(const Observable &obs, const ObservableMessage msg);
+  virtual void Notify(const Observable &obs, const ObservableMessage msg);
   void NotifyObservers(void);
 
   bool Load(void);
