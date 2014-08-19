@@ -37,8 +37,14 @@ using namespace PLATFORM;
 using namespace VDR;
 using namespace std;
 
-cChannelManager::cChannelManager()
+cChannelManager::cChannelManager(void)
 {
+}
+
+cChannelManager::~cChannelManager(void)
+{
+  for (ChannelVector::iterator itChannel = m_channels.begin(); itChannel != m_channels.end(); ++itChannel)
+    (*itChannel)->UnregisterObserver(this);
 }
 
 cChannelManager &cChannelManager::Get()
@@ -198,9 +204,6 @@ void cChannelManager::RemoveChannel(const ChannelPtr& channel)
     (*itChannel)->UnregisterObserver(this);
     m_channels.erase(itChannel);
     SetChanged();
-
-    // TODO: Also erase from sid map
-    // TODO TODO: Get rid of sid map
   }
 }
 

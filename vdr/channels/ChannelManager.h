@@ -43,7 +43,7 @@ class cChannelManager : public Observer, public Observable
 
 public:
   cChannelManager(void);
-  ~cChannelManager(void) { }
+  virtual ~cChannelManager(void);
 
   static cChannelManager &Get(void);
 
