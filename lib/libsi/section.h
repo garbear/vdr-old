@@ -369,6 +369,7 @@ public:
       const psip_eit_event *s;
    };
    StructureLoop<Event> eventLoop;
+   int getSourceId() const;
 protected:
    virtual void Parse();
 private:

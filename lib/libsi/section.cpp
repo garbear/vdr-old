@@ -589,6 +589,10 @@ void PSIP_EIT::Event::Parse() {
    assert(offset == sizeof(const psip_eit_event) + textLoop.getLength() + sizeof(const psip_eit_event_mid) + eventDescriptors.getLength());
 }
 
+int PSIP_EIT::getSourceId() const {
+   return HILO(s->source_id);
+}
+
 /*********************** PSIP_STT ***********************/
 
 void PSIP_STT::Parse() {
