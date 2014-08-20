@@ -24,7 +24,7 @@
 #pragma once
 
 /** Current VNSI Protocol Version number */
-#define VNSI_PROTOCOLVERSION 6
+#define VNSI_PROTOCOLVERSION 7
 
 //XXX
 #define VNSI_SERVER_VERSION "TEST"

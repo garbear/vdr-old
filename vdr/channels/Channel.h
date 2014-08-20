@@ -179,7 +179,8 @@ public:
         cTransponder& GetTransponder(void)             { return m_transponder; }
   void SetTransponder(const cTransponder& transponder) { m_transponder = transponder; }
 
-  unsigned int Number(void) const { return m_transponder.ChannelNumber() * 10 + m_channelId.Sid(); } // TODO
+  unsigned int Number(void) const { return m_transponder.ChannelNumber(); }
+  unsigned int SubNumber(void) const { return m_channelId.Sid(); }
 
   /*!
    * \brief Returns the transponder frequency in MHz, plus the polarization in

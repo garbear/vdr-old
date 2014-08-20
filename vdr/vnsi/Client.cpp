@@ -993,6 +993,7 @@ bool cVNSIClient::processCHANNELS_GetChannels() /* OPCODE 63 */
       caid_idx++;
     }
     m_resp->add_String(caids);
+    m_resp->add_U32(channel->SubNumber());
   }
 
   m_resp->finalise();
