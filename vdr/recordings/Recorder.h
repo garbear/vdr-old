@@ -48,7 +48,7 @@ public:
 
 protected:
   virtual void Activate(bool On);
-  virtual void Receive(uint8_t *Data, int Length);
+  virtual void Receive(const std::vector<uint8_t>& data);
   virtual void* Process(void);
 
 private:

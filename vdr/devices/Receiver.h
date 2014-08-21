@@ -53,13 +53,13 @@ public: // TODO
   void AttachDevice(cDevice* device);
   void DetachDevice(void);
 
-  virtual void Activate(bool On) {}
+  virtual void Activate(bool On) = 0;
                ///< This function is called just before the cReceiver gets attached to
                ///< (On == true) and right after it gets detached from (On == false) a cDevice. It can be used
                ///< to do things like starting/stopping a thread.
                ///< It is guaranteed that Receive() will not be called before Activate(true).
 protected:
-  virtual void Receive(uint8_t *Data, int Length) = 0;
+  virtual void Receive(const std::vector<uint8_t>& data) = 0;
                ///< This function is called from the cDevice we are attached to, and
                ///< delivers one TS packet from the set of PIDs the cReceiver has requested.
                ///< The data packet must be accepted immediately, and the call must return

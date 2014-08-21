@@ -32,6 +32,7 @@
 #include "utils/log/Log.h"
 
 #include <algorithm>
+#include <assert.h>
 
 using namespace PLATFORM;
 using namespace std;
@@ -102,7 +103,13 @@ void *cDeviceReceiverSubsystem::Process()
             Detach(receiver);
           }
           else
-            receiver->Receive(b, TS_SIZE);
+          {
+            std::vector<uint8_t> buffer;
+            buffer.assign(b, b + TS_SIZE);
+            assert(buffer.size() == TS_SIZE);
+            receiver->Receive(buffer);
+          }
+
           if (DescramblingOk)
             ChannelCamRelations.SetDecrypt(receiver->ChannelID(), CamSlotNumber);
         }

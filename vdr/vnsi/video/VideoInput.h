@@ -48,7 +48,7 @@ public:
 protected:
   void ResetMembers(void);
   void PmtChange(void);
-  void Receive(uint8_t *data, int length);
+  void Receive(const std::vector<uint8_t>& data);
   void Attach(bool on);
 
   DevicePtr                  m_Device;

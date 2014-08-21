@@ -130,7 +130,7 @@ void cVideoInput::PmtChange(void)
   m_PmtChange = true;
 }
 
-void cVideoInput::Receive(uint8_t *data, int length)
+void cVideoInput::Receive(const std::vector<uint8_t>& data)
 {
   CLockObject lock(m_mutex);
   if (!m_Device)
@@ -146,7 +146,7 @@ void cVideoInput::Receive(uint8_t *data, int length)
        m_VideoBuffer->Put(pmt, TS_SIZE);
      m_PmtChange = false;
   }
-  m_VideoBuffer->Put(data, length);
+  m_VideoBuffer->Put(data.data(), data.size());
 }
 
 void cVideoInput::Attach(bool on)

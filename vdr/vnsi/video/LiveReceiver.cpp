@@ -47,9 +47,9 @@ cLiveReceiver::~cLiveReceiver()
     m_device->Receiver()->Detach(this);
 }
 
-void cLiveReceiver::Receive(uint8_t *Data, int Length)
+void cLiveReceiver::Receive(const std::vector<uint8_t>& data)
 {
-  m_VideoInput->Receive(Data, Length);
+  m_VideoInput->Receive(data);
 }
 
 void cLiveReceiver::Activate(bool On)

@@ -56,7 +56,7 @@ void cTransfer::Activate(bool On)
 #define MAXRETRIES    20 // max. number of retries for a single TS packet
 #define RETRYWAIT      5 // time (in ms) between two retries
 
-void cTransfer::Receive(uint8_t *Data, int Length)
+void cTransfer::Receive(const std::vector<uint8_t>& data)
 {
   if (cPlayer::IsAttached()) {
      // Transfer Mode means "live tv", so there's no point in doing any additional
@@ -64,7 +64,7 @@ void cTransfer::Receive(uint8_t *Data, int Length)
      // now and then there may be conditions where the packet just can't be
      // handled when offered the first time, so that's why we try several times:
      for (int i = 0; i < MAXRETRIES; i++) {
-         if (PlayTs(Data, Length) > 0)
+         if (PlayTs(data.data(), data.size()) > 0)
             return;
          PLATFORM::CEvent::Sleep(RETRYWAIT);
          }
