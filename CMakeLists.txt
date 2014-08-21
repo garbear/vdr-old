@@ -248,7 +248,6 @@ set(VDR_SRCS
 	vdr/vnsi/net/RequestPacket.cpp
 	vdr/vnsi/net/ResponsePacket.cpp
 	vdr/vnsi/video/Demuxer.cpp
-	vdr/vnsi/video/LiveReceiver.cpp
 	vdr/vnsi/video/RecPlayer.cpp
 	vdr/vnsi/video/Streamer.cpp
 	vdr/vnsi/video/VideoBuffer.cpp

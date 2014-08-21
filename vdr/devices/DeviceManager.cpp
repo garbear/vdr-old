@@ -107,6 +107,24 @@ void cDeviceManager::Shutdown(void)
   m_devices.clear();
 }
 
+bool cDeviceManager::AttachReceiver(cReceiver* receiver, const ChannelPtr& channel)
+{
+  DevicePtr device = GetDevice(0); // TODO
+  if (device && device->Channel()->SwitchChannel(channel))
+  {
+    device->Receiver()->AttachReceiver(receiver);
+    return true;
+  }
+  return false;
+}
+
+void cDeviceManager::DetachReceiver(cReceiver* receiver)
+{
+  DevicePtr device = GetDevice(0); // TODO
+  if (device)
+    device->Receiver()->Detach(receiver);
+}
+
 void cDeviceManager::Notify(const Observable &obs, const ObservableMessage msg)
 {
   CLockObject lock(m_mutex);

@@ -25,28 +25,21 @@
 
 #include "VideoInput.h"
 #include "VideoBuffer.h"
-
-#include "LiveReceiver.h"
+#include "channels/Channel.h"
 #include "devices/DeviceManager.h"
-#include "devices/subsystems/DeviceChannelSubsystem.h"
-#include "devices/subsystems/DeviceReceiverSubsystem.h"
-#include "devices/subsystems/DeviceSectionFilterSubsystem.h"
 #include "devices/Remux.h"
-#include "channels/ChannelManager.h"
-#include "devices/Device.h"
-#include "devices/Receiver.h"
-#include "settings/Settings.h"
-#include "utils/CommonMacros.h"
 #include "utils/log/Log.h"
 
+#include <assert.h>
+
 using namespace PLATFORM;
+using namespace std;
 
 namespace VDR
 {
 
 cVideoInput::cVideoInput()
 {
-  m_Receiver  = NULL;
   ResetMembers();
 }
 
@@ -57,74 +50,44 @@ cVideoInput::~cVideoInput()
 
 void cVideoInput::ResetMembers(void)
 {
-  DELETENULL(m_Receiver);
   m_Channel     = cChannel::EmptyChannel;
   m_VideoBuffer = NULL;
   m_PmtChange   = false;
-  m_Device      = cDevice::EmptyDevice;
 }
 
-bool cVideoInput::Open(ChannelPtr channel, cVideoBuffer *videoBuffer)
+bool cVideoInput::Open(const ChannelPtr& channel, cVideoBuffer* videoBuffer)
 {
+  assert(videoBuffer);
+
   CLockObject lock(m_mutex);
 
-  m_Device = cDeviceManager::Get().GetDevice(0); // TODO
-  if (m_Device)
+  // TODO: Must set before calling AttachReceiver() because AttachReceiver()
+  // invokes m_VideoBuffer via Activate()
+  m_VideoBuffer = videoBuffer;
+
+  if (cDeviceManager::Get().AttachReceiver(this, channel))
   {
-    m_VideoBuffer = videoBuffer;
-    m_Channel     = channel;
-
-    if (m_Device->Channel()->SwitchChannel(m_Channel))
-    {
-      dsyslog("Creating new live Receiver");
-      m_Receiver  = new cLiveReceiver(m_Device, this, m_Channel);
-      m_Device->Receiver()->AttachReceiver(m_Receiver);
-
-      PmtChange();
-
-      return true;
-    }
+    m_Channel = channel;
+    PmtChange();
+    return true;
   }
+
+  ResetMembers(); // TODO: Only reset members if AttachReceiver() succeeds
+
   return false;
 }
 
 void cVideoInput::Close()
 {
-  DevicePtr device;
-  cLiveReceiver* receiver;
-  {
-    CLockObject lock(m_mutex);
-    device   = m_Device;
-    m_Device = cDevice::EmptyDevice;
+  CLockObject lock(m_mutex);
 
-    receiver   = m_Receiver;
-    m_Receiver = NULL;
-
-    m_Channel.reset();
-  }
-
-  if (device)
-  {
-    if (receiver)
-    {
-      dsyslog("Detaching Live Receiver");
-      device->Receiver()->Detach(receiver);
-    }
-    else
-    {
-      dsyslog("No live receiver present");
-    }
-
-    delete receiver;
-  }
-
+  cDeviceManager::Get().DetachReceiver(this);
   ResetMembers();
 }
 
 void cVideoInput::PmtChange(void)
 {
-  if (m_Receiver)
-    m_Receiver->SetPids(*m_Channel);
+  SetPids(*m_Channel);
 
   CLockObject lock(m_mutex);
   m_PmtChange = true;
@@ -133,8 +96,6 @@ void cVideoInput::PmtChange(void)
 void cVideoInput::Receive(const std::vector<uint8_t>& data)
 {
   CLockObject lock(m_mutex);
-  if (!m_Device)
-    return;
 
   if (m_PmtChange)
   {
@@ -149,10 +110,11 @@ void cVideoInput::Receive(const std::vector<uint8_t>& data)
   m_VideoBuffer->Put(data.data(), data.size());
 }
 
-void cVideoInput::Attach(bool on)
+void cVideoInput::Activate(bool bOn)
 {
   CLockObject lock(m_mutex);
-  m_VideoBuffer->AttachInput(on);
+  m_VideoBuffer->AttachInput(bOn);
+  dsyslog("%s live receiver", bOn ? "Activate" : "Deactivate");
 }
 
 }

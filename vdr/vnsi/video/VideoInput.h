@@ -25,38 +25,35 @@
 #pragma once
 
 #include "channels/ChannelTypes.h"
-#include "devices/DeviceTypes.h"
+#include "devices/Receiver.h"
 #include "lib/platform/threads/mutex.h"
 
 #include <stdint.h>
+#include <vector>
 
 namespace VDR
 {
 
-class cLiveReceiver;
 class cVideoBuffer;
 
-class cVideoInput
+class cVideoInput : public cReceiver
 {
-friend class cLiveReceiver;
 public:
   cVideoInput();
   virtual ~cVideoInput();
-  bool Open(ChannelPtr channel, cVideoBuffer *videoBuffer);
+  bool Open(const ChannelPtr& channel, cVideoBuffer* videoBuffer);
   void Close();
 
 protected:
   void ResetMembers(void);
   void PmtChange(void);
-  void Receive(const std::vector<uint8_t>& data);
-  void Attach(bool on);
+  virtual void Receive(const std::vector<uint8_t>& data);
+  virtual void Activate(bool bOn);
 
-  DevicePtr                  m_Device;
-  cLiveReceiver*             m_Receiver;
-  ChannelPtr                 m_Channel;
-  cVideoBuffer*              m_VideoBuffer;
-  PLATFORM::CMutex           m_mutex;
-  bool                       m_PmtChange;
+  ChannelPtr       m_Channel;
+  cVideoBuffer*    m_VideoBuffer;
+  bool             m_PmtChange;
+  PLATFORM::CMutex m_mutex;
 };
 
 }

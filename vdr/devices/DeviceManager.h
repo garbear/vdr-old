@@ -30,6 +30,8 @@
 namespace VDR
 {
 
+class cReceiver;
+
 class cDeviceManager : public Observer
 {
 private:
@@ -68,6 +70,9 @@ public:
    * \brief Closes down all devices. Must be called at the end of the program.
    */
   void Shutdown();
+
+  bool AttachReceiver(cReceiver* receiver, const ChannelPtr& channel);
+  void DetachReceiver(cReceiver* receiver);
 
   void Notify(const Observable &obs, const ObservableMessage msg);
 
