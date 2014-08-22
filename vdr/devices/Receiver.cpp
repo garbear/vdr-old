@@ -182,25 +182,6 @@ void cReceiver::DetachDevice(void)
   }
 }
 
-bool cReceiver::AddToPIDSubsystem(cDevicePIDSubsystem* pidSys) const
-{
-  assert(pidSys);
-
-  CLockObject lock(m_mutex);
-
-  for (set<uint16_t>::const_iterator it = m_pids.begin(); it != m_pids.end(); ++it)
-  {
-    if (!pidSys->AddPid(*it))
-    {
-      for (set<uint16_t>::const_iterator it2 = m_pids.begin(); *it2 != *it; ++it2)
-        pidSys->DelPid(*it2);
-      return false;
-    }
-  }
-
-  return true;
-}
-
 void cReceiver::RemoveFromPIDSubsystem(cDevicePIDSubsystem* pidSys) const
 {
   assert(pidSys);

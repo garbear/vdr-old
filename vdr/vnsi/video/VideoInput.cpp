@@ -45,7 +45,6 @@ cVideoInput::cVideoInput()
 
 cVideoInput::~cVideoInput()
 {
-  Close();
 }
 
 void cVideoInput::ResetMembers(void)
@@ -53,36 +52,6 @@ void cVideoInput::ResetMembers(void)
   m_Channel     = cChannel::EmptyChannel;
   m_VideoBuffer = NULL;
   m_PmtChange   = false;
-}
-
-bool cVideoInput::Open(const ChannelPtr& channel, cVideoBuffer* videoBuffer)
-{
-  assert(videoBuffer);
-
-  CLockObject lock(m_mutex);
-
-  // TODO: Must set before calling AttachReceiver() because AttachReceiver()
-  // invokes m_VideoBuffer via Activate()
-  m_VideoBuffer = videoBuffer;
-
-  if (cDeviceManager::Get().AttachReceiver(this, channel))
-  {
-    m_Channel = channel;
-    PmtChange();
-    return true;
-  }
-
-  ResetMembers(); // TODO: Only reset members if AttachReceiver() succeeds
-
-  return false;
-}
-
-void cVideoInput::Close()
-{
-  CLockObject lock(m_mutex);
-
-  cDeviceManager::Get().DetachReceiver(this);
-  ResetMembers();
 }
 
 void cVideoInput::PmtChange(void)

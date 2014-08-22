@@ -41,19 +41,18 @@ class cVideoInput : public cReceiver
 public:
   cVideoInput();
   virtual ~cVideoInput();
-  bool Open(const ChannelPtr& channel, cVideoBuffer* videoBuffer);
-  void Close();
 
   void ResetMembers(void);
 
   void SetChannel(const ChannelPtr& channel);
   void SetVideoBuffer(cVideoBuffer* videoBuffer);
 
+  virtual void Activate(bool bOn);
+
   void PmtChange(void);
 
 protected:
   virtual void Receive(const std::vector<uint8_t>& data);
-  virtual void Activate(bool bOn);
 
   ChannelPtr       m_Channel;
   cVideoBuffer*    m_VideoBuffer;

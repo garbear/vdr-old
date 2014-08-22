@@ -21,9 +21,14 @@
 
 #include "Transfer.h"
 #include "Device.h"
+#include "devices/subsystems/DevicePIDSubsystem.h" // TODO
 #include "devices/subsystems/DeviceReceiverSubsystem.h"
 #include "lib/platform/threads/mutex.h"
 #include "utils/log/Log.h"
+
+#include <set> // TODO
+
+using namespace std; // TODO
 
 namespace VDR
 {
@@ -79,6 +84,21 @@ cTransferControl::cTransferControl(cDevice *ReceiverDevice, ChannelPtr Channel)
 :cControl(m_transfer = new cTransfer(Channel), true),
  m_device(ReceiverDevice)
 {
+  const set<uint16_t>& pids = m_transfer->m_pids;
+  for (set<uint16_t>::const_iterator it = pids.begin(); it != pids.end(); ++it)
+  {
+    if (!ReceiverDevice->PID()->AddPid(*it))
+    {
+      for (set<uint16_t>::const_iterator it2 = pids.begin(); *it2 != *it; ++it2)
+        ReceiverDevice->PID()->DelPid(*it2);
+
+      dsyslog("receiver %p cannot be added to the pid subsys", m_transfer);
+      return;
+    }
+  }
+
+  m_transfer->Activate(true);
+
   ReceiverDevice->Receiver()->AttachReceiver(m_transfer);
 }
 

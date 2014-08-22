@@ -40,6 +40,7 @@ private:
   PLATFORM::CMutex   m_mutex;
   cChannelID         m_channelID;
   cDevice*           m_device;
+public: // TODO
   std::set<uint16_t> m_pids;
 
 protected:
@@ -47,7 +48,6 @@ protected:
 
 public: // TODO
   bool WantsPid(int Pid);
-  bool AddToPIDSubsystem(cDevicePIDSubsystem* pidSys) const;
   void RemoveFromPIDSubsystem(cDevicePIDSubsystem* pidSys) const;
   bool DeviceAttached(cDevice* device) const;
   void AttachDevice(cDevice* device);

@@ -504,6 +504,7 @@ bool cTimer::StartRecording(void)
       {
         // start recording
         cRecorder* recorder = new cRecorder(recording.FileName(), channel);
+        /* TODO
         if (device->Receiver()->AttachReceiver(recorder))
         {
           recording.WriteInfo();
@@ -517,6 +518,7 @@ bool cTimer::StartRecording(void)
           // failed to attach receiver
           DELETENULL(recorder);
         }
+        */
       }
       else
       {

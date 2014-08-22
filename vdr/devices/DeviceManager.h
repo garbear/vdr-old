@@ -76,9 +76,6 @@ public:
   bool OpenVideoInput(const ChannelPtr& channel, cVideoBuffer* videoBuffer);
   void CloseVideoInput(void);
 
-  bool AttachReceiver(cReceiver* receiver, const ChannelPtr& channel);
-  void DetachReceiver(cReceiver* receiver);
-
   void Notify(const Observable &obs, const ObservableMessage msg);
 
 private:

@@ -47,7 +47,7 @@ public:
   /*!
    * \brief Attaches the given receiver to this device
    */
-  bool AttachReceiver(cReceiver *receiver);
+  void AttachReceiver(cReceiver* receiver);
 
   /*!
    * \brief Detaches the given receiver from this device

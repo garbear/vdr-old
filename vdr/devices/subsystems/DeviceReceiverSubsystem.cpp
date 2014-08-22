@@ -126,26 +126,8 @@ bool cDeviceReceiverSubsystem::Receiving(void) const
   return !m_receivers.empty();
 }
 
-bool cDeviceReceiverSubsystem::AttachReceiver(cReceiver *receiver)
+void cDeviceReceiverSubsystem::AttachReceiver(cReceiver* receiver)
 {
-  assert(receiver);
-
-  if (receiver->DeviceAttached(Device()))
-  {
-    dsyslog("receiver %p is already attached to %p", receiver, this);
-    return true;
-  }
-
-  PLATFORM::CLockObject lock(m_mutexReceiver);
-
-  if (!receiver->AddToPIDSubsystem(PID()))
-  {
-    dsyslog("receiver %p cannot be added to the pid subsys", receiver);
-    return false;
-  }
-
-  receiver->Activate(true);
-
   {
     CLockObject lock(m_mutexReceiver);
     receiver->AttachDevice(Device());
@@ -160,7 +142,6 @@ bool cDeviceReceiverSubsystem::AttachReceiver(cReceiver *receiver)
 
   CreateThread();
   dsyslog("receiver %p attached to %p", receiver, this);
-  return true;
 }
 
 void cDeviceReceiverSubsystem::Detach(cReceiver *receiver)

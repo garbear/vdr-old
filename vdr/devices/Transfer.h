@@ -34,11 +34,11 @@ class cTransfer : public cReceiver, public cPlayer {
 private:
   cPatPmtGenerator patPmtGenerator;
 protected:
-  virtual void Activate(bool On);
   virtual void Receive(const std::vector<uint8_t>& data);
 public:
   cTransfer(ChannelPtr Channel);
   virtual ~cTransfer();
+  virtual void Activate(bool On);
   };
 
 class cDevice;
