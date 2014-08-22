@@ -93,6 +93,18 @@ void cVideoInput::PmtChange(void)
   m_PmtChange = true;
 }
 
+void cVideoInput::SetChannel(const ChannelPtr& channel)
+{
+  CLockObject lock(m_mutex);
+  m_Channel = channel;
+}
+
+void cVideoInput::SetVideoBuffer(cVideoBuffer* videoBuffer)
+{
+  CLockObject lock(m_mutex);
+  m_VideoBuffer = videoBuffer;
+}
+
 void cVideoInput::Receive(const std::vector<uint8_t>& data)
 {
   CLockObject lock(m_mutex);

@@ -109,7 +109,21 @@ void cDeviceManager::Shutdown(void)
 
 bool cDeviceManager::OpenVideoInput(const ChannelPtr& channel, cVideoBuffer* videoBuffer)
 {
-  return m_VideoInput.Open(channel, videoBuffer);
+  DevicePtr device = GetDevice(0); // TODO
+
+  if (device && device->Channel()->SwitchChannel(channel))
+  {
+    m_VideoInput.SetVideoBuffer(videoBuffer);
+    if (device->Receiver()->AttachReceiver(&m_VideoInput))
+    {
+      m_VideoInput.SetChannel(channel);
+      m_VideoInput.PmtChange();
+      return true;
+    }
+    m_VideoInput.ResetMembers();
+  }
+
+  return false;
 }
 
 void cDeviceManager::CloseVideoInput(void)
@@ -119,12 +133,7 @@ void cDeviceManager::CloseVideoInput(void)
 
 bool cDeviceManager::AttachReceiver(cReceiver* receiver, const ChannelPtr& channel)
 {
-  DevicePtr device = GetDevice(0); // TODO
-  if (device && device->Channel()->SwitchChannel(channel))
-  {
-    device->Receiver()->AttachReceiver(receiver);
-    return true;
-  }
+
   return false;
 }
 

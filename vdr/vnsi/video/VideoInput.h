@@ -44,9 +44,14 @@ public:
   bool Open(const ChannelPtr& channel, cVideoBuffer* videoBuffer);
   void Close();
 
-protected:
   void ResetMembers(void);
+
+  void SetChannel(const ChannelPtr& channel);
+  void SetVideoBuffer(cVideoBuffer* videoBuffer);
+
   void PmtChange(void);
+
+protected:
   virtual void Receive(const std::vector<uint8_t>& data);
   virtual void Activate(bool bOn);
 
