@@ -41,8 +41,6 @@
 namespace VDR
 {
 
-#define STREAMER_NO_FRONTEND_FOUND (-2)
-
 class cxSocket;
 class cTSParser;
 class cResponsePacket;
@@ -65,10 +63,7 @@ private:
 
   int               m_ClientID;
   ChannelPtr        m_Channel;                      /*!> Channel to stream */
-  DevicePtr         m_Device;
   cxSocket         *m_Socket;                       /*!> The socket class to communicate with client */
-  int               m_Frontend;                     /*!> File descriptor to access used receiving device  */
-  dvb_frontend_info m_FrontendInfo;                 /*!> DVB Information about the receiving device (DVB only) */
   v4l2_capability   m_vcap;                         /*!> PVR Information about the receiving device (pvrinput only) */
   std::string       m_DeviceString;                 /*!> The name of the receiving device */
   bool              m_startup;

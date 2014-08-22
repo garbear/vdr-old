@@ -52,7 +52,6 @@ cLiveStreamer::cLiveStreamer(int clientID, uint8_t timeshift, uint32_t timeout)
 {
   m_Channel         = cChannel::EmptyChannel;
   m_Socket          = NULL;
-  m_Frontend        = -1;
   m_IsAudioOnly     = false;
   m_IsMPEGPS        = false;
   m_startup         = true;
@@ -60,9 +59,6 @@ cLiveStreamer::cLiveStreamer(int clientID, uint8_t timeshift, uint32_t timeout)
   m_IFrameSeen      = false;
   m_VideoBuffer     = NULL;
   m_Timeshift       = timeshift;
-  m_Device          = cDevice::EmptyDevice;
-
-  memset(&m_FrontendInfo, 0, sizeof(m_FrontendInfo));
 
   if(m_scanTimeout == 0)
     m_scanTimeout = cSettings::Get().m_StreamTimeout;
@@ -81,14 +77,6 @@ cLiveStreamer::~cLiveStreamer()
 bool cLiveStreamer::Open(int serial)
 {
   Close();
-
-  m_Device = cDeviceManager::Get().GetDevice(0); // TODO
-
-  if (m_Device == cDevice::EmptyDevice)
-  {
-    esyslog("cannot start streaming on channel '%s': no device found", m_Channel->Name().c_str());
-    return false;
-  }
 
   bool recording = false;
   if (0) // test harness
@@ -140,12 +128,6 @@ void cLiveStreamer::Close(void)
   {
     delete m_VideoBuffer;
     m_VideoBuffer = NULL;
-  }
-
-  if (m_Frontend >= 0)
-  {
-    close(m_Frontend);
-    m_Frontend = -1;
   }
 }
 
@@ -405,11 +387,13 @@ void cLiveStreamer::sendStreamChange()
   delete resp;
 }
 
+bool IsFrontendFound(void) { return false; } // TODO
+
 void cLiveStreamer::sendSignalInfo()
 {
-  /* If no frontend is found m_Frontend is set to STREAMER_NO_FRONTEND_FOUND, in this case
-     return a empty signalinfo package */
-  if (m_Frontend == STREAMER_NO_FRONTEND_FOUND)
+  // If no frontend is found, return an empty signalinfo package
+  bool bFrontendFound = false; // TODO
+  if (!bFrontendFound)
   {
     cResponsePacket *resp = new cResponsePacket();
     if (!resp->initStream(VNSI_STREAM_SIGNALINFO, 0, 0, 0, 0, 0))
@@ -429,27 +413,9 @@ void cLiveStreamer::sendSignalInfo()
     resp->finaliseStream();
     m_Socket->write(resp->getPtr(), resp->getLen());
     delete resp;
-    return;
   }
-
-  if (m_Frontend < 0)
-  {
-    m_DeviceString = StringUtils::Format(FRONTEND_DEVICE, m_Device->Index(), 0);
-    m_Frontend = open(m_DeviceString.c_str(), O_RDONLY | O_NONBLOCK);
-    if (m_Frontend >= 0)
-    {
-      if (ioctl(m_Frontend, FE_GET_INFO, &m_FrontendInfo) < 0)
-      {
-        esyslog("cannot read frontend info.");
-        close(m_Frontend);
-        m_Frontend = STREAMER_NO_FRONTEND_FOUND;
-        memset(&m_FrontendInfo, 0, sizeof(m_FrontendInfo));
-        return;
-      }
-    }
-  }
-
-  if (m_Frontend >= 0)
+  /* TODO
+  else
   {
     cResponsePacket *resp = new cResponsePacket();
     if (!resp->initStream(VNSI_STREAM_SIGNALINFO, 0, 0, 0, 0, 0))
@@ -464,9 +430,6 @@ void cLiveStreamer::sendSignalInfo()
     uint16_t fe_signal;
     uint32_t fe_ber;
     uint32_t fe_unc;
-
-    memset(&status, 0, sizeof(status));
-    ioctl(m_Frontend, FE_READ_STATUS, &status);
 
     if (ioctl(m_Frontend, FE_READ_SIGNAL_STRENGTH, &fe_signal) == -1)
       fe_signal = -2;
@@ -494,6 +457,7 @@ void cLiveStreamer::sendSignalInfo()
     m_Socket->write(resp->getPtr(), resp->getLen());
     delete resp;
   }
+  */
 }
 
 void cLiveStreamer::sendStreamStatus()
