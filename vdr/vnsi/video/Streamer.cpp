@@ -116,7 +116,7 @@ bool cLiveStreamer::Open(int serial)
 
   if (!recording)
   {
-    if (!m_VideoInput.Open(m_Channel, m_VideoBuffer))
+    if (!cDeviceManager::Get().OpenVideoInput(m_Channel, m_VideoBuffer))
     {
       esyslog("Can't switch to channel %i - %s", m_Channel->Number(), m_Channel->Name().c_str());
       return false;
@@ -133,8 +133,9 @@ bool cLiveStreamer::Open(int serial)
 void cLiveStreamer::Close(void)
 {
   isyslog("LiveStreamer::Close - close");
-  m_VideoInput.Close();
+  cDeviceManager::Get().CloseVideoInput();
   m_Demuxer.Close();
+
   if (m_VideoBuffer)
   {
     delete m_VideoBuffer;

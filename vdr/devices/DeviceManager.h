@@ -24,6 +24,7 @@
 #include "DeviceTypes.h"
 #include "channels/ChannelTypes.h"
 #include "utils/Observer.h"
+#include "vnsi/video/VideoInput.h"
 
 #include <vector>
 
@@ -31,6 +32,7 @@ namespace VDR
 {
 
 class cReceiver;
+class cVideoBuffer;
 
 class cDeviceManager : public Observer
 {
@@ -71,6 +73,9 @@ public:
    */
   void Shutdown();
 
+  bool OpenVideoInput(const ChannelPtr& channel, cVideoBuffer* videoBuffer);
+  void CloseVideoInput(void);
+
   bool AttachReceiver(cReceiver* receiver, const ChannelPtr& channel);
   void DetachReceiver(cReceiver* receiver);
 
@@ -82,6 +87,7 @@ private:
   size_t                     m_devicesReady;
   bool                       m_bAllDevicesReady; //XXX make CCondition support other things than bools...
   PLATFORM::CCondition<bool> m_devicesReadyCondition;
+  cVideoInput                m_VideoInput;
 };
 
 }

@@ -107,6 +107,16 @@ void cDeviceManager::Shutdown(void)
   m_devices.clear();
 }
 
+bool cDeviceManager::OpenVideoInput(const ChannelPtr& channel, cVideoBuffer* videoBuffer)
+{
+  return m_VideoInput.Open(channel, videoBuffer);
+}
+
+void cDeviceManager::CloseVideoInput(void)
+{
+  m_VideoInput.Close();
+}
+
 bool cDeviceManager::AttachReceiver(cReceiver* receiver, const ChannelPtr& channel)
 {
   DevicePtr device = GetDevice(0); // TODO

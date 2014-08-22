@@ -81,7 +81,6 @@ private:
   cResponsePacket   m_streamHeader;
   cVNSIDemuxer      m_Demuxer;
   cVideoBuffer     *m_VideoBuffer;
-  cVideoInput       m_VideoInput;
   uint8_t           m_Timeshift;
 
 protected:
