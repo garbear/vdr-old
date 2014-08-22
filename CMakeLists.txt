@@ -134,9 +134,9 @@ set(VDR_SRCS
 	vdr/devices/Receiver.cpp
 	vdr/devices/Remux.cpp
 	vdr/devices/Transfer.cpp
-	vdr/devices/TSBuffer.cpp
 	vdr/devices/linux/DVBDevice.cpp
 	vdr/devices/linux/DVBTuner.cpp
+	vdr/devices/linux/TSBuffer.cpp
 	vdr/devices/linux/commoninterface/DVBCIAdapter.cpp
 	vdr/devices/linux/subsystems/DVBChannelSubsystem.cpp
 	vdr/devices/linux/subsystems/DVBCommonInterfaceSubsystem.cpp
