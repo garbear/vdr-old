@@ -21,8 +21,8 @@
 
 #include "DVBReceiverSubsystem.h"
 #include "devices/linux/DVBDevice.h"
-#include "devices/linux/TSBuffer.h"
-#include "utils/CommonMacros.h"
+#include "filesystem/Poller.h"
+#include "utils/log/Log.h"
 
 #include <fcntl.h>
 #include <sys/ioctl.h>
@@ -34,8 +34,8 @@ namespace VDR
 
 cDvbReceiverSubsystem::cDvbReceiverSubsystem(cDevice *device)
  : cDeviceReceiverSubsystem(device),
-   m_tsBuffer(NULL),
-   m_fd_dvr(-1)
+   m_fd_dvr(-1),
+   m_bFirstRead(false)
 {
 }
 
@@ -43,8 +43,7 @@ bool cDvbReceiverSubsystem::OpenDvr()
 {
   CloseDvr();
   m_fd_dvr = open(Device<cDvbDevice>()->DvbPath(DEV_DVB_DVR).c_str(), O_RDONLY | O_NONBLOCK);
-  if (m_fd_dvr >= 0)
-    m_tsBuffer = new cTSBuffer(m_fd_dvr, MEGABYTE(5), Device()->Index());
+  m_bFirstRead = false;
   return m_fd_dvr >= 0;
 }
 
@@ -52,21 +51,32 @@ void cDvbReceiverSubsystem::CloseDvr()
 {
   if (m_fd_dvr >= 0)
   {
-    delete m_tsBuffer;
-    m_tsBuffer = NULL;
     close(m_fd_dvr);
     m_fd_dvr = -1;
   }
 }
 
-bool cDvbReceiverSubsystem::GetTSPacket(uint8_t *&Data)
+void cDvbReceiverSubsystem::Read(cRingBufferLinear& ringBuffer)
 {
-  if (m_tsBuffer)
+  cPoller Poller(m_fd_dvr);
+  if (m_bFirstRead || Poller.Poll(100))
   {
-    Data = m_tsBuffer->Get();
-    return true;
+    m_bFirstRead = false;
+
+    int r = ringBuffer.Read(m_fd_dvr);
+    if (r < 0)
+    {
+      if (errno == EOVERFLOW)
+      {
+        esyslog("ERROR: driver buffer overflow on device %d", Device()->Index());
+      }
+      else if (errno != 0 && errno != EAGAIN && errno != EINTR)
+      {
+        LOG_ERROR;
+        return;
+      }
+    }
   }
-  return false;
 }
 
 bool cDvbReceiverSubsystem::SetPid(cPidHandle& handle, ePidType type, bool bOn)

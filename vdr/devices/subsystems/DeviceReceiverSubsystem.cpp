@@ -42,7 +42,10 @@ namespace VDR
 {
 
 cDeviceReceiverSubsystem::cDeviceReceiverSubsystem(cDevice *device)
- : cDeviceSubsystem(device)
+ : cDeviceSubsystem(device),
+   m_pidHandles(),
+   m_ringBuffer(MEGABYTE(5), TS_SIZE, true, "TS"),
+   m_bDelivered(false)
 {
 }
 
@@ -57,7 +60,8 @@ void *cDeviceReceiverSubsystem::Process()
   {
     while (!IsStopped())
     {
-      // Read data from the DVR device:
+      Read(m_ringBuffer);
+
       uint8_t *b = NULL;
       if (!GetTSPacket(b))
         break;
@@ -86,6 +90,40 @@ void *cDeviceReceiverSubsystem::Process()
     CloseDvr();
   }
   return NULL;
+}
+
+bool cDeviceReceiverSubsystem::GetTSPacket(uint8_t*& data)
+{
+  int count = 0;
+  if (m_bDelivered)
+  {
+    m_ringBuffer.Del(TS_SIZE);
+    m_bDelivered = false;
+  }
+  uint8_t* p = m_ringBuffer.Get(count);
+  if (p && count >= TS_SIZE)
+  {
+    if (p[0] != TS_SYNC_BYTE)
+    {
+      for (int i = 1; i < count; i++)
+      {
+        if (p[i] == TS_SYNC_BYTE)
+        {
+          count = i;
+          break;
+        }
+      }
+
+      m_ringBuffer.Del(count);
+      esyslog("ERROR: skipped %d bytes to sync on TS packet on device %d", count, Device()->Index());
+      return false;
+    }
+
+    m_bDelivered = true;
+    data = p;
+    return true;
+  }
+  return false;
 }
 
 bool cDeviceReceiverSubsystem::AttachReceiver(iReceiver* receiver, const ChannelPtr& channel)

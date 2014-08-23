@@ -22,12 +22,8 @@
 
 #include "devices/subsystems/DeviceReceiverSubsystem.h"
 
-#include <stdint.h>
-
 namespace VDR
 {
-class cTSBuffer;
-
 class cDvbReceiverSubsystem : public cDeviceReceiverSubsystem
 {
 public:
@@ -36,13 +32,12 @@ public:
 
   virtual bool OpenDvr();
   virtual void CloseDvr();
-  virtual bool GetTSPacket(uint8_t *&data);
+  virtual void Read(cRingBufferLinear& ringBuffer);
   virtual bool SetPid(cPidHandle& handle, ePidType type, bool bOn);
 
 private:
-  cTSBuffer *m_tsBuffer;
-
   // The DVR device (will be opened and closed as needed)
-  int m_fd_dvr;
+  int  m_fd_dvr;
+  bool m_bFirstRead; // TODO: Is this needed?
 };
 }

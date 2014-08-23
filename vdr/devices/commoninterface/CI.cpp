@@ -30,6 +30,7 @@
 #include "dvb/filters/PAT.h"
 #include "utils/CommonMacros.h"
 #include "utils/log/Log.h"
+#include "utils/Tools.h"
 
 #include <algorithm>
 #include <ctype.h>
