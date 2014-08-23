@@ -57,47 +57,8 @@ namespace VDR
 #define MSG_HELP "Usage: vdr [OPTIONS]\n\n" \
                  "  -c DIR,   --config=DIR   read config files from DIR (default: %s)\n" \
                  "  -d,       --daemon       run in daemon mode\n" \
-                 "            --dirnames=PATH[,NAME[,ENC]]\n" \
-                 "                           set the maximum directory path length to PATH\n" \
-                 "                           (default: %d); if NAME is also given, it defines\n" \
-                 "                           the maximum directory name length (default: %d);\n" \
-                 "                           the optional ENC can be 0 or 1, and controls whether\n" \
-                 "                           special characters in directory names are encoded as\n" \
-                 "                           hex values (default: 0); if PATH or NAME are left\n" \
-                 "                           empty (as in \",,1\" to only set ENC), the defaults\n" \
-                 "                           apply\n" \
-                 "            --edit=REC     cut recording REC and exit\n" \
-                 "            --genindex=REC generate index for recording REC and exit\n" \
-                 "  -g DIR,   --grab=DIR     write images from the SVDRP command GRAB into the\n" \
-                 "                           given DIR; DIR must be the full path name of an\n" \
-                 "                           existing directory, without any \"..\", double '/'\n" \
-                 "                           or symlinks (default: none, same as -g-)\n" \
                  "  -h,       --help         print this help and exit\n" \
-                 "  -i ID,    --instance=ID  use ID as the id of this VDR instance (default: 0)\n" \
-                 "  -l LEVEL, --log=LEVEL    set log level (default: 3)\n" \
-                 "                           0 = no logging, 1 = errors only,\n" \
-                 "                           2 = errors and info, 3 = errors, info and debug\n" \
-                 "                           if logging should be done to LOG_LOCALn instead of\n" \
-                 "                           LOG_USER, add '.n' to LEVEL, as in 3.7 (n=0..7)\n" \
-                 "  -L DIR,   --lib=DIR      search for plugins in DIR (default is %s)\n" \
-                 "            --lirc[=PATH]  use a LIRC remote control device, attached to PATH\n" \
-                 "                           (default: %s)\n" \
-                 "            --localedir=DIR search for locale files in DIR (default is\n" \
-                 "                           %s)\n" \
-                 "  -m,       --mute         mute audio of the primary DVB device at startup\n" \
-                 "  -r CMD,   --record=CMD   call CMD before and after a recording, and after\n" \
-                 "                           a recording has been edited or deleted\n" \
-                 "            --resdir=DIR   read resource files from DIR (default: %s)\n" \
-                 "  -s CMD,   --shutdown=CMD call CMD to shutdown the computer\n" \
-                 "            --split        split edited files at the editing marks (only\n" \
-                 "                           useful in conjunction with --edit)\n" \
-                 "  -u USER,  --user=USER    run as user USER; only applicable if started as\n" \
-                 "                           root\n" \
-                 "            --userdump     allow coredumps if -u is given (debugging)\n" \
-                 "  -v DIR,   --video=DIR    use DIR as video directory (default: %s)\n" \
                  "  -V,       --version      print version information and exit\n" \
-                 "            --vfat         for backwards compatibility (same as\n" \
-                 "                           --dirnames=250,40,1\n" \
                  "\n"
 
 cSettings::cSettings()
@@ -400,31 +361,13 @@ bool cSettings::LoadFromCmdLine(int argc, char *argv[])
     {
       { "config",    required_argument, NULL, 'c' },
       { "daemon",    no_argument,       NULL, 'd' },
-      { "dirnames",  required_argument, NULL, 'd' | 0x100 },
-      { "edit",      required_argument, NULL, 'e' | 0x100 },
-      { "filesize",  required_argument, NULL, 'f' | 0x100 },
-      { "genindex",  required_argument, NULL, 'g' | 0x100 },
-      { "grab",      required_argument, NULL, 'g' },
       { "help",      no_argument,       NULL, 'h' },
-      { "instance",  required_argument, NULL, 'i' },
-      { "lib",       required_argument, NULL, 'L' },
-      { "localedir", required_argument, NULL, 'l' | 0x200 },
-      { "log",       required_argument, NULL, 'l' },
-      { "mute",      no_argument,       NULL, 'm' },
-      { "record",    required_argument, NULL, 'r' },
-      { "shutdown",  required_argument, NULL, 's' },
-      { "split",     no_argument,       NULL, 's' | 0x100 },
-      { "terminal",  required_argument, NULL, 't' },
-      { "user",      required_argument, NULL, 'u' },
-      { "userdump",  no_argument,       NULL, 'u' | 0x100 },
       { "version",   no_argument,       NULL, 'V' },
-      { "vfat",      no_argument,       NULL, 'v' | 0x100 },
-      { "video",     required_argument, NULL, 'v' },
       { NULL,        no_argument,       NULL, 0 }
     };
 
   int c;
-  while ((c = getopt_long(argc, argv, "c:d:e:g:hi:L:m:o:r:s:t:u:v:Vw:",
+  while ((c = getopt_long(argc, argv, "c:d:h:V",
       long_options, NULL)) != -1)
   {
     switch (c)
@@ -437,155 +380,13 @@ bool cSettings::LoadFromCmdLine(int argc, char *argv[])
     case 'd':
       m_DaemonMode = true;
       break;
-    // dirnames
-    case 'd' | 0x100:
-      {
-        char *s = optarg;
-        if (*s != ',')
-        {
-          int n = strtol(s, &s, 10);
-          if (n <= 0 || n >= PATH_MAX)
-          { // PATH_MAX includes the terminating 0
-            fprintf(stderr, "vdr: invalid directory path length: %s\n", optarg);
-            return false;
-          }
-          cRecording::DirectoryPathMax = n;
-          if (!*s)
-            break;
-          if (*s != ',')
-          {
-            fprintf(stderr, "vdr: invalid delimiter: %s\n", optarg);
-            return false;
-          }
-        }
-        s++;
-        if (!*s)
-          break;
-        if (*s != ',')
-        {
-          int n = strtol(s, &s, 10);
-          if (n <= 0 || n > NAME_MAX)
-          { // NAME_MAX excludes the terminating 0
-            fprintf(stderr, "vdr: invalid directory name length: %s\n", optarg);
-            return false;
-          }
-          cRecording::DirectoryNameMax = n;
-          if (!*s)
-            break;
-          if (*s != ',')
-          {
-            fprintf(stderr, "vdr: invalid delimiter: %s\n", optarg);
-            return false;
-          }
-        }
-        s++;
-        if (!*s)
-          break;
-        int n = strtol(s, &s, 10);
-        if (n != 0 && n != 1)
-        {
-          fprintf(stderr, "vdr: invalid directory encoding: %s\n", optarg);
-          return false;
-        }
-        cRecording::DirectoryEncoding = n;
-        if (*s)
-        {
-          fprintf(stderr, "vdr: unexpected data: %s\n", optarg);
-          return false;
-        }
-      }
-      break;
-    // edit
-    case 'e' | 0x100:
-      return CutRecording(optarg);
-    // genindex
-    case 'g' | 0x100:
-      return GenerateIndex(optarg);
     // help
     case 'h':
       bDisplayHelp = true;
       break;
-    // instance
-    case 'i':
-      if (is_number(optarg))
-      {
-        InstanceId = atoi(optarg);
-        if (InstanceId >= 0)
-          break;
-      }
-      fprintf(stderr, "vdr: invalid instance id: %s\n", optarg);
-      return false;
-#if !defined(TARGET_ANDROID)
-    // log
-    case 'l':
-      {
-        char *p = strchr(optarg, '.');
-        if (p)
-          *p = 0;
-        if (is_number(optarg))
-        {
-          int l = atoi(optarg);
-          if (0 <= l && l <= 3)
-          {
-            cSettings::Get().m_SysLogLevel = SYS_LOG_INFO;
-            if (!p)
-              break;
-            if (is_number(p + 1))
-            {
-              int l = atoi(p + 1);
-              if (0 <= l && l <= 7)
-              {
-                int targets[] =
-                  { LOG_LOCAL0, LOG_LOCAL1, LOG_LOCAL2, LOG_LOCAL3, LOG_LOCAL4,
-                      LOG_LOCAL5, LOG_LOCAL6, LOG_LOCAL7 };
-                m_SysLogTarget = targets[l];
-                break;
-              }
-            }
-          }
-        }
-        if (p)
-          *p = '.';
-        fprintf(stderr, "vdr: invalid log level: %s\n", optarg);
-        return false;
-      }
-#else
-      cSettings::Get().m_SysLogLevel = SYS_LOG_INFO;
-#endif
-    // record
-    case 'r':
-      cRecordingUserCommand::Get().SetCommand(optarg);
-      break;
-    // shutdown
-    case 's':
-      ShutdownHandler.SetShutdownCommand(optarg);
-      break;
-    // split
-    case 's' | 0x100:
-      m_bSplitEditedFiles = true;
-      break;
-    // user
-    case 'u':
-      if (*optarg)
-        strVdrUser = optarg;
-      break;
-    // userdump
-    case 'u' | 0x100:
-      strUserDump = true;
-      break;
     // version
     case 'V':
       bDisplayVersion = true;
-      break;
-    // vfat
-    case 'v' | 0x100:
-      cRecording::SetFileLimits(RECORDING_FILE_LIMITS_MSDOS);
-      break;
-    // video
-    case 'v':
-      m_VideoDirectory = optarg;
-      while (optarg && *optarg && optarg[strlen(optarg) - 1] == '/')
-        optarg[strlen(optarg) - 1] = 0;
       break;
     default:
       return false;
@@ -595,19 +396,8 @@ bool cSettings::LoadFromCmdLine(int argc, char *argv[])
   // Help and version info:
   if (bDisplayHelp || bDisplayVersion)
   {
-     if (bDisplayHelp)
-     {
-        printf(MSG_HELP,
-               "DEFAULTCONFDIR",
-               PATH_MAX - 1,
-               NAME_MAX,
-               "DEFAULTPLUGINDIR",
-               "LIRC_DEVICE",
-               "DEFAULTLOCDIR",
-               "DEFAULTRESDIR",
-               "DEFAULTVIDEODIR"
-               );
-     }
+    if (bDisplayHelp)
+      printf(MSG_HELP, "DEFAULTCONFDIR");
 
     if (bDisplayVersion)
       printf("vdr %s - The Video Disk Recorder\n", VDRVERSION);
