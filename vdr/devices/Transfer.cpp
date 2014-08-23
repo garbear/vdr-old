@@ -83,7 +83,7 @@ cTransferControl::cTransferControl(cDevice *ReceiverDevice, ChannelPtr Channel)
 :cControl(m_transfer = new cTransfer(Channel), true),
  m_device(ReceiverDevice)
 {
-  const set<uint16_t>& pids = m_transfer->m_pids;
+  const set<uint16_t>& pids = m_transfer->GetPids();
   for (set<uint16_t>::const_iterator it = pids.begin(); it != pids.end(); ++it)
   {
     if (!ReceiverDevice->PID()->AddPid(*it))

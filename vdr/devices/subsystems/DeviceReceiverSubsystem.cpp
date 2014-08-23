@@ -198,7 +198,7 @@ bool cDeviceReceiverSubsystem::OpenVideoInput(const ChannelPtr& channel, cVideoB
 {
   m_VideoInput.SetVideoBuffer(videoBuffer);
 
-  const set<uint16_t>& pids = m_VideoInput.m_pids;
+  const set<uint16_t>& pids = m_VideoInput.GetPids();
   for (set<uint16_t>::const_iterator it = pids.begin(); it != pids.end(); ++it)
   {
     if (!PID()->AddPid(*it))

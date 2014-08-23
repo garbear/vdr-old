@@ -38,7 +38,6 @@ class cReceiver {
 private:
   PLATFORM::CMutex   m_mutex;
   cChannelID         m_channelID;
-public: // TODO
   std::set<uint16_t> m_pids;
 
 public: // TODO
@@ -82,6 +81,7 @@ public:
                ///< through ChannelID(). The ChannelID is necessary to allow the device
                ///< that will be used for this receiver to detect and store whether the
                ///< channel can be decrypted in case this is an encrypted channel.
+  const std::set<uint16_t>& GetPids(void) const { return m_pids; }
   cChannelID ChannelID(void) const;
   };
 
