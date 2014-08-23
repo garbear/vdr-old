@@ -154,7 +154,10 @@ void cDeviceReceiverSubsystem::Detach(cReceiver* receiver)
     if (*it == receiver)
     {
       receiver->Activate(false);
-      receiver->RemoveFromPIDSubsystem(PID());
+
+      for (set<uint16_t>::const_iterator itPid = receiver->m_pids.begin(); itPid != receiver->m_pids.end(); ++itPid)
+        PID()->DelPid(*itPid);
+
       m_receivers.erase(it);
       break;
     }

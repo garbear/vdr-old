@@ -43,7 +43,6 @@ public: // TODO
 
 public: // TODO
   bool WantsPid(int Pid);
-  void RemoveFromPIDSubsystem(cDevicePIDSubsystem* pidSys) const;
 
   virtual void Activate(bool On) = 0;
                ///< This function is called just before the cReceiver gets attached to

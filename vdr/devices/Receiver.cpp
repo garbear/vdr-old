@@ -127,14 +127,4 @@ bool cReceiver::WantsPid(int Pid)
   return it != m_pids.end();
 }
 
-void cReceiver::RemoveFromPIDSubsystem(cDevicePIDSubsystem* pidSys) const
-{
-  assert(pidSys);
-
-  CLockObject lock(m_mutex);
-
-  for (set<uint16_t>::const_iterator it = m_pids.begin(); it != m_pids.end(); ++it)
-    pidSys->DelPid(*it);
-}
-
 }
