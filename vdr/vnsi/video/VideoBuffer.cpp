@@ -874,13 +874,13 @@ cVideoBuffer::~cVideoBuffer()
 cVideoBuffer* cVideoBuffer::Create(int clientID, uint8_t timeshift)
 {
   // no time shift
-  if (cSettings::Get().m_TimeshiftMode == 0 || timeshift == 0)
+  if (cSettings::Get().m_TimeshiftMode == TS_MODE_NONE || timeshift == 0)
   {
     cVideoBufferSimple *buffer = new cVideoBufferSimple();
     return buffer;
   }
   // buffer in ram
-  else if (cSettings::Get().m_TimeshiftMode == 1)
+  else if (cSettings::Get().m_TimeshiftMode == TS_MODE_RAM)
   {
     cVideoBufferRAM *buffer = new cVideoBufferRAM();
     if (!buffer->Init())
@@ -892,7 +892,7 @@ cVideoBuffer* cVideoBuffer::Create(int clientID, uint8_t timeshift)
       return buffer;
   }
   // buffer in file
-  else if (cSettings::Get().m_TimeshiftMode == 2)
+  else if (cSettings::Get().m_TimeshiftMode == TS_MODE_FILE)
   {
     cVideoBufferFile *buffer = new cVideoBufferFile(clientID);
     if (!buffer->Init())

@@ -43,6 +43,12 @@ namespace VDR
 #define LISTEN_PORT_S    "34890"
 #define DISCOVERY_PORT    34890
 
+typedef enum {
+  TS_MODE_NONE = 0,
+  TS_MODE_RAM  = 1,
+  TS_MODE_FILE = 2
+} timeshift_mode;
+
 class cSettings
 {
 public:

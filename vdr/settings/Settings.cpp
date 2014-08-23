@@ -74,7 +74,7 @@ cSettings::cSettings()
   m_ListenPort              = LISTEN_PORT;
   m_StreamTimeout           = 10;
   m_PmtTimeout              = 5;
-  m_TimeshiftMode           = 0;
+  m_TimeshiftMode           = (int)TS_MODE_NONE;
   m_TimeshiftBufferSize     = 5;
   m_TimeshiftBufferFileSize = 6;
   m_iInstantRecordTime      = DEFINSTRECTIME;
