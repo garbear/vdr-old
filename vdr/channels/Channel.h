@@ -165,6 +165,11 @@ public:
   const CaDescriptorVector&          GetCaDescriptors(void)   const { return m_caDescriptors; }
   std::vector<uint16_t>              GetCaIds(void)           const;
 
+  /*!
+   * Get the PIDs associated with all streams
+   */
+  std::set<uint16_t> GetPids(void) const;
+
   void SetStreams(const VideoStream& videoStream,
                   const std::vector<AudioStream>& audioStreams,
                   const std::vector<DataStream>& dataStreams,

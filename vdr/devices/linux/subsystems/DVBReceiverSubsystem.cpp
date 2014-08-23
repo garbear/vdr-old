@@ -25,6 +25,8 @@
 #include "utils/CommonMacros.h"
 
 #include <fcntl.h>
+#include <sys/ioctl.h>
+#include <linux/dvb/dmx.h>
 #include <unistd.h>
 
 namespace VDR
@@ -65,6 +67,61 @@ bool cDvbReceiverSubsystem::GetTSPacket(uint8_t *&Data)
     return true;
   }
   return false;
+}
+
+bool cDvbReceiverSubsystem::SetPid(cPidHandle& handle, ePidType type, bool bOn)
+{
+  if (handle.pid)
+  {
+    dmx_pes_filter_params pesFilterParams;
+    memset(&pesFilterParams, 0, sizeof(pesFilterParams));
+
+    if (bOn)
+    {
+      if (handle.handle < 0)
+      {
+        handle.handle = open(Device<cDvbDevice>()->DvbPath(DEV_DVB_DEMUX).c_str(), O_RDWR | O_NONBLOCK);
+        if (handle.handle < 0)
+        {
+          LOG_ERROR;
+          return false;
+        }
+      }
+
+      pesFilterParams.pid     = handle.pid;
+      pesFilterParams.input   = DMX_IN_FRONTEND;
+      pesFilterParams.output  = DMX_OUT_TS_TAP;
+      pesFilterParams.pes_type= DMX_PES_OTHER;
+      pesFilterParams.flags   = DMX_IMMEDIATE_START;
+
+      if (ioctl(handle.handle, DMX_SET_PES_FILTER, &pesFilterParams) < 0)
+      {
+        LOG_ERROR;
+        return false;
+      }
+    }
+    else if (!handle.used)
+    {
+      if (ioctl(handle.handle, DMX_STOP) < 0)
+        LOG_ERROR;
+
+      if (type <= ptTeletext)
+      {
+        pesFilterParams.pid     = 0x1FFF;
+        pesFilterParams.input   = DMX_IN_FRONTEND;
+        pesFilterParams.output  = DMX_OUT_DECODER;
+        pesFilterParams.pes_type= DMX_PES_OTHER;
+        pesFilterParams.flags   = DMX_IMMEDIATE_START;
+
+        if (ioctl(handle.handle, DMX_SET_PES_FILTER, &pesFilterParams) < 0)
+          LOG_ERROR;
+      }
+
+      close(handle.handle);
+      handle.handle = -1;
+    }
+  }
+  return true;
 }
 
 }

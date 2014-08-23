@@ -36,19 +36,23 @@ class cFileName;
 class cIndexFile;
 class cRecordingInfo;
 
-class cRecorder : public cReceiver, PLATFORM::CThread
+class cRecorder : public iReceiver, PLATFORM::CThread
 {
 public:
-  cRecorder(const std::string& strFileName, ChannelPtr Channel);
-               // Creates a new recorder for the given Channel that will record
-               // into the file FileName.
-  virtual ~cRecorder();
+  /*!
+   * Creates a new recorder for the given Channel that will record into the
+   * specified filename
+   */
+  cRecorder(const std::string& strFileName, const ChannelPtr& channel);
+  virtual ~cRecorder(void);
 
-  virtual void SetEvent(const EventPtr& event);
+  void SetEvent(const EventPtr& event);
+
+  virtual void Start(void);
+  virtual void Stop(void);
+  virtual void Receive(const std::vector<uint8_t>& data);
 
 protected:
-  virtual void Activate(bool On);
-  virtual void Receive(const std::vector<uint8_t>& data);
   virtual void* Process(void);
 
 private:

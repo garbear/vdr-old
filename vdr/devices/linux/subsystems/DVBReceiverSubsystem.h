@@ -37,6 +37,7 @@ public:
   virtual bool OpenDvr();
   virtual void CloseDvr();
   virtual bool GetTSPacket(uint8_t *&data);
+  virtual bool SetPid(cPidHandle& handle, ePidType type, bool bOn);
 
 private:
   cTSBuffer *m_tsBuffer;

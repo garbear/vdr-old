@@ -240,6 +240,24 @@ vector<uint16_t> cChannel::GetCaIds() const
   return caIds;
 }
 
+set<uint16_t> cChannel::GetPids(void) const
+{
+  set<uint16_t> pids;
+  if (GetVideoStream().vpid)
+    pids.insert(GetVideoStream().vpid);
+  if (GetVideoStream().ppid != GetVideoStream().vpid)
+    pids.insert(GetVideoStream().ppid);
+  for (vector<AudioStream>::const_iterator it = GetAudioStreams().begin(); it != GetAudioStreams().end(); ++it)
+    pids.insert(it->apid);
+  for (vector<DataStream>::const_iterator it = GetDataStreams().begin(); it != GetDataStreams().end(); ++it)
+    pids.insert(it->dpid);
+  for (vector<SubtitleStream>::const_iterator it = GetSubtitleStreams().begin(); it != GetSubtitleStreams().end(); ++it)
+    pids.insert(it->spid);
+  if (GetTeletextStream().tpid)
+    pids.insert(GetTeletextStream().tpid);
+  return pids;
+}
+
 void cChannel::SetStreams(const VideoStream& videoStream,
                           const vector<AudioStream>& audioStreams,
                           const vector<DataStream>& dataStreams,

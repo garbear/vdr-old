@@ -30,15 +30,20 @@
 namespace VDR
 {
 
-class cTransfer : public cReceiver, public cPlayer {
+class cTransfer : public iReceiver, public cPlayer
+{
+public:
+  cTransfer(const ChannelPtr& Channel);
+  virtual ~cTransfer(void);
+
+  virtual void Start(void);
+  virtual void Stop(void);
+
+  virtual void Receive(const std::vector<uint8_t>& data);
+
 private:
   cPatPmtGenerator patPmtGenerator;
-protected:
-  virtual void Receive(const std::vector<uint8_t>& data);
-public:
-  cTransfer(ChannelPtr Channel);
-  virtual ~cTransfer();
-  virtual void Activate(bool On);
-  };
+  const ChannelPtr m_channel;
+};
 
 }

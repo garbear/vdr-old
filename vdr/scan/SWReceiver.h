@@ -33,7 +33,7 @@ namespace VDR
 
 class cRingBufferLinear;
 
-class cSwReceiver : public cReceiver, public PLATFORM::CThread
+class cSwReceiver : public iReceiver, public PLATFORM::CThread
 {
 public:
   cSwReceiver(ChannelPtr channel);

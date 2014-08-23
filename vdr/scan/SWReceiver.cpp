@@ -139,8 +139,7 @@ static inline uint8_t CharToInt(uint8_t c)
  *---------------------------------------------------------------------------*/
 
 cSwReceiver::cSwReceiver(ChannelPtr Channel)
- : cReceiver(Channel),
-   channel(Channel),
+ : channel(Channel),
    buffer(new cRingBufferLinear(MEGABYTE(1), 184)),
    m_bStopped(false),
    fuzzy(false),

@@ -26,7 +26,6 @@
 #include "devices/subsystems/DeviceChannelSubsystem.h"
 #include "devices/subsystems/DeviceCommonInterfaceSubsystem.h"
 #include "devices/subsystems/DeviceImageGrabSubsystem.h"
-#include "devices/subsystems/DevicePIDSubsystem.h"
 #include "devices/subsystems/DevicePlayerSubsystem.h"
 #include "devices/subsystems/DeviceReceiverSubsystem.h"
 #include "devices/subsystems/DeviceScanSubsystem.h"
@@ -53,7 +52,6 @@ void cSubsystems::Free() const
   delete Channel;
   delete CommonInterface;
   delete ImageGrab;
-  delete PID;
   delete Player;
   delete Receiver;
   delete Scan;
@@ -68,7 +66,6 @@ void cSubsystems::AssertValid() const
   assert(Channel);
   assert(CommonInterface);
   assert(ImageGrab);
-  assert(PID);
   assert(Player);
   assert(Receiver);
   assert(Scan);

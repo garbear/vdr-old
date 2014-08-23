@@ -1379,17 +1379,22 @@ void cH264Parser::ParseSliceHeader(void)
 
 // --- cFrameDetector --------------------------------------------------------
 
-cFrameDetector::cFrameDetector(int Pid, int Type)
+cFrameDetector::cFrameDetector(const ChannelPtr& channel)
+ : synced(false),
+   newFrame(false),
+   independentFrame(false),
+   ptsValues(),
+   numPtsValues(0),
+   numFrames(0),
+   numIFrames(0),
+   isVideo(false),
+   framesPerSecond(0.0),
+   framesInPayloadUnit(0),
+   framesPerPayloadUnit(0),
+   scanning(false),
+   parser(NULL)
 {
-  parser = NULL;
-  SetPid(Pid, Type);
-  synced = false;
-  newFrame = independentFrame = false;
-  numPtsValues = 0;
-  numIFrames = 0;
-  framesPerSecond = 0;
-  framesInPayloadUnit = framesPerPayloadUnit = 0;
-  scanning = false;
+  SetChannel(channel);
 }
 
 static int CmpUint32(const void *p1, const void *p2)
@@ -1399,13 +1404,34 @@ static int CmpUint32(const void *p1, const void *p2)
   return 0;
 }
 
-void cFrameDetector::SetPid(int Pid, int Type)
+void cFrameDetector::SetChannel(const ChannelPtr& channel)
 {
-  pid = Pid;
-  type = Type;
-  isVideo = type == 0x01 || type == 0x02 || type == 0x1B; // MPEG 1, 2 or H.264
+  uint16_t pid = channel->GetVideoStream().vpid;
+  uint8_t type = channel->GetVideoStream().vtype;
+
+  if (pid == 0 && channel->GetAudioStream(0).apid != 0)
+  {
+    pid = channel->GetAudioStream(0).apid;
+    type = 0x04;
+  }
+
+  if (pid == 0 && channel->GetDataStream(0).dpid != 0)
+  {
+    pid = channel->GetDataStream(0).dpid;
+    type = 0x06;
+  }
+
+  SetPid(pid, type);
+}
+
+void cFrameDetector::SetPid(uint16_t pid, uint8_t type)
+{
+  m_pid = pid;
+  isVideo = (type == 0x01 || type == 0x02 || type == 0x1B); // MPEG 1, 2 or H.264
+
   delete parser;
   parser = NULL;
+
   if (type == 0x01 || type == 0x02)
      parser = new cMpeg2Parser;
   else if (type == 0x1B)
@@ -1435,7 +1461,7 @@ int cFrameDetector::Analyze(const uint8_t *Data, int Length)
         int Handled = TS_SIZE;
         if (TsHasPayload(Data) && !TsIsScrambled(Data)) {
            int Pid = TsPid(Data);
-           if (Pid == pid) {
+           if (Pid == m_pid) {
               if (Processed)
                  return Processed;
               if (TsPayloadStart(Data))
@@ -1446,7 +1472,7 @@ int cFrameDetector::Analyze(const uint8_t *Data, int Length)
                     if (!framesPerPayloadUnit)
                        framesPerPayloadUnit = framesInPayloadUnit;
                     }
-                 int n = parser->Parse(Data, Length, pid);
+                 int n = parser->Parse(Data, Length, m_pid);
                  if (n > 0) {
                     if (parser->NewFrame()) {
                        newFrame = true;

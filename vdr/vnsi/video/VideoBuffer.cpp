@@ -47,7 +47,7 @@ class cVideoBufferSimple : public cVideoBuffer
 {
 friend class cVideoBuffer;
 public:
-  virtual void Put(const uint8_t *buf, unsigned int size);
+  virtual void Receive(const std::vector<uint8_t>& data);
   virtual int ReadBlock(uint8_t **buf, unsigned int size, time_t &endTime, time_t &wrapTime);
 
 protected:
@@ -70,9 +70,9 @@ cVideoBufferSimple::~cVideoBufferSimple()
     delete m_Buffer;
 }
 
-void cVideoBufferSimple::Put(const uint8_t *buf, unsigned int size)
+void cVideoBufferSimple::Receive(const std::vector<uint8_t>& data)
 {
-  m_Buffer->Put(buf, size);
+  m_Buffer->Put(data.data(), data.size());
 }
 
 int cVideoBufferSimple::ReadBlock(uint8_t **buf, unsigned int size, time_t &endTime, time_t &wrapTime)
@@ -206,7 +206,7 @@ class cVideoBufferRAM : public cVideoBufferTimeshift
 {
 friend class cVideoBuffer;
 public:
-  virtual void Put(const uint8_t *buf, unsigned int size);
+  virtual void Receive(const std::vector<uint8_t>& data);
   virtual int ReadBlock(uint8_t **buf, unsigned int size, time_t &endTime, time_t &wrapTime);
   virtual void SetPos(off_t pos);
 
@@ -252,8 +252,11 @@ void cVideoBufferRAM::SetPos(off_t pos)
   m_BytesConsumed = 0;
 }
 
-void cVideoBufferRAM::Put(const uint8_t *buf, unsigned int size)
+void cVideoBufferRAM::Receive(const std::vector<uint8_t>& data)
 {
+  const uint8_t* buf  = data.data();
+  size_t         size = data.size();
+
   if (Available() + MARGIN >= m_BufferSize)
   {
     return;
@@ -344,7 +347,7 @@ class cVideoBufferFile : public cVideoBufferTimeshift
 friend class cVideoBuffer;
 public:
   virtual off_t GetPosMax();
-  virtual void Put(const uint8_t *buf, unsigned int size);
+  virtual void Receive(const std::vector<uint8_t>& data);
   virtual int ReadBlock(uint8_t **buf, unsigned int size, time_t &endTime, time_t &wrapTime);
   virtual void SetPos(off_t pos);
 
@@ -457,8 +460,11 @@ off_t cVideoBufferFile::GetPosMax()
   return posMax;
 }
 
-void cVideoBufferFile::Put(const uint8_t *buf, unsigned int size)
+void cVideoBufferFile::Receive(const std::vector<uint8_t>& data)
 {
+  const uint8_t* buf  = data.data();
+  size_t         size = data.size();
+
   if (Available() + MARGIN >= m_BufferSize)
   {
     return;
@@ -636,7 +642,7 @@ class cVideoBufferRecording : public cVideoBufferFile
 friend class cVideoBuffer;
 public:
   virtual off_t GetPosMax();
-  virtual void Put(const uint8_t *buf, unsigned int size);
+  virtual void Receive(const std::vector<uint8_t>& data);
   virtual int ReadBlock(uint8_t **buf, unsigned int size, time_t &endTime, time_t &wrapTime);
   virtual time_t GetRefTime();
 
@@ -673,7 +679,7 @@ off_t cVideoBufferRecording::GetPosMax()
   return cVideoBufferFile::GetPosMax();
 }
 
-void cVideoBufferRecording::Put(const uint8_t *buf, unsigned int size)
+void cVideoBufferRecording::Receive(const std::vector<uint8_t>& data)
 {
 
 }
@@ -789,7 +795,7 @@ class cVideoBufferTest : public cVideoBufferFile
 friend class cVideoBuffer;
 public:
   virtual off_t GetPosMax();
-  virtual void Put(const uint8_t *buf, unsigned int size);
+  virtual void Receive(const std::vector<uint8_t>& data);
 
 protected:
   cVideoBufferTest(const std::string& filename);
@@ -824,7 +830,7 @@ off_t cVideoBufferTest::GetPosEnd()
   return end;
 }
 
-void cVideoBufferTest::Put(const uint8_t *buf, unsigned int size)
+void cVideoBufferTest::Receive(const std::vector<uint8_t>& data)
 {
 
 }
@@ -867,8 +873,45 @@ cVideoBuffer::cVideoBuffer()
   m_bufferWrapTime = 0;
 }
 
-cVideoBuffer::~cVideoBuffer()
+void cVideoBuffer::Start(void)
 {
+  m_InputAttached = true;
+}
+
+void cVideoBuffer::Stop(void)
+{
+  m_InputAttached = false;
+}
+
+int cVideoBuffer::Read(uint8_t **buf, unsigned int size, time_t &endTime, time_t &wrapTime)
+{
+  int count = ReadBlock(buf, size, endTime, wrapTime);
+
+  // check for end of file
+  if (!m_InputAttached && count != TS_SIZE)
+  {
+    if (m_CheckEof && m_Timer.TimedOut())
+    {
+      isyslog("Recoding - end of file");
+      return VIDEOBUFFER_EOF;
+    }
+    else if (!m_CheckEof)
+    {
+      m_CheckEof = true;
+      m_Timer.Set(3000);
+    }
+  }
+  else
+    m_CheckEof = false;
+
+  return count;
+}
+
+time_t cVideoBuffer::GetRefTime()
+{
+  time_t t;
+  time(&t);
+  return t;
 }
 
 cVideoBuffer* cVideoBuffer::Create(int clientID, uint8_t timeshift)
@@ -931,42 +974,6 @@ cVideoBuffer* cVideoBuffer::Create(cRecording *rec)
   }
   else
     return buffer;
-}
-
-int cVideoBuffer::Read(uint8_t **buf, unsigned int size, time_t &endTime, time_t &wrapTime)
-{
-  int count = ReadBlock(buf, size, endTime, wrapTime);
-
-  // check for end of file
-  if (!m_InputAttached && count != TS_SIZE)
-  {
-    if (m_CheckEof && m_Timer.TimedOut())
-    {
-      isyslog("Recoding - end of file");
-      return VIDEOBUFFER_EOF;
-    }
-    else if (!m_CheckEof)
-    {
-      m_CheckEof = true;
-      m_Timer.Set(3000);
-    }
-  }
-  else
-    m_CheckEof = false;
-
-  return count;
-}
-
-void cVideoBuffer::AttachInput(bool attach)
-{
-  m_InputAttached = attach;
-}
-
-time_t cVideoBuffer::GetRefTime()
-{
-  time_t t;
-  time(&t);
-  return t;
 }
 
 }

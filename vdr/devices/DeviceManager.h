@@ -30,8 +30,7 @@
 namespace VDR
 {
 
-class cReceiver;
-class cVideoBuffer;
+class iReceiver;
 
 class cDeviceManager : public Observer
 {
@@ -72,8 +71,8 @@ public:
    */
   void Shutdown();
 
-  bool OpenVideoInput(const ChannelPtr& channel, cVideoBuffer* videoBuffer);
-  void CloseVideoInput(void);
+  bool OpenVideoInput(iReceiver* receiver, const ChannelPtr& channel);
+  void CloseVideoInput(iReceiver* receiver);
 
   void Notify(const Observable &obs, const ObservableMessage msg);
 

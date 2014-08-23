@@ -21,7 +21,7 @@
 
 #include "Transfer.h"
 #include "Device.h"
-#include "devices/subsystems/DevicePIDSubsystem.h" // TODO
+#include "Remux.h"
 #include "devices/subsystems/DeviceReceiverSubsystem.h"
 #include "lib/platform/threads/mutex.h"
 #include "utils/log/Log.h"
@@ -32,29 +32,31 @@ using namespace std; // TODO
 
 namespace VDR
 {
+
 // --- cTransfer -------------------------------------------------------------
 
-cTransfer::cTransfer(ChannelPtr Channel)
-:cReceiver(Channel)
+cTransfer::cTransfer(const ChannelPtr& Channel)
+ : m_channel(Channel)
 {
   patPmtGenerator.SetChannel(Channel);
 }
 
-cTransfer::~cTransfer()
+cTransfer::~cTransfer(void)
 {
   cPlayer::Detach();
 }
 
-void cTransfer::Activate(bool On)
+void cTransfer::Start(void)
 {
-  if (On) {
-     PlayTs(patPmtGenerator.GetPat(), TS_SIZE);
-     int Index = 0;
-     while (uint8_t *pmt = patPmtGenerator.GetPmt(Index))
-           PlayTs(pmt, TS_SIZE);
-     }
-  else
-     cPlayer::Detach();
+  PlayTs(patPmtGenerator.GetPat(), TS_SIZE);
+  int Index = 0;
+  while (uint8_t *pmt = patPmtGenerator.GetPmt(Index))
+    PlayTs(pmt, TS_SIZE);
+}
+
+void cTransfer::Stop(void)
+{
+  cPlayer::Detach();
 }
 
 #define MAXRETRIES    20 // max. number of retries for a single TS packet
@@ -62,19 +64,23 @@ void cTransfer::Activate(bool On)
 
 void cTransfer::Receive(const std::vector<uint8_t>& data)
 {
-  if (cPlayer::IsAttached()) {
-     // Transfer Mode means "live tv", so there's no point in doing any additional
-     // buffering here. The TS packets *must* get through here! However, every
-     // now and then there may be conditions where the packet just can't be
-     // handled when offered the first time, so that's why we try several times:
-     for (int i = 0; i < MAXRETRIES; i++) {
-         if (PlayTs(data.data(), data.size()) > 0)
-            return;
-         PLATFORM::CEvent::Sleep(RETRYWAIT);
-         }
-     DeviceClear();
-     esyslog("ERROR: TS packet not accepted in Transfer Mode");
-     }
+  if (cPlayer::IsAttached())
+  {
+    // Transfer Mode means "live tv", so there's no point in doing any additional
+    // buffering here. The TS packets *must* get through here! However, every
+    // now and then there may be conditions where the packet just can't be
+    // handled when offered the first time, so that's why we try several times:
+    for (int i = 0; i < MAXRETRIES; i++)
+    {
+      if (PlayTs(data.data(), data.size()) > 0)
+        return;
+      PLATFORM::CEvent::Sleep(RETRYWAIT);
+    }
+
+    DeviceClear();
+
+    esyslog("ERROR: TS packet not accepted in Transfer Mode");
+  }
 }
 
 }

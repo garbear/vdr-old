@@ -24,6 +24,7 @@
  */
 #pragma once
 
+#include "devices/Receiver.h"
 #include "utils/Timer.h"
 
 #include <stdint.h>
@@ -40,14 +41,15 @@ namespace VDR
 
 class cRecording;
 
-class cVideoBuffer
+class cVideoBuffer : public iReceiver
 {
 public:
-  virtual ~cVideoBuffer();
-  static cVideoBuffer* Create(int clientID, uint8_t timeshift);
-  static cVideoBuffer* Create(const std::string& filename);
-  static cVideoBuffer* Create(cRecording *rec);
-  virtual void Put(const uint8_t *buf, unsigned int size) = 0;
+  virtual ~cVideoBuffer(void) { }
+
+  virtual void Start(void);
+  virtual void Stop(void);
+  virtual void Receive(const std::vector<uint8_t>& data) = 0;
+
   virtual int ReadBlock(uint8_t **buf, unsigned int size, time_t &endTime, time_t &wrapTime) = 0;
   virtual off_t GetPosMin() { return 0; };
   virtual off_t GetPosMax() { return 0; };
@@ -58,14 +60,22 @@ public:
   virtual bool HasBuffer() { return false; };
   virtual time_t GetRefTime();
   int Read(uint8_t **buf, unsigned int size, time_t &endTime, time_t &wrapTime);
-  void AttachInput(bool attach);
+
+  /*!
+   * Factory methods
+   */
+  static cVideoBuffer* Create(int clientID, uint8_t timeshift);
+  static cVideoBuffer* Create(const std::string& filename);
+  static cVideoBuffer* Create(cRecording *rec);
+
 protected:
-  cVideoBuffer();
+  cVideoBuffer(void);
+
   cTimeMs m_Timer;
-  bool m_CheckEof;
-  bool m_InputAttached;
-  time_t m_bufferEndTime;
-  time_t m_bufferWrapTime;
+  bool    m_CheckEof;
+  bool    m_InputAttached;
+  time_t  m_bufferEndTime;
+  time_t  m_bufferWrapTime;
 };
 
 }

@@ -105,13 +105,6 @@ public:
   virtual bool IsTunedToTransponder(const cChannel &channel) const { return false; }
 
   /*!
-   * \brief Returns true if it is ok to switch to the Channel's transponder on
-   *        this device, without disturbing any other activities
-   * \return False if an occupied timeout has been set for this device and that timeout has not yet expired
-   */
-  virtual bool MaySwitchTransponder(const cChannel &channel) const;
-
-  /*!
    * \brief Switches the device to the given Channel (actual physical setup).
    *        Blocks until the channel is successfully set or the action fails
    *        (perhaps due to a timeout).
@@ -144,12 +137,6 @@ public:
    *         to indicate that it is not ready yet.
    */
   virtual bool HasLock(void) const { return true; }
-
-  /*!
-   * \brief Returns true if the device is currently showing any programme to the
-   *        user, either through replaying or live
-   */
-  virtual bool HasProgramme() const;
 
 protected:
   /*!

@@ -40,8 +40,7 @@ namespace VDR
 
 // --- cRecorder -------------------------------------------------------------
 
-cRecorder::cRecorder(const std::string& strFileName, ChannelPtr Channel)
-:cReceiver(Channel), CThread()
+cRecorder::cRecorder(const std::string& strFileName, const ChannelPtr& channel)
 {
   m_strRecordingName = strFileName;
   m_recordingInfo = NULL;
@@ -54,17 +53,7 @@ cRecorder::cRecorder(const std::string& strFileName, ChannelPtr Channel)
   m_ringBuffer->SetTimeouts(0, 100);
   m_ringBuffer->SetIoThrottle();
 
-  uint16_t Pid = Channel->GetVideoStream().vpid;
-  uint16_t Type = Channel->GetVideoStream().vtype;
-  if (!Pid && Channel->GetAudioStream(0).apid) {
-     Pid = Channel->GetAudioStream(0).apid;
-     Type = 0x04;
-     }
-  if (!Pid && Channel->GetDataStream(0).dpid) {
-     Pid = Channel->GetDataStream(0).dpid;
-     Type = 0x06;
-     }
-  m_frameDetector = new cFrameDetector(Pid, Type);
+  m_frameDetector = new cFrameDetector(channel);
   m_index = NULL;
   m_fileSize = 0;
   m_lastDiskSpaceCheck = time(NULL);
@@ -72,7 +61,7 @@ cRecorder::cRecorder(const std::string& strFileName, ChannelPtr Channel)
   int PatVersion, PmtVersion;
   if (m_fileName->GetLastPatPmtVersions(PatVersion, PmtVersion))
      m_patPmtGenerator.SetVersions(PatVersion + 1, PmtVersion + 1);
-  m_patPmtGenerator.SetChannel(Channel);
+  m_patPmtGenerator.SetChannel(channel);
   m_recordFile = m_fileName->Open();
   if (!m_recordFile)
      return;
@@ -119,12 +108,14 @@ bool cRecorder::NextFile(void)
   return m_recordFile != NULL;
 }
 
-void cRecorder::Activate(bool On)
+void cRecorder::Start(void)
 {
-  if (On)
-     CreateThread();
-  else
-     StopThread(3);
+  CreateThread();
+}
+
+void cRecorder::Stop(void)
+{
+  StopThread(3);
 }
 
 void cRecorder::Receive(const std::vector<uint8_t>& data)

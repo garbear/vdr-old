@@ -27,7 +27,6 @@ namespace VDR
 cDeviceChannelSubsystem         *cDeviceSubsystem::Channel() const         { return m_device->Channel(); }
 cDeviceCommonInterfaceSubsystem *cDeviceSubsystem::CommonInterface() const { return m_device->CommonInterface(); }
 cDeviceImageGrabSubsystem       *cDeviceSubsystem::ImageGrab() const       { return m_device->ImageGrab(); }
-cDevicePIDSubsystem             *cDeviceSubsystem::PID() const             { return m_device->PID(); }
 cDevicePlayerSubsystem          *cDeviceSubsystem::Player() const          { return m_device->Player(); }
 cDeviceReceiverSubsystem        *cDeviceSubsystem::Receiver() const        { return m_device->Receiver(); }
 cDeviceSectionFilterSubsystem   *cDeviceSubsystem::SectionFilter() const   { return m_device->SectionFilter(); }

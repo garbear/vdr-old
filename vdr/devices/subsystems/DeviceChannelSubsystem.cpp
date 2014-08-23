@@ -21,7 +21,6 @@
 
 #include "DeviceChannelSubsystem.h"
 #include "DeviceCommonInterfaceSubsystem.h"
-#include "DevicePIDSubsystem.h"
 #include "DevicePlayerSubsystem.h"
 #include "DeviceReceiverSubsystem.h"
 #include "DeviceSectionFilterSubsystem.h"
@@ -56,17 +55,6 @@ cDeviceChannelSubsystem::cDeviceChannelSubsystem(cDevice *device)
  : cDeviceSubsystem(device),
    m_occupiedTimeout(0)
 {
-}
-
-bool cDeviceChannelSubsystem::MaySwitchTransponder(const cChannel &channel) const
-{
-  if (time(NULL) > m_occupiedTimeout)
-  {
-    return !Receiver()->Receiving() && !(PID()->m_pidHandles[ptAudio].pid ||
-                                         PID()->m_pidHandles[ptVideo].pid ||
-                                         PID()->m_pidHandles[ptDolby].pid);
-  }
-  return false;
 }
 
 bool cDeviceChannelSubsystem::SwitchChannel(const ChannelPtr& channel)
@@ -118,11 +106,6 @@ unsigned int cDeviceChannelSubsystem::Occupied() const
 void cDeviceChannelSubsystem::SetOccupied(unsigned int seconds)
 {
   m_occupiedTimeout = time(NULL) + min(seconds, MAXOCCUPIEDTIMEOUT);
-}
-
-bool cDeviceChannelSubsystem::HasProgramme() const
-{
-  return Player()->Replaying() || PID()->m_pidHandles[ptAudio].pid || PID()->m_pidHandles[ptVideo].pid;
 }
 
 }

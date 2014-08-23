@@ -111,7 +111,6 @@ public:
   cDeviceChannelSubsystem*         Channel(void)         const { return m_subsystems.Channel; }
   cDeviceCommonInterfaceSubsystem* CommonInterface(void) const { return m_subsystems.CommonInterface; }
   cDeviceImageGrabSubsystem*       ImageGrab(void)       const { return m_subsystems.ImageGrab; }
-  cDevicePIDSubsystem*             PID(void)             const { return m_subsystems.PID; }
   cDevicePlayerSubsystem*          Player(void)          const { return m_subsystems.Player; }
   cDeviceReceiverSubsystem*        Receiver(void)        const { return m_subsystems.Receiver; }
   cDeviceScanSubsystem*            Scan(void)            const { return m_subsystems.Scan; }

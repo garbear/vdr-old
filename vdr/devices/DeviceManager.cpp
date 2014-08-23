@@ -52,7 +52,6 @@ cDeviceManager &cDeviceManager::Get()
 
 cDeviceManager::~cDeviceManager()
 {
-  CloseVideoInput();
 }
 
 size_t cDeviceManager::Initialise(void)
@@ -106,25 +105,25 @@ void cDeviceManager::Shutdown(void)
   m_devices.clear();
 }
 
-bool cDeviceManager::OpenVideoInput(const ChannelPtr& channel, cVideoBuffer* videoBuffer)
+bool cDeviceManager::OpenVideoInput(iReceiver* receiver, const ChannelPtr& channel)
 {
   DevicePtr device = GetDevice(0); // TODO
 
   if (device)
   {
     if (device->Channel()->SwitchChannel(channel))
-      return device->Receiver()->OpenVideoInput(channel, videoBuffer);
+      return device->Receiver()->AttachReceiver(receiver, channel);
   }
 
   return false;
 }
 
-void cDeviceManager::CloseVideoInput(void)
+void cDeviceManager::CloseVideoInput(iReceiver* receiver)
 {
   DevicePtr device = GetDevice(0); // TODO
 
   if (device)
-    device->Receiver()->CloseVideoInput();
+    device->Receiver()->DetachReceiver(receiver);
 }
 
 void cDeviceManager::Notify(const Observable &obs, const ObservableMessage msg)

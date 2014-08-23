@@ -131,7 +131,6 @@ set(VDR_SRCS
 	vdr/devices/Device.cpp
 	vdr/devices/DeviceManager.cpp
 	vdr/devices/DeviceSubsystem.cpp
-	vdr/devices/Receiver.cpp
 	vdr/devices/Remux.cpp
 	vdr/devices/Transfer.cpp
 	vdr/devices/linux/DVBDevice.cpp
@@ -140,13 +139,11 @@ set(VDR_SRCS
 	vdr/devices/linux/commoninterface/DVBCIAdapter.cpp
 	vdr/devices/linux/subsystems/DVBChannelSubsystem.cpp
 	vdr/devices/linux/subsystems/DVBCommonInterfaceSubsystem.cpp
-	vdr/devices/linux/subsystems/DVBPIDSubsystem.cpp
 	vdr/devices/linux/subsystems/DVBReceiverSubsystem.cpp
 	vdr/devices/linux/subsystems/DVBSectionFilterSubsystem.cpp
 	vdr/devices/subsystems/DeviceChannelSubsystem.cpp
 	vdr/devices/subsystems/DeviceCommonInterfaceSubsystem.cpp
 	vdr/devices/subsystems/DeviceImageGrabSubsystem.cpp
-	vdr/devices/subsystems/DevicePIDSubsystem.cpp
 	vdr/devices/subsystems/DevicePlayerSubsystem.cpp
 	vdr/devices/subsystems/DeviceReceiverSubsystem.cpp
 	vdr/devices/subsystems/DeviceScanSubsystem.cpp
@@ -251,7 +248,6 @@ set(VDR_SRCS
 	vdr/vnsi/video/RecPlayer.cpp
 	vdr/vnsi/video/Streamer.cpp
 	vdr/vnsi/video/VideoBuffer.cpp
-	vdr/vnsi/video/VideoInput.cpp
 	vdr/vnsi/video/parser/Bitstream.cpp
 	vdr/vnsi/video/parser/Parser.cpp
 	vdr/vnsi/video/parser/ParserAAC.cpp

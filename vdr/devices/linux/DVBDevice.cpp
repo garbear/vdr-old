@@ -25,7 +25,6 @@
 #include "devices/linux/commoninterface/DVBCIAdapter.h"
 #include "devices/linux/subsystems/DVBChannelSubsystem.h"
 #include "devices/linux/subsystems/DVBCommonInterfaceSubsystem.h"
-#include "devices/linux/subsystems/DVBPIDSubsystem.h"
 #include "devices/linux/subsystems/DVBReceiverSubsystem.h"
 #include "devices/linux/subsystems/DVBSectionFilterSubsystem.h"
 #include "devices/subsystems/DeviceImageGrabSubsystem.h"
@@ -80,7 +79,6 @@ cSubsystems cDvbDevice::CreateSubsystems(cDvbDevice* device)
 
   subsystems.Channel         = new cDvbChannelSubsystem(device);
   subsystems.CommonInterface = new cDvbCommonInterfaceSubsystem(device);
-  subsystems.PID             = new cDvbPIDSubsystem(device);
   subsystems.Receiver        = new cDvbReceiverSubsystem(device);
   subsystems.SectionFilter   = new cDvbSectionFilterSubsystem(device);
 
@@ -258,13 +256,6 @@ cDvbCommonInterfaceSubsystem *cDvbDevice::DvbCommonInterface() const
   cDvbCommonInterfaceSubsystem *commonInterface = dynamic_cast<cDvbCommonInterfaceSubsystem*>(CommonInterface());
   assert(commonInterface);
   return commonInterface;
-}
-
-cDvbPIDSubsystem *cDvbDevice::DvbPID() const
-{
-  cDvbPIDSubsystem *pid = dynamic_cast<cDvbPIDSubsystem*>(PID());
-  assert(pid);
-  return pid;
 }
 
 cDvbReceiverSubsystem *cDvbDevice::DvbReceiver() const

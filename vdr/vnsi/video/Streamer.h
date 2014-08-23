@@ -25,7 +25,6 @@
 #pragma once
 
 #include "Demuxer.h"
-#include "VideoInput.h"
 #include "vnsi/net/ResponsePacket.h"
 #include "vnsi/video/parser/Parser.h"
 #include "channels/ChannelTypes.h"

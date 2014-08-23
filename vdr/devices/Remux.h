@@ -97,7 +97,7 @@ inline bool TsError(const uint8_t *p)
   return p[1] & TS_ERROR;
 }
 
-inline int TsPid(const uint8_t *p)
+inline uint16_t TsPid(const uint8_t *p)
 {
   return (p[1] & TS_PID_MASK_HI) * 256 + p[2];
 }
@@ -485,11 +485,11 @@ void PesDump(const char *Name, const u_char *Data, int Length);
 
 class cFrameParser;
 
-class cFrameDetector {
+class cFrameDetector
+{
 private:
   enum { MaxPtsValues = 150 };
-  int pid;
-  int type;
+  uint16_t m_pid;
   bool synced;
   bool newFrame;
   bool independentFrame;
@@ -504,13 +504,20 @@ private:
                             // while others put an entire GOP into one payload unit (> 1).
   bool scanning;
   cFrameParser *parser;
+
 public:
-  cFrameDetector(int Pid = 0, int Type = 0);
-      ///< Sets up a frame detector for the given Pid and stream Type.
-      ///< If no Pid and Type is given, they need to be set by a separate
-      ///< call to SetPid().
-  void SetPid(int Pid, int Type);
-      ///< Sets the Pid and stream Type to detect frames for.
+  /*!
+   * Sets up a frame detector for the given channel. If no channel is given,
+   * one needs to be set by a separate call to SetChannel().
+   */
+  cFrameDetector(const ChannelPtr& channel = cChannel::EmptyChannel);
+
+  /*!
+   * Sets the channel to detect frames for.
+   */
+  void SetChannel(const ChannelPtr& channel);
+  void SetPid(uint16_t pid, uint8_t type);
+
   int Analyze(const uint8_t *Data, int Length);
       ///< Analyzes the TS packets pointed to by Data. Length is the number of
       ///< bytes Data points to, and must be a multiple of TS_SIZE.

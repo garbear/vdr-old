@@ -20,59 +20,74 @@
  */
 #pragma once
 
+#include "channels/ChannelTypes.h"
 #include "devices/DeviceSubsystem.h"
 #include "utils/Tools.h"
 #include "lib/platform/threads/mutex.h"
 #include "lib/platform/threads/threads.h"
-#include "vnsi/video/VideoInput.h"
 
-#include <list>
+#include <map>
+#include <set>
 #include <stdint.h>
+
+#define MAXPIDHANDLES  64 // TODO: Convert to std::vector
 
 namespace VDR
 {
-class cReceiver;
+
+class iReceiver;
+class cVideoBuffer;
+
+enum ePidType
+{
+  ptAudio,
+  ptVideo,
+  ptPcr,
+  ptTeletext,
+  ptDolby,
+  ptOther
+};
 
 class cDeviceReceiverSubsystem : protected cDeviceSubsystem, public PLATFORM::CThread
 {
 public:
   cDeviceReceiverSubsystem(cDevice *device);
-  virtual ~cDeviceReceiverSubsystem() { }
+  virtual ~cDeviceReceiverSubsystem(void);
 
   /*!
    * \brief Attaches the given receiver to this device
    */
-  void AttachReceiver(cReceiver* receiver);
+  bool AttachReceiver(iReceiver* receiver, const ChannelPtr& channel);
 
   /*!
    * \brief Detaches the given receiver from this device
    */
-  void Detach(cReceiver* receiver);
-
-  /*!
-   * \brief Detaches all receivers from this device for this pid
-   */
-  void DetachAll(int pid);
-
-  /*!
-   * \brief Detaches all receivers from this device
-   */
-  virtual void DetachAllReceivers(void);
-
-  bool OpenVideoInput(const ChannelPtr& channel, cVideoBuffer* videoBuffer);
-  void CloseVideoInput(void);
+  void DetachReceiver(iReceiver* receiver);
 
   /*!
    * \brief Returns true if we are currently receiving
    */
   bool Receiving(void) const;
 
+  /*!
+   * \brief Returns true if this device is currently receiving the given PID
+   */
+  bool HasPid(uint16_t pid) const;
+
 protected:
-  virtual void* Process(void);
+  class cPidHandle
+  {
+  public:
+    cPidHandle(void) : pid(0), streamType(0), handle(-1), used(0) { }
+    uint16_t pid;
+    uint8_t  streamType;
+    int      handle;
+    int      used;
+  };
 
   /*!
    * \brief Opens the DVR of this device and prepares it to deliver a Transport
-   *        Stream for use in a cReceiver
+   *        Stream for use in a iReceiver
    */
   virtual bool OpenDvr() = 0;
 
@@ -93,12 +108,49 @@ protected:
    */
   virtual bool GetTSPacket(uint8_t *&data) = 0;
 
-private:
-  PLATFORM::CMutex  m_mutexReceiver;
-public: // TODO
-  std::list<cReceiver*> m_receivers;
+  /*!
+   * \brief Does the actual PID setting on this device.
+   * \param bOn Indicates whether the PID shall be added or deleted
+   * \param handle The PID handle
+   *        * handle->handle can be used by the device to store information it
+   *          needs to receive this PID (for instance a file handle)
+   *        * handle->used indicates how many receivers are using this PID
+   * \param type Indicates some special types of PIDs, which the device may need
+   *        to set in a specific way.
+   */
+  virtual bool SetPid(cPidHandle &handle, ePidType type, bool bOn) = 0;
+
+  /*!
+   * Inherited from CThread. Read and dispatch TS packets in a loop.
+   */
+  virtual void* Process(void);
 
 private:
-  cVideoInput   m_VideoInput;
+  /*!
+   * \brief Adds a PID to the set of PIDs this device shall receive
+   */
+  bool AddPid(uint16_t pid, ePidType pidType = ptOther, uint8_t streamType = 0);
+
+  /*!
+   * \brief Deletes a PID from the set of PIDs this device shall receive
+   */
+  void DeletePid(uint16_t pid, ePidType pidType = ptOther);
+
+  /*!
+   * \brief Detaches all receivers from this device
+   */
+  virtual void DetachAllReceivers(void);
+
+  /*!
+   * \brief Detaches all receivers from this device for this pid
+   */
+  void DetachAll(uint16_t pid);
+
+  typedef std::map<iReceiver*, std::set<uint16_t> > ReceiverPidMap; // receiver -> pids
+
+  ReceiverPidMap   m_receiverPids;
+  PLATFORM::CMutex m_mutexReceiver;
+  cPidHandle       m_pidHandles[MAXPIDHANDLES];
 };
+
 }

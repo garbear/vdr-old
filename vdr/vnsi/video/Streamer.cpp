@@ -35,6 +35,7 @@
 #include "utils/log/Log.h"
 #include "utils/StringUtils.h"
 #include "utils/XSocket.h"
+#include "Config.h"
 
 #include <fcntl.h>
 #include <stdlib.h>
@@ -104,7 +105,7 @@ bool cLiveStreamer::Open(int serial)
 
   if (!recording)
   {
-    if (!cDeviceManager::Get().OpenVideoInput(m_Channel, m_VideoBuffer))
+    if (!cDeviceManager::Get().OpenVideoInput(m_VideoBuffer, m_Channel))
     {
       esyslog("Can't switch to channel %i - %s", m_Channel->Number(), m_Channel->Name().c_str());
       return false;
@@ -121,7 +122,7 @@ bool cLiveStreamer::Open(int serial)
 void cLiveStreamer::Close(void)
 {
   isyslog("LiveStreamer::Close - close");
-  cDeviceManager::Get().CloseVideoInput();
+  cDeviceManager::Get().CloseVideoInput(m_VideoBuffer);
   m_Demuxer.Close();
 
   if (m_VideoBuffer)

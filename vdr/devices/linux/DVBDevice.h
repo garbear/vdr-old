@@ -52,7 +52,6 @@ namespace VDR
 class cDvbAudioSubsystem;
 class cDvbChannelSubsystem;
 class cDvbCommonInterfaceSubsystem;
-class cDvbPIDSubsystem;
 class cDvbReceiverSubsystem;
 class cDvbSectionFilterSubsystem;
 
@@ -87,7 +86,6 @@ public:
   // Safely access subsystem DVB subclasses
   cDvbChannelSubsystem         *DvbChannel() const;
   cDvbCommonInterfaceSubsystem *DvbCommonInterface() const;
-  cDvbPIDSubsystem             *DvbPID() const;
   cDvbReceiverSubsystem        *DvbReceiver() const;
   cDvbSectionFilterSubsystem   *DvbSectionFilter() const;
 

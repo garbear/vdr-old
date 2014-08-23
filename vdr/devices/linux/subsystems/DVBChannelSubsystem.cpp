@@ -26,7 +26,6 @@
 #include "devices/linux/DVBTuner.h"
 #include "devices/subsystems/DeviceCommonInterfaceSubsystem.h"
 #include "devices/subsystems/DevicePlayerSubsystem.h"
-#include "devices/subsystems/DevicePIDSubsystem.h"
 #include "devices/subsystems/DeviceReceiverSubsystem.h"
 #include "channels/ChannelTypes.h"
 #include "dvb/DiSEqC.h"
@@ -115,9 +114,9 @@ bool cDvbChannelSubsystem::ProvidesChannel(const cChannel &channel, bool *pNeeds
     {
       if (Device<cDvbDevice>()->m_dvbTuner.IsTunedTo(channel.GetTransponder()))
       {
-        if ((channel.GetVideoStream().vpid && !PID()->HasPid(channel.GetVideoStream().vpid)) ||
-            (channel.GetAudioStream(0).apid && !PID()->HasPid(channel.GetAudioStream(0).apid)) ||
-            (channel.GetDataStream(0).dpid && !PID()->HasPid(channel.GetDataStream(0).dpid)))
+        if ((channel.GetVideoStream().vpid && !Receiver()->HasPid(channel.GetVideoStream().vpid)) ||
+            (channel.GetAudioStream(0).apid && !Receiver()->HasPid(channel.GetAudioStream(0).apid)) ||
+            (channel.GetDataStream(0).dpid && !Receiver()->HasPid(channel.GetDataStream(0).dpid)))
         {
           if (CommonInterface()->CamSlot() && channel.GetCaId(0) >= CA_ENCRYPTED_MIN)
           {
