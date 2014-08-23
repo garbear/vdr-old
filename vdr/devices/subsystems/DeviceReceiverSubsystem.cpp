@@ -56,39 +56,40 @@ cDeviceReceiverSubsystem::~cDeviceReceiverSubsystem(void)
 
 void *cDeviceReceiverSubsystem::Process()
 {
-  if (!IsStopped() && OpenDvr())
+  if (!OpenDvr())
+    return NULL;
+
+  while (!IsStopped())
   {
-    while (!IsStopped())
+    Read(m_ringBuffer);
+
+    uint8_t *b = NULL;
+    if (!GetTSPacket(b))
+      break;
+
+    if (!b)
+      continue;
+
+    std::vector<uint8_t> buffer;
+    buffer.assign(b, b + TS_SIZE);
+    assert(buffer.size() == TS_SIZE);
+
+    uint16_t Pid = TsPid(b);
+
+    // Distribute the packet to all attached receivers:
+    CLockObject lock(m_mutexReceiver);
+    for (ReceiverPidMap::iterator itPair = m_receiverPids.begin(); itPair != m_receiverPids.end(); ++itPair)
     {
-      Read(m_ringBuffer);
+      iReceiver* receiver = itPair->first;
+      const std::set<uint16_t>& pids = itPair->second;
 
-      uint8_t *b = NULL;
-      if (!GetTSPacket(b))
-        break;
-
-      if (!b)
-        continue;
-
-      std::vector<uint8_t> buffer;
-      buffer.assign(b, b + TS_SIZE);
-      assert(buffer.size() == TS_SIZE);
-
-      uint16_t Pid = TsPid(b);
-
-      // Distribute the packet to all attached receivers:
-      CLockObject lock(m_mutexReceiver);
-      for (ReceiverPidMap::iterator itPair = m_receiverPids.begin(); itPair != m_receiverPids.end(); ++itPair)
-      {
-        iReceiver* receiver = itPair->first;
-        const std::set<uint16_t>& pids = itPair->second;
-
-        if (pids.find(Pid) != pids.end())
-          receiver->Receive(buffer);
-      }
+      if (pids.find(Pid) != pids.end())
+	receiver->Receive(buffer);
     }
-
-    CloseDvr();
   }
+
+  CloseDvr();
+
   return NULL;
 }
 
