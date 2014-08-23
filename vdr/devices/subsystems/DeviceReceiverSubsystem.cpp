@@ -120,17 +120,10 @@ void *cDeviceReceiverSubsystem::Process()
   return NULL;
 }
 
-bool cDeviceReceiverSubsystem::Receiving(void) const
-{
-  PLATFORM::CLockObject lock(m_mutexReceiver);
-  return !m_receivers.empty();
-}
-
 void cDeviceReceiverSubsystem::AttachReceiver(cReceiver* receiver)
 {
   {
     CLockObject lock(m_mutexReceiver);
-    receiver->AttachDevice(Device());
     m_receivers.push_back(receiver);
   }
 
@@ -144,26 +137,22 @@ void cDeviceReceiverSubsystem::AttachReceiver(cReceiver* receiver)
   dsyslog("receiver %p attached to %p", receiver, this);
 }
 
-void cDeviceReceiverSubsystem::Detach(cReceiver *receiver)
+void cDeviceReceiverSubsystem::Detach(cReceiver* receiver)
 {
   assert(receiver);
 
-  if (!receiver->DeviceAttached(Device()))
+  PLATFORM::CLockObject lock(m_mutexReceiver);
+
+  if (std::find(m_receivers.begin(), m_receivers.end(), receiver) == m_receivers.end())
   {
     dsyslog("receiver %p is not attached to %p", receiver, this);
     return;
   }
 
-  PLATFORM::CLockObject lock(m_mutexReceiver);
   for (std::list<cReceiver*>::iterator it = m_receivers.begin(); it != m_receivers.end(); ++it)
   {
     if (*it == receiver)
     {
-      {
-        CLockObject lock(m_mutexReceiver);
-        receiver->DetachDevice();
-      }
-
       receiver->Activate(false);
       receiver->RemoveFromPIDSubsystem(PID());
       m_receivers.erase(it);
@@ -234,6 +223,12 @@ void cDeviceReceiverSubsystem::CloseVideoInput(void)
 {
   Detach(&m_VideoInput);
   m_VideoInput.ResetMembers();
+}
+
+bool cDeviceReceiverSubsystem::Receiving(void) const
+{
+  PLATFORM::CLockObject lock(m_mutexReceiver);
+  return !m_receivers.empty();
 }
 
 }

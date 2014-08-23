@@ -39,12 +39,6 @@ public:
   cDeviceReceiverSubsystem(cDevice *device);
   virtual ~cDeviceReceiverSubsystem() { }
 
-public:
-  /*!
-   * \brief Returns true if we are currently receiving
-   */
-  bool Receiving(void) const;
-
   /*!
    * \brief Attaches the given receiver to this device
    */
@@ -53,7 +47,7 @@ public:
   /*!
    * \brief Detaches the given receiver from this device
    */
-  void Detach(cReceiver *receiver);
+  void Detach(cReceiver* receiver);
 
   /*!
    * \brief Detaches all receivers from this device for this pid
@@ -63,10 +57,15 @@ public:
   /*!
    * \brief Detaches all receivers from this device
    */
-  virtual void DetachAllReceivers();
+  virtual void DetachAllReceivers(void);
 
   bool OpenVideoInput(const ChannelPtr& channel, cVideoBuffer* videoBuffer);
   void CloseVideoInput(void);
+
+  /*!
+   * \brief Returns true if we are currently receiving
+   */
+  bool Receiving(void) const;
 
 protected:
   virtual void* Process(void);
@@ -75,12 +74,12 @@ protected:
    * \brief Opens the DVR of this device and prepares it to deliver a Transport
    *        Stream for use in a cReceiver
    */
-  virtual bool OpenDvr() { return false; }
+  virtual bool OpenDvr() = 0;
 
   /*!
    * \brief Shuts down the DVR
    */
-  virtual void CloseDvr() { }
+  virtual void CloseDvr() = 0;
 
   /*!
    * \brief Gets exactly one TS packet from the DVR of this device and returns
@@ -92,7 +91,7 @@ protected:
    * accessed. If there is currently no new data available, data will be set to
    * NULL.
    */
-  virtual bool GetTSPacket(uint8_t *&data) { return false; }
+  virtual bool GetTSPacket(uint8_t *&data) = 0;
 
 private:
   PLATFORM::CMutex  m_mutexReceiver;

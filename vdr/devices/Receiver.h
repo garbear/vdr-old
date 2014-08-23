@@ -30,7 +30,6 @@
 
 namespace VDR
 {
-class cDevice;
 class cDevicePIDSubsystem;
 
 class cReceiver {
@@ -39,19 +38,12 @@ class cReceiver {
 private:
   PLATFORM::CMutex   m_mutex;
   cChannelID         m_channelID;
-  cDevice*           m_device;
 public: // TODO
   std::set<uint16_t> m_pids;
-
-protected:
-  void Detach(void);
 
 public: // TODO
   bool WantsPid(int Pid);
   void RemoveFromPIDSubsystem(cDevicePIDSubsystem* pidSys) const;
-  bool DeviceAttached(cDevice* device) const;
-  void AttachDevice(cDevice* device);
-  void DetachDevice(void);
 
   virtual void Activate(bool On) = 0;
                ///< This function is called just before the cReceiver gets attached to
@@ -92,12 +84,6 @@ public:
                ///< that will be used for this receiver to detect and store whether the
                ///< channel can be decrypted in case this is an encrypted channel.
   cChannelID ChannelID(void) const;
-  bool IsAttached(void) const;
-               ///< Returns true if this receiver is (still) attached to a device.
-               ///< A receiver may be automatically detached from its device in
-               ///< case the device is needed otherwise, so code that uses a cReceiver
-               ///< should repeatedly check whether it is still attached, and if
-               ///< it isn't, delete it (or take any other appropriate measures).
   };
 
 }

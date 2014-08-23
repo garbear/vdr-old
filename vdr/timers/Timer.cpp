@@ -599,6 +599,7 @@ bool cTimer::CheckRecordingStatus(const CDateTime& Now)
 {
   if (m_recorder)
   {
+    /* TODO
     if (!m_recorder->IsAttached() || !Matches(Now))
     {
       SetPending(false);
@@ -607,6 +608,7 @@ bool cTimer::CheckRecordingStatus(const CDateTime& Now)
 
       return false;
     }
+    */
     Recordings.AssertFreeDiskSpace(Priority());
   }
   return true;

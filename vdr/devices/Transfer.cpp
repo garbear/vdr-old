@@ -42,7 +42,6 @@ cTransfer::cTransfer(ChannelPtr Channel)
 
 cTransfer::~cTransfer()
 {
-  cReceiver::Detach();
   cPlayer::Detach();
 }
 

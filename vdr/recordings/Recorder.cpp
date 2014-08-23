@@ -85,7 +85,6 @@ cRecorder::cRecorder(const std::string& strFileName, ChannelPtr Channel)
 
 cRecorder::~cRecorder()
 {
-  Detach();
   delete m_index;
   delete m_fileName;
   delete m_frameDetector;

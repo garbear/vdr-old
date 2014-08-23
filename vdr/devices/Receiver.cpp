@@ -36,21 +36,12 @@ namespace VDR
 
 cReceiver::cReceiver(const ChannelPtr& Channel /* = cChannel::EmptyChannel */)
 {
-  m_device = NULL;
   if (Channel)
     SetPids(*Channel);
 }
 
 cReceiver::~cReceiver()
 {
-  if (m_device)
-  {
-    const char *msg =
-        "ERROR: cReceiver has not been detached yet! This is a design fault and VDR will segfault now!";
-    esyslog("%s", msg);
-    fprintf(stderr, "%s\n", msg);
-    *(char *) 0 = 0; // XXX dafuq... cause a segfault
-  }
 }
 
 void cReceiver::AddPid(uint16_t pid)
@@ -134,52 +125,6 @@ bool cReceiver::WantsPid(int Pid)
 {
   set<uint16_t>::const_iterator it = m_pids.find(Pid);
   return it != m_pids.end();
-}
-
-void cReceiver::Detach(void)
-{
-  CLockObject lock(m_mutex);
-
-  if (m_device)
-  {
-    dsyslog("detaching receiver");
-    m_device->Receiver()->Detach(this);
-  }
-}
-
-bool cReceiver::DeviceAttached(cDevice* device) const
-{
-  CLockObject lock(m_mutex);
-
-  return m_device == device;
-}
-
-bool cReceiver::IsAttached(void) const
-{
-  CLockObject lock(m_mutex);
-
-  return m_device != NULL;
-}
-
-void cReceiver::AttachDevice(cDevice* device)
-{
-  assert(device);
-
-  CLockObject lock(m_mutex);
-
-  dsyslog("Attaching device %u to receiver '%p'", device->Index(), this);
-  m_device = device;
-}
-
-void cReceiver::DetachDevice(void)
-{
-  CLockObject lock(m_mutex);
-
-  if (m_device)
-  {
-    dsyslog("Detaching device %u from receiver '%p'", m_device->Index(), this);
-    m_device = NULL;
-  }
 }
 
 void cReceiver::RemoveFromPIDSubsystem(cDevicePIDSubsystem* pidSys) const
