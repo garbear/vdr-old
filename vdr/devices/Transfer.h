@@ -41,16 +41,4 @@ public:
   virtual void Activate(bool On);
   };
 
-class cDevice;
-
-class cTransferControl : public cControl {
-private:
-  cTransfer* m_transfer;
-  cDevice*   m_device;
-public:
-  cTransferControl(cDevice *ReceiverDevice, ChannelPtr Channel);
-  ~cTransferControl();
-  virtual void Hide(void) {}
-  };
-
 }
