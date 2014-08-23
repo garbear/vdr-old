@@ -25,15 +25,12 @@
 #include "devices/commoninterface/CI.h"
 #include "devices/subsystems/DeviceChannelSubsystem.h"
 #include "devices/subsystems/DeviceCommonInterfaceSubsystem.h"
-#include "devices/subsystems/DevicePIDSubsystem.h" // TODO
 #include "devices/subsystems/DeviceReceiverSubsystem.h"
 #include "devices/subsystems/DeviceVideoFormatSubsystem.h"
 #include "channels/Channel.h"
 #include "settings/Settings.h"
 #include "utils/log/Log.h"
 #include "utils/Tools.h"
-
-#include <assert.h>
 
 using namespace std;
 using namespace PLATFORM;
@@ -113,32 +110,10 @@ bool cDeviceManager::OpenVideoInput(const ChannelPtr& channel, cVideoBuffer* vid
 {
   DevicePtr device = GetDevice(0); // TODO
 
-  if (device && device->Channel()->SwitchChannel(channel))
+  if (device)
   {
-    m_VideoInput.SetVideoBuffer(videoBuffer);
-
-    const set<uint16_t>& pids = m_VideoInput.m_pids;
-    for (set<uint16_t>::const_iterator it = pids.begin(); it != pids.end(); ++it)
-    {
-      if (!device->PID()->AddPid(*it))
-      {
-        for (set<uint16_t>::const_iterator it2 = pids.begin(); *it2 != *it; ++it2)
-          device->PID()->DelPid(*it2);
-
-        dsyslog("receiver %p cannot be added to the pid subsys", &m_VideoInput);
-        m_VideoInput.ResetMembers();
-        return false;
-      }
-    }
-
-    m_VideoInput.Activate(true);
-
-    device->Receiver()->AttachReceiver(&m_VideoInput);
-
-    m_VideoInput.SetChannel(channel);
-    m_VideoInput.PmtChange();
-
-    return true;
+    if (device->Channel()->SwitchChannel(channel))
+      return device->Receiver()->OpenVideoInput(channel, videoBuffer);
   }
 
   return false;
@@ -149,10 +124,7 @@ void cDeviceManager::CloseVideoInput(void)
   DevicePtr device = GetDevice(0); // TODO
 
   if (device)
-  {
-    device->Receiver()->Detach(&m_VideoInput);
-    m_VideoInput.ResetMembers();
-  }
+    device->Receiver()->CloseVideoInput();
 }
 
 void cDeviceManager::Notify(const Observable &obs, const ObservableMessage msg)

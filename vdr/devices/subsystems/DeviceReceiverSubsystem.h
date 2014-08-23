@@ -24,6 +24,7 @@
 #include "utils/Tools.h"
 #include "lib/platform/threads/mutex.h"
 #include "lib/platform/threads/threads.h"
+#include "vnsi/video/VideoInput.h"
 
 #include <list>
 #include <stdint.h>
@@ -64,6 +65,9 @@ public:
    */
   virtual void DetachAllReceivers();
 
+  bool OpenVideoInput(const ChannelPtr& channel, cVideoBuffer* videoBuffer);
+  void CloseVideoInput(void);
+
 protected:
   virtual void* Process(void);
 
@@ -94,5 +98,8 @@ private:
   PLATFORM::CMutex  m_mutexReceiver;
 public: // TODO
   std::list<cReceiver*> m_receivers;
+
+private:
+  cVideoInput   m_VideoInput;
 };
 }

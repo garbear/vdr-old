@@ -202,4 +202,38 @@ void cDeviceReceiverSubsystem::DetachAllReceivers()
     Detach(*it);
 }
 
+bool cDeviceReceiverSubsystem::OpenVideoInput(const ChannelPtr& channel, cVideoBuffer* videoBuffer)
+{
+  m_VideoInput.SetVideoBuffer(videoBuffer);
+
+  const set<uint16_t>& pids = m_VideoInput.m_pids;
+  for (set<uint16_t>::const_iterator it = pids.begin(); it != pids.end(); ++it)
+  {
+    if (!PID()->AddPid(*it))
+    {
+      for (set<uint16_t>::const_iterator it2 = pids.begin(); *it2 != *it; ++it2)
+	PID()->DelPid(*it2);
+
+      dsyslog("receiver %p cannot be added to the pid subsys", &m_VideoInput);
+      m_VideoInput.ResetMembers();
+      return false;
+    }
+  }
+
+  m_VideoInput.Activate(true);
+
+  AttachReceiver(&m_VideoInput);
+
+  m_VideoInput.SetChannel(channel);
+  m_VideoInput.PmtChange();
+
+  return true;
+}
+
+void cDeviceReceiverSubsystem::CloseVideoInput(void)
+{
+  Detach(&m_VideoInput);
+  m_VideoInput.ResetMembers();
+}
+
 }
