@@ -64,3 +64,5 @@
 
 #define HOSTS_XML_ROOT                                 "hosts"
 #define HOSTS_XML_ELM_HOST                             "host"
+#define HOSTS_XML_ATTR_IP                              "ip"
+#define HOSTS_XML_ATTR_MASK                            "mask"

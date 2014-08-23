@@ -31,42 +31,66 @@
 
 namespace VDR
 {
-
-CAllowedHost* CAllowedHost::FromString(const std::string& value)
+void CAllowedHost::Save(TiXmlNode *root)
 {
-  CAllowedHost* newVal = new CAllowedHost;
-  if (!newVal)
-    return NULL;
+  char ipbuf[32];
+  TiXmlElement hostElement(HOSTS_XML_ELM_HOST);
+  TiXmlNode* node = root->InsertEndChild(hostElement);
 
-  newVal->mask = 0xFFFFFFFF;
-  std::string tmp(value);
-  char* p = (char*)strchr(tmp.c_str(), '/');
-  if (p)
+  if (inet_ntop(AF_INET, &addr, ipbuf, sizeof ipbuf))
   {
-    char *error = NULL;
-    int m = strtoul(p + 1, &error, 10);
-    if ((error && *error && !isspace(*error)) || m > 32)
-    {
-      delete newVal;
-      return NULL;
-    }
+    node->ToElement()->SetAttribute(HOSTS_XML_ATTR_IP,   ipbuf);
+    node->ToElement()->SetAttribute(HOSTS_XML_ATTR_MASK, mask);
+  }
+}
 
-    *p = 0;
-    if (m == 0)
+CAllowedHost* CAllowedHost::Localhost(void)
+{
+  CAllowedHost* retval = new CAllowedHost;
+  retval->mask = 0;
+  inet_aton("127.0.0.1", &retval->addr);
+  return retval;
+}
+
+in_addr_t CAllowedHost::AsMask(void) const
+{
+  int retval = 0xFFFFFFFF;
+  if (mask > 0 && mask < 32)
+  {
+    retval <<= (32 - mask);
+    retval = htonl(retval);
+  }
+  else
+  {
+    retval = 0;
+  }
+  return retval;
+}
+
+CAllowedHost* CAllowedHost::Load(const TiXmlNode* node)
+{
+  CAllowedHost* retval = NULL;
+  const TiXmlElement* elem = node->ToElement();
+  if (elem && elem->Attribute(HOSTS_XML_ATTR_IP))
+  {
+    retval = new CAllowedHost;
+    retval->mask = 0;
+
+    if (elem->Attribute(HOSTS_XML_ATTR_MASK))
+      retval->mask = atoi(elem->Attribute(HOSTS_XML_ATTR_MASK));
+
+    int result = inet_aton(elem->Attribute(HOSTS_XML_ATTR_IP), &retval->addr);
+    if (result == 0)
     {
-      newVal->mask = 0;
+      delete retval;
+      retval = NULL;
     }
     else
     {
-      newVal->mask <<= (32 - m);
-      newVal->mask = htonl(newVal->mask);
+      dsyslog("allowed host: %s/%d", elem->Attribute(HOSTS_XML_ATTR_IP), retval->mask);
     }
   }
-  int result = inet_aton(tmp.c_str(), &newVal->addr);
-  if (result != 0 && (newVal->mask != 0 || newVal->addr.s_addr == 0))
-    return newVal;
-  delete newVal;
-  return NULL;
+  return retval;
 }
 
 bool CAllowedHost::IsLocalhost(void) const
@@ -76,7 +100,8 @@ bool CAllowedHost::IsLocalhost(void) const
 
 bool CAllowedHost::Accepts(in_addr_t Address) const
 {
-  return (Address & mask) == (addr.s_addr & mask);
+  in_addr_t checkMask = AsMask();
+  return (Address & checkMask) == (addr.s_addr & checkMask);
 }
 
 CAllowedHosts::CAllowedHosts(void)
@@ -122,7 +147,7 @@ bool CAllowedHosts::Load(void)
       !Load("special://vdr/system/hosts.xml"))
   {
     // create a new empty file
-    m_hosts.push_back(CAllowedHost::FromString("127.0.0.1"));
+    m_hosts.push_back(CAllowedHost::Localhost());
     Save("special://home/system/hosts.xml");
     return false;
   }
@@ -156,13 +181,9 @@ bool CAllowedHosts::Load(const std::string& strFilename)
   const TiXmlNode* hostNode = root->FirstChild(HOSTS_XML_ELM_HOST);
   while (hostNode != NULL)
   {
-    elem = hostNode->ToElement();
-    if (elem && elem->Attribute(SETTINGS_XML_ATTR_VALUE))
-    {
-      allowedHost = CAllowedHost::FromString(elem->Attribute(SETTINGS_XML_ATTR_VALUE));
-      if (allowedHost)
-        m_hosts.push_back(allowedHost);
-    }
+    allowedHost = CAllowedHost::Load(hostNode);
+    if (allowedHost)
+      m_hosts.push_back(allowedHost);
     hostNode = hostNode->NextSibling(HOSTS_XML_ELM_HOST);
   }
 
@@ -171,8 +192,30 @@ bool CAllowedHosts::Load(const std::string& strFilename)
 
 bool CAllowedHosts::Save(const std::string& strFilename)
 {
-  //TODO
-  return false;
+  CXBMCTinyXML xmlDoc;
+  TiXmlDeclaration *decl = new TiXmlDeclaration("1.0", "", "");
+  xmlDoc.LinkEndChild(decl);
+
+  TiXmlElement rootElement(HOSTS_XML_ROOT);
+  TiXmlNode *root = xmlDoc.InsertEndChild(rootElement);
+  if (root == NULL)
+    return false;
+
+  for (std::vector<CAllowedHost*>::const_iterator it = m_hosts.begin(); it != m_hosts.end(); ++it)
+    (*it)->Save(root);
+
+  if (!strFilename.empty())
+    m_strFilename = strFilename;
+
+  assert(!m_strFilename.empty());
+
+  isyslog("saving configuration to '%s'", m_strFilename.c_str());
+  if (!xmlDoc.SafeSaveFile(m_strFilename))
+  {
+    esyslog("failed to save the configuration: could not write to '%s'", m_strFilename.c_str());
+    return false;
+  }
+  return true;
 }
 
 }

@@ -25,6 +25,8 @@
 #include <string>
 #include <vector>
 
+class TiXmlNode;
+
 namespace VDR
 {
 
@@ -36,13 +38,17 @@ public:
   bool IsLocalhost(void) const;
   bool Accepts(in_addr_t Address) const;
 
-  static CAllowedHost* FromString(const std::string& value);
+  void Save(TiXmlNode *root);
+  static CAllowedHost* Load(const TiXmlNode *root);
+  static CAllowedHost* Localhost(void);
 
 private:
   CAllowedHost(void) {}
 
+  in_addr_t AsMask(void) const;
+
   struct in_addr addr;
-  in_addr_t mask;
+  int            mask;
 };
 
 class CAllowedHosts
