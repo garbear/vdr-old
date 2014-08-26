@@ -22,7 +22,6 @@
 
 #include "channels/ChannelTypes.h"
 #include "devices/DeviceSubsystem.h"
-#include "utils/Ringbuffer.h"
 #include "lib/platform/threads/mutex.h"
 #include "lib/platform/threads/threads.h"
 
@@ -36,6 +35,7 @@ namespace VDR
 {
 
 class iReceiver;
+class cRingBufferLinear;
 
 enum ePidType
 {
@@ -145,16 +145,13 @@ private:
    * accessed. If there is currently no new data available, data will be set to
    * NULL.
    */
-  bool GetTSPacket(uint8_t*& data);
+  bool GetTSPacket(cRingBufferLinear& ringBuffer, std::vector<uint8_t>& data);
 
   typedef std::map<iReceiver*, std::set<uint16_t> > ReceiverPidMap; // receiver -> pids
 
   ReceiverPidMap   m_receiverPids;
   PLATFORM::CMutex m_mutexReceiver;
   cPidHandle       m_pidHandles[MAXPIDHANDLES];
-
-  cRingBufferLinear m_ringBuffer;
-  bool              m_bDelivered;
 };
 
 }

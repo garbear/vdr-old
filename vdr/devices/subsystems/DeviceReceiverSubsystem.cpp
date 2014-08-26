@@ -28,6 +28,7 @@
 #include "devices/Remux.h"
 #include "utils/CommonMacros.h"
 #include "utils/log/Log.h"
+#include "utils/Ringbuffer.h"
 
 #include <algorithm>
 #include <assert.h>
@@ -43,9 +44,7 @@ namespace VDR
 
 cDeviceReceiverSubsystem::cDeviceReceiverSubsystem(cDevice *device)
  : cDeviceSubsystem(device),
-   m_pidHandles(),
-   m_ringBuffer(MEGABYTE(5), TS_SIZE, true, "TS"),
-   m_bDelivered(false)
+   m_pidHandles()
 {
 }
 
@@ -59,22 +58,15 @@ void *cDeviceReceiverSubsystem::Process()
   if (!OpenDvr())
     return NULL;
 
+  cRingBufferLinear ringBuffer(MEGABYTE(5), TS_SIZE, true, "TS");
+
   while (!IsStopped())
   {
-    Read(m_ringBuffer);
-
-    uint8_t *b = NULL;
-    if (!GetTSPacket(b))
-      break;
-
-    if (!b)
+    std::vector<uint8_t> packet;
+    if (!GetTSPacket(ringBuffer, packet))
       continue;
 
-    std::vector<uint8_t> buffer;
-    buffer.assign(b, b + TS_SIZE);
-    assert(buffer.size() == TS_SIZE);
-
-    uint16_t Pid = TsPid(b);
+    uint16_t Pid = TsPid(packet.data());
 
     // Distribute the packet to all attached receivers:
     CLockObject lock(m_mutexReceiver);
@@ -84,7 +76,7 @@ void *cDeviceReceiverSubsystem::Process()
       const std::set<uint16_t>& pids = itPair->second;
 
       if (pids.find(Pid) != pids.end())
-	receiver->Receive(buffer);
+        receiver->Receive(packet);
     }
   }
 
@@ -93,15 +85,12 @@ void *cDeviceReceiverSubsystem::Process()
   return NULL;
 }
 
-bool cDeviceReceiverSubsystem::GetTSPacket(uint8_t*& data)
+bool cDeviceReceiverSubsystem::GetTSPacket(cRingBufferLinear& ringBuffer, std::vector<uint8_t>& data)
 {
+  Read(ringBuffer);
   int count = 0;
-  if (m_bDelivered)
-  {
-    m_ringBuffer.Del(TS_SIZE);
-    m_bDelivered = false;
-  }
-  uint8_t* p = m_ringBuffer.Get(count);
+  uint8_t* p = ringBuffer.Get(count);
+
   if (p && count >= TS_SIZE)
   {
     if (p[0] != TS_SYNC_BYTE)
@@ -115,13 +104,14 @@ bool cDeviceReceiverSubsystem::GetTSPacket(uint8_t*& data)
         }
       }
 
-      m_ringBuffer.Del(count);
+      ringBuffer.Del(count);
       esyslog("ERROR: skipped %d bytes to sync on TS packet on device %d", count, Device()->Index());
       return false;
     }
 
-    m_bDelivered = true;
-    data = p;
+    ringBuffer.Del(TS_SIZE);
+    data.assign(p, p + TS_SIZE);
+    assert(data.size() == TS_SIZE);
     return true;
   }
   return false;

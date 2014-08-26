@@ -23,6 +23,7 @@
 #include "devices/linux/DVBDevice.h"
 #include "filesystem/Poller.h"
 #include "utils/log/Log.h"
+#include "utils/Ringbuffer.h"
 
 #include <fcntl.h>
 #include <sys/ioctl.h>
@@ -34,8 +35,7 @@ namespace VDR
 
 cDvbReceiverSubsystem::cDvbReceiverSubsystem(cDevice *device)
  : cDeviceReceiverSubsystem(device),
-   m_fd_dvr(-1),
-   m_bFirstRead(false)
+   m_fd_dvr(-1)
 {
 }
 
@@ -43,7 +43,6 @@ bool cDvbReceiverSubsystem::OpenDvr()
 {
   CloseDvr();
   m_fd_dvr = open(Device<cDvbDevice>()->DvbPath(DEV_DVB_DVR).c_str(), O_RDONLY | O_NONBLOCK);
-  m_bFirstRead = false;
   return m_fd_dvr >= 0;
 }
 
@@ -59,10 +58,8 @@ void cDvbReceiverSubsystem::CloseDvr()
 void cDvbReceiverSubsystem::Read(cRingBufferLinear& ringBuffer)
 {
   cPoller Poller(m_fd_dvr);
-  if (m_bFirstRead || Poller.Poll(100))
+  if (Poller.Poll(100))
   {
-    m_bFirstRead = false;
-
     int r = ringBuffer.Read(m_fd_dvr);
     if (r < 0)
     {

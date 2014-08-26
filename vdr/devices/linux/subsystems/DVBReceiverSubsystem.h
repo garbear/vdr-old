@@ -38,6 +38,5 @@ public:
 private:
   // The DVR device (will be opened and closed as needed)
   int  m_fd_dvr;
-  bool m_bFirstRead; // TODO: Is this needed?
 };
 }
