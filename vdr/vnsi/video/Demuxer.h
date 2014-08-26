@@ -27,8 +27,11 @@
 #include "parser/Parser.h"
 #include "channels/ChannelTypes.h"
 #include "devices/Remux.h"
+#include "utils/Observer.h"
 
 #include <list>
+#include <stdint.h>
+#include <set>
 
 namespace VDR
 {
@@ -55,36 +58,46 @@ struct sStreamInfo
   }
 };
 
-class cVNSIDemuxer
+class cVNSIDemuxer : public Observer
 {
 public:
-  cVNSIDemuxer();
+  cVNSIDemuxer(int clientID, uint8_t timeshift);
   virtual ~cVNSIDemuxer();
+
+  bool Open(const ChannelPtr& channel, int serial);
+  void Close();
+
   int Read(sStreamPacket *packet);
   cTSStream *GetFirstStream();
   cTSStream *GetNextStream();
-  void Open(ChannelPtr channel, cVideoBuffer *videoBuffer);
-  void Close();
+
   bool SeekTime(int64_t time);
+
   uint32_t GetSerial() { return m_MuxPacketSerial; }
   void SetSerial(uint32_t serial) { m_MuxPacketSerial = serial; }
+
   void BufferStatus(bool &timeshift, uint32_t &start, uint32_t &end);
+
   uint16_t GetError();
 
+  virtual void Notify(const Observable &obs, const ObservableMessage msg);
+
 protected:
-  bool EnsureParsers();
+  bool EnsureParsers(const ChannelPtr& channel);
   void ResetParsers();
-  void UpdateStreamsFromChannel(void);
-  void UpdateChannelPIDsFromPMT(void);
+
+  std::vector<sStreamInfo> GetStreamsFromChannel(const ChannelPtr& channel);
   cTSStream *FindStream(int Pid);
-  void AddStreamInfo(sStreamInfo &stream);
+
   bool GetTimeAtPos(off_t *pos, int64_t *time);
+
+  bool PidsChanged(void);
+
+  int m_clientID;
   std::list<cTSStream*> m_Streams;
   std::list<cTSStream*>::iterator m_StreamsIterator;
-  std::list<sStreamInfo> m_StreamInfos;
   ChannelPtr m_CurrentChannel;
-  cPatPmtParser m_PatPmtParser;
-  int m_OldPmtVersion;
+  std::set<uint16_t> m_pids;
   bool m_WaitIFrame;
   int64_t m_FirstFramePTS;
   cVideoBuffer *m_VideoBuffer;
@@ -94,6 +107,7 @@ protected:
   uint16_t m_Error;
   bool m_SetRefTime;
   time_t m_refTime, m_endTime, m_wrapTime;
+  uint8_t m_timeshift;
 };
 
 }

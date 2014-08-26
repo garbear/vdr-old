@@ -27,11 +27,8 @@
 #include "VideoBuffer.h"
 #include "vnsi/net/VNSICommand.h"
 #include "vnsi/net/ResponsePacket.h"
-#include "channels/ChannelManager.h"
-#include "devices/DeviceManager.h"
 #include "recordings/Recordings.h"
 #include "settings/Settings.h"
-#include "timers/Timers.h"
 #include "utils/log/Log.h"
 #include "utils/StringUtils.h"
 #include "utils/XSocket.h"
@@ -48,7 +45,7 @@ namespace VDR
 // --- cLiveStreamer -------------------------------------------------
 
 cLiveStreamer::cLiveStreamer(int clientID, uint8_t timeshift, uint32_t timeout)
- : m_ClientID(clientID)
+ : m_Demuxer(clientID, timeshift)
  , m_scanTimeout(timeout)
 {
   m_Channel         = cChannel::EmptyChannel;
@@ -58,8 +55,6 @@ cLiveStreamer::cLiveStreamer(int clientID, uint8_t timeshift, uint32_t timeout)
   m_startup         = true;
   m_SignalLost      = false;
   m_IFrameSeen      = false;
-  m_VideoBuffer     = NULL;
-  m_Timeshift       = timeshift;
 
   if(m_scanTimeout == 0)
     m_scanTimeout = cSettings::Get().m_StreamTimeout;
@@ -79,40 +74,7 @@ bool cLiveStreamer::Open(int serial)
 {
   Close();
 
-  bool recording = false;
-  if (0) // test harness
-  {
-    recording = true;
-    m_VideoBuffer = cVideoBuffer::Create("/home/xbmc/test.ts");
-  }
-  else if (serial == -1)
-  {
-    cRecording* rec = cTimers::Get().GetActiveRecording(m_Channel);
-    if (rec)
-    {
-      recording = true;
-      m_VideoBuffer = cVideoBuffer::Create(rec);
-    }
-  }
-
-  if (!recording)
-  {
-    m_VideoBuffer = cVideoBuffer::Create(m_ClientID, m_Timeshift);
-  }
-
-  if (!m_VideoBuffer)
-    return false;
-
-  if (!recording)
-  {
-    if (!cDeviceManager::Get().OpenVideoInput(m_VideoBuffer, m_Channel))
-    {
-      esyslog("Can't switch to channel %i - %s", m_Channel->Number(), m_Channel->Name().c_str());
-      return false;
-    }
-  }
-
-  m_Demuxer.Open(m_Channel, m_VideoBuffer);
+  m_Demuxer.Open(m_Channel, serial);
   if (serial >= 0)
     m_Demuxer.SetSerial(serial);
 
@@ -122,14 +84,8 @@ bool cLiveStreamer::Open(int serial)
 void cLiveStreamer::Close(void)
 {
   isyslog("LiveStreamer::Close - close");
-  cDeviceManager::Get().CloseVideoInput(m_VideoBuffer);
   m_Demuxer.Close();
 
-  if (m_VideoBuffer)
-  {
-    delete m_VideoBuffer;
-    m_VideoBuffer = NULL;
-  }
 }
 
 void* cLiveStreamer::Process(void)

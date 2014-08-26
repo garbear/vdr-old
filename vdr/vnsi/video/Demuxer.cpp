@@ -26,8 +26,9 @@
 #include "Demuxer.h"
 #include "VideoBuffer.h"
 #include "Config.h"
-#include "channels/ChannelManager.h"
+#include "devices/DeviceManager.h"
 #include "Streamer.h"
+#include "timers/Timers.h"
 #include "utils/log/Log.h"
 
 #include <assert.h>
@@ -38,8 +39,9 @@ using namespace PLATFORM;
 namespace VDR
 {
 
-cVNSIDemuxer::cVNSIDemuxer() :
-    m_OldPmtVersion(-1),
+cVNSIDemuxer::cVNSIDemuxer(int clientID, uint8_t timeshift) :
+    m_clientID(clientID),
+    m_timeshift(timeshift),
     m_WaitIFrame(true),
     m_FirstFramePTS(0),
     m_VideoBuffer(NULL),
@@ -57,26 +59,70 @@ cVNSIDemuxer::~cVNSIDemuxer()
 {
 }
 
-void cVNSIDemuxer::Open(ChannelPtr channel, cVideoBuffer *videoBuffer)
+bool cVNSIDemuxer::Open(const ChannelPtr& channel, int serial)
 {
   assert(channel.get());
-  assert(videoBuffer);
 
   CLockObject lock(m_Mutex);
 
-  Close();
-  m_CurrentChannel  = channel;
-  m_VideoBuffer     = videoBuffer;
+  bool recording = false;
+  if (0) // test harness
+  {
+    recording = true;
+    m_VideoBuffer = cVideoBuffer::Create("/home/xbmc/test.ts");
+  }
+  else if (serial == -1)
+  {
+    cRecording* rec = cTimers::Get().GetActiveRecording(channel);
+    if (rec)
+    {
+      recording = true;
+      m_VideoBuffer = cVideoBuffer::Create(rec);
+    }
+  }
+
+  if (!recording)
+  {
+    m_VideoBuffer = cVideoBuffer::Create(m_clientID, m_timeshift);
+  }
+
+  if (!m_VideoBuffer)
+    return false;
+
+  if (!recording)
+  {
+    if (!cDeviceManager::Get().OpenVideoInput(m_VideoBuffer, channel))
+    {
+      esyslog("Can't switch to channel %i - %s", channel->Number(), channel->Name().c_str());
+      return false;
+    }
+  }
+
+  m_CurrentChannel = channel;
+  m_CurrentChannel->RegisterObserver(this);
+
+  PidsChanged();
+
+  return true;
 }
 
 void cVNSIDemuxer::Close()
 {
   CLockObject lock(m_Mutex);
 
-  m_CurrentChannel  = cChannel::EmptyChannel;
-  m_VideoBuffer     = NULL;
-  m_OldPmtVersion   = -1;
-  m_WaitIFrame      = m_CurrentChannel ? m_CurrentChannel->GetVideoStream().vpid != 0 : true;
+  if (m_VideoBuffer)
+  {
+    cDeviceManager::Get().CloseVideoInput(m_VideoBuffer);
+    delete m_VideoBuffer;
+    m_VideoBuffer = NULL;
+  }
+
+  if (m_CurrentChannel)
+  {
+    m_CurrentChannel->UnregisterObserver(this);
+    m_CurrentChannel.reset();
+  }
+  m_WaitIFrame      = true;
   m_FirstFramePTS   = 0;
   m_MuxPacketSerial = 0;
   m_Error           = ERROR_DEMUX_NODATA;
@@ -90,7 +136,26 @@ void cVNSIDemuxer::Close()
   }
 
   m_Streams.clear();
-  m_StreamInfos.clear();
+}
+
+void cVNSIDemuxer::Notify(const Observable &obs, const ObservableMessage msg)
+{
+  if (msg == ObservableMessageChannelChanged)
+  {
+    PidsChanged();
+  }
+}
+
+bool cVNSIDemuxer::PidsChanged(void)
+{
+  std::set<uint16_t> pids = m_CurrentChannel->GetPids();
+  if (pids != m_pids)
+  {
+    m_pids = pids;
+    return EnsureParsers(m_CurrentChannel);
+  }
+
+  return false;
 }
 
 int cVNSIDemuxer::Read(sStreamPacket *packet)
@@ -120,35 +185,12 @@ int cVNSIDemuxer::Read(sStreamPacket *packet)
 
   int ts_pid = TsPid(buf);
 
-  // parse PAT/PMT
-  if (ts_pid == PATPID)
-  {
-    m_PatPmtParser.ParsePat(buf, TS_SIZE);
-  }
-  else if (m_PatPmtParser.IsPmtPid(ts_pid))
-  {
-    int patVersion, pmtVersion;
-    m_PatPmtParser.ParsePmt(buf, TS_SIZE);
-    if (m_PatPmtParser.GetVersions(patVersion, pmtVersion))
-    {
-      // PMT version changed
-      if (pmtVersion != m_OldPmtVersion)
-      {
-        UpdateChannelPIDsFromPMT();
-        UpdateStreamsFromChannel();
-        m_PatPmtParser.Reset();
-        m_OldPmtVersion = pmtVersion;
+  /* TODO
+  if (PidsChanged())
+    packet->pmtChange = true;
+  */
 
-        // (re)create stream parsers
-        if (EnsureParsers())
-        {
-          packet->pmtChange = true;
-            return 1;
-        }
-      }
-    }
-  }
-  else if ((stream = FindStream(ts_pid)))
+  if ((stream = FindStream(ts_pid)))
   {
     // pass to demux
     int error = stream->ProcessTSPacket(buf, packet, m_WaitIFrame);
@@ -403,27 +445,24 @@ void cVNSIDemuxer::ResetParsers()
   }
 }
 
-void cVNSIDemuxer::AddStreamInfo(sStreamInfo &stream)
+bool cVNSIDemuxer::EnsureParsers(const ChannelPtr& channel)
 {
-  m_StreamInfos.push_back(stream);
-}
+  std::vector<sStreamInfo> streamInfos = GetStreamsFromChannel(m_CurrentChannel);
 
-bool cVNSIDemuxer::EnsureParsers()
-{
   bool streamChange = false;
 
   std::list<cTSStream*>::iterator it = m_Streams.begin();
   while (it != m_Streams.end())
   {
-    std::list<sStreamInfo>::iterator its;
-    for (its = m_StreamInfos.begin(); its != m_StreamInfos.end(); ++its)
+    std::vector<sStreamInfo>::iterator its;
+    for (its = streamInfos.begin(); its != streamInfos.end(); ++its)
     {
       if ((its->pID == (*it)->GetPID()) && (its->type == (*it)->Type()))
       {
         break;
       }
     }
-    if (its == m_StreamInfos.end())
+    if (its == streamInfos.end())
     {
       isyslog("Deleting stream for pid=%i and type=%i", (*it)->GetPID(), (*it)->Type());
       m_Streams.erase(it);
@@ -434,7 +473,7 @@ bool cVNSIDemuxer::EnsureParsers()
       ++it;
   }
 
-  for (std::list<sStreamInfo>::iterator it = m_StreamInfos.begin(); it != m_StreamInfos.end(); ++it)
+  for (std::vector<sStreamInfo>::const_iterator it = streamInfos.begin(); it != streamInfos.end(); ++it)
   {
     cTSStream *stream = FindStream(it->pID);
     if (stream)
@@ -494,44 +533,47 @@ bool cVNSIDemuxer::EnsureParsers()
     isyslog("Created stream for pid=%i and type=%i", stream->GetPID(), stream->Type());
     streamChange = true;
   }
-  m_StreamInfos.clear();
 
   return streamChange;
 }
 
-void cVNSIDemuxer::UpdateStreamsFromChannel(void)
+std::vector<sStreamInfo> cVNSIDemuxer::GetStreamsFromChannel(const ChannelPtr& channel)
 {
-  sStreamInfo newStream;
-  if (m_CurrentChannel->GetVideoStream().vpid)
+  std::vector<sStreamInfo> streamInfos;
+
+  if (channel->GetVideoStream().vpid)
   {
-    newStream.pID = m_CurrentChannel->GetVideoStream().vpid;
-    if (m_CurrentChannel->GetVideoStream().vtype == 0x1B)
+    sStreamInfo newStream = { };
+    newStream.pID = channel->GetVideoStream().vpid;
+    if (channel->GetVideoStream().vtype == 0x1B)
       newStream.type = stH264;
     else
       newStream.type = stMPEG2VIDEO;
 
-    AddStreamInfo(newStream);
+    streamInfos.push_back(newStream);
   }
 
-  const std::vector<DataStream>& dataStreams = m_CurrentChannel->GetDataStreams();
+  const std::vector<DataStream>& dataStreams = channel->GetDataStreams();
   for (std::vector<DataStream>::const_iterator it = dataStreams.begin(); it != dataStreams.end(); ++it)
   {
     if (!FindStream(it->dpid))
     {
+      sStreamInfo newStream = { };
       newStream.pID = it->dpid;
       newStream.type = stAC3;
       if (it->dtype == SI::EnhancedAC3DescriptorTag)
         newStream.type = stEAC3;
       newStream.SetLanguage(it->dlang.c_str());
-      AddStreamInfo(newStream);
+      streamInfos.push_back(newStream);
     }
   }
 
-  const std::vector<AudioStream>& audioStreams = m_CurrentChannel->GetAudioStreams();
+  const std::vector<AudioStream>& audioStreams = channel->GetAudioStreams();
   for (std::vector<AudioStream>::const_iterator it = audioStreams.begin(); it != audioStreams.end(); ++it)
   {
     if (!FindStream(it->apid))
     {
+      sStreamInfo newStream = { };
       newStream.pID = it->apid;
       newStream.type = stMPEG2AUDIO;
       if (it->atype == 0x0F)
@@ -539,77 +581,35 @@ void cVNSIDemuxer::UpdateStreamsFromChannel(void)
       else if (it->atype == 0x11)
         newStream.type = stAACLATM;
       newStream.SetLanguage(it->alang.c_str());
-      AddStreamInfo(newStream);
+      streamInfos.push_back(newStream);
     }
   }
 
-  const std::vector<SubtitleStream>& subtitleStreams = m_CurrentChannel->GetSubtitleStreams();
+  const std::vector<SubtitleStream>& subtitleStreams = channel->GetSubtitleStreams();
   for (std::vector<SubtitleStream>::const_iterator it = subtitleStreams.begin(); it != subtitleStreams.end(); ++it)
   {
     if (!FindStream(it->spid))
     {
+      sStreamInfo newStream = { };
       newStream.pID = it->spid;
       newStream.type = stDVBSUB;
       newStream.SetLanguage(it->slang.c_str());
       newStream.subtitlingType = it->subtitlingType;
       newStream.compositionPageId = it->compositionPageId;
       newStream.ancillaryPageId = it->ancillaryPageId;
-      AddStreamInfo(newStream);
+      streamInfos.push_back(newStream);
     }
   }
 
-  if (m_CurrentChannel->GetTeletextStream().tpid)
+  if (channel->GetTeletextStream().tpid)
   {
-    newStream.pID = m_CurrentChannel->GetTeletextStream().tpid;
+    sStreamInfo newStream = { };
+    newStream.pID = channel->GetTeletextStream().tpid;
     newStream.type = stTELETEXT;
-    AddStreamInfo(newStream);
-  }
-}
-
-void cVNSIDemuxer::UpdateChannelPIDsFromPMT(void)
-{
-
-  VideoStream vs;
-  vs.vpid  = m_PatPmtParser.Vpid();
-  vs.vtype = m_PatPmtParser.Ppid();
-  vs.ppid  = m_PatPmtParser.Vtype();
-
-  std::vector<AudioStream>    audioStreams;
-  const int *aPids = m_PatPmtParser.Apids();
-  for (unsigned int index = 0; *aPids; aPids++, index++)
-  {
-    AudioStream as;
-    as.apid  = m_PatPmtParser.Apid(index);
-    as.atype = m_PatPmtParser.Atype(index);
-    as.alang = m_PatPmtParser.Alang(index);
-    audioStreams.push_back(as);
+    streamInfos.push_back(newStream);
   }
 
-  std::vector<DataStream>     dataStreams;
-  const int *dPids = m_PatPmtParser.Dpids();
-  for (unsigned int index = 0; *dPids; dPids++, index++)
-  {
-    DataStream ds;
-    ds.dpid  = m_PatPmtParser.Dpid(index);
-    ds.dtype = m_PatPmtParser.Dtype(index);
-    ds.dlang = m_PatPmtParser.Dlang(index);
-    dataStreams.push_back(ds);
-  }
-
-  std::vector<SubtitleStream> subtitleStreams;
-  const int *sPids = m_PatPmtParser.Spids();
-  for (unsigned int index = 0; *sPids; sPids++, index++)
-  {
-    SubtitleStream ss;
-    ss.spid  = m_PatPmtParser.Spid(index);
-    ss.slang = m_PatPmtParser.Slang(index);
-    subtitleStreams.push_back(ss);
-  }
-
-  TeletextStream ts;
-  ts.tpid = m_CurrentChannel->GetTeletextStream().tpid;
-
-  m_CurrentChannel->SetStreams(vs, audioStreams, dataStreams, subtitleStreams, ts);
+  return streamInfos;
 }
 
 bool cVNSIDemuxer::GetTimeAtPos(off_t *pos, int64_t *time)

@@ -60,7 +60,6 @@ private:
   void sendBufferStatus();
   void sendRefTime(sStreamPacket *pkt);
 
-  int               m_ClientID;
   ChannelPtr        m_Channel;                      /*!> Channel to stream */
   cxSocket         *m_Socket;                       /*!> The socket class to communicate with client */
   v4l2_capability   m_vcap;                         /*!> PVR Information about the receiving device (pvrinput only) */
@@ -74,8 +73,6 @@ private:
   bool              m_IFrameSeen;
   cResponsePacket   m_streamHeader;
   cVNSIDemuxer      m_Demuxer;
-  cVideoBuffer     *m_VideoBuffer;
-  uint8_t           m_Timeshift;
 
 protected:
   virtual void* Process(void);
