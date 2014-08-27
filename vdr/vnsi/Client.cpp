@@ -141,7 +141,7 @@ void* cVNSIClient::Process(void)
         data = NULL;
       }
 
-      dsyslog("Received channel='%s' (%u), ser=%u, opcode='%s' (%u), edl=%u", ChannelToString(channelID), channelID, requestID, OpcodeToString(opcode), opcode, dataLength);
+      //dsyslog("Received channel='%s' (%u), ser=%u, opcode='%s' (%u), edl=%u", ChannelToString(channelID), channelID, requestID, OpcodeToString(opcode), opcode, dataLength);
 
       if (!m_loggedIn && (opcode != VNSI_LOGIN))
       {
