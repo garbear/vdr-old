@@ -71,11 +71,6 @@ public:
    */
   bool Receiving(void) const;
 
-  /*!
-   * \brief Returns true if this device is currently receiving the given PID
-   */
-  bool HasPid(uint16_t pid) const;
-
 protected:
   /*!
    * Inherited from CThread. Read and dispatch TS packets in a loop.

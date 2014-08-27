@@ -39,7 +39,6 @@ public:
   virtual bool ProvidesDeliverySystem(fe_delivery_system_t deliverySystem) const;
   virtual bool ProvidesSource(TRANSPONDER_TYPE source) const;
   virtual bool ProvidesTransponder(const cChannel &channel) const;
-  virtual bool ProvidesChannel(const cChannel &channel, bool *pNeedsDetachReceivers = NULL) const;
   virtual bool ProvidesEIT() const;
   virtual unsigned int NumProvidedSystems() const;
   virtual int SignalStrength() const;

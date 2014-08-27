@@ -101,45 +101,6 @@ bool cDvbChannelSubsystem::ProvidesTransponder(const cChannel &channel) const
   return true; // TODO: Previous this checked to see if any devices provided a transponder for the channel
 }
 
-bool cDvbChannelSubsystem::ProvidesChannel(const cChannel &channel, bool *pNeedsDetachReceivers /* = NULL */) const
-{
-  bool result = false;
-  bool needsDetachReceivers = false;
-
-  if (Device<cDvbDevice>()->m_dvbTuner.IsOpen() && ProvidesTransponder(channel))
-  {
-    result = true; // XXX
-
-    if (Receiver()->Receiving())
-    {
-      if (Device<cDvbDevice>()->m_dvbTuner.IsTunedTo(channel.GetTransponder()))
-      {
-        if ((channel.GetVideoStream().vpid && !Receiver()->HasPid(channel.GetVideoStream().vpid)) ||
-            (channel.GetAudioStream(0).apid && !Receiver()->HasPid(channel.GetAudioStream(0).apid)) ||
-            (channel.GetDataStream(0).dpid && !Receiver()->HasPid(channel.GetDataStream(0).dpid)))
-        {
-          if (CommonInterface()->CamSlot() && channel.GetCaId(0) >= CA_ENCRYPTED_MIN)
-          {
-            if (CommonInterface()->CamSlot()->CanDecrypt(channel))
-              result = true;
-            else
-              needsDetachReceivers = true;
-          }
-          else
-            result = true;
-        }
-        else
-          result = true;
-      }
-      else
-        needsDetachReceivers = Receiver()->Receiving();
-    }
-  }
-  if (pNeedsDetachReceivers)
-    *pNeedsDetachReceivers = needsDetachReceivers;
-  return result;
-}
-
 bool cDvbChannelSubsystem::ProvidesEIT() const
 {
   return Device<cDvbDevice>()->m_dvbTuner.IsOpen();

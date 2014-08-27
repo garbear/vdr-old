@@ -162,23 +162,6 @@ bool cDeviceReceiverSubsystem::Receiving(void) const
   return !m_receiverResources.empty();
 }
 
-bool cDeviceReceiverSubsystem::HasPid(uint16_t pid) const
-{
-  CLockObject lock(m_mutexReceiver);
-
-  for (ReceiverResourceMap::const_iterator itPair = m_receiverResources.begin(); itPair != m_receiverResources.end(); ++itPair)
-  {
-    const PidResourceSet& haystack = itPair->second;
-    for (PidResourceSet::const_iterator itPidHandle = haystack.begin(); itPidHandle != haystack.end(); ++itPidHandle)
-    {
-      if (pid == (*itPidHandle)->Pid())
-        return true;
-    }
-  }
-
-  return false;
-}
-
 PidResourcePtr cDeviceReceiverSubsystem::GetOpenResource(uint16_t pid)
 {
   CLockObject lock(m_mutexReceiver);
