@@ -155,7 +155,6 @@ set(VDR_SRCS
 	vdr/dvb/DiSEqC.cpp
 	vdr/dvb/filters/EIT.cpp
 	vdr/dvb/filters/Filter.cpp
-	vdr/dvb/filters/FilterResource.cpp
 	vdr/dvb/filters/NIT.cpp
 	vdr/dvb/filters/PAT.cpp
 	vdr/dvb/filters/PMT.cpp

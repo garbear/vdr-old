@@ -60,7 +60,7 @@ namespace VDR
 
 // --- cDeviceSectionFilterSubsystem::cFilterHandlePollRequest-----------------
 
-cDeviceSectionFilterSubsystem::cResourceRequest::cResourceRequest(const FilterResourceCollection& filterResources)
+cDeviceSectionFilterSubsystem::cResourceRequest::cResourceRequest(const PidResourceSet& filterResources)
  : m_resources(filterResources)
 {
 }
@@ -75,7 +75,7 @@ bool cDeviceSectionFilterSubsystem::cResourceRequest::WaitForSection(void)
   return m_readyEvent.Wait(SECTION_TIMEOUT_MS);
 }
 
-void cDeviceSectionFilterSubsystem::cResourceRequest::HandleSection(const FilterResourcePtr& resource)
+void cDeviceSectionFilterSubsystem::cResourceRequest::HandleSection(const PidResourcePtr& resource)
 {
   // Record the resource that is ready to provide a section
   m_activeResource = resource;
@@ -121,18 +121,22 @@ void cDeviceSectionFilterSubsystem::UnregisterFilter(const cFilter* filter)
   m_registeredFilters.erase(it);
 }
 
-FilterResourcePtr cDeviceSectionFilterSubsystem::OpenResource(uint16_t pid, uint8_t tid, uint8_t mask)
+PidResourcePtr cDeviceSectionFilterSubsystem::OpenResourceInternal(uint16_t pid, uint8_t tid, uint8_t mask)
 {
   // Check open resources first
-  FilterResourcePtr resource = GetOpenResource(pid, tid, mask);
+  PidResourcePtr resource = GetOpenResource(pid);
   if (resource)
     return resource;
 
   // Open the resource
-  return OpenResourceInternal(pid, tid, mask);
+  resource = OpenResource(pid, tid, mask);
+  if (resource)
+    return resource;
+
+  return PidResourcePtr();
 }
 
-bool cDeviceSectionFilterSubsystem::GetSection(const FilterResourceCollection& filterResources, uint16_t& pid, std::vector<uint8_t>& data)
+bool cDeviceSectionFilterSubsystem::GetSection(const PidResourceSet& filterResources, uint16_t& pid, std::vector<uint8_t>& data)
 {
   // If we don't have a tuner lock, no sections are being received
   if (!Channel()->HasLock())
@@ -153,7 +157,7 @@ bool cDeviceSectionFilterSubsystem::GetSection(const FilterResourceCollection& f
   // Remove poll request so that Process() doesn't invoke it twice
   {
     CLockObject lock(m_mutex);
-    ResourceRequestCollection::iterator it = std::find(m_activePollRequests.begin(), m_activePollRequests.end(), pollRequest);
+    ResourceRequestVector::iterator it = std::find(m_activePollRequests.begin(), m_activePollRequests.end(), pollRequest);
     assert(it != m_activePollRequests.end());
     m_activePollRequests.erase(it);
   }
@@ -163,7 +167,7 @@ bool cDeviceSectionFilterSubsystem::GetSection(const FilterResourceCollection& f
   {
     if (ReadResource(pollRequest->GetActiveResource(), data))
     {
-      pid = pollRequest->GetActiveResource()->GetPid();
+      pid = pollRequest->GetActiveResource()->Pid();
       return true;
     }
     else
@@ -189,7 +193,7 @@ void* cDeviceSectionFilterSubsystem::Process(void)
   while (!IsStopped())
   {
     // Accumulate all resources from active poll requests into a vector
-    FilterResourceCollection activeResources = GetActiveResources();
+    PidResourceSet activeResources = GetActiveResources();
 
     if (activeResources.empty())
     {
@@ -199,7 +203,7 @@ void* cDeviceSectionFilterSubsystem::Process(void)
     }
 
     // TODO: Need a thread-safe, abortable poll
-    FilterResourcePtr resource = Poll(activeResources);
+    PidResourcePtr resource = Poll(activeResources);
     if (resource && !IsStopped())
     {
       // TODO: We shouldn't lose channel lock, should we?
@@ -236,57 +240,55 @@ void* cDeviceSectionFilterSubsystem::Process(void)
   CLockObject lock(m_mutex);
 
   // Look for any poll requests that were waiting on the resource
-  for (ResourceRequestCollection::iterator it = m_activePollRequests.begin(); it != m_activePollRequests.end(); ++it)
+  for (ResourceRequestVector::iterator it = m_activePollRequests.begin(); it != m_activePollRequests.end(); ++it)
     (*it)->Abort();
 
   return NULL;
 }
 
-FilterResourcePtr cDeviceSectionFilterSubsystem::GetOpenResource(uint16_t pid, uint8_t tid, uint8_t mask)
+PidResourcePtr cDeviceSectionFilterSubsystem::GetOpenResource(uint16_t pid)
 {
   CLockObject lock(m_mutex);
-
-  cFilterResource needle(pid, tid, mask);
 
   // Scan registered filters for the resource
   for (set<const cFilter*>::const_iterator itFilter = m_registeredFilters.begin(); itFilter != m_registeredFilters.end(); ++itFilter)
   {
-    const FilterResourceCollection& haystack = (*itFilter)->GetResources();
-    for (FilterResourceCollection::const_iterator itResource = haystack.begin(); itResource != haystack.end(); ++itResource)
+    const PidResourceSet& haystack = (*itFilter)->GetResources();
+    for (PidResourceSet::const_iterator itResource = haystack.begin(); itResource != haystack.end(); ++itResource)
     {
-      if (**itResource == needle)
+      if ((*itResource)->Pid() == pid)
         return *itResource;
     }
   }
 
-  return FilterResourcePtr();
+  return PidResourcePtr();
 }
 
-FilterResourceCollection cDeviceSectionFilterSubsystem::GetActiveResources(void)
+PidResourceSet cDeviceSectionFilterSubsystem::GetActiveResources(void)
 {
   CLockObject lock(m_mutex);
 
-  FilterResourceCollection activeResources;
+  PidResourceSet activeResources;
 
   // Enumerate all active filters (those who are waiting on a call to GetSection())
-  for (ResourceRequestCollection::const_iterator it = m_activePollRequests.begin(); it != m_activePollRequests.end(); ++it)
+  for (ResourceRequestVector::const_iterator it = m_activePollRequests.begin(); it != m_activePollRequests.end(); ++it)
   {
-    const FilterResourceCollection& filterResources = (*it)->GetResources();
+    const PidResourceSet& filterResources = (*it)->GetResources();
     activeResources.insert(filterResources.begin(), filterResources.end());
   }
 
   return activeResources;
 }
 
-void cDeviceSectionFilterSubsystem::HandleSection(const FilterResourcePtr& resource)
+void cDeviceSectionFilterSubsystem::HandleSection(const PidResourcePtr& resource)
 {
   CLockObject lock(m_mutex);
 
   // Look for any poll requests that were waiting on the resource
-  for (ResourceRequestCollection::iterator it = m_activePollRequests.begin(); it != m_activePollRequests.end(); ++it)
+  for (ResourceRequestVector::iterator it = m_activePollRequests.begin(); it != m_activePollRequests.end(); ++it)
   {
-    const FilterResourceCollection& filterResources = (*it)->GetResources();
-    FilterResourceCollection::const_iterator it2 = filterResources.find(resource);
+    const PidResourceSet& filterResources = (*it)->GetResources();
+    PidResourceSet::const_iterator it2 = filterResources.find(resource);
     if (it2 != filterResources.end())
     {
       // Found a poll request waiting on the resource, notify clients

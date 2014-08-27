@@ -105,7 +105,7 @@ bool cPsipEit::ScanEvents(iFilterCallback* callback, unsigned int gpsUtcOffset)
 
     dsyslog("EIT: Found PID %u (%u bytes) with %u events", pid, data.size(), numEvents);
 
-    CloseResource(pid, TableIdEIT);
+    CloseResource(pid);
   }
 
   // Scan was successful if all resources were encountered and closed

@@ -22,14 +22,13 @@
 
 #include "channels/ChannelTypes.h"
 #include "devices/DeviceSubsystem.h"
+#include "devices/DeviceTypes.h"
+#include "devices/PIDResource.h"
 #include "lib/platform/threads/mutex.h"
 #include "lib/platform/threads/threads.h"
 
 #include <map>
-#include <set>
 #include <stdint.h>
-
-#define MAXPIDHANDLES  64 // TODO: Convert to std::vector
 
 namespace VDR
 {
@@ -54,17 +53,21 @@ public:
   virtual ~cDeviceReceiverSubsystem(void);
 
   /*!
-   * \brief Attaches the given receiver to this device
+   * Attaches the given receiver to this device. Resources for all the streams
+   * that channel provides are associated with the receiver in the m_receiverResources
+   * map.
    */
   bool AttachReceiver(iReceiver* receiver, const ChannelPtr& channel);
 
   /*!
-   * \brief Detaches the given receiver from this device
+   * Detaches the given receiver from this device. Pointer is removed from
+   * m_receiverResources, and all resources that fall out of scope will be
+   * closed RAII-style.
    */
   void DetachReceiver(iReceiver* receiver);
 
   /*!
-   * \brief Returns true if we are currently receiving
+   * Returns true if any receivers are attached to this device.
    */
   bool Receiving(void) const;
 
@@ -74,15 +77,10 @@ public:
   bool HasPid(uint16_t pid) const;
 
 protected:
-  class cPidHandle
-  {
-  public:
-    cPidHandle(void) : pid(0), streamType(0), handle(-1), used(0) { }
-    uint16_t pid;
-    uint8_t  streamType;
-    int      handle;
-    int      used;
-  };
+  /*!
+   * Inherited from CThread. Read and dispatch TS packets in a loop.
+   */
+  virtual void* Process(void);
 
   /*!
    * \brief Opens the DVR of this device and prepares it to deliver a Transport
@@ -107,39 +105,39 @@ protected:
    * \param type Indicates some special types of PIDs, which the device may need
    *        to set in a specific way.
    */
-  virtual bool SetPid(cPidHandle &handle, ePidType type, bool bOn) = 0;
+  virtual PidResourcePtr OpenResource(uint16_t pid, uint8_t streamType) = 0;
 
   /*!
-   * Inherited from CThread. Read and dispatch TS packets in a loop.
+   * Utility function: returns an open resource with the given PID, or empty
+   * pointer if no resources with the given PID are open.
    */
-  virtual void* Process(void);
+  PidResourcePtr GetOpenResource(uint16_t pid);
 
 private:
-  /*!
-   * \brief Adds a PID to the set of PIDs this device shall receive
-   */
-  bool AddPid(uint16_t pid, ePidType pidType = ptOther, uint8_t streamType = 0);
+  typedef std::map<iReceiver*, PidResourceSet> ReceiverResourceMap; // receiver -> resources
 
   /*!
-   * \brief Deletes a PID from the set of PIDs this device shall receive
-   */
-  void DeletePid(uint16_t pid, ePidType pidType = ptOther);
-
-  /*!
-   * \brief Detaches all receivers from this device
+   * \brief Detaches all receivers from this device.
    */
   virtual void DetachAllReceivers(void);
 
   /*!
-   * \brief Detaches all receivers from this device for this pid
+   * Open resources for all the PIDs belonging to channel.
+   * \return A collection of open resources
    */
-  void DetachAll(uint16_t pid);
+  bool OpenResources(const ChannelPtr& channel, PidResourceSet& openResources);
 
   /*!
-   * \brief Gets exactly one TS packet from the DVR of this device and returns
-   *        a pointer to it in data
-   * \return False in case of a non-recoverable error, otherwise true (even if
-   *         data is NULL)
+   * Opens resource for the given PID and stream type and inserts it into
+   * openResources on success. If a handle is already open, a copy of the
+   * shared pointer will be added to pidHandles instead. Returns false if no
+   * resource was added to openResources.
+   */
+  bool OpenResourceInternal(uint16_t pid, uint8_t streamType, PidResourceSet& openResources);
+
+  /*!
+   * Gets exactly one TS packet from the DVR of this device. Returns false in
+   * case of a non-recoverable error, or true otherwise (even if data is empty).
    *
    * Only the first 188 bytes (TS_SIZE) data points to are valid and may be
    * accessed. If there is currently no new data available, data will be set to
@@ -147,11 +145,8 @@ private:
    */
   bool GetTSPacket(cRingBufferLinear& ringBuffer, std::vector<uint8_t>& data);
 
-  typedef std::map<iReceiver*, std::set<uint16_t> > ReceiverPidMap; // receiver -> pids
-
-  ReceiverPidMap   m_receiverPids;
-  PLATFORM::CMutex m_mutexReceiver;
-  cPidHandle       m_pidHandles[MAXPIDHANDLES];
+  ReceiverResourceMap m_receiverResources;
+  PLATFORM::CMutex    m_mutexReceiver;
 };
 
 }

@@ -21,10 +21,7 @@
 #pragma once
 
 #include "devices/subsystems/DeviceSectionFilterSubsystem.h"
-#include "dvb/DVBTypes.h"
-
-#include <stdint.h>
-#include <vector>
+#include "devices/DeviceTypes.h"
 
 namespace VDR
 {
@@ -35,8 +32,8 @@ public:
   virtual ~cDvbSectionFilterSubsystem() { }
 
 protected:
-  virtual FilterResourcePtr OpenResourceInternal(uint16_t pid, uint8_t tid, uint8_t mask);
-  virtual bool ReadResource(const FilterResourcePtr& handle, std::vector<uint8_t>& data);
-  virtual FilterResourcePtr Poll(const FilterResourceCollection& filterResources);
+  virtual PidResourcePtr OpenResource(uint16_t pid, uint8_t tid, uint8_t mask);
+  virtual bool ReadResource(const PidResourcePtr& handle, std::vector<uint8_t>& data);
+  virtual PidResourcePtr Poll(const PidResourceSet& filterResources);
 };
 }

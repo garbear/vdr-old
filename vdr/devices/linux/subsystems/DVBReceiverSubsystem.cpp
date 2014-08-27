@@ -26,32 +26,134 @@
 #include "utils/Ringbuffer.h"
 
 #include <fcntl.h>
+#include <string>
 #include <sys/ioctl.h>
 #include <linux/dvb/dmx.h>
 #include <unistd.h>
 
+#define FILE_DESCRIPTOR_INVALID  (-1)
+
 namespace VDR
 {
 
+// --- cDvbReceiverResource ------------------------------------------------
+
+class cDvbReceiverResource : public cPidResource
+{
+public:
+  cDvbReceiverResource(uint16_t pid, uint8_t streamType, const std::string& strDvbPath);
+  virtual ~cDvbReceiverResource(void) { Close(); }
+
+  virtual bool Open(void);
+  virtual void Close(void);
+
+  uint8_t StreamType(void) const { return m_streamType; }
+
+private:
+  const uint8_t     m_streamType;
+  const std::string m_strDvbPath;
+  int               m_handle;
+};
+
+typedef shared_ptr<cDvbReceiverResource> DvbReceiverResourcePtr;
+
+cDvbReceiverResource::cDvbReceiverResource(uint16_t pid, uint8_t streamType, const std::string& strDvbPath)
+ : cPidResource(pid),
+   m_streamType(streamType),
+   m_strDvbPath(strDvbPath),
+   m_handle(FILE_DESCRIPTOR_INVALID)
+{
+}
+
+bool cDvbReceiverResource::Open(void)
+{
+  if (m_handle == FILE_DESCRIPTOR_INVALID)
+  {
+    m_handle = open(m_strDvbPath.c_str(), O_RDWR | O_NONBLOCK);
+    if (m_handle == FILE_DESCRIPTOR_INVALID)
+    {
+      esyslog("Couldn't open PES filter (pid=%u, streamType=%u)", Pid(), m_streamType);
+      return false;
+    }
+
+    dmx_pes_filter_params pesFilterParams = { };
+
+    pesFilterParams.pid     = Pid();
+    pesFilterParams.input   = DMX_IN_FRONTEND;
+    pesFilterParams.output  = DMX_OUT_TS_TAP;
+    pesFilterParams.pes_type= DMX_PES_OTHER;
+    pesFilterParams.flags   = DMX_IMMEDIATE_START;
+
+    if (ioctl(m_handle, DMX_SET_PES_FILTER, &pesFilterParams) < 0)
+    {
+      esyslog("Couldn't set PES filter (pid=%u, streamType=%u)", Pid(), m_streamType);
+      Close();
+      return false;
+    }
+  }
+
+  assert(m_handle >= 0);
+  dsyslog("Opened PES filter (pid=%u, streamType=%u)", Pid(), m_streamType);
+
+  return true;
+}
+
+void cDvbReceiverResource::Close(void)
+{
+  if (m_handle != FILE_DESCRIPTOR_INVALID)
+  {
+    if (ioctl(m_handle, DMX_STOP) < 0)
+      LOG_ERROR;
+
+    /* TODO: Why was this called on close?
+
+    if (StreamType() <= ptTeletext)
+    {
+      dmx_pes_filter_params pesFilterParams = { };
+
+      pesFilterParams.pid     = 0x1FFF;
+      pesFilterParams.input   = DMX_IN_FRONTEND;
+      pesFilterParams.output  = DMX_OUT_DECODER;
+      pesFilterParams.pes_type= DMX_PES_OTHER;
+      pesFilterParams.flags   = DMX_IMMEDIATE_START;
+
+      if (ioctl(m_handle, DMX_SET_PES_FILTER, &pesFilterParams) < 0)
+        LOG_ERROR;
+    }
+
+    */
+
+    close(m_handle);
+    m_handle = FILE_DESCRIPTOR_INVALID;
+    dsyslog("Closed PES filter (pid=%u, streamType=%u)");
+  }
+}
+
+// --- cDvbReceiverSubsystem -----------------------------------------------
+
 cDvbReceiverSubsystem::cDvbReceiverSubsystem(cDevice *device)
  : cDeviceReceiverSubsystem(device),
-   m_fd_dvr(-1)
+   m_fd_dvr(FILE_DESCRIPTOR_INVALID)
 {
 }
 
-bool cDvbReceiverSubsystem::OpenDvr()
+bool cDvbReceiverSubsystem::OpenDvr(void)
 {
   CloseDvr();
+
   m_fd_dvr = open(Device<cDvbDevice>()->DvbPath(DEV_DVB_DVR).c_str(), O_RDONLY | O_NONBLOCK);
-  return m_fd_dvr >= 0;
+  if (m_fd_dvr == FILE_DESCRIPTOR_INVALID)
+    return false;
+
+  return true;
 }
 
-void cDvbReceiverSubsystem::CloseDvr()
+void cDvbReceiverSubsystem::CloseDvr(void)
 {
   if (m_fd_dvr >= 0)
   {
     close(m_fd_dvr);
-    m_fd_dvr = -1;
+    m_fd_dvr = FILE_DESCRIPTOR_INVALID;
   }
 }
 
@@ -76,59 +178,15 @@ void cDvbReceiverSubsystem::Read(cRingBufferLinear& ringBuffer)
   }
 }
 
-bool cDvbReceiverSubsystem::SetPid(cPidHandle& handle, ePidType type, bool bOn)
+PidResourcePtr cDvbReceiverSubsystem::OpenResource(uint16_t pid, uint8_t streamType)
 {
-  if (handle.pid)
-  {
-    dmx_pes_filter_params pesFilterParams;
-    memset(&pesFilterParams, 0, sizeof(pesFilterParams));
+  std::string strDvbPath = Device<cDvbDevice>()->DvbPath(DEV_DVB_DEMUX);
+  PidResourcePtr handle = PidResourcePtr(new cDvbReceiverResource(pid, streamType, strDvbPath));
 
-    if (bOn)
-    {
-      if (handle.handle < 0)
-      {
-        handle.handle = open(Device<cDvbDevice>()->DvbPath(DEV_DVB_DEMUX).c_str(), O_RDWR | O_NONBLOCK);
-        if (handle.handle < 0)
-        {
-          LOG_ERROR;
-          return false;
-        }
-      }
+  if (!handle->Open())
+    handle.reset();
 
-      pesFilterParams.pid     = handle.pid;
-      pesFilterParams.input   = DMX_IN_FRONTEND;
-      pesFilterParams.output  = DMX_OUT_TS_TAP;
-      pesFilterParams.pes_type= DMX_PES_OTHER;
-      pesFilterParams.flags   = DMX_IMMEDIATE_START;
-
-      if (ioctl(handle.handle, DMX_SET_PES_FILTER, &pesFilterParams) < 0)
-      {
-        LOG_ERROR;
-        return false;
-      }
-    }
-    else if (!handle.used)
-    {
-      if (ioctl(handle.handle, DMX_STOP) < 0)
-        LOG_ERROR;
-
-      if (type <= ptTeletext)
-      {
-        pesFilterParams.pid     = 0x1FFF;
-        pesFilterParams.input   = DMX_IN_FRONTEND;
-        pesFilterParams.output  = DMX_OUT_DECODER;
-        pesFilterParams.pes_type= DMX_PES_OTHER;
-        pesFilterParams.flags   = DMX_IMMEDIATE_START;
-
-        if (ioctl(handle.handle, DMX_SET_PES_FILTER, &pesFilterParams) < 0)
-          LOG_ERROR;
-      }
-
-      close(handle.handle);
-      handle.handle = -1;
-    }
-  }
-  return true;
+  return handle;
 }
 
 }

@@ -82,19 +82,19 @@ cFilter::~cFilter(void)
 
 void cFilter::OpenResource(u_short pid, u_char tid, u_char mask /* = 0xFF */)
 {
-  FilterResourcePtr newResource = m_device->SectionFilter()->OpenResource(pid, tid, mask);
+  PidResourcePtr newResource = m_device->SectionFilter()->OpenResourceInternal(pid, tid, mask); // TODO
 
   if (newResource)
     m_resources.insert(newResource);
 }
 
-void cFilter::CloseResource(u_short pid, u_char tid, u_char mask /* = 0xFF */)
+void cFilter::CloseResource(u_short pid)
 {
   bool bResourceFound = false;
 
-  for (FilterResourceCollection::iterator it = m_resources.begin(); it != m_resources.end(); ++it)
+  for (PidResourceSet::iterator it = m_resources.begin(); it != m_resources.end(); ++it)
   {
-    if ((*it)->GetPid() == pid && (*it)->GetTid() == tid && (*it)->GetMask() == mask)
+    if ((*it)->Pid())
     {
       m_resources.erase(it);
       bResourceFound = true;

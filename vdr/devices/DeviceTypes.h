@@ -20,6 +20,7 @@
  */
 #pragma once
 
+#include <set>
 #include <shared_ptr/shared_ptr.hpp>
 #include <vector>
 
@@ -29,5 +30,9 @@ namespace VDR
 class cDevice;
 typedef VDR::shared_ptr<cDevice> DevicePtr;
 typedef std::vector<DevicePtr>   DeviceVector;
+
+class cPidResource;
+typedef VDR::shared_ptr<cPidResource> PidResourcePtr;
+typedef std::set<PidResourcePtr>      PidResourceSet;
 
 }

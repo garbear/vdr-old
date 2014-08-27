@@ -31,10 +31,6 @@ class cFilter;
 typedef VDR::shared_ptr<cFilter> FilterPtr;
 typedef std::vector<FilterPtr>   FilterVector;
 
-class cFilterResource;
-typedef VDR::shared_ptr<cFilterResource> FilterResourcePtr;
-typedef std::set<FilterResourcePtr>      FilterResourceCollection;
-
 class cCaDescriptor;
 typedef VDR::shared_ptr<cCaDescriptor> CaDescriptorPtr;
 typedef std::vector<CaDescriptorPtr>   CaDescriptorVector;

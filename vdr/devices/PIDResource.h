@@ -20,24 +20,37 @@
  */
 #pragma once
 
-#include "devices/subsystems/DeviceReceiverSubsystem.h"
+#include <stdint.h>
 
 namespace VDR
 {
-class cDvbReceiverSubsystem : public cDeviceReceiverSubsystem
+
+/*!
+ * Represents a resource (possibly a POSIX file handle) that is associated with
+ * a DVB packet ID. This is meant to abstract handles used by the Section Filter
+ * and Receiver subsystems.
+ *
+ * TODO: Because the two subsystems were recently merged, they contain duplicate
+ *       code providing similar functionality. This code should be merged.
+ *
+ * TODO: Consider an abstraction of a PID resource that provides data, such as
+ *       the Section Filter subsystem's resources, as opposed to a resource
+ *       held to enable data from a shared resource, like the Receiver
+ *       subsystem's DVR device.
+ */
+class cPidResource
 {
 public:
-  cDvbReceiverSubsystem(cDevice *device);
-  virtual ~cDvbReceiverSubsystem() { }
+  cPidResource(uint16_t pid) : m_pid(pid) { }
+  virtual ~cPidResource(void) { }
 
-  virtual bool OpenDvr(void);
-  virtual void CloseDvr(void);
+  virtual bool Open(void) = 0;
+  virtual void Close(void) = 0;
 
-  virtual void Read(cRingBufferLinear& ringBuffer);
-  virtual PidResourcePtr OpenResource(uint16_t pid, uint8_t streamType);
+  uint16_t Pid(void) const { return m_pid; }
 
 private:
-  // The DVR device (will be opened and closed as needed)
-  int  m_fd_dvr;
+  const uint16_t m_pid;
 };
+
 }

@@ -21,8 +21,8 @@
 #pragma once
 
 #include "devices/DeviceSubsystem.h"
-#include "dvb/DVBTypes.h"
-#include "dvb/filters/FilterResource.h"
+#include "devices/DeviceTypes.h"
+#include "devices/PIDResource.h"
 #include "lib/platform/threads/mutex.h"
 #include "lib/platform/threads/threads.h"
 
@@ -53,19 +53,19 @@ private:
   class cResourceRequest
   {
   public:
-    cResourceRequest(const FilterResourceCollection& filterResources);
+    cResourceRequest(const PidResourceSet& filterResources);
     ~cResourceRequest(void);
 
     /*!
      * Return all resources being polled.
      */
-    const FilterResourceCollection& GetResources(void) const { return m_resources; }
+    const PidResourceSet& GetResources(void) const { return m_resources; }
 
     /*!
      * Returns the resource that received the section, or an empty pointer if no
      * resource has received a section yet.
      */
-    FilterResourcePtr GetActiveResource(void) const { return m_activeResource; }
+    PidResourcePtr GetActiveResource(void) const { return m_activeResource; }
 
     /*!
      * Block until a resource receives a section. Allows the thread to sleep
@@ -81,17 +81,17 @@ private:
      * has been received from the section handler. Any threads blocking on this
      * request via WaitForSection() will return.
      */
-    void HandleSection(const FilterResourcePtr& resource);
+    void HandleSection(const PidResourcePtr& resource);
 
     void Abort(void);
 
   private:
-    FilterResourceCollection m_resources;      // The filter resources that this request is polling
-    FilterResourcePtr        m_activeResource; // Resource ready to be read
-    PLATFORM::CEvent         m_readyEvent;     // Fired when resource is ready to be read
+    PidResourceSet   m_resources;      // The filter resources that this request is polling
+    PidResourcePtr   m_activeResource; // Resource ready to be read
+    PLATFORM::CEvent m_readyEvent;     // Fired when resource is ready to be read
   };
 
-  typedef std::vector<shared_ptr<cResourceRequest> > ResourceRequestCollection;
+  typedef std::vector<shared_ptr<cResourceRequest> > ResourceRequestVector;
 
 public:
   cDeviceSectionFilterSubsystem(cDevice* device);
@@ -113,8 +113,10 @@ public:
    * returned instead. When all filters are destroyed, all references to a
    * resource will be lost and the resource will close automatically
    * (RAII pattern).
+   *
+   * TODO: Make this function internal as the Receiver subsystem is slowly merged with the Filter subsystem
    */
-  FilterResourcePtr OpenResource(uint16_t pid, uint8_t tid, uint8_t mask);
+  PidResourcePtr OpenResourceInternal(uint16_t pid, uint8_t tid, uint8_t mask);
 
   /*!
    * Wait on a collection of filter resources until one of them has received a
@@ -122,7 +124,7 @@ public:
    * will be set to the pid of the section. Blocks until a section is received
    * or false is returned.
    */
-  bool GetSection(const FilterResourceCollection& filterResources, uint16_t& pid, std::vector<uint8_t>& data);
+  bool GetSection(const PidResourceSet& filterResources, uint16_t& pid, std::vector<uint8_t>& data);
 
 protected:
   /*!
@@ -134,40 +136,40 @@ protected:
    * Open a resource for the given filter data. Returns the resource, or an
    * empty pointer if open failed or wasn't implemented.
    */
-  virtual FilterResourcePtr OpenResourceInternal(uint16_t pid, uint8_t tid, uint8_t mask) = 0;
+  virtual PidResourcePtr OpenResource(uint16_t pid, uint8_t tid, uint8_t mask) = 0;
 
   /*!
    * Read data from a resource.
    */
-  virtual bool ReadResource(const FilterResourcePtr& resource, std::vector<uint8_t>& data) = 0;
+  virtual bool ReadResource(const PidResourcePtr& resource, std::vector<uint8_t>& data) = 0;
 
   /*!
    * Wait on any of the provided resources until one receives a section. Returns
    * the resource that received the section, or an empty pointer if no filters
    * were received by any sections.
    */
-  virtual FilterResourcePtr Poll(const FilterResourceCollection& filterResources) = 0;
+  virtual PidResourcePtr Poll(const PidResourceSet& filterResources) = 0;
 
 private:
   /*!
    * Scan registered filters for an existing resource with the specified ID.
    */
-  FilterResourcePtr GetOpenResource(uint16_t pid, uint8_t tid, uint8_t mask);
+  PidResourcePtr GetOpenResource(uint16_t pid);
 
   /*!
    * Accumulate resources of all active filters (those who are waiting on a call
    * to GetSection()).
    */
-  FilterResourceCollection GetActiveResources(void);
+  PidResourceSet GetActiveResources(void);
 
   /*!
    * Called when a section has been read from the device.
    */
-  void HandleSection(const FilterResourcePtr& resource);
+  void HandleSection(const PidResourcePtr& resource);
 
-  ResourceRequestCollection m_activePollRequests;
-  std::set<const cFilter*>  m_registeredFilters;
-  PLATFORM::CMutex          m_mutex;
+  ResourceRequestVector    m_activePollRequests;
+  std::set<const cFilter*> m_registeredFilters;
+  PLATFORM::CMutex         m_mutex;
 };
 
 }

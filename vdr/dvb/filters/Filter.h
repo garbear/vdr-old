@@ -20,9 +20,8 @@
  */
 #pragma once
 
-#include "FilterResource.h"
 #include "channels/ChannelTypes.h"
-#include "dvb/DVBTypes.h"
+#include "devices/DeviceTypes.h"
 #include "epg/EPGTypes.h"
 #include "transponders/Transponder.h"
 
@@ -82,7 +81,7 @@ public:
   /*!
    * Get the resources that have been opened as a result of OpenResource().
    */
-  const FilterResourceCollection& GetResources() const { return m_resources; }
+  const PidResourceSet& GetResources(void) const { return m_resources; }
 
 protected:
   /*!
@@ -91,7 +90,7 @@ protected:
    * the derived class.
    */
   void OpenResource(uint16_t pid, uint8_t tid, uint8_t mask = 0xFF);
-  void CloseResource(uint16_t pid, uint8_t tid, uint8_t mask = 0xFF);
+  void CloseResource(uint16_t pid);
 
   /*!
    * Get a section from the resources that have been opened by this filter.
@@ -114,9 +113,9 @@ protected:
   cTransponder GetTransponder(void) const { return m_transponder; }
 
 private:
-  cDevice* const           m_device;      // Device that this filter belongs to
-  const cTransponder       m_transponder; // Transponder that the device is tuned to
-  FilterResourceCollection m_resources;   // Open resources held by this device
+  cDevice* const     m_device;      // Device that this filter belongs to
+  const cTransponder m_transponder; // Transponder that the device is tuned to
+  PidResourceSet     m_resources;   // Open resources held by this device
 };
 
 }
