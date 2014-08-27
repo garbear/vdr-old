@@ -84,6 +84,15 @@ protected:
   void Close();
 
 public:
+  /*!
+   * cLiveStreamer() arguments:
+   *
+   *    clientId  - the ID of the cVNSIClient that owns this streamer. given to
+   *                the demuxer.
+   *    timeshift - also given to the demuxer
+   *    timeout   - streamer thread timeout, or 0 to use default value
+   *                (m_StreamTimeout from cSettings)
+   */
   cLiveStreamer(int clientID, uint8_t timeshift, uint32_t timeout = 0);
   virtual ~cLiveStreamer();
 
