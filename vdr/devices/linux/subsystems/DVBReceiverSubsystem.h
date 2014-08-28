@@ -21,6 +21,7 @@
 #pragma once
 
 #include "devices/subsystems/DeviceReceiverSubsystem.h"
+#include "utils/Ringbuffer.h"
 
 namespace VDR
 {
@@ -33,11 +34,15 @@ public:
   virtual bool OpenDvr(void);
   virtual void CloseDvr(void);
 
-  virtual void Read(cRingBufferLinear& ringBuffer);
+  virtual bool Poll(void);
+  virtual bool Read(std::vector<uint8_t>& data);
   virtual PidResourcePtr OpenResource(uint16_t pid, uint8_t streamType);
 
 private:
   // The DVR device (will be opened and closed as needed)
   int  m_fd_dvr;
+
+  // We need a buffer because we might read partial packets
+  cRingBufferLinear m_ringBuffer;
 };
 }

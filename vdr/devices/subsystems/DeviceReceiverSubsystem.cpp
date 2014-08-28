@@ -28,10 +28,10 @@
 #include "devices/Remux.h"
 #include "utils/CommonMacros.h"
 #include "utils/log/Log.h"
-#include "utils/Ringbuffer.h"
 
 #include <algorithm>
 #include <assert.h>
+#include <unistd.h> // for usleep()
 
 using namespace PLATFORM;
 using namespace std;
@@ -40,6 +40,8 @@ using namespace std;
 #define TS_SCRAMBLING_TIME_OK    10 // seconds before a Channel/CAM combination is marked as known to decrypt
 
 #define STREAM_TYPE_UNKNOWN  0x00 // TODO: Find VDR code that determines stream type for these cases
+
+#define MAX_IDLE_DELAY_MS      100
 
 namespace VDR
 {
@@ -59,29 +61,44 @@ void *cDeviceReceiverSubsystem::Process()
   if (!OpenDvr())
     return NULL;
 
-  cRingBufferLinear ringBuffer(MEGABYTE(5), TS_SIZE, true, "TS");
-
   while (!IsStopped())
   {
-    std::vector<uint8_t> packet;
-    if (!GetTSPacket(ringBuffer, packet))
-      continue;
-
-    uint16_t pid = TsPid(packet.data());
-
-    // Distribute the packet to all attached receivers:
-    CLockObject lock(m_mutexReceiver);
-    for (ReceiverResourceMap::iterator itPair = m_receiverResources.begin(); itPair != m_receiverResources.end(); ++itPair)
+    bool bHasReceivers;
     {
-      iReceiver* receiver = itPair->first;
-      const PidResourceSet& pids = itPair->second;
+      CLockObject lock(m_mutexReceiver);
+      bHasReceivers = !m_receiverResources.empty();
+    }
 
-      for (PidResourceSet::const_iterator itPid = pids.begin(); itPid != pids.end(); ++itPid)
+    if (!bHasReceivers)
+    {
+      usleep(MAX_IDLE_DELAY_MS * 1000);
+      continue;
+    }
+
+    if (Poll() && !IsStopped())
+    {
+      vector<uint8_t> packet;
+      if (Read(packet))
       {
-        if (pid == (*itPid)->Pid())
+        uint16_t pid = TsPid(packet.data());
+
+        CLockObject lock(m_mutexReceiver);
+
+        // Distribute the packet to all attached receivers:
+        for (ReceiverResourceMap::iterator itPair = m_receiverResources.begin(); itPair != m_receiverResources.end(); ++itPair)
         {
-          receiver->Receive(packet);
-          break;
+          iReceiver* receiver = itPair->first;
+          const PidResourceSet& pids = itPair->second;
+
+          for (PidResourceSet::const_iterator itPid = pids.begin(); itPid != pids.end(); ++itPid)
+          {
+            if (pid == (*itPid)->Pid())
+            {
+              //(*itPid)->Receive(packet)
+              receiver->Receive(packet);
+              break;
+            }
+          }
         }
       }
     }
@@ -221,38 +238,6 @@ bool cDeviceReceiverSubsystem::OpenResourceInternal(uint16_t pid, uint8_t stream
     return true;
   }
 
-  return false;
-}
-
-bool cDeviceReceiverSubsystem::GetTSPacket(cRingBufferLinear& ringBuffer, std::vector<uint8_t>& data)
-{
-  Read(ringBuffer);
-  int count = 0;
-  uint8_t* p = ringBuffer.Get(count);
-
-  if (p && count >= TS_SIZE)
-  {
-    if (p[0] != TS_SYNC_BYTE)
-    {
-      for (int i = 1; i < count; i++)
-      {
-        if (p[i] == TS_SYNC_BYTE)
-        {
-          count = i;
-          break;
-        }
-      }
-
-      ringBuffer.Del(count);
-      esyslog("ERROR: skipped %d bytes to sync on TS packet on device %d", count, Device()->Index());
-      return false;
-    }
-
-    ringBuffer.Del(TS_SIZE);
-    data.assign(p, p + TS_SIZE);
-    assert(data.size() == TS_SIZE);
-    return true;
-  }
   return false;
 }
 

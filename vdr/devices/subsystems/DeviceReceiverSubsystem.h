@@ -81,14 +81,20 @@ protected:
    * \brief Opens the DVR of this device and prepares it to deliver a Transport
    *        Stream for use in a iReceiver
    */
-  virtual bool OpenDvr() = 0;
+  virtual bool OpenDvr(void) = 0;
 
   /*!
    * \brief Shuts down the DVR
    */
-  virtual void CloseDvr() = 0;
+  virtual void CloseDvr(void) = 0;
 
-  virtual void Read(cRingBufferLinear& ringBuffer) = 0;
+  virtual bool Poll(void) = 0;
+
+  /*!
+   * Gets exactly one TS packet from the DVR of this device, or returns false if
+   * no new data is ready.
+   */
+  virtual bool Read(std::vector<uint8_t>& data) = 0;
 
   /*!
    * \brief Does the actual PID setting on this device.
@@ -129,16 +135,6 @@ private:
    * resource was added to openResources.
    */
   bool OpenResourceInternal(uint16_t pid, uint8_t streamType, PidResourceSet& openResources);
-
-  /*!
-   * Gets exactly one TS packet from the DVR of this device. Returns false in
-   * case of a non-recoverable error, or true otherwise (even if data is empty).
-   *
-   * Only the first 188 bytes (TS_SIZE) data points to are valid and may be
-   * accessed. If there is currently no new data available, data will be set to
-   * NULL.
-   */
-  bool GetTSPacket(cRingBufferLinear& ringBuffer, std::vector<uint8_t>& data);
 
   ReceiverResourceMap m_receiverResources;
   PLATFORM::CMutex    m_mutexReceiver;

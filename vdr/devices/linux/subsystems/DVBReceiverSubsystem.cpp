@@ -20,6 +20,7 @@
  */
 
 #include "DVBReceiverSubsystem.h"
+#include "devices/Remux.h"
 #include "devices/linux/DVBDevice.h"
 #include "filesystem/Poller.h"
 #include "utils/log/Log.h"
@@ -31,6 +32,9 @@
 #include <linux/dvb/dmx.h>
 #include <unistd.h>
 
+using namespace std;
+
+#define TS_PACKET_BUFFER_SIZE    (5 * TS_SIZE) // Buffer up to 5 TS packets
 #define FILE_DESCRIPTOR_INVALID  (-1)
 
 namespace VDR
@@ -133,7 +137,8 @@ void cDvbReceiverResource::Close(void)
 
 cDvbReceiverSubsystem::cDvbReceiverSubsystem(cDevice *device)
  : cDeviceReceiverSubsystem(device),
-   m_fd_dvr(FILE_DESCRIPTOR_INVALID)
+   m_fd_dvr(FILE_DESCRIPTOR_INVALID),
+   m_ringBuffer(TS_PACKET_BUFFER_SIZE, TS_SIZE, false, "TS")
 {
 }
 
@@ -155,27 +160,57 @@ void cDvbReceiverSubsystem::CloseDvr(void)
     close(m_fd_dvr);
     m_fd_dvr = FILE_DESCRIPTOR_INVALID;
   }
+
+  m_ringBuffer.Clear();
 }
 
-void cDvbReceiverSubsystem::Read(cRingBufferLinear& ringBuffer)
+bool cDvbReceiverSubsystem::Poll(void)
 {
   cPoller Poller(m_fd_dvr);
-  if (Poller.Poll(100))
+  return Poller.Poll(100);
+}
+
+bool cDvbReceiverSubsystem::Read(vector<uint8_t>& data)
+{
+  int count = 0;
+  if (!m_ringBuffer.Get(count) || count < TS_SIZE)
   {
-    int r = ringBuffer.Read(m_fd_dvr);
-    if (r < 0)
+    if (m_ringBuffer.Read(m_fd_dvr) <= 0)
     {
       if (errno == EOVERFLOW)
-      {
-        esyslog("ERROR: driver buffer overflow on device %d", Device()->Index());
-      }
+        esyslog("Driver buffer overflow on device %d", Device()->Index());
       else if (errno != 0 && errno != EAGAIN && errno != EINTR)
-      {
-        LOG_ERROR;
-        return;
-      }
+        esyslog("Error reading dvr device: %m");
+      return false;
     }
   }
+
+  uint8_t* p = m_ringBuffer.Get(count);
+  while (p && count >= TS_SIZE)
+  {
+    // Check for TS sync byte
+    if (p[0] != TS_SYNC_BYTE)
+    {
+      for (int i = 1; i < count; i++)
+      {
+        if (p[i] == TS_SYNC_BYTE)
+        {
+          count = i;
+          break;
+        }
+      }
+
+      m_ringBuffer.Del(count);
+      esyslog("Skipped %d bytes to sync on TS packet on device %d", count, Device()->Index());
+      return false;
+    }
+
+    m_ringBuffer.Del(TS_SIZE);
+    data.assign(p, p + TS_SIZE);
+    return true;
+  }
+
+  return false;
 }
 
 PidResourcePtr cDvbReceiverSubsystem::OpenResource(uint16_t pid, uint8_t streamType)
