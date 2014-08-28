@@ -142,9 +142,9 @@ cDvbReceiverSubsystem::cDvbReceiverSubsystem(cDevice *device)
 {
 }
 
-bool cDvbReceiverSubsystem::OpenDvr(void)
+bool cDvbReceiverSubsystem::Initialise(void)
 {
-  CloseDvr();
+  Deinitialise();
 
   m_fd_dvr = open(Device<cDvbDevice>()->DvbPath(DEV_DVB_DVR).c_str(), O_RDONLY | O_NONBLOCK);
   if (m_fd_dvr == FILE_DESCRIPTOR_INVALID)
@@ -153,7 +153,7 @@ bool cDvbReceiverSubsystem::OpenDvr(void)
   return true;
 }
 
-void cDvbReceiverSubsystem::CloseDvr(void)
+void cDvbReceiverSubsystem::Deinitialise(void)
 {
   if (m_fd_dvr >= 0)
   {

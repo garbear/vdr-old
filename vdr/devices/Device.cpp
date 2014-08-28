@@ -79,7 +79,8 @@ void cSubsystems::AssertValid() const
 
 cDevice::cDevice(const cSubsystems &subsystems)
  : m_subsystems(subsystems),
-   m_index(0)
+   m_index(0),
+   m_bInitialised(false)
 {
   m_subsystems.AssertValid();
   Channel()->RegisterObserver(Scan());
@@ -87,8 +88,7 @@ cDevice::cDevice(const cSubsystems &subsystems)
 
 cDevice::~cDevice()
 {
-  Channel()->UnregisterObserver(Scan());
-  SectionFilter()->StopSectionHandler();
+  Deinitialise();
   m_subsystems.Free(); // TODO: Remove me if we switch cSubsystems to use shared_ptrs
 }
 
@@ -97,6 +97,14 @@ bool cDevice::Initialise(unsigned int index)
   m_index = index;
   m_bInitialised = true;
   return m_bInitialised;
+}
+
+void cDevice::Deinitialise(void)
+{
+  m_bInitialised = false;
+  Channel()->UnregisterObserver(Scan());
+  SectionFilter()->Stop();
+  Receiver()->Stop();
 }
 
 }

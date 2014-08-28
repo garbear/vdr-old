@@ -78,6 +78,7 @@ public:
    * @return True when initialised, false otherwise.
    */
   virtual bool Initialise(unsigned int index);
+  virtual void Deinitialise(void);
 
   /*!
    * @return True when initialised, false otherwise

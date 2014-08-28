@@ -31,8 +31,8 @@ public:
   cDvbReceiverSubsystem(cDevice *device);
   virtual ~cDvbReceiverSubsystem() { }
 
-  virtual bool OpenDvr(void);
-  virtual void CloseDvr(void);
+  virtual bool Initialise(void);
+  virtual void Deinitialise(void);
 
   virtual bool Poll(void);
   virtual bool Read(std::vector<uint8_t>& data);

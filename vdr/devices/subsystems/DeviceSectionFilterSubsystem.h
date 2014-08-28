@@ -95,10 +95,10 @@ private:
 
 public:
   cDeviceSectionFilterSubsystem(cDevice* device);
-  virtual ~cDeviceSectionFilterSubsystem(void) { StopSectionHandler(); }
+  virtual ~cDeviceSectionFilterSubsystem(void) { Stop(); }
 
-  void StartSectionHandler(void);
-  void StopSectionHandler(void);
+  void Start(void);
+  void Stop(void);
 
   /*!
    * Register/unregister a filter. This is used to track which filter resources
@@ -131,6 +131,9 @@ protected:
    * Polling thread.
    */
   void* Process(void);
+
+  virtual bool Initialise(void) = 0;
+  virtual void Deinitialise(void) = 0;
 
   /*!
    * Open a resource for the given filter data. Returns the resource, or an

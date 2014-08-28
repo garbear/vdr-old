@@ -94,13 +94,13 @@ cDeviceSectionFilterSubsystem::cDeviceSectionFilterSubsystem(cDevice* device)
 {
 }
 
-void cDeviceSectionFilterSubsystem::StartSectionHandler(void)
+void cDeviceSectionFilterSubsystem::Start(void)
 {
   if (!IsRunning())
     CreateThread(true);
 }
 
-void cDeviceSectionFilterSubsystem::StopSectionHandler(void)
+void cDeviceSectionFilterSubsystem::Stop(void)
 {
   StopThread(0);
 }
@@ -185,6 +185,9 @@ bool cDeviceSectionFilterSubsystem::GetSection(const PidResourceSet& filterResou
 
 void* cDeviceSectionFilterSubsystem::Process(void)
 {
+  if (!Initialise())
+    return NULL;
+
   // Buffer for section data
   std::vector<uint8_t> data;
 
@@ -237,11 +240,15 @@ void* cDeviceSectionFilterSubsystem::Process(void)
     }
   }
 
-  CLockObject lock(m_mutex);
+  {
+    CLockObject lock(m_mutex);
 
-  // Look for any poll requests that were waiting on the resource
-  for (ResourceRequestVector::iterator it = m_activePollRequests.begin(); it != m_activePollRequests.end(); ++it)
-    (*it)->Abort();
+    // Look for any poll requests that were waiting on the resource
+    for (ResourceRequestVector::iterator it = m_activePollRequests.begin(); it != m_activePollRequests.end(); ++it)
+      (*it)->Abort();
+  }
+
+  Deinitialise();
 
   return NULL;
 }

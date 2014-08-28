@@ -60,7 +60,8 @@ cDeviceChannelSubsystem::cDeviceChannelSubsystem(cDevice *device)
 bool cDeviceChannelSubsystem::SwitchChannel(const ChannelPtr& channel)
 {
   // Stop section handling
-  SectionFilter()->StopSectionHandler();
+  SectionFilter()->Stop();
+  Receiver()->Stop();
 
   // Tell the camSlot about the channel switch and add all PIDs of this
   // channel to it, for possible later decryption
@@ -70,7 +71,8 @@ bool cDeviceChannelSubsystem::SwitchChannel(const ChannelPtr& channel)
   if (Tune(channel->GetTransponder()))
   {
     // Start section handling
-    SectionFilter()->StartSectionHandler();
+    SectionFilter()->Start();
+    Receiver()->Start();
 
     // Start decrypting any PIDs that might have been set in SetChannelDevice():
     if (CommonInterface()->m_camSlot)

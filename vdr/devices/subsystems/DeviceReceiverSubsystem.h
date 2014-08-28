@@ -52,6 +52,9 @@ public:
   cDeviceReceiverSubsystem(cDevice *device);
   virtual ~cDeviceReceiverSubsystem(void);
 
+  void Start(void);
+  void Stop(void);
+
   /*!
    * Attaches the given receiver to this device. Resources for all the streams
    * that channel provides are associated with the receiver in the m_receiverResources
@@ -81,20 +84,12 @@ protected:
    * \brief Opens the DVR of this device and prepares it to deliver a Transport
    *        Stream for use in a iReceiver
    */
-  virtual bool OpenDvr(void) = 0;
+  virtual bool Initialise(void) = 0;
 
   /*!
    * \brief Shuts down the DVR
    */
-  virtual void CloseDvr(void) = 0;
-
-  virtual bool Poll(void) = 0;
-
-  /*!
-   * Gets exactly one TS packet from the DVR of this device, or returns false if
-   * no new data is ready.
-   */
-  virtual bool Read(std::vector<uint8_t>& data) = 0;
+  virtual void Deinitialise(void) = 0;
 
   /*!
    * \brief Does the actual PID setting on this device.
@@ -108,14 +103,22 @@ protected:
    */
   virtual PidResourcePtr OpenResource(uint16_t pid, uint8_t streamType) = 0;
 
+  virtual bool Poll(void) = 0;
+
+  /*!
+   * Gets exactly one TS packet from the DVR of this device, or returns false if
+   * no new data is ready.
+   */
+  virtual bool Read(std::vector<uint8_t>& data) = 0;
+
+private:
+  typedef std::map<iReceiver*, PidResourceSet> ReceiverResourceMap; // receiver -> resources
+
   /*!
    * Utility function: returns an open resource with the given PID, or empty
    * pointer if no resources with the given PID are open.
    */
   PidResourcePtr GetOpenResource(uint16_t pid);
-
-private:
-  typedef std::map<iReceiver*, PidResourceSet> ReceiverResourceMap; // receiver -> resources
 
   /*!
    * \brief Detaches all receivers from this device.

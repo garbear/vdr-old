@@ -94,8 +94,6 @@ cSubsystems cDvbDevice::CreateSubsystems(cDvbDevice* device)
 
 cDvbDevice::~cDvbDevice(void)
 {
-  SectionFilter()->StopSectionHandler();
-
   // We're not explicitly closing any device files here, since this sometimes
   // caused segfaults. Besides, the program is about to terminate anyway...
 }
@@ -217,9 +215,6 @@ DeviceVector cDvbDevice::FindDevices()
 
 bool cDvbDevice::Initialise(unsigned int index)
 {
-  if (!cDevice::Initialise(index))
-    return false;
-
   if (!m_dvbTuner.Open())
     return false;
 
@@ -228,7 +223,8 @@ bool cDvbDevice::Initialise(unsigned int index)
   if (m_fd_ca >= 0)
     DvbCommonInterface()->m_ciAdapter = cDvbCiAdapter::CreateCiAdapter(this, m_fd_ca);
 
-  SectionFilter()->StartSectionHandler();
+  if (!cDevice::Initialise(index))
+    return false;
 
   if (!Ready())
   {

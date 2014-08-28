@@ -56,9 +56,20 @@ cDeviceReceiverSubsystem::~cDeviceReceiverSubsystem(void)
   DetachAllReceivers();
 }
 
+void cDeviceReceiverSubsystem::Start(void)
+{
+  if (!IsRunning())
+    CreateThread(true);
+}
+
+void cDeviceReceiverSubsystem::Stop(void)
+{
+  StopThread(0);
+}
+
 void *cDeviceReceiverSubsystem::Process()
 {
-  if (!OpenDvr())
+  if (!Initialise())
     return NULL;
 
   while (!IsStopped())
@@ -104,7 +115,7 @@ void *cDeviceReceiverSubsystem::Process()
     }
   }
 
-  CloseDvr();
+  Deinitialise();
 
   return NULL;
 }
@@ -134,9 +145,6 @@ bool cDeviceReceiverSubsystem::AttachReceiver(iReceiver* receiver, const Channel
     CommonInterface()->m_startScrambleDetection = time(NULL);
   }
 
-  if (!IsRunning())
-    CreateThread();
-
   dsyslog("receiver %p attached to %p", receiver, this);
 
   return true;
@@ -159,9 +167,6 @@ void cDeviceReceiverSubsystem::DetachReceiver(iReceiver* receiver)
 
   if (CommonInterface()->m_camSlot)
     CommonInterface()->m_camSlot->StartDecrypting();
-
-  if (m_receiverResources.empty())
-    StopThread(0);
 
   dsyslog("receiver %p detached from %p", receiver, this);
 }
