@@ -367,7 +367,7 @@ void cPatPmtGenerator::IncEsInfoLength(int Length)
      }
 }
 
-int cPatPmtGenerator::MakeStream(uint8_t *Target, uint8_t Type, int Pid)
+int cPatPmtGenerator::MakeStream(uint8_t *Target, STREAM_TYPE Type, int Pid)
 {
   int i = 0;
   Target[i++] = Type; // stream type
@@ -379,7 +379,7 @@ int cPatPmtGenerator::MakeStream(uint8_t *Target, uint8_t Type, int Pid)
   return i;
 }
 
-int cPatPmtGenerator::MakeAC3Descriptor(uint8_t *Target, uint8_t Type)
+int cPatPmtGenerator::MakeAC3Descriptor(uint8_t *Target, STREAM_TYPE Type)
 {
   int i = 0;
   Target[i++] = Type;
@@ -540,14 +540,14 @@ void cPatPmtGenerator::GeneratePmt(ChannelPtr Channel)
 
      for (std::vector<DataStream>::const_iterator it = Channel->GetDataStreams().begin(); it != Channel->GetDataStreams().end(); ++it)
      {
-       i += MakeStream(buf + i, 0x06, it->dpid);
+       i += MakeStream(buf + i, STREAM_TYPE_13818_PES_PRIVATE, it->dpid);
        i += MakeAC3Descriptor(buf + i, it->dtype);
        i += MakeLanguageDescriptor(buf + i, it->dlang.c_str());
      }
 
      for (std::vector<SubtitleStream>::const_iterator it = Channel->GetSubtitleStreams().begin(); it != Channel->GetSubtitleStreams().end(); ++it)
      {
-       i += MakeStream(buf + i, 0x06, it->spid);
+       i += MakeStream(buf + i, STREAM_TYPE_13818_PES_PRIVATE, it->spid);
        i += MakeSubtitlingDescriptor(buf + i, it->slang.c_str(), it->subtitlingType, it->compositionPageId, it->ancillaryPageId);
      }
 
@@ -621,7 +621,7 @@ void cPatPmtParser::Reset(void)
   pmtSize = 0;
   patVersion = pmtVersion = -1;
   pmtPids[0] = 0;
-  vpid = vtype = 0;
+  vpid = vtype = STREAM_TYPE_UNDEFINED;
   ppid = 0;
 }
 
@@ -707,32 +707,32 @@ void cPatPmtParser::ParsePmt(const uint8_t *Data, int Length)
      int NumApids = 0;
      int NumDpids = 0;
      int NumSpids = 0;
-     vpid = vtype = 0;
+     vpid = vtype = STREAM_TYPE_UNDEFINED;
      ppid = 0;
      apids[0] = 0;
      dpids[0] = 0;
      spids[0] = 0;
-     atypes[0] = 0;
-     dtypes[0] = 0;
+     atypes[0] = STREAM_TYPE_UNDEFINED;
+     dtypes[0] = STREAM_TYPE_UNDEFINED;
      SI::PMT::Stream stream;
      for (SI::Loop::Iterator it; Pmt.streamLoop.getNext(stream, it); ) {
          dbgpatpmt("     stream type = %02X, pid = %d", stream.getStreamType(), stream.getPid());
          switch (stream.getStreamType()) {
-           case 0x01: // STREAMTYPE_11172_VIDEO
-           case 0x02: // STREAMTYPE_13818_VIDEO
-           case 0x1B: // H.264
+           case STREAM_TYPE_11172_VIDEO:
+           case STREAM_TYPE_13818_VIDEO:
+           case STREAM_TYPE_14496_H264_VIDEO: // H.264
                       vpid = stream.getPid();
-                      vtype = stream.getStreamType();
+                      vtype = (STREAM_TYPE)stream.getStreamType();
                       ppid = Pmt.getPCRPid();
                       break;
-           case 0x03: // STREAMTYPE_11172_AUDIO
-           case 0x04: // STREAMTYPE_13818_AUDIO
-           case 0x0F: // ISO/IEC 13818-7 Audio with ADTS transport syntax
-           case 0x11: // ISO/IEC 14496-3 Audio with LATM transport syntax
+           case STREAM_TYPE_11172_AUDIO:
+           case STREAM_TYPE_13818_AUDIO:
+           case STREAM_TYPE_13818_AUDIO_ADTS: // ISO/IEC 13818-7 Audio with ADTS transport syntax
+           case STREAM_TYPE_14496_AUDIO_LATM: // ISO/IEC 14496-3 Audio with LATM transport syntax
                       {
                       if (NumApids < MAXAPIDS) {
                          apids[NumApids] = stream.getPid();
-                         atypes[NumApids] = stream.getStreamType();
+                         atypes[NumApids] = (STREAM_TYPE)stream.getStreamType();
                          *alangs[NumApids] = 0;
                          SI::Descriptor *d;
                          for (SI::Loop::Iterator it; (d = stream.streamDescriptors.getNext(it)); ) {
@@ -764,10 +764,10 @@ void cPatPmtParser::ParsePmt(const uint8_t *Data, int Length)
                          }
                       }
                       break;
-           case 0x06: // STREAMTYPE_13818_PES_PRIVATE
+           case STREAM_TYPE_13818_PES_PRIVATE:
                       {
                       int dpid = 0;
-                      int dtype = 0;
+                      STREAM_TYPE dtype = STREAM_TYPE_UNDEFINED;
                       char lang[MAXLANGCODE1] = "";
                       SI::Descriptor *d;
                       for (SI::Loop::Iterator it; (d = stream.streamDescriptors.getNext(it)); ) {
@@ -776,7 +776,7 @@ void cPatPmtParser::ParsePmt(const uint8_t *Data, int Length)
                             case SI::EnhancedAC3DescriptorTag:
                                  dbgpatpmt(" AC3");
                                  dpid = stream.getPid();
-                                 dtype = d->getDescriptorTag();
+                                 dtype = (STREAM_TYPE)d->getDescriptorTag(); // TODO: STREAM_TYPE or DESCRIPTOR_TAG???
                                  break;
                             case SI::SubtitlingDescriptorTag:
                                  dbgpatpmt(" subtitling");
@@ -829,7 +829,7 @@ void cPatPmtParser::ParsePmt(const uint8_t *Data, int Length)
                          }
                       }
                       break;
-           case 0x81: // STREAMTYPE_USER_PRIVATE
+           case STREAM_TYPE_13818_USR_PRIVATE_81:
                       {
                       dbgpatpmt(" AC3");
                       char lang[MAXLANGCODE1] = { 0 };
@@ -848,7 +848,7 @@ void cPatPmtParser::ParsePmt(const uint8_t *Data, int Length)
                          }
                       if (NumDpids < MAXDPIDS) {
                          dpids[NumDpids] = stream.getPid();
-                         dtypes[NumDpids] = SI::AC3DescriptorTag;
+                         dtypes[NumDpids] = (STREAM_TYPE)SI::AC3DescriptorTag; // TODO: STREAM_TYPE or DESCRIPTOR_TAG???
                          strn0cpy(dlangs[NumDpids], lang, sizeof(dlangs[NumDpids]));
                          NumDpids++;
                          dpids[NumDpids] = 0;
@@ -1406,40 +1406,52 @@ static int CmpUint32(const void *p1, const void *p2)
 
 void cFrameDetector::SetChannel(const ChannelPtr& channel)
 {
-  uint16_t pid = channel->GetVideoStream().vpid;
-  uint8_t type = channel->GetVideoStream().vtype;
+  uint16_t    pid  = channel->GetVideoStream().vpid;
+  STREAM_TYPE type = channel->GetVideoStream().vtype;
 
   if (pid == 0 && channel->GetAudioStream(0).apid != 0)
   {
     pid = channel->GetAudioStream(0).apid;
-    type = 0x04;
+    type = STREAM_TYPE_13818_AUDIO;
   }
 
   if (pid == 0 && channel->GetDataStream(0).dpid != 0)
   {
     pid = channel->GetDataStream(0).dpid;
-    type = 0x06;
+    type = STREAM_TYPE_13818_PES_PRIVATE;
   }
 
   SetPid(pid, type);
 }
 
-void cFrameDetector::SetPid(uint16_t pid, uint8_t type)
+void cFrameDetector::SetPid(uint16_t pid, STREAM_TYPE type)
 {
   m_pid = pid;
-  isVideo = (type == 0x01 || type == 0x02 || type == 0x1B); // MPEG 1, 2 or H.264
+  isVideo = (type == STREAM_TYPE_11172_VIDEO     || // MPEG 1
+             type == STREAM_TYPE_13818_VIDEO     || // MPEG 2
+             type == STREAM_TYPE_14496_H264_VIDEO); // H.264
 
   delete parser;
   parser = NULL;
 
-  if (type == 0x01 || type == 0x02)
-     parser = new cMpeg2Parser;
-  else if (type == 0x1B)
-     parser = new cH264Parser;
-  else if (type == 0x04 || type == 0x06) // MPEG audio or AC3 audio
-     parser = new cAudioParser;
-  else if (type != 0)
-     esyslog("ERROR: unknown stream type %d (PID %d) in frame detector", type, pid);
+  if (type == STREAM_TYPE_11172_VIDEO ||
+      type == STREAM_TYPE_13818_VIDEO)
+  {
+    parser = new cMpeg2Parser;
+  }
+  else if (type == STREAM_TYPE_14496_H264_VIDEO)
+  {
+    parser = new cH264Parser;
+  }
+  else if (type == STREAM_TYPE_13818_AUDIO     || // MPEG audio
+           type == STREAM_TYPE_13818_PES_PRIVATE) // AC3 audio
+  {
+    parser = new cAudioParser;
+  }
+  else if (type != STREAM_TYPE_UNDEFINED)
+  {
+    esyslog("ERROR: unknown stream type %d (PID %d) in frame detector", type, pid);
+  }
 }
 
 int cFrameDetector::Analyze(const uint8_t *Data, int Length)

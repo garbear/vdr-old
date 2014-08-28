@@ -311,8 +311,8 @@ private:
   void IncVersion(int &Version);
   void IncEsInfoLength(int Length);
 protected:
-  int MakeStream(uint8_t *Target, uint8_t Type, int Pid);
-  int MakeAC3Descriptor(uint8_t *Target, uint8_t Type);
+  int MakeStream(uint8_t *Target, STREAM_TYPE Type, int Pid);
+  int MakeAC3Descriptor(uint8_t *Target, STREAM_TYPE Type);
   int MakeSubtitlingDescriptor(uint8_t *Target, const char *Language, uint8_t SubtitlingType, uint16_t CompositionPageId, uint16_t AncillaryPageId);
   int MakeLanguageDescriptor(uint8_t *Target, const char *Language);
   int MakeCRC(uint8_t *Target, const uint8_t *Data, int Length);
@@ -360,12 +360,12 @@ private:
   int pmtPids[MAX_PMT_PIDS + 1]; // list is zero-terminated
   int vpid;
   int ppid;
-  int vtype;
+  STREAM_TYPE vtype;
   int apids[MAXAPIDS + 1]; // list is zero-terminated
-  int atypes[MAXAPIDS + 1]; // list is zero-terminated
+  STREAM_TYPE atypes[MAXAPIDS + 1]; // list is zero-terminated
   char alangs[MAXAPIDS][MAXLANGCODE2];
   int dpids[MAXDPIDS + 1]; // list is zero-terminated
-  int dtypes[MAXDPIDS + 1]; // list is zero-terminated
+  STREAM_TYPE dtypes[MAXDPIDS + 1]; // list is zero-terminated
   char dlangs[MAXDPIDS][MAXLANGCODE2];
   int spids[MAXSPIDS + 1]; // list is zero-terminated
   char slangs[MAXSPIDS][MAXLANGCODE2];
@@ -405,7 +405,7 @@ public:
   int Ppid(void) const { return ppid; }
        ///< Returns the PCR pid as defined by the current PMT, or 0 if no PCR
        ///< pid has been detected, yet.
-  int Vtype(void) const { return vtype; }
+  STREAM_TYPE Vtype(void) const { return vtype; }
        ///< Returns the video stream type as defined by the current PMT, or 0 if no video
        ///< stream type has been detected, yet.
   const int *Apids(void) const { return apids; }
@@ -414,8 +414,8 @@ public:
   int Apid(int i) const { return (0 <= i && i < MAXAPIDS) ? apids[i] : 0; }
   int Dpid(int i) const { return (0 <= i && i < MAXDPIDS) ? dpids[i] : 0; }
   int Spid(int i) const { return (0 <= i && i < MAXSPIDS) ? spids[i] : 0; }
-  int Atype(int i) const { return (0 <= i && i < MAXAPIDS) ? atypes[i] : 0; }
-  int Dtype(int i) const { return (0 <= i && i < MAXDPIDS) ? dtypes[i] : 0; }
+  STREAM_TYPE Atype(int i) const { return (0 <= i && i < MAXAPIDS) ? atypes[i] : STREAM_TYPE_UNDEFINED; }
+  STREAM_TYPE Dtype(int i) const { return (0 <= i && i < MAXDPIDS) ? dtypes[i] : STREAM_TYPE_UNDEFINED; }
   const char *Alang(int i) const { return (0 <= i && i < MAXAPIDS) ? alangs[i] : ""; }
   const char *Dlang(int i) const { return (0 <= i && i < MAXDPIDS) ? dlangs[i] : ""; }
   const char *Slang(int i) const { return (0 <= i && i < MAXSPIDS) ? slangs[i] : ""; }
@@ -516,7 +516,7 @@ public:
    * Sets the channel to detect frames for.
    */
   void SetChannel(const ChannelPtr& channel);
-  void SetPid(uint16_t pid, uint8_t type);
+  void SetPid(uint16_t pid, STREAM_TYPE type);
 
   int Analyze(const uint8_t *Data, int Length);
       ///< Analyzes the TS packets pointed to by Data. Length is the number of

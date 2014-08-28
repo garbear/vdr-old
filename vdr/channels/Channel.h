@@ -39,22 +39,22 @@ namespace VDR
 
 struct VideoStream
 {
-  uint16_t vpid;  // Video stream packet ID
-  uint8_t  vtype; // Video stream type (see enum _stream_type in si_ext.h)
-  uint16_t ppid;  // Program clock reference packet ID
+  uint16_t    vpid;  // Video stream packet ID
+  STREAM_TYPE vtype; // Video stream type (see enum _stream_type in si_ext.h)
+  uint16_t    ppid;  // Program clock reference packet ID
 };
 
 struct AudioStream
 {
   uint16_t    apid;  // Audio stream packet ID
-  uint8_t     atype; // Audio stream type (see enum _stream_type in si_ext.h)
+  STREAM_TYPE atype; // Audio stream type (see enum _stream_type in si_ext.h)
   std::string alang; // Audio stream language
 };
 
 struct DataStream // dolby (AC3 + DTS)
 {
   uint16_t    dpid;  // Data stream packet ID
-  uint8_t     dtype; // Data stream type (see enum _stream_type in si_ext.h)
+  STREAM_TYPE dtype; // Data stream type (see enum _stream_type in si_ext.h)
   std::string dlang; // Data stream language
 };
 
@@ -69,7 +69,7 @@ struct SubtitleStream
 
 struct TeletextStream
 {
-  uint16_t tpid; // Teletext stream packet ID
+  uint16_t    tpid; // Teletext stream packet ID
 };
 
 

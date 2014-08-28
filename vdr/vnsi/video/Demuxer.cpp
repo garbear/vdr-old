@@ -545,7 +545,7 @@ std::vector<sStreamInfo> cVNSIDemuxer::GetStreamsFromChannel(const ChannelPtr& c
   {
     sStreamInfo newStream = { };
     newStream.pID = channel->GetVideoStream().vpid;
-    if (channel->GetVideoStream().vtype == 0x1B)
+    if (channel->GetVideoStream().vtype == STREAM_TYPE_14496_H264_VIDEO)
       newStream.type = stH264;
     else
       newStream.type = stMPEG2VIDEO;
@@ -561,7 +561,7 @@ std::vector<sStreamInfo> cVNSIDemuxer::GetStreamsFromChannel(const ChannelPtr& c
       sStreamInfo newStream = { };
       newStream.pID = it->dpid;
       newStream.type = stAC3;
-      if (it->dtype == SI::EnhancedAC3DescriptorTag)
+      if (it->dtype == (STREAM_TYPE)SI::EnhancedAC3DescriptorTag) // TODO: STREAM_TYPE or DESCRIPTOR_TAG?
         newStream.type = stEAC3;
       newStream.SetLanguage(it->dlang.c_str());
       streamInfos.push_back(newStream);
@@ -576,9 +576,9 @@ std::vector<sStreamInfo> cVNSIDemuxer::GetStreamsFromChannel(const ChannelPtr& c
       sStreamInfo newStream = { };
       newStream.pID = it->apid;
       newStream.type = stMPEG2AUDIO;
-      if (it->atype == 0x0F)
+      if (it->atype == STREAM_TYPE_13818_AUDIO_ADTS)
         newStream.type = stAACADTS;
-      else if (it->atype == 0x11)
+      else if (it->atype == STREAM_TYPE_14496_AUDIO_LATM)
         newStream.type = stAACLATM;
       newStream.SetLanguage(it->alang.c_str());
       streamInfos.push_back(newStream);

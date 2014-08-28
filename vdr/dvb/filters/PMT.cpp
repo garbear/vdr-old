@@ -54,10 +54,10 @@ const char* GetVtype(uint8_t vtype)
 {
   switch (vtype)
   {
-  case STREAMTYPE_11172_VIDEO:          return "STREAMTYPE_11172_VIDEO";
-  case STREAMTYPE_13818_VIDEO:          return "STREAMTYPE_13818_VIDEO";
-  case STREAMTYPE_14496_H264_VIDEO:     return "STREAMTYPE_14496_H264_VIDEO";
-  case STREAMTYPE_13818_USR_PRIVATE_80: return "STREAMTYPE_13818_USR_PRIVATE_80";
+  case STREAM_TYPE_11172_VIDEO:          return "STREAM_TYPE_11172_VIDEO";
+  case STREAM_TYPE_13818_VIDEO:          return "STREAM_TYPE_13818_VIDEO";
+  case STREAM_TYPE_14496_H264_VIDEO:     return "STREAM_TYPE_14496_H264_VIDEO";
+  case STREAM_TYPE_13818_USR_PRIVATE_80: return "STREAM_TYPE_13818_USR_PRIVATE_80";
   }
 
   static string err(StringUtils::Format("<Not a video type: 0x%02x!>"), vtype);
@@ -141,26 +141,26 @@ void cPmt::SetStreams(const ChannelPtr& channel, /* const */ SI::PMT& pmt) const
   {
     switch (stream.getStreamType())
     {
-      case STREAMTYPE_11172_VIDEO:
-      case STREAMTYPE_13818_VIDEO:
-      case STREAMTYPE_14496_H264_VIDEO:
+      case STREAM_TYPE_11172_VIDEO:
+      case STREAM_TYPE_13818_VIDEO:
+      case STREAM_TYPE_14496_H264_VIDEO:
       {
         if (videoStream.vpid)
           LogVtype(videoStream.vtype, stream.getPid());
 
         videoStream.vpid  = stream.getPid();
-        videoStream.vtype = stream.getStreamType();
+        videoStream.vtype = (STREAM_TYPE)stream.getStreamType();
         videoStream.ppid  = pmt.getPCRPid();
         break;
       }
-      case STREAMTYPE_11172_AUDIO:
-      case STREAMTYPE_13818_AUDIO:
-      case STREAMTYPE_13818_AUDIO_ADTS:
-      case STREAMTYPE_14496_AUDIO_LATM:
+      case STREAM_TYPE_11172_AUDIO:
+      case STREAM_TYPE_13818_AUDIO:
+      case STREAM_TYPE_13818_AUDIO_ADTS:
+      case STREAM_TYPE_14496_AUDIO_LATM:
       {
         AudioStream as;
         as.apid = stream.getPid();
-        as.atype = stream.getStreamType();
+        as.atype = (STREAM_TYPE)stream.getStreamType();
 
         SI::Descriptor* d;
         for (SI::Loop::Iterator it; (d = stream.streamDescriptors.getNext(it)); )
@@ -194,8 +194,8 @@ void cPmt::SetStreams(const ChannelPtr& channel, /* const */ SI::PMT& pmt) const
         audioStreams.push_back(as);
         break;
       }
-      case STREAMTYPE_13818_PRIVATE:
-      case STREAMTYPE_13818_PES_PRIVATE:
+      case STREAM_TYPE_13818_PRIVATE:
+      case STREAM_TYPE_13818_PES_PRIVATE:
       {
         DataStream ds = { };
 
@@ -210,7 +210,7 @@ void cPmt::SetStreams(const ChannelPtr& channel, /* const */ SI::PMT& pmt) const
             case AACDescriptorTag:
             {
               ds.dpid  = stream.getPid();
-              ds.dtype = d->getDescriptorTag();
+              ds.dtype = (STREAM_TYPE)d->getDescriptorTag(); // TODO: STREAM_TYPE OR DESCRIPTOR_TAG???
               break;
             }
             case SubtitlingDescriptorTag:
@@ -260,26 +260,26 @@ void cPmt::SetStreams(const ChannelPtr& channel, /* const */ SI::PMT& pmt) const
 
         break;
       }
-      case STREAMTYPE_13818_USR_PRIVATE_80:
+      case STREAM_TYPE_13818_USR_PRIVATE_80:
         if (cSettings::Get().m_iStandardCompliance == STANDARD_ANSISCTE) // DigiCipher II VIDEO (ANSI/SCTE 57)
         {
           if (videoStream.vpid)
             LogVtype(videoStream.vtype, stream.getPid());
 
           videoStream.vpid  = stream.getPid();
-          videoStream.vtype = STREAMTYPE_13818_VIDEO; // compression based upon MPEG-2
+          videoStream.vtype = STREAM_TYPE_13818_VIDEO; // compression based upon MPEG-2
           videoStream.ppid  = pmt.getPCRPid();
           break;
         }
         // no break
-      case STREAMTYPE_13818_USR_PRIVATE_81:
+      case STREAM_TYPE_13818_USR_PRIVATE_81:
       {
         if (cSettings::Get().m_iStandardCompliance == STANDARD_ANSISCTE || // ATSC A/53 AUDIO (ANSI/SCTE 57)
             channel->GetTransponder().Type() == TRANSPONDER_ATSC)          // ATSC AC-3; kls && Alex Lasnier
         {
           DataStream ds;
           ds.dpid  = stream.getPid();
-          ds.dtype = SI::AC3DescriptorTag;
+          ds.dtype = (STREAM_TYPE)SI::AC3DescriptorTag; // TODO: STREAM_TYPE OR DESCRIPTOR_TAG???
 
           SI::Descriptor* d;
           for (SI::Loop::Iterator it; (d = stream.streamDescriptors.getNext(it)); )
@@ -303,7 +303,7 @@ void cPmt::SetStreams(const ChannelPtr& channel, /* const */ SI::PMT& pmt) const
         }
         // no break
       }
-      case 0x82: // STREAMTYPE_USER_PRIVATE
+      case STREAM_TYPE_13818_USR_PRIVATE_82:
       {
         if (cSettings::Get().m_iStandardCompliance == STANDARD_ANSISCTE) // STANDARD SUBTITLE (ANSI/SCTE 27)
         {
@@ -312,11 +312,11 @@ void cPmt::SetStreams(const ChannelPtr& channel, /* const */ SI::PMT& pmt) const
         }
         // no break
       }
-      case 0x83 ... 0xFF: // STREAMTYPE_USER_PRIVATE
+      case 0x83 ... 0xFF: // STREAM_TYPE_USER_PRIVATE
       {
         DataStream ds;
         ds.dpid  = stream.getPid();
-        ds.dtype = SI::AC3DescriptorTag;
+        ds.dtype = (STREAM_TYPE)SI::AC3DescriptorTag; // TODO: STREAM_TYPE OR DESCRIPTOR_TAG???
 
         bool bIsAc3 = false;
 

@@ -627,7 +627,7 @@ bool cChannel::Deserialise(const TiXmlNode* node)
 
         const char *vtype = vpidElem->Attribute(CHANNEL_XML_ATTR_VTYPE);
         if (vtype != NULL)
-          vs.vtype = StringUtils::IntVal(vtype);
+          vs.vtype = (STREAM_TYPE)StringUtils::IntVal(vtype);
 
         m_videoStream = vs;
       }
@@ -652,7 +652,7 @@ bool cChannel::Deserialise(const TiXmlNode* node)
 
         const char *atype = apidElem->Attribute(CHANNEL_XML_ATTR_ATYPE);
         if (atype != NULL)
-          as.atype = StringUtils::IntVal(atype);
+          as.atype = (STREAM_TYPE)StringUtils::IntVal(atype);
 
         m_audioStreams.push_back(as);
       }
@@ -678,7 +678,7 @@ bool cChannel::Deserialise(const TiXmlNode* node)
 
         const char *dtype = dpidElem->Attribute(CHANNEL_XML_ATTR_DTYPE);
         if (dtype != NULL)
-          ds.dtype = StringUtils::IntVal(dtype);
+          ds.dtype = (STREAM_TYPE)StringUtils::IntVal(dtype);
 
         m_dataStreams.push_back(ds);
       }

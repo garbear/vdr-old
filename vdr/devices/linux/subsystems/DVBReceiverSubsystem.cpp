@@ -45,7 +45,7 @@ namespace VDR
 class cDvbReceiverResource : public cPidResource
 {
 public:
-  cDvbReceiverResource(uint16_t pid, uint8_t streamType, const std::string& strDvbPath);
+  cDvbReceiverResource(uint16_t pid, STREAM_TYPE streamType, const std::string& strDvbPath);
   virtual ~cDvbReceiverResource(void) { Close(); }
 
   virtual bool Open(void);
@@ -54,14 +54,14 @@ public:
   uint8_t StreamType(void) const { return m_streamType; }
 
 private:
-  const uint8_t     m_streamType;
+  const STREAM_TYPE m_streamType;
   const std::string m_strDvbPath;
   int               m_handle;
 };
 
 typedef shared_ptr<cDvbReceiverResource> DvbReceiverResourcePtr;
 
-cDvbReceiverResource::cDvbReceiverResource(uint16_t pid, uint8_t streamType, const std::string& strDvbPath)
+cDvbReceiverResource::cDvbReceiverResource(uint16_t pid, STREAM_TYPE streamType, const std::string& strDvbPath)
  : cPidResource(pid),
    m_streamType(streamType),
    m_strDvbPath(strDvbPath),
@@ -213,7 +213,7 @@ bool cDvbReceiverSubsystem::Read(vector<uint8_t>& data)
   return false;
 }
 
-PidResourcePtr cDvbReceiverSubsystem::OpenResource(uint16_t pid, uint8_t streamType)
+PidResourcePtr cDvbReceiverSubsystem::OpenResource(uint16_t pid, STREAM_TYPE streamType)
 {
   std::string strDvbPath = Device<cDvbDevice>()->DvbPath(DEV_DVB_DEMUX);
   PidResourcePtr handle = PidResourcePtr(new cDvbReceiverResource(pid, streamType, strDvbPath));

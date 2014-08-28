@@ -39,8 +39,6 @@ using namespace std;
 #define TS_SCRAMBLING_TIMEOUT     3 // seconds to wait until a TS becomes unscrambled
 #define TS_SCRAMBLING_TIME_OK    10 // seconds before a Channel/CAM combination is marked as known to decrypt
 
-#define STREAM_TYPE_UNKNOWN  0x00 // TODO: Find VDR code that determines stream type for these cases
-
 #define MAX_IDLE_DELAY_MS      100
 
 namespace VDR
@@ -207,7 +205,7 @@ bool cDeviceReceiverSubsystem::OpenResources(const ChannelPtr& channel, PidResou
     OpenResourceInternal(channel->GetVideoStream().vpid, channel->GetVideoStream().vtype, openResources);
 
   if (channel->GetVideoStream().ppid != channel->GetVideoStream().vpid)
-    OpenResourceInternal(channel->GetVideoStream().ppid, STREAM_TYPE_UNKNOWN, openResources);
+    OpenResourceInternal(channel->GetVideoStream().ppid, STREAM_TYPE_UNDEFINED, openResources);
 
   for (vector<AudioStream>::const_iterator it = channel->GetAudioStreams().begin(); it != channel->GetAudioStreams().end(); ++it)
     OpenResourceInternal(it->apid, it->atype, openResources);
@@ -216,16 +214,16 @@ bool cDeviceReceiverSubsystem::OpenResources(const ChannelPtr& channel, PidResou
     OpenResourceInternal(it->dpid, it->dtype, openResources);
 
   for (vector<SubtitleStream>::const_iterator it = channel->GetSubtitleStreams().begin(); it != channel->GetSubtitleStreams().end(); ++it)
-    OpenResourceInternal(it->spid, STREAM_TYPE_UNKNOWN, openResources);
+    OpenResourceInternal(it->spid, STREAM_TYPE_UNDEFINED, openResources);
 
   if (channel->GetTeletextStream().tpid)
-    OpenResourceInternal(channel->GetTeletextStream().tpid, STREAM_TYPE_UNKNOWN, openResources);
+    OpenResourceInternal(channel->GetTeletextStream().tpid, STREAM_TYPE_UNDEFINED, openResources);
 
   // TODO: Or should we bail if any stream fails to open? (this was VDR's behavior)
   return !openResources.empty();
 }
 
-bool cDeviceReceiverSubsystem::OpenResourceInternal(uint16_t pid, uint8_t streamType, PidResourceSet& pidHandles)
+bool cDeviceReceiverSubsystem::OpenResourceInternal(uint16_t pid, STREAM_TYPE streamType, PidResourceSet& pidHandles)
 {
   // Try to get a resource that is already open
   PidResourcePtr pidHandle = GetOpenResource(pid);

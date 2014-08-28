@@ -101,7 +101,7 @@ protected:
    * \param type Indicates some special types of PIDs, which the device may need
    *        to set in a specific way.
    */
-  virtual PidResourcePtr OpenResource(uint16_t pid, uint8_t streamType) = 0;
+  virtual PidResourcePtr OpenResource(uint16_t pid, STREAM_TYPE streamType) = 0;
 
   virtual bool Poll(void) = 0;
 
@@ -137,7 +137,7 @@ private:
    * shared pointer will be added to pidHandles instead. Returns false if no
    * resource was added to openResources.
    */
-  bool OpenResourceInternal(uint16_t pid, uint8_t streamType, PidResourceSet& openResources);
+  bool OpenResourceInternal(uint16_t pid, STREAM_TYPE streamType, PidResourceSet& openResources);
 
   ReceiverResourceMap m_receiverResources;
   PLATFORM::CMutex    m_mutexReceiver;
