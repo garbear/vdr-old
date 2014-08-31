@@ -31,6 +31,7 @@
 #include <string.h>
 
 #include <asm/byteorder.h>
+#include "utils/android/android_replacements.h"
 
 #include "ResponsePacket.h"
 #include "VNSICommand.h"
