@@ -24,6 +24,7 @@
 
 #include "sort.h"
 #include "strchrnul.h"
+#include <linux/byteorder/swab.h>
 
 #define POSIX_FADV_RANDOM   1
 #define POSIX_FADV_DONTNEED 1

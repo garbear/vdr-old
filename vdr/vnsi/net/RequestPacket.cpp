@@ -28,6 +28,7 @@
 #include <netinet/in.h>
 
 #include <asm/byteorder.h>
+#include "utils/android/android_replacements.h"
 
 #include "Config.h"
 #include "RequestPacket.h"
