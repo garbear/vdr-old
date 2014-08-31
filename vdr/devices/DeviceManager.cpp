@@ -56,7 +56,7 @@ cDeviceManager::~cDeviceManager()
 
 size_t cDeviceManager::Initialise(void)
 {
-  isyslog("Searching for DVB devices");
+  isyslog("Searching for DVB devices in %s", DEV_DVB_BASE);
 
   DeviceVector devices = cDvbDevice::FindDevices();
 
