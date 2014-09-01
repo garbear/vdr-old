@@ -215,6 +215,30 @@ bool cDvbReceiverSubsystem::Read(vector<uint8_t>& data)
 
 PidResourcePtr cDvbReceiverSubsystem::OpenResource(uint16_t pid, STREAM_TYPE streamType)
 {
+  // TODO: Magic code that makes everything work on Android
+#if defined(TARGET_ANDROID)
+  static bool bSetSourceOnce = false;
+  if (!bSetSourceOnce)
+  {
+    bSetSourceOnce = true;
+
+    const unsigned int async_fifo_id = 0; // TODO
+    string strPath = StringUtils::Format("/sys/class/stb/asyncfifo%d_source", async_fifo_id);
+
+    CFile demuxSource;
+    if (demuxSource.OpenForWrite(strPath, false))
+    {
+      string cmd = StringUtils::Format("dmx%u", Device<cDvbDevice>()->Frontend());
+      demuxSource.Write(cmd.c_str(), cmd.length());
+      demuxSource.Close();
+    }
+    else
+    {
+      dsyslog("Can't open %s", strPath.c_str());
+    }
+  }
+#endif
+
   std::string strDvbPath = Device<cDvbDevice>()->DvbPath(DEV_DVB_DEMUX);
   PidResourcePtr handle = PidResourcePtr(new cDvbReceiverResource(pid, streamType, strDvbPath));
 
