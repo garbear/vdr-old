@@ -22,9 +22,11 @@
 #include "DVBReceiverSubsystem.h"
 #include "devices/Remux.h"
 #include "devices/linux/DVBDevice.h"
+#include "filesystem/File.h"
 #include "filesystem/Poller.h"
 #include "utils/log/Log.h"
 #include "utils/Ringbuffer.h"
+#include "utils/StringUtils.h"
 
 #include <fcntl.h>
 #include <string>
