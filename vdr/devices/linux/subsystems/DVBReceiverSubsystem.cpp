@@ -217,16 +217,18 @@ bool cDvbReceiverSubsystem::Read(vector<uint8_t>& data)
 
 PidResourcePtr cDvbReceiverSubsystem::OpenResource(uint16_t pid, STREAM_TYPE streamType)
 {
-  // TODO: Magic code that makes everything work on Android
-#if defined(TARGET_ANDROID)
-  static bool bSetSourceOnce = false;
-  if (!bSetSourceOnce)
+  std::string strDvbPath = Device<cDvbDevice>()->DvbPath(DEV_DVB_DEMUX);
+  PidResourcePtr handle = PidResourcePtr(new cDvbReceiverResource(pid, streamType, strDvbPath));
+
+  if (!handle->Open())
   {
-    bSetSourceOnce = true;
-
-    const unsigned int async_fifo_id = 0; // TODO
-    string strPath = StringUtils::Format("/sys/class/stb/asyncfifo%d_source", async_fifo_id);
-
+    handle.reset();
+  }
+  else
+  {
+    // TODO: Magic code that makes everything work on Android
+  #if defined(TARGET_ANDROID)
+    string strPath = StringUtils::Format("/sys/class/stb/asyncfifo%d_source", Device<cDvbDevice>()->Frontend());
     CFile demuxSource;
     if (demuxSource.OpenForWrite(strPath, false))
     {
@@ -238,14 +240,8 @@ PidResourcePtr cDvbReceiverSubsystem::OpenResource(uint16_t pid, STREAM_TYPE str
     {
       dsyslog("Can't open %s", strPath.c_str());
     }
+  #endif
   }
-#endif
-
-  std::string strDvbPath = Device<cDvbDevice>()->DvbPath(DEV_DVB_DEMUX);
-  PidResourcePtr handle = PidResourcePtr(new cDvbReceiverResource(pid, streamType, strDvbPath));
-
-  if (!handle->Open())
-    handle.reset();
 
   return handle;
 }
