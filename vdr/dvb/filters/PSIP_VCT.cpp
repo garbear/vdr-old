@@ -24,6 +24,7 @@
 #include "PSIP_VCT.h"
 #include "channels/Channel.h"
 #include "utils/log/Log.h"
+#include "utils/UTF8Utils.h"
 
 #include <libsi/si.h>
 #include <libsi/si_ext.h>
@@ -67,6 +68,19 @@ bool cPsipVct::ScanChannels(iFilterCallback* callback)
         char buffer[22] = { };
         channelInfo.getShortName(buffer);
         channel->SetName(buffer, buffer, ""); // TODO: Parse descriptors for long name
+
+        Descriptor* dtor;
+        SI::Loop::Iterator it2;
+        while ((dtor = vct.descriptorLoop.getNext(it2, PSIP_ExtendedChannelNameDescriptorTag)))
+        {
+          CharArray tmp = dtor->getData();
+          std::vector<uint32_t> utf8Symbols;
+          for (int i = 0; i < dtor->getLength(); ++i)
+            utf8Symbols.push_back(tmp[i]);
+
+          std::string strDecoded = cUtf8Utils::Utf8FromArray(utf8Symbols);
+          isyslog("TEST: found name descriptor %s length %d", strDecoded.c_str(), dtor->getLength());
+        }
 
         // Transponder and modulation mode
         cTransponder transponder(GetTransponder());
