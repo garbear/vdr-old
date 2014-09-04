@@ -71,7 +71,7 @@ bool cPsipVct::ScanChannels(iFilterCallback* callback)
 
         Descriptor* dtor;
         SI::Loop::Iterator it2;
-        while ((dtor = vct.descriptorLoop.getNext(it2, PSIP_ExtendedChannelNameDescriptorTag)))
+        if ((dtor = channelInfo.channelDescriptors.getNext(it2, PSIP_ExtendedChannelNameDescriptorTag)))
         {
           CharArray tmp = dtor->getData();
           std::vector<uint32_t> utf8Symbols;
