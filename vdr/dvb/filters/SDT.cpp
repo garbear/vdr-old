@@ -23,6 +23,7 @@
 
 #include "SDT.h"
 #include "channels/Channel.h"
+#include "channels/ChannelManager.h"
 #include "utils/CommonMacros.h"
 #include "utils/log/Log.h"
 #include "utils/StringUtils.h"
@@ -97,9 +98,8 @@ cSdt::cSdt(cDevice* device, SI::TableId tableId /* = SI::TableIdSDT */)
   OpenResource(PID_SDT, m_tableId); // SDT
 }
 
-ChannelVector cSdt::GetChannels()
+void cSdt::ScanChannels()
 {
-  ChannelVector  channels;
   cSectionSyncer syncSdt;
 
   uint16_t        pid;  // Packet ID
@@ -122,14 +122,9 @@ ChannelVector cSdt::GetChannels()
       SI::SDT::Service SiSdtService;
       for (SI::Loop::Iterator it; sdt.serviceLoop.getNext(SiSdtService, it);)
       {
-        /*
-        ChannelPtr channel = SdtFoundService(Channel(), sdt.getOriginalNetworkId(), sdt.getTransportStreamId(), SiSdtService.getServiceId());
+        ChannelPtr channel = cChannelManager::Get().GetByTransportAndService(sdt.getOriginalNetworkId(), sdt.getTransportStreamId(), SiSdtService.getServiceId());
         if (!channel)
           continue;
-        */
-        ChannelPtr channel = ChannelPtr(new cChannel);
-        channel->SetId(sdt.getOriginalNetworkId(), sdt.getTransportStreamId(), SiSdtService.getServiceId());
-        channel->SetTransponder(GetTransponder());
 
         SI::Descriptor * d;
         for (SI::Loop::Iterator it2; (d = SiSdtService.serviceDescriptors.getNext(it2));)
@@ -192,7 +187,7 @@ ChannelVector cSdt::GetChannels()
                   StringUtils::Trim(strShortName);
 
                   channel->SetName(strName, strShortName, strProviderName);
-                  channels.push_back(channel);
+                  isyslog("updating channel name: %s (%s)\n", strName.c_str(), strShortName.c_str());
                 }
                 default:
                   break;
@@ -222,8 +217,6 @@ ChannelVector cSdt::GetChannels()
       }
     }
   }
-
-  return channels;
 }
 
 }

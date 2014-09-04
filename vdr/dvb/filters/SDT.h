@@ -51,7 +51,7 @@ public:
   cSdt(cDevice* device, SI::TableId tableId = SI::TableIdSDT);
   virtual ~cSdt(void) { }
 
-  ChannelVector GetChannels();
+  void ScanChannels();
 
 private:
   SI::TableId          m_tableId;

@@ -26,6 +26,7 @@
 #include "dvb/filters/PAT.h"
 #include "dvb/filters/PSIP_MGT.h"
 #include "dvb/filters/PSIP_VCT.h"
+#include "dvb/filters/SDT.h"
 #include "epg/Schedules.h"
 #include "lib/platform/util/timeutils.h"
 
@@ -82,6 +83,10 @@ void* cChannelNamesScanner::Process(void)
   cPsipVct vct(m_device);
   m_bSuccess = vct.ScanChannels(m_callback);
 
+  if (m_bSuccess) {
+    cSdt sdt(m_device);
+    sdt.ScanChannels();
+  }
   cChannelManager::Get().NotifyObservers();
 
   return NULL;
