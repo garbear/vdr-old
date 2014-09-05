@@ -126,6 +126,8 @@ cChannel::~cChannel(void)
 void cChannel::Reset(void)
 {
   m_channelId      = cChannelID();
+  m_number         = 0;
+  m_subNumber      = 0;
   m_videoStream    = VideoStream();
   m_teletextStream = TeletextStream();
   m_linkChannels   = NULL;
@@ -148,6 +150,8 @@ cChannel& cChannel::operator=(const cChannel& rhs)
   m_shortName       = rhs.m_shortName;
   m_provider        = rhs.m_provider;
   m_portalName      = rhs.m_portalName;
+  m_number          = rhs.m_number;
+  m_subNumber       = rhs.m_subNumber;
   m_videoStream     = rhs.m_videoStream;
   m_audioStreams    = rhs.m_audioStreams;
   m_dataStreams     = rhs.m_dataStreams;
@@ -201,6 +205,17 @@ void cChannel::SetPortalName(const string& strPortalName)
   if (m_portalName != strPortalName)
   {
     m_portalName = strPortalName;
+
+    SetChanged();
+  }
+}
+
+void cChannel::SetNumber(unsigned int number, unsigned int subNumber /* = 0 */)
+{
+  if (m_number != number || m_subNumber != subNumber)
+  {
+    m_number = number;
+    m_subNumber = subNumber;
 
     SetChanged();
   }
