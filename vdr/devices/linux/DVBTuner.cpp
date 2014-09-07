@@ -50,14 +50,11 @@ using namespace PLATFORM;
 
 #define INVALID_FD                 -1
 
-#define DVBS_LOCK_TIMEOUT_MS       9000
-#define DVBC_LOCK_TIMEOUT_MS       9000
-#define DVBT_LOCK_TIMEOUT_MS       9000
-#define ATSC_LOCK_TIMEOUT_MS       2000
+#define DVBS_LOCK_TIMEOUT_MS       1500
+#define DVBC_LOCK_TIMEOUT_MS       1500
+#define DVBT_LOCK_TIMEOUT_MS       1500
+#define ATSC_LOCK_TIMEOUT_MS       1500
 
-#define LOCK_REACQUIRE_TIMEOUT_MS  2000 // TODO: use this value somewhere
-
-#define SCR_RANDOM_TIMEOUT_MS      500 // add random value up to this when tuning SCR device to avoid lockups
 #define TUNER_POLL_TIMEOUT_MS      100 // tuning usually takes about a second
 
 #define DEBUG_SIGNALSTRENGTH       1
