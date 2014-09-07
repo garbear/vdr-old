@@ -113,6 +113,8 @@ TunerHandlePtr cDeviceChannelSubsystem::Acquire(const ChannelPtr& channel, devic
   TunerHandlePtr handle;
   std::vector<TunerHandlePtr> lowerPrio;
 
+  dsyslog("acquire subscription for channel '%s' prio %d", channel->Name().c_str(), type);
+
   {
     CLockObject lock(m_mutex);
     for (std::vector<TunerHandlePtr>::iterator it = m_activeTransponders.begin(); valid &&it != m_activeTransponders.end(); ++it)
@@ -123,11 +125,13 @@ TunerHandlePtr cDeviceChannelSubsystem::Acquire(const ChannelPtr& channel, devic
         if ((*it)->Type() > type)
         {
           /** subscription with lower prio than this one */
+          dsyslog("stopping subscription for channel '%s' prio %d", (*it)->Channel()->Name().c_str(), (*it)->Type());
           lowerPrio.push_back(*it);
         }
         else if ((*it)->Type() < type)
         {
           /** subscription with higher prio than this one */
+          dsyslog("cannot acquire new subscription for channel '%s' prio %d: channel '%s' has a higher prio %d", channel->Name().c_str(), type,  (*it)->Channel()->Name().c_str(), (*it)->Type());
           valid = false;
         }
       }
@@ -153,7 +157,10 @@ TunerHandlePtr cDeviceChannelSubsystem::Acquire(const ChannelPtr& channel, devic
       m_activeTransponders.push_back(handle);
 
       if (switchNeeded)
+      {
+        dsyslog("switch to '%s' prio %d", channel->Name().c_str(), type);
         SwitchChannel(channel);
+      }
     }
   }
 
