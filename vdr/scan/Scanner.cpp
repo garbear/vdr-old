@@ -74,13 +74,25 @@ void* cScanner::Process()
 
   cTransponderFactory* transponders = NULL;
 
-  // TODO: Need to get caps from cDevice class
   shared_ptr<cDvbDevice> dvbDevice = dynamic_pointer_cast<cDvbDevice>(m_setup.device);
   if (!dvbDevice)
     return NULL;
   const fe_caps_t caps = dvbDevice->m_dvbTuner.Capabilities();
+  TRANSPONDER_TYPE type = m_setup.dvbType;
+  if (m_setup.dvbType == TRANSPONDER_INVALID)
+  {
+    if (dvbDevice->Channel()->ProvidesSource(TRANSPONDER_ATSC))
+      type = TRANSPONDER_ATSC;
+    else if (dvbDevice->Channel()->ProvidesSource(TRANSPONDER_CABLE))
+      type = TRANSPONDER_CABLE;
+    else if (dvbDevice->Channel()->ProvidesSource(TRANSPONDER_SATELLITE))
+      type = TRANSPONDER_SATELLITE;
+    else if (dvbDevice->Channel()->ProvidesSource(TRANSPONDER_TERRESTRIAL))
+      type = TRANSPONDER_TERRESTRIAL;
+  }
 
-  switch (m_setup.dvbType)
+
+  switch (type)
   {
   case TRANSPONDER_ATSC:
     transponders = new cAtscTransponderFactory(caps, m_setup.atscModulation);
