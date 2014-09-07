@@ -113,7 +113,7 @@ TunerHandlePtr cDeviceChannelSubsystem::Acquire(const ChannelPtr& channel, devic
   TunerHandlePtr handle;
   std::vector<TunerHandlePtr> lowerPrio;
 
-  dsyslog("acquire subscription for channel '%s' prio %d", channel->Name().c_str(), type);
+  dsyslog("acquire subscription for channel %uMHz prio %d", channel->GetTransponder().FrequencyMHz(), type);
 
   {
     CLockObject lock(m_mutex);
@@ -125,13 +125,13 @@ TunerHandlePtr cDeviceChannelSubsystem::Acquire(const ChannelPtr& channel, devic
         if ((*it)->Type() > type)
         {
           /** subscription with lower prio than this one */
-          dsyslog("stopping subscription for channel '%s' prio %d", (*it)->Channel()->Name().c_str(), (*it)->Type());
+          dsyslog("stopping subscription for %uMHz prio %d", (*it)->Channel()->GetTransponder().FrequencyMHz(), (*it)->Type());
           lowerPrio.push_back(*it);
         }
         else if ((*it)->Type() < type)
         {
           /** subscription with higher prio than this one */
-          dsyslog("cannot acquire new subscription for channel '%s' prio %d: channel '%s' has a higher prio %d", channel->Name().c_str(), type,  (*it)->Channel()->Name().c_str(), (*it)->Type());
+          dsyslog("cannot acquire new subscription for channel %uMHz prio %d: channel %uMHz has a higher prio %d", channel->GetTransponder().FrequencyMHz(), type,  (*it)->Channel()->GetTransponder().FrequencyMHz(), (*it)->Type());
           valid = false;
         }
       }
@@ -158,8 +158,13 @@ TunerHandlePtr cDeviceChannelSubsystem::Acquire(const ChannelPtr& channel, devic
 
       if (switchNeeded)
       {
-        dsyslog("switch to '%s' prio %d", channel->Name().c_str(), type);
-        SwitchChannel(channel);
+        dsyslog("switch to %uMHz prio %d", channel->GetTransponder().FrequencyMHz(), type);
+        if (!SwitchChannel(channel))
+        {
+          Release(handle);
+          dsyslog("failed to switch to %uMHz prio %d", channel->GetTransponder().FrequencyMHz(), type);
+          handle = cTunerHandle::EmptyHandle;
+        }
       }
     }
   }
