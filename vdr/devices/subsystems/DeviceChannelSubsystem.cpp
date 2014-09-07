@@ -173,6 +173,8 @@ void cDeviceChannelSubsystem::Release(TunerHandlePtr& handle)
   std::vector<TunerHandlePtr>::iterator it = std::find(m_activeTransponders.begin(), m_activeTransponders.end(), handle);
   if (it != m_activeTransponders.end())
     m_activeTransponders.erase(it);
+  if (m_activeTransponders.empty())
+    ClearChannel();
 }
 
 void cDeviceChannelSubsystem::Release(cTunerHandle* handle)

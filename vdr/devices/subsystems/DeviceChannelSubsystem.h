@@ -107,15 +107,6 @@ public:
   virtual bool IsTunedToTransponder(const cChannel &channel) const { return false; }
 
   /*!
-   * \brief Switches the device to the given Channel (actual physical setup).
-   *        Blocks until the channel is successfully set or the action fails
-   *        (perhaps due to a timeout).
-   */
-  bool SwitchChannel(const ChannelPtr& channel);
-
-  void ClearChannel(void);
-
-  /*!
    * \brief Returns the number of seconds this device is still occupied for
    */
   unsigned int Occupied() const;
@@ -155,6 +146,15 @@ protected:
   virtual void ClearTransponder(void) = 0;
 
 private:
+
+  /*!
+   * \brief Switches the device to the given Channel (actual physical setup).
+   *        Blocks until the channel is successfully set or the action fails
+   *        (perhaps due to a timeout).
+   */
+  bool SwitchChannel(const ChannelPtr& channel);
+  void ClearChannel(void);
+
   time_t               m_occupiedTimeout;
   std::vector<TunerHandlePtr> m_activeTransponders;
   PLATFORM::CMutex            m_mutex;
