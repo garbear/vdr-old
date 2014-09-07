@@ -108,6 +108,7 @@ protected:
   bool m_SetRefTime;
   time_t m_refTime, m_endTime, m_wrapTime;
   uint8_t m_timeshift;
+  TunerHandlePtr m_tunerHandle;
 };
 
 }

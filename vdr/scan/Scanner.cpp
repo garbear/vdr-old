@@ -100,6 +100,7 @@ void* cScanner::Process()
     return NULL;
 
   const int64_t startMs = GetTimeMs();
+  ChannelPtr channel = ChannelPtr(new cChannel);
 
   while (!IsStopped() && transponders->HasNext())
   {
@@ -108,10 +109,14 @@ void* cScanner::Process()
     m_frequencyHz = transponder.FrequencyHz();
     m_number      = transponder.ChannelNumber();
 
-    if (m_setup.device->Channel()->SwitchTransponder(transponder))
+    channel->SetTransponder(transponder);
+
+    TunerHandlePtr newHandle = dvbDevice->Acquire(channel, TUNING_TYPE_CHANNEL_SCAN, this);
+    if (newHandle)
     {
       bool bSuccess = m_setup.device->Scan()->WaitForTransponderScan();
       dsyslog("%s %d MHz", bSuccess ? "Successfully scanned" : "Failed to scan", transponder.FrequencyMHz());
+      newHandle->Release();
     }
 
     m_percentage += 1.0f / transponders->TransponderCount();
@@ -123,6 +128,21 @@ void* cScanner::Process()
   isyslog("Channel scan took %d min %d sec", durationSec / 60, durationSec % 60);
 
   return NULL;
+}
+
+void cScanner::LockAcquired(void)
+{
+  //TODO
+}
+
+void cScanner::LockLost(void)
+{
+  //TODO
+}
+
+void cScanner::LostPriority(void)
+{
+  //TODO
 }
 
 }

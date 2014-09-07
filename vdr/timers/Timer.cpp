@@ -486,14 +486,6 @@ bool cTimer::StartRecording(void)
     DevicePtr device = cDeviceManager::Get().GetDevice(0); // TODO
     if (device)
     {
-      // switch channels
-      dsyslog("switching device %d to channel %d", device->Index(), channel->Number());
-      if (!device->Channel()->SwitchChannel(channel))
-      {
-//        XXX why? ShutdownHandler.RequestEmergencyExit();
-        return false;
-      }
-
       TimerPtr timerPtr = cTimers::Get().GetTimer(this);
       cRecording recording(timerPtr, Event());
 //      cRecordingUserCommand::Get().InvokeCommand(RUC_BEFORERECORDING, recording.FileName());
@@ -503,7 +495,19 @@ bool cTimer::StartRecording(void)
       if (MakeDirs(recording.FileName(), true))
       {
         // start recording
-        cRecorder* recorder = new cRecorder(recording.FileName(), channel);
+        m_recorder = new cRecorder(recording.FileName(), channel);
+
+        // switch channels
+        dsyslog("switching device %d to channel %d", device->Index(), channel->Number());
+        TunerHandlePtr newHandle = device->Acquire(channel, TUNING_TYPE_RECORDING, m_recorder);
+        if (!newHandle)
+        {
+  //        XXX why? ShutdownHandler.RequestEmergencyExit();
+          delete m_recorder;
+          m_recorder = NULL;
+          return false;
+        }
+
         /* TODO
         if (device->Receiver()->AttachReceiver(recorder))
         {
@@ -588,8 +592,10 @@ void cTimer::SwitchTransponder(const CDateTime& Now)
       if (!device->Channel()->IsTunedToTransponder(*channel))
       {
         dsyslog("switching device %d to channel '%s'", device->Index(), Channel()->Name().c_str());
-        if (device->Channel()->SwitchChannel(channel))
-          device->Channel()->SetOccupied(TIMERDEVICETIMEOUT);
+        StartRecording();
+        //XXX
+//        if (device->Channel()->SwitchChannel(channel))
+//          device->Channel()->SetOccupied(TIMERDEVICETIMEOUT);
       }
     }
   }

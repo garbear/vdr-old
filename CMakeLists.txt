@@ -133,6 +133,7 @@ set(VDR_SRCS
 	vdr/devices/DeviceSubsystem.cpp
 	vdr/devices/Remux.cpp
 	vdr/devices/Transfer.cpp
+	vdr/devices/TunerHandle.cpp
 	vdr/devices/linux/DVBDevice.cpp
 	vdr/devices/linux/DVBTuner.cpp
 	vdr/devices/linux/commoninterface/DVBCIAdapter.cpp

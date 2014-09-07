@@ -22,6 +22,7 @@
 #include "Device.h"
 
 #include "DeviceManager.h"
+#include "TunerHandle.h"
 #include "devices/commoninterface/CI.h"
 #include "devices/subsystems/DeviceChannelSubsystem.h"
 #include "devices/subsystems/DeviceCommonInterfaceSubsystem.h"
@@ -105,6 +106,16 @@ void cDevice::Deinitialise(void)
   Channel()->UnregisterObserver(Scan());
   SectionFilter()->Stop();
   Receiver()->Stop();
+}
+
+TunerHandlePtr cDevice::Acquire(const ChannelPtr& channel, device_tuning_type_t type, iTunerHandleCallbacks* callbacks)
+{
+  return Channel()->Acquire(channel, type, callbacks);
+}
+
+void cDevice::Release(TunerHandlePtr& handle)
+{
+  return Channel()->Release(handle);
 }
 
 }

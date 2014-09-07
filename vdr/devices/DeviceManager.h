@@ -22,6 +22,7 @@
 
 #include "Device.h"
 #include "DeviceTypes.h"
+#include "TunerHandle.h"
 #include "channels/ChannelTypes.h"
 #include "utils/Observer.h"
 
@@ -71,7 +72,7 @@ public:
    */
   void Shutdown();
 
-  bool OpenVideoInput(iReceiver* receiver, const ChannelPtr& channel);
+  TunerHandlePtr OpenVideoInput(iReceiver* receiver, const ChannelPtr& channel);
   void CloseVideoInput(iReceiver* receiver);
 
   void Notify(const Observable &obs, const ObservableMessage msg);

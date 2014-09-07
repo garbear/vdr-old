@@ -35,6 +35,9 @@
 #include "utils/I18N.h"
 
 #include <time.h>
+#include <algorithm>
+
+using namespace PLATFORM;
 
 namespace VDR
 {
@@ -87,13 +90,6 @@ bool cDeviceChannelSubsystem::SwitchChannel(const ChannelPtr& channel)
   return false;
 }
 
-bool cDeviceChannelSubsystem::SwitchTransponder(const cTransponder& transponder)
-{
-  ChannelPtr channel = ChannelPtr(new cChannel);
-  channel->SetTransponder(transponder);
-  return SwitchChannel(channel);
-}
-
 void cDeviceChannelSubsystem::ClearChannel(void)
 {
   ClearTransponder();
@@ -108,6 +104,88 @@ unsigned int cDeviceChannelSubsystem::Occupied() const
 void cDeviceChannelSubsystem::SetOccupied(unsigned int seconds)
 {
   m_occupiedTimeout = time(NULL) + min(seconds, MAXOCCUPIEDTIMEOUT);
+}
+
+TunerHandlePtr cDeviceChannelSubsystem::Acquire(const ChannelPtr& channel, device_tuning_type_t type, iTunerHandleCallbacks* callbacks)
+{
+  bool valid(true);
+  bool switchNeeded(true);
+  TunerHandlePtr handle;
+  std::vector<TunerHandlePtr> lowerPrio;
+
+  {
+    CLockObject lock(m_mutex);
+    for (std::vector<TunerHandlePtr>::iterator it = m_activeTransponders.begin(); valid &&it != m_activeTransponders.end(); ++it)
+    {
+      if ((*it)->Channel()->GetTransponder() != channel->GetTransponder())
+      {
+        /** found subscription for another transponder */
+        if ((*it)->Type() > type)
+        {
+          /** subscription with lower prio than this one */
+          lowerPrio.push_back(*it);
+        }
+        else if ((*it)->Type() < type)
+        {
+          /** subscription with higher prio than this one */
+          valid = false;
+        }
+      }
+      else
+      {
+        switchNeeded = false;
+        break;
+      }
+    }
+
+    if (valid)
+    {
+      /** remove lower prio registrations */
+      for (std::vector<TunerHandlePtr>::iterator it = lowerPrio.begin(); it != lowerPrio.end(); ++it)
+      {
+        std::vector<TunerHandlePtr>::iterator it2 = std::find(m_activeTransponders.begin(), m_activeTransponders.end(), *it);
+        if (it2 != m_activeTransponders.end())
+          m_activeTransponders.erase(it2);
+      }
+
+      /** add new registration */
+      handle = TunerHandlePtr(new cTunerHandle(type, this, callbacks, channel));
+      m_activeTransponders.push_back(handle);
+
+      if (switchNeeded)
+        SwitchChannel(channel);
+    }
+  }
+
+  if (valid)
+  {
+    /** notify lower prio that they lost prio */
+    for (std::vector<TunerHandlePtr>::iterator it = lowerPrio.begin(); it != lowerPrio.end(); ++it)
+      (*it)->LostPriority();
+  }
+
+  return handle;
+}
+
+void cDeviceChannelSubsystem::Release(TunerHandlePtr& handle)
+{
+  CLockObject lock(m_mutex);
+  std::vector<TunerHandlePtr>::iterator it = std::find(m_activeTransponders.begin(), m_activeTransponders.end(), handle);
+  if (it != m_activeTransponders.end())
+    m_activeTransponders.erase(it);
+}
+
+void cDeviceChannelSubsystem::Release(cTunerHandle* handle)
+{
+  CLockObject lock(m_mutex);
+  for (std::vector<TunerHandlePtr>::iterator it = m_activeTransponders.begin(); it != m_activeTransponders.end(); ++it)
+  {
+    if ((*it).get() == handle)
+    {
+      m_activeTransponders.erase(it);
+      break;
+    }
+  }
 }
 
 }
