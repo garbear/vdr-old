@@ -634,6 +634,31 @@ unsigned int cDvbTuner::GetTunedFrequencyHz(const cTransponder& transponder)
   return frequencyHz;
 }
 
+std::string cDvbTuner::StatusToString(const fe_status_t status)
+{
+  std::string retval;
+
+  if (status & FE_HAS_SIGNAL)
+    retval.append(" [signal]");
+  if (status & FE_HAS_CARRIER)
+    retval.append(" [carrier]");
+  if (status & FE_HAS_VITERBI)
+    retval.append(" [stable]");
+  if (status & FE_HAS_SYNC)
+    retval.append(" [sync]");
+  if (status & FE_HAS_LOCK)
+    retval.append(" [lock]");
+  if (status & FE_TIMEDOUT)
+    retval.append(" [timeout]");
+  if (status & FE_REINIT)
+    retval.append(" [reinit]");
+
+  if (!retval.empty())
+    retval.erase(retval.begin());
+
+  return retval;
+}
+
 void* cDvbTuner::Process(void)
 {
   while (!IsStopped())
@@ -674,6 +699,8 @@ void* cDvbTuner::Process(void)
       const bool bHadLock = HasLock();
       m_status = status;
       const bool bHasLock = HasLock();
+
+      dsyslog("frontend status changed to %s", StatusToString(status).c_str());
 
       // Report new lock status to observers
       if (!bHadLock && bHasLock)
