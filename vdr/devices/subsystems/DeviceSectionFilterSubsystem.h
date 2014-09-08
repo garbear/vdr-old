@@ -167,6 +167,8 @@ private:
    */
   void HandleSection(const PidResourcePtr& resource);
 
+  std::string ToString(const PidResourceSet& resources);
+
   ResourceRequestVector    m_activePollRequests;
   std::set<const cFilter*> m_registeredFilters;
   PLATFORM::CMutex         m_mutex;

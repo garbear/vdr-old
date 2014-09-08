@@ -95,8 +95,6 @@ EventPtr cSchedulesLock::GetEvent(const cChannelID& channelId, tEventID eventId)
 
 bool cSchedulesLock::AddEvent(const cChannelID& channelId, const EventPtr& event)
 {
-
-
   cSchedulesLock schedulesLock(true, 10);
   cSchedules* schedules = schedulesLock.Get();
 
@@ -106,6 +104,11 @@ bool cSchedulesLock::AddEvent(const cChannelID& channelId, const EventPtr& event
     schedule->AddEvent(event);
     schedule->SetModified();
     return true;
+  }
+  else
+  {
+    //XXX fix this mess!
+    dsyslog("failed to get a schedules lock while adding events");
   }
   return false;
 }
