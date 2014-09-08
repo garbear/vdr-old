@@ -293,6 +293,7 @@ SchedulePtr cSchedules::AddSchedule(const cChannelID& ChannelID)
     ChannelPtr channel = cChannelManager::Get().GetByChannelID(ChannelID);
     if (channel)
       channel->SetSchedule(schedule);
+    dsyslog("created new EPG table for channel %u-%u-%u", ChannelID.Nid(), ChannelID.Sid(), ChannelID.Tsid());
     m_bHasUnsavedData = true;
   }
   return schedule;
