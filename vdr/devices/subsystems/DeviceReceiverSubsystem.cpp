@@ -182,11 +182,9 @@ bool cDeviceReceiverSubsystem::Receiving(void) const
   return !m_receiverResources.empty();
 }
 
-PidResourcePtr cDeviceReceiverSubsystem::GetOpenResource(uint16_t pid, STREAM_TYPE streamType)
+PidResourcePtr cDeviceReceiverSubsystem::GetOpenResource(const PidResourcePtr& needle)
 {
   CLockObject lock(m_mutexReceiver);
-
-  PidResourcePtr needle = CreateResource(pid, streamType);
 
   for (ReceiverResourceMap::const_iterator itPair = m_receiverResources.begin(); itPair != m_receiverResources.end(); ++itPair)
   {
@@ -203,45 +201,60 @@ PidResourcePtr cDeviceReceiverSubsystem::GetOpenResource(uint16_t pid, STREAM_TY
 
 bool cDeviceReceiverSubsystem::OpenResources(const ChannelPtr& channel, PidResourceSet& openResources)
 {
+  PidResourcePtr resource;
+
   if (channel->GetVideoStream().vpid)
-    OpenResourceInternal(channel->GetVideoStream().vpid, channel->GetVideoStream().vtype, openResources);
+  {
+    if ((resource = OpenResourceInternal(channel->GetVideoStream().vpid, channel->GetVideoStream().vtype)))
+      openResources.insert(resource);
+  }
 
   if (channel->GetVideoStream().ppid != channel->GetVideoStream().vpid)
-    OpenResourceInternal(channel->GetVideoStream().ppid, STREAM_TYPE_UNDEFINED, openResources);
+  {
+    if ((resource = OpenResourceInternal(channel->GetVideoStream().ppid, STREAM_TYPE_UNDEFINED)))
+      openResources.insert(resource);
+  }
 
   for (vector<AudioStream>::const_iterator it = channel->GetAudioStreams().begin(); it != channel->GetAudioStreams().end(); ++it)
-    OpenResourceInternal(it->apid, it->atype, openResources);
+  {
+    if ((resource = OpenResourceInternal(it->apid, it->atype)))
+      openResources.insert(resource);
+  }
 
   for (vector<DataStream>::const_iterator it = channel->GetDataStreams().begin(); it != channel->GetDataStreams().end(); ++it)
-    OpenResourceInternal(it->dpid, it->dtype, openResources);
+  {
+    if ((resource = OpenResourceInternal(it->dpid, it->dtype)))
+      openResources.insert(resource);
+  }
 
   for (vector<SubtitleStream>::const_iterator it = channel->GetSubtitleStreams().begin(); it != channel->GetSubtitleStreams().end(); ++it)
-    OpenResourceInternal(it->spid, STREAM_TYPE_UNDEFINED, openResources);
+  {
+    if ((resource = OpenResourceInternal(it->spid, STREAM_TYPE_UNDEFINED)))
+      openResources.insert(resource);
+  }
 
   if (channel->GetTeletextStream().tpid)
-    OpenResourceInternal(channel->GetTeletextStream().tpid, STREAM_TYPE_UNDEFINED, openResources);
+  {
+    if ((resource = OpenResourceInternal(channel->GetTeletextStream().tpid, STREAM_TYPE_UNDEFINED)))
+      openResources.insert(resource);
+  }
 
   // TODO: Or should we bail if any stream fails to open? (this was VDR's behavior)
   return !openResources.empty();
 }
 
-bool cDeviceReceiverSubsystem::OpenResourceInternal(uint16_t pid, STREAM_TYPE streamType, PidResourceSet& pidHandles)
+PidResourcePtr cDeviceReceiverSubsystem::OpenResourceInternal(uint16_t pid, STREAM_TYPE streamType)
 {
-  PidResourcePtr resource = GetOpenResource(pid, streamType);
-  if (resource)
-  {
-    pidHandles.insert(resource);
-    return true;
-  }
+  PidResourcePtr newResource = GetOpenResource(CreateResource(pid, streamType));
+  PidResourcePtr existingResource = GetOpenResource(newResource);
 
-  resource = CreateResource(pid, streamType);
-  if (resource->Open())
-  {
-    pidHandles.insert(resource);
-    return true;
-  }
+  if (existingResource)
+    return existingResource;
 
-  return false;
+  if (newResource->Open())
+    return newResource;
+
+  return PidResourcePtr();
 }
 
 }

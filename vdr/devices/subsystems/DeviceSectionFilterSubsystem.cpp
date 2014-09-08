@@ -123,13 +123,14 @@ void cDeviceSectionFilterSubsystem::UnregisterFilter(const cFilter* filter)
 
 PidResourcePtr cDeviceSectionFilterSubsystem::OpenResourceInternal(uint16_t pid, uint8_t tid, uint8_t mask)
 {
-  PidResourcePtr resource = GetOpenResource(pid, tid, mask);
-  if (resource)
-    return resource;
+  PidResourcePtr newResource = CreateResource(pid, tid, mask);
+  PidResourcePtr existingResource = GetOpenResource(newResource);
 
-  resource = CreateResource(pid, tid, mask);
-  if (resource->Open())
-    return resource;
+  if (existingResource)
+    return existingResource;
+
+  if (newResource->Open())
+    return newResource;
 
   return PidResourcePtr();
 }
@@ -251,11 +252,9 @@ void* cDeviceSectionFilterSubsystem::Process(void)
   return NULL;
 }
 
-PidResourcePtr cDeviceSectionFilterSubsystem::GetOpenResource(uint16_t pid, uint8_t tid, uint8_t mask)
+PidResourcePtr cDeviceSectionFilterSubsystem::GetOpenResource(const PidResourcePtr& needle)
 {
   CLockObject lock(m_mutex);
-
-  PidResourcePtr needle = CreateResource(pid, tid, mask);
 
   // Scan registered filters for the resource
   for (set<const cFilter*>::const_iterator itFilter = m_registeredFilters.begin(); itFilter != m_registeredFilters.end(); ++itFilter)

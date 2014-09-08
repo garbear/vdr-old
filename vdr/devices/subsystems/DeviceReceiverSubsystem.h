@@ -115,10 +115,10 @@ private:
   typedef std::map<iReceiver*, PidResourceSet> ReceiverResourceMap; // receiver -> resources
 
   /*!
-   * Utility function: returns an open resource with the given PID, or empty
-   * pointer if no resources with the given PID are open.
+   * Utility function: returns an open resource with the given properties, or
+   * empty pointer if no resources with the given properties are open.
    */
-  PidResourcePtr GetOpenResource(uint16_t pid, STREAM_TYPE streamType);
+  PidResourcePtr GetOpenResource(const PidResourcePtr& needle);
 
   /*!
    * \brief Detaches all receivers from this device.
@@ -137,7 +137,7 @@ private:
    * shared pointer will be added to pidHandles instead. Returns false if no
    * resource was added to openResources.
    */
-  bool OpenResourceInternal(uint16_t pid, STREAM_TYPE streamType, PidResourceSet& openResources);
+  PidResourcePtr OpenResourceInternal(uint16_t pid, STREAM_TYPE streamType);
 
   ReceiverResourceMap m_receiverResources;
   PLATFORM::CMutex    m_mutexReceiver;

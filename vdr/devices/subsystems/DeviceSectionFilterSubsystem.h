@@ -154,7 +154,7 @@ private:
    * Scan registered filters for an existing resource with the specified
    * properties.
    */
-  PidResourcePtr GetOpenResource(uint16_t pid, uint8_t tid, uint8_t mask);
+  PidResourcePtr GetOpenResource(const PidResourcePtr& needle);
 
   /*!
    * Accumulate resources of all active filters (those who are waiting on a call
