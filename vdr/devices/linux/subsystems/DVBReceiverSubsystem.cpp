@@ -47,8 +47,10 @@ namespace VDR
 class cDvbReceiverResource : public cPidResource
 {
 public:
-  cDvbReceiverResource(uint16_t pid, STREAM_TYPE streamType, const std::string& strDvbPath);
+  cDvbReceiverResource(uint16_t pid, STREAM_TYPE streamType, const cDvbDevice* device);
   virtual ~cDvbReceiverResource(void) { Close(); }
+
+  virtual bool Equals(const cPidResource* other) const { return other && Pid() == other->Pid(); }
 
   virtual bool Open(void);
   virtual void Close(void);
@@ -56,26 +58,31 @@ public:
   uint8_t StreamType(void) const { return m_streamType; }
 
 private:
-  const STREAM_TYPE m_streamType;
-  const std::string m_strDvbPath;
-  int               m_handle;
+  const STREAM_TYPE       m_streamType;
+  const cDvbDevice* const m_device;
+  int                     m_handle;
 };
 
 typedef shared_ptr<cDvbReceiverResource> DvbReceiverResourcePtr;
 
-cDvbReceiverResource::cDvbReceiverResource(uint16_t pid, STREAM_TYPE streamType, const std::string& strDvbPath)
+cDvbReceiverResource::cDvbReceiverResource(uint16_t pid, STREAM_TYPE streamType, const cDvbDevice* device)
  : cPidResource(pid),
    m_streamType(streamType),
-   m_strDvbPath(strDvbPath),
+   m_device(device),
    m_handle(FILE_DESCRIPTOR_INVALID)
 {
 }
 
 bool cDvbReceiverResource::Open(void)
 {
+  // Calculate strings
+  const std::string strDvbPath = m_device->DvbPath(DEV_DVB_DEMUX);
+  const std::string strAsyncFifoPath = StringUtils::Format("/sys/class/stb/asyncfifo%d_source", m_device->Frontend());
+  const std::string strCmd = StringUtils::Format("dmx%u", m_device->Frontend());
+
   if (m_handle == FILE_DESCRIPTOR_INVALID)
   {
-    m_handle = open(m_strDvbPath.c_str(), O_RDWR | O_NONBLOCK);
+    m_handle = open(strDvbPath.c_str(), O_RDWR | O_NONBLOCK);
     if (m_handle == FILE_DESCRIPTOR_INVALID)
     {
       esyslog("Couldn't open PES filter (pid=%u, streamType=%u)", Pid(), m_streamType);
@@ -97,6 +104,20 @@ bool cDvbReceiverResource::Open(void)
       return false;
     }
   }
+
+  // TODO: Magic code that makes everything work on Android
+#if defined(TARGET_ANDROID)
+  CFile demuxSource;
+  if (demuxSource.OpenForWrite(strAsyncFifoPath, false))
+  {
+    demuxSource.Write(strCmd.c_str(), strCmd.length());
+    demuxSource.Close();
+  }
+  else
+  {
+    dsyslog("Can't open %s", strAsyncFifoPath.c_str());
+  }
+#endif
 
   assert(m_handle >= 0);
   dsyslog("Opened PES filter (pid=%u, streamType=%u)", Pid(), m_streamType);
@@ -215,35 +236,9 @@ bool cDvbReceiverSubsystem::Read(vector<uint8_t>& data)
   return false;
 }
 
-PidResourcePtr cDvbReceiverSubsystem::OpenResource(uint16_t pid, STREAM_TYPE streamType)
+PidResourcePtr cDvbReceiverSubsystem::CreateResource(uint16_t pid, STREAM_TYPE streamType)
 {
-  std::string strDvbPath = Device<cDvbDevice>()->DvbPath(DEV_DVB_DEMUX);
-  PidResourcePtr handle = PidResourcePtr(new cDvbReceiverResource(pid, streamType, strDvbPath));
-
-  if (!handle->Open())
-  {
-    handle.reset();
-  }
-  else
-  {
-    // TODO: Magic code that makes everything work on Android
-  #if defined(TARGET_ANDROID)
-    string strPath = StringUtils::Format("/sys/class/stb/asyncfifo%d_source", Device<cDvbDevice>()->Frontend());
-    CFile demuxSource;
-    if (demuxSource.OpenForWrite(strPath, false))
-    {
-      string cmd = StringUtils::Format("dmx%u", Device<cDvbDevice>()->Frontend());
-      demuxSource.Write(cmd.c_str(), cmd.length());
-      demuxSource.Close();
-    }
-    else
-    {
-      dsyslog("Can't open %s", strPath.c_str());
-    }
-  #endif
-  }
-
-  return handle;
+  return PidResourcePtr(new cDvbReceiverResource(pid, streamType, Device<cDvbDevice>()));
 }
 
 }

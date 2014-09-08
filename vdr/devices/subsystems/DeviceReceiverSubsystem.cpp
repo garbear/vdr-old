@@ -182,16 +182,18 @@ bool cDeviceReceiverSubsystem::Receiving(void) const
   return !m_receiverResources.empty();
 }
 
-PidResourcePtr cDeviceReceiverSubsystem::GetOpenResource(uint16_t pid)
+PidResourcePtr cDeviceReceiverSubsystem::GetOpenResource(uint16_t pid, STREAM_TYPE streamType)
 {
   CLockObject lock(m_mutexReceiver);
+
+  PidResourcePtr needle = CreateResource(pid, streamType);
 
   for (ReceiverResourceMap::const_iterator itPair = m_receiverResources.begin(); itPair != m_receiverResources.end(); ++itPair)
   {
     const PidResourceSet& haystack = itPair->second;
     for (PidResourceSet::const_iterator itPidHandle = haystack.begin(); itPidHandle != haystack.end(); ++itPidHandle)
     {
-      if (pid == (*itPidHandle)->Pid())
+      if ((*itPidHandle)->Equals(needle.get()))
         return *itPidHandle;
     }
   }
@@ -225,19 +227,17 @@ bool cDeviceReceiverSubsystem::OpenResources(const ChannelPtr& channel, PidResou
 
 bool cDeviceReceiverSubsystem::OpenResourceInternal(uint16_t pid, STREAM_TYPE streamType, PidResourceSet& pidHandles)
 {
-  // Try to get a resource that is already open
-  PidResourcePtr pidHandle = GetOpenResource(pid);
-  if (pidHandle)
+  PidResourcePtr resource = GetOpenResource(pid, streamType);
+  if (resource)
   {
-    pidHandles.insert(pidHandle);
+    pidHandles.insert(resource);
     return true;
   }
 
-  // Open a new resource and add it to the set
-  pidHandle = OpenResource(pid, streamType);
-  if (pidHandle)
+  resource = CreateResource(pid, streamType);
+  if (resource->Open())
   {
-    pidHandles.insert(pidHandle);
+    pidHandles.insert(resource);
     return true;
   }
 

@@ -44,6 +44,8 @@ public:
   cPidResource(uint16_t pid) : m_pid(pid) { }
   virtual ~cPidResource(void) { }
 
+  virtual bool Equals(const cPidResource* other) const = 0;
+
   virtual bool Open(void) = 0;
   virtual void Close(void) = 0;
 

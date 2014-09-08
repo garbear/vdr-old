@@ -81,6 +81,8 @@ public:
   // Use RAII pattern to close file when no longer referenced
   virtual ~cDvbFilterResource(void) { Close(); }
 
+  virtual bool Equals(const cPidResource* other) const;
+
   virtual bool Open(void);
   virtual void Close(void);
 
@@ -96,6 +98,18 @@ private:
 };
 
 typedef shared_ptr<cDvbFilterResource> DvbFilterResourcePtr;
+
+bool cDvbFilterResource::Equals(const cPidResource* other) const
+{
+  const cDvbFilterResource* dvbResource = dynamic_cast<const cDvbFilterResource*>(other);
+  if (dvbResource)
+  {
+    return Pid()  == dvbResource->Pid()  &&
+           m_tid  == dvbResource->m_tid  &&
+           m_mask == dvbResource->m_mask;
+  }
+  return false;
+}
 
 bool cDvbFilterResource::Open(void)
 {
@@ -139,7 +153,7 @@ cDvbSectionFilterSubsystem::cDvbSectionFilterSubsystem(cDevice *device)
 {
 }
 
-PidResourcePtr cDvbSectionFilterSubsystem::OpenResource(uint16_t pid, uint8_t tid, uint8_t mask)
+PidResourcePtr cDvbSectionFilterSubsystem::CreateResource(uint16_t pid, uint8_t tid, uint8_t mask)
 {
   // TODO: Magic code that makes everything work on Android
 #if defined(TARGET_ANDROID)
@@ -186,12 +200,7 @@ PidResourcePtr cDvbSectionFilterSubsystem::OpenResource(uint16_t pid, uint8_t ti
 #endif
 
   std::string strDvbPath = Device<cDvbDevice>()->DvbPath(DEV_DVB_DEMUX);
-  PidResourcePtr handle = PidResourcePtr(new cDvbFilterResource(pid, tid, mask, strDvbPath));
-
-  if (!handle->Open())
-    handle.reset();
-
-  return handle;
+  return PidResourcePtr(new cDvbFilterResource(pid, tid, mask, strDvbPath));
 }
 
 bool cDvbSectionFilterSubsystem::ReadResource(const PidResourcePtr& handle, std::vector<uint8_t>& data)

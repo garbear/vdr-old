@@ -35,7 +35,7 @@ protected:
   virtual bool Initialise(void) { return true; }
   virtual void Deinitialise(void) { }
 
-  virtual PidResourcePtr OpenResource(uint16_t pid, uint8_t tid, uint8_t mask);
+  virtual PidResourcePtr CreateResource(uint16_t pid, uint8_t tid, uint8_t mask);
   virtual bool ReadResource(const PidResourcePtr& handle, std::vector<uint8_t>& data);
   virtual PidResourcePtr Poll(const PidResourceSet& filterResources);
 };

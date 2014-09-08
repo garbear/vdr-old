@@ -101,7 +101,7 @@ protected:
    * \param type Indicates some special types of PIDs, which the device may need
    *        to set in a specific way.
    */
-  virtual PidResourcePtr OpenResource(uint16_t pid, STREAM_TYPE streamType) = 0;
+  virtual PidResourcePtr CreateResource(uint16_t pid, STREAM_TYPE streamType) = 0;
 
   virtual bool Poll(void) = 0;
 
@@ -118,7 +118,7 @@ private:
    * Utility function: returns an open resource with the given PID, or empty
    * pointer if no resources with the given PID are open.
    */
-  PidResourcePtr GetOpenResource(uint16_t pid);
+  PidResourcePtr GetOpenResource(uint16_t pid, STREAM_TYPE streamType);
 
   /*!
    * \brief Detaches all receivers from this device.

@@ -36,7 +36,7 @@ public:
 
   virtual bool Poll(void);
   virtual bool Read(std::vector<uint8_t>& data);
-  virtual PidResourcePtr OpenResource(uint16_t pid, STREAM_TYPE streamType);
+  virtual PidResourcePtr CreateResource(uint16_t pid, STREAM_TYPE streamType);
 
 private:
   // The DVR device (will be opened and closed as needed)

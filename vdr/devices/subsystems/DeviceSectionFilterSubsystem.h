@@ -135,11 +135,7 @@ protected:
   virtual bool Initialise(void) = 0;
   virtual void Deinitialise(void) = 0;
 
-  /*!
-   * Open a resource for the given filter data. Returns the resource, or an
-   * empty pointer if open failed or wasn't implemented.
-   */
-  virtual PidResourcePtr OpenResource(uint16_t pid, uint8_t tid, uint8_t mask) = 0;
+  virtual PidResourcePtr CreateResource(uint16_t pid, uint8_t tid, uint8_t mask) = 0;
 
   /*!
    * Read data from a resource.
@@ -155,9 +151,10 @@ protected:
 
 private:
   /*!
-   * Scan registered filters for an existing resource with the specified ID.
+   * Scan registered filters for an existing resource with the specified
+   * properties.
    */
-  PidResourcePtr GetOpenResource(uint16_t pid);
+  PidResourcePtr GetOpenResource(uint16_t pid, uint8_t tid, uint8_t mask);
 
   /*!
    * Accumulate resources of all active filters (those who are waiting on a call

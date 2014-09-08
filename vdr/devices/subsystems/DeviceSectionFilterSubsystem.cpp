@@ -123,14 +123,12 @@ void cDeviceSectionFilterSubsystem::UnregisterFilter(const cFilter* filter)
 
 PidResourcePtr cDeviceSectionFilterSubsystem::OpenResourceInternal(uint16_t pid, uint8_t tid, uint8_t mask)
 {
-  // Check open resources first
-  PidResourcePtr resource = GetOpenResource(pid);
+  PidResourcePtr resource = GetOpenResource(pid, tid, mask);
   if (resource)
     return resource;
 
-  // Open the resource
-  resource = OpenResource(pid, tid, mask);
-  if (resource)
+  resource = CreateResource(pid, tid, mask);
+  if (resource->Open())
     return resource;
 
   return PidResourcePtr();
@@ -253,9 +251,11 @@ void* cDeviceSectionFilterSubsystem::Process(void)
   return NULL;
 }
 
-PidResourcePtr cDeviceSectionFilterSubsystem::GetOpenResource(uint16_t pid)
+PidResourcePtr cDeviceSectionFilterSubsystem::GetOpenResource(uint16_t pid, uint8_t tid, uint8_t mask)
 {
   CLockObject lock(m_mutex);
+
+  PidResourcePtr needle = CreateResource(pid, tid, mask);
 
   // Scan registered filters for the resource
   for (set<const cFilter*>::const_iterator itFilter = m_registeredFilters.begin(); itFilter != m_registeredFilters.end(); ++itFilter)
@@ -263,7 +263,7 @@ PidResourcePtr cDeviceSectionFilterSubsystem::GetOpenResource(uint16_t pid)
     const PidResourceSet& haystack = (*itFilter)->GetResources();
     for (PidResourceSet::const_iterator itResource = haystack.begin(); itResource != haystack.end(); ++itResource)
     {
-      if ((*itResource)->Pid() == pid)
+      if ((*itResource)->Equals(needle.get()))
         return *itResource;
     }
   }
