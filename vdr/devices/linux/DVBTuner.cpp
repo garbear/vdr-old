@@ -655,6 +655,8 @@ std::string cDvbTuner::StatusToString(const fe_status_t status)
 
   if (!retval.empty())
     retval.erase(retval.begin());
+  else
+    retval = "[unknown/error]";
 
   return retval;
 }
