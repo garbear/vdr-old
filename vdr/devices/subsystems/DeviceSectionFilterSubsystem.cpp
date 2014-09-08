@@ -314,12 +314,10 @@ std::string cDeviceSectionFilterSubsystem::ToString(const PidResourceSet& resour
     retval.append(buf);
   }
 
-  if (resources.size() == 0)
-    retval.append("[none]");
-  else
-    retval.erase(retval.end());
+  if (resources.empty())
+    return "[none]";
 
-  return retval;
+  return retval.substr(0, retval.size() - 1);
 }
 
 }
