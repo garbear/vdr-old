@@ -184,7 +184,10 @@ void cDeviceChannelSubsystem::Release(TunerHandlePtr& handle)
   CLockObject lock(m_mutex);
   std::vector<TunerHandlePtr>::iterator it = std::find(m_activeTransponders.begin(), m_activeTransponders.end(), handle);
   if (it != m_activeTransponders.end())
+  {
     m_activeTransponders.erase(it);
+    dsyslog("released subscription for channel %uMHz prio %d", handle->Channel()->GetTransponder().FrequencyMHz(), handle->Type());
+  }
   if (m_activeTransponders.empty())
     ClearChannel();
 }
@@ -197,9 +200,12 @@ void cDeviceChannelSubsystem::Release(cTunerHandle* handle)
     if ((*it).get() == handle)
     {
       m_activeTransponders.erase(it);
+      dsyslog("released subscription for channel %uMHz prio %d", handle->Channel()->GetTransponder().FrequencyMHz(), handle->Type());
       break;
     }
   }
+  if (m_activeTransponders.empty())
+    ClearChannel();
 }
 
 }
