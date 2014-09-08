@@ -702,7 +702,7 @@ void* cDvbTuner::Process(void)
       m_status = status;
       const bool bHasLock = HasLock();
 
-      dsyslog("frontend status changed to %s", StatusToString(status).c_str());
+      dsyslog("frontend %d '%s' status changed to %s", m_device->Index(), Name().c_str(), StatusToString(status).c_str());
 
       // Report new lock status to observers
       if (!bHadLock && bHasLock)
