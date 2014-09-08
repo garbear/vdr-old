@@ -130,6 +130,18 @@ void* cScanner::Process()
       dsyslog("%s %d MHz", bSuccess ? "Successfully scanned" : "Failed to scan", transponder.FrequencyMHz());
       newHandle->Release();
     }
+    else
+    {
+      if (!dvbDevice->CanTune(TUNING_TYPE_CHANNEL_SCAN))
+      {
+        isyslog("Scan aborted: another subscription is using the tuner");
+        break;
+      }
+      else
+      {
+        dsyslog("%s %d MHz", "Failed to scan", transponder.FrequencyMHz());
+      }
+    }
 
     m_percentage += 1.0f / transponders->TransponderCount();
   }

@@ -135,6 +135,7 @@ public:
   void Release(TunerHandlePtr& handle);
   void Release(cTunerHandle* handle);
   TunerHandlePtr Acquire(const ChannelPtr& channel, device_tuning_type_t type, iTunerHandleCallbacks* callbacks);
+  bool CanTune(device_tuning_type_t type);
 
 protected:
   /*!

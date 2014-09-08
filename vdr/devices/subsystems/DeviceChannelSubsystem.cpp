@@ -106,6 +106,17 @@ void cDeviceChannelSubsystem::SetOccupied(unsigned int seconds)
   m_occupiedTimeout = time(NULL) + min(seconds, MAXOCCUPIEDTIMEOUT);
 }
 
+bool cDeviceChannelSubsystem::CanTune(device_tuning_type_t type)
+{
+  CLockObject lock(m_mutex);
+  for (std::vector<TunerHandlePtr>::iterator it = m_activeTransponders.begin(); it != m_activeTransponders.end(); ++it)
+  {
+    if ((*it)->Type() < type)
+      return false;
+  }
+  return true;
+}
+
 TunerHandlePtr cDeviceChannelSubsystem::Acquire(const ChannelPtr& channel, device_tuning_type_t type, iTunerHandleCallbacks* callbacks)
 {
   bool valid(true);

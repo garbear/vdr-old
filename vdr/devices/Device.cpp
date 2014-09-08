@@ -108,6 +108,11 @@ void cDevice::Deinitialise(void)
   Receiver()->Stop();
 }
 
+bool cDevice::CanTune(device_tuning_type_t type)
+{
+  return Channel()->CanTune(type);
+}
+
 TunerHandlePtr cDevice::Acquire(const ChannelPtr& channel, device_tuning_type_t type, iTunerHandleCallbacks* callbacks)
 {
   return Channel()->Acquire(channel, type, callbacks);

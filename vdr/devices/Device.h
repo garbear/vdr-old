@@ -113,6 +113,7 @@ public:
 
   TunerHandlePtr Acquire(const ChannelPtr& channel, device_tuning_type_t type, iTunerHandleCallbacks* callbacks);
   void Release(TunerHandlePtr& handle);
+  bool CanTune(device_tuning_type_t type);
 
   cDeviceChannelSubsystem*         Channel(void)         const { return m_subsystems.Channel; }
   cDeviceCommonInterfaceSubsystem* CommonInterface(void) const { return m_subsystems.CommonInterface; }
