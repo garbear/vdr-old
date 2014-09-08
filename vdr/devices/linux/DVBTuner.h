@@ -120,6 +120,7 @@ private:
 
   // Adjust for satellite receivers that offset the frequency
   unsigned int GetTunedFrequencyHz(const cTransponder& transponder); // TODO: const
+  static std::string StatusToString(const fe_status_t status);
 
   cDvbDevice* const                 m_device;
   bool                              m_bIsOpen;

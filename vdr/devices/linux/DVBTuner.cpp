@@ -50,14 +50,11 @@ using namespace PLATFORM;
 
 #define INVALID_FD                 -1
 
-#define DVBS_LOCK_TIMEOUT_MS       9000
-#define DVBC_LOCK_TIMEOUT_MS       9000
-#define DVBT_LOCK_TIMEOUT_MS       9000
-#define ATSC_LOCK_TIMEOUT_MS       2000
+#define DVBS_LOCK_TIMEOUT_MS       1500
+#define DVBC_LOCK_TIMEOUT_MS       1500
+#define DVBT_LOCK_TIMEOUT_MS       1500
+#define ATSC_LOCK_TIMEOUT_MS       1500
 
-#define LOCK_REACQUIRE_TIMEOUT_MS  2000 // TODO: use this value somewhere
-
-#define SCR_RANDOM_TIMEOUT_MS      500 // add random value up to this when tuning SCR device to avoid lockups
 #define TUNER_POLL_TIMEOUT_MS      100 // tuning usually takes about a second
 
 #define DEBUG_SIGNALSTRENGTH       1
@@ -637,6 +634,33 @@ unsigned int cDvbTuner::GetTunedFrequencyHz(const cTransponder& transponder)
   return frequencyHz;
 }
 
+std::string cDvbTuner::StatusToString(const fe_status_t status)
+{
+  std::string retval;
+
+  if (status & FE_HAS_SIGNAL)
+    retval.append(" [signal]");
+  if (status & FE_HAS_CARRIER)
+    retval.append(" [carrier]");
+  if (status & FE_HAS_VITERBI)
+    retval.append(" [stable]");
+  if (status & FE_HAS_SYNC)
+    retval.append(" [sync]");
+  if (status & FE_HAS_LOCK)
+    retval.append(" [lock]");
+  if (status & FE_TIMEDOUT)
+    retval.append(" [timeout]");
+  if (status & FE_REINIT)
+    retval.append(" [reinit]");
+
+  if (!retval.empty())
+    retval.erase(retval.begin());
+  else
+    retval = "[unknown/error]";
+
+  return retval;
+}
+
 void* cDvbTuner::Process(void)
 {
   while (!IsStopped())
@@ -677,6 +701,8 @@ void* cDvbTuner::Process(void)
       const bool bHadLock = HasLock();
       m_status = status;
       const bool bHasLock = HasLock();
+
+      dsyslog("frontend %d '%s' status changed to %s", m_device->Index(), Name().c_str(), StatusToString(status).c_str());
 
       // Report new lock status to observers
       if (!bHadLock && bHasLock)

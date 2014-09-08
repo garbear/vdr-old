@@ -23,6 +23,8 @@
 #include "channels/Channel.h" // For cChannel::EmptyChannel
 #include "channels/ChannelTypes.h"
 #include "devices/DeviceSubsystem.h"
+#include "devices/Device.h"
+#include "devices/TunerHandle.h"
 #include "transponders/TransponderTypes.h"
 #include "utils/Observer.h"
 #include "Config.h" // For IDLEPRIORITY
@@ -105,16 +107,6 @@ public:
   virtual bool IsTunedToTransponder(const cChannel &channel) const { return false; }
 
   /*!
-   * \brief Switches the device to the given Channel (actual physical setup).
-   *        Blocks until the channel is successfully set or the action fails
-   *        (perhaps due to a timeout).
-   */
-  bool SwitchChannel(const ChannelPtr& channel);
-  bool SwitchTransponder(const cTransponder& transponder);
-
-  void ClearChannel(void);
-
-  /*!
    * \brief Returns the number of seconds this device is still occupied for
    */
   unsigned int Occupied() const;
@@ -138,6 +130,13 @@ public:
    */
   virtual bool HasLock(void) const { return true; }
 
+  bool TuningAllowed(device_tuning_type_t type, const cTransponder& transponder);
+
+  void Release(TunerHandlePtr& handle);
+  void Release(cTunerHandle* handle);
+  TunerHandlePtr Acquire(const ChannelPtr& channel, device_tuning_type_t type, iTunerHandleCallbacks* callbacks);
+  bool CanTune(device_tuning_type_t type);
+
 protected:
   /*!
    * \brief Sets the device to the given channel (actual physical setup). Blocks
@@ -148,6 +147,17 @@ protected:
   virtual void ClearTransponder(void) = 0;
 
 private:
-  time_t     m_occupiedTimeout;
+
+  /*!
+   * \brief Switches the device to the given Channel (actual physical setup).
+   *        Blocks until the channel is successfully set or the action fails
+   *        (perhaps due to a timeout).
+   */
+  bool SwitchChannel(const ChannelPtr& channel);
+  void ClearChannel(void);
+
+  time_t               m_occupiedTimeout;
+  std::vector<TunerHandlePtr> m_activeTransponders;
+  PLATFORM::CMutex            m_mutex;
 };
 }

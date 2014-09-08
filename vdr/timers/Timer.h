@@ -24,6 +24,7 @@
 #include "TimerTypes.h"
 #include "channels/Channel.h"
 #include "channels/ChannelTypes.h"
+#include "devices/TunerHandle.h"
 #include "epg/EPGTypes.h"
 
 #include <stddef.h>
@@ -140,5 +141,6 @@ private:
   cRecorder*    m_recorder;                ///< the recorder that's being used while this timer is being recorded
   cRecording*   m_recording;               ///< the recording that is currently running
   size_t        m_index; // XXX (re)move me
+  TunerHandlePtr m_tunerHandle;
 };
 }

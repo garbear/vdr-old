@@ -438,8 +438,6 @@ bool cSettings::LoadFromCmdLine(int argc, char *argv[])
     dsyslog("running as daemon");
   }
 
-  isyslog("VDR version %s started", VDRVERSION);
-
   return true;
 }
 

@@ -196,8 +196,7 @@ PidResourcePtr cDvbSectionFilterSubsystem::OpenResource(uint16_t pid, uint8_t ti
 
 bool cDvbSectionFilterSubsystem::ReadResource(const PidResourcePtr& handle, std::vector<uint8_t>& data)
 {
-  //cDvbFilterResource* dvbResource = dynamic_cast<cDvbFilterResource*>(handle.get()); // TODO: Segfaults
-  cDvbFilterResource* dvbResource = (cDvbFilterResource*)handle.get();
+  cDvbFilterResource* dvbResource = static_cast<cDvbFilterResource*>(handle.get());
   if (dvbResource)
   {
     uint8_t buffer[READ_BUFFER_SIZE];
@@ -225,8 +224,7 @@ PidResourcePtr cDvbSectionFilterSubsystem::Poll(const PidResourceSet& filterReso
 
     assert(resource.get());
 
-    //cDvbFilterResource* handle = dynamic_cast<cDvbFilterResource*>(resource.get()); // TODO: Segfaults
-    cDvbFilterResource* handle = (cDvbFilterResource*)resource.get();
+    cDvbFilterResource* handle = static_cast<cDvbFilterResource*>(resource.get());
     if (!handle)
     {
       // Fail hard and fast if vector contains invalid handle
@@ -261,8 +259,7 @@ PidResourcePtr cDvbSectionFilterSubsystem::Poll(const PidResourceSet& filterReso
       {
         for (PidResourceSet::const_iterator it = filterResources.begin(); it != filterResources.end(); ++it)
         {
-          //cDvbFilterResource* handle = dynamic_cast<cDvbFilterResource*>(it->get()); // TODO: Segfaults
-          cDvbFilterResource* handle = (cDvbFilterResource*)it->get();
+          cDvbFilterResource* handle = static_cast<cDvbFilterResource*>(it->get());
           if (handle && handle->FileDescriptor() == signaledFd)
             return *it;
         }

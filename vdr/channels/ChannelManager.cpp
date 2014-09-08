@@ -182,6 +182,21 @@ ChannelPtr cChannelManager::GetByChannelUID(uint32_t channelUid) const
   return cChannel::EmptyChannel;
 }
 
+ChannelPtr cChannelManager::GetByTransportAndService(uint16_t network, uint16_t transport, uint16_t service)
+{
+  CLockObject lock(m_mutex);
+
+  for (ChannelVector::const_iterator itChannel = m_channels.begin(); itChannel != m_channels.end(); ++itChannel)
+  {
+    if ((*itChannel)->ID().Nid()  == network &&
+        (*itChannel)->ID().Tsid() == transport &&
+        (*itChannel)->ID().Sid()  == service)
+      return (*itChannel);
+  }
+
+  return cChannel::EmptyChannel;
+}
+
 ChannelVector cChannelManager::GetCurrent(void) const
 {
   CLockObject lock(m_mutex);

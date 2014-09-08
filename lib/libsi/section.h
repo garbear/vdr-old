@@ -330,6 +330,7 @@ public:
       bool isGuideHidden() const; // Should this channel's EPG events be hidden
       int getSourceID() const;
       virtual int getLength() { return int(sizeof(vct_channel_info)+channelDescriptors.getLength()); }
+      int getDescriptorLength() { return channelDescriptors.getLength(); }
       static int getChannelInfoLength(const unsigned char *data);
       PSIP_DescriptorLoop channelDescriptors;
    protected:

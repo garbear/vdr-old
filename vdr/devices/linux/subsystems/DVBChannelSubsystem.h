@@ -35,8 +35,6 @@ public:
   cDvbChannelSubsystem(cDevice *device);
   virtual ~cDvbChannelSubsystem() { }
 
-  // Not inherited from cDeviceChannelSubsystem
-  virtual bool ProvidesDeliverySystem(fe_delivery_system_t deliverySystem) const;
   virtual bool ProvidesSource(TRANSPONDER_TYPE source) const;
   virtual bool ProvidesTransponder(const cChannel &channel) const;
   virtual bool ProvidesEIT() const;
@@ -44,9 +42,6 @@ public:
   virtual int SignalStrength() const;
   virtual int SignalQuality() const;
   virtual cTransponder GetCurrentlyTunedTransponder() const;
-  virtual bool IsTunedToTransponder(const cTransponder& transponder) const;
-  bool SwitchChannel(const cChannel &channel, bool bLiveView);
-  void ForceTransferMode();
   unsigned int Occupied() const;
   void SetOccupied(unsigned int seconds);
   virtual bool HasLock(void) const;
@@ -54,5 +49,10 @@ public:
 protected:
   virtual bool Tune(const cTransponder& transponder);
   virtual void ClearTransponder(void);
+
+  // Not inherited from cDeviceChannelSubsystem
+  virtual bool ProvidesDeliverySystem(fe_delivery_system_t deliverySystem) const;
+  virtual bool IsTunedToTransponder(const cTransponder& transponder) const;
+  void ForceTransferMode();
 };
 }

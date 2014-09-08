@@ -74,13 +74,25 @@ void* cScanner::Process()
 
   cTransponderFactory* transponders = NULL;
 
-  // TODO: Need to get caps from cDevice class
   shared_ptr<cDvbDevice> dvbDevice = dynamic_pointer_cast<cDvbDevice>(m_setup.device);
   if (!dvbDevice)
     return NULL;
   const fe_caps_t caps = dvbDevice->m_dvbTuner.Capabilities();
+  TRANSPONDER_TYPE type = m_setup.dvbType;
+  if (m_setup.dvbType == TRANSPONDER_INVALID)
+  {
+    if (dvbDevice->Channel()->ProvidesSource(TRANSPONDER_ATSC))
+      type = TRANSPONDER_ATSC;
+    else if (dvbDevice->Channel()->ProvidesSource(TRANSPONDER_CABLE))
+      type = TRANSPONDER_CABLE;
+    else if (dvbDevice->Channel()->ProvidesSource(TRANSPONDER_SATELLITE))
+      type = TRANSPONDER_SATELLITE;
+    else if (dvbDevice->Channel()->ProvidesSource(TRANSPONDER_TERRESTRIAL))
+      type = TRANSPONDER_TERRESTRIAL;
+  }
 
-  switch (m_setup.dvbType)
+
+  switch (type)
   {
   case TRANSPONDER_ATSC:
     transponders = new cAtscTransponderFactory(caps, m_setup.atscModulation);
@@ -100,6 +112,7 @@ void* cScanner::Process()
     return NULL;
 
   const int64_t startMs = GetTimeMs();
+  ChannelPtr channel = ChannelPtr(new cChannel);
 
   while (!IsStopped() && transponders->HasNext())
   {
@@ -108,10 +121,26 @@ void* cScanner::Process()
     m_frequencyHz = transponder.FrequencyHz();
     m_number      = transponder.ChannelNumber();
 
-    if (m_setup.device->Channel()->SwitchTransponder(transponder))
+    channel->SetTransponder(transponder);
+
+    TunerHandlePtr newHandle = dvbDevice->Acquire(channel, TUNING_TYPE_CHANNEL_SCAN, this);
+    if (newHandle)
     {
       bool bSuccess = m_setup.device->Scan()->WaitForTransponderScan();
       dsyslog("%s %d MHz", bSuccess ? "Successfully scanned" : "Failed to scan", transponder.FrequencyMHz());
+      newHandle->Release();
+    }
+    else
+    {
+      if (!dvbDevice->CanTune(TUNING_TYPE_CHANNEL_SCAN))
+      {
+        isyslog("Scan aborted: another subscription is using the tuner");
+        break;
+      }
+      else
+      {
+        dsyslog("%s %d MHz", "Failed to scan", transponder.FrequencyMHz());
+      }
     }
 
     m_percentage += 1.0f / transponders->TransponderCount();
@@ -123,6 +152,20 @@ void* cScanner::Process()
   isyslog("Channel scan took %d min %d sec", durationSec / 60, durationSec % 60);
 
   return NULL;
+}
+
+void cScanner::LockAcquired(void)
+{
+}
+
+void cScanner::LockLost(void)
+{
+}
+
+void cScanner::LostPriority(void)
+{
+  isyslog("Scan aborted: another subscription is using the tuner");
+  StopThread(-1);
 }
 
 }

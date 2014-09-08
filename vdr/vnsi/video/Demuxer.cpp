@@ -91,7 +91,7 @@ bool cVNSIDemuxer::Open(const ChannelPtr& channel, int serial)
 
   if (!recording)
   {
-    if (!cDeviceManager::Get().OpenVideoInput(m_VideoBuffer, channel))
+    if (!(m_tunerHandle = cDeviceManager::Get().OpenVideoInput(m_VideoBuffer, channel)))
     {
       esyslog("Can't switch to channel %i - %s", channel->Number(), channel->Name().c_str());
       return false;
@@ -115,6 +115,8 @@ void cVNSIDemuxer::Close()
     cDeviceManager::Get().CloseVideoInput(m_VideoBuffer);
     delete m_VideoBuffer;
     m_VideoBuffer = NULL;
+    m_tunerHandle->Release();
+    m_tunerHandle = cTunerHandle::EmptyHandle;
   }
 
   if (m_CurrentChannel)

@@ -131,6 +131,7 @@ void cVDRDaemon::Stop()
 
 void *cVDRDaemon::Process()
 {
+  isyslog("VDR version %s started", VDRVERSION);
   while (!IsStopped())
   {
     cTimers::Get().ProcessOnce();

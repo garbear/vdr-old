@@ -21,6 +21,7 @@
 #pragma once
 
 #include "channels/ChannelTypes.h"
+#include "devices/TunerHandle.h"
 
 #include <stdint.h>
 #include <vector>
@@ -28,7 +29,7 @@
 namespace VDR
 {
 
-class iReceiver
+class iReceiver : public iTunerHandleCallbacks
 {
 public:
   virtual ~iReceiver(void) { }
@@ -55,6 +56,12 @@ public:
    * the data if necessary.
    */
   virtual void Receive(const std::vector<uint8_t>& data) = 0;
+
+  virtual void LockAcquired(void) {}
+
+  virtual void LockLost(void) {}
+
+  virtual void LostPriority(void) {}
 
 private:
 };

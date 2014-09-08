@@ -22,12 +22,13 @@
 #pragma once
 
 #include "ScanConfig.h"
+#include "devices/TunerHandle.h"
 #include "lib/platform/threads/threads.h"
 
 namespace VDR
 {
 
-class cScanner : public PLATFORM::CThread
+class cScanner : public PLATFORM::CThread, public iTunerHandleCallbacks
 {
 public:
   cScanner(void);
@@ -43,6 +44,10 @@ public:
   float GetFrequency() const { return m_frequencyHz; }
   unsigned int GetChannelNumber() const { return m_number; }
   float GetPercentage() const { return m_percentage; }
+
+  void LockAcquired(void);
+  void LockLost(void);
+  void LostPriority(void);
 
 protected:
   virtual void* Process(void);

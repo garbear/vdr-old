@@ -25,6 +25,7 @@
  */
 
 #include "DeviceTypes.h"
+#include "TunerHandle.h"
 #include "channels/ChannelTypes.h"
 
 #include <list>
@@ -44,6 +45,7 @@ class cDeviceSectionFilterSubsystem;
 class cDeviceSPUSubsystem;
 class cDeviceTrackSubsystem;
 class cDeviceVideoFormatSubsystem;
+class cTunerHandle;
 
 struct cSubsystems
 {
@@ -108,6 +110,10 @@ public:
    * \brief Tells whether this device has an MPEG decoder
    */
   virtual bool HasDecoder() const { return false; }
+
+  TunerHandlePtr Acquire(const ChannelPtr& channel, device_tuning_type_t type, iTunerHandleCallbacks* callbacks);
+  void Release(TunerHandlePtr& handle);
+  bool CanTune(device_tuning_type_t type);
 
   cDeviceChannelSubsystem*         Channel(void)         const { return m_subsystems.Channel; }
   cDeviceCommonInterfaceSubsystem* CommonInterface(void) const { return m_subsystems.CommonInterface; }
