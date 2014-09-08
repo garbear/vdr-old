@@ -144,17 +144,16 @@ void* cScanner::Process()
 
 void cScanner::LockAcquired(void)
 {
-  //TODO
 }
 
 void cScanner::LockLost(void)
 {
-  //TODO
 }
 
 void cScanner::LostPriority(void)
 {
-  //TODO
+  isyslog("Scan aborted: another subscription is using the tuner");
+  StopThread(-1);
 }
 
 }
