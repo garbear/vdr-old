@@ -751,6 +751,15 @@ Descriptor *Descriptor::getDescriptor(CharArray da, DescriptorTagDomain domain, 
             break;
       }
       break;
+   case PSIP:
+      switch ((DescriptorTag)da.getData<DescriptorHeader>()->descriptor_tag) {
+         default:
+            if (!returnUnimplemetedDescriptor)
+               return 0;
+            d=new UnimplementedDescriptor();
+            break;
+      }
+      break;
    default: ; // unknown domain, nothing to do
    }
    d->setData(da);
