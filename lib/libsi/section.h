@@ -23,7 +23,7 @@ namespace SI {
 
 class PAT : public NumberedSection {
 public:
-   PAT(const unsigned char *data, bool doCopy=true) : NumberedSection(data, doCopy), s(NULL) {}
+   PAT(const unsigned char *data) : NumberedSection(data), s(NULL) {}
    PAT() : s(NULL) {}
    class Association : public LoopElement {
    public:
@@ -46,7 +46,7 @@ private:
 
 class CAT : public NumberedSection {
 public:
-   CAT(const unsigned char *data, bool doCopy=true) : NumberedSection(data, doCopy) {}
+   CAT(const unsigned char *data) : NumberedSection(data) {}
    CAT() {}
    DescriptorLoop loop;
 protected:
@@ -55,7 +55,7 @@ protected:
 
 class PMT : public NumberedSection {
 public:
-   PMT(const unsigned char *data, bool doCopy=true) : NumberedSection(data, doCopy), s(NULL) {}
+   PMT(const unsigned char *data) : NumberedSection(data), s(NULL) {}
    PMT() : s(NULL) {}
    class Stream : public LoopElement {
    public:
@@ -80,7 +80,7 @@ private:
 
 class TSDT : public NumberedSection {
 public:
-   TSDT(const unsigned char *data, bool doCopy=true) : NumberedSection(data, doCopy), s(NULL) {}
+   TSDT(const unsigned char *data) : NumberedSection(data), s(NULL) {}
    TSDT() : s(NULL) {}
    DescriptorLoop transportStreamDescriptors;
 protected:
@@ -91,7 +91,7 @@ private:
 
 class NIT : public NumberedSection {
 public:
-   NIT(const unsigned char *data, bool doCopy=true) : NumberedSection(data, doCopy), s(NULL) {}
+   NIT(const unsigned char *data) : NumberedSection(data), s(NULL) {}
    NIT() : s(NULL) {}
    class TransportStream : public LoopElement {
    public:
@@ -116,14 +116,14 @@ private:
 //BAT has the same structure as NIT but different allowed descriptors
 class BAT : public NIT {
 public:
-   BAT(const unsigned char *data, bool doCopy=true) : NIT(data, doCopy) {}
+   BAT(const unsigned char *data) : NIT(data) {}
    BAT() {}
    int getBouquetId() const { return getNetworkId(); }
 };
 
 class SDT : public NumberedSection {
 public:
-   SDT(const unsigned char *data, bool doCopy=true) : NumberedSection(data, doCopy), s(NULL) {}
+   SDT(const unsigned char *data) : NumberedSection(data), s(NULL) {}
    SDT() : s(NULL) {}
    class Service : public LoopElement {
    public:
@@ -150,7 +150,7 @@ private:
 
 class EIT : public NumberedSection {
 public:
-   EIT(const unsigned char *data, bool doCopy=true) : NumberedSection(data, doCopy), s(NULL) {}
+   EIT(const unsigned char *data) : NumberedSection(data), s(NULL) {}
    EIT() : s(NULL) {}
    class Event : public LoopElement {
    public:
@@ -194,7 +194,7 @@ private:
 
 class TDT : public Section {
 public:
-   TDT(const unsigned char *data, bool doCopy=true) : Section(data, doCopy), s(NULL) {}
+   TDT(const unsigned char *data) : Section(data), s(NULL) {}
    TDT() : s(NULL) {}
    time_t getTime() const; //UTC
 protected:
@@ -205,7 +205,7 @@ private:
 
 class TOT : public CRCSection {
 public:
-   TOT(const unsigned char *data, bool doCopy=true) : CRCSection(data, doCopy), s(NULL) {}
+   TOT(const unsigned char *data) : CRCSection(data), s(NULL) {}
    TOT() : s(NULL) {}
    time_t getTime() const;
    DescriptorLoop descriptorLoop;
@@ -217,7 +217,7 @@ private:
 
 class RST : public Section {
 public:
-   RST(const unsigned char *data, bool doCopy=true) : Section(data, doCopy) {}
+   RST(const unsigned char *data) : Section(data) {}
    RST() {}
    class RunningInfo : public LoopElement {
    public:
@@ -239,7 +239,7 @@ protected:
 
 class AIT : public NumberedSection {
 public:
-   AIT(const unsigned char *data, bool doCopy=true) : NumberedSection(data, doCopy), first(NULL) {}
+   AIT(const unsigned char *data) : NumberedSection(data), first(NULL) {}
    AIT() : first(NULL) {}
    class Application : public LoopElement {
    public:
@@ -265,7 +265,7 @@ protected:
 
 class PremiereCIT : public NumberedSection {
 public:
-   PremiereCIT(const unsigned char *data, bool doCopy=true) : NumberedSection(data, doCopy), s(NULL) {}
+   PremiereCIT(const unsigned char *data) : NumberedSection(data), s(NULL) {}
    PremiereCIT() : s(NULL) {}
    int getContentId() const;
    time_t getDuration() const;
@@ -280,7 +280,7 @@ private:
 
 class PSIP_MGT : public VersionedSection {
 public:
-   PSIP_MGT(const unsigned char *data, bool doCopy=true) : VersionedSection(data, doCopy), s(NULL) {}
+   PSIP_MGT(const unsigned char *data) : VersionedSection(data), s(NULL) {}
    PSIP_MGT() : s(NULL) {}
    class TableInfo : public VariableLengthPart {
    public:
@@ -313,7 +313,7 @@ private:
 
 class PSIP_VCT : public VersionedSection {
 public:
-   PSIP_VCT(const unsigned char *data, bool doCopy=true) : VersionedSection(data, doCopy), s(NULL) {}
+   PSIP_VCT(const unsigned char *data) : VersionedSection(data), s(NULL) {}
    PSIP_VCT() : s(NULL) {}
    class ChannelInfo : public VariableLengthPart {
    public:
@@ -352,7 +352,7 @@ private:
 
 class PSIP_EIT : public VersionedSection {
 public:
-   PSIP_EIT(const unsigned char *data, bool doCopy=true) : VersionedSection(data, doCopy), s(NULL) {}
+   PSIP_EIT(const unsigned char *data) : VersionedSection(data), s(NULL) {}
    PSIP_EIT() : s(NULL) {}
    class Event : public VariableLengthPart {
    public:
@@ -381,7 +381,7 @@ private:
 
 class PSIP_STT : public VersionedSection {
 public:
-   PSIP_STT(const unsigned char *data, bool doCopy=true) : VersionedSection(data, doCopy), s(NULL) {}
+   PSIP_STT(const unsigned char *data) : VersionedSection(data), s(NULL) {}
    PSIP_STT() : s(NULL) {}
    int getGpsUtcOffset() const;
 protected:

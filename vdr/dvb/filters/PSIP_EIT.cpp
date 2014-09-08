@@ -62,7 +62,7 @@ bool cPsipEit::ScanEvents(iFilterCallback* callback, unsigned int gpsUtcOffset)
     // For logging purposes
     unsigned int numEvents = 0;
 
-    SI::PSIP_EIT psipEit(data.data(), false);
+    SI::PSIP_EIT psipEit(data.data());
     if (psipEit.CheckCRCAndParse())
     {
       SI::PSIP_EIT::Event psipEitEvent;

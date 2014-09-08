@@ -56,7 +56,7 @@ bool cPsipVct::ScanChannels(iFilterCallback* callback)
   {
     bSuccess = true;
 
-    SI::PSIP_VCT vct(data.data(), false);
+    SI::PSIP_VCT vct(data.data());
     if (vct.CheckCRCAndParse())
     {
       SI::PSIP_VCT::ChannelInfo channelInfo;

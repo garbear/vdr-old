@@ -53,7 +53,7 @@ unsigned int cPsipStt::GetGpsUtcOffset(void)
     vector<uint8_t> data; // Section data
     if (GetSection(pid, data))
     {
-      SI::PSIP_STT stt(data.data(), false);
+      SI::PSIP_STT stt(data.data());
       if (stt.CheckCRCAndParse())
         gpsUtcOffset = stt.getGpsUtcOffset();
     }

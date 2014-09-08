@@ -52,7 +52,7 @@ bool cPsipMgt::ScanPSIPData(iFilterCallback* callback)
 
   if (GetSection(pid, data))
   {
-    SI::PSIP_MGT mgt(data.data(), false);
+    SI::PSIP_MGT mgt(data.data());
     if (mgt.CheckCRCAndParse())
     {
       vector<uint16_t> eitPids; // Packet IDs of discovered EIT tables

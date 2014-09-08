@@ -65,7 +65,7 @@ time_t cTdt::GetTime(void)
   vector<uint8_t> data; // Section data
   if (GetSection(pid, data))
   {
-    SI::TDT tsTDT(data.data(), false);
+    SI::TDT tsTDT(data.data());
     tsTDT.CheckParse();
 
     /*

@@ -106,7 +106,7 @@ void cSdt::ScanChannels()
   vector<uint8_t> data; // Section data
   while (GetSection(pid, data))
   {
-    SI::SDT sdt(data.data(), false);
+    SI::SDT sdt(data.data());
     if (sdt.CheckCRCAndParse())
     {
       cSectionSyncer::SYNC_STATUS status = syncSdt.Sync(sdt.getVersionNumber(), sdt.getSectionNumber(), sdt.getLastSectionNumber());

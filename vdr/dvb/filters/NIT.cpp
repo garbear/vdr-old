@@ -76,7 +76,7 @@ ChannelVector cNit::GetTransponders()
   vector<uint8_t> data; // Section data
   while (GetSection(pid, data))
   {
-    SI::NIT nit(data.data(), false);
+    SI::NIT nit(data.data());
     if (nit.CheckCRCAndParse())
     {
       // TODO: Handle TableIdNIT_other

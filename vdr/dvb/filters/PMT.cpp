@@ -84,7 +84,7 @@ bool cPmt::ScanChannel(iFilterCallback* callback)
   vector<uint8_t> data; // Section data
   if (GetSection(pid, data))
   {
-    SI::PMT pmt(data.data(), false);
+    SI::PMT pmt(data.data());
     if (pmt.CheckCRCAndParse())
     {
       if (m_sid == pmt.getServiceId())

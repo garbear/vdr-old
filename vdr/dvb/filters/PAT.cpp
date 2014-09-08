@@ -52,7 +52,7 @@ bool cPat::ScanChannels(iFilterCallback* callback)
   vector<uint8_t> data; // Section data
   if (GetSection(pid, data))
   {
-    SI::PAT tsPAT(data.data(), false);
+    SI::PAT tsPAT(data.data());
     if (tsPAT.CheckCRCAndParse())
     {
       SI::PAT::Association assoc;

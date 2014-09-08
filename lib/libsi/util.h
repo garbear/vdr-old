@@ -45,12 +45,8 @@ class CharArray {
 public:
    CharArray();
 
-   CharArray(const CharArray &source);
-   CharArray& operator=(const CharArray &source);
-   ~CharArray();
-
    //can be called exactly once
-   void assign(const unsigned char*data, int size, bool doCopy=true);
+   void assign(const unsigned char*data, int size);
    //compares to a null-terminated string
    bool operator==(const char *string) const;
    //compares to another CharArray (data not necessarily null-terminated)
@@ -60,76 +56,26 @@ public:
    CharArray operator+(const int offset) const;
 
    //access and convenience methods
-   const unsigned char* getData() const { return data_->data+off; }
-   const unsigned char* getData(int offset) const { return data_->data+offset+off; }
-   template <typename T> const T* getData() const { return (T*)(data_->data+off); }
-   template <typename T> const T* getData(int offset) const { return (T*)(data_->data+offset+off); }
+   const unsigned char* getData() const { return data+off; }
+   const unsigned char* getData(int offset) const { return data+offset+off; }
+   template <typename T> const T* getData() const { return (T*)(data+off); }
+   template <typename T> const T* getData(int offset) const { return (T*)(data+offset+off); }
       //sets p to point to data+offset, increments offset
    template <typename T> void setPointerAndOffset(const T* &p, int &offset) const { p=(T*)getData(offset); offset+=sizeof(T); }
-   unsigned char operator[](const int index) const { return data_->data ? data_->data[off+index] : (unsigned char)0; }
-   int getLength() const { return data_->size; }
-   u_int16_t TwoBytes(const int index) const { return data_->data ? data_->TwoBytes(off+index) : u_int16_t(0); }
-   u_int32_t FourBytes(const int index) const { return data_->data ? data_->FourBytes(off+index) : u_int32_t(0); }
+   unsigned char operator[](const int index) const { return data ? data[off+index] : (unsigned char)0; }
+   int getLength() const { return size; }
+   u_int16_t TwoBytes(const int index) const { return data ? u_int16_t((data[off+index] << 8) | data[off+index+1]) : u_int16_t(0); }
+   u_int32_t FourBytes(const int index) const { return data ? u_int32_t((data[off+index] << 24) | (data[off+index+1] << 16) | (data[off+index+2] << 8) | data[off+index+3]) : u_int32_t(0); }
 
-   bool isValid() const { return data_->valid; }
+   bool isValid() const { return valid; }
    bool checkSize(int offset);
 
    void addOffset(int offset) { off+=offset; }
+
 private:
-   class Data {
-   public:
-      Data();
-      virtual ~Data();
-
-      virtual void assign(const unsigned char*data, int size) = 0;
-      virtual void Delete() = 0;
-
-      u_int16_t TwoBytes(const int index) const
-         { return u_int16_t((data[index] << 8) | data[index+1]); }
-      u_int32_t FourBytes(const int index) const
-         { return u_int32_t((data[index] << 24) | (data[index+1] << 16) | (data[index+2] << 8) | data[index+3]); }
-      /*#ifdef CHARARRAY_THREADSAFE
-      void Lock();
-      void Unlock();
-      #else
-      void Lock() {}
-      void Unlock() {}
-      #endif
-      Data(const Data& d);
-      void assign(int size);
-      */
-
-      const unsigned char*data;
-      int size;
-
-      // count_ is the number of CharArray objects that point at this
-      // count_ must be initialized to 1 by all constructors
-      // (it starts as 1 since it is pointed to by the CharArray object that created it)
-      unsigned count_;
-
-      bool valid;
-
-      /*
-      pthread_mutex_t mutex;
-      pid_t lockingPid;
-      pthread_t locked;
-      */
-   };
-   class DataOwnData : public Data {
-   public:
-      DataOwnData() {}
-      virtual ~DataOwnData();
-      virtual void assign(const unsigned char*data, int size);
-      virtual void Delete();
-   };
-   class DataForeignData : public Data {
-   public:
-      DataForeignData() {}
-      virtual ~DataForeignData();
-      virtual void assign(const unsigned char*data, int size);
-      virtual void Delete();
-   };
-   Data* data_;
+   const unsigned char*data;
+   int size;
+   bool valid;
    int off;
 };
 

@@ -74,7 +74,7 @@ EventVector cEit::GetEvents()
                                 pid == 0x0300  ||
                                 pid == 0x0441))
   {
-    SI::EIT tsEIT(data.data(), false);
+    SI::EIT tsEIT(data.data());
     if (tsEIT.CheckCRCAndParse() /* && tsEIT.getTableId() >= SI::TableIdEIT_presentFollowing */) // TODO: Do we need this check?
     {
       // We need the current time for handling PDC descriptors

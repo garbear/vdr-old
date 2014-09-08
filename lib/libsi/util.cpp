@@ -17,67 +17,24 @@ namespace SI {
 
 /*---------------------------- CharArray ----------------------------*/
 
-CharArray::CharArray() : data_(0), off(0) {
+CharArray::CharArray() : data(NULL), size(0), valid(true), off(0) {
 }
 
-CharArray::~CharArray() {
-   if (!data_)
-      return;
-   if (--data_->count_ == 0)
-      delete data_;
-}
-
-CharArray::CharArray(const CharArray &f) : data_(f.data_), off(f.off) {
-   if (data_)
-      ++ data_->count_;
-}
-
-CharArray& CharArray::operator=(const CharArray &f) {
-    // DO NOT CHANGE THE ORDER OF THESE STATEMENTS!
-    // (This order properly handles self-assignment)
-    if (f.data_) {
-      ++ f.data_->count_;
-    }
-    if (data_) {
-      if (--data_->count_ == 0)
-         delete data_;
-    }
-    data_ = f.data_;
-    off = f.off;
-    return *this;
-}
-
-void CharArray::assign(const unsigned char*data, int size, bool doCopy) {
-    //immutable
-    if (!data_)
-      data_= doCopy ? (Data*)new DataOwnData() : (Data*)new DataForeignData();
-    // This method might need to change things in *data_
-    // Thus it first checks if this is the only pointer to *data_
-    if (data_->count_ > 1) {
-      Data* d = doCopy ? (Data*)new DataOwnData() : (Data*)new DataForeignData();
-      -- data_->count_;
-      data_ = d;
-    }
-    data_->assign(data, size);
-}
-
-bool CharArray::operator==(const char *string) const {
-   //here we can use strcmp, string is null-terminated.
-   if (!data_)
-      return false;
-   return data_->size ? (!strcmp((const char*)data_->data, string)) : string[0]==0;
+void CharArray::assign(const unsigned char*data, int size) {
+    this->data = data;
+    this->size = size;
 }
 
 bool CharArray::operator==(const CharArray &other) const {
-   if (!data_ || !other.data_)
-      return !(data_ || other.data_); //true if both empty
+   if (!data || !other.data)
+      return !(data || other.data); //true if both empty
 
-   if (data_->size != other.data_->size)
+   if (size != other.size)
       return false;
 
    //do _not_ use strcmp! Data is not necessarily null-terminated.
-   for (int i=0;i<data_->size;i++)
-      if (data_->data[i] != other.data_->data[i])
+   for (int i=0;i<size;i++)
+      if (data[i] != other.data[i])
          return false;
    return true;
 }
@@ -88,97 +45,10 @@ CharArray CharArray::operator+(const int offset) const {
    return f;
 }
 
-CharArray::Data::Data() : data(0), size(0), count_(1), valid(true) {
-   /*
-   lockingPid = 0;
-   locked = 0;
-   pthread_mutex_init(&mutex, NULL);
-   */
-}
-
-CharArray::Data::~Data() {
-   /*
-   if (locked)
-      pthread_mutex_unlock(&mutex);
-   pthread_mutex_destroy(&mutex);
-   */
-}
-
-/*CharArray::Data::Data(const Data& d) : count_(1) {
-   size=0;
-   data=0;
-
-   lockingPid = 0;
-   locked = 0;
-   pthread_mutex_init(&mutex, NULL);
-}*/
-
-CharArray::DataOwnData::~DataOwnData() {
-   Delete();
-}
-
-void CharArray::DataOwnData::assign(const unsigned char*d, int s) {
-   Delete();
-   if (!d || s > 100000 || s <= 0) // ultimate plausibility check
-      return;
-   size=s;
-   unsigned char *newdata=new unsigned char[size];
-   memcpy(newdata, d, size);
-   data=newdata;
-}
-
-void CharArray::DataOwnData::Delete() {
-   delete[] data;
-   size=0;
-   data=0;
-}
-
-CharArray::DataForeignData::~DataForeignData() {
-   Delete();
-}
-
-void CharArray::DataForeignData::assign(const unsigned char*d, int s) {
-   size=s;
-   data=d;
-}
-
-void CharArray::DataForeignData::Delete() {
-   //do not delete!
-}
-
-/*
-void CharArray::Data::assign(int s) {
-   if (data)
-      delete[] data;
-   size=s;
-   if (size) { //new assignment may be zero length
-      data=new unsigned char[size];
-      memset(data, 0, size);
-   }
-}
-
-void CharArray::Data::Lock(void)
-{
-  if ( !pthread_equal(pthread_self(), lockingPid) || !locked) {
-     pthread_mutex_lock(&mutex);
-     lockingPid = pthread_self();
-     }
-  locked++;
-}
-
-void CharArray::Data::Unlock(void)
-{
-   if (!--locked) {
-     lockingPid = 0;
-     pthread_mutex_unlock(&mutex);
-   }
-}
-*/
-
 bool CharArray::checkSize(int offset)
 {
-  data_->valid = (offset >= 0 && off + offset < data_->size);
-  return data_->valid;
+  valid = (offset >= 0 && off + offset < size);
+  return valid;
 }
 
 Parsable::Parsable() {

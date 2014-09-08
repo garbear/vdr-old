@@ -27,8 +27,8 @@ Object::Object() {
 Object::Object(CharArray &d) : data(d) {
 }
 
-void Object::setData(const unsigned char*d, int size, bool doCopy) {
-   data.assign(d, size, doCopy);
+void Object::setData(const unsigned char*d, int size) {
+   data.assign(d, size);
 }
 
 void Object::setData(CharArray &d) {
@@ -39,8 +39,8 @@ bool Object::checkSize(int offset) {
    return data.checkSize(offset);
 }
 
-Section::Section(const unsigned char *data, bool doCopy) {
-   setData(data, getLength(data), doCopy);
+Section::Section(const unsigned char *data) {
+   setData(data, getLength(data));
 }
 
 TableId Section::getTableId() const {

@@ -269,7 +269,7 @@ public:
    Object();
    Object(CharArray &d);
    //can only be called once since data is immutable
-   void setData(const unsigned char*data, int size, bool doCopy=true);
+   void setData(const unsigned char*data, int size);
    CharArray getData() { return data; }
    //returns the valid flag which indicates if data is all right or errors have been encountered
    bool isValid() { return data.isValid(); }
@@ -287,7 +287,7 @@ protected:
 class Section : public Object {
 public:
    //convenience: sets data and parses if doParse
-   Section(const unsigned char *data, bool doCopy=true);
+   Section(const unsigned char *data);
    Section() {}
    TableId getTableId() const;
    virtual int getLength();
@@ -299,7 +299,7 @@ public:
 class CRCSection : public Section {
 public:
    //convenience: sets data and parses if doParse
-   CRCSection(const unsigned char *data, bool doCopy=true) : Section(data, doCopy) {}
+   CRCSection(const unsigned char *data) : Section(data) {}
    CRCSection() {}
    bool isCRCValid();
    //convenience: isValid+CheckParse
@@ -310,7 +310,7 @@ public:
    (section_syntax_indicator==1) */
 class NumberedSection : public CRCSection {
 public:
-   NumberedSection(const unsigned char *data, bool doCopy=true) : CRCSection(data, doCopy) {}
+   NumberedSection(const unsigned char *data) : CRCSection(data) {}
    NumberedSection() {}
    int getTableIdExtension() const;
    bool getCurrentNextIndicator() const;
@@ -326,7 +326,7 @@ public:
    (section_syntax_indicator==1) */
 class VersionedSection : public NumberedSection {
 public:
-   VersionedSection(const unsigned char *data, bool doCopy=true) : NumberedSection(data, doCopy) {}
+   VersionedSection(const unsigned char *data) : NumberedSection(data) {}
    VersionedSection() {}
    int getProtocolVersion() const;
 };
