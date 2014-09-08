@@ -197,6 +197,20 @@ ChannelPtr cChannelManager::GetByTransportAndService(uint16_t network, uint16_t 
   return cChannel::EmptyChannel;
 }
 
+ChannelPtr cChannelManager::GetByFrequencyAndService(unsigned int frequency, uint16_t service)
+{
+  CLockObject lock(m_mutex);
+
+  for (ChannelVector::const_iterator itChannel = m_channels.begin(); itChannel != m_channels.end(); ++itChannel)
+  {
+    if ((*itChannel)->GetTransponder().FrequencyHz()  == frequency &&
+        (*itChannel)->ID().Sid()  == service)
+      return (*itChannel);
+  }
+
+  return cChannel::EmptyChannel;
+}
+
 ChannelVector cChannelManager::GetCurrent(void) const
 {
   CLockObject lock(m_mutex);
