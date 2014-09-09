@@ -160,14 +160,14 @@ private:
    * Accumulate resources of all active filters (those who are waiting on a call
    * to GetSection()).
    */
-  PidResourceSet GetActiveResources(void);
+  PidResourceSet GetActiveResources(void) const;
 
   /*!
    * Called when a section has been read from the device.
    */
   void HandleSection(const PidResourcePtr& resource);
 
-  std::string ToString(const PidResourceSet& resources);
+  static std::string ToString(const PidResourceSet& resources);
 
   ResourceRequestVector    m_activePollRequests;
   std::set<const cFilter*> m_registeredFilters;

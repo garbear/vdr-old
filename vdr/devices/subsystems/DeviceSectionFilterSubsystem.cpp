@@ -270,7 +270,7 @@ PidResourcePtr cDeviceSectionFilterSubsystem::GetOpenResource(const PidResourceP
   return PidResourcePtr();
 }
 
-PidResourceSet cDeviceSectionFilterSubsystem::GetActiveResources(void)
+PidResourceSet cDeviceSectionFilterSubsystem::GetActiveResources(void) const
 {
   CLockObject lock(m_mutex);
 
