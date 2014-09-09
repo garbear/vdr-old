@@ -40,15 +40,17 @@ class cFilter;
  * The section filter subsystem is responsible for distributing DVB sections
  * from the device to a collection of filters. A section can come from one of
  * several resources, for example from a DVB demux file (/dev/dvb/adapterX/demuxY).
+ *
+ * This class makes use of a subclass, cResourceRequest, described below.
  */
 class cDeviceSectionFilterSubsystem : protected cDeviceSubsystem, protected PLATFORM::CThread
 {
 private:
   /*!
-   * When a client calls cDeviceSectionFilterSubsystem::GetSection(), a request
-   * to poll the specified resources is submitted to the polling thread. When
-   * one of the resources is ready to provide a section, it will be placed in
-   * m_activeResource and WaitForSection() will finish blocking.
+   * When a client calls cDeviceSectionFilterSubsystem::GetSection() below, a
+   * request to poll the specified resources is submitted to the polling thread.
+   * When one of the resources is ready to provide a section, it will be placed
+   * in m_activeResource and WaitForSection() will finish blocking.
    */
   class cResourceRequest
   {
@@ -163,7 +165,10 @@ private:
   PidResourceSet GetActiveResources(void) const;
 
   /*!
-   * Called when a section has been read from the device.
+   * Called when a section has been read from the device. As a side effect, all
+   * poll requests waiting on this resource are removed from
+   * m_activePollRequests so that they may not handle a second section before
+   * expiring.
    */
   void HandleSection(const PidResourcePtr& resource);
 

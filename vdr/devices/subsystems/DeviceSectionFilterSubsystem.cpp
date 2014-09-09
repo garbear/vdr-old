@@ -141,7 +141,15 @@ bool cDeviceSectionFilterSubsystem::GetSection(const PidResourceSet& filterResou
   if (!Channel()->HasLock())
     return false;
 
-  // Create a new request to poll filter resources
+  // Create a new request to poll filter resources. It will be polled until:
+  //
+  //   - Polling thread: One of its resources has received a section and is
+  //                     ready to be read, or thread is aborted.
+  //   - This thread:    WaitForSection() times out in this thread
+  //
+  // Because a possible race exists between these conditions, we need to check
+  // for both of these invariants when reading the resource.
+
   shared_ptr<cResourceRequest> pollRequest = shared_ptr<cResourceRequest>(new cResourceRequest(filterResources));
 
   // Record it so that Process() can access it
@@ -153,30 +161,41 @@ bool cDeviceSectionFilterSubsystem::GetSection(const PidResourceSet& filterResou
   // Block until a resources receives a section
   const bool bTimedOut = !pollRequest->WaitForSection();
 
-  // Remove poll request so that Process() doesn't invoke it twice
   {
     CLockObject lock(m_mutex);
-    ResourceRequestVector::iterator it = std::find(m_activePollRequests.begin(), m_activePollRequests.end(), pollRequest);
-    assert(it != m_activePollRequests.end());
-    m_activePollRequests.erase(it);
-  }
 
-  // Read a resource if one is ready to be read
-  if (pollRequest->GetActiveResource())
-  {
-    if (ReadResource(pollRequest->GetActiveResource(), data))
+    const bool bAborted  = !pollRequest->GetActiveResource();
+
+    // The polling thread will autonomously remove the poll request after being
+    // notified that it's ready to receive a section.
+    ResourceRequestVector::iterator it = std::find(m_activePollRequests.begin(), m_activePollRequests.end(), pollRequest);
+    if (bAborted)
     {
-      pid = pollRequest->GetActiveResource()->Pid();
-      return true;
+      assert(it != m_activePollRequests.end());
+      m_activePollRequests.erase(it);
     }
     else
     {
-      dsyslog("Failed to read section with PIDs %s: failed to read from section filter resource", ToString(filterResources).c_str());
+      assert(it == m_activePollRequests.end());
     }
-  }
-  else
-  {
-    dsyslog("Failed to read section with PIDs %s: %s", ToString(filterResources).c_str(), bTimedOut ? "timed out" : "aborted");
+
+    // Must check both invariants
+    if (!bTimedOut && !bAborted)
+    {
+      if (ReadResource(pollRequest->GetActiveResource(), data))
+      {
+        pid = pollRequest->GetActiveResource()->Pid();
+        return true;
+      }
+      else
+      {
+        dsyslog("Failed to read section with PIDs %s: failed to read from section filter resource", ToString(filterResources).c_str());
+      }
+    }
+    else
+    {
+      dsyslog("Failed to read section with PIDs %s: %s", ToString(filterResources).c_str(), bTimedOut ? "timed out" : "aborted");
+    }
   }
 
   return false;
@@ -290,6 +309,9 @@ void cDeviceSectionFilterSubsystem::HandleSection(const PidResourcePtr& resource
 {
   CLockObject lock(m_mutex);
 
+  // Fix for erasing requests from m_activePollRequests mid-loop
+  ResourceRequestVector expiredPollRequests;
+
   // Look for any poll requests that were waiting on the resource
   for (ResourceRequestVector::iterator it = m_activePollRequests.begin(); it != m_activePollRequests.end(); ++it)
   {
@@ -299,7 +321,17 @@ void cDeviceSectionFilterSubsystem::HandleSection(const PidResourcePtr& resource
     {
       // Found a poll request waiting on the resource, notify clients
       (*it)->HandleSection(resource);
+
+      // Don't service this request twice
+      expiredPollRequests.push_back(*it);
     }
+  }
+
+  for (ResourceRequestVector::iterator it = expiredPollRequests.begin(); it != expiredPollRequests.end(); ++it)
+  {
+    ResourceRequestVector::iterator it2 = std::find(m_activePollRequests.begin(), m_activePollRequests.end(), *it);
+    assert(it2 != m_activePollRequests.end());
+    m_activePollRequests.erase(it2);
   }
 }
 
