@@ -62,11 +62,13 @@ void cSchedule::AddEvent(const EventPtr& event)
     existingEvent->SetTableID(event->TableID());
     existingEvent->SetComponents(const_cast<CEpgComponents*>(event->Components()));
     existingEvent->FixEpgBugs();
+    dsyslog("updating event '%d' table %p - %s", event->EventID(), this, event->Title().c_str());
   }
   else
   {
     event->schedule = this;
     m_events.push_back(event);
+    dsyslog("adding event '%d' table %p - %s", event->EventID(), this, event->Title().c_str());
     HashEvent(event.get());
   }
 }

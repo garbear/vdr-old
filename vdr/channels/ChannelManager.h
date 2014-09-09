@@ -71,6 +71,8 @@ public:
   ChannelPtr GetByChannelID(const cChannelID& channelID) const;
   ChannelPtr GetByChannelUID(uint32_t channelUid) const;
   ChannelPtr GetByTransportAndService(uint16_t network, uint16_t transport, uint16_t service);
+  ChannelPtr GetByFrequencyAndATSCSourceId(unsigned int frequency, uint32_t sourceId);
+
   ChannelVector GetCurrent(void) const;
   size_t ChannelCount() const;
 

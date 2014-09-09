@@ -54,6 +54,7 @@
 #define CHANNEL_ID_XML_ATTR_NID           "networkid"
 #define CHANNEL_ID_XML_ATTR_TSID          "transportstreamid"
 #define CHANNEL_ID_XML_ATTR_SID           "serviceid"
+#define CHANNEL_ID_XML_ATTR_ATSC_SID      "source"
 
 #define TRANSPONDER_XML_ATTR_FREQUENCY    "frequency"
 #define TRANSPONDER_XML_ATTR_SYMBOL_RATE  "symbolrate"

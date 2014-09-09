@@ -171,12 +171,12 @@ bool cDeviceSectionFilterSubsystem::GetSection(const PidResourceSet& filterResou
     }
     else
     {
-      dsyslog("Failed to read section: failed to read from section filter resource");
+      dsyslog("Failed to read section with PIDs %s: failed to read from section filter resource", ToString(filterResources).c_str());
     }
   }
   else
   {
-    dsyslog("Failed to read section: %s", bTimedOut ? "timed out" : "aborted");
+    dsyslog("Failed to read section with PIDs %s: %s", ToString(filterResources).c_str(), bTimedOut ? "timed out" : "aborted");
   }
 
   return false;
@@ -301,6 +301,23 @@ void cDeviceSectionFilterSubsystem::HandleSection(const PidResourcePtr& resource
       (*it)->HandleSection(resource);
     }
   }
+}
+
+std::string cDeviceSectionFilterSubsystem::ToString(const PidResourceSet& resources)
+{
+  std::string retval;
+
+  for (PidResourceSet::const_iterator it = resources.begin(); it != resources.end(); ++it)
+  {
+    char buf[16];
+    snprintf(buf, 16, "[%u] ", (*it)->Pid());
+    retval.append(buf);
+  }
+
+  if (resources.empty())
+    return "[none]";
+
+  return retval.substr(0, retval.size() - 1);
 }
 
 }

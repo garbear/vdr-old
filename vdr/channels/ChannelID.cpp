@@ -36,15 +36,17 @@ cChannelID::cChannelID(uint16_t nid  /* = 0 */,
                        uint16_t sid  /* = 0 */)
  : m_nid(nid),
    m_tsid(tsid),
-   m_sid(sid)
+   m_sid(sid),
+   m_atscSourceId(ATSC_SOURCE_ID_NONE)
 {
 }
 
 bool cChannelID::operator==(const cChannelID &rhs) const
 {
-  return m_nid    == rhs.m_nid    &&
-         m_tsid   == rhs.m_tsid   &&
-         m_sid    == rhs.m_sid;
+  return m_nid          == rhs.m_nid  &&
+         m_tsid         == rhs.m_tsid &&
+         m_sid          == rhs.m_sid  &&
+         m_atscSourceId == rhs.m_atscSourceId;
 }
 
 bool cChannelID::IsValid(void) const
@@ -57,6 +59,11 @@ void cChannelID::SetID(uint16_t nid, uint16_t tsid, uint16_t sid)
   m_nid  = nid;
   m_tsid = tsid;
   m_sid  = sid;
+}
+
+void cChannelID::SetATSCSourceID(uint16_t sourceId)
+{
+  m_atscSourceId = sourceId;
 }
 
 bool cChannelID::Serialise(TiXmlNode* node) const
@@ -76,6 +83,9 @@ bool cChannelID::Serialise(TiXmlNode* node) const
 
   if (m_sid != 0)
     elem->SetAttribute(CHANNEL_ID_XML_ATTR_SID, m_sid);
+
+  if (m_atscSourceId >= 0)
+    elem->SetAttribute(CHANNEL_ID_XML_ATTR_ATSC_SID, m_atscSourceId);
 
   return true;
 }
@@ -97,6 +107,9 @@ bool cChannelID::Deserialise(const TiXmlNode* node)
 
   const char *sid = elem->Attribute(CHANNEL_ID_XML_ATTR_SID);
   m_sid = sid ? StringUtils::IntVal(sid) : 0;
+
+  const char *source = elem->Attribute(CHANNEL_ID_XML_ATTR_ATSC_SID);
+  m_atscSourceId = source ? StringUtils::IntVal(source) : ATSC_SOURCE_ID_NONE;
 
   return true;
 }

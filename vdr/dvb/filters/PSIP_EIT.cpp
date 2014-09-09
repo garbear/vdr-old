@@ -22,6 +22,9 @@
  */
 
 #include "PSIP_EIT.h"
+#include "channels/ChannelManager.h"
+#include "devices/DeviceManager.h"
+#include "devices/subsystems/DeviceChannelSubsystem.h"
 #include "utils/DateTime.h"
 #include "utils/log/Log.h"
 #include "utils/StringUtils.h"
@@ -80,7 +83,7 @@ bool cPsipEit::ScanEvents(iFilterCallback* callback, unsigned int gpsUtcOffset)
         CDateTime startTimeGps(psipEitEvent.getStartTime());
 
         CDateTime startTimePosix = startTimeGps + (gpsEpoch - posixEpoch) - CDateTimeSpan(0, 0, 0, gpsUtcOffset);
-        thisEvent->SetStartTime(startTimePosix.GetAsUTCDateTime());
+        thisEvent->SetStartTime(startTimePosix);
 
         // Set IDs and duration
         thisEvent->SetTableID(psipEit.getTableId());
@@ -98,7 +101,12 @@ bool cPsipEit::ScanEvents(iFilterCallback* callback, unsigned int gpsUtcOffset)
 
         thisEvent->SetTitle(StringUtils::Join(titleStrings, "/"));
 
-        callback->OnEventScanned(thisEvent);
+        DevicePtr device = cDeviceManager::Get().GetDevice(0); //XXX
+        ChannelPtr channel = cChannelManager::Get().GetByFrequencyAndATSCSourceId(device->Channel()->GetCurrentlyTunedTransponder().FrequencyHz(), psipEit.getSourceId());
+        if (channel)
+          callback->OnEventScanned(channel->ID(), thisEvent);
+        else
+          dsyslog("failed to find channel for event - freq=%u source=%u", device->Channel()->GetCurrentlyTunedTransponder().FrequencyHz(), psipEit.getSourceId());
         numEvents++;
       }
     }

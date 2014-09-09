@@ -197,6 +197,20 @@ ChannelPtr cChannelManager::GetByTransportAndService(uint16_t network, uint16_t 
   return cChannel::EmptyChannel;
 }
 
+ChannelPtr cChannelManager::GetByFrequencyAndATSCSourceId(unsigned int frequency, uint32_t sourceId)
+{
+  CLockObject lock(m_mutex);
+
+  for (ChannelVector::const_iterator itChannel = m_channels.begin(); itChannel != m_channels.end(); ++itChannel)
+  {
+    if ((*itChannel)->GetTransponder().FrequencyHz()  == frequency &&
+        (*itChannel)->ID().ATSCSourceId()  == sourceId)
+      return (*itChannel);
+  }
+
+  return cChannel::EmptyChannel;
+}
+
 ChannelVector cChannelManager::GetCurrent(void) const
 {
   CLockObject lock(m_mutex);

@@ -28,6 +28,8 @@ class TiXmlNode;
 namespace VDR
 {
 
+#define ATSC_SOURCE_ID_NONE (-1)
+
 class cChannelID
 {
 public:
@@ -47,8 +49,10 @@ public:
   uint16_t Nid()  const { return m_nid; }
   uint16_t Tsid() const { return m_tsid; }
   uint16_t Sid()  const { return m_sid; }
+  int32_t  ATSCSourceId(void) const { return m_atscSourceId; }
 
   void SetID(uint16_t nid, uint16_t tsid, uint16_t sid);
+  void SetATSCSourceID(uint16_t sourceId);
 
   bool Serialise(TiXmlNode* node) const;
   bool Deserialise(const TiXmlNode* node);
@@ -67,6 +71,7 @@ private:
   uint16_t        m_nid;  // Actually the "original" network ID
   uint16_t        m_tsid; // Transport stream ID
   uint16_t        m_sid;  // Service ID
+  int32_t         m_atscSourceId; // Source ID for ATSC
 };
 
 }

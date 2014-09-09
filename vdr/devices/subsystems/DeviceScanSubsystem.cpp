@@ -167,12 +167,9 @@ void cDeviceScanSubsystem::OnChannelNamesScanned(const ChannelPtr& channel)
   cChannelManager::Get().MergeChannelNamesAndModulation(channel);
 }
 
-void cDeviceScanSubsystem::OnEventScanned(const EventPtr& event)
+void cDeviceScanSubsystem::OnEventScanned(const cChannelID& channelId, const EventPtr& event)
 {
-  /* TODO
-  if (Device()->Channel()->GetCurrentlyTunedTransponder())
-    cSchedulesLock::AddEvent(Device()->Channel()->GetCurrentlyTunedTransponder()->ID(), event);
-  */
+  cSchedulesLock::AddEvent(channelId, event);
 }
 
 }
