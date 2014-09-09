@@ -83,7 +83,7 @@ bool cPsipEit::ScanEvents(iFilterCallback* callback, unsigned int gpsUtcOffset)
         CDateTime startTimeGps(psipEitEvent.getStartTime());
 
         CDateTime startTimePosix = startTimeGps + (gpsEpoch - posixEpoch) - CDateTimeSpan(0, 0, 0, gpsUtcOffset);
-        thisEvent->SetStartTime(startTimePosix.GetAsUTCDateTime());
+        thisEvent->SetStartTime(startTimePosix);
 
         // Set IDs and duration
         thisEvent->SetTableID(psipEit.getTableId());
