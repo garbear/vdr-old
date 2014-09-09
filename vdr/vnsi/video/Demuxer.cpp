@@ -115,8 +115,11 @@ void cVNSIDemuxer::Close()
     cDeviceManager::Get().CloseVideoInput(m_VideoBuffer);
     delete m_VideoBuffer;
     m_VideoBuffer = NULL;
-    m_tunerHandle->Release();
-    m_tunerHandle = cTunerHandle::EmptyHandle;
+    if (m_tunerHandle)
+    {
+      m_tunerHandle->Release();
+      m_tunerHandle = cTunerHandle::EmptyHandle;
+    }
   }
 
   if (m_CurrentChannel)
