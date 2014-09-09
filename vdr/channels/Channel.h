@@ -136,6 +136,8 @@ public:
 
   const cChannelID& ID(void) const { return m_channelId; }
   void SetId(uint16_t nid, uint16_t tsid, uint16_t sid);
+  const int32_t ATSCSourceID(void) const { return m_channelId.ATSCSourceId(); }
+  void SetATSCSourceId(int32_t id) { m_channelId.SetATSCSourceID(id); }
   uint32_t UID(void) const { return m_channelId.Hash(); }
 
   const std::string& Name(void)       const { return m_name; }

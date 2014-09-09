@@ -112,11 +112,12 @@ bool cPsipVct::ScanChannels(iFilterCallback* callback)
         // Transport Stream ID (TID) and program number / service ID (SID)
         // TODO: SID is 0xFFFF for analog channels
         channel->SetId(0, channelInfo.getTSID(), channelInfo.getServiceId());
+        channel->SetATSCSourceId(channelInfo.getSourceID());
 
-        dsyslog("VCT: Found %s: %s (%d.%d, TSID=%u, SID=%u)",
+        dsyslog("VCT: Found %s: %s (%d.%d, TSID=%u, SID=%u, source=%u)",
             channelInfo.isHidden() ? "hidden channel" : "channel", channel->ShortName().c_str(),
             channelInfo.getMajorNumber(), channelInfo.getMinorNumber(),
-            channel->ID().Tsid(), channel->ID().Sid());
+            channel->ID().Tsid(), channel->ID().Sid(), channelInfo.getSourceID());
 
         if (channelInfo.isHidden())
           continue;

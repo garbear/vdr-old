@@ -102,9 +102,11 @@ bool cPsipEit::ScanEvents(iFilterCallback* callback, unsigned int gpsUtcOffset)
         thisEvent->SetTitle(StringUtils::Join(titleStrings, "/"));
 
         DevicePtr device = cDeviceManager::Get().GetDevice(0); //XXX
-        ChannelPtr channel = cChannelManager::Get().GetByFrequencyAndService(device->Channel()->GetCurrentlyTunedTransponder().FrequencyHz(), psipEit.getSourceId());
+        ChannelPtr channel = cChannelManager::Get().GetByFrequencyAndATSCSourceId(device->Channel()->GetCurrentlyTunedTransponder().FrequencyHz(), psipEit.getSourceId());
         if (channel)
           callback->OnEventScanned(channel->ID(), thisEvent);
+        else
+          dsyslog("failed to find channel for event - freq=%u source=%u", device->Channel()->GetCurrentlyTunedTransponder().FrequencyHz(), psipEit.getSourceId());
         numEvents++;
       }
     }
