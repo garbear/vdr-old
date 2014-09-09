@@ -253,7 +253,7 @@ PidResourcePtr cDvbSectionFilterSubsystem::Poll(const PidResourceSet& filterReso
     if (poll(vecPfds.data(), vecPfds.size(), POLL_TIMEOUT_MS) > 0)
     {
       // Look for fd that signaled poll()
-      int signaledFd = -1;
+      int signaledFd = FILE_DESCRIPTOR_INVALID;
       for (unsigned int i = 0; i < vecPfds.size(); i++)
       {
         if (vecPfds[i].revents & (POLLIN | POLLERR))
@@ -264,7 +264,7 @@ PidResourcePtr cDvbSectionFilterSubsystem::Poll(const PidResourceSet& filterReso
       }
 
       // Look for handle that corresponds to fd
-      if (signaledFd != -1)
+      if (signaledFd != FILE_DESCRIPTOR_INVALID)
       {
         for (PidResourceSet::const_iterator it = filterResources.begin(); it != filterResources.end(); ++it)
         {
