@@ -27,6 +27,7 @@
 #include "devices/subsystems/DeviceCommonInterfaceSubsystem.h"
 #include "devices/subsystems/DeviceReceiverSubsystem.h"
 #include "devices/subsystems/DeviceVideoFormatSubsystem.h"
+#include "epg/EPGScanner.h"
 #include "channels/Channel.h"
 #include "settings/Settings.h"
 #include "utils/log/Log.h"
@@ -40,7 +41,8 @@ namespace VDR
 
 cDeviceManager::cDeviceManager()
  : m_devicesReady(0),
-   m_bAllDevicesReady(false)
+   m_bAllDevicesReady(false),
+   m_epgScan(new cEPGScanner)
 {
 }
 
@@ -52,6 +54,7 @@ cDeviceManager &cDeviceManager::Get()
 
 cDeviceManager::~cDeviceManager()
 {
+  delete m_epgScan;
 }
 
 size_t cDeviceManager::Initialise(void)
@@ -90,7 +93,9 @@ bool cDeviceManager::WaitForAllDevicesReady(unsigned int timeout /* = 0 */)
   if (m_devices.empty())
     return false;
 
-  return m_devicesReadyCondition.Wait(m_mutex, m_bAllDevicesReady, timeout * 1000);
+  bool retval = m_devicesReadyCondition.Wait(m_mutex, m_bAllDevicesReady, timeout * 1000);
+  m_epgScan->Start();
+  return retval;
 }
 
 DevicePtr cDeviceManager::GetDevice(unsigned int index)
