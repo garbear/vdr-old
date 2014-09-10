@@ -445,6 +445,8 @@ bool cChannel::Serialise(TiXmlNode* node) const
   channelElement->SetAttribute(CHANNEL_XML_ATTR_SHORTNAME, m_shortName);
   channelElement->SetAttribute(CHANNEL_XML_ATTR_PROVIDER,  m_provider);
   // m_portalName
+  channelElement->SetAttribute(CHANNEL_XML_ATTR_NUMBER,    m_number);
+  channelElement->SetAttribute(CHANNEL_XML_ATTR_SUBNUMBER, m_subNumber);
 
   if (m_videoStream.vpid != 0)
   {
@@ -625,6 +627,14 @@ bool cChannel::Deserialise(const TiXmlNode* node)
   const char *provider = elem->Attribute(CHANNEL_XML_ATTR_PROVIDER);
   if (provider != NULL)
     m_provider = provider;
+
+  const char *number = elem->Attribute(CHANNEL_XML_ATTR_NUMBER);
+  if (number != NULL)
+    m_number = StringUtils::IntVal(number);
+
+  const char *subNumber = elem->Attribute(CHANNEL_XML_ATTR_SUBNUMBER);
+  if (subNumber != NULL)
+    m_subNumber = subNumber;
 
   const TiXmlNode *vpidNode = elem->FirstChild(CHANNEL_XML_ELM_VPID);
   if (vpidNode)

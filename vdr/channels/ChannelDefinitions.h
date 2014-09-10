@@ -40,6 +40,7 @@
 #define CHANNEL_XML_ATTR_SHORTNAME        "shortname"
 #define CHANNEL_XML_ATTR_PROVIDER         "provider"
 #define CHANNEL_XML_ATTR_NUMBER           "number"
+#define CHANNEL_XML_ATTR_SUBNUMBER        "subnumber"
 #define CHANNEL_XML_ATTR_PPID             "pcr-pid"  // Program clock reference packet ID
 #define CHANNEL_XML_ATTR_VTYPE            "type"     // Video stream type
 #define CHANNEL_XML_ATTR_ALANG            "lang"     // Audio stream language
