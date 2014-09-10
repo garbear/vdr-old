@@ -82,6 +82,9 @@ bool cPsipVct::ScanChannels(iFilterCallback* callback)
           isyslog("TEST: found name descriptor %s length %d", strDecoded.c_str(), dtor->getLength());
         }
 
+        // Number and subnumber
+        channel->SetNumber(channelInfo.getMajorNumber(), channelInfo.getMinorNumber());
+
         // Transponder and modulation mode
         cTransponder transponder(GetTransponder());
 
@@ -114,9 +117,9 @@ bool cPsipVct::ScanChannels(iFilterCallback* callback)
         channel->SetId(0, channelInfo.getTSID(), channelInfo.getServiceId());
         channel->SetATSCSourceId(channelInfo.getSourceID());
 
-        dsyslog("VCT: Found %s: %s (%d.%d, TSID=%u, SID=%u, source=%u)",
-            channelInfo.isHidden() ? "hidden channel" : "channel", channel->ShortName().c_str(),
-            channelInfo.getMajorNumber(), channelInfo.getMinorNumber(),
+        dsyslog("VCT: %s: %s (%d-%d, TSID=%u, SID=%u, source=%u)",
+            channelInfo.isHidden() ? "Skipping hidden channel" : "Found channel",
+            channel->ShortName().c_str(), channel->Number(), channel->SubNumber(),
             channel->ID().Tsid(), channel->ID().Sid(), channelInfo.getSourceID());
 
         if (channelInfo.isHidden())

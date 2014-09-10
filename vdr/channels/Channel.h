@@ -186,8 +186,10 @@ public:
         cTransponder& GetTransponder(void)             { return m_transponder; }
   void SetTransponder(const cTransponder& transponder) { m_transponder = transponder; }
 
-  unsigned int Number(void) const { return m_transponder.ChannelNumber(); }
-  unsigned int SubNumber(void) const { return m_channelId.Sid(); }
+  unsigned int Number(void) const { return m_number; }
+  unsigned int SubNumber(void) const { return m_subNumber; }
+
+  void SetNumber(unsigned int number, unsigned int subNumber = 0);
 
   /*!
    * \brief Returns the transponder frequency in MHz, plus the polarization in
@@ -216,6 +218,9 @@ private:
   std::string                 m_shortName;
   std::string                 m_provider;
   std::string                 m_portalName;
+
+  unsigned int                m_number;
+  unsigned int                m_subNumber;
 
   VideoStream                 m_videoStream;     // Max 1
   std::vector<AudioStream>    m_audioStreams;    // Max 32

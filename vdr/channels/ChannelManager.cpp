@@ -131,6 +131,8 @@ void cChannelManager::MergeChannelNamesAndModulation(const ChannelPtr& channel)
                             channel->ShortName(),
                             channel->Provider());
 
+      (*itChannel)->SetNumber(channel->Number(), channel->SubNumber());
+
       fe_modulation_t modulation = channel->GetTransponder().Modulation();
       if (modulation != (*itChannel)->GetTransponder().Modulation())
       {
