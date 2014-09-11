@@ -634,7 +634,7 @@ bool cChannel::Deserialise(const TiXmlNode* node)
 
   const char *subNumber = elem->Attribute(CHANNEL_XML_ATTR_SUBNUMBER);
   if (subNumber != NULL)
-    m_subNumber = subNumber;
+    m_subNumber = StringUtils::IntVal(subNumber);
 
   const TiXmlNode *vpidNode = elem->FirstChild(CHANNEL_XML_ELM_VPID);
   if (vpidNode)
