@@ -170,6 +170,7 @@ set(VDR_SRCS
 	vdr/epg/EPGHandler.cpp
 	vdr/epg/EPGHandlers.cpp
 	vdr/epg/EPGScanner.cpp
+	vdr/epg/EPGStringifier.cpp
 	vdr/epg/Event.cpp
 	vdr/epg/Schedule.cpp
 	vdr/epg/Schedules.cpp
