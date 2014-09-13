@@ -37,7 +37,7 @@ class iFilterCallback
 public:
   virtual void OnChannelPropsScanned(const ChannelPtr& channel) { }
   virtual void OnChannelNamesScanned(const ChannelPtr& channel) { }
-  virtual void OnEventScanned(const cChannelID& channelId, const EventPtr& event) { }
+  virtual void OnEventScanned(const EventPtr& event) { }
 
   virtual ~iFilterCallback(void) { }
 };

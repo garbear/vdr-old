@@ -84,11 +84,10 @@ bool cPsipEit::ScanEvents(iFilterCallback* callback, unsigned int gpsUtcOffset)
 
         CDateTime startTimePosix = startTimeGps + (gpsEpoch - posixEpoch) - CDateTimeSpan(0, 0, 0, gpsUtcOffset);
         thisEvent->SetStartTime(startTimePosix);
+        thisEvent->SetEndTime(startTimePosix + CDateTimeSpan(0, 0, 0, psipEitEvent.getLengthInSeconds()));
 
-        // Set IDs and duration
         thisEvent->SetTableID(psipEit.getTableId());
         thisEvent->SetVersion(psipEit.getVersionNumber());
-        thisEvent->SetDuration(psipEitEvent.getLengthInSeconds());
 
         vector<string> titleStrings;
         SI::PSIPString psipString;
@@ -101,12 +100,15 @@ bool cPsipEit::ScanEvents(iFilterCallback* callback, unsigned int gpsUtcOffset)
 
         thisEvent->SetTitle(StringUtils::Join(titleStrings, "/"));
 
-        DevicePtr device = cDeviceManager::Get().GetDevice(0); //XXX
-        ChannelPtr channel = cChannelManager::Get().GetByFrequencyAndATSCSourceId(device->Channel()->GetCurrentlyTunedTransponder().FrequencyHz(), psipEit.getSourceId());
+        ChannelPtr channel = cChannelManager::Get().GetByFrequencyAndATSCSourceId(GetTransponder().FrequencyHz(), psipEit.getSourceId());
         if (channel)
-          callback->OnEventScanned(channel->ID(), thisEvent);
+          thisEvent->SetChannelID(channel->ID());
         else
-          dsyslog("failed to find channel for event - freq=%u source=%u", device->Channel()->GetCurrentlyTunedTransponder().FrequencyHz(), psipEit.getSourceId());
+          dsyslog("failed to find channel for event - freq=%u source=%u", GetTransponder().FrequencyHz(), psipEit.getSourceId());
+
+        thisEvent->FixEpgBugs();
+
+        callback->OnEventScanned(thisEvent);
         numEvents++;
       }
     }
