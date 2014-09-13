@@ -27,7 +27,7 @@
 #include "Config.h"
 #include "devices/Remux.h" // For MAX*PIDS
 #include "epg/Event.h"
-#include "epg/Components.h"
+#include "epg/Component.h"
 #include "utils/log/Log.h"
 #include "utils/XBMCTinyXML.h"
 
@@ -77,21 +77,32 @@ cRecordingInfo::cRecordingInfo(ChannelPtr channel, const EventPtr& event)
     // Since the EPG data's component records can carry only a single
     // language code, let's see whether the channel's PID data has
     // more information:
-    CEpgComponents *Components = (CEpgComponents *)m_event->Components();
-    if (!Components)
-      Components = new CEpgComponents;
+    vector<CEpgComponent> components = m_event->Components();
     for (int i = 0; i < MAXAPIDS; i++)
     {
       string alang = m_channel->GetAudioStream(i).alang;
       if (!alang.empty())
       {
-        CEpgComponent *Component = Components->GetComponent(i, 2, 3);
-        if (!Component)
-          Components->SetComponent(COMPONENT_ADD_NEW, 2, 3, alang.c_str(), NULL);
-        else
-          Component->SetLanguage(alang);
+        // TODO: Magic constants
+        const uint8_t stream = 2;
+        const uint8_t type   = 3;
+
+        bool bFoundComponent = false;
+        for (vector<CEpgComponent>::iterator itComponent = components.begin(); itComponent != components.end(); ++itComponent)
+        {
+          CEpgComponent& component = *itComponent;
+          if (component.Stream() == stream && component.Type() == type)
+          {
+            component.SetLanguage(alang);
+            bFoundComponent = true;
+          }
+        }
+
+        if (!bFoundComponent)
+          components.push_back(CEpgComponent(stream, type, alang, ""));
       }
     }
+
     // There's no "multiple languages" for Dolby Digital tracks, but
     // we do the same procedure here, too, in case there is no component
     // information at all:
@@ -100,30 +111,58 @@ cRecordingInfo::cRecordingInfo(ChannelPtr channel, const EventPtr& event)
       string dlang = m_channel->GetDataStream(i).dlang;
       if (!dlang.empty())
       {
-        CEpgComponent *Component = Components->GetComponent(i, 4, 0); // AC3 component according to the DVB standard
-        if (!Component)
-          Component = Components->GetComponent(i, 2, 5); // fallback "Dolby" component according to the "Premiere pseudo standard"
-        if (!Component)
-          Components->SetComponent(COMPONENT_ADD_NEW, 2, 5, dlang.c_str(), NULL);
-        else
-          Component->SetLanguage(dlang);
+        // TODO: Magic constants
+        const uint8_t streamAC3 = 4; // AC3 component according to the DVB standard
+        const uint8_t typeAC3   = 0; // AC3 component according to the DVB standard
+
+        const uint8_t streamDolby = 2; // fallback "Dolby" component according to the "Premiere pseudo standard"
+        const uint8_t typeDolby   = 5; // fallback "Dolby" component according to the "Premiere pseudo standard"
+
+        bool bFoundComponent = false;
+        for (vector<CEpgComponent>::iterator itComponent = components.begin(); itComponent != components.end(); ++itComponent)
+        {
+          CEpgComponent& component = *itComponent;
+          if ((component.Stream() == streamAC3   && component.Type() == typeAC3)  ||
+              (component.Stream() == streamDolby && component.Type() == typeDolby))
+          {
+            component.SetLanguage(dlang);
+            bFoundComponent = true;
+            break;
+          }
+        }
+
+        if (!bFoundComponent)
+          components.push_back(CEpgComponent(streamDolby, typeDolby, dlang, ""));
       }
     }
+
     // The same applies to subtitles:
     for (int i = 0; i < MAXSPIDS; i++)
     {
       string slang = m_channel->GetSubtitleStream(i).slang;
       if (!slang.empty())
       {
-        CEpgComponent *Component = Components->GetComponent(i, 3, 3);
-        if (!Component)
-          Components->SetComponent(COMPONENT_ADD_NEW, 3, 3, slang.c_str(), NULL);
-        else
-          Component->SetLanguage(slang);
+        // TODO: Magic constants
+        const uint8_t stream = 3;
+        const uint8_t type   = 3;
+
+        bool bFoundComponent = false;
+        for (vector<CEpgComponent>::iterator itComponent = components.begin(); itComponent != components.end(); ++itComponent)
+        {
+          CEpgComponent& component = *itComponent;
+          if (component.Stream() == stream && component.Type() == type)
+          {
+            component.SetLanguage(slang);
+            bFoundComponent = true;
+          }
+        }
+
+        if (!bFoundComponent)
+          components.push_back(CEpgComponent(stream, type, slang, ""));
       }
     }
-    if (Components != m_event->Components())
-      m_event->SetComponents(Components);
+
+    m_event->SetComponents(components);
   }
 }
 
@@ -143,9 +182,9 @@ void cRecordingInfo::SetData(const char *Title, const char *ShortText, const cha
   if (!isempty(Title))
      m_event->SetTitle(Title);
   if (!isempty(ShortText))
-     m_event->SetShortText(ShortText);
+     m_event->SetPlotOutline(ShortText);
   if (!isempty(Description))
-     m_event->SetDescription(Description);
+     m_event->SetPlot(Description);
 }
 
 void cRecordingInfo::SetFramesPerSecond(double FramesPerSecond)
@@ -202,19 +241,23 @@ bool cRecordingInfo::Read(const std::string& strFilename /* = "" */)
         if (const TiXmlElement *elem = eventNode->ToElement())
         {
           if (const char* attr = elem->Attribute(RECORDING_XML_ATTR_EPG_EVENT_ID))
-            m_ownEvent->SetEventID(StringUtils::IntVal(attr));
+          {
+            EventPtr ownEvent = EventPtr(new cEvent(StringUtils::IntVal(attr)));
 
-          if (const char* attr = elem->Attribute(RECORDING_XML_ATTR_EPG_START_TIME))
-            m_ownEvent->SetStartTime(CDateTime((time_t)StringUtils::IntVal(attr)));
+            if (const char* attr = elem->Attribute(RECORDING_XML_ATTR_EPG_START_TIME))
+              ownEvent->SetStartTime(CDateTime((time_t)StringUtils::IntVal(attr)));
 
-          if (const char* attr = elem->Attribute(RECORDING_XML_ATTR_EPG_DURATION))
-            m_ownEvent->SetDuration(StringUtils::IntVal(attr));
+            if (const char* attr = elem->Attribute(RECORDING_XML_ATTR_EPG_DURATION))
+              ownEvent->SetEndTime(m_ownEvent->StartTime() + CDateTimeSpan(0, 0, 0, StringUtils::IntVal(attr)));
 
-          if (const char* attr = elem->Attribute(RECORDING_XML_ATTR_EPG_TABLE))
-            m_ownEvent->SetTableID(StringUtils::IntVal(attr));
+            if (const char* attr = elem->Attribute(RECORDING_XML_ATTR_EPG_TABLE))
+              ownEvent->SetTableID(StringUtils::IntVal(attr));
 
-          if (const char* attr = elem->Attribute(RECORDING_XML_ATTR_EPG_VERSION))
-            m_ownEvent->SetVersion(StringUtils::IntVal(attr));
+            if (const char* attr = elem->Attribute(RECORDING_XML_ATTR_EPG_VERSION))
+              ownEvent->SetVersion(StringUtils::IntVal(attr));
+
+            m_ownEvent = ownEvent;
+          }
 
           return true;
         }
@@ -261,9 +304,9 @@ bool cRecordingInfo::Write(const std::string& strFilename /* = "" */) const
   if (m_event.get() != NULL)
   {
     TiXmlElement epgElement(RECORDING_XML_ELM_EPG_EVENT);
-    epgElement.SetAttribute(RECORDING_XML_ATTR_EPG_EVENT_ID,   m_event->EventID());
+    epgElement.SetAttribute(RECORDING_XML_ATTR_EPG_EVENT_ID,   m_event->ID());
     epgElement.SetAttribute(RECORDING_XML_ATTR_EPG_START_TIME, m_event->StartTimeAsTime());
-    epgElement.SetAttribute(RECORDING_XML_ATTR_EPG_DURATION,   m_event->Duration());
+    epgElement.SetAttribute(RECORDING_XML_ATTR_EPG_DURATION,   m_event->DurationSecs());
     epgElement.SetAttribute(RECORDING_XML_ATTR_EPG_TABLE,      m_event->TableID());
     epgElement.SetAttribute(RECORDING_XML_ATTR_EPG_VERSION,    m_event->Version());
     TiXmlNode* epgNode = recordingNode->InsertEndChild(epgElement);
@@ -282,26 +325,6 @@ void cRecordingInfo::SetEvent(const EventPtr& event)
 {
   m_event = event;
   Write();
-}
-
-std::string cRecordingInfo::Title(void) const
-{
-  return m_event->Title();
-}
-
-std::string cRecordingInfo::ShortText(void) const
-{
-  return m_event->ShortText();
-}
-
-std::string cRecordingInfo::Description(void) const
-{
-  return m_event->Description();
-}
-
-const CEpgComponents* cRecordingInfo::Components(void) const
-{
-  return m_event->Components();
 }
 
 void cRecordingInfo::SetTitle(const std::string& strTitle)

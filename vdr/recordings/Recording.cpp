@@ -374,7 +374,7 @@ cRecording::cRecording(TimerPtr Timer, const EventPtr& event)
   m_hash = -1;
   // set up the actual name:
   std::string strTitle = event.get() != NULL ? event->Title() : "";
-  std::string strSubtitle = event.get() != NULL ? event->ShortText() : "";
+  std::string strSubtitle = event.get() != NULL ? event->PlotOutline() : "";
   if (strTitle.empty())
     strTitle = Timer->Channel()->Name();
   if (strSubtitle.empty())

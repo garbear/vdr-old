@@ -31,7 +31,7 @@
 #include "devices/subsystems/DeviceChannelSubsystem.h"
 #include "devices/subsystems/DeviceReceiverSubsystem.h"
 #include "epg/Event.h"
-#include "epg/Schedules.h"
+//#include "epg/ScheduleManager.h" // TODO
 #include "filesystem/Videodir.h"
 #include "settings/Settings.h"
 #include "utils/CommonMacros.h"
@@ -255,8 +255,12 @@ eTimerMatch cTimer::MatchesEvent(const EventPtr& Event, int *Overlap)
     bool UseVps = HasFlags(tfVps) && Event->HasVps();
     Matches(UseVps ? Event->Vps() : Event->StartTime(), true);
     int overlap = 0;
+
+    /* TODO
     if (UseVps)
       overlap = (m_time.Start() == Event->Vps()) ? FULLMATCH + (Event->IsRunning() ? 200 : 100) : 0;
+    */
+
     if (!overlap)
     {
       if (m_time.Start() <= Event->StartTime() && Event->EndTime() <= m_time.End())
@@ -264,7 +268,11 @@ eTimerMatch cTimer::MatchesEvent(const EventPtr& Event, int *Overlap)
       else if (m_time.End() <= Event->StartTime() || Event->EndTime() <= m_time.Start())
         overlap = 0;
       else
-        overlap = (std::min(m_time.End(), Event->EndTime()) - std::max(m_time.Start(), Event->StartTime())).GetSecondsTotal() * FULLMATCH / std::max(Event->Duration(), 1);
+      {
+        time_t myTimeStart;
+        m_time.Start().GetAsTime(myTimeStart);
+        overlap = (std::min(m_time.End(), Event->EndTime()) - std::max(myTimeStart, Event->StartTimeAsTime())).GetSecondsTotal() * FULLMATCH / std::max(Event->DurationSecs(), 1U);
+      }
     }
     if (Overlap)
       *Overlap = overlap;
@@ -302,6 +310,7 @@ time_t cTimer::EndTimeAsTime(void) const
 #define EPGLIMITBEFORE   (1 * 3600) // Time in seconds before a timer's start time and
 #define EPGLIMITAFTER    (1 * 3600) // after its stop time within which EPG events will be taken into consideration.
 
+/* TODO
 void cTimer::SetEventFromSchedule(cSchedules *Schedules)
 {
   cSchedulesLock SchedulesLock;
@@ -361,6 +370,7 @@ void cTimer::SetEventFromSchedule(cSchedules *Schedules)
         }
      }
 }
+*/
 
 void cTimer::ClearEvent(void)
 {
@@ -375,7 +385,7 @@ void cTimer::SetEvent(const EventPtr& event)
   { //XXX TODO check event data, too???
     if (event.get() != NULL)
     {
-      isyslog("timer %s set to event %s", ToDescr().c_str(), event->ToDescr().c_str());
+      isyslog("timer %s set to event %s", ToDescr().c_str(), event->ToString().c_str());
       if (m_recorder)
         m_recorder->SetEvent(event);
     }
@@ -540,6 +550,7 @@ bool cTimer::StartRecording(void)
   return false;
 }
 
+/* TODO
 void cTimer::SwitchTransponder(const CDateTime& Now)
 {
   bool InVpsMargin = false;
@@ -568,7 +579,7 @@ void cTimer::SwitchTransponder(const CDateTime& Now)
         {
           SchedulePtr Schedule = Schedules->GetSchedule(channel->ID());
           InVpsMargin = !Schedule; // we must make sure we have the schedule
-          NeedsTransponder = Schedule && !Schedule->PresentSeenWithin(VPSUPTODATETIME);
+          //NeedsTransponder = Schedule && !Schedule->PresentSeenWithin(VPSUPTODATETIME); // TODO
         }
       }
 //      InhibitEpgScan |= InVpsMargin | NeedsTransponder;
@@ -600,6 +611,7 @@ void cTimer::SwitchTransponder(const CDateTime& Now)
     }
   }
 }
+*/
 
 bool cTimer::CheckRecordingStatus(const CDateTime& Now)
 {

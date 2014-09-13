@@ -25,7 +25,6 @@
 #include "devices/Device.h"
 #include "devices/DeviceManager.h"
 #include "epg/Event.h"
-#include "epg/Schedules.h"
 #include "recordings/Recordings.h"
 #include "utils/log/Log.h"
 #include "utils/UTF8Utils.h"
@@ -220,6 +219,7 @@ bool cTimers::Modified()
   return bResult;
 }
 
+/* TODO
 void cTimers::SetEvents(void)
 {
   CLockObject lock(m_mutex);
@@ -240,6 +240,7 @@ void cTimers::SetEvents(void)
   }
   m_lastSetEvents = now;
 }
+*/
 
 void cTimers::DeleteExpired(void)
 {
@@ -394,7 +395,7 @@ void cTimers::ProcessOnce(void)
   CLockObject lock(m_mutex);
 
   // Assign events to timers:
-  SetEvents();
+  //SetEvents(); // TODO
 
   // Must do all following calls with the exact same time!
   CDateTime Now = CDateTime::GetUTCDateTime();
@@ -409,9 +410,12 @@ void cTimers::ProcessOnce(void)
   // Make sure timers "see" their channel early enough:
   static CDateTime LastTimerCheck;
   if (!LastTimerCheck.IsValid() || (Now - LastTimerCheck).GetSecondsTotal() > TIMERCHECKDELTA)
-  { // don't do this too often
+  {
+    // don't do this too often
+    /* TODO
     for (std::map<size_t, TimerPtr>::iterator it = m_timers.begin(); it != m_timers.end(); ++it)
       it->second->SwitchTransponder(Now);
+    */
     LastTimerCheck = Now;
   }
 

@@ -58,7 +58,7 @@ public:
    */
   bool Modified();
 
-  void SetEvents(void);
+  //void SetEvents(void); // TODO
   void DeleteExpired(void);
   void Add(TimerPtr Timer);
   void Del(TimerPtr Timer);

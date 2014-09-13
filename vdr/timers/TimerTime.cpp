@@ -61,7 +61,7 @@ CTimerTime::CTimerTime(const EventPtr& event) :
   m_bUseVPS(event->HasVps() && cSettings::Get().m_bUseVps)
 {
   m_firstStartTime = m_bUseVPS ? event->Vps() : event->StartTime() - CDateTimeSpan(0, 0, cSettings::Get().m_iMarginStart, 0);
-  m_iDurationSecs = event->Duration();
+  m_iDurationSecs = event->DurationSecs();
 
   if (!m_bUseVPS)
     m_iDurationSecs += (cSettings::Get().m_iMarginStart * 60) + (cSettings::Get().m_iMarginEnd * 60);
@@ -137,13 +137,15 @@ bool CTimerTime::Matches(CDateTime checkTime, bool bDirectly, int iMarginSeconds
       m_nextEndTime   = m_event->EndTime();
 
       if (!iMarginSeconds)
-      { // this is an actual check
+      {
+        /* TODO
+        // this is an actual check
         if (m_event->Schedule()->PresentSeenWithin(EITPRESENTFOLLOWINGRATE))
         { // VPS control can only work with up-to-date events...
           if (m_event->StartTime().IsValid()) // checks for "phased out" events
             return m_event->IsRunning(true);
         }
-
+        */
         return m_nextStartTime <= checkTime && checkTime < m_nextEndTime; // ...otherwise we fall back to normal timer handling
       }
     }

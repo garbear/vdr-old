@@ -45,11 +45,11 @@ public:
   std::string ChannelName(void) const { return m_channel ? m_channel->Name() : ""; }
   EventPtr GetEvent(void) const { return m_event; }
   void SetEvent(const EventPtr& event);
-  std::string Title(void) const;
+  std::string Title(void) const { return m_event->Title(); }
   void SetTitle(const std::string& strTitle);
-  std::string ShortText(void) const;
-  std::string Description(void) const;
-  const CEpgComponents *Components(void) const;
+  std::string ShortText(void) const { return m_event->PlotOutline(); }
+  std::string Description(void) const { return m_event->Plot(); }
+  const std::vector<CEpgComponent>& Components(void) const { return m_event->Components(); }
   double FramesPerSecond(void) const { return m_dFramesPerSecond; }
   void SetFramesPerSecond(double FramesPerSecond);
   int Priority(void) const { return m_iPriority; }
