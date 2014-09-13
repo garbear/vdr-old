@@ -140,6 +140,9 @@ void cChannelManager::MergeChannelNamesAndModulation(const ChannelPtr& channel)
         (*itChannel)->SetChanged();
       }
 
+      if (channel->ATSCSourceID() != ATSC_SOURCE_ID_NONE)
+        (*itChannel)->SetATSCSourceId(channel->ATSCSourceID());
+
       (*itChannel)->NotifyObservers();
       break;
     }
