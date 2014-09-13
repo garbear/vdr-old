@@ -166,8 +166,6 @@ set(VDR_SRCS
 	vdr/dvb/filters/SDT.cpp
 	vdr/dvb/filters/TDT.cpp
 	vdr/epg/Component.cpp
-	vdr/epg/EPGHandler.cpp
-	vdr/epg/EPGHandlers.cpp
 	vdr/epg/EPGScanner.cpp
 	vdr/epg/EPGStringifier.cpp
 	vdr/epg/Event.cpp
