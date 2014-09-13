@@ -27,7 +27,8 @@
 #include "dvb/filters/PSIP_MGT.h"
 #include "dvb/filters/PSIP_VCT.h"
 #include "dvb/filters/SDT.h"
-#include "epg/Schedules.h"
+#include "epg/Event.h"
+#include "epg/ScheduleManager.h"
 #include "lib/platform/util/timeutils.h"
 
 #include <algorithm>
@@ -37,6 +38,7 @@ using namespace std;
 
 // TODO: This can be shorted by fetching PMT tables in parallel
 #define TRANSPONDER_TIMEOUT 5000
+#define EPG_TIMEOUT         10000
 
 namespace VDR
 {
@@ -102,6 +104,8 @@ void* cEventScanner::Process(void)
   cPsipMgt mgt(m_device);
   m_bSuccess = mgt.ScanPSIPData(m_callback);
 
+  cScheduleManager::Get().NotifyObservers();
+
   return NULL;
 }
 
@@ -123,7 +127,7 @@ void cDeviceScanSubsystem::StartScan()
   m_eventScanner.CreateThread(true);
 }
 
-bool cDeviceScanSubsystem::WaitForTransponderScan()
+bool cDeviceScanSubsystem::WaitForTransponderScan(void)
 {
   const int64_t startMs = GetTimeMs();
   const int64_t timeoutMs = TRANSPONDER_TIMEOUT;
@@ -138,8 +142,11 @@ bool cDeviceScanSubsystem::WaitForTransponderScan()
   return false;
 }
 
-bool cDeviceScanSubsystem::WaitForEPGScan(unsigned int timeoutMs)
+bool cDeviceScanSubsystem::WaitForEPGScan(void)
 {
+  const int64_t startMs = GetTimeMs();
+  const int64_t timeoutMs = EPG_TIMEOUT;
+
   return m_eventScanner.WaitForExit(timeoutMs);
 }
 
@@ -167,9 +174,9 @@ void cDeviceScanSubsystem::OnChannelNamesScanned(const ChannelPtr& channel)
   cChannelManager::Get().MergeChannelNamesAndModulation(channel);
 }
 
-void cDeviceScanSubsystem::OnEventScanned(const cChannelID& channelId, const EventPtr& event)
+void cDeviceScanSubsystem::OnEventScanned(const EventPtr& event)
 {
-  cSchedulesLock::AddEvent(channelId, event);
+  cScheduleManager::Get().AddEvent(event);
 }
 
 }

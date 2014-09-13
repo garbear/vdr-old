@@ -21,7 +21,7 @@
 #pragma once
 
 #include "devices/DeviceSubsystem.h"
-#include "dvb/filters/PMT.h" // for iScanCallback
+#include "dvb/filters/Filter.h"
 #include "lib/platform/threads/mutex.h"
 #include "lib/platform/threads/threads.h"
 #include "transponders/Transponder.h"
@@ -79,8 +79,6 @@ protected:
   void* Process(void);
 };
 
-class cTransponder;
-
 class cDeviceScanSubsystem : protected cDeviceSubsystem,
                              public    Observer,
                              public    iFilterCallback
@@ -91,14 +89,14 @@ public:
 
   void StartScan(void);
 
-  bool WaitForTransponderScan();
-  bool WaitForEPGScan(unsigned int timeoutMs);
+  bool WaitForTransponderScan(void);
+  bool WaitForEPGScan(void);
 
   virtual void Notify(const Observable &obs, const ObservableMessage msg);
 
   virtual void OnChannelPropsScanned(const ChannelPtr& channel);
   virtual void OnChannelNamesScanned(const ChannelPtr& channel);
-  virtual void OnEventScanned(const cChannelID& channelId, const EventPtr& event);
+  virtual void OnEventScanned(const EventPtr& event);
 
 private:
   cChannelPropsScanner m_channelPropsScanner;
