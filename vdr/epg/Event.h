@@ -23,113 +23,184 @@
 #define MAXEPGBUGFIXLEVEL 3
 #define VDR_RATINGS_PATCHED_V2
 
-#include "Components.h"
+#include "Component.h"
 #include "EPGTypes.h"
+#include "channels/ChannelID.h"
+#include "channels/ChannelTypes.h"
 #include "utils/DateTime.h"
-#include "utils/List.h"
+#include "utils/Observer.h"
 
+//#include <libsi/si.h> // for SI::RunningStatus
 #include <stdint.h>
 #include <string>
+#include <vector>
 
 class TiXmlElement;
 
 namespace VDR
 {
 
-enum { MaxEventContents = 4 };
-
-enum eEventContentGroup {
-  ecgMovieDrama               = 0x10,
-  ecgNewsCurrentAffairs       = 0x20,
-  ecgShow                     = 0x30,
-  ecgSports                   = 0x40,
-  ecgChildrenYouth            = 0x50,
-  ecgMusicBalletDance         = 0x60,
-  ecgArtsCulture              = 0x70,
-  ecgSocialPoliticalEconomics = 0x80,
-  ecgEducationalScience       = 0x90,
-  ecgLeisureHobbies           = 0xA0,
-  ecgSpecial                  = 0xB0,
-  ecgUserDefined              = 0xF0
-  };
-
-enum eDumpMode { dmAll, dmPresent, dmFollowing, dmAtTime };
-
-class cSchedule;
-
-class cEvent : public cListObject {
-  friend class cSchedule;
-private:
-  // The sequence of these parameters is optimized for minimal memory waste!
-  cSchedule *schedule;     // The Schedule this event belongs to
-  tEventID eventID;        // Event ID of this event
-  uint8_t tableID;           // Table ID this event came from
-  uint8_t version;           // Version number of section this event came from
-  uint8_t runningStatus;     // 0=undefined, 1=not running, 2=starts in a few seconds, 3=pausing, 4=running
-  uint16_t parentalRating; // Parental rating of this event
-  uint8_t starRating;      // Dish/BEV star rating
-  std::string m_strTitle;  // Title of this event
-  std::string m_strShortText; // Short description of this event (typically the episode name in case of a series)
-  std::string m_strDescription; // Description of this event
-  CEpgComponents *components;       // The stream components of this event
-  uint8_t contents[MaxEventContents]; // Contents of this event
-  CDateTime m_startTime;        // Start time of this event
-  int duration;            // Duration of this event in seconds
-  CDateTime m_vps;              // Video Programming Service timestamp (VPS, aka "Programme Identification Label", PIL)
-  CDateTime seen;             // When this event was last seen in the data stream
+class cEvent : public Observable
+{
 public:
-  cEvent(tEventID EventID);
-  ~cEvent();
+  cEvent(unsigned int eventID);
+  virtual ~cEvent(void) { }
+  void Reset(void);
 
   static const EventPtr EmptyEvent;
 
-  virtual int Compare(const cListObject &ListObject) const;
-  cChannelID ChannelID(void) const;
-  const cSchedule *Schedule(void) const { return schedule; }
-  tEventID EventID(void) const { return eventID; }
-  uint8_t TableID(void) const { return tableID; }
-  uint8_t Version(void) const { return version; }
-  int RunningStatus(void) const { return runningStatus; }
-  std::string Title(void) const { return m_strTitle; }
-  std::string ShortText(void) const { return m_strShortText; }
-  std::string Description(void) const { return m_strDescription; }
-  const CEpgComponents *Components(void) const { return components; }
-  uint8_t Contents(int i = 0) const { return (0 <= i && i < MaxEventContents) ? contents[i] : uint8_t(0); }
-  int ParentalRating(void) const { return parentalRating; }
-  uint8_t StarRating(void) const { return starRating; }
-  CDateTime StartTime(void) const { return m_startTime; }
-  time_t StartTimeAsTime(void) const { time_t retval; StartTime().GetAsTime(retval); return retval; }
-  CDateTime EndTime(void) const { return (m_startTime + CDateTimeSpan(0, 0, 0, duration)); }
-  time_t EndTimeAsTime(void) const { time_t retval; EndTime().GetAsTime(retval); return retval; }
-  int Duration(void) const { return duration; }
-  bool HasVps(void) const { return m_vps.IsValid(); }
-  CDateTime Vps(void) const { return m_vps; }
-  CDateTime Seen(void) const { return seen; }
-  bool SeenWithin(int Seconds) const { return (CDateTime::GetUTCDateTime() - seen).GetSecondsTotal() < Seconds; }
-  bool IsRunning(bool OrAboutToStart = false) const;
-  static const char *ContentToString(uint8_t Content);
-  std::string GetParentalRatingString(void) const;
-  std::string GetStarRatingString(void) const;
-  std::string GetVpsString(void) const;
-  void SetEventID(tEventID EventID);
-  void SetTableID(uint8_t TableID);
-  void SetVersion(uint8_t Version);
-  void SetRunningStatus(int RunningStatus, cChannel *Channel = NULL);
+  cEvent& operator=(const cEvent& rhs);
+
+  /*!
+   * Event ID of this event
+   */
+  unsigned int ID(void) const { return m_eventID; }
+
+  /*!
+   * Title of this event
+   */
+  const std::string& Title(void) const { return m_strTitle; }
   void SetTitle(const std::string& strTitle);
-  void SetShortText(const std::string& strShortText);
-  void SetDescription(const std::string& strDescription);
-  void SetComponents(CEpgComponents *Components); // Will take ownership of Components!
-  void SetContents(uint8_t *Contents);
-  void SetParentalRating(int ParentalRating);
-  void SetStarRating(uint8_t StarRating) { starRating = StarRating; }
-  void SetStartTime(const CDateTime& StartTime);
-  void SetDuration(int Duration);
-  void SetVps(const CDateTime& Vps);
-  void SetSeen(void);
-  std::string ToDescr(void) const;
-  bool Parse(const std::string& data);
+
+  /*!
+   * Short description of this event (typically the episode name in case of a series)
+   */
+  const std::string& PlotOutline(void) const { return m_strPlotOutline; }
+  void SetPlotOutline(const std::string& strPlotOutline);
+
+  /*!
+   * Description of this event
+   */
+  const std::string& Plot(void) const { return m_strPlot; }
+  void SetPlot(const std::string& strPlot);
+
+  /*!
+   * ID of the channel this event belongs to
+   */
+  const cChannelID& ChannelID(void) const { return m_channelID; }
+  void SetChannelID(const cChannelID& channelId);
+
+  /*!
+   * Start time of this event
+   */
+  const CDateTime& StartTime(void) const { return m_startTime; }
+  time_t StartTimeAsTime(void)     const { time_t retval; StartTime().GetAsTime(retval); return retval; }
+  void SetStartTime(const CDateTime& startTime);
+
+  /*!
+   * End time of this event
+   */
+  const CDateTime& EndTime(void) const { return m_endTime; }
+  time_t EndTimeAsTime(void)     const { time_t retval; EndTime().GetAsTime(retval); return retval; }
+  void SetEndTime(const CDateTime& endTime);
+
+  /*!
+   * Duration (computed from start time and end time)
+   */
+  CDateTimeSpan Duration(void)    const { return m_endTime - m_startTime; }
+  unsigned int DurationSecs(void) const { return (m_endTime - m_startTime).GetSecondsTotal(); }
+
+  /*!
+   * Genre and sub-genre
+   */
+  EPG_GENRE Genre(void) const { return m_genreType; }
+  EPG_SUB_GENRE SubGenre(void) const { return m_genreSubType; }
+  void SetGenre(EPG_GENRE genre, EPG_SUB_GENRE subGenre);
+
+  /*!
+   * Custom genre string, if genre and sub-genre do not match the available
+   * types. Used only if Genre() == EPG_GENRE_CUSTOM. Setting a custom genre
+   * will force genre to EPG_GENRE_CUSTOM.
+   */
+  const std::string& CustomGenre(void) const { return m_strCustomGenre; }
+  void SetCustomGenre(const std::string& strCustomGenre);
+
+  /*!
+   * Parental rating of this event
+   */
+  uint16_t ParentalRating(void) const { return m_parentalRating; }
+  std::string ParentalRatingString(void) const; // TODO: Move to EPGStringifier
+  void SetParentalRating(uint16_t parentalRating);
+
+  /*!
+   * Dish/BEV star rating
+   */
+  uint8_t StarRating(void) const { return m_starRating; }
+  const char* StarRatingString(void) const; // TODO: Move to EPGStringifier
+  void SetStarRating(uint8_t starRating);
+
+  /*!
+   * Table ID this event came from (actual table ids are 0x4E..0x60)
+   */
+  uint8_t TableID(void) const { return m_tableID; }
+  void SetTableID(uint8_t tableID);
+
+  /*!
+   * Version number of section this event came from (actual version numbers are 0..31)
+   */
+  uint8_t Version(void) const { return m_version; }
+  void SetVersion(uint8_t version);
+
+  /*!
+   * Video Programming Service timestamp (VPS, aka "Programme Identification Label", PIL)
+   */
+  bool HasVps(void) const            { return m_vps.IsValid(); }
+  const CDateTime& Vps(void) const   { return m_vps; }
+  std::string VpsString(void) const  { return m_vps.GetAsSaveString(); }
+  void SetVps(const CDateTime& vps);
+
+  /*!
+   * The stream components of this event
+   */
+  const std::vector<CEpgComponent>& Components(void) const { return m_components; }
+  void SetComponents(const std::vector<CEpgComponent>& components);
+
+  /*!
+   * Contents of this event (Max: 4 contents)
+   */
+  const std::vector<uint8_t>& Contents(void) const { return m_contents; }
+  uint8_t GetContents(unsigned int i = 0) const    { return i < m_contents.size() ? m_contents[i] : 0; }
+  void SetContents(const std::vector<uint8_t>& contents);
+
+  /*!
+   * Convert this event to its string representation (guaranteed to be a valid filename)
+   */
+  std::string ToString(void) const;
+
   void FixEpgBugs(void);
-  static bool Deserialise(cSchedule* schedule, const TiXmlNode *eventNode);
-  bool Serialise(TiXmlElement* element) const;
-  };
+
+  bool Serialise(TiXmlNode* node) const;
+  static bool Deserialise(EventPtr& event, const TiXmlNode* eventNode);
+  bool Deserialise(const TiXmlNode* node);
+
+private:
+  // XBMC data
+  const unsigned int   m_eventID;
+  // TODO: ATSC Source ID
+  std::string          m_strTitle;
+  std::string          m_strPlotOutline; // sub title / short text (m_strShortText)
+  std::string          m_strPlot; // description (m_strDescription)
+  cChannelID           m_channelID;
+  CDateTime            m_startTime;
+  CDateTime            m_endTime;
+  EPG_GENRE            m_genreType;
+  EPG_SUB_GENRE        m_genreSubType;
+  std::string          m_strCustomGenre; // Used only when m_genreType = EPG_GENRE_CUSTOM
+  uint16_t             m_parentalRating;
+  uint8_t              m_starRating;
+
+  // VDR data
+  uint8_t              m_tableID;
+  uint8_t              m_version;
+  CDateTime            m_vps;
+  std::vector<CEpgComponent> m_components;
+  std::vector<uint8_t> m_contents;
+
+  /*
+  // Ephemeral data
+  CDateTime            m_seen;
+  SI::RunningStatus    m_runningStatus;
+  */
+};
+
 }
