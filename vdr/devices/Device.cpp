@@ -37,7 +37,6 @@
 #include "dvb/filters/PSIP_MGT.h"
 #include "epg/EPGTypes.h"
 #include "epg/Event.h"
-#include "epg/Schedules.h"
 #include "utils/log/Log.h"
 
 using namespace std;
