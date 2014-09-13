@@ -140,7 +140,6 @@ void cChannel::Reset(void)
   m_dataStreams.clear();
   m_subtitleStreams.clear();
   m_transponder.Reset();
-  m_schedule.reset();
 }
 
 cChannel& cChannel::operator=(const cChannel& rhs)
@@ -161,7 +160,6 @@ cChannel& cChannel::operator=(const cChannel& rhs)
   m_transponder     = rhs.m_transponder;
 
   // TODO
-  m_schedule.reset();
   m_linkChannels = NULL;
 
   SetChanged();
@@ -181,9 +179,6 @@ void cChannel::SetId(uint16_t nid, uint16_t tsid, uint16_t sid)
   if (m_channelId != newId)
   {
     m_channelId = newId;
-
-    m_schedule.reset();
-
     SetChanged();
   }
 }
@@ -338,21 +333,6 @@ unsigned int cChannel::FrequencyMHzWithPolarization() const
   }
 
   return m_transponder.FrequencyMHz();
-}
-
-SchedulePtr cChannel::Schedule(void) const
-{
-  return m_schedule;
-}
-
-bool cChannel::HasSchedule(void) const
-{
-  return m_schedule.get() != NULL;
-}
-
-void cChannel::SetSchedule(const SchedulePtr& schedule)
-{
-  m_schedule = schedule;
 }
 
 void cChannel::SetLinkChannels(cLinkChannels *linkChannels)
