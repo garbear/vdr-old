@@ -52,6 +52,7 @@ protected:
   ClientList       m_clients;
   unsigned int     m_IdCnt;
   bool             m_bChannelsModified;
+  bool             m_bEventsModified;
   PLATFORM::CMutex m_mutex;
 };
 
