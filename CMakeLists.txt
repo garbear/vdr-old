@@ -173,7 +173,7 @@ set(VDR_SRCS
 	vdr/epg/EPGStringifier.cpp
 	vdr/epg/Event.cpp
 	vdr/epg/Schedule.cpp
-	vdr/epg/Schedules.cpp
+	vdr/epg/ScheduleManager.cpp
 	vdr/filesystem/Directory.cpp
 	vdr/filesystem/DirectoryFetchJob.cpp
 	vdr/filesystem/File.cpp
