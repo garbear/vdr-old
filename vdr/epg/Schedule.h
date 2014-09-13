@@ -23,36 +23,33 @@
 #include "EPGTypes.h"
 #include "channels/ChannelID.h"
 #include "utils/DateTime.h"
-#include "utils/Hash.h"
-#include "utils/List.h"
+#include "utils/Observer.h"
 
+#include <map>
 #include <stdint.h>
 
 class TiXmlNode;
 
 namespace VDR
 {
-class cChannel;
 
-class cSchedule : public cListObject  {
-private:
-  cChannelID channelID;
-  EventVector m_events;
-  cHash<cEvent> eventsHashID; // TODO: hash table of shared pointers
-  cHash<cEvent> eventsHashStartTime;
-  bool hasRunning;
-  CDateTime modified;
-  CDateTime presentSeen;
-  CDateTime saved;
+class cSchedule : protected Observer, public Observable
+{
 public:
-  cSchedule(const cChannelID& ChannelID);
-  const cChannelID& ChannelID(void) const { return channelID; }
-  CDateTime Modified(void) const { return modified; }
-  CDateTime PresentSeen(void) const { return presentSeen; }
-  bool PresentSeenWithin(int Seconds) const { return (CDateTime::GetCurrentDateTime() - presentSeen).GetSecondsTotal() < Seconds; }
-  void SetModified(void) { modified = CDateTime::GetCurrentDateTime(); }
-  void SetSaved(void) { saved = modified; }
-  void SetPresentSeen(void) { presentSeen = CDateTime::GetCurrentDateTime(); }
+  cSchedule(const cChannelID& m_channelID);
+  virtual ~cSchedule(void);
+
+  static const SchedulePtr EmptySchedule;
+
+  const cChannelID& ChannelID(void) const { return m_channelID; }
+
+  EventVector Events(void) const;
+  EventPtr GetEvent(unsigned int eventID) const;
+  EventPtr GetEvent(const CDateTime& startTime) const;
+  void AddEvent(const EventPtr& event);
+  void DeleteEvent(unsigned int eventID);
+
+  /*
   void SetRunningStatus(const EventPtr& event, int RunningStatus, cChannel *Channel = NULL);
   void ClrRunningStatus(cChannel *Channel = NULL);
   void ResetVersions(void);
@@ -60,16 +57,25 @@ public:
   void DropOutdated(const CDateTime& SegmentStart, const CDateTime& SegmentEnd, uint8_t TableID, uint8_t Version);
   void Cleanup(const CDateTime& Time);
   void Cleanup(void);
-  void AddEvent(const EventPtr& event);
-  void DelEvent(const EventPtr& event);
-  void HashEvent(cEvent *Event);
-  void UnhashEvent(cEvent *Event);
-  const EventVector& Events(void) const { return m_events; }
-  EventPtr GetPresentEvent(void) const;
-  EventPtr GetFollowingEvent(void) const;
-  EventPtr GetEvent(tEventID EventID, CDateTime StartTime = CDateTime::GetCurrentDateTime());
-  bool Read(void);
-  bool Save(void);
-  bool Serialise(TiXmlNode *node) const;
-  };
+  */
+
+  virtual void Notify(const Observable &obs, const ObservableMessage msg);
+  void NotifyObservers(void);
+
+  bool Load(void);
+  bool Serialise(TiXmlNode* node) const;
+
+private:
+  bool Save(void) const;
+
+  const cChannelID                 m_channelID;
+  std::map<unsigned int, EventPtr> m_eventIds;    // ID -> Event
+
+  //bool             m_bHasRunning;
+
+  //CDateTime modified;
+  //CDateTime presentSeen;
+  //CDateTime saved;
+};
+
 }

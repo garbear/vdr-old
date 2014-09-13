@@ -20,7 +20,6 @@
  */
 
 #include "Schedule.h"
-#include "Components.h"
 #include "EPGDefinitions.h"
 #include "Event.h"
 #include "channels/Channel.h"
@@ -33,162 +32,86 @@
 
 #include <algorithm>
 
+using namespace std;
+
 namespace VDR
 {
 
 #define RUNNINGSTATUSTIMEOUT 30 // seconds before the running status is considered unknown
 
-cSchedule::cSchedule(const cChannelID& ChannelID)
+cSchedule::cSchedule(const cChannelID& channelID)
+ : m_channelID(channelID)/*,
+   m_bHasRunning(false)*/
 {
-  channelID   = ChannelID;
-  hasRunning  = false;
+}
+
+cSchedule::~cSchedule(void)
+{
+  for (map<unsigned int, EventPtr>::iterator itPair = m_eventIds.begin(); itPair != m_eventIds.end(); ++itPair)
+    itPair->second->UnregisterObserver(this);
+}
+
+EventVector cSchedule::Events(void) const
+{
+  EventVector events;
+
+  for (map<unsigned int, EventPtr>::const_iterator itPair = m_eventIds.begin(); itPair != m_eventIds.end(); ++itPair)
+    events.push_back(itPair->second);
+
+  return events;
+}
+
+EventPtr cSchedule::GetEvent(unsigned int eventID) const
+{
+  if (m_eventIds.find(eventID) != m_eventIds.end())
+    return m_eventIds.find(eventID)->second;
+
+  return cEvent::EmptyEvent;
+}
+
+EventPtr cSchedule::GetEvent(const CDateTime& startTime) const
+{
+  if (startTime.IsValid()) // 'StartTime < 0' is apparently used with NVOD channels
+  {
+    for (map<unsigned int, EventPtr>::const_iterator itPair = m_eventIds.begin(); itPair != m_eventIds.end(); ++itPair)
+    {
+      const EventPtr& event = itPair->second;
+      if (event->StartTime() == startTime)
+        return event;
+    }
+  }
+
+  return cEvent::EmptyEvent;
 }
 
 void cSchedule::AddEvent(const EventPtr& event)
 {
-  EventPtr existingEvent = GetEvent(event->EventID(), event->StartTime());
+  EventPtr existingEvent = GetEvent(event->ID());
+
   if (existingEvent)
-  {
-    // We have found an existing event, either through its event ID or its start time.
-    //*existingEvent = *event;
-    existingEvent->SetSeen();
-    existingEvent->SetEventID(event->EventID());
-    existingEvent->SetStartTime(event->StartTime());
-    existingEvent->SetDuration(event->Duration());
-    existingEvent->SetVersion(event->Version());
-    existingEvent->SetTitle(event->Title());
-    existingEvent->SetShortText(event->ShortText());
-    existingEvent->SetDescription(event->Description());
-    existingEvent->SetTableID(event->TableID());
-    existingEvent->SetComponents(const_cast<CEpgComponents*>(event->Components()));
-    existingEvent->FixEpgBugs();
-    dsyslog("updating event '%d' table %p - %s", event->EventID(), this, event->Title().c_str());
-  }
+    *existingEvent = *event;
   else
   {
-    event->schedule = this;
-    m_events.push_back(event);
-    dsyslog("adding event '%d' table %p - %s", event->EventID(), this, event->Title().c_str());
-    HashEvent(event.get());
+    event->RegisterObserver(this);
+    m_eventIds[event->ID()] = event;
+    SetChanged();
   }
 }
 
-void cSchedule::DelEvent(const EventPtr& event)
+void cSchedule::DeleteEvent(unsigned int eventID)
 {
-  if (event->schedule == this)
+  if (m_eventIds.find(eventID) != m_eventIds.end())
   {
-    if (hasRunning && event->IsRunning())
-      ClrRunningStatus();
-    UnhashEvent(event.get());
-    EventVector::iterator it = std::find(m_events.begin(), m_events.end(), event);
-    if (it != m_events.end())
-      m_events.erase(it);
+    m_eventIds[eventID]->UnregisterObserver(this);
+    m_eventIds.erase(eventID);
+    SetChanged();
   }
 }
 
-void cSchedule::HashEvent(cEvent *Event)
-{
-  eventsHashID.Add(Event, Event->EventID());
-  if (Event->StartTime().IsValid()) // 'StartTime < 0' is apparently used with NVOD channels
-    eventsHashStartTime.Add(Event, Event->StartTimeAsTime());
-}
-
-void cSchedule::UnhashEvent(cEvent *Event)
-{
-  eventsHashID.Del(Event, Event->EventID());
-  if (Event->StartTime().IsValid()) // 'StartTime < 0' is apparently used with NVOD channels
-    eventsHashStartTime.Del(Event, Event->StartTimeAsTime());
-}
-
-EventPtr cSchedule::GetPresentEvent(void) const
-{
-  EventPtr presentEvent;
-  CDateTime now = CDateTime::GetUTCDateTime();
-  for (EventVector::const_iterator it = m_events.begin(); it != m_events.end(); ++it)
-  {
-    const EventPtr& event = *it;
-
-    if (event->StartTime() <= now)
-      presentEvent = event;
-    else if (event->StartTime() > now + CDateTimeSpan(0, 1, 0, 0))
-      break;
-
-    if (event->SeenWithin(RUNNINGSTATUSTIMEOUT) &&
-          event->RunningStatus() >= SI::RunningStatusPausing)
-    {
-      presentEvent = event;
-      break;
-    }
-  }
-  return presentEvent;
-}
-
-EventPtr cSchedule::GetFollowingEvent(void) const
-{
-  EventPtr event = GetPresentEvent();
-
-  if (event)
-  {
-    // Get the next event
-    for (EventVector::const_iterator it = m_events.begin(); it != m_events.end(); ++it)
-    {
-      if (event == *it && (it + 1) != m_events.end())
-      {
-        event = *(it + 1);
-        break;
-      }
-    }
-  }
-  else
-  {
-    CDateTime now = CDateTime::GetUTCDateTime();
-    for (EventVector::const_iterator it = m_events.begin(); it != m_events.end(); ++it)
-    {
-      if ((*it)->StartTime() >= now)
-      {
-        event = *it;
-        break;
-      }
-    }
-  }
-  return event;
-}
-
-EventPtr cSchedule::GetEvent(tEventID EventID, CDateTime StartTime /* = CDateTime::GetCurrentDateTime() */)
-{
-  EventPtr event;
-
-  // Returns the event info with the given StartTime or, if no actual StartTime
-  // is given, the one with the given EventID.
-  cEvent* eventRawPtr = NULL;
-  if (StartTime.IsValid()) // 'StartTime < 0' is apparently used with NVOD channels
-  {
-    time_t tmStart;
-    StartTime.GetAsTime(tmStart);
-    eventRawPtr = eventsHashStartTime.Get(tmStart);
-  }
-  else
-    eventRawPtr = eventsHashID.Get(EventID);
-
-  if (eventRawPtr)
-  {
-    // Look for corresponding shared pointer
-    for (EventVector::const_iterator it = m_events.begin(); it != m_events.end(); ++it)
-    {
-      if (eventRawPtr == it->get())
-      {
-        event = *it;
-        break;
-      }
-    }
-  }
-
-  return event;
-}
-
+/*
 void cSchedule::SetRunningStatus(const EventPtr& event, int RunningStatus, cChannel *Channel)
 {
-  hasRunning = false;
+  m_bHasRunning = false;
   for (EventVector::iterator it = m_events.begin(); it != m_events.end(); ++it)
   {
     if (*it == event)
@@ -309,98 +232,122 @@ void cSchedule::Cleanup(const CDateTime& Time)
       ++it;
   }
 }
+*/
 
-bool cSchedule::Read(void)
+void cSchedule::Notify(const Observable &obs, const ObservableMessage msg)
+{
+  switch (msg)
+  {
+  case ObservableMessageEventChanged:
+    SetChanged();
+    break;
+  default:
+    break;
+  }
+}
+
+void cSchedule::NotifyObservers(void)
+{
+  for (map<unsigned int, EventPtr>::iterator itPair = m_eventIds.begin(); itPair != m_eventIds.end(); ++itPair)
+    itPair->second->NotifyObservers(ObservableMessageEventChanged);
+
+  if (Changed())
+  {
+    Observable::NotifyObservers(ObservableMessageEventChanged);
+    Save();
+  }
+}
+
+bool cSchedule::Load(void)
 {
   assert(!cSettings::Get().m_EPGDirectory.empty());
 
   CXBMCTinyXML xmlDoc;
-  std::string strFilename = cSettings::Get().m_EPGDirectory + "/epg_" + channelID.ToString() + ".xml";
+  std::string strFilename = cSettings::Get().m_EPGDirectory + "/epg_" + m_channelID.ToString() + ".xml";
   if (!xmlDoc.LoadFile(strFilename.c_str()))
   {
     esyslog("failed to open '%s'", strFilename.c_str());
     return false;
   }
 
-  TiXmlElement *root = xmlDoc.RootElement();
+  TiXmlElement* root = xmlDoc.RootElement();
   if (root == NULL)
     return false;
 
-  if (!StringUtils::EqualsNoCase(root->ValueStr(), EPG_XML_ELM_TABLE))
+  if (!StringUtils::EqualsNoCase(root->ValueStr(), EPG_XML_ELM_SCHEDULE))
   {
     esyslog("failed to find root element in '%s'", strFilename.c_str());
     return false;
   }
 
-  const TiXmlNode *eventNode = root->FirstChild(EPG_XML_ELM_EVENT);
+  map<unsigned int, EventPtr> events;
+
+  const TiXmlNode* eventNode = root->FirstChild(EPG_XML_ELM_EVENT);
   while (eventNode != NULL)
   {
-    if (!cEvent::Deserialise(this, eventNode))
-      break;
+    EventPtr event;
+
+    if (cEvent::Deserialise(event, eventNode))
+      events[event->ID()] = event;
+
     eventNode = eventNode->NextSibling(EPG_XML_ELM_EVENT);
   }
 
-  Sort();
+  m_eventIds = events;
 
   return true;
 }
 
-bool cSchedule::Save(void)
+bool cSchedule::Save(void) const
 {
   assert(!cSettings::Get().m_EPGDirectory.empty());
-
-  Cleanup();
-
-  if (saved == modified)
-    return true;
 
   CXBMCTinyXML xmlDoc;
   TiXmlDeclaration *decl = new TiXmlDeclaration("1.0", "", "");
   xmlDoc.LinkEndChild(decl);
 
-  TiXmlElement rootElement(EPG_XML_ELM_TABLE);
-  TiXmlNode *root = xmlDoc.InsertEndChild(rootElement);
-  if (root == NULL)
-    return false;
-
-  if (!Serialise(root))
+  try
   {
-    delete decl;
-    return false;
+    TiXmlElement rootElement(EPG_XML_ELM_SCHEDULE);
+    TiXmlNode* root = xmlDoc.InsertEndChild(rootElement);
+    if (root == NULL)
+      throw false;
+
+    TiXmlElement* epgElement = root->ToElement();
+    if (!epgElement)
+      throw false;
+
+    if (!m_channelID.Serialise(root))
+      throw false;
+
+    for (map<unsigned int, EventPtr>::const_iterator itPair = m_eventIds.begin(); itPair != m_eventIds.end(); ++itPair)
+    {
+      TiXmlElement eventElement(EPG_XML_ELM_EVENT);
+      TiXmlNode* eventNode = root->InsertEndChild(eventElement);
+      if (!eventNode)
+        throw false;
+
+      if (!itPair->second->Serialise(eventNode))
+        throw false;
+    }
+  }
+  catch (const bool& bSuccess)
+  {
+    esyslog("Failed to save schedule for channel %s", m_channelID.ToString().c_str());
+    //delete decl; // TODO: Do we need to delete decl?
+    return bSuccess;
   }
 
-  std::string strFilename = cSettings::Get().m_EPGDirectory + "/epg_" + channelID.ToString() + ".xml";
+  std::string strFilename = cSettings::Get().m_EPGDirectory + "/epg_" + m_channelID.ToString() + ".xml";
   if (!xmlDoc.SafeSaveFile(strFilename))
   {
     esyslog("failed to save the EPG data: could not write to '%s'", strFilename.c_str());
     return false;
   }
 
-  saved = modified;
-
   ChannelPtr channel = cChannelManager::Get().GetByChannelID(ChannelID());
   if (channel)
     dsyslog("EPG for channel '%s' saved", channel->Name().c_str());
-  return true;
-}
-
-bool cSchedule::Serialise(TiXmlNode *node) const
-{
-  if (node == NULL)
-    return false;
-
-  TiXmlElement* epgElement = node->ToElement();
-  if (!epgElement)
-    return false;
-
-  if (!channelID.Serialise(node))
-    return false;
-
-  for (EventVector::const_iterator it = m_events.begin(); it != m_events.end(); ++it)
-  {
-    if (!(*it)->Serialise(epgElement))
-      return false;
-  }
 
   return true;
 }

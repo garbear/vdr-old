@@ -32,6 +32,7 @@ typedef enum
 {
   ObservableMessageNone,
   ObservableMessageChannelChanged,
+  ObservableMessageEventChanged,
   ObservableMessageChannelLock,
   ObservableMessageChannelLostLock,
   ObservableMessageDeviceReady,
