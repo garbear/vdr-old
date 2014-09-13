@@ -39,6 +39,7 @@ public:
 
   bool operator==(const cChannelID &rhs) const;
   bool operator!=(const cChannelID &rhs) const { return !(*this == rhs); }
+  bool operator<(const cChannelID& rhs) const;
 
   /*!
    * Checks the validity of this channel ID. A channel ID is valid if it has
