@@ -30,7 +30,7 @@ namespace VDR
 class cEPGScanner : public PLATFORM::CThread, public iTunerHandleCallbacks
 {
 public:
-  cEPGScanner(void);
+  static cEPGScanner& Get(void);
   virtual ~cEPGScanner(void) { Stop(true); }
 
   /*!
@@ -45,6 +45,7 @@ public:
   void LostPriority(void);
 
 protected:
+  cEPGScanner(void);
   virtual void* Process(void);
 };
 
