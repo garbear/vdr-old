@@ -27,7 +27,7 @@
 #include "Client.h"
 #include "channels/ChannelFilter.h"
 #include "channels/ChannelManager.h"
-#include "epg/Schedules.h"
+#include "epg/ScheduleManager.h"
 #include "filesystem/Videodir.h"
 #include "recordings/Recordings.h"
 #include "settings/AllowedHosts.h"
@@ -67,6 +67,7 @@ cVNSIServer::cVNSIServer(int listenPort)
 //  VNSIChannelFilter.SortChannels();
 
   m_bChannelsModified = false;
+  m_bEventsModified = false;
 
   m_ServerFD = socket(AF_INET, SOCK_STREAM, 0);
   if(m_ServerFD == -1)
@@ -93,15 +94,11 @@ cVNSIServer::cVNSIServer(int listenPort)
 
   listen(m_ServerFD, 10);
 
-  cChannelManager::Get().RegisterObserver(this);
-
   CreateThread();
 }
 
 cVNSIServer::~cVNSIServer()
 {
-  cChannelManager::Get().UnregisterObserver(this);
-
   StopThread(-1);
   for (ClientList::iterator i = m_clients.begin(); i != m_clients.end(); i++)
   {
@@ -118,6 +115,11 @@ void cVNSIServer::Notify(const Observable &obs, const ObservableMessage msg)
   {
     PLATFORM::CLockObject lock(m_mutex);
     m_bChannelsModified = true;
+  }
+  else if (msg == ObservableMessageEventChanged)
+  {
+    PLATFORM::CLockObject lock(m_mutex);
+    m_bEventsModified = true;
   }
 }
 
@@ -176,13 +178,11 @@ void* cVNSIServer::Process(void)
   struct timeval tv;
 
   cTimeMs chanTimer(0);
+  cTimeMs epgTimer(0);
 
   // get initial state of the recordings
   int recState = -1;
   Recordings.StateChanged(recState);
-
-  // last update of epg
-  CDateTime epgUpdate = cSchedules::Modified();
 
   // delete old timeshift file
   std::string cmd;
@@ -202,6 +202,7 @@ void* cVNSIServer::Process(void)
   int ret = system(cmd.c_str());
 
   cChannelManager::Get().RegisterObserver(this);
+  cScheduleManager::Get().RegisterObserver(this);
 
   isyslog("VNSI Server started on port %d", m_ServerPort);
   isyslog("Channel streaming timeout: %i seconds", cSettings::Get().m_StreamTimeout);
@@ -276,14 +277,15 @@ void* cVNSIServer::Process(void)
       }
 
       // update epg
-      CDateTime epgModified(cSchedules::Modified());
-      if((epgModified > epgUpdate + CDateTimeSpan(0, 0, 0, 10)) || CDateTime::GetUTCDateTime() > epgUpdate + CDateTimeSpan(0, 0, 0, 300))
+      if(m_clients.size() > 0 && epgTimer.TimedOut())
       {
-        for (ClientList::iterator i = m_clients.begin(); i != m_clients.end(); i++)
+        if (m_bEventsModified)
         {
-         (*i)->EpgChange();
+          m_bEventsModified = false;
+          for (ClientList::iterator i = m_clients.begin(); i != m_clients.end(); i++)
+            (*i)->EpgChange();
         }
-        epgUpdate = epgModified.IsValid() ? epgModified : CDateTime::GetUTCDateTime();
+        epgTimer.Set(5000);
       }
       continue;
     }
@@ -300,6 +302,7 @@ void* cVNSIServer::Process(void)
   }
 
   cChannelManager::Get().UnregisterObserver(this);
+  cScheduleManager::Get().UnregisterObserver(this);
 
   return NULL;
 }

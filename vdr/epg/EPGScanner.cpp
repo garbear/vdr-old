@@ -40,6 +40,12 @@ using namespace std;
 namespace VDR
 {
 
+cEPGScanner& cEPGScanner::Get(void)
+{
+  static cEPGScanner _instance;
+  return _instance;
+}
+
 cEPGScanner::cEPGScanner(void)
 {
 }

@@ -104,7 +104,7 @@ public:
   size_t Index(void) const { return m_index; }
 
   void SetRecordingFilename(const std::string& strFile);
-  void SetEventFromSchedule(cSchedules *Schedules = NULL);
+  //void SetEventFromSchedule(cSchedules *Schedules = NULL); // TODO
   void ClearEvent(void);
   void SetEvent(const EventPtr& event);
   void SetRecording(cRecorder* recorder, cRecording* recording);
@@ -123,7 +123,7 @@ public:
 
   bool StartRecording(void);
   bool CheckRecordingStatus(const CDateTime& Now);
-  void SwitchTransponder(const CDateTime& Now);
+  //void SwitchTransponder(const CDateTime& Now); // TODO
 
   static int CompareTimers(const cTimer *a, const cTimer *b);
 

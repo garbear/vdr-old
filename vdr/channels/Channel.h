@@ -198,10 +198,6 @@ public:
    */
   unsigned int FrequencyMHzWithPolarization() const;
 
-  SchedulePtr Schedule(void) const;
-  bool HasSchedule(void) const;
-  void SetSchedule(const SchedulePtr& schedule);
-
   //const cLinkChannels& LinkChannels(void)       const { return m_linkChannels; }
   //void SetLinkChannels(cLinkChannels& channels) { m_linkChannels = channels; }
   void SetLinkChannels(cLinkChannels *linkChannels);
@@ -231,7 +227,6 @@ private:
 
   cTransponder                m_transponder;
 
-  SchedulePtr                 m_schedule;
   cLinkChannels*              m_linkChannels;
   //cLinkChannels               m_linkChannels;
 };

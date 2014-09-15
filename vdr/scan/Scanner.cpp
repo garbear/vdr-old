@@ -28,6 +28,7 @@
 #include "devices/subsystems/DeviceScanSubsystem.h"
 #include "dvb/filters/PAT.h"
 #include "dvb/filters/PSIP_VCT.h"
+#include "epg/EPGScanner.h"
 #include "lib/platform/util/timeutils.h"
 #include "transponders/TransponderFactory.h"
 #include "utils/log/Log.h"
@@ -150,6 +151,7 @@ void* cScanner::Process()
 
   const int64_t durationSec = (GetTimeMs() - startMs) / 1000;
   isyslog("Channel scan took %d min %d sec", durationSec / 60, durationSec % 60);
+  cEPGScanner::Get().Start();
 
   return NULL;
 }

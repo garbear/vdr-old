@@ -36,7 +36,7 @@
 #include "devices/Device.h"
 #include "devices/DeviceManager.h"
 #include "epg/Event.h"
-#include "epg/Schedules.h"
+#include "epg/ScheduleManager.h"
 #include "filesystem/Videodir.h"
 #include "recordings/RecordingInfo.h"
 #include "recordings/Recordings.h"
@@ -270,15 +270,10 @@ void cVNSIClient::EpgChange()
   if (!m_StatusInterfaceEnabled)
     return;
 
-  cSchedulesLock MutexLock;
-  cSchedules *schedules = MutexLock.Get();
-  if (!schedules)
-    return;
-
-  ScheduleVector updatedSchedules = schedules->GetUpdatedSchedules(m_epgUpdate, VNSIChannelFilter);
-  for (ScheduleVector::const_iterator it = updatedSchedules.begin(); it != updatedSchedules.end(); ++it)
+  std::vector<cChannelID> updatedChannels = cScheduleManager::Get().GetUpdatedChannels(m_epgUpdate, VNSIChannelFilter);
+  for (std::vector<cChannelID>::const_iterator itChannelID = updatedChannels.begin(); itChannelID != updatedChannels.end(); ++itChannelID)
   {
-    const cChannelID& channelId = (*it)->ChannelID();
+    const cChannelID& channelId = *itChannelID;
     const ChannelPtr channel = cChannelManager::Get().GetByChannelID(channelId);
     isyslog("Trigger EPG update for channel %s, id: %d", channel->Name().c_str(), channelId.Hash());
 
@@ -1497,7 +1492,7 @@ bool cVNSIClient::processRECORDINGS_GetList() /* OPCODE 102 */
     if (event.get() != NULL)
     {
       recordingStart    = event->StartTime();
-      recordingDuration = event->Duration();
+      recordingDuration = event->DurationSecs();
     }
     else
     {
@@ -1722,21 +1717,10 @@ bool cVNSIClient::processEPG_GetForChannel() /* OPCODE 120 */
     return true;
   }
 
-  cSchedulesLock MutexLock;
-  cSchedules *Schedules = MutexLock.Get();
   m_epgUpdate[channelUID].Reset();
-  if (!Schedules)
-  {
-    m_resp->add_U32(0);
-    m_resp->finalise();
-    m_socket.write(m_resp->getPtr(), m_resp->getLen());
 
-    dsyslog("cannot write EPG data for channel '%s': cannot acquire a lock", channel->Name().c_str());
-    return true;
-  }
-
-  SchedulePtr Schedule = channel->Schedule();
-  if (!Schedule)
+  EventVector events = cScheduleManager::Get().GetEvents(channel->ID());
+  if (events.empty())
   {
     m_resp->add_U32(0);
     m_resp->finalise();
@@ -1758,18 +1742,18 @@ bool cVNSIClient::processEPG_GetForChannel() /* OPCODE 120 */
   const char* thisEventSubTitle;
   const char* thisEventDescription;
 
-  for (EventVector::const_iterator it = Schedule->Events().begin(); it != Schedule->Events().end(); ++it)
+  for (EventVector::const_iterator itEvent = events.begin(); itEvent != events.end(); ++itEvent)
   {
-    const EventPtr& event = *it;
+    const EventPtr& event = *itEvent;
 
-    thisEventID           = event->EventID();
+    thisEventID           = event->ID();
     thisEventTitle        = event->Title().c_str();
-    thisEventSubTitle     = event->ShortText().c_str();
-    thisEventDescription  = event->Description().c_str();
+    thisEventSubTitle     = event->PlotOutline().c_str();
+    thisEventDescription  = event->Plot().c_str();
     thisEventStart        = event->StartTime();
     thisEventEnd          = event->EndTime();
-    thisEventDuration     = event->Duration();
-    thisEventContent      = event->Contents();
+    thisEventDuration     = event->DurationSecs();
+    thisEventContent      = event->Genre() & event->SubGenre(); // TODO
     thisEventRating       = event->ParentalRating();
 
     //in the past filter
@@ -1811,14 +1795,15 @@ bool cVNSIClient::processEPG_GetForChannel() /* OPCODE 120 */
   m_resp->finalise();
   m_socket.write(m_resp->getPtr(), m_resp->getLen());
 
-  const EventVector& events = Schedule->Events();
-  EventPtr lastEvent;
-  if (!events.empty())
-    lastEvent = events[events.size() - 1];
-  if (lastEvent)
+  CDateTime epgUpdate;
+  for (EventVector::const_iterator itEvent = events.begin(); itEvent != events.end(); ++itEvent)
   {
-    m_epgUpdate[channelUID] = lastEvent->StartTime();
+    if (!epgUpdate.IsValid() || (*itEvent)->StartTime() > epgUpdate)
+      epgUpdate = (*itEvent)->StartTime();
   }
+
+  if (epgUpdate.IsValid())
+    m_epgUpdate[channelUID] = epgUpdate;
 
   return true;
 }

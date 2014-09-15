@@ -41,8 +41,7 @@ namespace VDR
 
 cDeviceManager::cDeviceManager()
  : m_devicesReady(0),
-   m_bAllDevicesReady(false),
-   m_epgScan(new cEPGScanner)
+   m_bAllDevicesReady(false)
 {
 }
 
@@ -54,7 +53,6 @@ cDeviceManager &cDeviceManager::Get()
 
 cDeviceManager::~cDeviceManager()
 {
-  delete m_epgScan;
 }
 
 size_t cDeviceManager::Initialise(void)
@@ -94,7 +92,7 @@ bool cDeviceManager::WaitForAllDevicesReady(unsigned int timeout /* = 0 */)
     return false;
 
   bool retval = m_devicesReadyCondition.Wait(m_mutex, m_bAllDevicesReady, timeout * 1000);
-  m_epgScan->Start();
+  cEPGScanner::Get().Start();
   return retval;
 }
 

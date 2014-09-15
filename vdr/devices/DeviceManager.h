@@ -84,7 +84,6 @@ private:
   size_t                     m_devicesReady;
   bool                       m_bAllDevicesReady; //XXX make CCondition support other things than bools...
   PLATFORM::CCondition<bool> m_devicesReadyCondition;
-  cEPGScanner*               m_epgScan;
 };
 
 }

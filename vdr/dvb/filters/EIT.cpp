@@ -25,9 +25,9 @@
 #include "channels/Channel.h"
 #include "channels/ChannelID.h"
 #include "channels/ChannelManager.h"
-#include "epg/Components.h"
+#include "epg/Component.h"
 #include "epg/Event.h"
-#include "epg/Schedules.h"
+#include "epg/ScheduleManager.h"
 #include "settings/Settings.h"
 #include "utils/CommonMacros.h"
 #include "utils/DateTime.h"
@@ -162,21 +162,22 @@ EventVector cEit::GetEvents()
 
           EventPtr thisEvent = EventPtr(new cEvent(eitEvent.getEventId()));
           thisEvent->SetStartTime(startTime);
-          thisEvent->SetDuration(iDuration);
+          thisEvent->SetEndTime(startTime + CDateTimeSpan(0, 0, 0, iDuration));
           thisEvent->SetTableID(tsEIT.getTableId());
           thisEvent->SetVersion(tsEIT.getVersionNumber());
 
           // We trust only the present/following info on the actual TS
+          /* TODO
           if (tsEIT.getTableId() == 0x4E && eitEvent.getRunningStatus() >= SI::RunningStatusNotRunning)
-            thisEvent->SetRunningStatus(eitEvent.getRunningStatus(), channel.get());
+            thisEvent->SetRunningStatus(eitEvent.getRunningStatus());
+          */
 
-          string          strTitle;
-          string          strShortText;
-          string          strDescription;
-          vector<uint8_t> contents;
-
-          cLinkChannels   linkChannels;
-          CEpgComponents* components = NULL;
+          string                strTitle;
+          string                strShortText;
+          string                strDescription;
+          vector<CEpgComponent> components;
+          vector<uint8_t>       contents;
+          cLinkChannels         linkChannels;
 
           SI::Descriptor* d;
           for (SI::Loop::Iterator it2; (d = eitEvent.eventDescriptors.getNext(it2)); )
@@ -301,13 +302,9 @@ EventVector cEit::GetEvents()
               // 1=MPEG2-video, 2=MPEG1-audio, 3=subtitles, 4=AC3-audio, 5=H.264-video, 6=HEAAC-audio
               if (1 <= stream && stream <= 6 && type != 0)
               {
-                if (!components)
-                  components = new CEpgComponents;
-
                 char buffer[Utf8BufSize(256)] = { };
                 cd->description.getText(buffer, sizeof(buffer));
-                string strDescription = buffer;
-                components->SetComponent(COMPONENT_ADD_NEW, stream, type, I18nNormalizeLanguageCode(cd->languageCode), strDescription.c_str());
+                components.push_back(CEpgComponent(stream, type, I18nNormalizeLanguageCode(cd->languageCode), buffer));
               }
               break;
             }
@@ -319,15 +316,11 @@ EventVector cEit::GetEvents()
           }
 
           thisEvent->SetTitle(strTitle);
-          thisEvent->SetShortText(strShortText);
-          thisEvent->SetDescription(strDescription);
+          thisEvent->SetPlotOutline(strShortText);
+          thisEvent->SetPlot(strDescription);
 
-          // Event expects MaxEventContents number of contents
-          // TODO: Change cEvent to accept a std::vector
-          contents.resize(MaxEventContents);
-          thisEvent->SetContents(contents.data());
+          thisEvent->SetContents(contents);
 
-          // thisEvent assumes ownership of components
           thisEvent->SetComponents(components);
 
           thisEvent->FixEpgBugs();
@@ -440,12 +433,14 @@ void cEit::GetText(SI::Descriptor* d, uint8_t tid, uint16_t nid, uint16_t tsid,
                          tsid,
                          tsed->getReferenceServiceId());
 
-    EventPtr rEvent = cSchedulesLock::GetEvent(channelId, tsed->getReferenceEventId());
+    // TODO: Shouldn't need to query cScheduleManager, it should know how to
+    // merge partial event data
+    EventPtr rEvent = cScheduleManager::Get().GetEvent(channelId, tsed->getReferenceEventId());
     if (rEvent)
     {
       strTitle = rEvent->Title();
-      strShortText = rEvent->ShortText();
-      strDescription = rEvent->Description();
+      strShortText = rEvent->PlotOutline();
+      strDescription = rEvent->Plot();
     }
 
     break;

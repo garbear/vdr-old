@@ -21,641 +21,251 @@
 
 #include "Event.h"
 #include "EPGDefinitions.h"
-#include "Schedule.h"
-#include "channels/ChannelManager.h"
+#include "EPGStringifier.h"
 #include "settings/Settings.h"
-#include "utils/CalendarUtils.h"
-#include "utils/I18N.h"
-#include "utils/log/Log.h"
 #include "utils/StringUtils.h"
-#include "utils/UTF8Utils.h"
 #include "utils/XBMCTinyXML.h"
+
+#include <stddef.h>
+
+#define TABLE_ID_INVALID           0xFF
+#define VERSION_INVALID            0xFF
+#define MAX_USEFUL_EPISODE_LENGTH  40  // For fixing EPG bugs
+
+using namespace std;
 
 namespace VDR
 {
 
 const EventPtr cEvent::EmptyEvent;
 
-cEvent::cEvent(tEventID EventID)
+cEvent::cEvent(unsigned int eventID)
+ : m_eventID(eventID)
 {
-  schedule = NULL;
-  eventID = EventID;
-  tableID = 0xFF; // actual table ids are 0x4E..0x60
-  version = 0xFF; // actual version numbers are 0..31
-  runningStatus = SI::RunningStatusUndefined;
-  components = NULL;
-  memset(contents, 0, sizeof(contents));
-  parentalRating = 0;
-  starRating = 0;
-  duration = 0;
-  SetSeen();
+  Reset();
 }
 
-cEvent::~cEvent()
+void cEvent::Reset(void)
 {
-  delete components;
+  m_strTitle.clear();
+  m_strPlotOutline.clear();
+  m_strPlot.clear();
+  m_channelID = cChannelID::InvalidID;
+  m_startTime.Reset();
+  m_endTime.Reset();
+  m_genreType = EPG_GENRE_UNDEFINED;
+  m_genreSubType = EPG_SUB_GENRE_DRAMA_OTHER;
+  m_strCustomGenre.clear();
+  m_parentalRating = 0;
+  m_starRating = 0;
+  m_tableID = TABLE_ID_INVALID;
+  m_version = VERSION_INVALID;
+  m_vps.Reset();
+  m_components.clear();
+  m_contents.clear();
 }
 
-int cEvent::Compare(const cListObject &ListObject) const
+cEvent& cEvent::operator=(const cEvent& rhs)
 {
-  cEvent *e = (cEvent *)&ListObject;
-  return (m_startTime - e->m_startTime).GetSecondsTotal();
-}
-
-cChannelID cEvent::ChannelID(void) const
-{
-  return schedule ? schedule->ChannelID() : cChannelID::InvalidID;
-}
-
-void cEvent::SetEventID(tEventID EventID)
-{
-  if (eventID != EventID)
+  if (this != &rhs)
   {
-    if (schedule)
-      schedule->UnhashEvent(this);
-    eventID = EventID;
-    if (schedule)
-      schedule->HashEvent(this);
+    SetTitle(rhs.Title());
+    SetPlotOutline(rhs.PlotOutline());
+    SetPlot(rhs.Plot());
+    SetChannelID(rhs.ChannelID());
+    SetStartTime(rhs.StartTime());
+    SetEndTime(rhs.EndTime());
+    SetGenre(rhs.Genre(), rhs.SubGenre());
+    SetParentalRating(rhs.ParentalRating());
+    SetStarRating(rhs.StarRating());
+    SetTableID(rhs.TableID());
+    SetVersion(rhs.Version());
+    SetVps(rhs.Vps());
+    SetComponents(rhs.Components());
+    SetContents(rhs.Contents());
   }
-}
-
-void cEvent::SetTableID(uint8_t TableID)
-{
-  tableID = TableID;
-}
-
-void cEvent::SetVersion(uint8_t Version)
-{
-  version = Version;
-}
-
-void cEvent::SetRunningStatus(int RunningStatus, cChannel *Channel)
-{
-  if (Channel && runningStatus != RunningStatus && (RunningStatus > SI::RunningStatusNotRunning || runningStatus > SI::RunningStatusUndefined) && Channel->HasTimer())
-    isyslog("channel %d (%s) event %s status %d", Channel->Number(), Channel->Name().c_str(), ToDescr().c_str(), RunningStatus);
-  runningStatus = RunningStatus;
+  return *this;
 }
 
 void cEvent::SetTitle(const std::string& strTitle)
 {
-  m_strTitle = strTitle;
-}
-
-void cEvent::SetShortText(const std::string& strShortText)
-{
-  m_strShortText = strShortText;
-}
-
-void cEvent::SetDescription(const std::string& strDescription)
-{
-  m_strDescription = strDescription;
-}
-
-void cEvent::SetComponents(CEpgComponents *Components)
-{
-  delete components;
-  components = Components;
-}
-
-void cEvent::SetContents(uint8_t *Contents)
-{
-  for (int i = 0; i < MaxEventContents; i++)
-      contents[i] = Contents[i];
-}
-
-void cEvent::SetParentalRating(int ParentalRating)
-{
-  parentalRating = ParentalRating;
-}
-
-void cEvent::SetStartTime(const CDateTime& StartTime)
-{
-  if (m_startTime != StartTime)
+  if (m_strTitle != strTitle)
   {
-    if (schedule)
-      schedule->UnhashEvent(this);
-    m_startTime = StartTime;
-    if (schedule)
-      schedule->HashEvent(this);
+    m_strTitle = strTitle;
+    SetChanged();
   }
 }
 
-void cEvent::SetDuration(int Duration)
+void cEvent::SetPlotOutline(const std::string& strPlotOutline)
 {
-  duration = Duration;
+  if (m_strPlotOutline != strPlotOutline)
+  {
+    m_strPlotOutline = strPlotOutline;
+    SetChanged();
+  }
 }
 
-void cEvent::SetVps(const CDateTime& Vps)
+void cEvent::SetPlot(const std::string& strPlot)
 {
-  m_vps = Vps;
+  if (m_strPlot != strPlot)
+  {
+    m_strPlot = strPlot;
+    SetChanged();
+  }
 }
 
-void cEvent::SetSeen(void)
+void cEvent::SetChannelID(const cChannelID& channelId)
 {
-  seen = CDateTime::GetUTCDateTime();
+  if (m_channelID != channelId)
+  {
+    m_channelID = channelId;
+    SetChanged();
+  }
 }
 
-std::string cEvent::ToDescr(void) const
+void cEvent::SetStartTime(const CDateTime& startTime)
 {
-  char vpsbuf[64] = "";
+  if (m_startTime != startTime)
+  {
+    m_startTime = startTime;
+    SetChanged();
+  }
+}
+
+void cEvent::SetEndTime(const CDateTime& endTime)
+{
+  if (m_endTime != endTime)
+  {
+    m_endTime = endTime;
+    SetChanged();
+  }
+}
+
+void cEvent::SetGenre(EPG_GENRE genre, EPG_SUB_GENRE subGenre)
+{
+  if (m_genreType != genre || m_genreSubType != subGenre)
+  {
+    m_genreType = genre;
+    m_genreSubType = subGenre;
+    SetChanged();
+  }
+}
+
+void cEvent::SetCustomGenre(const std::string& strCustomGenre)
+{
+  if (m_genreType != EPG_GENRE_CUSTOM || m_strCustomGenre != strCustomGenre)
+  {
+    m_genreType = EPG_GENRE_CUSTOM;
+    m_strCustomGenre = strCustomGenre;
+    SetChanged();
+  }
+}
+
+std::string cEvent::ParentalRatingString(void) const
+{
+  static const char* const ratings[8] = { "", "G", "PG", "PG-13", "R", "NR/AO", "", "NC-17" };
+
+  std::string strBuffer = ratings[(m_parentalRating >> 10) & 0x07];
+
+  if (m_parentalRating & 0x37F)
+  {
+    strBuffer += " [";
+    if (m_parentalRating & 0x0230)
+      strBuffer += "V,";
+    if (m_parentalRating & 0x000A)
+      strBuffer += "L,";
+    if (m_parentalRating & 0x0044)
+      strBuffer += "N,";
+    if (m_parentalRating & 0x0101)
+      strBuffer += "SC,";
+    strBuffer += "]";
+  }
+
+  return strBuffer;
+}
+
+void cEvent::SetParentalRating(uint16_t parentalRating)
+{
+  if (m_parentalRating != parentalRating)
+  {
+    m_parentalRating = parentalRating;
+    SetChanged();
+  }
+}
+
+const char* cEvent::StarRatingString(void) const
+{
+  static const char* const critiques[8] = { "", "*", "*+", "**", "**+", "***", "***+", "****" };
+  return critiques[m_starRating & 0x07];
+}
+
+void cEvent::SetStarRating(uint8_t starRating)
+{
+  if (m_starRating != starRating)
+  {
+    m_starRating = starRating;
+    SetChanged();
+  }
+}
+
+void cEvent::SetTableID(uint8_t tableID)
+{
+  if (m_tableID != tableID)
+  {
+    m_tableID = tableID;
+    SetChanged();
+  }
+}
+
+void cEvent::SetVersion(uint8_t version)
+{
+  if (m_version != version)
+  {
+    m_version = version;
+    SetChanged();
+  }
+}
+
+void cEvent::SetVps(const CDateTime& vps)
+{
+  if (m_vps != vps)
+  {
+    m_vps = vps;
+    SetChanged();
+  }
+}
+
+void cEvent::SetComponents(const std::vector<CEpgComponent>& components)
+{
+  if (m_components != components)
+  {
+    m_components = components;
+    SetChanged();
+  }
+}
+
+void cEvent::SetContents(const std::vector<uint8_t>& contents)
+{
+  if (m_contents != contents)
+  {
+    m_contents = contents;
+    SetChanged();
+  }
+}
+
+std::string cEvent::ToString(void) const
+{
+  std::string strVps;
   if (HasVps())
-    sprintf(vpsbuf, "(VPS: %s) ", GetVpsString().c_str());
-  return StringUtils::Format("%s - %s %s '%s'", StartTime().GetAsDBDateTime().c_str(), EndTime().GetAsDBDateTime().c_str(), vpsbuf, Title().c_str());
+    strVps = "(VPS: " + VpsString() + ") ";
+  return StartTime().GetAsDBDateTime() + " - " + EndTime().GetAsDBDateTime() + " " + strVps + " '" + Title() + "'";
 }
-
-bool cEvent::IsRunning(bool OrAboutToStart) const
-{
-  return runningStatus >= (OrAboutToStart ? SI::RunningStatusStartsInAFewSeconds : SI::RunningStatusPausing);
-}
-
-const char *cEvent::ContentToString(uint8_t Content)
-{
-  switch (Content & 0xF0)
-    {
-  case ecgMovieDrama:
-    switch (Content & 0x0F)
-      {
-    default:
-    case 0x00:
-      return tr("Content$Movie/Drama");
-    case 0x01:
-      return tr("Content$Detective/Thriller");
-    case 0x02:
-      return tr("Content$Adventure/Western/War");
-    case 0x03:
-      return tr("Content$Science Fiction/Fantasy/Horror");
-    case 0x04:
-      return tr("Content$Comedy");
-    case 0x05:
-      return tr("Content$Soap/Melodrama/Folkloric");
-    case 0x06:
-      return tr("Content$Romance");
-    case 0x07:
-      return tr("Content$Serious/Classical/Religious/Historical Movie/Drama");
-    case 0x08:
-      return tr("Content$Adult Movie/Drama");
-      }
-    break;
-  case ecgNewsCurrentAffairs:
-    switch (Content & 0x0F)
-      {
-    default:
-    case 0x00:
-      return tr("Content$News/Current Affairs");
-    case 0x01:
-      return tr("Content$News/Weather Report");
-    case 0x02:
-      return tr("Content$News Magazine");
-    case 0x03:
-      return tr("Content$Documentary");
-    case 0x04:
-      return tr("Content$Discussion/Inverview/Debate");
-      }
-    break;
-  case ecgShow:
-    switch (Content & 0x0F)
-      {
-    default:
-    case 0x00:
-      return tr("Content$Show/Game Show");
-    case 0x01:
-      return tr("Content$Game Show/Quiz/Contest");
-    case 0x02:
-      return tr("Content$Variety Show");
-    case 0x03:
-      return tr("Content$Talk Show");
-      }
-    break;
-  case ecgSports:
-    switch (Content & 0x0F)
-      {
-    default:
-    case 0x00:
-      return tr("Content$Sports");
-    case 0x01:
-      return tr("Content$Special Event");
-    case 0x02:
-      return tr("Content$Sport Magazine");
-    case 0x03:
-      return tr("Content$Football/Soccer");
-    case 0x04:
-      return tr("Content$Tennis/Squash");
-    case 0x05:
-      return tr("Content$Team Sports");
-    case 0x06:
-      return tr("Content$Athletics");
-    case 0x07:
-      return tr("Content$Motor Sport");
-    case 0x08:
-      return tr("Content$Water Sport");
-    case 0x09:
-      return tr("Content$Winter Sports");
-    case 0x0A:
-      return tr("Content$Equestrian");
-    case 0x0B:
-      return tr("Content$Martial Sports");
-      }
-    break;
-  case ecgChildrenYouth:
-    switch (Content & 0x0F)
-      {
-    default:
-    case 0x00:
-      return tr("Content$Children's/Youth Programme");
-    case 0x01:
-      return tr("Content$Pre-school Children's Programme");
-    case 0x02:
-      return tr("Content$Entertainment Programme for 6 to 14");
-    case 0x03:
-      return tr("Content$Entertainment Programme for 10 to 16");
-    case 0x04:
-      return tr("Content$Informational/Educational/School Programme");
-    case 0x05:
-      return tr("Content$Cartoons/Puppets");
-      }
-    break;
-  case ecgMusicBalletDance:
-    switch (Content & 0x0F)
-      {
-    default:
-    case 0x00:
-      return tr("Content$Music/Ballet/Dance");
-    case 0x01:
-      return tr("Content$Rock/Pop");
-    case 0x02:
-      return tr("Content$Serious/Classical Music");
-    case 0x03:
-      return tr("Content$Folk/Tradional Music");
-    case 0x04:
-      return tr("Content$Jazz");
-    case 0x05:
-      return tr("Content$Musical/Opera");
-    case 0x06:
-      return tr("Content$Ballet");
-      }
-    break;
-  case ecgArtsCulture:
-    switch (Content & 0x0F)
-      {
-    default:
-    case 0x00:
-      return tr("Content$Arts/Culture");
-    case 0x01:
-      return tr("Content$Performing Arts");
-    case 0x02:
-      return tr("Content$Fine Arts");
-    case 0x03:
-      return tr("Content$Religion");
-    case 0x04:
-      return tr("Content$Popular Culture/Traditional Arts");
-    case 0x05:
-      return tr("Content$Literature");
-    case 0x06:
-      return tr("Content$Film/Cinema");
-    case 0x07:
-      return tr("Content$Experimental Film/Video");
-    case 0x08:
-      return tr("Content$Broadcasting/Press");
-    case 0x09:
-      return tr("Content$New Media");
-    case 0x0A:
-      return tr("Content$Arts/Culture Magazine");
-    case 0x0B:
-      return tr("Content$Fashion");
-      }
-    break;
-  case ecgSocialPoliticalEconomics:
-    switch (Content & 0x0F)
-      {
-    default:
-    case 0x00:
-      return tr("Content$Social/Political/Economics");
-    case 0x01:
-      return tr("Content$Magazine/Report/Documentary");
-    case 0x02:
-      return tr("Content$Economics/Social Advisory");
-    case 0x03:
-      return tr("Content$Remarkable People");
-      }
-    break;
-  case ecgEducationalScience:
-    switch (Content & 0x0F)
-      {
-    default:
-    case 0x00:
-      return tr("Content$Education/Science/Factual");
-    case 0x01:
-      return tr("Content$Nature/Animals/Environment");
-    case 0x02:
-      return tr("Content$Technology/Natural Sciences");
-    case 0x03:
-      return tr("Content$Medicine/Physiology/Psychology");
-    case 0x04:
-      return tr("Content$Foreign Countries/Expeditions");
-    case 0x05:
-      return tr("Content$Social/Spiritual Sciences");
-    case 0x06:
-      return tr("Content$Further Education");
-    case 0x07:
-      return tr("Content$Languages");
-      }
-    break;
-  case ecgLeisureHobbies:
-    switch (Content & 0x0F)
-      {
-    default:
-    case 0x00:
-      return tr("Content$Leisure/Hobbies");
-    case 0x01:
-      return tr("Content$Tourism/Travel");
-    case 0x02:
-      return tr("Content$Handicraft");
-    case 0x03:
-      return tr("Content$Motoring");
-    case 0x04:
-      return tr("Content$Fitness & Health");
-    case 0x05:
-      return tr("Content$Cooking");
-    case 0x06:
-      return tr("Content$Advertisement/Shopping");
-    case 0x07:
-      return tr("Content$Gardening");
-      }
-    break;
-  case ecgSpecial:
-    switch (Content & 0x0F)
-      {
-    case 0x00:
-      return tr("Content$Original Language");
-    case 0x01:
-      return tr("Content$Black & White");
-    case 0x02:
-      return tr("Content$Unpublished");
-    case 0x03:
-      return tr("Content$Live Broadcast");
-    default:
-      ;
-      }
-    break;
-  case ecgUserDefined:
-    switch (Content & 0x0F)
-      {
-    //case 0x00: return tr("Content$"); // ???
-    case 0x01:
-      return tr("Content$Movie");
-    case 0x02:
-      return tr("Content$Sports");
-    case 0x03:
-      return tr("Content$News");
-    case 0x04:
-      return tr("Content$Children");
-    case 0x05:
-      return tr("Content$Education");
-    case 0x06:
-      return tr("Content$Series");
-    case 0x07:
-      return tr("Content$Music");
-    case 0x08:
-      return tr("Content$Religious");
-    default:
-      ;
-      }
-    break;
-  default:
-    ;
-    }
-  return "";
-}
-
-std::string cEvent::GetParentalRatingString(void) const
-{
-  static const char * const ratings[8] = { "", "G", "PG", "PG-13", "R", "NR/AO", "", "NC-17" };
-  char buffer[19];
-  buffer[0] = 0;
-  strcpy(buffer, ratings[(parentalRating >> 10) & 0x07]);
-  if (parentalRating & 0x37F)
-  {
-    strcat(buffer, " [");
-    if (parentalRating & 0x0230)
-      strcat(buffer, "V,");
-    if (parentalRating & 0x000A)
-      strcat(buffer, "L,");
-    if (parentalRating & 0x0044)
-      strcat(buffer, "N,");
-    if (parentalRating & 0x0101)
-      strcat(buffer, "SC,");
-    if (char *s = strrchr(buffer, ','))
-      s[0] = ']';
-  }
-
-  return isempty(buffer) ? "" : buffer;
-}
-
-std::string cEvent::GetStarRatingString(void) const
-{
-  static const char *const critiques[8] = { "", "*", "*+", "**", "**+", "***", "***+", "****" };
-  return critiques[starRating & 0x07];
-}
-
-std::string cEvent::GetVpsString(void) const
-{
-  return m_vps.GetAsSaveString();
-}
-
-bool cEvent::Parse(const std::string& data)
-{
-  char *t = skipspace(data.c_str() + 1);
-  switch (*data.c_str())
-    {
-  case 'T':
-    SetTitle(t);
-    break;
-  case 'S':
-    SetShortText(t);
-    break;
-  case 'D':
-    strreplace(t, '|', '\n');
-    SetDescription(t);
-    break;
-  case 'G':
-    {
-      memset(contents, 0, sizeof(contents));
-      for (int i = 0; i < MaxEventContents; i++)
-      {
-        char *tail = NULL;
-        int c = strtol(t, &tail, 16);
-        if (0x00 < c && c <= 0xFF)
-        {
-          contents[i] = c;
-          t = tail;
-        }
-        else
-          break;
-      }
-    }
-    break;
-  case 'R':
-    {
-      int ParentalRating = 0;
-      int StarRating = 0;
-      sscanf(t, "%d %d", &ParentalRating, &StarRating);
-      SetParentalRating(ParentalRating);
-      SetStarRating(StarRating);
-    }
-    break;
-  case 'X':
-    if (!components)
-      components = new CEpgComponents;
-    components->SetComponent(COMPONENT_ADD_NEW, t);
-    break;
-  case 'V':
-    SetVps(atoi(t));
-    break;
-  default:
-    esyslog("ERROR: unexpected tag while reading EPG data: %s", data.c_str());
-    return false;
-    }
-  return true;
-}
-
-#define MAXEPGBUGFIXSTATS 13
-#define MAXEPGBUGFIXCHANS 100
-struct tEpgBugFixStats
-{
-  int hits;
-  int n;
-  cChannelID channelIDs[MAXEPGBUGFIXCHANS];
-  tEpgBugFixStats(void)
-  {
-    hits = n = 0;
-  }
-};
-
-tEpgBugFixStats EpgBugFixStats[MAXEPGBUGFIXSTATS];
-
-static void EpgBugFixStat(int Number, const cChannelID& ChannelID)
-{
-  if (0 <= Number && Number < MAXEPGBUGFIXSTATS)
-  {
-    tEpgBugFixStats *p = &EpgBugFixStats[Number];
-    p->hits++;
-    int i = 0;
-    for (; i < p->n; i++)
-    {
-      if (p->channelIDs[i] == ChannelID)
-        break;
-    }
-    if (i == p->n && p->n < MAXEPGBUGFIXCHANS)
-      p->channelIDs[p->n++] = ChannelID;
-  }
-}
-
-#if 0
-void ReportEpgBugFixStats(bool Force)
-{
-  if (g_setup.EPGBugfixLevel > 0)
-  {
-    static time_t LastReport = 0;
-    time_t now = time(NULL);
-    if (now - LastReport > 3600 || Force)
-    {
-      LastReport = now;
-      struct tm tm_r;
-      struct tm *ptm = localtime_r(&now, &tm_r);
-      if (ptm->tm_hour != 5)
-        return;
-    }
-    else
-      return;
-    bool GotHits = false;
-    char buffer[1024];
-    for (int i = 0; i < MAXEPGBUGFIXSTATS; i++)
-    {
-      const char *delim = " ";
-      tEpgBugFixStats *p = &EpgBugFixStats[i];
-      if (p->hits)
-      {
-        bool PrintedStats = false;
-        char *q = buffer;
-        *buffer = 0;
-        for (int c = 0; c < p->n; c++)
-        {
-          ChannelPtr channel = cChannelManager::Get().GetByChannelID(
-              p->channelIDs[c], true);
-          if (channel)
-          {
-            if (!GotHits)
-            {
-              dsyslog("=====================");
-              dsyslog("EPG bugfix statistics");
-              dsyslog("=====================");
-              dsyslog(
-                  "IF SOMEBODY WHO IS IN CHARGE OF THE EPG DATA FOR ONE OF THE LISTED");
-              dsyslog(
-                  "CHANNELS READS THIS: PLEASE TAKE A LOOK AT THE FUNCTION cEvent::FixEpgBugs()");
-              dsyslog(
-                  "IN VDR/epg.c TO LEARN WHAT'S WRONG WITH YOUR DATA, AND FIX IT!");
-              dsyslog("=====================");
-              dsyslog("Fix Hits Channels");
-              GotHits = true;
-            }
-            if (!PrintedStats)
-            {
-              q += snprintf(q, sizeof(buffer) - (q - buffer), "%-3d %-4d", i,
-                  p->hits);
-              PrintedStats = true;
-            }
-            q += snprintf(q, sizeof(buffer) - (q - buffer), "%s%s", delim,
-                channel->Name().c_str());
-            delim = ", ";
-            if (q - buffer > 80)
-            {
-              q += snprintf(q, sizeof(buffer) - (q - buffer), "%s...", delim);
-              break;
-            }
-          }
-        }
-        if (*buffer)
-          dsyslog("%s", buffer);
-      }
-      p->hits = p->n = 0;
-    }
-    if (GotHits)
-      dsyslog("=====================");
-  }
-}
-
-static void StripControlCharacters(char *s)
-{
-  if (s)
-  {
-    int len = strlen(s);
-    while (len > 0)
-    {
-      int l = cUtf8Utils::Utf8CharLen(s);
-      uint8_t *p = (uint8_t*) s;
-      if (l == 2 && *p == 0xC2) // UTF-8 sequence
-        p++;
-      if (*p == 0x86 || *p == 0x87)
-      {
-        memmove(s, p + 1, len - l + 1); // we also copy the terminating 0!
-        len -= l;
-        l = 0;
-      }
-      s += l;
-      len -= l;
-    }
-  }
-}
-
-#endif
 
 void cEvent::FixEpgBugs(void)
 {
   if (m_strTitle.empty()) {
      // we don't want any "(null)" titles
     m_strTitle = tr("No title");
-    EpgBugFixStat(12, ChannelID());
   }
 
   if (cSettings::Get().m_iEPGBugfixLevel == 0)
@@ -664,15 +274,15 @@ void cEvent::FixEpgBugs(void)
   // Some TV stations apparently have their own idea about how to fill in the
   // EPG data. Let's fix their bugs as good as we can:
 
-  // Some channels put the ShortText in quotes and use either the ShortText
-  // or the Description field, depending on how long the string is:
+  // Some channels put the PlotOutline in quotes and use either the PlotOutline
+  // or the Plot field, depending on how long the string is:
   //
   // Title
-  // "ShortText". Description
+  // "PlotOutline". Plot
   //
-  if (m_strShortText.empty() != !m_strDescription.empty())
+  if (m_strPlotOutline.empty() != !m_strPlot.empty())
   {
-    std::string strCheck = !m_strShortText.empty() ? m_strShortText : m_strDescription;
+    std::string strCheck = !m_strPlotOutline.empty() ? m_strPlotOutline : m_strPlot;
     if (!strCheck.empty() && strCheck.at(0) == '"')
     {
       const char *delim = "\".";
@@ -680,59 +290,53 @@ void cEvent::FixEpgBugs(void)
       size_t delimPos = strCheck.find(delim);
       if (delimPos != std::string::npos)
       {
-        m_strDescription = m_strShortText = strCheck;
-        m_strDescription.erase(0, delimPos);
-        m_strShortText.erase(delimPos);
-        EpgBugFixStat(1, ChannelID());
+        m_strPlot = m_strPlotOutline = strCheck;
+        m_strPlot.erase(0, delimPos);
+        m_strPlotOutline.erase(delimPos);
       }
     }
   }
 
-  // Some channels put the Description into the ShortText (preceded
-  // by a blank) if there is no actual ShortText and the Description
+  // Some channels put the Plot into the PlotOutline (preceded
+  // by a blank) if there is no actual PlotOutline and the Plot
   // is short enough:
   //
   // Title
-  //  Description
+  //  Plot
   //
-  if (!m_strShortText.empty() && m_strDescription.empty())
+  if (!m_strPlotOutline.empty() && m_strPlot.empty())
   {
-    StringUtils::Trim(m_strShortText);
-    m_strDescription = m_strShortText;
-    m_strShortText.clear();
-    EpgBugFixStat(2, ChannelID());
+    StringUtils::Trim(m_strPlotOutline);
+    m_strPlot = m_strPlotOutline;
+    m_strPlotOutline.clear();
   }
 
-  // Sometimes they repeat the Title in the ShortText:
+  // Sometimes they repeat the Title in the PlotOutline:
   //
   // Title
   // Title
   //
-  if (!m_strShortText.empty() && m_strTitle == m_strShortText)
-  {
-    m_strShortText.clear();
-    EpgBugFixStat(3, ChannelID());
-  }
+  if (!m_strPlotOutline.empty() && m_strTitle == m_strPlotOutline)
+    m_strPlotOutline.clear();
 
-  // Some channels put the ShortText between double quotes, which is nothing
+  // Some channels put the PlotOutline between double quotes, which is nothing
   // but annoying (some even put a '.' after the closing '"'):
   //
   // Title
-  // "ShortText"[.]
+  // "PlotOutline"[.]
   //
-  if (!m_strShortText.empty() && m_strShortText.at(0) == '"')
+  if (!m_strPlotOutline.empty() && m_strPlotOutline.at(0) == '"')
   {
-    size_t len = m_strShortText.size();
+    size_t len = m_strPlotOutline.size();
     if (len > 2 &&
-        (m_strShortText.at(len - 1) == '"' ||
-            (m_strShortText.at(len - 1) == '.' && m_strShortText.at(len - 2) == '"')))
+        (m_strPlotOutline.at(len - 1) == '"' ||
+            (m_strPlotOutline.at(len - 1) == '.' && m_strPlotOutline.at(len - 2) == '"')))
     {
-      m_strShortText.erase(0, 1);
-      const char* tmp = m_strShortText.c_str();
+      m_strPlotOutline.erase(0, 1);
+      const char* tmp = m_strPlotOutline.c_str();
       const char *p = strrchr(tmp, '"');
       if (p)
-        m_strShortText.erase(m_strShortText.size() - (p - tmp));
-      EpgBugFixStat(4, ChannelID());
+        m_strPlotOutline.erase(m_strPlotOutline.size() - (p - tmp));
     }
   }
 
@@ -744,129 +348,120 @@ void cEvent::FixEpgBugs(void)
   // of the window that will actually display the text.
   // Remove excess whitespace:
   StringUtils::Trim(m_strTitle);
-  StringUtils::Trim(m_strShortText);
-  StringUtils::Trim(m_strDescription);
+  StringUtils::Trim(m_strPlotOutline);
+  StringUtils::Trim(m_strPlot);
 
-#define MAX_USEFUL_EPISODE_LENGTH 40
-  // Some channels put a whole lot of information in the ShortText and leave
-  // the Description totally empty. So if the ShortText length exceeds
-  // MAX_USEFUL_EPISODE_LENGTH, let's put this into the Description
+  // Some channels put a whole lot of information in the PlotOutline and leave
+  // the Plot totally empty. So if the PlotOutline length exceeds
+  // MAX_USEFUL_EPISODE_LENGTH, let's put this into the Plot
   // instead:
-  if (!m_strShortText.empty() && m_strDescription.empty())
+  if (!m_strPlotOutline.empty() && m_strPlot.empty())
   {
-    if (m_strShortText.size() > MAX_USEFUL_EPISODE_LENGTH)
-    {
-      m_strDescription.swap(m_strShortText);
-      EpgBugFixStat(6, ChannelID());
-    }
+    if (m_strPlotOutline.size() > MAX_USEFUL_EPISODE_LENGTH)
+      m_strPlot.swap(m_strPlotOutline);
   }
 
-  // Some channels put the same information into ShortText and Description.
+  // Some channels put the same information into PlotOutline and Plot.
   // In that case we delete one of them:
-  if (!m_strShortText.empty() && !m_strDescription.empty() && m_strShortText == m_strDescription)
+  if (!m_strPlotOutline.empty() && !m_strPlot.empty() && m_strPlotOutline == m_strPlot)
   {
-    if (m_strShortText.size() > MAX_USEFUL_EPISODE_LENGTH)
-      m_strShortText.clear();
+    if (m_strPlotOutline.size() > MAX_USEFUL_EPISODE_LENGTH)
+      m_strPlotOutline.clear();
     else
-      m_strDescription.clear();
-
-    EpgBugFixStat(7, ChannelID());
+      m_strPlot.clear();
   }
 
   // Some channels use the ` ("backtick") character, where a ' (single quote)
   // would be normally used. Actually, "backticks" in normal text don't make
   // much sense, so let's replace them:
   StringUtils::Replace(m_strTitle, '`', '\'');
-  StringUtils::Replace(m_strShortText, '`', '\'');
-  StringUtils::Replace(m_strDescription, '`', '\'');
+  StringUtils::Replace(m_strPlotOutline, '`', '\'');
+  StringUtils::Replace(m_strPlot, '`', '\'');
 
   if (cSettings::Get().m_iEPGBugfixLevel <= 2)
     goto Final;
 
-  // The stream components have a "description" field which some channels
+  // The stream components have a "plot" field which some channels
   // apparently have no idea of how to set correctly:
-  if (components)
+  if (!m_components.empty())
   {
-    for (int i = 0; i < components->NumComponents(); i++)
+    for (vector<CEpgComponent>::iterator itComponent = m_components.begin(); itComponent != m_components.end(); ++itComponent)
     {
-      CEpgComponent *p = components->Component(i);
-      switch (p->Stream())
+      CEpgComponent& component = *itComponent;
+
+      switch (component.Stream())
       {
       case 0x01:
         { // video
-          if (!p->Description().empty())
+          if (!component.Description().empty())
           {
-            if (StringUtils::EqualsNoCase(p->Description(), "Video") ||
-                StringUtils::EqualsNoCase(p->Description(), "Bildformat"))
+            if (StringUtils::EqualsNoCase(component.Description(), "Video") ||
+                StringUtils::EqualsNoCase(component.Description(), "Bildformat"))
             {
               // Yes, we know it's video - that's what the 'stream' code
               // is for! But _which_ video is it?
-              p->SetDescription("");
-              EpgBugFixStat(8, ChannelID());
+              component.SetDescription("");
             }
           }
-          if (p->Description().empty())
+          if (component.Description().empty())
           {
-            switch (p->Type())
-              {
+            switch (component.Type())
+            {
             case 0x01:
             case 0x05:
-              p->SetDescription("4:3");
+              component.SetDescription("4:3");
               break;
             case 0x02:
             case 0x03:
             case 0x06:
             case 0x07:
-              p->SetDescription("16:9");
+              component.SetDescription("16:9");
               break;
             case 0x04:
             case 0x08:
-              p->SetDescription(">16:9");
+              component.SetDescription(">16:9");
               break;
             case 0x09:
             case 0x0D:
-              p->SetDescription("HD 4:3");
+              component.SetDescription("HD 4:3");
               break;
             case 0x0A:
             case 0x0B:
             case 0x0E:
             case 0x0F:
-              p->SetDescription("HD 16:9");
+              component.SetDescription("HD 16:9");
               break;
             case 0x0C:
             case 0x10:
-              p->SetDescription("HD >16:9");
+              component.SetDescription("HD >16:9");
               break;
             default:
               break;
-              }
-            EpgBugFixStat(9, ChannelID());
+            }
           }
         }
         break;
       case 0x02:
         { // audio
-          if (!p->Description().empty())
+          if (!component.Description().empty())
           {
-            if (StringUtils::EqualsNoCase(p->Description(), "Audio"))
+            if (StringUtils::EqualsNoCase(component.Description(), "Audio"))
             {
               // Yes, we know it's audio - that's what the 'stream' code
               // is for! But _which_ audio is it?
-              p->SetDescription("");
-              EpgBugFixStat(10, ChannelID());
+              component.SetDescription("");
             }
           }
-          if (p->Description().empty())
+          if (component.Description().empty())
           {
-            switch (p->Type())
+            switch (component.Type())
             {
             case 0x05:
-              p->SetDescription("Dolby Digital");
+              component.SetDescription("Dolby Digital");
               break;
             default:
               break; // all others will just display the language
             }
-            EpgBugFixStat(11, ChannelID());
           }
         }
         break;
@@ -876,31 +471,8 @@ void cEvent::FixEpgBugs(void)
     }
   }
 
-  Final:
-
-  // XXX is this just gui code that can't handle this?
-
-#if 0
-  // VDR can't usefully handle newline characters in the title, shortText or component description of EPG
-  // data, so let's always convert them to blanks (independent of the setting of EPGBugfixLevel):
-  strreplace(title, '\n', ' ');
-  strreplace(shortText, '\n', ' ');
-  if (components)
-  {
-    for (int i = 0; i < components->NumComponents(); i++)
-    {
-      CEpgComponent *p = components->Component(i);
-      if (p->description)
-        strreplace(p->description, '\n', ' ');
-    }
-  }
-  // Same for control characters:
-  StripControlCharacters(title);
-  StripControlCharacters(shortText);
-  StripControlCharacters(description);
-#else
-  (void)0;
-#endif
+Final:
+  return;
 }
 
 void AddEventElement(TiXmlElement* eventElement, const std::string& strElement, const std::string& strText)
@@ -914,191 +486,215 @@ void AddEventElement(TiXmlElement* eventElement, const std::string& strElement, 
   }
 }
 
-bool cEvent::Deserialise(cSchedule* schedule, const TiXmlNode *eventNode)
+bool cEvent::Serialise(TiXmlNode* node) const
 {
-  bool bNewEvent(false);
-  EventPtr event;
-  assert(schedule);
-  assert(eventNode);
+  if (node == NULL)
+    return false;
 
-  const TiXmlElement *elem = eventNode->ToElement();
+  TiXmlElement *elem = node->ToElement();
   if (elem == NULL)
     return false;
 
-  const char* id       = elem->Attribute(EPG_XML_ATTR_EVENT_ID);
-  const char* start    = elem->Attribute(EPG_XML_ATTR_START_TIME);
-  const char* duration = elem->Attribute(EPG_XML_ATTR_DURATION);
-  const char* tableId  = elem->Attribute(EPG_XML_ATTR_TABLE_ID);
-  const char* version  = elem->Attribute(EPG_XML_ATTR_VERSION);
-  if (id && start && duration && tableId && version)
+  elem->SetAttribute(EPG_XML_ATTR_EVENT_ID, m_eventID);
+
+  if (!m_strTitle.empty())
+    AddEventElement(elem, EPG_XML_ELM_TITLE, m_strTitle);
+  if (!m_strPlotOutline.empty())
+    AddEventElement(elem, EPG_XML_ELM_PLOT_OUTLINE, m_strPlotOutline);
+  if (!m_strPlot.empty())
+    AddEventElement(elem, EPG_XML_ELM_PLOT, m_strPlot);
+
+  if (!m_channelID.Serialise(node))
+    return false;
+
+  std::string strGenre = EPGStringifier::GenreToString(m_genreType);
+  if (!strGenre.empty())
+    elem->SetAttribute(EPG_XML_ATTR_GENRE, strGenre.c_str());
+
+  std::string strSubGenre = EPGStringifier::SubGenreToString(m_genreType, m_genreSubType);
+  if (!strSubGenre.empty())
+    elem->SetAttribute(EPG_XML_ATTR_SUBGENRE, strSubGenre.c_str());
+
+  if (m_genreType == EPG_GENRE_CUSTOM && !m_strCustomGenre.empty())
+    elem->SetAttribute(EPG_XML_ATTR_CUSTOM_GENRE, m_strCustomGenre.c_str());
+
+  time_t tmStart;
+  m_startTime.GetAsTime(tmStart);
+  elem->SetAttribute(EPG_XML_ATTR_START_TIME, tmStart);
+
+  time_t tmEnd;
+  m_endTime.GetAsTime(tmEnd);
+  elem->SetAttribute(EPG_XML_ATTR_END_TIME, tmEnd);
+
+  if (m_parentalRating)
+    elem->SetAttribute(EPG_XML_ATTR_PARENTAL, m_parentalRating);
+
+  if (m_starRating)
+    elem->SetAttribute(EPG_XML_ATTR_STAR, m_starRating);
+
+  if (m_tableID != TABLE_ID_INVALID)
+    elem->SetAttribute(EPG_XML_ATTR_STAR, m_tableID);
+
+  if (m_version != VERSION_INVALID)
+    elem->SetAttribute(EPG_XML_ATTR_STAR, m_version);
+
+  if (m_vps.IsValid())
   {
-    tEventID EventID = (tEventID)StringUtils::IntVal(id);
-    CDateTime startTime = CDateTime((time_t)StringUtils::IntVal(start));
+    time_t tmVps;
+    m_vps.GetAsTime(tmVps);
+    elem->SetAttribute(EPG_XML_ATTR_VPS, tmVps);
+  }
 
-    event = schedule->GetEvent(EventID, startTime);
-
-    if (!event)
-    {
-      event = EventPtr(new cEvent(EventID));
-      event->m_startTime = startTime;
-      bNewEvent = true;
-    }
-
-    event->duration = (int)StringUtils::IntVal(duration);
-    event->tableID  = (uint8_t)StringUtils::IntVal(tableId);
-    event->version  = (uint8_t)StringUtils::IntVal(version);
-
-    const TiXmlNode *titleNode = elem->FirstChild(EPG_XML_ELM_TITLE);
-    if (titleNode)
-    {
-      event->m_strTitle = titleNode->ToElement()->GetText();
-    }
-
-    const TiXmlNode *shortTextNode = elem->FirstChild(EPG_XML_ELM_SHORT_TEXT);
-    if (shortTextNode)
-    {
-      event->m_strShortText = shortTextNode->ToElement()->GetText();
-    }
-
-    const TiXmlNode *descriptionNode = elem->FirstChild(EPG_XML_ELM_DESCRIPTION);
-    if (descriptionNode)
-    {
-      event->m_strDescription = descriptionNode->ToElement()->GetText();
-    }
-
-    const char* parental  = elem->Attribute(EPG_XML_ATTR_PARENTAL);
-    if (parental)
-      event->parentalRating = (uint16_t)StringUtils::IntVal(parental);
-
-    const char* starRating  = elem->Attribute(EPG_XML_ATTR_STAR);
-    if (starRating)
-      event->starRating = (uint8_t)StringUtils::IntVal(starRating);
-
-    const char* vps  = elem->Attribute(EPG_XML_ATTR_VPS);
-    if (vps)
-      event->m_vps = CDateTime((time_t)StringUtils::IntVal(vps));
-
-    const TiXmlNode *contentsNode = elem->FirstChild(EPG_XML_ELM_CONTENTS);
-    int iPtr(0);
-    while (contentsNode != NULL)
-    {
-      event->contents[iPtr++] = (uint8_t)StringUtils::IntVal(contentsNode->ToElement()->GetText());
-      contentsNode = contentsNode->NextSibling(EPG_XML_ELM_CONTENTS);
-    }
-
-    const TiXmlNode *componentsNode = elem->FirstChild(EPG_XML_ELM_COMPONENTS);
+  if (!m_components.empty())
+  {
+    TiXmlElement componentsElement(EPG_XML_ELM_COMPONENTS);
+    TiXmlNode* componentsNode = elem->InsertEndChild(componentsElement);
     if (componentsNode)
     {
-      int iPtr(0);
-      const TiXmlNode *componentNode = componentsNode->FirstChild(EPG_XML_ELM_COMPONENTS);
-      while (componentNode != NULL)
+      for (vector<CEpgComponent>::const_iterator itComponent = m_components.begin(); itComponent != m_components.end(); ++itComponent)
       {
-        const char* num  = componentNode->ToElement()->Attribute(EPG_XML_ATTR_COMPONENT_ID);
-        if (num)
-          event->components->SetComponent((int)StringUtils::IntVal(num), componentNode->ToElement()->GetText());
-        componentNode = componentNode->NextSibling(EPG_XML_ELM_COMPONENT);
+        TiXmlElement componentElement(EPG_XML_ELM_COMPONENT);
+        TiXmlNode* componentNode = componentsNode->InsertEndChild(componentElement);
+        if (componentNode)
+          itComponent->Serialise(componentNode);
       }
     }
+  }
 
-    if (bNewEvent)
-      schedule->AddEvent(event);
-    else
-      schedule->HashEvent(event.get());
+  if (!m_contents.empty())
+  {
+    for (std::vector<uint8_t>::const_iterator it = m_contents.begin(); it != m_contents.end(); ++it)
+    {
+      TiXmlElement contentsElement(EPG_XML_ELM_CONTENTS);
+      TiXmlNode* contentsNode = elem->InsertEndChild(contentsElement);
+      if (contentsNode)
+      {
+        TiXmlElement* contentsElem = contentsNode->ToElement();
+        if (contentsElem)
+        {
+          TiXmlText* text = new TiXmlText(StringUtils::Format("%u", *it));
+          if (text)
+            contentsElem->LinkEndChild(text);
+        }
+      }
+    }
+  }
 
-    return true;
+  return true;
+}
+
+bool cEvent::Deserialise(EventPtr& event, const TiXmlNode *eventNode)
+{
+  if (eventNode == NULL)
+    return false;
+
+  const TiXmlElement* elem = eventNode->ToElement();
+  if (elem == NULL)
+    return false;
+
+  const char* strID = elem->Attribute(EPG_XML_ATTR_EVENT_ID);
+  if (strID != NULL)
+  {
+    event = EventPtr(new cEvent(StringUtils::IntVal(strID)));
+    return event->Deserialise(eventNode);
   }
 
   return false;
 }
 
-bool cEvent::Serialise(TiXmlElement* element) const
+bool cEvent::Deserialise(const TiXmlNode* node)
 {
-  assert(element);
+  if (node == NULL)
+    return false;
 
-  if (EndTime() + CDateTimeSpan(0, 0, cSettings::Get().m_iEPGLinger, 0) >= CDateTime::GetUTCDateTime())
+  const TiXmlElement* elem = node->ToElement();
+  if (elem == NULL)
+    return false;
+
+  Reset();
+
+  const TiXmlNode* titleNode = elem->FirstChild(EPG_XML_ELM_TITLE);
+  if (titleNode != NULL)
+    m_strTitle = titleNode->ToElement()->GetText();
+
+  const TiXmlNode* plotOutlineNode = elem->FirstChild(EPG_XML_ELM_PLOT_OUTLINE);
+  if (plotOutlineNode != NULL)
+    m_strPlotOutline = plotOutlineNode->ToElement()->GetText();
+
+  const TiXmlNode* plotNode = elem->FirstChild(EPG_XML_ELM_PLOT);
+  if (plotNode)
+    m_strPlot = plotNode->ToElement()->GetText();
+
+  if (!m_channelID.Deserialise(node))
+    return false;
+
+  const char* strStart = elem->Attribute(EPG_XML_ATTR_START_TIME);
+  if (strStart != NULL)
+    m_startTime = CDateTime((time_t)StringUtils::IntVal(strStart));
+
+  const char* strEnd = elem->Attribute(EPG_XML_ATTR_END_TIME);
+  if (strEnd != NULL)
+    m_startTime = CDateTime((time_t)StringUtils::IntVal(strEnd));
+
+  const char* strGenre = elem->Attribute(EPG_XML_ATTR_GENRE);
+  if (strGenre != NULL)
+    m_genreType = EPGStringifier::StringToGenre(strGenre);
+
+  if (m_genreType == EPG_GENRE_CUSTOM)
   {
-    TiXmlElement eventElement(EPG_XML_ELM_EVENT);
-    TiXmlNode *eventNode = element->InsertEndChild(eventElement);
+    const char* strCustomGenre = elem->Attribute(EPG_XML_ATTR_CUSTOM_GENRE);
+    if (strCustomGenre != NULL)
+      m_strCustomGenre = strCustomGenre;
+  }
+  else
+  {
+    const char* strSubGenre = elem->Attribute(EPG_XML_ATTR_SUBGENRE);
+    if (strSubGenre != NULL)
+      m_genreSubType = EPGStringifier::StringToSubGenre(strSubGenre);
+  }
 
-    TiXmlElement* eventNodeElement = eventNode->ToElement();
-    if (!eventNodeElement)
-      return false;
+  const char* parental  = elem->Attribute(EPG_XML_ATTR_PARENTAL);
+  if (parental)
+    m_parentalRating = StringUtils::IntVal(parental);
 
-    time_t tmStart;
-    m_startTime.GetAsTime(tmStart);
+  const char* starRating  = elem->Attribute(EPG_XML_ATTR_STAR);
+  if (starRating)
+    m_starRating = StringUtils::IntVal(starRating);
 
-    eventNodeElement->SetAttribute(EPG_XML_ATTR_EVENT_ID,   eventID);
-    eventNodeElement->SetAttribute(EPG_XML_ATTR_START_TIME, tmStart);
-    eventNodeElement->SetAttribute(EPG_XML_ATTR_DURATION,   duration);
-    eventNodeElement->SetAttribute(EPG_XML_ATTR_TABLE_ID,   tableID);
-    eventNodeElement->SetAttribute(EPG_XML_ATTR_VERSION,    version);
+  const char* strTableID = elem->Attribute(EPG_XML_ATTR_TABLE_ID);
+  if (strTableID != NULL)
+    m_tableID = StringUtils::IntVal(strTableID);
 
-    if (!m_strTitle.empty())
-      AddEventElement(eventNodeElement, EPG_XML_ELM_TITLE,       m_strTitle.c_str());
-    if (!m_strShortText.empty())
-      AddEventElement(eventNodeElement, EPG_XML_ELM_SHORT_TEXT,  m_strShortText.c_str());
-    if (!m_strDescription.empty())
-      AddEventElement(eventNodeElement, EPG_XML_ELM_DESCRIPTION, m_strDescription.c_str());
-    if (contents[0])
+  const char* strVersion = elem->Attribute(EPG_XML_ATTR_VERSION);
+  if (strVersion != NULL)
+    m_version = StringUtils::IntVal(strVersion);
+
+  const char* strVps  = elem->Attribute(EPG_XML_ATTR_VPS);
+  if (strVps)
+    m_vps = CDateTime((time_t)StringUtils::IntVal(strVps));
+
+  const TiXmlNode* componentsNode = elem->FirstChild(EPG_XML_ELM_COMPONENTS);
+  if (componentsNode)
+  {
+    const TiXmlNode* componentNode = componentsNode->FirstChild(EPG_XML_ELM_COMPONENTS);
+    while (componentNode != NULL)
     {
-      for (int i = 0; Contents(i); i++)
+      const char* num  = componentNode->ToElement()->Attribute(EPG_XML_ATTR_COMPONENT_ID);
+      if (num)
       {
-        TiXmlElement contentsElement(EPG_XML_ELM_CONTENTS);
-        TiXmlNode* contentsNode = eventNodeElement->InsertEndChild(contentsElement);
-        if (contentsNode)
-        {
-          TiXmlElement* contentsElem = contentsNode->ToElement();
-          if (contentsElem)
-          {
-            TiXmlText* text = new TiXmlText(StringUtils::Format("%u", Contents(i)));
-            if (text)
-              contentsElem->LinkEndChild(text);
-          }
-        }
+        CEpgComponent component;
+        if (component.Deserialise(componentNode))
+          m_components[StringUtils::IntVal(num)] = component;
       }
+      componentNode = componentNode->NextSibling(EPG_XML_ELM_COMPONENT);
     }
+  }
 
-    if (parentalRating)
-      eventNodeElement->SetAttribute(EPG_XML_ATTR_PARENTAL, parentalRating);
-
-    if (starRating)
-      eventNodeElement->SetAttribute(EPG_XML_ATTR_STAR, starRating);
-
-    if (components)
-    {
-      TiXmlElement componentsElement(EPG_XML_ELM_COMPONENTS);
-      TiXmlNode* componentsNode = eventNodeElement->InsertEndChild(componentsElement);
-      if (componentsNode)
-      {
-        for (int i = 0; i < components->NumComponents(); i++)
-        {
-          CEpgComponent *p = components->Component(i);
-
-          TiXmlElement componentElement(EPG_XML_ELM_COMPONENT);
-          TiXmlNode* componentNode = componentsNode->InsertEndChild(componentElement);
-          if (componentNode)
-          {
-            TiXmlElement* componentElem = componentNode->ToElement();
-            if (componentElem)
-            {
-              TiXmlText* text = new TiXmlText(StringUtils::Format("%s", p->Serialise().c_str()));
-              if (text)
-              {
-                componentElem->LinkEndChild(text);
-                componentElem->SetAttribute(EPG_XML_ATTR_COMPONENT_ID, i);
-              }
-            }
-          }
-        }
-      }
-    }
-
-    if (m_vps.IsValid())
-    {
-      time_t tmVps;
-      m_vps.GetAsTime(tmVps);
-      eventNodeElement->SetAttribute(EPG_XML_ATTR_VPS, tmVps);
-    }
+  const TiXmlNode* contentsNode = elem->FirstChild(EPG_XML_ELM_CONTENTS);
+  while (contentsNode != NULL)
+  {
+    m_contents.push_back(StringUtils::IntVal(contentsNode->ToElement()->GetText()));
+    contentsNode = contentsNode->NextSibling(EPG_XML_ELM_CONTENTS);
   }
 
   return true;

@@ -20,85 +20,94 @@
  */
 
 #include "Component.h"
-#include "utils/Tools.h"
+#include "EPGDefinitions.h"
+#include "utils/StringUtils.h"
+
+#include <tinyxml.h>
 
 using namespace std;
 
 namespace VDR
 {
 
-CEpgComponent::CEpgComponent(void)
+CEpgComponent::CEpgComponent(uint8_t stream, uint8_t type, const std::string& strLang, const std::string& strDesc)
+ : m_stream(stream),
+   m_type(type),
+   m_strDescription(strDesc)
 {
-  m_stream      = 0;
-  m_type        = 0;
+  SetLanguage(strLang);
 }
 
-string CEpgComponent::Serialise(void)
+void CEpgComponent::Reset(void)
 {
-  char buffer[256];
-  snprintf(buffer, sizeof(buffer), "%X %02X %s %s", m_stream, m_type, m_strLanguage.c_str(), m_strDescription.c_str());
-  return buffer;
+  m_stream = 0;
+  m_type = 0;
+  m_strLanguage.clear();
+  m_strDescription.clear();
 }
 
-bool CEpgComponent::Deserialse(const std::string& str)
+bool CEpgComponent::operator==(const CEpgComponent& rhs) const
 {
-  unsigned int Stream, Type;
-  char* description;
-  char language[MAXLANGCODE2];
-  int n = sscanf(str.c_str(), "%X %02X %7s %a[^\n]", &Stream, &Type, language, &description); // 7 = MAXLANGCODE2 - 1
-  if (n == 4)
-  {
-    m_strLanguage    = language;
-    m_strDescription = description;
-  }
-  free(description);
-  m_stream = Stream;
-  m_type = Type;
-  return n >= 3;
+  return m_stream         == rhs.m_stream      &&
+         m_type           == rhs.m_type        &&
+         m_strLanguage    == rhs.m_strLanguage &&
+         m_strDescription == rhs.m_strDescription;
 }
 
-uint8_t CEpgComponent::Stream(void) const
+void CEpgComponent::SetLanguage(const std::string& strLang)
 {
-  return m_stream;
-}
-
-uint8_t CEpgComponent::Type(void) const
-{
-  return m_type;
-}
-
-std::string CEpgComponent::Language(void) const
-{
-  return m_strLanguage;
-}
-
-std::string CEpgComponent::Description(void) const
-{
-  return m_strDescription;
-}
-
-void CEpgComponent::SetStream(uint8_t stream)
-{
-  m_stream = stream;
-}
-
-void CEpgComponent::SetType(uint8_t type)
-{
-  m_type = type;
-}
-
-void CEpgComponent::SetLanguage(const std::string& lang)
-{
-  size_t comma = lang.find(',');
+  size_t comma = strLang.find(',');
   if (comma != std::string::npos)
-    m_strLanguage = lang.substr(0, comma - 1); // strips rest of "normalized" language codes
+    m_strLanguage = strLang.substr(0, comma - 1); // strips rest of "normalized" language codes
   else
-    m_strLanguage = lang;
+    m_strLanguage = strLang;
 }
 
-void CEpgComponent::SetDescription(const std::string& desc)
+bool CEpgComponent::Serialise(TiXmlNode* node) const
 {
-  m_strDescription = desc;
+  if (node == NULL)
+    return false;
+
+  TiXmlElement *elem = node->ToElement();
+  if (elem == NULL)
+    return false;
+
+  elem->SetAttribute(EPG_COMPONENT_XML_ATTR_STREAM,      m_stream);
+  elem->SetAttribute(EPG_COMPONENT_XML_ATTR_TYPE,        m_type);
+  elem->SetAttribute(EPG_COMPONENT_XML_ATTR_LANGUAGE,    m_strLanguage);
+  elem->SetAttribute(EPG_COMPONENT_XML_ATTR_DESCRIPTION, m_strDescription);
+
+  return true;
+}
+
+bool CEpgComponent::Deserialise(const TiXmlNode* node)
+{
+  if (node == NULL)
+    return false;
+
+  const TiXmlElement* elem = node->ToElement();
+  if (elem == NULL)
+    return false;
+
+  Reset();
+
+  const char* strStream = elem->Attribute(EPG_COMPONENT_XML_ATTR_STREAM);
+  if (strStream != NULL)
+    m_stream = StringUtils::IntVal(strStream);
+
+  const char* strType = elem->Attribute(EPG_COMPONENT_XML_ATTR_TYPE);
+  if (strType != NULL)
+    m_type = StringUtils::IntVal(strType);
+
+  const char* strLanguage = elem->Attribute(EPG_COMPONENT_XML_ATTR_LANGUAGE);
+  if (strLanguage != NULL)
+    m_strLanguage = strLanguage;
+
+  const char* strDescription = elem->Attribute(EPG_COMPONENT_XML_ATTR_DESCRIPTION);
+  if (strDescription != NULL)
+    m_strDescription = strDescription;
+
+  return true;
 }
 
 }

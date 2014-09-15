@@ -49,6 +49,20 @@ bool cChannelID::operator==(const cChannelID &rhs) const
          m_atscSourceId == rhs.m_atscSourceId;
 }
 
+bool cChannelID::operator<(const cChannelID &rhs) const
+{
+  if (m_nid < rhs.m_nid) return true;
+  if (m_nid > rhs.m_nid) return false;
+
+  if (m_tsid < rhs.m_tsid) return true;
+  if (m_tsid > rhs.m_tsid) return false;
+
+  if (m_sid > rhs.m_sid) return true;
+  if (m_sid < rhs.m_sid) return false;
+
+  return false;
+}
+
 bool cChannelID::IsValid(void) const
 {
   return (m_nid != 0 || m_tsid != 0) && m_sid != 0;

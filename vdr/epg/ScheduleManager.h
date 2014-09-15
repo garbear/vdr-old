@@ -21,61 +21,55 @@
 #pragma once
 
 #include "EPGTypes.h"
+#include "Schedule.h"
 #include "channels/ChannelID.h"
+#include "lib/platform/threads/mutex.h"
 #include "utils/DateTime.h"
 #include "utils/Observer.h"
 
 #include <map>
-#include <stdint.h>
-
-class TiXmlNode;
+#include <vector>
 
 namespace VDR
 {
 
-class cSchedule : protected Observer, public Observable
+class CChannelFilter;
+
+class cScheduleManager : protected Observer, public Observable
 {
 public:
-  cSchedule(const cChannelID& m_channelID);
-  virtual ~cSchedule(void);
-
-  static const SchedulePtr EmptySchedule;
-
-  const cChannelID& ChannelID(void) const { return m_channelID; }
-
-  EventVector Events(void) const;
-  EventPtr GetEvent(unsigned int eventID) const;
-  EventPtr GetEvent(const CDateTime& startTime) const;
-  void AddEvent(const EventPtr& event);
-  void DeleteEvent(unsigned int eventID);
+  static cScheduleManager& Get(void);
+  virtual ~cScheduleManager(void);
 
   /*
-  void SetRunningStatus(const EventPtr& event, int RunningStatus, cChannel *Channel = NULL);
-  void ClrRunningStatus(cChannel *Channel = NULL);
   void ResetVersions(void);
-  void Sort(void);
-  void DropOutdated(const CDateTime& SegmentStart, const CDateTime& SegmentEnd, uint8_t TableID, uint8_t Version);
-  void Cleanup(const CDateTime& Time);
-  void Cleanup(void);
+  bool ClearAll(void);
+  void CleanTables(void);
   */
+
+  void AddEvent(const EventPtr& event);
+  EventPtr GetEvent(const cChannelID& channelId, unsigned int eventId) const;
+  EventVector GetEvents(const cChannelID& channelID) const;
+  std::vector<cChannelID> GetUpdatedChannels(const std::map<int, CDateTime>& lastUpdated, CChannelFilter& filter) const;
 
   virtual void Notify(const Observable &obs, const ObservableMessage msg);
   void NotifyObservers(void);
 
+  /*!
+   * EPG data is saved to the EPG folder (special://home/epg by default).
+   * cScheduleManager saves an index of channel IDs to epg.xml. Each channel ID
+   * corresponds to an EPG schedule for that channel. Schedules are saved to
+   * their own channel-specific file named epg_<CHANNEL_ID>.xml.
+   */
   bool Load(void);
-  bool Serialise(TiXmlNode* node) const;
 
 private:
+  cScheduleManager(void) { }
+
   bool Save(void) const;
 
-  const cChannelID                 m_channelID;
-  std::map<unsigned int, EventPtr> m_eventIds;    // ID -> Event
-
-  //bool             m_bHasRunning;
-
-  //CDateTime modified;
-  //CDateTime presentSeen;
-  //CDateTime saved;
+  std::map<cChannelID, SchedulePtr> m_schedules;
+  PLATFORM::CMutex                  m_mutex;
 };
 
 }
