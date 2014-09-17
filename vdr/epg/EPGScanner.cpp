@@ -86,7 +86,7 @@ void* cEPGScanner::Process()
       TunerHandlePtr newHandle = device->Acquire((*it), TUNING_TYPE_EPG_SCAN, this);
       if (newHandle)
       {
-        device->Scan()->WaitForTransponderScan();
+        device->Scan()->WaitForEPGScan();
         newHandle->Release();
       }
       else
