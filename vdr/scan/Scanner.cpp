@@ -144,7 +144,7 @@ void* cScanner::Process()
       }
     }
 
-    m_percentage += 1.0f / transponders->TransponderCount();
+    m_percentage += (1.0f / transponders->TransponderCount()) * 100.0f;
   }
 
   m_percentage = 100.0f;
