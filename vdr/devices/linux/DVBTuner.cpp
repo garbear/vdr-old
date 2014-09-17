@@ -50,10 +50,10 @@ using namespace PLATFORM;
 
 #define INVALID_FD                 -1
 
-#define DVBS_LOCK_TIMEOUT_MS       1500
-#define DVBC_LOCK_TIMEOUT_MS       1500
-#define DVBT_LOCK_TIMEOUT_MS       1500
-#define ATSC_LOCK_TIMEOUT_MS       1500
+#define DVBS_LOCK_TIMEOUT_MS       3000
+#define DVBC_LOCK_TIMEOUT_MS       3000
+#define DVBT_LOCK_TIMEOUT_MS       3000
+#define ATSC_LOCK_TIMEOUT_MS       3000
 
 #define TUNER_POLL_TIMEOUT_MS      100 // tuning usually takes about a second
 
