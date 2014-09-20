@@ -698,20 +698,20 @@ void* cDvbTuner::Process(void)
     else if (bSuccess && m_status != status)
     {
       // Update status, recording lock state before and after status change
-      const bool bHadLock = HasLock();
+      const bool bWasSynced = IsSynced();
       m_status = status;
-      const bool bHasLock = HasLock();
+      const bool bIsSynced = IsSynced();
 
       dsyslog("frontend %d '%s' status changed to %s", m_device->Index(), Name().c_str(), StatusToString(status).c_str());
 
       // Report new lock status to observers
-      if (!bHadLock && bHasLock)
+      if (!bWasSynced && bIsSynced)
       {
         SetChanged();
         NotifyObservers(ObservableMessageChannelLock);
         m_lockEvent.Broadcast();
       }
-      else if (bHadLock && !bHasLock)
+      else if (bWasSynced && !bIsSynced)
       {
         SetChanged();
         NotifyObservers(ObservableMessageChannelLostLock);
