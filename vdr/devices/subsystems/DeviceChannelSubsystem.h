@@ -32,7 +32,7 @@
 namespace VDR
 {
 
-class cDeviceChannelSubsystem : protected cDeviceSubsystem, public Observable
+class cDeviceChannelSubsystem : protected cDeviceSubsystem, public Observable, public Observer
 {
 public:
   cDeviceChannelSubsystem(cDevice *device);
@@ -136,6 +136,7 @@ public:
   void Release(cTunerHandle* handle);
   TunerHandlePtr Acquire(const ChannelPtr& channel, device_tuning_type_t type, iTunerHandleCallbacks* callbacks);
   bool CanTune(device_tuning_type_t type);
+  void Notify(const Observable &obs, const ObservableMessage msg);
 
 protected:
   /*!

@@ -42,6 +42,7 @@ namespace VDR
 cDvbChannelSubsystem::cDvbChannelSubsystem(cDevice *device)
  : cDeviceChannelSubsystem(device)
 {
+  Device<cDvbDevice>()->m_dvbTuner.RegisterObserver(this);
 }
 
 bool cDvbChannelSubsystem::ProvidesDeliverySystem(fe_delivery_system_t deliverySystem) const
