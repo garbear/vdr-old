@@ -88,6 +88,7 @@ public:
   virtual ~cDeviceScanSubsystem(void) { }
 
   void StartScan(void);
+  void StopScan(void);
 
   bool WaitForTransponderScan(void);
   bool WaitForEPGScan(void);

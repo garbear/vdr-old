@@ -122,9 +122,16 @@ cDeviceScanSubsystem::cDeviceScanSubsystem(cDevice* device)
 
 void cDeviceScanSubsystem::StartScan()
 {
-  m_channelPropsScanner.CreateThread(true);
-  m_channelNamesScanner.CreateThread(true);
-  m_eventScanner.CreateThread(true);
+  m_channelPropsScanner.CreateThread(false);
+  m_channelNamesScanner.CreateThread(false);
+  m_eventScanner.CreateThread(false);
+}
+
+void cDeviceScanSubsystem::StopScan()
+{
+  m_channelPropsScanner.StopThread(0);
+  m_channelNamesScanner.StopThread(0);
+  m_eventScanner.StopThread(0);
 }
 
 bool cDeviceScanSubsystem::WaitForTransponderScan(void)
@@ -157,6 +164,11 @@ void cDeviceScanSubsystem::Notify(const Observable &obs, const ObservableMessage
   case ObservableMessageChannelLock:
   {
     StartScan();
+    break;
+  }
+  case ObservableMessageChannelLostLock:
+  {
+    StopScan();
     break;
   }
   default:
