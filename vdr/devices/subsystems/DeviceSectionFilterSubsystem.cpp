@@ -130,13 +130,14 @@ void cDeviceSectionFilterSubsystem::UnregisterFilter(const cFilter* filter)
 
 PidResourcePtr cDeviceSectionFilterSubsystem::OpenResourceInternal(uint16_t pid, uint8_t tid, uint8_t mask)
 {
-  PidResourcePtr newResource = CreateResource(pid, tid, mask);
+  PidResourcePtr newResource;
   PidResourcePtr existingResource = GetOpenResource(newResource);
 
   if (existingResource)
     return existingResource;
 
-  if (newResource->Open())
+  newResource = CreateResource(pid, tid, mask);
+  if (newResource && newResource->Open())
     return newResource;
 
   return PidResourcePtr();
