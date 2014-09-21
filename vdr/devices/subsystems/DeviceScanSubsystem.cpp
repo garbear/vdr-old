@@ -42,7 +42,7 @@ using namespace std;
 
 namespace VDR
 {
-class cSectionScanner : public PLATFORM::CThread
+class cSectionScanner : protected PLATFORM::CThread
 {
 public:
   cSectionScanner(cDevice* device, iFilterCallback* callback);
@@ -64,39 +64,42 @@ protected:
 class cChannelPropsScanner : public cSectionScanner
 {
 public:
-  cChannelPropsScanner(cDevice* device, iFilterCallback* callback) : cSectionScanner(device, callback), m_pat(m_device) { }
-  virtual ~cChannelPropsScanner(void) { Abort(); }
+  cChannelPropsScanner(cDevice* device, iFilterCallback* callback) : cSectionScanner(device, callback), m_pat(NULL) { }
+  virtual ~cChannelPropsScanner(void) { Abort(); delete m_pat; }
+  void Start(void);
   void Abort(void);
 
 protected:
   void* Process(void);
-  cPat m_pat;
+  cPat* m_pat;
 };
 
 class cChannelNamesScanner : public cSectionScanner
 {
 public:
-  cChannelNamesScanner(cDevice* device, iFilterCallback* callback) : cSectionScanner(device, callback), m_vct(m_device), m_sdt(m_device), m_bAbort(false) { }
-  virtual ~cChannelNamesScanner(void) { Abort(); }
+  cChannelNamesScanner(cDevice* device, iFilterCallback* callback) : cSectionScanner(device, callback), m_vct(NULL), m_sdt(NULL), m_bAbort(false) { }
+  virtual ~cChannelNamesScanner(void) { Abort(); delete m_vct; delete m_sdt;}
   void Abort(void);
+  void Start(void);
 
 protected:
   void* Process(void);
-  bool     m_bAbort;
-  cPsipVct m_vct;
-  cSdt     m_sdt;
+  bool      m_bAbort;
+  cPsipVct* m_vct;
+  cSdt*     m_sdt;
 };
 
 class cEventScanner : public cSectionScanner
 {
 public:
-  cEventScanner(cDevice* device, iFilterCallback* callback) : cSectionScanner(device, callback), m_mgt(m_device) { }
-  virtual ~cEventScanner(void) { Abort(); }
+  cEventScanner(cDevice* device, iFilterCallback* callback) : cSectionScanner(device, callback), m_mgt(NULL) { }
+  virtual ~cEventScanner(void) { Abort(); delete m_mgt; }
   void Abort(void);
+  void Start(void);
 
 protected:
   void* Process(void);
-  cPsipMgt m_mgt;
+  cPsipMgt* m_mgt;
 };
 
 /*
@@ -120,15 +123,23 @@ bool cSectionScanner::WaitForExit(unsigned int timeoutMs)
  */
 void* cChannelPropsScanner::Process(void)
 {
-  m_bSuccess = m_pat.ScanChannels(m_callback);
+  m_bSuccess = m_pat->ScanChannels(m_callback);
   cChannelManager::Get().NotifyObservers();
 
   return NULL;
 }
 
+void cChannelPropsScanner::Start(void)
+{
+  if (!m_pat)
+    m_pat = new cPat(m_device);
+  CreateThread(false);
+}
+
 void cChannelPropsScanner::Abort(void)
 {
-  m_pat.Abort();
+  if (m_pat)
+    m_pat->Abort();
   StopThread(0);
 }
 
@@ -141,10 +152,10 @@ void* cChannelNamesScanner::Process(void)
   m_bAbort   = false;
 
   // TODO: Use SDT for non-ATSC tuners
-  m_bSuccess = m_vct.ScanChannels(m_callback);
+  m_bSuccess = m_vct->ScanChannels(m_callback);
 
   if (m_bSuccess && !m_bAbort) {
-    m_sdt.ScanChannels();
+    m_sdt->ScanChannels();
   }
 
   cChannelManager::Get().NotifyObservers();
@@ -152,11 +163,22 @@ void* cChannelNamesScanner::Process(void)
   return NULL;
 }
 
+void cChannelNamesScanner::Start(void)
+{
+  if (!m_vct)
+    m_vct = new cPsipVct(m_device);
+  if (!m_sdt)
+    m_sdt = new cSdt(m_device);
+  CreateThread(false);
+}
+
 void cChannelNamesScanner::Abort(void)
 {
   m_bAbort = true;
-  m_vct.Abort();
-  m_sdt.Abort();
+  if (m_vct)
+    m_vct->Abort();
+  if (m_sdt)
+    m_sdt->Abort();
   StopThread(0);
 }
 
@@ -165,16 +187,24 @@ void cChannelNamesScanner::Abort(void)
  */
 void* cEventScanner::Process(void)
 {
-  m_bSuccess = m_mgt.ScanPSIPData(m_callback);
+  m_bSuccess = m_mgt->ScanPSIPData(m_callback);
 
   cScheduleManager::Get().NotifyObservers();
 
   return NULL;
 }
 
+void cEventScanner::Start(void)
+{
+  if (!m_mgt)
+    m_mgt = new cPsipMgt(m_device);
+  CreateThread(false);
+}
+
 void cEventScanner::Abort(void)
 {
-  m_mgt.Abort();
+  if (m_mgt)
+    m_mgt->Abort();
   StopThread(0);
 }
 
@@ -198,16 +228,16 @@ cDeviceScanSubsystem::~cDeviceScanSubsystem(void)
 
 void cDeviceScanSubsystem::StartScan()
 {
-  m_channelPropsScanner->CreateThread(false);
-  m_channelNamesScanner->CreateThread(false);
-  m_eventScanner->CreateThread(false);
+  m_channelPropsScanner->Start();
+  m_channelNamesScanner->Start();
+  m_eventScanner->Start();
 }
 
 void cDeviceScanSubsystem::StopScan()
 {
   m_channelPropsScanner->Abort();
-  m_channelNamesScanner->StopThread(0);
-  m_eventScanner->StopThread(0);
+  m_channelNamesScanner->Abort();
+  m_eventScanner->Abort();
 }
 
 bool cDeviceScanSubsystem::WaitForTransponderScan(void)
