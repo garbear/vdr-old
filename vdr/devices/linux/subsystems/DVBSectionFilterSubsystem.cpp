@@ -70,7 +70,7 @@ class cDvbFilterResource : public cPidResource
 {
 public:
   cDvbFilterResource(uint16_t pid, uint8_t tid, uint8_t mask, const std::string& strDvbPath)
-    : cPidResource(pid),
+    : cPidResource(pid, tid),
       m_tid(tid),
       m_mask(mask),
       m_strDvbPath(strDvbPath),
@@ -115,7 +115,7 @@ bool cDvbFilterResource::Open(void)
 {
   if (m_fileDescriptor == FILE_DESCRIPTOR_INVALID)
   {
-    dsyslog("Opening pid=%u tid=0x%02X, mask=0x%02X", Pid(), m_tid, m_mask);
+    dsyslog("PID: opening %s", ToString().c_str());
 
     // Don't open with O_NONBLOCK flag so that reads will wait for a full section
     m_fileDescriptor = open(m_strDvbPath.c_str(), O_RDWR);
@@ -143,7 +143,7 @@ void cDvbFilterResource::Close(void)
 {
   if (m_fileDescriptor != FILE_DESCRIPTOR_INVALID)
   {
-    dsyslog("Closing pid=%u tid=0x%02X, mask=0x%02X", Pid(), m_tid, m_mask);
+    dsyslog("PID: closing %s", ToString().c_str());
     close(m_fileDescriptor);
     m_fileDescriptor = FILE_DESCRIPTOR_INVALID;
   }

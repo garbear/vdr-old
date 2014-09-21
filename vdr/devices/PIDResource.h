@@ -21,6 +21,7 @@
 #pragma once
 
 #include <stdint.h>
+#include <string>
 
 namespace VDR
 {
@@ -41,7 +42,8 @@ namespace VDR
 class cPidResource
 {
 public:
-  cPidResource(uint16_t pid) : m_pid(pid) { }
+  cPidResource(uint16_t pid) : m_pid(pid), m_tid(0) { }
+  cPidResource(uint16_t pid, uint8_t tid) : m_pid(pid), m_tid(tid) { }
   virtual ~cPidResource(void) { }
 
   virtual bool Equals(const cPidResource* other) const = 0;
@@ -50,9 +52,20 @@ public:
   virtual void Close(void) = 0;
 
   uint16_t Pid(void) const { return m_pid; }
+  uint8_t  Tid(void) const { return m_tid; }
+  std::string ToString(void) const
+  {
+    char buf[16];
+    if (m_tid > 0)
+      snprintf(buf, 16, "[%u:%u]", m_pid, m_tid);
+    else
+      snprintf(buf, 16, "[%u]", m_pid);
+    return buf;
+  }
 
 private:
   const uint16_t m_pid;
+  const uint8_t  m_tid;
 };
 
 }

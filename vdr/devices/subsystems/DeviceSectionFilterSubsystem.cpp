@@ -348,16 +348,12 @@ std::string cDeviceSectionFilterSubsystem::ToString(const PidResourceSet& resour
   std::string retval;
 
   for (PidResourceSet::const_iterator it = resources.begin(); it != resources.end(); ++it)
-  {
-    char buf[16];
-    snprintf(buf, 16, "[%u] ", (*it)->Pid());
-    retval.append(buf);
-  }
+    retval.append((*it)->ToString());
 
   if (resources.empty())
-    return "[none]";
+    retval = "[none]";
 
-  return retval.substr(0, retval.size() - 1);
+  return retval;
 }
 
 }
