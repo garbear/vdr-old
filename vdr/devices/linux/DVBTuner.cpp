@@ -748,8 +748,6 @@ bool cDvbTuner::IsTunedTo(const cTransponder& transponder) const
 
 void cDvbTuner::ClearTransponder(void)
 {
-  StopThread(0);
-
   SetChanged();
   NotifyObservers(ObservableMessageChannelLostLock);
 
