@@ -152,7 +152,7 @@ void cDvbReceiverResource::Close(void)
 
     close(m_handle);
     m_handle = FILE_DESCRIPTOR_INVALID;
-    dsyslog("Closed PES filter (pid=%u, streamType=%u)");
+    dsyslog("Closed PES filter (pid=%u, streamType=%u)", Pid(), m_streamType);
   }
 }
 
