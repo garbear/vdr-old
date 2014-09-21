@@ -750,6 +750,9 @@ void cDvbTuner::ClearTransponder(void)
 {
   StopThread(0);
 
+  SetChanged();
+  NotifyObservers(ObservableMessageChannelLostLock);
+
   CLockObject lock(m_mutex);
 
   m_transponder.Reset();
