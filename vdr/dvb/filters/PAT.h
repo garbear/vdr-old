@@ -44,6 +44,10 @@ public:
    * early (even if channels were found).
    */
   bool ScanChannels(iFilterCallback* callback);
+  void Abort(void) { m_bAbort = true; }
+
+private:
+  bool m_bAbort;
 };
 
 }

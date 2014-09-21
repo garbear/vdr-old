@@ -89,6 +89,11 @@ public:
   bool HasLock(void) const { return m_status & FE_HAS_LOCK; }
 
   /*!
+   * Check if the tuner found sync bytes on any channel.
+   */
+  bool IsSynced(void) const { return m_status & FE_HAS_SYNC; }
+
+  /*!
    * Check if the tuner has a lock on a specified channel.
    */
   bool IsTunedTo(const cTransponder& transponder) const;

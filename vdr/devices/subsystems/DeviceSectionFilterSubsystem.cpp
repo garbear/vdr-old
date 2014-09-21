@@ -102,6 +102,13 @@ void cDeviceSectionFilterSubsystem::Start(void)
 
 void cDeviceSectionFilterSubsystem::Stop(void)
 {
+  {
+    CLockObject lock(m_mutex);
+
+    // Look for any poll requests that were waiting on the resource
+    for (ResourceRequestVector::iterator it = m_activePollRequests.begin(); it != m_activePollRequests.end(); ++it)
+      (*it)->Abort();
+  }
   StopThread(0);
 }
 

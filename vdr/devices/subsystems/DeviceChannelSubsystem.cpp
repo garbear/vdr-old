@@ -81,9 +81,6 @@ bool cDeviceChannelSubsystem::SwitchChannel(const ChannelPtr& channel)
     if (CommonInterface()->m_camSlot)
       CommonInterface()->m_camSlot->StartDecrypting();
 
-    SetChanged();
-    NotifyObservers(ObservableMessageChannelLock);
-
     return true;
   }
 
@@ -115,6 +112,12 @@ bool cDeviceChannelSubsystem::CanTune(device_tuning_type_t type)
       return false;
   }
   return true;
+}
+
+void cDeviceChannelSubsystem::Notify(const Observable &obs, const ObservableMessage msg)
+{
+  SetChanged();
+  NotifyObservers(msg);
 }
 
 TunerHandlePtr cDeviceChannelSubsystem::Acquire(const ChannelPtr& channel, device_tuning_type_t type, iTunerHandleCallbacks* callbacks)

@@ -52,10 +52,12 @@ public:
   virtual ~cSdt(void) { }
 
   void ScanChannels();
+  void Abort(void) { m_bAbort = true; }
 
 private:
-  SI::TableId          m_tableId;
-  cSectionSyncer       m_sectionSyncer;
+  bool           m_bAbort;
+  SI::TableId    m_tableId;
+  cSectionSyncer m_sectionSyncer;
 };
 
 }

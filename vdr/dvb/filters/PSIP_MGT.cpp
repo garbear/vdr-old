@@ -38,7 +38,8 @@ namespace VDR
 {
 
 cPsipMgt::cPsipMgt(cDevice* device)
- : cFilter(device)
+ : cFilter(device),
+   m_bAbort(false)
 {
   OpenResource(PID_MGT, TableIdMGT);
 }
@@ -46,11 +47,12 @@ cPsipMgt::cPsipMgt(cDevice* device)
 bool cPsipMgt::ScanPSIPData(iFilterCallback* callback)
 {
   bool bSuccess = false;
+  m_bAbort      = false;
 
   uint16_t        pid;  // Packet ID
   vector<uint8_t> data; // Section data
 
-  if (GetSection(pid, data))
+  if (GetSection(pid, data) && !m_bAbort)
   {
     SI::PSIP_MGT mgt(data.data());
     if (mgt.CheckCRCAndParse())
@@ -58,7 +60,7 @@ bool cPsipMgt::ScanPSIPData(iFilterCallback* callback)
       vector<uint16_t> eitPids; // Packet IDs of discovered EIT tables
 
       SI::PSIP_MGT::TableInfo tableInfo;
-      for (SI::Loop::Iterator it; mgt.tableInfoLoop.getNext(tableInfo, it);)
+      for (SI::Loop::Iterator it; !m_bAbort && mgt.tableInfoLoop.getNext(tableInfo, it);)
       {
         const uint16_t tableType = tableInfo.getTableType();
         const uint16_t tablePid = tableInfo.getPid();
@@ -109,7 +111,7 @@ bool cPsipMgt::ScanPSIPData(iFilterCallback* callback)
       bSuccess = psipEit.ScanEvents(callback, gpsUtcOffset);
     }
   }
-  return bSuccess;
+  return bSuccess && !m_bAbort;
 }
 
 }

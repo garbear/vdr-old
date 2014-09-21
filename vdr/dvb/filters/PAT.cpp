@@ -39,7 +39,8 @@ namespace VDR
 {
 
 cPat::cPat(cDevice* device)
- : cFilter(device)
+ : cFilter(device),
+   m_bAbort(false)
 {
   OpenResource(PID_PAT, TableIdPAT);
 }
@@ -47,16 +48,17 @@ cPat::cPat(cDevice* device)
 bool cPat::ScanChannels(iFilterCallback* callback)
 {
   bool bSuccess = true;
+  m_bAbort      = false;
 
   uint16_t        pid;  // Packet ID
   vector<uint8_t> data; // Section data
-  if (GetSection(pid, data))
+  if (GetSection(pid, data) && !m_bAbort)
   {
     SI::PAT tsPAT(data.data());
     if (tsPAT.CheckCRCAndParse())
     {
       SI::PAT::Association assoc;
-      for (SI::Loop::Iterator it; tsPAT.associationLoop.getNext(assoc, it); )
+      for (SI::Loop::Iterator it; !m_bAbort && tsPAT.associationLoop.getNext(assoc, it); )
       {
         // TODO: Let's do something with the NIT PID
         if (assoc.isNITPid())
@@ -69,7 +71,7 @@ bool cPat::ScanChannels(iFilterCallback* callback)
       }
     }
   }
-  return bSuccess;
+  return bSuccess && !m_bAbort;
 }
 
 }
