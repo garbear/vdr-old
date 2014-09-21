@@ -210,7 +210,7 @@ int cParser::ParsePacketHeader(uint8_t *data)
 
   if (!TsHasPayload(data))
   {
-    dsyslog("no payload, size %d", bytes);
+    dsyslog("no payload, size %d, pid %u", bytes, m_pID);
     return 0;
   }
 
