@@ -245,13 +245,14 @@ bool cDeviceReceiverSubsystem::OpenResources(const ChannelPtr& channel, PidResou
 
 PidResourcePtr cDeviceReceiverSubsystem::OpenResourceInternal(uint16_t pid, STREAM_TYPE streamType)
 {
-  PidResourcePtr newResource = CreateResource(pid, streamType);
+  PidResourcePtr newResource;
   PidResourcePtr existingResource = GetOpenResource(newResource);
 
   if (existingResource)
     return existingResource;
 
-  if (newResource->Open())
+  newResource = CreateResource(pid, streamType);
+  if (newResource && newResource->Open())
     return newResource;
 
   return PidResourcePtr();
