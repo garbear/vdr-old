@@ -186,6 +186,7 @@ PidResourcePtr cDvbSectionFilterSubsystem::CreateResource(uint16_t pid, uint8_t 
         break;
       default:
         dsyslog("Demux source not supported: %d", src);
+        break;
       }
 
       if (!cmd.empty())
