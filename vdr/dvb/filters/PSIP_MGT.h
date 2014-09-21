@@ -41,6 +41,10 @@ public:
    * Scan the PSIP tables for all data referenced by the MGT.
    */
   bool ScanPSIPData(iFilterCallback* callback);
+  void Abort(void) { m_bAbort = true; }
+
+private:
+  bool m_bAbort;
 };
 
 }

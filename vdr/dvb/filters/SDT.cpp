@@ -89,6 +89,7 @@ ChannelPtr SdtFoundService(ChannelPtr channel, int nid, int tid, int sid)
 
 cSdt::cSdt(cDevice* device, SI::TableId tableId /* = SI::TableIdSDT */)
  : cFilter(device),
+   m_bAbort(false),
    m_tableId(tableId)
 {
   assert(m_tableId == TableIdSDT || m_tableId == TableIdSDT_other);
@@ -101,10 +102,11 @@ cSdt::cSdt(cDevice* device, SI::TableId tableId /* = SI::TableIdSDT */)
 void cSdt::ScanChannels()
 {
   cSectionSyncer syncSdt;
+  m_bAbort = false;
 
   uint16_t        pid;  // Packet ID
   vector<uint8_t> data; // Section data
-  while (GetSection(pid, data))
+  while (GetSection(pid, data) && !m_bAbort)
   {
     SI::SDT sdt(data.data());
     if (sdt.CheckCRCAndParse())
@@ -120,7 +122,7 @@ void cSdt::ScanChannels()
       //HEXDUMP(data.data(), Length);
 
       SI::SDT::Service SiSdtService;
-      for (SI::Loop::Iterator it; sdt.serviceLoop.getNext(SiSdtService, it);)
+      for (SI::Loop::Iterator it; !m_bAbort && sdt.serviceLoop.getNext(SiSdtService, it);)
       {
         ChannelPtr channel = cChannelManager::Get().GetByTransportAndService(sdt.getOriginalNetworkId(), sdt.getTransportStreamId(), SiSdtService.getServiceId());
         if (!channel)

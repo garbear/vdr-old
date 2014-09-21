@@ -29,55 +29,9 @@
 
 namespace VDR
 {
-
-class cSectionScanner : public PLATFORM::CThread
-{
-public:
-  cSectionScanner(cDevice* device, iFilterCallback* callback);
-  virtual ~cSectionScanner(void) { }
-
-  /*!
-   * Returns true if the scan ran until completion, or false if it was
-   * terminated early (even if some data was reported to callback).
-   */
-  bool WaitForExit(unsigned int timeoutMs);
-
-protected:
-  cDevice* const         m_device;
-  iFilterCallback* const m_callback;
-  volatile bool          m_bSuccess;
-  PLATFORM::CEvent       m_exitEvent;
-};
-
-class cChannelPropsScanner : public cSectionScanner
-{
-public:
-  cChannelPropsScanner(cDevice* device, iFilterCallback* callback) : cSectionScanner(device, callback) { }
-  virtual ~cChannelPropsScanner(void) { }
-
-protected:
-  void* Process(void);
-};
-
-class cChannelNamesScanner : public cSectionScanner
-{
-public:
-  cChannelNamesScanner(cDevice* device, iFilterCallback* callback) : cSectionScanner(device, callback) { }
-  virtual ~cChannelNamesScanner(void) { }
-
-protected:
-  void* Process(void);
-};
-
-class cEventScanner : public cSectionScanner
-{
-public:
-  cEventScanner(cDevice* device, iFilterCallback* callback) : cSectionScanner(device, callback) { }
-  virtual ~cEventScanner(void) { }
-
-protected:
-  void* Process(void);
-};
+class cChannelPropsScanner;
+class cChannelNamesScanner;
+class cEventScanner;
 
 class cDeviceScanSubsystem : protected cDeviceSubsystem,
                              public    Observer,
@@ -85,7 +39,7 @@ class cDeviceScanSubsystem : protected cDeviceSubsystem,
 {
 public:
   cDeviceScanSubsystem(cDevice* device);
-  virtual ~cDeviceScanSubsystem(void) { }
+  virtual ~cDeviceScanSubsystem(void);
 
   void StartScan(void);
   void StopScan(void);
@@ -100,9 +54,9 @@ public:
   virtual void OnEventScanned(const EventPtr& event);
 
 private:
-  cChannelPropsScanner m_channelPropsScanner;
-  cChannelNamesScanner m_channelNamesScanner;
-  cEventScanner        m_eventScanner;
+  cChannelPropsScanner* m_channelPropsScanner;
+  cChannelNamesScanner* m_channelNamesScanner;
+  cEventScanner*        m_eventScanner;
 };
 
 }

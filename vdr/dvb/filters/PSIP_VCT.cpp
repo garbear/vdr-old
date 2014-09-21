@@ -38,7 +38,8 @@ namespace VDR
 {
 
 cPsipVct::cPsipVct(cDevice* device)
- : cFilter(device)
+ : cFilter(device),
+   m_bAbort(false)
 {
   OpenResource(PID_VCT, TableIdTVCT);
   OpenResource(PID_VCT, TableIdCVCT);
@@ -47,12 +48,13 @@ cPsipVct::cPsipVct(cDevice* device)
 bool cPsipVct::ScanChannels(iFilterCallback* callback)
 {
   bool bSuccess = false;
+  m_bAbort      = false;
 
   // TODO: Might be multiple sections, need section syncer
 
   uint16_t        pid;  // Packet ID
   vector<uint8_t> data; // Section data
-  if (GetSection(pid, data))
+  if (GetSection(pid, data) && !m_bAbort)
   {
     bSuccess = true;
 
@@ -60,7 +62,7 @@ bool cPsipVct::ScanChannels(iFilterCallback* callback)
     if (vct.CheckCRCAndParse())
     {
       SI::PSIP_VCT::ChannelInfo channelInfo;
-      for (SI::Loop::Iterator it; vct.channelInfoLoop.getNext(channelInfo, it); )
+      for (SI::Loop::Iterator it; !m_bAbort && vct.channelInfoLoop.getNext(channelInfo, it); )
       {
         ChannelPtr channel = ChannelPtr(new cChannel);
 
@@ -129,7 +131,7 @@ bool cPsipVct::ScanChannels(iFilterCallback* callback)
       }
     }
   }
-  return bSuccess;
+  return bSuccess && !m_bAbort;
 }
 
 }
