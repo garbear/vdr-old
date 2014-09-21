@@ -131,6 +131,7 @@ void* cChannelPropsScanner::Process(void)
 
 void cChannelPropsScanner::Start(void)
 {
+  StopThread(0);
   if (!m_pat)
     m_pat = new cPat(m_device);
   CreateThread(false);
@@ -140,7 +141,7 @@ void cChannelPropsScanner::Abort(void)
 {
   if (m_pat)
     m_pat->Abort();
-  StopThread(0);
+  StopThread(-1);
 }
 
 /*
@@ -165,6 +166,7 @@ void* cChannelNamesScanner::Process(void)
 
 void cChannelNamesScanner::Start(void)
 {
+  StopThread(0);
   if (!m_vct)
     m_vct = new cPsipVct(m_device);
   if (!m_sdt)
@@ -179,7 +181,7 @@ void cChannelNamesScanner::Abort(void)
     m_vct->Abort();
   if (m_sdt)
     m_sdt->Abort();
-  StopThread(0);
+  StopThread(-1);
 }
 
 /*
@@ -196,6 +198,7 @@ void* cEventScanner::Process(void)
 
 void cEventScanner::Start(void)
 {
+  StopThread(0);
   if (!m_mgt)
     m_mgt = new cPsipMgt(m_device);
   CreateThread(false);
@@ -205,7 +208,7 @@ void cEventScanner::Abort(void)
 {
   if (m_mgt)
     m_mgt->Abort();
-  StopThread(0);
+  StopThread(-1);
 }
 
 /*
