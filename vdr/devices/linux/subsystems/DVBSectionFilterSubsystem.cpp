@@ -115,6 +115,8 @@ bool cDvbFilterResource::Open(void)
 {
   if (m_fileDescriptor == FILE_DESCRIPTOR_INVALID)
   {
+    dsyslog("Opening pid=%u tid=0x%02X, mask=0x%02X", Pid(), m_tid, m_mask);
+
     // Don't open with O_NONBLOCK flag so that reads will wait for a full section
     m_fileDescriptor = open(m_strDvbPath.c_str(), O_RDWR);
 
@@ -141,6 +143,7 @@ void cDvbFilterResource::Close(void)
 {
   if (m_fileDescriptor != FILE_DESCRIPTOR_INVALID)
   {
+    dsyslog("Closing pid=%u tid=0x%02X, mask=0x%02X", Pid(), m_tid, m_mask);
     close(m_fileDescriptor);
     m_fileDescriptor = FILE_DESCRIPTOR_INVALID;
   }
