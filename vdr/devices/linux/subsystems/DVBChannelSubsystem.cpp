@@ -42,7 +42,6 @@ namespace VDR
 cDvbChannelSubsystem::cDvbChannelSubsystem(cDevice *device)
  : cDeviceChannelSubsystem(device)
 {
-  Device<cDvbDevice>()->m_dvbTuner.RegisterObserver(this);
 }
 
 bool cDvbChannelSubsystem::ProvidesDeliverySystem(fe_delivery_system_t deliverySystem) const
@@ -143,6 +142,7 @@ bool cDvbChannelSubsystem::HasLock(void) const
 
 bool cDvbChannelSubsystem::Tune(const cTransponder& transponder)
 {
+  Device<cDvbDevice>()->m_dvbTuner.RegisterObserver(this);
   return Device<cDvbDevice>()->m_dvbTuner.Tune(transponder);
 }
 
