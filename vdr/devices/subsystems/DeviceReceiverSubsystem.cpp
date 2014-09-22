@@ -118,7 +118,7 @@ void *cDeviceReceiverSubsystem::Process()
   return NULL;
 }
 
-bool cDeviceReceiverSubsystem::AttachReceiver(iReceiver* receiver, const ChannelPtr& channel)
+bool cDeviceReceiverSubsystem::AttachReceiver(iReceiver* receiver, PidResourceSet pids)
 {
   CLockObject lock(m_mutexReceiver);
 
@@ -128,22 +128,43 @@ bool cDeviceReceiverSubsystem::AttachReceiver(iReceiver* receiver, const Channel
     return false;
   }
 
+  m_receiverResources[receiver] = pids;
+  receiver->Start();
+
+  dsyslog("receiver %p attached to %p", receiver, this);
+
+  return true;
+}
+
+bool cDeviceReceiverSubsystem::AttachReceiver(iReceiver* receiver, uint16_t pid)
+{
+  PidResourceSet pidHandles;
+  CLockObject lock(m_mutexReceiver);
+  PidResourcePtr res = OpenResourceInternal(pid, STREAM_TYPE_UNDEFINED);
+  if (!res)
+    return false;
+
+  pidHandles.insert(res);
+  return AttachReceiver(receiver, pidHandles);
+}
+
+bool cDeviceReceiverSubsystem::AttachReceiver(iReceiver* receiver, const ChannelPtr& channel)
+{
+  CLockObject lock(m_mutexReceiver);
   // Receivers are mapped receiver -> pids
   // Generate list of pids to attach to this filter
   PidResourceSet pidHandles;
   if (!OpenResources(channel, pidHandles))
     return false;
-  m_receiverResources[receiver] = pidHandles;
 
-  receiver->Start();
+  if (!AttachReceiver(receiver, pidHandles))
+    return false;
 
   if (CommonInterface()->m_camSlot)
   {
     CommonInterface()->m_camSlot->StartDecrypting();
     CommonInterface()->m_startScrambleDetection = time(NULL);
   }
-
-  dsyslog("receiver %p attached to %p", receiver, this);
 
   return true;
 }

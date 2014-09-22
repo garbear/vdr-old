@@ -61,6 +61,8 @@ public:
    * map.
    */
   bool AttachReceiver(iReceiver* receiver, const ChannelPtr& channel);
+  bool AttachReceiver(iReceiver* receiver, uint16_t pid);
+  bool AttachReceiver(iReceiver* receiver, PidResourceSet pids);
 
   /*!
    * Detaches the given receiver from this device. Pointer is removed from
