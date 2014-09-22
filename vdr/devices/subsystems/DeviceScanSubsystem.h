@@ -29,9 +29,9 @@
 
 namespace VDR
 {
-class cChannelPropsScanner;
 class cChannelNamesScanner;
 class cEventScanner;
+class cPat;
 
 class cDeviceScanSubsystem : protected cDeviceSubsystem,
                              public    Observer,
@@ -46,6 +46,7 @@ public:
 
   bool WaitForTransponderScan(void);
   bool WaitForEPGScan(void);
+  bool AttachReceivers(void);
 
   virtual void Notify(const Observable &obs, const ObservableMessage msg);
 
@@ -53,10 +54,11 @@ public:
   virtual void OnChannelNamesScanned(const ChannelPtr& channel);
   virtual void OnEventScanned(const EventPtr& event);
 
+  cPat* PAT(void) const { return m_pat; }
 private:
-  cChannelPropsScanner* m_channelPropsScanner;
   cChannelNamesScanner* m_channelNamesScanner;
   cEventScanner*        m_eventScanner;
+  cPat*                 m_pat;
 };
 
 }

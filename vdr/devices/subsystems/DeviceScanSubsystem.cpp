@@ -37,7 +37,6 @@ using namespace PLATFORM;
 using namespace std;
 
 // TODO: This can be shorted by fetching PMT tables in parallel
-#define TRANSPONDER_TIMEOUT 5000
 #define EPG_TIMEOUT         10000
 
 namespace VDR
@@ -59,19 +58,6 @@ protected:
   iFilterCallback* const m_callback;
   volatile bool          m_bSuccess;
   PLATFORM::CEvent       m_exitEvent;
-};
-
-class cChannelPropsScanner : public cSectionScanner
-{
-public:
-  cChannelPropsScanner(cDevice* device, iFilterCallback* callback) : cSectionScanner(device, callback), m_pat(NULL) { }
-  virtual ~cChannelPropsScanner(void) { Abort(); delete m_pat; }
-  void Start(void);
-  void Abort(void);
-
-protected:
-  void* Process(void);
-  cPat* m_pat;
 };
 
 class cChannelNamesScanner : public cSectionScanner
@@ -116,33 +102,6 @@ bool cSectionScanner::WaitForExit(unsigned int timeoutMs)
 {
   StopThread(timeoutMs);
   return m_bSuccess;
-}
-
-/*
- * cChannelPropsScanner
- */
-void* cChannelPropsScanner::Process(void)
-{
-  m_bSuccess = m_pat->ScanChannels(m_callback);
-  cChannelManager::Get().NotifyObservers();
-
-  return NULL;
-}
-
-void cChannelPropsScanner::Start(void)
-{
-  StopThread(0);
-  if (m_pat)
-    delete m_pat;
-  m_pat = new cPat(m_device);
-  CreateThread(true);
-}
-
-void cChannelPropsScanner::Abort(void)
-{
-  if (m_pat)
-    m_pat->Abort();
-  StopThread(-1);
 }
 
 /*
@@ -220,46 +179,41 @@ void cEventScanner::Abort(void)
  */
 cDeviceScanSubsystem::cDeviceScanSubsystem(cDevice* device)
  : cDeviceSubsystem(device),
-   m_channelPropsScanner(new cChannelPropsScanner(device, this)),
    m_channelNamesScanner(new cChannelNamesScanner(device, this)),
-   m_eventScanner(new cEventScanner(device, this))
+   m_eventScanner(new cEventScanner(device, this)),
+   m_pat(new cPat(device))
 {
 }
 
 cDeviceScanSubsystem::~cDeviceScanSubsystem(void)
 {
   delete m_channelNamesScanner;
-  delete m_channelPropsScanner;
   delete m_eventScanner;
+  delete m_pat;
+}
+
+bool cDeviceScanSubsystem::AttachReceivers(void)
+{
+  bool retval = true;
+  retval &= PAT()->Attach();
+  return retval;
 }
 
 void cDeviceScanSubsystem::StartScan()
 {
-  m_channelPropsScanner->Start();
   m_channelNamesScanner->Start();
   m_eventScanner->Start();
 }
 
 void cDeviceScanSubsystem::StopScan()
 {
-  m_channelPropsScanner->Abort();
   m_channelNamesScanner->Abort();
   m_eventScanner->Abort();
 }
 
 bool cDeviceScanSubsystem::WaitForTransponderScan(void)
 {
-  const int64_t startMs = GetTimeMs();
-  const int64_t timeoutMs = TRANSPONDER_TIMEOUT;
-
-  if (m_channelPropsScanner->WaitForExit(timeoutMs))
-  {
-    const int64_t duration = GetTimeMs() - startMs;
-    const int64_t timeLeft = timeoutMs - duration;
-    return m_channelNamesScanner->WaitForExit(std::max(timeLeft, (int64_t)1));
-  }
-
-  return false;
+  return m_pat->WaitForScan();
 }
 
 bool cDeviceScanSubsystem::WaitForEPGScan(void)
