@@ -22,8 +22,9 @@
  */
 #pragma once
 
-#include "dvb/filters/Filter.h"
+#include "devices/Receiver.h"
 #include "channels/ChannelTypes.h"
+#include "PMT.h"
 
 #include <stdint.h>
 
@@ -31,23 +32,31 @@ namespace VDR
 {
 
 class iFilterCallback;
+class cDevice;
 
-class cPat : public cFilter
+class cPat : public iReceiver
 {
 public:
   cPat(cDevice* device);
   virtual ~cPat(void) { }
 
-  /*!
-   * Scan for channel parameters like channel IDs, streams and CA descriptors.
-   * Returns true if the scan ran until completion, or false if it was aborted
-   * early (even if channels were found).
-   */
-  bool ScanChannels(iFilterCallback* callback);
-  void Abort(void) { m_bAbort = true; }
+  void Receive(const std::vector<uint8_t>& data);
+  bool Attach(void);
+  bool WaitForScan(uint32_t iTimeout = TRANSPONDER_TIMEOUT);
+
+  void Start(void) {}
+  void Stop(void) {}
+  void LockAcquired(void);
+  void LockLost(void);
+  void LostPriority(void) { }
 
 private:
-  bool m_bAbort;
+  cDevice*                   m_device;
+  cPmt                       m_pmt;
+  bool                       m_locked;
+  bool                       m_scanned;
+  PLATFORM::CMutex           m_mutex;
+  PLATFORM::CCondition<bool> m_scannedEvent;
 };
 
 }

@@ -25,6 +25,8 @@
 #include "PAT.h"
 #include "PMT.h"
 #include "channels/Channel.h"
+#include "devices/Device.h"
+#include "devices/subsystems/DeviceReceiverSubsystem.h"
 #include "utils/log/Log.h"
 
 #include <libsi/si.h>
@@ -38,40 +40,60 @@ using namespace std;
 namespace VDR
 {
 
-cPat::cPat(cDevice* device)
- : cFilter(device),
-   m_bAbort(false)
+cPat::cPat(cDevice* device) :
+    m_device(device),
+    m_pmt(device),
+    m_locked(false),
+    m_scanned(false)
 {
-  OpenResource(PID_PAT, TableIdPAT);
 }
 
-bool cPat::ScanChannels(iFilterCallback* callback)
+bool cPat::Attach(void)
 {
-  bool bSuccess = true;
-  m_bAbort      = false;
+  return m_device->Receiver()->AttachReceiver(this, PID_PAT);
+}
 
-  uint16_t        pid;  // Packet ID
-  vector<uint8_t> data; // Section data
-  if (GetSection(pid, data) && !m_bAbort)
+bool cPat::WaitForScan(uint32_t iTimeout /* = TRANSPONDER_TIMEOUT */)
+{
+  PLATFORM::CLockObject lock(m_mutex);
+  return m_scannedEvent.Wait(m_mutex, m_scanned, iTimeout) &&
+      m_pmt.WaitForScan(iTimeout);
+}
+
+void cPat::Receive(const std::vector<uint8_t>& data)
+{
+  SI::PAT tsPAT(data.data());
+  if (tsPAT.CheckCRCAndParse() && tsPAT.getTableId() == TableIdPAT)
   {
-    SI::PAT tsPAT(data.data());
-    if (tsPAT.CheckCRCAndParse())
+    SI::PAT::Association assoc;
+    for (SI::Loop::Iterator it; m_locked && tsPAT.associationLoop.getNext(assoc, it); )
     {
-      SI::PAT::Association assoc;
-      for (SI::Loop::Iterator it; !m_bAbort && tsPAT.associationLoop.getNext(assoc, it); )
-      {
-        // TODO: Let's do something with the NIT PID
-        if (assoc.isNITPid())
-          continue;
+      // TODO: Let's do something with the NIT PID
+      if (assoc.isNITPid())
+        continue;
 
-        dsyslog("PAT: Scanning for PMT table with TSID=%d, SID=%d", tsPAT.getTransportStreamId(), assoc.getServiceId());
-
-        cPmt pmt(GetDevice(), tsPAT.getTransportStreamId(), assoc.getServiceId(), assoc.getPid());
-        bSuccess &= pmt.ScanChannel(callback);
-      }
+      dsyslog("PAT: Scanning for PMT table with TSID=%d, SID=%d", tsPAT.getTransportStreamId(), assoc.getServiceId());
+      m_pmt.AddTransport(tsPAT.getTransportStreamId(), assoc.getServiceId(), assoc.getPid());
     }
+
+    PLATFORM::CLockObject lock(m_mutex);
+    m_scanned = true;
+    m_scannedEvent.Broadcast();
   }
-  return bSuccess && !m_bAbort;
+}
+
+void cPat::LockAcquired(void)
+{
+  PLATFORM::CLockObject lock(m_mutex);
+  m_locked  = true;
+  m_scanned = false;
+}
+
+void cPat::LockLost(void)
+{
+  PLATFORM::CLockObject lock(m_mutex);
+  m_locked = false;
+  m_scanned = false;
 }
 
 }

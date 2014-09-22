@@ -24,36 +24,55 @@
 
 #include "channels/Channel.h"
 #include "channels/ChannelTypes.h"
-#include "dvb/filters/Filter.h"
+#include "devices/Receiver.h"
 
 #include <libsi/section.h>
 #include <stdint.h>
 
+#define TRANSPONDER_TIMEOUT 5000
+
 namespace VDR
 {
 
-class cPmt : public cFilter
+typedef struct
+{
+  uint16_t pid;
+  uint16_t tsid;
+  uint16_t sid;
+} PMTFilter;
+
+class cDevice;
+
+class cPmt : public iReceiver
 {
 public:
-  cPmt(cDevice* device, uint16_t tsid, uint16_t sid, uint16_t pid);
+  cPmt(cDevice* device);
   virtual ~cPmt(void) { }
 
-  /*!
-   * Scan for channel parameters like channel IDs, streams and CA descriptors.
-   * Returns true if the scan ran until completion, or false if it was aborted
-   * early (even if channels were found).
-   */
-  bool ScanChannel(iFilterCallback* callback);
+  bool AddTransport(uint16_t tsid, uint16_t sid, uint16_t pid);
+  void Receive(const std::vector<uint8_t>& data);
+  bool Attach(void);
+  bool WaitForScan(uint32_t iTimeout = TRANSPONDER_TIMEOUT);
+
+  void Start(void) {}
+  void Stop(void) {}
+  void LockAcquired(void) {}
+  void LockLost(void) {}
+  void LostPriority(void) { }
 
 private:
-  ChannelPtr CreateChannel(/* const */ SI::PMT& pmt) const; // TODO: libsi fails at const-correctness
+  ChannelPtr CreateChannel(/* const */ SI::PMT& pmt, uint16_t tsid) const; // TODO: libsi fails at const-correctness
 
-  void SetIds(const ChannelPtr& channel) const;
   void SetStreams(const ChannelPtr& channel, /* const */ SI::PMT& pmt) const; // TODO: libsi fails at const-correctness
   void SetCaDescriptors(const ChannelPtr& channel, /* const */ SI::PMT& pmt) const; // TODO: libsi fails at const-correctness
 
-  const uint16_t m_tsid; // Transport stream ID
-  const uint16_t m_sid; // Service ID
+  bool HasPid(uint16_t pid) const;
+
+  cDevice*                   m_device;
+  std::vector<PMTFilter>     m_filters;
+  bool                       m_scanned;
+  PLATFORM::CMutex           m_mutex;
+  PLATFORM::CCondition<bool> m_scannedEvent;
 };
 
 }
