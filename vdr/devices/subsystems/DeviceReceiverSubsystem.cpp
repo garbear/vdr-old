@@ -120,12 +120,46 @@ void *cDeviceReceiverSubsystem::Process()
 
 bool cDeviceReceiverSubsystem::AttachReceiver(iReceiver* receiver, PidResourceSet pids)
 {
+  bool retval = true;
   CLockObject lock(m_mutexReceiver);
 
   if (m_receiverResources.find(receiver) != m_receiverResources.end())
   {
-    dsyslog("Receiver already attached, skipping");
-    return false;
+    bool haspid;
+    bool added = false;
+    for (std::set<PidResourcePtr>::iterator it = pids.begin(); it != pids.end(); ++it)
+    {
+      haspid = false;
+      for (std::set<PidResourcePtr>::iterator it2 = m_receiverResources[receiver].begin(); it2 != m_receiverResources[receiver].end(); ++it2)
+      {
+        if ((*it2)->Pid() == (*it)->Pid())
+        {
+          haspid = true;
+          break;
+        }
+      }
+
+      if (!haspid)
+      {
+        PidResourcePtr res = OpenResourceInternal((*it)->Pid(), STREAM_TYPE_UNDEFINED);
+        if (res)
+        {
+          added = true;
+          m_receiverResources[receiver].insert(res);
+        }
+        else
+        {
+          retval = false;
+        }
+      }
+    }
+
+    if (!added)
+    {
+      dsyslog("Receiver already attached, skipping");
+      return false;
+    }
+    return retval;
   }
 
   m_receiverResources[receiver] = pids;
@@ -167,6 +201,41 @@ bool cDeviceReceiverSubsystem::AttachReceiver(iReceiver* receiver, const Channel
   }
 
   return true;
+}
+
+void cDeviceReceiverSubsystem::DetachReceiverPid(iReceiver* receiver, uint16_t pid)
+{
+  CLockObject lock(m_mutexReceiver);
+
+  ReceiverResourceMap::iterator it = m_receiverResources.find(receiver);
+  if (it == m_receiverResources.end())
+  {
+    dsyslog("Receiver is not attached?");
+    return;
+  }
+
+  for (std::set<PidResourcePtr>::iterator it2 = m_receiverResources[receiver].begin(); it2 != m_receiverResources[receiver].end(); ++it2)
+  {
+    if ((*it2)->Pid() == pid)
+    {
+      m_receiverResources[receiver].erase(it2);
+      break;
+    }
+  }
+
+  if (m_receiverResources[receiver].empty())
+  {
+    receiver->Stop();
+    m_receiverResources.erase(it);
+
+    if (CommonInterface()->m_camSlot)
+      CommonInterface()->m_camSlot->StartDecrypting();
+    dsyslog("receiver %p detached from %p", receiver, this);
+  }
+  else
+  {
+    dsyslog("PID %u detached from receiver %p attached to %p", pid, receiver, this);
+  }
 }
 
 void cDeviceReceiverSubsystem::DetachReceiver(iReceiver* receiver)

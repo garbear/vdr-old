@@ -70,6 +70,7 @@ public:
    * closed RAII-style.
    */
   void DetachReceiver(iReceiver* receiver);
+  void DetachReceiverPid(iReceiver* receiver, uint16_t pid);
 
   /*!
    * Returns true if any receivers are attached to this device.
