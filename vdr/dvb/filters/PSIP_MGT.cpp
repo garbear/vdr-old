@@ -109,8 +109,7 @@ void cPsipMgt::Receive(const std::vector<uint8_t>& data)
     dsyslog("MGT: Discovered %d EIT tables", eitPids.size());
 
     // Get the/UTC offset for calculating event start times
-    cPsipStt psipStt(m_device);
-    const unsigned int gpsUtcOffset = psipStt.GetGpsUtcOffset();
+    const unsigned int gpsUtcOffset = m_device->Scan()->STT()->GetGpsUtcOffset();
 
     //TODO
 //    cPsipEit psipEit(m_device, eitPids);
