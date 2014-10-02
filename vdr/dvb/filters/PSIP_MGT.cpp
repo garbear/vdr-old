@@ -26,6 +26,7 @@
 #include "PSIP_STT.h"
 #include "devices/Device.h"
 #include "devices/subsystems/DeviceReceiverSubsystem.h"
+#include "devices/subsystems/DeviceScanSubsystem.h"
 #include "utils/log/Log.h"
 
 #include <libsi/si.h>
