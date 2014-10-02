@@ -25,6 +25,7 @@
 #include "devices/Device.h"
 #include "dvb/filters/PAT.h"
 #include "dvb/filters/PSIP_MGT.h"
+#include "dvb/filters/PSIP_STT.h"
 #include "dvb/filters/PSIP_VCT.h"
 #include "dvb/filters/SDT.h"
 #include "epg/Event.h"
@@ -182,7 +183,8 @@ cDeviceScanSubsystem::cDeviceScanSubsystem(cDevice* device)
    m_channelNamesScanner(new cChannelNamesScanner(device, this)),
    m_eventScanner(new cEventScanner(device, this)),
    m_pat(new cPat(device)),
-   m_mgt(new cPsipMgt(device))
+   m_mgt(new cPsipMgt(device)),
+   m_stt(new cPsipStt(device))
 {
 }
 
@@ -192,6 +194,7 @@ cDeviceScanSubsystem::~cDeviceScanSubsystem(void)
   delete m_eventScanner;
   delete m_pat;
   delete m_mgt;
+  delete m_stt;
 }
 
 bool cDeviceScanSubsystem::AttachReceivers(void)
@@ -199,6 +202,7 @@ bool cDeviceScanSubsystem::AttachReceivers(void)
   bool retval = true;
   retval &= PAT()->Attach();
   retval &= MGT()->Attach();
+  retval &= STT()->Attach();
   return retval;
 }
 

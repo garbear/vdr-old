@@ -22,16 +22,28 @@
  */
 #pragma once
 
-#include "dvb/filters/Filter.h"
+#include "devices/Receiver.h"
 
 namespace VDR
 {
 
-class cPsipStt : public cFilter
+class cDevice;
+
+class cPsipStt : public iReceiver
 {
 public:
   cPsipStt(cDevice* device);
   virtual ~cPsipStt() { }
+
+  void Receive(const std::vector<uint8_t>& data);
+  bool Attach(void);
+  bool WaitForScan(uint32_t iTimeout = TRANSPONDER_TIMEOUT);
+
+  void Start(void) {}
+  void Stop(void) {}
+  void LockAcquired(void) {}
+  void LockLost(void) {}
+  void LostPriority(void) { }
 
   /*!
    * Get the current number of leap-seconds between GPS and UTC time standards.
@@ -43,7 +55,11 @@ public:
    * second may be added (or subtracted). If an error or timeout occurred, this
    * returns 0.
    */
-  unsigned int GetGpsUtcOffset(void);
+  unsigned int GetGpsUtcOffset(void) const { return m_iLastOffset; }
+
+private:
+  cDevice*     m_device;
+  unsigned int m_iLastOffset;
 };
 
 }

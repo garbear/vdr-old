@@ -33,6 +33,7 @@ class cChannelNamesScanner;
 class cEventScanner;
 class cPat;
 class cPsipMgt;
+class cPsipStt;
 
 class cDeviceScanSubsystem : protected cDeviceSubsystem,
                              public    Observer,
@@ -57,11 +58,13 @@ public:
 
   cPat* PAT(void) const { return m_pat; }
   cPsipMgt* MGT(void) const { return m_mgt; }
+  cPsipStt* STT(void) const { return m_stt; }
 private:
   cChannelNamesScanner* m_channelNamesScanner;
   cEventScanner*        m_eventScanner;
   cPat*                 m_pat;
   cPsipMgt*             m_mgt;
+  cPsipStt*             m_stt;
 };
 
 }
