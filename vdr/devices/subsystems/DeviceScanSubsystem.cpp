@@ -151,7 +151,7 @@ void cChannelNamesScanner::Abort(void)
  */
 void* cEventScanner::Process(void)
 {
-  m_bSuccess = m_mgt->ScanPSIPData(m_callback);
+//  m_bSuccess = m_mgt->ScanPSIPData(m_callback);
 
   cScheduleManager::Get().NotifyObservers();
 
@@ -169,8 +169,8 @@ void cEventScanner::Start(void)
 
 void cEventScanner::Abort(void)
 {
-  if (m_mgt)
-    m_mgt->Abort();
+//  if (m_mgt)
+//    m_mgt->Abort();
   StopThread(-1);
 }
 

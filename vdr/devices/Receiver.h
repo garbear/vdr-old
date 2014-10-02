@@ -26,6 +26,8 @@
 #include <stdint.h>
 #include <vector>
 
+#define TRANSPONDER_TIMEOUT 5000
+
 namespace VDR
 {
 

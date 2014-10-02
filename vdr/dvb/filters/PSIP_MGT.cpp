@@ -24,6 +24,8 @@
 #include "PSIP_MGT.h"
 #include "PSIP_EIT.h"
 #include "PSIP_STT.h"
+#include "devices/Device.h"
+#include "devices/subsystems/DeviceReceiverSubsystem.h"
 #include "utils/log/Log.h"
 
 #include <libsi/si.h>
@@ -37,81 +39,100 @@ using namespace std;
 namespace VDR
 {
 
-cPsipMgt::cPsipMgt(cDevice* device)
- : cFilter(device),
-   m_bAbort(false)
+cPsipMgt::cPsipMgt(cDevice* device) :
+        m_device(device),
+        m_locked(false),
+        m_scanned(false)
 {
-  OpenResource(PID_MGT, TableIdMGT);
 }
 
-bool cPsipMgt::ScanPSIPData(iFilterCallback* callback)
+bool cPsipMgt::Attach(void)
 {
-  bool bSuccess = false;
-  m_bAbort      = false;
+  return m_device->Receiver()->AttachReceiver(this, PID_MGT);
+}
 
-  uint16_t        pid;  // Packet ID
-  vector<uint8_t> data; // Section data
+bool cPsipMgt::WaitForScan(uint32_t iTimeout /* = TRANSPONDER_TIMEOUT */)
+{
+  PLATFORM::CLockObject lock(m_mutex);
+  return m_scannedEvent.Wait(m_mutex, m_scanned, iTimeout);
+}
 
-  if (GetSection(pid, data) && !m_bAbort)
+void cPsipMgt::Receive(const std::vector<uint8_t>& data)
+{
+  SI::PSIP_MGT mgt(data.data());
+  if (mgt.CheckCRCAndParse() && mgt.getTableId() == TableIdMGT)
   {
-    SI::PSIP_MGT mgt(data.data());
-    if (mgt.CheckCRCAndParse())
+    vector<uint16_t> eitPids; // Packet IDs of discovered EIT tables
+
+    SI::PSIP_MGT::TableInfo tableInfo;
+    for (SI::Loop::Iterator it; mgt.tableInfoLoop.getNext(tableInfo, it);)
     {
-      vector<uint16_t> eitPids; // Packet IDs of discovered EIT tables
+      const uint16_t tableType = tableInfo.getTableType();
+      const uint16_t tablePid = tableInfo.getPid();
 
-      SI::PSIP_MGT::TableInfo tableInfo;
-      for (SI::Loop::Iterator it; !m_bAbort && mgt.tableInfoLoop.getNext(tableInfo, it);)
+      // Source: ATSC Standard A/65:2009 Table 6.3
+      switch (tableType)
       {
-        const uint16_t tableType = tableInfo.getTableType();
-        const uint16_t tablePid = tableInfo.getPid();
-
-        // Source: ATSC Standard A/65:2009 Table 6.3
-        switch (tableType)
-        {
-        case 0x0000: // Terrestrial VCT with current_next_indicator='1'
-        case 0x0001: // Terrestrial VCT with current_next_indicator='0'
-          //filters.push_back(shared_ptr<cFilter>(new cVct(tablePid, true)));
-          break;
-        case 0x0002: // Cable VCT with current_next_indicator='1'
-        case 0x0003: // Cable VCT with current_next_indicator='0'
-          //filters.push_back(shared_ptr<cFilter>(new cVct(GetDevice(), tablePid, false)));
-          break;
-        case 0x0004: // Channel ETT
-          //filters.push_back(shared_ptr<cFilter>(new cChannelEtt(GetDevice(), tablePid)));
-          break;
-        case 0x0005: // DCCSCT
-          //filters.push_back(shared_ptr<cFilter>(new cDccst(GetDevice(), tablePid)));
-          break;
-        case 0x0100 ... 0x017F: // EIT-0 to EIT-127
-        {
-          //filters.push_back(shared_ptr<cFilter>(new cEitPsip(GetDevice(), tablePid, tableType - 0x0100)));
-          const unsigned short eitNumber = tableType - 0x0100;
-          eitPids.push_back(tablePid);
-          break;
-        }
-        case 0x0200 ... 0x027F: // Event ETT-0 to event ETT-127
-          //filters.push_back(shared_ptr<cFilter>(new cEventEttPsip(GetDevice(), tablePid, tableType - 0x0200)));
-          break;
-        case 0x0301 ... 0x03FF: // RRT with rating_region 1-255
-          //filters.push_back(shared_ptr<cFilter>(new cRrt(GetDevice(), tablePid, tableType - 0x0300)));
-          break;
-        case 0x1400 ... 0x14FF: // DCCT with dcc_id 0x00-0xFF
-          //filters.push_back(shared_ptr<cFilter>(new cDcct(GetDevice(), tablePid, tableType - 0x1400)));
-          break;
-        }
+      case 0x0000: // Terrestrial VCT with current_next_indicator='1'
+      case 0x0001: // Terrestrial VCT with current_next_indicator='0'
+        //filters.push_back(shared_ptr<cFilter>(new cVct(tablePid, true)));
+        break;
+      case 0x0002: // Cable VCT with current_next_indicator='1'
+      case 0x0003: // Cable VCT with current_next_indicator='0'
+        //filters.push_back(shared_ptr<cFilter>(new cVct(GetDevice(), tablePid, false)));
+        break;
+      case 0x0004: // Channel ETT
+        //filters.push_back(shared_ptr<cFilter>(new cChannelEtt(GetDevice(), tablePid)));
+        break;
+      case 0x0005: // DCCSCT
+        //filters.push_back(shared_ptr<cFilter>(new cDccst(GetDevice(), tablePid)));
+        break;
+      case 0x0100 ... 0x017F: // EIT-0 to EIT-127
+      {
+        //filters.push_back(shared_ptr<cFilter>(new cEitPsip(GetDevice(), tablePid, tableType - 0x0100)));
+        const unsigned short eitNumber = tableType - 0x0100;
+        eitPids.push_back(tablePid);
+        break;
       }
-
-      dsyslog("MGT: Discovered %d EIT tables", eitPids.size());
-
-      // Get the/UTC offset for calculating event start times
-      cPsipStt psipStt(GetDevice());
-      const unsigned int gpsUtcOffset = psipStt.GetGpsUtcOffset();
-
-      cPsipEit psipEit(GetDevice(), eitPids);
-      bSuccess = psipEit.ScanEvents(callback, gpsUtcOffset);
+      case 0x0200 ... 0x027F: // Event ETT-0 to event ETT-127
+        //filters.push_back(shared_ptr<cFilter>(new cEventEttPsip(GetDevice(), tablePid, tableType - 0x0200)));
+        break;
+      case 0x0301 ... 0x03FF: // RRT with rating_region 1-255
+        //filters.push_back(shared_ptr<cFilter>(new cRrt(GetDevice(), tablePid, tableType - 0x0300)));
+        break;
+      case 0x1400 ... 0x14FF: // DCCT with dcc_id 0x00-0xFF
+        //filters.push_back(shared_ptr<cFilter>(new cDcct(GetDevice(), tablePid, tableType - 0x1400)));
+        break;
+      }
     }
+
+    dsyslog("MGT: Discovered %d EIT tables", eitPids.size());
+
+    // Get the/UTC offset for calculating event start times
+    cPsipStt psipStt(m_device);
+    const unsigned int gpsUtcOffset = psipStt.GetGpsUtcOffset();
+
+    //TODO
+//    cPsipEit psipEit(m_device, eitPids);
+//    psipEit.ScanEvents(NULL, gpsUtcOffset);
+    PLATFORM::CLockObject lock(m_mutex);
+    m_scanned = true;
+    m_scannedEvent.Broadcast();
   }
-  return bSuccess && !m_bAbort;
+}
+
+void cPsipMgt::LockAcquired(void)
+{
+  PLATFORM::CLockObject lock(m_mutex);
+  m_locked  = true;
+  m_scanned = false;
+}
+
+void cPsipMgt::LockLost(void)
+{
+  PLATFORM::CLockObject lock(m_mutex);
+  m_locked = false;
+  m_scanned = false;
 }
 
 }

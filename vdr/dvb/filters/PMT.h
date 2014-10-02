@@ -29,8 +29,6 @@
 #include <libsi/section.h>
 #include <stdint.h>
 
-#define TRANSPONDER_TIMEOUT 5000
-
 namespace VDR
 {
 
