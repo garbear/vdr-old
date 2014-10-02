@@ -181,7 +181,8 @@ cDeviceScanSubsystem::cDeviceScanSubsystem(cDevice* device)
  : cDeviceSubsystem(device),
    m_channelNamesScanner(new cChannelNamesScanner(device, this)),
    m_eventScanner(new cEventScanner(device, this)),
-   m_pat(new cPat(device))
+   m_pat(new cPat(device)),
+   m_mgt(new cPsipMgt(device))
 {
 }
 
@@ -190,12 +191,14 @@ cDeviceScanSubsystem::~cDeviceScanSubsystem(void)
   delete m_channelNamesScanner;
   delete m_eventScanner;
   delete m_pat;
+  delete m_mgt;
 }
 
 bool cDeviceScanSubsystem::AttachReceivers(void)
 {
   bool retval = true;
   retval &= PAT()->Attach();
+  retval &= MGT()->Attach();
   return retval;
 }
 
@@ -213,7 +216,8 @@ void cDeviceScanSubsystem::StopScan()
 
 bool cDeviceScanSubsystem::WaitForTransponderScan(void)
 {
-  return m_pat->WaitForScan();
+  return m_pat->WaitForScan() &&
+      m_mgt->WaitForScan();
 }
 
 bool cDeviceScanSubsystem::WaitForEPGScan(void)
