@@ -70,7 +70,7 @@ public:
     char dump[1000];
     int wptr = 0;
     for (unsigned int ptr = 0; ptr < 188 && ptr < data.size(); ++ptr)
-      snprintf(dump + wptr, 4, "%02X:", data[ptr]);
+      wptr += snprintf(dump + wptr, 4, "%02X:", data[ptr]);
     dump[wptr] = 0;
     return dump;
   }
