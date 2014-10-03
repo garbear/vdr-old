@@ -105,7 +105,6 @@ void *cDeviceReceiverSubsystem::Process()
             {
               //(*itPid)->Receive(packet)
               receiver->Receive(packet);
-              break;
             }
           }
         }
