@@ -57,9 +57,6 @@ void cPsipStt::Receive(const std::vector<uint8_t>& data)
     SI::PSIP_STT stt(data.data());
     if (stt.CheckCRCAndParse() && stt.getTableId() == TableIdSTT)
       m_iLastOffset = stt.getGpsUtcOffset();
-
-    if (m_iLastOffset == 0)
-      esyslog("Error: unable to get GPS/UTC offset, assuming 0 seconds");
   }
 }
 
