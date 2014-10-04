@@ -76,8 +76,7 @@ void LogVtype(uint8_t oldVtype, uint8_t newVtype)
 }
 
 cPmt::cPmt(cDevice* device)
- : m_device(device),
-   m_scanned(false)
+ : cScanReceiver(device)
 {
 }
 
@@ -108,12 +107,6 @@ bool cPmt::HasPid(uint16_t pid) const
     if ((*it).pid == pid)
       return true;
   return false;
-}
-
-bool cPmt::WaitForScan(uint32_t iTimeout /* = TRANSPONDER_TIMEOUT */)
-{
-  PLATFORM::CLockObject lock(m_mutex);
-  return m_scannedEvent.Wait(m_mutex, m_scanned, iTimeout);
 }
 
 void cPmt::Receive(const std::vector<uint8_t>& data)

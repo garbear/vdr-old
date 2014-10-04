@@ -24,7 +24,7 @@
 
 #include "channels/Channel.h"
 #include "channels/ChannelTypes.h"
-#include "devices/Receiver.h"
+#include "ScanReceiver.h"
 
 #include <libsi/section.h>
 #include <stdint.h>
@@ -39,9 +39,7 @@ typedef struct
   uint16_t sid;
 } PMTFilter;
 
-class cDevice;
-
-class cPmt : public iReceiver
+class cPmt : public cScanReceiver
 {
 public:
   cPmt(cDevice* device);
@@ -49,14 +47,6 @@ public:
 
   bool AddTransport(uint16_t tsid, uint16_t sid, uint16_t pid);
   void Receive(const std::vector<uint8_t>& data);
-  bool Attach(void);
-  bool WaitForScan(uint32_t iTimeout = TRANSPONDER_TIMEOUT);
-
-  void Start(void) {}
-  void Stop(void) {}
-  void LockAcquired(void) {}
-  void LockLost(void) {}
-  void LostPriority(void) { }
 
 private:
   ChannelPtr CreateChannel(/* const */ SI::PMT& pmt, uint16_t tsid) const; // TODO: libsi fails at const-correctness
@@ -66,11 +56,7 @@ private:
 
   bool HasPid(uint16_t pid) const;
 
-  cDevice*                   m_device;
-  std::vector<PMTFilter>     m_filters;
-  bool                       m_scanned;
-  PLATFORM::CMutex           m_mutex;
-  PLATFORM::CCondition<bool> m_scannedEvent;
+  std::vector<PMTFilter> m_filters;
 };
 
 }
