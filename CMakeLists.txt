@@ -163,6 +163,7 @@ set(VDR_SRCS
 	vdr/dvb/filters/PSIP_MGT.cpp
 	vdr/dvb/filters/PSIP_STT.cpp
 	vdr/dvb/filters/PSIP_VCT.cpp
+	vdr/dvb/filters/ScanReceiver.cpp
 	vdr/dvb/filters/SDT.cpp
 	vdr/dvb/filters/TDT.cpp
 	vdr/epg/Component.cpp
