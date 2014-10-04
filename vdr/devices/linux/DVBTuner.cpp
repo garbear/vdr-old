@@ -663,6 +663,9 @@ std::string cDvbTuner::StatusToString(const fe_status_t status)
 
 void* cDvbTuner::Process(void)
 {
+  fe_status_t status;
+  bool bSuccess, bLocked = false, bLostLock = false;
+
   while (!IsStopped())
   {
     // Wait for backend to get a tune message
@@ -686,42 +689,55 @@ void* cDvbTuner::Process(void)
     struct dvb_frontend_event event;
     while (ioctl(m_fileDescriptor, FE_GET_EVENT, &event) == 0); // empty
 
-    CLockObject lock(m_mutex);
 
-    fe_status_t status;
-    bool bSuccess = (ioctl(m_fileDescriptor, FE_READ_STATUS, &status) >= 0);
-
-    if (!bSuccess)
     {
-      esyslog("Dvb tuner: failed to read status from tuner: %m");
+      CLockObject lock(m_mutex);
+      bSuccess = (ioctl(m_fileDescriptor, FE_READ_STATUS, &status) >= 0);
+
+      if (!bSuccess)
+      {
+        esyslog("Dvb tuner: failed to read status from tuner: %m");
+      }
+      else if (bSuccess && m_status != status)
+      {
+        // Update status, recording lock state before and after status change
+        const bool bWasSynced = IsSynced();
+        m_status = status;
+        const bool bIsSynced = IsSynced();
+
+        dsyslog("frontend %d '%s' status changed to %s", m_device->Index(), Name().c_str(), StatusToString(status).c_str());
+
+        // Report new lock status to observers
+        if (!bWasSynced && bIsSynced)
+        {
+          SetChanged();
+          bLocked = true;
+          m_lockEvent.Broadcast();
+        }
+        else if (bWasSynced && !bIsSynced)
+        {
+          SetChanged();
+          bLostLock = true;
+        }
+
+        // Check for frontend re-initialisation
+        if (m_status & FE_REINIT)
+        {
+          // TODO
+        }
+      }
     }
-    else if (bSuccess && m_status != status)
+
+    if (bLocked)
     {
-      // Update status, recording lock state before and after status change
-      const bool bWasSynced = IsSynced();
-      m_status = status;
-      const bool bIsSynced = IsSynced();
+      bLocked = false;
+      NotifyObservers(ObservableMessageChannelLock);
+    }
 
-      dsyslog("frontend %d '%s' status changed to %s", m_device->Index(), Name().c_str(), StatusToString(status).c_str());
-
-      // Report new lock status to observers
-      if (!bWasSynced && bIsSynced)
-      {
-        SetChanged();
-        NotifyObservers(ObservableMessageChannelLock);
-        m_lockEvent.Broadcast();
-      }
-      else if (bWasSynced && !bIsSynced)
-      {
-        SetChanged();
-        NotifyObservers(ObservableMessageChannelLostLock);
-      }
-
-      // Check for frontend re-initialisation
-      if (m_status & FE_REINIT)
-      {
-        // TODO
-      }
+    if (bLostLock)
+    {
+      bLostLock = false;
+      NotifyObservers(ObservableMessageChannelLostLock);
     }
   }
 
