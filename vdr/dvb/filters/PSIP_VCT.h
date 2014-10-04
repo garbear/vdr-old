@@ -23,22 +23,18 @@
 #pragma once
 
 #include "channels/ChannelTypes.h"
-#include "dvb/filters/Filter.h"
+#include "ScanReceiver.h"
 
 namespace VDR
 {
 
-class cPsipVct : public cFilter
+class cPsipVct : public cScanReceiver
 {
 public:
   cPsipVct(cDevice* device);
   virtual ~cPsipVct(void) { }
 
-  bool ScanChannels(iFilterCallback* callback);
-  void Abort(void) { m_bAbort = true; }
-
-private:
-  bool m_bAbort;
+  void Receive(const std::vector<uint8_t>& data);
 };
 
 }
