@@ -243,10 +243,7 @@ void cDeviceReceiverSubsystem::DetachReceiver(iReceiver* receiver)
 
   ReceiverResourceMap::iterator it = m_receiverResources.find(receiver);
   if (it == m_receiverResources.end())
-  {
-    dsyslog("Receiver is not attached?");
     return;
-  }
 
   receiver->Stop();
 
