@@ -30,6 +30,7 @@ cDeviceImageGrabSubsystem       *cDeviceSubsystem::ImageGrab() const       { ret
 cDevicePlayerSubsystem          *cDeviceSubsystem::Player() const          { return m_device->Player(); }
 cDeviceReceiverSubsystem        *cDeviceSubsystem::Receiver() const        { return m_device->Receiver(); }
 cDeviceSectionFilterSubsystem   *cDeviceSubsystem::SectionFilter() const   { return m_device->SectionFilter(); }
+cDeviceScanSubsystem            *cDeviceSubsystem::Scan() const            { return m_device->Scan(); }
 cDeviceSPUSubsystem             *cDeviceSubsystem::SPU() const             { return m_device->SPU(); }
 cDeviceTrackSubsystem           *cDeviceSubsystem::Track() const           { return m_device->Track(); }
 cDeviceVideoFormatSubsystem     *cDeviceSubsystem::VideoFormat() const     { return m_device->VideoFormat(); }
