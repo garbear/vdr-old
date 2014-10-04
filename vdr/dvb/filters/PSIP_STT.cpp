@@ -39,16 +39,10 @@ namespace VDR
 {
 
 cPsipStt::cPsipStt(cDevice* device) :
-    m_device(device),
+    cScanReceiver(device, PID_STT),
     m_iLastOffset(0)
 {
 }
-
-bool cPsipStt::Attach(void)
-{
-  return m_device->Receiver()->AttachReceiver(this, PID_STT);
-}
-
 
 void cPsipStt::Receive(const std::vector<uint8_t>& data)
 {

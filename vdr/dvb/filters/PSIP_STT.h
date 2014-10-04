@@ -22,28 +22,18 @@
  */
 #pragma once
 
-#include "devices/Receiver.h"
+#include "ScanReceiver.h"
 
 namespace VDR
 {
 
-class cDevice;
-
-class cPsipStt : public iReceiver
+class cPsipStt : public cScanReceiver
 {
 public:
   cPsipStt(cDevice* device);
   virtual ~cPsipStt() { }
 
   void Receive(const std::vector<uint8_t>& data);
-  bool Attach(void);
-  bool WaitForScan(uint32_t iTimeout = TRANSPONDER_TIMEOUT);
-
-  void Start(void) {}
-  void Stop(void) {}
-  void LockAcquired(void) {}
-  void LockLost(void) {}
-  void LostPriority(void) { }
 
   /*!
    * Get the current number of leap-seconds between GPS and UTC time standards.
@@ -58,7 +48,6 @@ public:
   unsigned int GetGpsUtcOffset(void) const { return m_iLastOffset; }
 
 private:
-  cDevice*     m_device;
   unsigned int m_iLastOffset;
 };
 
