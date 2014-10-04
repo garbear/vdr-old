@@ -253,7 +253,7 @@ void cDeviceReceiverSubsystem::DetachReceiver(iReceiver* receiver)
   m_receiverResources.erase(it);
 
   if (CommonInterface()->m_camSlot)
-    CommonInterface()->m_camSlot->StartDecrypting();
+    CommonInterface()->m_camSlot->StopDecrypting();
 
   dsyslog("receiver %p detached from %p", receiver, this);
 }

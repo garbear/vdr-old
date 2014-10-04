@@ -200,14 +200,24 @@ bool cDeviceScanSubsystem::AttachReceivers(void)
   return retval;
 }
 
+void cDeviceScanSubsystem::DetachReceivers(void)
+{
+  PAT()->Detach();
+  MGT()->Detach();
+  STT()->Detach();
+  VCT()->Detach();
+}
+
 void cDeviceScanSubsystem::StartScan()
 {
   m_channelNamesScanner->Start();
   m_eventScanner->Start();
+  AttachReceivers();
 }
 
 void cDeviceScanSubsystem::StopScan()
 {
+  DetachReceivers();
   m_channelNamesScanner->Abort();
   m_eventScanner->Abort();
 }

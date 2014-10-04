@@ -50,6 +50,7 @@ public:
   bool WaitForTransponderScan(void);
   bool WaitForEPGScan(void);
   bool AttachReceivers(void);
+  void DetachReceivers(void);
 
   virtual void Notify(const Observable &obs, const ObservableMessage msg);
 
