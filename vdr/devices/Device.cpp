@@ -95,7 +95,7 @@ cDevice::~cDevice()
 bool cDevice::Initialise(unsigned int index)
 {
   m_index = index;
-  m_bInitialised = Scan()->AttachReceivers();
+  m_bInitialised = true;
   return m_bInitialised;
 }
 

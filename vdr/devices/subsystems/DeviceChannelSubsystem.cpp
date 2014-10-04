@@ -179,6 +179,10 @@ TunerHandlePtr cDeviceChannelSubsystem::Acquire(const ChannelPtr& channel, devic
           dsyslog("failed to switch to %uMHz prio %d", channel->GetTransponder().FrequencyMHz(), type);
           handle = cTunerHandle::EmptyHandle;
         }
+        else
+        {
+          Scan()->AttachReceivers();
+        }
       }
     }
   }
