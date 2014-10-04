@@ -72,6 +72,11 @@ bool cScanReceiver::Attach(void)
   return retval;
 }
 
+void cScanReceiver::Detach(void)
+{
+  m_device->Receiver()->DetachReceiver(this);
+}
+
 bool cScanReceiver::WaitForScan(uint32_t iTimeout /* = TRANSPONDER_TIMEOUT */)
 {
   PLATFORM::CLockObject lock(m_mutex);

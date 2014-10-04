@@ -40,6 +40,7 @@ public:
 
   virtual void Receive(const std::vector<uint8_t>& data) = 0;
   virtual bool Attach(void);
+  virtual void Detach(void);
   virtual bool WaitForScan(uint32_t iTimeout = TRANSPONDER_TIMEOUT);
 
   virtual void Start(void) {}
