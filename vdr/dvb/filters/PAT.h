@@ -22,7 +22,7 @@
  */
 #pragma once
 
-#include "devices/Receiver.h"
+#include "ScanReceiver.h"
 #include "channels/ChannelTypes.h"
 #include "PMT.h"
 
@@ -30,33 +30,17 @@
 
 namespace VDR
 {
-
-class iFilterCallback;
-class cDevice;
-
-class cPat : public iReceiver
+class cPat : public cScanReceiver
 {
 public:
   cPat(cDevice* device);
   virtual ~cPat(void) { }
 
   void Receive(const std::vector<uint8_t>& data);
-  bool Attach(void);
   bool WaitForScan(uint32_t iTimeout = TRANSPONDER_TIMEOUT);
 
-  void Start(void) {}
-  void Stop(void) {}
-  void LockAcquired(void);
-  void LockLost(void);
-  void LostPriority(void) { }
-
 private:
-  cDevice*                   m_device;
   cPmt                       m_pmt;
-  bool                       m_locked;
-  bool                       m_scanned;
-  PLATFORM::CMutex           m_mutex;
-  PLATFORM::CCondition<bool> m_scannedEvent;
 };
 
 }

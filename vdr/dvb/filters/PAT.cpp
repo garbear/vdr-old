@@ -41,22 +41,15 @@ namespace VDR
 {
 
 cPat::cPat(cDevice* device) :
-    m_device(device),
-    m_pmt(device),
-    m_locked(false),
-    m_scanned(false)
+    cScanReceiver(device, PID_PAT),
+    m_pmt(device)
 {
-}
-
-bool cPat::Attach(void)
-{
-  return m_device->Receiver()->AttachReceiver(this, PID_PAT);
 }
 
 bool cPat::WaitForScan(uint32_t iTimeout /* = TRANSPONDER_TIMEOUT */)
 {
   PLATFORM::CLockObject lock(m_mutex);
-  return m_scannedEvent.Wait(m_mutex, m_scanned, iTimeout) &&
+  return cScanReceiver::WaitForScan(iTimeout) &&
       m_pmt.WaitForScan(iTimeout);
 }
 
@@ -80,20 +73,6 @@ void cPat::Receive(const std::vector<uint8_t>& data)
     m_scanned = true;
     m_scannedEvent.Broadcast();
   }
-}
-
-void cPat::LockAcquired(void)
-{
-  PLATFORM::CLockObject lock(m_mutex);
-  m_locked  = true;
-  m_scanned = false;
-}
-
-void cPat::LockLost(void)
-{
-  PLATFORM::CLockObject lock(m_mutex);
-  m_locked = false;
-  m_scanned = false;
 }
 
 }
