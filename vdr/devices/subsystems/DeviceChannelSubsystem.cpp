@@ -23,6 +23,7 @@
 #include "DeviceCommonInterfaceSubsystem.h"
 #include "DevicePlayerSubsystem.h"
 #include "DeviceReceiverSubsystem.h"
+#include "DeviceScanSubsystem.h"
 #include "DeviceSectionFilterSubsystem.h"
 #include "DeviceSPUSubsystem.h"
 #include "devices/commoninterface/CI.h"
