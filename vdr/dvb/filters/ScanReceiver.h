@@ -32,6 +32,7 @@ class cDevice;
 class cScanReceiver : public iReceiver
 {
 public:
+  cScanReceiver(cDevice* device);
   cScanReceiver(cDevice* device, uint16_t pid);
   cScanReceiver(cDevice* device, const std::vector<uint16_t>& pids);
   cScanReceiver(cDevice* device, size_t nbPids, const uint16_t* pids);

@@ -32,6 +32,13 @@ using namespace std;
 namespace VDR
 {
 
+cScanReceiver::cScanReceiver(cDevice* device) :
+    m_device(device),
+    m_locked(false),
+    m_scanned(false)
+{
+}
+
 cScanReceiver::cScanReceiver(cDevice* device, uint16_t pid) :
     m_device(device),
     m_locked(false),
