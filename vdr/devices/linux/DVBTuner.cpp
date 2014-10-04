@@ -430,7 +430,7 @@ bool cDvbTuner::Tune(const cTransponder& transponder)
 
   while (timeout.TimeLeft() > 0)
   {
-    if (HasLock())
+    if (IsSynced())
     {
       dsyslog("Dvb tuner: tuned to channel %u in %d ms", transponder.ChannelNumber(), GetTimeMs() - startMs);
 
