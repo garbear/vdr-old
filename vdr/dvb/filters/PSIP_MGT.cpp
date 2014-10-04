@@ -41,21 +41,8 @@ namespace VDR
 {
 
 cPsipMgt::cPsipMgt(cDevice* device) :
-        m_device(device),
-        m_locked(false),
-        m_scanned(false)
+    cScanReceiver(device, PID_MGT)
 {
-}
-
-bool cPsipMgt::Attach(void)
-{
-  return m_device->Receiver()->AttachReceiver(this, PID_MGT);
-}
-
-bool cPsipMgt::WaitForScan(uint32_t iTimeout /* = TRANSPONDER_TIMEOUT */)
-{
-  PLATFORM::CLockObject lock(m_mutex);
-  return m_scannedEvent.Wait(m_mutex, m_scanned, iTimeout);
 }
 
 void cPsipMgt::Receive(const std::vector<uint8_t>& data)
@@ -119,20 +106,6 @@ void cPsipMgt::Receive(const std::vector<uint8_t>& data)
     m_scanned = true;
     m_scannedEvent.Broadcast();
   }
-}
-
-void cPsipMgt::LockAcquired(void)
-{
-  PLATFORM::CLockObject lock(m_mutex);
-  m_locked  = true;
-  m_scanned = false;
-}
-
-void cPsipMgt::LockLost(void)
-{
-  PLATFORM::CLockObject lock(m_mutex);
-  m_locked = false;
-  m_scanned = false;
 }
 
 }

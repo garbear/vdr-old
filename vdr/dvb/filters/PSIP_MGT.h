@@ -22,7 +22,7 @@
  */
 #pragma once
 
-#include "devices/Receiver.h"
+#include "ScanReceiver.h"
 #include "epg/EPGTypes.h"
 
 #include <stdint.h>
@@ -30,30 +30,13 @@
 
 namespace VDR
 {
-class cDevice;
-
-class cPsipMgt : public iReceiver
+class cPsipMgt : public cScanReceiver
 {
 public:
   cPsipMgt(cDevice* device);
   virtual ~cPsipMgt() { }
 
   void Receive(const std::vector<uint8_t>& data);
-  bool Attach(void);
-  bool WaitForScan(uint32_t iTimeout = TRANSPONDER_TIMEOUT);
-
-  void Start(void) {}
-  void Stop(void) {}
-  void LockAcquired(void);
-  void LockLost(void);
-  void LostPriority(void) { }
-
-private:
-  cDevice*                   m_device;
-  bool                       m_locked;
-  bool                       m_scanned;
-  PLATFORM::CMutex           m_mutex;
-  PLATFORM::CCondition<bool> m_scannedEvent;
 };
 
 }
