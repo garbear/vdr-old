@@ -36,7 +36,7 @@ public:
   cPat(cDevice* device);
   virtual ~cPat(void) { }
 
-  void Receive(const std::vector<uint8_t>& data);
+  void ReceivePacket(const uint8_t* data);
   bool WaitForScan(uint32_t iTimeout = TRANSPONDER_TIMEOUT);
 
 private:

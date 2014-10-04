@@ -53,9 +53,9 @@ bool cPat::WaitForScan(uint32_t iTimeout /* = TRANSPONDER_TIMEOUT */)
       m_pmt.WaitForScan(iTimeout);
 }
 
-void cPat::Receive(const std::vector<uint8_t>& data)
+void cPat::ReceivePacket(const uint8_t* data)
 {
-  SI::PAT tsPAT(data.data());
+  SI::PAT tsPAT(data);
   if (tsPAT.CheckCRCAndParse() && tsPAT.getTableId() == TableIdPAT)
   {
     SI::PAT::Association assoc;

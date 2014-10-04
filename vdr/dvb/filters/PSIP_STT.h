@@ -33,7 +33,7 @@ public:
   cPsipStt(cDevice* device);
   virtual ~cPsipStt() { }
 
-  void Receive(const std::vector<uint8_t>& data);
+  void ReceivePacket(const uint8_t* data);
 
   /*!
    * Get the current number of leap-seconds between GPS and UTC time standards.

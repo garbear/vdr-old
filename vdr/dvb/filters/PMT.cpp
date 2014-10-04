@@ -109,18 +109,19 @@ bool cPmt::HasPid(uint16_t pid) const
   return false;
 }
 
-void cPmt::Receive(const std::vector<uint8_t>& data)
+void cPmt::ReceivePacket(const uint8_t* data)
 {
-  SI::PMT pmt(data.data());
+  SI::PMT pmt(data);
   if (pmt.CheckCRCAndParse() && pmt.getTableId() == TableIdPMT)
   {
     for (std::vector<PMTFilter>::iterator it = m_filters.begin(); it != m_filters.end(); ++it)
     {
-      if ((*it).pid == TsPid(data.data()) && (*it).sid == pmt.getServiceId())
+      //XXX
+      if ((*it).pid == TsPid(data) && (*it).sid == pmt.getServiceId())
       {
         cChannelManager::Get().MergeChannelProps(CreateChannel(pmt, (*it).tsid));
         m_filters.erase(it);
-        m_device->Receiver()->DetachReceiverPid(this, TsPid(data.data()));
+        m_device->Receiver()->DetachReceiverPid(this, TsPid(data));
         break;
       }
     }

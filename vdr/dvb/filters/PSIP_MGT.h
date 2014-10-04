@@ -36,7 +36,7 @@ public:
   cPsipMgt(cDevice* device);
   virtual ~cPsipMgt() { }
 
-  void Receive(const std::vector<uint8_t>& data);
+  void ReceivePacket(const uint8_t* data);
 };
 
 }

@@ -44,11 +44,11 @@ cPsipStt::cPsipStt(cDevice* device) :
 {
 }
 
-void cPsipStt::Receive(const std::vector<uint8_t>& data)
+void cPsipStt::ReceivePacket(const uint8_t* data)
 {
   if (m_iLastOffset == 0)
   {
-    SI::PSIP_STT stt(data.data());
+    SI::PSIP_STT stt(data);
     if (stt.CheckCRCAndParse() && stt.getTableId() == TableIdSTT)
       m_iLastOffset = stt.getGpsUtcOffset();
   }

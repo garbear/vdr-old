@@ -38,7 +38,8 @@ public:
   cScanReceiver(cDevice* device, size_t nbPids, const uint16_t* pids);
   virtual ~cScanReceiver(void) { }
 
-  virtual void Receive(const std::vector<uint8_t>& data) = 0;
+  void Receive(const std::vector<uint8_t>& data);
+  virtual void ReceivePacket(const uint8_t* data) = 0;
   virtual bool Attach(void);
   virtual void Detach(void);
   virtual bool WaitForScan(uint32_t iTimeout = TRANSPONDER_TIMEOUT);

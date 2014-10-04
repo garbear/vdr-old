@@ -46,7 +46,7 @@ public:
   virtual ~cPmt(void) { }
 
   bool AddTransport(uint16_t tsid, uint16_t sid, uint16_t pid);
-  void Receive(const std::vector<uint8_t>& data);
+  void ReceivePacket(const uint8_t* data);
 
 private:
   ChannelPtr CreateChannel(/* const */ SI::PMT& pmt, uint16_t tsid) const; // TODO: libsi fails at const-correctness

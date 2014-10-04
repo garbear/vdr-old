@@ -45,11 +45,11 @@ cPsipVct::cPsipVct(cDevice* device) :
 {
 }
 
-void cPsipVct::Receive(const std::vector<uint8_t>& data)
+void cPsipVct::ReceivePacket(const uint8_t* data)
 {
   // TODO: Might be multiple sections, need section syncer
 
-  SI::PSIP_VCT vct(data.data());
+  SI::PSIP_VCT vct(data);
   if (vct.CheckCRCAndParse() && (vct.getTableId() == TableIdTVCT || vct.getTableId() == TableIdCVCT))
   {
     SI::PSIP_VCT::ChannelInfo channelInfo;

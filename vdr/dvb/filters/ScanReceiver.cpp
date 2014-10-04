@@ -23,6 +23,7 @@
 
 #include "ScanReceiver.h"
 #include "devices/Device.h"
+#include "devices/Remux.h"
 #include "devices/subsystems/DeviceReceiverSubsystem.h"
 #include "devices/subsystems/DeviceScanSubsystem.h"
 #include "utils/log/Log.h"
@@ -95,6 +96,11 @@ void cScanReceiver::LockLost(void)
   PLATFORM::CLockObject lock(m_mutex);
   m_locked = false;
   m_scanned = false;
+}
+
+void cScanReceiver::Receive(const std::vector<uint8_t>& data)
+{
+  ReceivePacket(data.data() + TsPayloadOffset(data.data()) + 1);
 }
 
 }

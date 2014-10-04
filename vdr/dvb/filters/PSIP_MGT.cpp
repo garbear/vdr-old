@@ -45,9 +45,9 @@ cPsipMgt::cPsipMgt(cDevice* device) :
 {
 }
 
-void cPsipMgt::Receive(const std::vector<uint8_t>& data)
+void cPsipMgt::ReceivePacket(const uint8_t* data)
 {
-  SI::PSIP_MGT mgt(data.data());
+  SI::PSIP_MGT mgt(data);
   if (mgt.CheckCRCAndParse() && mgt.getTableId() == TableIdMGT)
   {
     vector<uint16_t> eitPids; // Packet IDs of discovered EIT tables
