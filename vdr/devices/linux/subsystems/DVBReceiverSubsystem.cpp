@@ -132,8 +132,6 @@ void cDvbReceiverResource::Close(void)
     if (ioctl(m_handle, DMX_STOP) < 0)
       LOG_ERROR;
 
-    /* TODO: Why was this called on close?
-
     if (StreamType() <= ptTeletext)
     {
       dmx_pes_filter_params pesFilterParams = { };
@@ -147,8 +145,6 @@ void cDvbReceiverResource::Close(void)
       if (ioctl(m_handle, DMX_SET_PES_FILTER, &pesFilterParams) < 0)
         LOG_ERROR;
     }
-
-    */
 
     close(m_handle);
     m_handle = FILE_DESCRIPTOR_INVALID;
