@@ -210,16 +210,17 @@ void cDeviceScanSubsystem::DetachReceivers(void)
 
 void cDeviceScanSubsystem::StartScan()
 {
-  m_channelNamesScanner->Start();
-  m_eventScanner->Start();
+  //TODO refactor me. disabled for now because it blocks
+//  m_channelNamesScanner->Start();
+//  m_eventScanner->Start();
   AttachReceivers();
 }
 
 void cDeviceScanSubsystem::StopScan()
 {
   DetachReceivers();
-  m_channelNamesScanner->Abort();
-  m_eventScanner->Abort();
+//  m_channelNamesScanner->Abort();
+//  m_eventScanner->Abort();
 }
 
 bool cDeviceScanSubsystem::WaitForTransponderScan(void)
