@@ -515,10 +515,16 @@ int PSIP_VCT::ChannelInfo::getChannelInfoLength(const unsigned char *data)
 void PSIP_VCT::ChannelInfo::Parse() {
    int offset=0;
    data.setPointerAndOffset<const vct_channel_info>(s, offset);
-   assert(offset == sizeof(const vct_channel_info));
-
-   channelDescriptors.setDataAndOffset(data+offset, HILO(s->descriptors_length), offset);
-   assert(offset == sizeof(const vct_channel_info) + channelDescriptors.getLength());
+   if (offset != sizeof(const vct_channel_info))
+   {
+     data.valid = false;
+   }
+   else
+   {
+     channelDescriptors.setDataAndOffset(data+offset, HILO(s->descriptors_length), offset);
+     if (offset != sizeof(const vct_channel_info) + channelDescriptors.getLength())
+       data.valid = false;
+   }
 }
 
 /*********************** PSIP_EIT ***********************/
