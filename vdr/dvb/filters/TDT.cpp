@@ -52,60 +52,56 @@ namespace VDR
 //CDateTime cTdt::m_lastAdj;
 
 cTdt::cTdt(cDevice* device)
- : cFilter(device)
+ : cScanReceiver(device, PID_TDT)
 {
-  OpenResource(PID_TDT, TableIdTDT);
+}
+
+void cTdt::ReceivePacket(uint16_t pid, const uint8_t* data)
+{
+  SI::TDT tsTDT(data);
+  tsTDT.CheckParse();
+  /*
+  if (cSettings::Get().m_bSetSystemTime)
+  {
+#ifdef ADJUST_SYSTEM_TIME_FROM_DVB
+    // XXX not adjusted to CDateTime yet
+    time_t dvbtim = tsTDT.getTime();
+    time_t loctim = time(NULL);
+
+    int diff = dvbtim - loctim;
+    if (std::abs(diff) > MAX_TIME_DIFF)
+    {
+      CLockObject lock(m_mutex);
+
+      if (std::abs(diff) > MAX_ADJ_DIFF)
+      {
+        if (stime(&dvbtim) == 0)
+          isyslog("System time changed from %s (%ld) to %s (%ld)", CalendarUtils::TimeToString(loctim).c_str(), loctim, CalendarUtils::TimeToString(dvbtim).c_str(), dvbtim);
+        else
+          esyslog("ERROR while setting system time: %s", strerror(errno));
+      }
+      else if ((CDateTime::GetUTCDateTime() - m_lastAdj).GetSecondsTotal() > ADJ_DELTA)
+      {
+        m_lastAdj = CDateTime::GetUTCDateTime();
+
+        timeval delta;
+        delta.tv_sec = diff;
+        delta.tv_usec = 0;
+        if (adjtime(&delta, NULL) == 0)
+          isyslog("System time adjustment initiated from %s (%ld) to %s (%ld)", CalendarUtils::TimeToString(loctim).c_str(), loctim, CalendarUtils::TimeToString(dvbtim).c_str(), dvbtim);
+        else
+          esyslog("ERROR while adjusting system time: %s", strerror(errno));
+      }
+    }
+#endif
+  }
+  */
 }
 
 time_t cTdt::GetTime(void)
 {
   time_t t = 0;
-
-  uint16_t        pid;  // Packet ID
-  vector<uint8_t> data; // Section data
-  if (GetSection(pid, data))
-  {
-    SI::TDT tsTDT(data.data());
-    tsTDT.CheckParse();
-
-    /*
-    if (cSettings::Get().m_bSetSystemTime)
-    {
-#ifdef ADJUST_SYSTEM_TIME_FROM_DVB
-      // XXX not adjusted to CDateTime yet
-      time_t dvbtim = tsTDT.getTime();
-      time_t loctim = time(NULL);
-
-      int diff = dvbtim - loctim;
-      if (std::abs(diff) > MAX_TIME_DIFF)
-      {
-        CLockObject lock(m_mutex);
-
-        if (std::abs(diff) > MAX_ADJ_DIFF)
-        {
-          if (stime(&dvbtim) == 0)
-            isyslog("System time changed from %s (%ld) to %s (%ld)", CalendarUtils::TimeToString(loctim).c_str(), loctim, CalendarUtils::TimeToString(dvbtim).c_str(), dvbtim);
-          else
-            esyslog("ERROR while setting system time: %s", strerror(errno));
-        }
-        else if ((CDateTime::GetUTCDateTime() - m_lastAdj).GetSecondsTotal() > ADJ_DELTA)
-        {
-          m_lastAdj = CDateTime::GetUTCDateTime();
-
-          timeval delta;
-          delta.tv_sec = diff;
-          delta.tv_usec = 0;
-          if (adjtime(&delta, NULL) == 0)
-            isyslog("System time adjustment initiated from %s (%ld) to %s (%ld)", CalendarUtils::TimeToString(loctim).c_str(), loctim, CalendarUtils::TimeToString(dvbtim).c_str(), dvbtim);
-          else
-            esyslog("ERROR while adjusting system time: %s", strerror(errno));
-        }
-      }
-#endif
-    }
-    */
-  }
-
+  //TODO
   return t;
 }
 
