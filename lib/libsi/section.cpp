@@ -13,7 +13,6 @@
 #include "section.h"
 #include "util.h"
 #include "../../vdr/utils/UTF8Utils.h"
-#include <assert.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -422,19 +421,19 @@ void PSIP_MGT::TableInfo::Parse() {
 void PSIP_VCT::Parse() {
    int offset=0;
    data.setPointerAndOffset<const vct>(s, offset);
-   assert(offset == sizeof(const vct));
+   CHECK_VALID_DATA((offset == sizeof(const vct)), data);
 
    const int channelCount = s->num_channels_in_section;
 
    channelInfoLoop.setDataAndOffset(data+offset, getChannelInfoLoopLength(data+offset, channelCount), offset);
-   assert(offset == sizeof(const vct) + channelInfoLoop.getLength());
+   CHECK_VALID_DATA((offset == sizeof(const vct) + channelInfoLoop.getLength()), data);
 
    const vct_mid *mid;
    data.setPointerAndOffset<const vct_mid>(mid, offset);
-   assert(offset == sizeof(const vct) + channelInfoLoop.getLength() + sizeof(const vct_mid));
+   CHECK_VALID_DATA((offset == sizeof(const vct) + channelInfoLoop.getLength() + sizeof(const vct_mid)), data);
 
    descriptorLoop.setDataAndOffset(data+offset, HILO(mid->additional_descriptors_length), offset);
-   assert(offset == sizeof(const vct) + channelInfoLoop.getLength() + sizeof(const vct_mid) + descriptorLoop.getLength());
+   CHECK_VALID_DATA((offset == sizeof(const vct) + channelInfoLoop.getLength() + sizeof(const vct_mid) + descriptorLoop.getLength()), data);
 }
 
 int PSIP_VCT::getChannelInfoLoopLength(const CharArray &data, int channelCount) {
@@ -581,18 +580,18 @@ int PSIP_EIT::Event::getEventLength(const psip_eit_event *event) {
 void PSIP_EIT::Event::Parse() {
    int offset=0;
    data.setPointerAndOffset<const psip_eit_event>(s, offset);
-   assert(offset == sizeof(const psip_eit_event));
+   CHECK_VALID_DATA((offset == sizeof(const psip_eit_event)), data);
 
    textLoop.setDataAndOffset(data+offset, offset);
-   assert(offset == sizeof(const psip_eit_event) + textLoop.getLength());
+   CHECK_VALID_DATA((offset == sizeof(const psip_eit_event) + textLoop.getLength()), data);
 
    const psip_eit_event_mid *mid;
    data.setPointerAndOffset<const psip_eit_event_mid>(mid, offset);
-   assert(offset == sizeof(const psip_eit_event) + textLoop.getLength() + sizeof(const psip_eit_event_mid));
+   CHECK_VALID_DATA((offset == sizeof(const psip_eit_event) + textLoop.getLength() + sizeof(const psip_eit_event_mid)), data);
 
    const uint16_t descriptorsLength = HILO(mid->descriptors_length);
    eventDescriptors.setDataAndOffset(data+offset, descriptorsLength, offset);
-   assert(offset == sizeof(const psip_eit_event) + textLoop.getLength() + sizeof(const psip_eit_event_mid) + eventDescriptors.getLength());
+   CHECK_VALID_DATA((offset == sizeof(const psip_eit_event) + textLoop.getLength() + sizeof(const psip_eit_event_mid) + eventDescriptors.getLength()), data);
 }
 
 int PSIP_EIT::getSourceId() const {

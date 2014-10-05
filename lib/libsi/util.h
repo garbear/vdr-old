@@ -36,6 +36,8 @@ typedef time_t si_time_t;
                              (60 * ((10*((x##_m & 0xF0)>>4)) + (x##_m & 0xF))) + \
                              ((10*((x##_s & 0xF0)>>4)) + (x##_s & 0xF)))
 
+#define CHECK_VALID_DATA(x,y) if (!(x)) { y.setInvalid(); return; }
+
 namespace SI {
 
 //Holds an array of unsigned char which is deleted
