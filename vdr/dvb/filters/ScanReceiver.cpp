@@ -100,7 +100,9 @@ void cScanReceiver::LockLost(void)
 
 void cScanReceiver::Receive(const std::vector<uint8_t>& data)
 {
-  ReceivePacket(TsPid(data.data()), data.data() + TsPayloadOffset(data.data()) + 1);
+  int len = PesLength(data.data() + TsPayloadOffset(data.data()) + 1);
+  if (PesLongEnough(len))
+    ReceivePacket(TsPid(data.data()), data.data() + TsPayloadOffset(data.data()) + 1);
 }
 
 }
