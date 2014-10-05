@@ -70,6 +70,7 @@ private:
   cPsipMgt*             m_mgt;
   cPsipStt*             m_stt;
   cPsipVct*             m_vct;
+  bool                  m_receiversAttached;
 };
 
 }

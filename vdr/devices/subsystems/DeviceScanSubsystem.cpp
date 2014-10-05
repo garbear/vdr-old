@@ -128,7 +128,8 @@ cDeviceScanSubsystem::cDeviceScanSubsystem(cDevice* device)
    m_sdt(new cSdt(device)),
    m_mgt(new cPsipMgt(device)),
    m_stt(new cPsipStt(device)),
-   m_vct(new cPsipVct(device))
+   m_vct(new cPsipVct(device)),
+   m_receiversAttached(false)
 {
 }
 
@@ -167,12 +168,20 @@ void cDeviceScanSubsystem::StartScan()
   //TODO refactor me. disabled for now because it blocks
 //  m_channelNamesScanner->Start();
 //  m_eventScanner->Start();
-  AttachReceivers();
+  if (!m_receiversAttached)
+  {
+    m_receiversAttached = true;
+    AttachReceivers();
+  }
 }
 
 void cDeviceScanSubsystem::StopScan()
 {
-  DetachReceivers();
+  if (m_receiversAttached)
+  {
+    m_receiversAttached = false;
+    DetachReceivers();
+  }
 //  m_channelNamesScanner->Abort();
 //  m_eventScanner->Abort();
 }
@@ -198,11 +207,6 @@ void cDeviceScanSubsystem::Notify(const Observable &obs, const ObservableMessage
   case ObservableMessageChannelLock:
   {
     StartScan();
-    break;
-  }
-  case ObservableMessageChannelLostLock:
-  {
-    StopScan();
     break;
   }
   default:
