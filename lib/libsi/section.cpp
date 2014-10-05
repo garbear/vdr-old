@@ -378,7 +378,7 @@ void PSIP_MGT::Parse() {
 
 int PSIP_MGT::getTableInfoLoopLength(const CharArray &data, int tableCount) {
    int tableInfoLength = 0;
-   for (int i = 0; i < tableCount; i++)
+   for (int i = 0; i < tableCount && tableInfoLength < data.getLength(); i++)
    {
       TableInfo tableInfo;
       tableInfo.setData(data + tableInfoLength);
