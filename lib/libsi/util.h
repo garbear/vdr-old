@@ -61,7 +61,7 @@ public:
    template <typename T> const T* getData() const { return (T*)(data+off); }
    template <typename T> const T* getData(int offset) const { return (T*)(data+offset+off); }
       //sets p to point to data+offset, increments offset
-   template <typename T> void setPointerAndOffset(const T* &p, int &offset) const { p=(T*)getData(offset); offset+=sizeof(T); }
+   template <typename T> void setPointerAndOffset(const T* &p, int &offset) const { p=(T*)getData(offset); if (offset + sizeof(T) < size) offset+=sizeof(T); }
    unsigned char operator[](const int index) const { return data ? data[off+index] : (unsigned char)0; }
    int getLength() const { return size; }
    u_int16_t TwoBytes(const int index) const { return data ? u_int16_t((data[off+index] << 8) | data[off+index+1]) : u_int16_t(0); }
