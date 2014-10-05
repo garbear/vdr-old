@@ -88,134 +88,122 @@ ChannelPtr SdtFoundService(ChannelPtr channel, int nid, int tid, int sid)
 */
 
 cSdt::cSdt(cDevice* device, SI::TableId tableId /* = SI::TableIdSDT */)
- : cFilter(device),
-   m_bAbort(false),
+ : cScanReceiver(device, PID_SDT),
    m_tableId(tableId)
 {
-  assert(m_tableId == TableIdSDT || m_tableId == TableIdSDT_other);
-
-  //m_sectionSyncer.Reset();
-
-  OpenResource(PID_SDT, m_tableId); // SDT
 }
 
-void cSdt::ScanChannels()
+void cSdt::ReceivePacket(uint16_t pid, const uint8_t* data)
 {
   cSectionSyncer syncSdt;
-  m_bAbort = false;
 
-  uint16_t        pid;  // Packet ID
-  vector<uint8_t> data; // Section data
-  while (GetSection(pid, data) && !m_bAbort)
+  SI::SDT sdt(data);
+  if (sdt.CheckCRCAndParse())
   {
-    SI::SDT sdt(data.data());
-    if (sdt.CheckCRCAndParse())
+    cSectionSyncer::SYNC_STATUS status = syncSdt.Sync(sdt.getVersionNumber(), sdt.getSectionNumber(), sdt.getLastSectionNumber());
+    if (status == cSectionSyncer::SYNC_STATUS_NOT_SYNCED)
+      return;
+    if (status == cSectionSyncer::SYNC_STATUS_OLD_VERSION)
+      return;
+
+    assert(status == cSectionSyncer::SYNC_STATUS_NEW_VERSION);
+
+    //HEXDUMP(data.data(), Length);
+
+    SI::SDT::Service SiSdtService;
+    for (SI::Loop::Iterator it; sdt.serviceLoop.getNext(SiSdtService, it);)
     {
-      cSectionSyncer::SYNC_STATUS status = syncSdt.Sync(sdt.getVersionNumber(), sdt.getSectionNumber(), sdt.getLastSectionNumber());
-      if (status == cSectionSyncer::SYNC_STATUS_NOT_SYNCED)
+      ChannelPtr channel = cChannelManager::Get().GetByTransportAndService(sdt.getOriginalNetworkId(), sdt.getTransportStreamId(), SiSdtService.getServiceId());
+      if (!channel)
         continue;
-      if (status == cSectionSyncer::SYNC_STATUS_OLD_VERSION)
-        break;
 
-      assert(status == cSectionSyncer::SYNC_STATUS_NEW_VERSION);
-
-      //HEXDUMP(data.data(), Length);
-
-      SI::SDT::Service SiSdtService;
-      for (SI::Loop::Iterator it; !m_bAbort && sdt.serviceLoop.getNext(SiSdtService, it);)
+      SI::Descriptor * d;
+      for (SI::Loop::Iterator it2; (d = SiSdtService.serviceDescriptors.getNext(it2));)
       {
-        ChannelPtr channel = cChannelManager::Get().GetByTransportAndService(sdt.getOriginalNetworkId(), sdt.getTransportStreamId(), SiSdtService.getServiceId());
-        if (!channel)
-          continue;
-
-        SI::Descriptor * d;
-        for (SI::Loop::Iterator it2; (d = SiSdtService.serviceDescriptors.getNext(it2));)
+        switch ((unsigned) d->getDescriptorTag())
         {
-          switch ((unsigned) d->getDescriptorTag())
+          case SI::ServiceDescriptorTag:
           {
-            case SI::ServiceDescriptorTag:
+            SI::ServiceDescriptor * sd = (SI::ServiceDescriptor *) d;
+            switch (sd->getServiceType())
             {
-              SI::ServiceDescriptor * sd = (SI::ServiceDescriptor *) d;
-              switch (sd->getServiceType())
+              // ---television---
+              case digital_television_service:
+              case MPEG2_HD_digital_television_service:
+              case advanced_codec_SD_digital_television_service:
+              case advanced_codec_HD_digital_television_service:
+
+              // ---radio---
+              case digital_radio_sound_service:
+              case advanced_codec_digital_radio_sound_service:
+
+              // ---references---
+              case digital_television_NVOD_reference_service:
+              case advanced_codec_SD_NVOD_reference_service:
+              case advanced_codec_HD_NVOD_reference_service:
+
+              // ---time shifted services---
+              case digital_television_NVOD_timeshifted_service:
+              case advanced_codec_SD_NVOD_timeshifted_service:
+              case advanced_codec_HD_NVOD_timeshifted_service:
               {
-                // ---television---
-                case digital_television_service:
-                case MPEG2_HD_digital_television_service:
-                case advanced_codec_SD_digital_television_service:
-                case advanced_codec_HD_digital_television_service:
+                char NameBuf[Utf8BufSize(1024)];
+                char ShortNameBuf[Utf8BufSize(1024)];
+                char ProviderNameBuf[Utf8BufSize(1024)];
+                sd->serviceName.getText(NameBuf, ShortNameBuf, sizeof(NameBuf), sizeof(ShortNameBuf));
+                sd->providerName.getText(ProviderNameBuf, sizeof(ProviderNameBuf));
 
-                // ---radio---
-                case digital_radio_sound_service:
-                case advanced_codec_digital_radio_sound_service:
+                string strName = compactspace(NameBuf);
+                string strShortName = compactspace(ShortNameBuf);
+                string strProviderName = compactspace(ProviderNameBuf);
 
-                // ---references---
-                case digital_television_NVOD_reference_service:
-                case advanced_codec_SD_NVOD_reference_service:
-                case advanced_codec_HD_NVOD_reference_service:
-
-                // ---time shifted services---
-                case digital_television_NVOD_timeshifted_service:
-                case advanced_codec_SD_NVOD_timeshifted_service:
-                case advanced_codec_HD_NVOD_timeshifted_service:
+                // Some cable providers don't mark short channel names according to the
+                // standard, but rather go their own way and use "name>short name" or
+                // "name, short name"
+                if (strShortName.empty() && channel->GetTransponder().IsCable())
                 {
-                  char NameBuf[Utf8BufSize(1024)];
-                  char ShortNameBuf[Utf8BufSize(1024)];
-                  char ProviderNameBuf[Utf8BufSize(1024)];
-                  sd->serviceName.getText(NameBuf, ShortNameBuf, sizeof(NameBuf), sizeof(ShortNameBuf));
-                  sd->providerName.getText(ProviderNameBuf, sizeof(ProviderNameBuf));
+                  size_t pos = strName.find('>'); // fix for UPC Wien
+                  if (pos == string::npos)
+                    pos = strName.find(','); // fix for "Kabel Deutschland"
 
-                  string strName = compactspace(NameBuf);
-                  string strShortName = compactspace(ShortNameBuf);
-                  string strProviderName = compactspace(ProviderNameBuf);
-
-                  // Some cable providers don't mark short channel names according to the
-                  // standard, but rather go their own way and use "name>short name" or
-                  // "name, short name"
-                  if (strShortName.empty() && channel->GetTransponder().IsCable())
+                  if (pos != string::npos)
                   {
-                    size_t pos = strName.find('>'); // fix for UPC Wien
-                    if (pos == string::npos)
-                      pos = strName.find(','); // fix for "Kabel Deutschland"
-
-                    if (pos != string::npos)
-                    {
-                      strShortName = strName.substr(pos + 1);
-                      strName = strName.substr(0, pos);
-                    }
+                    strShortName = strName.substr(pos + 1);
+                    strName = strName.substr(0, pos);
                   }
-
-                  StringUtils::Trim(strName);
-                  StringUtils::Trim(strProviderName);
-                  StringUtils::Trim(strShortName);
-
-                  channel->SetName(strName, strShortName, strProviderName);
-                  isyslog("updating channel name: %s (%s)\n", strName.c_str(), strShortName.c_str());
                 }
-                default:
-                  break;
+
+                StringUtils::Trim(strName);
+                StringUtils::Trim(strProviderName);
+                StringUtils::Trim(strShortName);
+
+                channel->SetName(strName, strShortName, strProviderName);
+                isyslog("updating channel name: %s (%s)\n", strName.c_str(), strShortName.c_str());
               }
+              default:
+                break;
             }
-            break;
-            case SI::NVODReferenceDescriptorTag:
-            case SI::BouquetNameDescriptorTag:
-            case SI::MultilingualServiceNameDescriptorTag:
-            case SI::ServiceIdentifierDescriptorTag:
-            case SI::ServiceAvailabilityDescriptorTag:
-            case SI::DefaultAuthorityDescriptorTag:
-            case SI::AnnouncementSupportDescriptorTag:
-            case SI::DataBroadcastDescriptorTag:
-            case SI::TelephoneDescriptorTag:
-            case SI::CaIdentifierDescriptorTag:
-            case SI::PrivateDataSpecifierDescriptorTag:
-            case SI::ContentDescriptorTag:
-            case 0x80 ... 0xFE: // user defined //
-              break;
-            default:
-              dsyslog("SDT: unknown descriptor 0x%.2x", d->getDescriptorTag());
-              break;
           }
-          DELETENULL(d);
+          break;
+          case SI::NVODReferenceDescriptorTag:
+          case SI::BouquetNameDescriptorTag:
+          case SI::MultilingualServiceNameDescriptorTag:
+          case SI::ServiceIdentifierDescriptorTag:
+          case SI::ServiceAvailabilityDescriptorTag:
+          case SI::DefaultAuthorityDescriptorTag:
+          case SI::AnnouncementSupportDescriptorTag:
+          case SI::DataBroadcastDescriptorTag:
+          case SI::TelephoneDescriptorTag:
+          case SI::CaIdentifierDescriptorTag:
+          case SI::PrivateDataSpecifierDescriptorTag:
+          case SI::ContentDescriptorTag:
+          case 0x80 ... 0xFE: // user defined //
+            break;
+          default:
+            dsyslog("SDT: unknown descriptor 0x%.2x", d->getDescriptorTag());
+            break;
         }
+        DELETENULL(d);
       }
     }
   }

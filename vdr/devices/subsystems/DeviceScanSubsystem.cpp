@@ -61,20 +61,6 @@ protected:
   PLATFORM::CEvent       m_exitEvent;
 };
 
-class cChannelNamesScanner : public cSectionScanner
-{
-public:
-  cChannelNamesScanner(cDevice* device, iFilterCallback* callback) : cSectionScanner(device, callback),  m_sdt(NULL), m_bAbort(false) { }
-  virtual ~cChannelNamesScanner(void) { Abort(); delete m_sdt;}
-  void Abort(void);
-  void Start(void);
-
-protected:
-  void* Process(void);
-  bool      m_bAbort;
-  cSdt*     m_sdt;
-};
-
 class cEventScanner : public cSectionScanner
 {
 public:
@@ -102,40 +88,6 @@ bool cSectionScanner::WaitForExit(unsigned int timeoutMs)
 {
   StopThread(timeoutMs);
   return m_bSuccess;
-}
-
-/*
- * cChannelNamesScanner
- */
-void* cChannelNamesScanner::Process(void)
-{
-  m_bSuccess = true;
-  m_bAbort   = false;
-
-  if (m_bSuccess && !m_bAbort) {
-    m_sdt->ScanChannels();
-  }
-
-  cChannelManager::Get().NotifyObservers();
-
-  return NULL;
-}
-
-void cChannelNamesScanner::Start(void)
-{
-  StopThread(0);
-  if (m_sdt)
-    delete m_sdt;
-  m_sdt = new cSdt(m_device);
-  CreateThread(true);
-}
-
-void cChannelNamesScanner::Abort(void)
-{
-  m_bAbort = true;
-  if (m_sdt)
-    m_sdt->Abort();
-  StopThread(-1);
 }
 
 /*
@@ -171,9 +123,9 @@ void cEventScanner::Abort(void)
  */
 cDeviceScanSubsystem::cDeviceScanSubsystem(cDevice* device)
  : cDeviceSubsystem(device),
-   m_channelNamesScanner(new cChannelNamesScanner(device, this)),
    m_eventScanner(new cEventScanner(device, this)),
    m_pat(new cPat(device)),
+   m_sdt(new cSdt(device)),
    m_mgt(new cPsipMgt(device)),
    m_stt(new cPsipStt(device)),
    m_vct(new cPsipVct(device))
@@ -182,9 +134,9 @@ cDeviceScanSubsystem::cDeviceScanSubsystem(cDevice* device)
 
 cDeviceScanSubsystem::~cDeviceScanSubsystem(void)
 {
-  delete m_channelNamesScanner;
   delete m_eventScanner;
   delete m_pat;
+  delete m_sdt;
   delete m_mgt;
   delete m_stt;
   delete m_vct;
@@ -194,6 +146,7 @@ bool cDeviceScanSubsystem::AttachReceivers(void)
 {
   bool retval = true;
   retval &= PAT()->Attach();
+  retval &= SDT()->Attach();
   retval &= MGT()->Attach();
   retval &= STT()->Attach();
   retval &= VCT()->Attach();
@@ -203,6 +156,7 @@ bool cDeviceScanSubsystem::AttachReceivers(void)
 void cDeviceScanSubsystem::DetachReceivers(void)
 {
   PAT()->Detach();
+  SDT()->Detach();
   MGT()->Detach();
   STT()->Detach();
   VCT()->Detach();

@@ -79,7 +79,7 @@ ChannelVector cNit::GetTransponders()
     SI::NIT nit(data.data());
     if (nit.CheckCRCAndParse())
     {
-      // TODO: Handle TableIdNIT_other
+      // TODO: Handle TableIdNIT_other/
       SI::TableId tid = nit.getTableId();
       if (tid != TableIdNIT)
         continue;

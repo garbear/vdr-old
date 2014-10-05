@@ -29,9 +29,9 @@
 
 namespace VDR
 {
-class cChannelNamesScanner;
 class cEventScanner;
 class cPat;
+class cSdt;
 class cPsipMgt;
 class cPsipStt;
 class cPsipVct;
@@ -59,13 +59,14 @@ public:
   virtual void OnEventScanned(const EventPtr& event);
 
   cPat* PAT(void) const { return m_pat; }
+  cSdt* SDT(void) const { return m_sdt; }
   cPsipMgt* MGT(void) const { return m_mgt; }
   cPsipStt* STT(void) const { return m_stt; }
   cPsipVct* VCT(void) const { return m_vct; }
 private:
-  cChannelNamesScanner* m_channelNamesScanner;
   cEventScanner*        m_eventScanner;
   cPat*                 m_pat;
+  cSdt*                 m_sdt;
   cPsipMgt*             m_mgt;
   cPsipStt*             m_stt;
   cPsipVct*             m_vct;
