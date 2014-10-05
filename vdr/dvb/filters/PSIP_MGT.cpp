@@ -45,7 +45,7 @@ cPsipMgt::cPsipMgt(cDevice* device) :
 {
 }
 
-void cPsipMgt::ReceivePacket(const uint8_t* data)
+void cPsipMgt::ReceivePacket(uint16_t pid, const uint8_t* data)
 {
   SI::PSIP_MGT mgt(data);
   if (mgt.CheckCRCAndParse() && mgt.getTableId() == TableIdMGT)

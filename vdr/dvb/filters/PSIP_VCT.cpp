@@ -45,7 +45,7 @@ cPsipVct::cPsipVct(cDevice* device) :
 {
 }
 
-void cPsipVct::ReceivePacket(const uint8_t* data)
+void cPsipVct::ReceivePacket(uint16_t pid, const uint8_t* data)
 {
   // TODO: Might be multiple sections, need section syncer
 

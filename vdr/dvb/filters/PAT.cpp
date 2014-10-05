@@ -53,13 +53,13 @@ bool cPat::WaitForScan(uint32_t iTimeout /* = TRANSPONDER_TIMEOUT */)
       m_pmt.WaitForScan(iTimeout);
 }
 
-void cPat::ReceivePacket(const uint8_t* data)
+void cPat::ReceivePacket(uint16_t pid, const uint8_t* data)
 {
   SI::PAT tsPAT(data);
   if (tsPAT.CheckCRCAndParse() && tsPAT.getTableId() == TableIdPAT)
   {
     SI::PAT::Association assoc;
-    for (SI::Loop::Iterator it; m_locked && tsPAT.associationLoop.getNext(assoc, it); )
+    for (SI::Loop::Iterator it; tsPAT.associationLoop.getNext(assoc, it); )
     {
       // TODO: Let's do something with the NIT PID
       if (assoc.isNITPid())

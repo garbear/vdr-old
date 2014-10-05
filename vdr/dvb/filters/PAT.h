@@ -36,11 +36,11 @@ public:
   cPat(cDevice* device);
   virtual ~cPat(void) { }
 
-  void ReceivePacket(const uint8_t* data);
+  void ReceivePacket(uint16_t pid, const uint8_t* data);
   bool WaitForScan(uint32_t iTimeout = TRANSPONDER_TIMEOUT);
 
 private:
-  cPmt                       m_pmt;
+  cPmt m_pmt;
 };
 
 }

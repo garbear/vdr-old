@@ -39,7 +39,7 @@ public:
   virtual ~cScanReceiver(void) { }
 
   void Receive(const std::vector<uint8_t>& data);
-  virtual void ReceivePacket(const uint8_t* data) = 0;
+  virtual void ReceivePacket(uint16_t pid, const uint8_t* data) = 0;
   virtual bool Attach(void);
   virtual void Detach(void);
   virtual bool WaitForScan(uint32_t iTimeout = TRANSPONDER_TIMEOUT);

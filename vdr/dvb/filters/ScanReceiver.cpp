@@ -100,7 +100,7 @@ void cScanReceiver::LockLost(void)
 
 void cScanReceiver::Receive(const std::vector<uint8_t>& data)
 {
-  ReceivePacket(data.data() + TsPayloadOffset(data.data()) + 1);
+  ReceivePacket(TsPid(data.data()), data.data() + TsPayloadOffset(data.data()) + 1);
 }
 
 }

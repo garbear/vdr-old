@@ -34,7 +34,7 @@ public:
   cPsipVct(cDevice* device);
   virtual ~cPsipVct(void) { }
 
-  void ReceivePacket(const uint8_t* data);
+  void ReceivePacket(uint16_t pid, const uint8_t* data);
 };
 
 }

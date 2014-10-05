@@ -44,7 +44,7 @@ cPsipStt::cPsipStt(cDevice* device) :
 {
 }
 
-void cPsipStt::ReceivePacket(const uint8_t* data)
+void cPsipStt::ReceivePacket(uint16_t pid, const uint8_t* data)
 {
   if (m_iLastOffset == 0)
   {
