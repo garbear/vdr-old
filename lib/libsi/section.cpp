@@ -407,13 +407,8 @@ void PSIP_MGT::TableInfo::setData(CharArray d)
 
 int PSIP_MGT::TableInfo::getTableInfoLength(const unsigned char *data)
 {
-  const mgt_table_info* tdata = (const mgt_table_info*)data;
-  if (tdata)
-  {
-    const int descriptorsLength = HILO(tdata->table_type_descriptors_length);
-    return sizeof(const mgt_table_info) + descriptorsLength;
-  }
-  return 0;
+  const int descriptorsLength = HILO(((const mgt_table_info*)data)->table_type_descriptors_length);
+  return sizeof(const mgt_table_info) + descriptorsLength;
 }
 
 void PSIP_MGT::TableInfo::Parse() {
