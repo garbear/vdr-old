@@ -68,6 +68,7 @@ public:
    u_int32_t FourBytes(const int index) const { return data ? u_int32_t((data[off+index] << 24) | (data[off+index+1] << 16) | (data[off+index+2] << 8) | data[off+index+3]) : u_int32_t(0); }
 
    bool isValid() const { return valid; }
+   void setInvalid(void) { valid = false; }
    bool checkSize(int offset);
 
    void addOffset(int offset) { off+=offset; }

@@ -517,13 +517,13 @@ void PSIP_VCT::ChannelInfo::Parse() {
    data.setPointerAndOffset<const vct_channel_info>(s, offset);
    if (offset != sizeof(const vct_channel_info))
    {
-     data.valid = false;
+     data.setInvalid();
    }
    else
    {
      channelDescriptors.setDataAndOffset(data+offset, HILO(s->descriptors_length), offset);
      if (offset != sizeof(const vct_channel_info) + channelDescriptors.getLength())
-       data.valid = false;
+       data.setInvalid();
    }
 }
 
