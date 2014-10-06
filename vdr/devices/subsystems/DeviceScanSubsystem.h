@@ -76,6 +76,9 @@ private:
   cPsipStt*             m_stt;
   cPsipVct*             m_vct;
   bool                  m_receiversAttached;
+  PLATFORM::CMutex           m_mutex;
+  PLATFORM::CCondition<bool> m_lockCondition;
+  bool                       m_locked;
 };
 
 }

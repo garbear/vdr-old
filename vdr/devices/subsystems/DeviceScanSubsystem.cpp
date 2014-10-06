@@ -75,7 +75,8 @@ cDeviceScanSubsystem::cDeviceScanSubsystem(cDevice* device)
    m_psipeit(new cPsipEit(device)),
    m_stt(new cPsipStt(device)),
    m_vct(new cPsipVct(device)),
-   m_receiversAttached(false)
+   m_receiversAttached(false),
+   m_locked(false)
 {
 }
 
@@ -139,8 +140,13 @@ void cDeviceScanSubsystem::StopScan()
 
 bool cDeviceScanSubsystem::WaitForTransponderScan(void)
 {
-  return m_pat->WaitForScan() &&
-      m_mgt->WaitForScan();
+  PLATFORM::CLockObject lock(m_mutex);
+  if (m_lockCondition.Wait(m_mutex, m_locked, TRANSPONDER_TIMEOUT))
+  {
+    return m_pat->WaitForScan() &&
+        m_mgt->WaitForScan();
+  }
+  return false;
 }
 
 bool cDeviceScanSubsystem::WaitForEPGScan(void)
@@ -158,6 +164,15 @@ void cDeviceScanSubsystem::Notify(const Observable &obs, const ObservableMessage
   case ObservableMessageChannelLock:
   {
     StartScan();
+    PLATFORM::CLockObject lock(m_mutex);
+    m_locked = true;
+    m_lockCondition.Signal();
+    break;
+  }
+  case ObservableMessageChannelLostLock:
+  {
+    PLATFORM::CLockObject lock(m_mutex);
+    m_locked = false;
     break;
   }
   default:
