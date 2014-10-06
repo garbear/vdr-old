@@ -22,7 +22,10 @@
  */
 
 #include "NIT.h"
+#include "Filter.h"
 #include "channels/Channel.h"
+#include "devices/Device.h"
+#include "devices/subsystems/DeviceChannelSubsystem.h"
 #include "utils/CommonMacros.h"
 #include "utils/log/Log.h"
 #include "utils/StringUtils.h"
@@ -59,36 +62,32 @@ enum eSystemType
 };
 
 cNit::cNit(cDevice* device)
- : cFilter(device),
+ : cScanReceiver(device, PID_NIT),
    m_networkId(NETWORK_ID_UNKNOWN)
  {
-  OpenResource(PID_NIT, TableIdNIT);
-  OpenResource(PID_NIT, TableIdNIT_other);
+//  OpenResource(PID_NIT, TableIdNIT);
+//  OpenResource(PID_NIT, TableIdNIT_other);
 }
 
-ChannelVector cNit::GetTransponders()
+void cNit::ReceivePacket(uint16_t pid, const uint8_t* data)
 {
   ChannelVector          transponders; // Return value
   cSectionSyncer         syncNit;
   map<uint16_t, Network> networks; // Network ID -> Network
 
-  uint16_t        pid;  // Packet ID
-  vector<uint8_t> data; // Section data
-  while (GetSection(pid, data))
-  {
-    SI::NIT nit(data.data());
+  SI::NIT nit(data);
     if (nit.CheckCRCAndParse())
     {
       // TODO: Handle TableIdNIT_other/
       SI::TableId tid = nit.getTableId();
       if (tid != TableIdNIT)
-        continue;
+        return;
 
       cSectionSyncer::SYNC_STATUS status = syncNit.Sync(nit.getVersionNumber(), nit.getSectionNumber(), nit.getLastSectionNumber());
       if (status == cSectionSyncer::SYNC_STATUS_NOT_SYNCED)
-        continue;
+        return;
       if (status == cSectionSyncer::SYNC_STATUS_OLD_VERSION)
-        break;
+        return;
 
       assert(status == cSectionSyncer::SYNC_STATUS_NEW_VERSION);
 
@@ -142,7 +141,7 @@ ChannelVector cNit::GetTransponders()
       }
 
       if (m_networkId != NETWORK_ID_UNKNOWN && m_networkId != nit.getNetworkId())
-        break; // Ignore all other NITs
+        return; // Ignore all other NITs
 
       SI::NIT::TransportStream ts;
       for (SI::Loop::Iterator it; nit.transportStreamLoop.getNext(ts, it); )
@@ -226,7 +225,7 @@ ChannelVector cNit::GetTransponders()
 
               for (vector<uint32_t>::const_iterator itKHz = frequenciesKHz.begin(); itKHz != frequenciesKHz.end(); ++itKHz)
               {
-                if (ISTRANSPONDER(*itKHz / 1000, GetTransponder().FrequencyMHz())) // TODO: ???
+                if (ISTRANSPONDER(*itKHz / 1000, m_device->Channel()->GetCurrentlyTunedTransponder().FrequencyMHz())) // TODO: ???
                 {
                   thisNetwork.bHasTransponder = true;
                   break;
@@ -363,7 +362,7 @@ ChannelVector cNit::GetTransponders()
 
               for (vector<uint32_t>::const_iterator itKHz = frequenciesKHz.begin(); itKHz != frequenciesKHz.end(); ++itKHz)
               {
-                if (*itKHz / 1000 == GetTransponder().FrequencyMHz()) // TODO
+                if (*itKHz / 1000 == m_device->Channel()->GetCurrentlyTunedTransponder().FrequencyMHz()) // TODO
                 {
                   thisNetwork.bHasTransponder = true;
                   break;
@@ -490,7 +489,7 @@ ChannelVector cNit::GetTransponders()
 
               for (vector<uint32_t>::const_iterator itKHz = frequenciesKHz.begin(); itKHz != frequenciesKHz.end(); ++itKHz)
               {
-                if (*itKHz / (1000 * 1000) == GetTransponder().FrequencyMHz()) // TODO
+                if (*itKHz / (1000 * 1000) == m_device->Channel()->GetCurrentlyTunedTransponder().FrequencyMHz()) // TODO
                 {
                   thisNetwork.bHasTransponder = true;
                   break;
@@ -694,9 +693,7 @@ ChannelVector cNit::GetTransponders()
         }
       }
     }
-  }
-
-  return transponders;
+  //TODO do something useful with transponders
 }
 
 }
