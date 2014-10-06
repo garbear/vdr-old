@@ -332,10 +332,13 @@ bool cDeviceReceiverSubsystem::OpenResources(const ChannelPtr& channel, PidResou
 PidResourcePtr cDeviceReceiverSubsystem::OpenResourceInternal(uint16_t pid, STREAM_TYPE streamType)
 {
   PidResourcePtr newResource = CreateResource(pid, streamType);
-  PidResourcePtr existingResource = GetOpenResource(newResource);
+  {
+    PLATFORM::CLockObject lock(m_mutexReceiver);
+    PidResourcePtr existingResource = GetOpenResource(newResource);
 
-  if (existingResource)
-    return existingResource;
+    if (existingResource)
+      return existingResource;
+  }
 
   if (newResource && newResource->Open())
     return newResource;
