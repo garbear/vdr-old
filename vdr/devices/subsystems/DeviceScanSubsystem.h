@@ -30,6 +30,7 @@
 namespace VDR
 {
 class cEventScanner;
+class cEit;
 class cPat;
 class cSdt;
 class cPsipMgt;
@@ -60,6 +61,7 @@ public:
   virtual void OnEventScanned(const EventPtr& event);
 
   cPat* PAT(void) const { return m_pat; }
+  cEit* EIT(void) const { return m_eit; }
   cSdt* SDT(void) const { return m_sdt; }
   cPsipMgt* MGT(void) const { return m_mgt; }
   cPsipStt* STT(void) const { return m_stt; }
@@ -67,6 +69,7 @@ public:
   cPsipEit* PSIPEIT(void) const { return m_psipeit; }
 private:
   cPat*                 m_pat;
+  cEit*                 m_eit;
   cSdt*                 m_sdt;
   cPsipMgt*             m_mgt;
   cPsipEit*             m_psipeit;

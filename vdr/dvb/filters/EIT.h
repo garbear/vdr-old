@@ -22,7 +22,7 @@
  */
 #pragma once
 
-#include "dvb/filters/Filter.h"
+#include "ScanReceiver.h"
 #include "epg/EPGTypes.h"
 
 #include <libsi/descriptor.h>
@@ -36,20 +36,19 @@ namespace VDR
 
 class cChannelManager;
 
-class cEit : public cFilter
+class cEit : public cScanReceiver
 {
 public:
-  cEit(cDevice* device, cChannelManager& channelManager);
+  cEit(cDevice* device);
   virtual ~cEit(void) { }
 
-  EventVector GetEvents();
+  void ReceivePacket(uint16_t pid, const uint8_t* data);
 
 private:
   void GetText(SI::Descriptor* d, uint8_t tid, uint16_t nid, uint16_t tsid,
       std::string& strTitle, std::string& strShortText, std::string& strDescription);
   void GetContents(SI::ContentDescriptor* cd, std::vector<uint8_t>& contents);
 
-  cChannelManager&              m_channelManager;
   SI::ExtendedEventDescriptors* m_extendedEventDescriptors;
 };
 

@@ -23,6 +23,7 @@
 #include "DeviceChannelSubsystem.h"
 #include "channels/ChannelManager.h"
 #include "devices/Device.h"
+#include "dvb/filters/EIT.h"
 #include "dvb/filters/PAT.h"
 #include "dvb/filters/PSIP_MGT.h"
 #include "dvb/filters/PSIP_EIT.h"
@@ -68,6 +69,7 @@ protected:
 cDeviceScanSubsystem::cDeviceScanSubsystem(cDevice* device)
  : cDeviceSubsystem(device),
    m_pat(new cPat(device)),
+   m_eit(new cEit(device)),
    m_sdt(new cSdt(device)),
    m_mgt(new cPsipMgt(device)),
    m_psipeit(new cPsipEit(device)),
@@ -80,6 +82,7 @@ cDeviceScanSubsystem::cDeviceScanSubsystem(cDevice* device)
 cDeviceScanSubsystem::~cDeviceScanSubsystem(void)
 {
   delete m_pat;
+  delete m_eit;
   delete m_sdt;
   delete m_mgt;
   delete m_psipeit;
@@ -91,6 +94,7 @@ bool cDeviceScanSubsystem::AttachReceivers(void)
 {
   bool retval = true;
   retval &= PAT()->Attach();
+  retval &= EIT()->Attach();
   retval &= SDT()->Attach();
   retval &= MGT()->Attach();
   retval &= STT()->Attach();
@@ -102,6 +106,7 @@ bool cDeviceScanSubsystem::AttachReceivers(void)
 void cDeviceScanSubsystem::DetachReceivers(void)
 {
   PAT()->Detach();
+  EIT()->Detach();
   SDT()->Detach();
   MGT()->Detach();
   STT()->Detach();
