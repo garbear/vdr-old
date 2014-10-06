@@ -140,14 +140,12 @@ set(VDR_SRCS
 	vdr/devices/linux/subsystems/DVBChannelSubsystem.cpp
 	vdr/devices/linux/subsystems/DVBCommonInterfaceSubsystem.cpp
 	vdr/devices/linux/subsystems/DVBReceiverSubsystem.cpp
-	vdr/devices/linux/subsystems/DVBSectionFilterSubsystem.cpp
 	vdr/devices/subsystems/DeviceChannelSubsystem.cpp
 	vdr/devices/subsystems/DeviceCommonInterfaceSubsystem.cpp
 	vdr/devices/subsystems/DeviceImageGrabSubsystem.cpp
 	vdr/devices/subsystems/DevicePlayerSubsystem.cpp
 	vdr/devices/subsystems/DeviceReceiverSubsystem.cpp
 	vdr/devices/subsystems/DeviceScanSubsystem.cpp
-	vdr/devices/subsystems/DeviceSectionFilterSubsystem.cpp
 	vdr/devices/subsystems/DeviceSPUSubsystem.cpp
 	vdr/devices/subsystems/DeviceTrackSubsystem.cpp
 	vdr/devices/subsystems/DeviceVideoFormatSubsystem.cpp

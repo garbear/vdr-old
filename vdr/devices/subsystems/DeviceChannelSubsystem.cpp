@@ -24,7 +24,6 @@
 #include "DevicePlayerSubsystem.h"
 #include "DeviceReceiverSubsystem.h"
 #include "DeviceScanSubsystem.h"
-#include "DeviceSectionFilterSubsystem.h"
 #include "DeviceSPUSubsystem.h"
 #include "devices/commoninterface/CI.h"
 #include "devices/Device.h"
@@ -63,8 +62,6 @@ cDeviceChannelSubsystem::cDeviceChannelSubsystem(cDevice *device)
 
 bool cDeviceChannelSubsystem::SwitchChannel(const ChannelPtr& channel)
 {
-  // Stop section handling
-  SectionFilter()->Stop();
   Receiver()->Stop();
 
   // Tell the camSlot about the channel switch and add all PIDs of this
@@ -74,8 +71,6 @@ bool cDeviceChannelSubsystem::SwitchChannel(const ChannelPtr& channel)
 
   if (Tune(channel->GetTransponder()))
   {
-    // Start section handling
-    SectionFilter()->Start();
     Receiver()->Start();
 
     // Start decrypting any PIDs that might have been set in SetChannelDevice():
