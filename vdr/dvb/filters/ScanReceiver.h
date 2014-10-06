@@ -51,12 +51,21 @@ public:
   virtual void LostPriority(void) { }
 
 protected:
+  void AddPid(uint16_t pid);
+  void RemovePid(uint16_t pid);
+  void RemovePids(void);
+  void SetScanned(void);
+  void ResetScanned(void);
+
   cDevice*                   m_device;
   bool                       m_locked;
-  bool                       m_scanned;
   PLATFORM::CMutex           m_mutex;
+
+private:
+  bool                       m_scanned;
   PLATFORM::CCondition<bool> m_scannedEvent;
   std::vector<uint16_t>      m_pids;
+  bool                       m_attached;
 };
 
 }

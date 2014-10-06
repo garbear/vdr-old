@@ -69,9 +69,7 @@ void cPat::ReceivePacket(uint16_t pid, const uint8_t* data)
       m_pmt.AddTransport(tsPAT.getTransportStreamId(), assoc.getServiceId(), assoc.getPid());
     }
 
-    PLATFORM::CLockObject lock(m_mutex);
-    m_scanned = true;
-    m_scannedEvent.Broadcast();
+    SetScanned();
   }
 }
 

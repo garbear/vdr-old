@@ -95,16 +95,9 @@ void cPsipMgt::ReceivePacket(uint16_t pid, const uint8_t* data)
     }
 
     dsyslog("MGT: Discovered %d EIT tables", eitPids.size());
+    m_device->Scan()->PSIPEIT()->AttachPids(eitPids);
 
-    // Get the/UTC offset for calculating event start times
-    const unsigned int gpsUtcOffset = m_device->Scan()->STT()->GetGpsUtcOffset();
-
-    //TODO
-//    cPsipEit psipEit(m_device, eitPids);
-//    psipEit.ScanEvents(NULL, gpsUtcOffset);
-    PLATFORM::CLockObject lock(m_mutex);
-    m_scanned = true;
-    m_scannedEvent.Broadcast();
+    SetScanned();
   }
 }
 

@@ -93,10 +93,9 @@ bool cPmt::AddTransport(uint16_t tsid, uint16_t sid, uint16_t pid)
   newfilter.pid  = pid;
 
   bool retval = true;
-  if (!HasPid(pid))
-    retval = m_device->Receiver()->AttachReceiver(this, pid);
-  m_scanned = false;
+  ResetScanned();
   m_filters.push_back(newfilter);
+  AddPid(pid);
   return retval;
 }
 
@@ -120,16 +119,13 @@ void cPmt::ReceivePacket(uint16_t pid, const uint8_t* data)
       {
         cChannelManager::Get().MergeChannelProps(CreateChannel(pmt, (*it).tsid));
         m_filters.erase(it);
-        m_device->Receiver()->DetachReceiverPid(this, pid);
+        RemovePid(pid);
         break;
       }
     }
 
     if (m_filters.empty())
-    {
-      m_scanned = true;
-      m_scannedEvent.Broadcast();
-    }
+      SetScanned();
   }
 }
 
