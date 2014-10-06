@@ -33,6 +33,7 @@ class cEventScanner;
 class cPat;
 class cSdt;
 class cPsipMgt;
+class cPsipEit;
 class cPsipStt;
 class cPsipVct;
 
@@ -63,11 +64,12 @@ public:
   cPsipMgt* MGT(void) const { return m_mgt; }
   cPsipStt* STT(void) const { return m_stt; }
   cPsipVct* VCT(void) const { return m_vct; }
+  cPsipEit* PSIPEIT(void) const { return m_psipeit; }
 private:
-  cEventScanner*        m_eventScanner;
   cPat*                 m_pat;
   cSdt*                 m_sdt;
   cPsipMgt*             m_mgt;
+  cPsipEit*             m_psipeit;
   cPsipStt*             m_stt;
   cPsipVct*             m_vct;
   bool                  m_receiversAttached;

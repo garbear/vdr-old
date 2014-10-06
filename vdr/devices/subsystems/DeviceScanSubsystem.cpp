@@ -25,6 +25,7 @@
 #include "devices/Device.h"
 #include "dvb/filters/PAT.h"
 #include "dvb/filters/PSIP_MGT.h"
+#include "dvb/filters/PSIP_EIT.h"
 #include "dvb/filters/PSIP_STT.h"
 #include "dvb/filters/PSIP_VCT.h"
 #include "dvb/filters/SDT.h"
@@ -61,72 +62,15 @@ protected:
   PLATFORM::CEvent       m_exitEvent;
 };
 
-class cEventScanner : public cSectionScanner
-{
-public:
-  cEventScanner(cDevice* device, iFilterCallback* callback) : cSectionScanner(device, callback), m_mgt(NULL) { }
-  virtual ~cEventScanner(void) { Abort(); delete m_mgt; }
-  void Abort(void);
-  void Start(void);
-
-protected:
-  void* Process(void);
-  cPsipMgt* m_mgt;
-};
-
-/*
- * cSectionScanner
- */
-cSectionScanner::cSectionScanner(cDevice* device, iFilterCallback* callback)
- : m_device(device),
-   m_callback(callback),
-   m_bSuccess(true)
-{
-}
-
-bool cSectionScanner::WaitForExit(unsigned int timeoutMs)
-{
-  StopThread(timeoutMs);
-  return m_bSuccess;
-}
-
-/*
- * cEventScanner
- */
-void* cEventScanner::Process(void)
-{
-//  m_bSuccess = m_mgt->ScanPSIPData(m_callback);
-
-  cScheduleManager::Get().NotifyObservers();
-
-  return NULL;
-}
-
-void cEventScanner::Start(void)
-{
-  StopThread(0);
-  if (m_mgt)
-    delete m_mgt;
-  m_mgt = new cPsipMgt(m_device);
-  CreateThread(true);
-}
-
-void cEventScanner::Abort(void)
-{
-//  if (m_mgt)
-//    m_mgt->Abort();
-  StopThread(-1);
-}
-
 /*
  * cDeviceScanSubsystem
  */
 cDeviceScanSubsystem::cDeviceScanSubsystem(cDevice* device)
  : cDeviceSubsystem(device),
-   m_eventScanner(new cEventScanner(device, this)),
    m_pat(new cPat(device)),
    m_sdt(new cSdt(device)),
    m_mgt(new cPsipMgt(device)),
+   m_psipeit(new cPsipEit(device)),
    m_stt(new cPsipStt(device)),
    m_vct(new cPsipVct(device)),
    m_receiversAttached(false)
@@ -135,10 +79,10 @@ cDeviceScanSubsystem::cDeviceScanSubsystem(cDevice* device)
 
 cDeviceScanSubsystem::~cDeviceScanSubsystem(void)
 {
-  delete m_eventScanner;
   delete m_pat;
   delete m_sdt;
   delete m_mgt;
+  delete m_psipeit;
   delete m_stt;
   delete m_vct;
 }
@@ -151,6 +95,7 @@ bool cDeviceScanSubsystem::AttachReceivers(void)
   retval &= MGT()->Attach();
   retval &= STT()->Attach();
   retval &= VCT()->Attach();
+  retval &= PSIPEIT()->Attach();
   return retval;
 }
 
@@ -161,6 +106,7 @@ void cDeviceScanSubsystem::DetachReceivers(void)
   MGT()->Detach();
   STT()->Detach();
   VCT()->Detach();
+  PSIPEIT()->Detach();
 }
 
 void cDeviceScanSubsystem::StartScan()
@@ -197,7 +143,7 @@ bool cDeviceScanSubsystem::WaitForEPGScan(void)
   const int64_t startMs = GetTimeMs();
   const int64_t timeoutMs = EPG_TIMEOUT;
 
-  return m_eventScanner->WaitForExit(timeoutMs);
+  return m_psipeit->WaitForScan(timeoutMs);
 }
 
 void cDeviceScanSubsystem::Notify(const Observable &obs, const ObservableMessage msg)
