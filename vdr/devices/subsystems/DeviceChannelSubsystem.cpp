@@ -199,6 +199,7 @@ void cDeviceChannelSubsystem::Release(TunerHandlePtr& handle)
   if (it != m_activeTransponders.end())
   {
     m_activeTransponders.erase(it);
+    handle->LockLost();
     dsyslog("released subscription for channel %uMHz prio %d", handle->Channel()->GetTransponder().FrequencyMHz(), handle->Type());
   }
   if (m_activeTransponders.empty())
@@ -213,6 +214,7 @@ void cDeviceChannelSubsystem::Release(cTunerHandle* handle)
     if ((*it).get() == handle)
     {
       m_activeTransponders.erase(it);
+      handle->LockLost();
       dsyslog("released subscription for channel %uMHz prio %d", handle->Channel()->GetTransponder().FrequencyMHz(), handle->Type());
       break;
     }
