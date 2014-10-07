@@ -46,6 +46,12 @@ cPat::cPat(cDevice* device) :
 {
 }
 
+bool cPat::Attach(void)
+{
+  return cScanReceiver::Attach() &&
+      m_pmt.Attach();
+}
+
 bool cPat::WaitForScan(uint32_t iTimeout /* = TRANSPONDER_TIMEOUT */)
 {
   PLATFORM::CLockObject lock(m_mutex);
