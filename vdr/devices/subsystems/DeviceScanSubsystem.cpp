@@ -157,6 +157,28 @@ bool cDeviceScanSubsystem::WaitForEPGScan(void)
   return m_psipeit->WaitForScan(timeoutMs);
 }
 
+void cDeviceScanSubsystem::LockAcquired(void)
+{
+  PAT()->LockAcquired();
+  EIT()->LockAcquired();
+  SDT()->LockAcquired();
+  MGT()->LockAcquired();
+  STT()->LockAcquired();
+  VCT()->LockAcquired();
+  PSIPEIT()->LockAcquired();
+}
+
+void cDeviceScanSubsystem::LockLost(void)
+{
+  PAT()->LockLost();
+  EIT()->LockLost();
+  SDT()->LockLost();
+  MGT()->LockLost();
+  STT()->LockLost();
+  VCT()->LockLost();
+  PSIPEIT()->LockLost();
+}
+
 void cDeviceScanSubsystem::Notify(const Observable &obs, const ObservableMessage msg)
 {
   switch (msg)
@@ -164,6 +186,7 @@ void cDeviceScanSubsystem::Notify(const Observable &obs, const ObservableMessage
   case ObservableMessageChannelLock:
   {
     StartScan();
+    LockAcquired();
     PLATFORM::CLockObject lock(m_mutex);
     m_locked = true;
     m_lockCondition.Signal();
@@ -171,6 +194,7 @@ void cDeviceScanSubsystem::Notify(const Observable &obs, const ObservableMessage
   }
   case ObservableMessageChannelLostLock:
   {
+    LockLost();
     PLATFORM::CLockObject lock(m_mutex);
     m_locked = false;
     break;

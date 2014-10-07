@@ -68,6 +68,9 @@ public:
   cPsipVct* VCT(void) const { return m_vct; }
   cPsipEit* PSIPEIT(void) const { return m_psipeit; }
 private:
+  void LockAcquired(void);
+  void LockLost(void);
+
   cPat*                 m_pat;
   cEit*                 m_eit;
   cSdt*                 m_sdt;
