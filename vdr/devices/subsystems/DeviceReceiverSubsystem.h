@@ -62,7 +62,6 @@ public:
    */
   bool AttachReceiver(iReceiver* receiver, const ChannelPtr& channel);
   bool AttachReceiver(iReceiver* receiver, uint16_t pid);
-  bool AttachReceiver(iReceiver* receiver, PidResourceSet pids);
 
   /*!
    * Detaches the given receiver from this device. Pointer is removed from
@@ -115,34 +114,17 @@ protected:
   virtual bool Read(std::vector<uint8_t>& data) = 0;
 
 private:
-  typedef std::map<iReceiver*, PidResourceSet> ReceiverResourceMap; // receiver -> resources
-
-  /*!
-   * Utility function: returns an open resource with the given properties, or
-   * empty pointer if no resources with the given properties are open.
-   */
-  PidResourcePtr GetOpenResource(const PidResourcePtr& needle);
-
   /*!
    * \brief Detaches all receivers from this device.
    */
   virtual void DetachAllReceivers(void);
 
-  /*!
-   * Open resources for all the PIDs belonging to channel.
-   * \return A collection of open resources
-   */
-  bool OpenResources(const ChannelPtr& channel, PidResourceSet& openResources);
+  bool OpenResourceForReceiver(uint16_t pid, STREAM_TYPE streamType, iReceiver* receiver);
+  PidReceivers* GetReceivers(uint16_t pid, STREAM_TYPE streamType);
+  void CloseResourceForReceiver(iReceiver* receiver);
+  void CloseResourceForReceiver(uint16_t pid, iReceiver* receiver);
 
-  /*!
-   * Opens resource for the given PID and stream type and inserts it into
-   * openResources on success. If a handle is already open, a copy of the
-   * shared pointer will be added to pidHandles instead. Returns false if no
-   * resource was added to openResources.
-   */
-  PidResourcePtr OpenResourceInternal(uint16_t pid, STREAM_TYPE streamType);
-
-  ReceiverResourceMap m_receiverResources;
+  PidResourceMap      m_resources;
   PLATFORM::CMutex    m_mutexReceiver;
 };
 

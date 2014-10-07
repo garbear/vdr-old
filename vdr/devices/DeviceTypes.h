@@ -21,6 +21,7 @@
 #pragma once
 
 #include <set>
+#include <map>
 #include <shared_ptr/shared_ptr.hpp>
 #include <vector>
 
@@ -28,11 +29,20 @@ namespace VDR
 {
 
 class cDevice;
+class iReceiver;
+
 typedef VDR::shared_ptr<cDevice> DevicePtr;
 typedef std::vector<DevicePtr>   DeviceVector;
 
 class cPidResource;
 typedef VDR::shared_ptr<cPidResource> PidResourcePtr;
 typedef std::set<PidResourcePtr>      PidResourceSet;
+
+typedef struct PidReceivers {
+  PidResourcePtr       resource; //TODO don't need a shared_ptr for this
+  std::set<iReceiver*> receivers;
+} PidReceivers;
+
+typedef std::map<uint16_t, PidReceivers*> PidResourceMap; // pid -> resource + receivers
 
 }
