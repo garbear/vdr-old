@@ -52,6 +52,11 @@ bool cPat::Attach(void)
       m_pmt.Attach();
 }
 
+void cPat::LockLost(void)
+{
+  m_pmt.Detach();
+}
+
 bool cPat::WaitForScan(uint32_t iTimeout /* = TRANSPONDER_TIMEOUT */)
 {
   PLATFORM::CLockObject lock(m_mutex);
