@@ -183,7 +183,10 @@ TunerHandlePtr cDeviceChannelSubsystem::Acquire(const ChannelPtr& channel, devic
   {
     /** notify lower prio that they lost prio */
     for (std::vector<TunerHandlePtr>::iterator it = lowerPrio.begin(); it != lowerPrio.end(); ++it)
+    {
+      (*it)->LockLost();
       (*it)->LostPriority();
+    }
   }
 
   return handle;
