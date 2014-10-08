@@ -449,4 +449,11 @@ void cPmt::SetCaDescriptors(const ChannelPtr& channel, /* const */ SI::PMT& pmt)
   channel->SetCaDescriptors(caDescriptors);
 }
 
+void cPmt::Detach(void)
+{
+  cScanReceiver::Detach();
+  m_filters.clear();
+  RemovePids();
+}
+
 }

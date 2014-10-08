@@ -48,6 +48,8 @@ public:
   bool AddTransport(uint16_t tsid, uint16_t sid, uint16_t pid);
   void ReceivePacket(uint16_t pid, const uint8_t* data);
 
+  void Detach(void);
+
 private:
   ChannelPtr CreateChannel(/* const */ SI::PMT& pmt, uint16_t tsid) const; // TODO: libsi fails at const-correctness
 
