@@ -89,13 +89,17 @@ void *cDeviceReceiverSubsystem::Process()
       vector<uint8_t> packet;
       if (Read(packet))
       {
+        std::set<iReceiver*>* receivers = NULL;
         uint16_t pid = TsPid(packet.data());
-
-        CLockObject lock(m_mutexReceiver);
-        PidResourceMap::iterator it = m_resources.find(pid);
-        if (it != m_resources.end())
         {
-          for (std::set<iReceiver*>::iterator receiverit = it->second->receivers.begin(); receiverit != it->second->receivers.end(); ++receiverit)
+          CLockObject lock(m_mutexReceiver);
+          PidResourceMap::iterator it = m_resources.find(pid);
+          if (it != m_resources.end())
+            receivers = &it->second->receivers;
+        }
+        if (receivers)
+        {
+          for (std::set<iReceiver*>::iterator receiverit = receivers->begin(); receiverit != receivers->end(); ++receiverit)
             (*receiverit)->Receive(packet);
         }
       }
