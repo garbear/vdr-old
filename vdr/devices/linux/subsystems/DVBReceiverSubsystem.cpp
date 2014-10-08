@@ -132,19 +132,19 @@ void cDvbReceiverResource::Close(void)
     if (ioctl(m_handle, DMX_STOP) < 0)
       LOG_ERROR;
 
-    if (StreamType() <= ptTeletext)
-    {
-      dmx_pes_filter_params pesFilterParams = { };
-
-      pesFilterParams.pid     = 0x1FFF;
-      pesFilterParams.input   = DMX_IN_FRONTEND;
-      pesFilterParams.output  = DMX_OUT_DECODER;
-      pesFilterParams.pes_type= DMX_PES_OTHER;
-      pesFilterParams.flags   = DMX_IMMEDIATE_START;
-
-      if (ioctl(m_handle, DMX_SET_PES_FILTER, &pesFilterParams) < 0)
-        LOG_ERROR;
-    }
+//    if (StreamType() <= ptTeletext)
+//    {
+//      dmx_pes_filter_params pesFilterParams = { };
+//
+//      pesFilterParams.pid     = 0x1FFF;
+//      pesFilterParams.input   = DMX_IN_FRONTEND;
+//      pesFilterParams.output  = DMX_OUT_DECODER;
+//      pesFilterParams.pes_type= DMX_PES_OTHER;
+//      pesFilterParams.flags   = DMX_IMMEDIATE_START;
+//
+//      if (ioctl(m_handle, DMX_SET_PES_FILTER, &pesFilterParams) < 0)
+//        LOG_ERROR;
+//    }
 
     close(m_handle);
     m_handle = FILE_DESCRIPTOR_INVALID;
