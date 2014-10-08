@@ -61,13 +61,13 @@ public:
   unsigned int GetGpsUtcOffset(void);
   void AttachEITPids(const std::vector<uint16_t>& pids);
 
-  TRANSPONDER_TYPE Type(void) const { return m_type; }
+  TRANSPONDER_TYPE Type(void);
   void SetType(TRANSPONDER_TYPE type) { m_type = type; }
 
 private:
   void LockAcquired(void);
   void LockLost(void);
-  std::set<cScanReceiver*>& Receivers(void) { return m_type == TRANSPONDER_ATSC ? m_atscReceivers : m_receivers; }
+  std::set<cScanReceiver*>& Receivers(void) { return Type() == TRANSPONDER_ATSC ? m_atscReceivers : m_receivers; }
 
   cPat*                      m_pat;
   cEit*                      m_eit;
@@ -80,6 +80,7 @@ private:
   PLATFORM::CCondition<bool> m_lockCondition;
   bool                       m_locked;
   TRANSPONDER_TYPE           m_type;
+  cDevice*                   m_device;
 };
 
 }

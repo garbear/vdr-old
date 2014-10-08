@@ -74,7 +74,9 @@ cDeviceScanSubsystem::cDeviceScanSubsystem(cDevice* device)
    m_mgt(new cPsipMgt(device)),
    m_psipeit(new cPsipEit(device)),
    m_psipstt(new cPsipStt(device)),
-   m_locked(false)
+   m_locked(false),
+   m_type(TRANSPONDER_INVALID),
+   m_device(device)
 {
   m_receivers.insert(m_pat);
   m_receivers.insert(m_eit);
@@ -83,21 +85,6 @@ cDeviceScanSubsystem::cDeviceScanSubsystem(cDevice* device)
   m_atscReceivers.insert(m_psipstt);
   m_atscReceivers.insert(new cSdt(device));
   m_atscReceivers.insert(new cPsipVct(device));
-
-  m_type = TRANSPONDER_INVALID;
-  //XXX
-  cDvbDevice* dvbDevice = static_cast<cDvbDevice*>(device);
-  if (dvbDevice)
-  {
-    if (dvbDevice->Channel()->ProvidesSource(TRANSPONDER_ATSC))
-      m_type = TRANSPONDER_ATSC;
-    else if (dvbDevice->Channel()->ProvidesSource(TRANSPONDER_CABLE))
-      m_type = TRANSPONDER_CABLE;
-    else if (dvbDevice->Channel()->ProvidesSource(TRANSPONDER_SATELLITE))
-      m_type = TRANSPONDER_SATELLITE;
-    else if (dvbDevice->Channel()->ProvidesSource(TRANSPONDER_TERRESTRIAL))
-      m_type = TRANSPONDER_TERRESTRIAL;
-  }
 }
 
 cDeviceScanSubsystem::~cDeviceScanSubsystem(void)
@@ -106,6 +93,27 @@ cDeviceScanSubsystem::~cDeviceScanSubsystem(void)
     delete *it;
   for (std::set<cScanReceiver*>::iterator it = m_atscReceivers.begin(); it != m_atscReceivers.end(); ++it)
     delete *it;
+}
+
+TRANSPONDER_TYPE cDeviceScanSubsystem::Type(void)
+{
+  if (m_type == TRANSPONDER_INVALID)
+  {
+    //XXX
+    cDvbDevice* dvbDevice = static_cast<cDvbDevice*>(m_device);
+    if (dvbDevice)
+    {
+      if (dvbDevice->Channel()->ProvidesSource(TRANSPONDER_ATSC))
+        m_type = TRANSPONDER_ATSC;
+      else if (dvbDevice->Channel()->ProvidesSource(TRANSPONDER_CABLE))
+        m_type = TRANSPONDER_CABLE;
+      else if (dvbDevice->Channel()->ProvidesSource(TRANSPONDER_SATELLITE))
+        m_type = TRANSPONDER_SATELLITE;
+      else if (dvbDevice->Channel()->ProvidesSource(TRANSPONDER_TERRESTRIAL))
+        m_type = TRANSPONDER_TERRESTRIAL;
+    }
+  }
+  return m_type;
 }
 
 bool cDeviceScanSubsystem::AttachReceivers(void)
@@ -134,12 +142,12 @@ void cDeviceScanSubsystem::StopScan()
 
 bool cDeviceScanSubsystem::WaitForTransponderScan(void)
 {
-  return m_type == TRANSPONDER_ATSC ? m_mgt->WaitForScan() : m_pat->WaitForScan();
+  return Type() == TRANSPONDER_ATSC ? m_mgt->WaitForScan() : m_pat->WaitForScan();
 }
 
 bool cDeviceScanSubsystem::WaitForEPGScan(void)
 {
-  return m_type == TRANSPONDER_ATSC ? m_psipeit->WaitForScan(EPG_TIMEOUT) : m_eit->WaitForScan(EPG_TIMEOUT);
+  return Type() == TRANSPONDER_ATSC ? m_psipeit->WaitForScan(EPG_TIMEOUT) : m_eit->WaitForScan(EPG_TIMEOUT);
 }
 
 void cDeviceScanSubsystem::LockAcquired(void)
@@ -196,12 +204,12 @@ void cDeviceScanSubsystem::OnEventScanned(const EventPtr& event)
 
 unsigned int cDeviceScanSubsystem::GetGpsUtcOffset(void)
 {
-  return m_type == TRANSPONDER_ATSC ? m_psipstt->GetGpsUtcOffset() : 0;
+  return Type() == TRANSPONDER_ATSC ? m_psipstt->GetGpsUtcOffset() : 0;
 }
 
 void cDeviceScanSubsystem::AttachEITPids(const vector<uint16_t>& pids)
 {
-  if (m_type == TRANSPONDER_ATSC)
+  if (Type() == TRANSPONDER_ATSC)
     m_psipeit->AttachPids(pids);
   //TODO
 }
