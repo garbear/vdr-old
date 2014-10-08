@@ -46,29 +46,30 @@ cPat::cPat(cDevice* device) :
 {
 }
 
-bool cPat::Attach(void)
-{
-  return cScanReceiver::Attach() &&
-      m_pmt.Attach();
-}
-
 void cPat::LockLost(void)
 {
+  cScanReceiver::LockLost();
   m_pmt.Detach();
 }
 
 bool cPat::WaitForScan(uint32_t iTimeout /* = TRANSPONDER_TIMEOUT */)
 {
-  PLATFORM::CLockObject lock(m_mutex);
   return cScanReceiver::WaitForScan(iTimeout) &&
       m_pmt.WaitForScan(iTimeout);
 }
 
 void cPat::ReceivePacket(uint16_t pid, const uint8_t* data)
 {
+  if (Scanned())
+    return;
+
   SI::PAT tsPAT(data);
-  if (tsPAT.CheckCRCAndParse() && tsPAT.getTableId() == TableIdPAT)
+  if (tsPAT.CheckCRCAndParse())
   {
+    bool haspmt = false;
+    if (tsPAT.getTableId() != TableIdPAT)
+      return;
+
     SI::PAT::Association assoc;
     for (SI::Loop::Iterator it; tsPAT.associationLoop.getNext(assoc, it); )
     {
@@ -76,11 +77,16 @@ void cPat::ReceivePacket(uint16_t pid, const uint8_t* data)
       if (assoc.isNITPid())
         continue;
 
+      haspmt = true;
       dsyslog("PAT: Scanning for PMT table with TSID=%d, SID=%d", tsPAT.getTransportStreamId(), assoc.getServiceId());
       m_pmt.AddTransport(tsPAT.getTransportStreamId(), assoc.getServiceId(), assoc.getPid());
     }
 
-    SetScanned();
+    if (haspmt)
+    {
+      m_pmt.Attach();
+      SetScanned();
+    }
   }
 }
 

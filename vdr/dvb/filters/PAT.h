@@ -36,7 +36,6 @@ public:
   cPat(cDevice* device);
   virtual ~cPat(void) { }
 
-  bool Attach(void);
   void LockLost(void);
   void ReceivePacket(uint16_t pid, const uint8_t* data);
   bool WaitForScan(uint32_t iTimeout = TRANSPONDER_TIMEOUT);
