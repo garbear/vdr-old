@@ -61,6 +61,9 @@ public:
   unsigned int GetGpsUtcOffset(void);
   void AttachEITPids(const std::vector<uint16_t>& pids);
 
+  TRANSPONDER_TYPE Type(void) const { return m_type; }
+  void SetType(TRANSPONDER_TYPE type) { m_type = type; }
+
 private:
   void LockAcquired(void);
   void LockLost(void);
@@ -74,6 +77,7 @@ private:
   PLATFORM::CMutex           m_mutex;
   PLATFORM::CCondition<bool> m_lockCondition;
   bool                       m_locked;
+  TRANSPONDER_TYPE           m_type;
 };
 
 }

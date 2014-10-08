@@ -23,6 +23,7 @@
 #include "DeviceChannelSubsystem.h"
 #include "channels/ChannelManager.h"
 #include "devices/Device.h"
+#include "devices/linux/DVBDevice.h"
 #include "dvb/filters/EIT.h"
 #include "dvb/filters/PAT.h"
 #include "dvb/filters/PSIP_MGT.h"
@@ -82,6 +83,21 @@ cDeviceScanSubsystem::cDeviceScanSubsystem(cDevice* device)
   m_receivers.insert(m_psipstt);
   m_receivers.insert(new cSdt(device));
   m_receivers.insert(new cPsipVct(device));
+
+  m_type = TRANSPONDER_INVALID;
+  //XXX
+  cDvbDevice* dvbDevice = static_cast<cDvbDevice*>(device);
+  if (dvbDevice)
+  {
+    if (dvbDevice->Channel()->ProvidesSource(TRANSPONDER_ATSC))
+      m_type = TRANSPONDER_ATSC;
+    else if (dvbDevice->Channel()->ProvidesSource(TRANSPONDER_CABLE))
+      m_type = TRANSPONDER_CABLE;
+    else if (dvbDevice->Channel()->ProvidesSource(TRANSPONDER_SATELLITE))
+      m_type = TRANSPONDER_SATELLITE;
+    else if (dvbDevice->Channel()->ProvidesSource(TRANSPONDER_TERRESTRIAL))
+      m_type = TRANSPONDER_TERRESTRIAL;
+  }
 }
 
 cDeviceScanSubsystem::~cDeviceScanSubsystem(void)
@@ -117,13 +133,8 @@ void cDeviceScanSubsystem::StopScan()
 
 bool cDeviceScanSubsystem::WaitForTransponderScan(void)
 {
-  PLATFORM::CLockObject lock(m_mutex);
-  if (m_lockCondition.Wait(m_mutex, m_locked, TRANSPONDER_TIMEOUT))
-  {
-    return m_pat->WaitForScan() &&
-        m_mgt->WaitForScan();
-  }
-  return false;
+  return m_pat->WaitForScan() &&
+      m_mgt->WaitForScan();
 }
 
 bool cDeviceScanSubsystem::WaitForEPGScan(void)

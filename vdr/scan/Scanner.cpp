@@ -80,18 +80,8 @@ void* cScanner::Process()
     return NULL;
   const fe_caps_t caps = dvbDevice->m_dvbTuner.Capabilities();
   TRANSPONDER_TYPE type = m_setup.dvbType;
-  if (m_setup.dvbType == TRANSPONDER_INVALID)
-  {
-    if (dvbDevice->Channel()->ProvidesSource(TRANSPONDER_ATSC))
-      type = TRANSPONDER_ATSC;
-    else if (dvbDevice->Channel()->ProvidesSource(TRANSPONDER_CABLE))
-      type = TRANSPONDER_CABLE;
-    else if (dvbDevice->Channel()->ProvidesSource(TRANSPONDER_SATELLITE))
-      type = TRANSPONDER_SATELLITE;
-    else if (dvbDevice->Channel()->ProvidesSource(TRANSPONDER_TERRESTRIAL))
-      type = TRANSPONDER_TERRESTRIAL;
-  }
-
+  if (type == TRANSPONDER_INVALID)
+    type = m_setup.device->Scan()->Type();
 
   switch (type)
   {
