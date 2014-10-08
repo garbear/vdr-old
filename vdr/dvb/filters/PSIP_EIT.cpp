@@ -66,7 +66,7 @@ void cPsipEit::AttachPids(const std::vector<uint16_t>& pids)
 void cPsipEit::ReceivePacket(uint16_t pid, const uint8_t* data)
 {
   // Get the/UTC offset for calculating event start times
-  const unsigned int gpsUtcOffset = m_device->Scan()->STT()->GetGpsUtcOffset();
+  const unsigned int gpsUtcOffset = m_device->Scan()->GetGpsUtcOffset();
   unsigned int numEvents = 0;
 
   SI::PSIP_EIT psipEit(data);

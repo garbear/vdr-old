@@ -95,7 +95,7 @@ void cPsipMgt::ReceivePacket(uint16_t pid, const uint8_t* data)
     }
 
     dsyslog("MGT: Discovered %d EIT tables", eitPids.size());
-    m_device->Scan()->PSIPEIT()->AttachPids(eitPids);
+    m_device->Scan()->AttachEITPids(eitPids);
 
     SetScanned();
   }

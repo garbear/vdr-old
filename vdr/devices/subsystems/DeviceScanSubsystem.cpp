@@ -70,72 +70,49 @@ cDeviceScanSubsystem::cDeviceScanSubsystem(cDevice* device)
  : cDeviceSubsystem(device),
    m_pat(new cPat(device)),
    m_eit(new cEit(device)),
-   m_sdt(new cSdt(device)),
    m_mgt(new cPsipMgt(device)),
    m_psipeit(new cPsipEit(device)),
-   m_stt(new cPsipStt(device)),
-   m_vct(new cPsipVct(device)),
-   m_receiversAttached(false),
+   m_psipstt(new cPsipStt(device)),
    m_locked(false)
 {
+  m_receivers.insert(m_pat);
+  m_receivers.insert(m_eit);
+  m_receivers.insert(m_mgt);
+  m_receivers.insert(m_psipeit);
+  m_receivers.insert(m_psipstt);
+  m_receivers.insert(new cSdt(device));
+  m_receivers.insert(new cPsipVct(device));
 }
 
 cDeviceScanSubsystem::~cDeviceScanSubsystem(void)
 {
-  delete m_pat;
-  delete m_eit;
-  delete m_sdt;
-  delete m_mgt;
-  delete m_psipeit;
-  delete m_stt;
-  delete m_vct;
+  for (std::set<cScanReceiver*>::iterator it = m_receivers.begin(); it != m_receivers.end(); ++it)
+    delete *it;
+  m_receivers.clear();
 }
 
 bool cDeviceScanSubsystem::AttachReceivers(void)
 {
-  bool retval = true;
-  retval &= PAT()->Attach();
-  retval &= EIT()->Attach();
-  retval &= SDT()->Attach();
-  retval &= MGT()->Attach();
-  retval &= STT()->Attach();
-  retval &= VCT()->Attach();
-  retval &= PSIPEIT()->Attach();
+  bool retval(true);
+  for (std::set<cScanReceiver*>::iterator it = m_receivers.begin(); it != m_receivers.end(); ++it)
+    retval &= (*it)->Attach();
   return retval;
 }
 
 void cDeviceScanSubsystem::DetachReceivers(void)
 {
-  PAT()->Detach();
-  EIT()->Detach();
-  SDT()->Detach();
-  MGT()->Detach();
-  STT()->Detach();
-  VCT()->Detach();
-  PSIPEIT()->Detach();
+  for (std::set<cScanReceiver*>::iterator it = m_receivers.begin(); it != m_receivers.end(); ++it)
+    (*it)->Detach();
 }
 
 void cDeviceScanSubsystem::StartScan()
 {
-  //TODO refactor me. disabled for now because it blocks
-//  m_channelNamesScanner->Start();
-//  m_eventScanner->Start();
-  if (!m_receiversAttached)
-  {
-    m_receiversAttached = true;
-    AttachReceivers();
-  }
+  AttachReceivers();
 }
 
 void cDeviceScanSubsystem::StopScan()
 {
-  if (m_receiversAttached)
-  {
-    m_receiversAttached = false;
-    DetachReceivers();
-  }
-//  m_channelNamesScanner->Abort();
-//  m_eventScanner->Abort();
+  DetachReceivers();
 }
 
 bool cDeviceScanSubsystem::WaitForTransponderScan(void)
@@ -159,24 +136,14 @@ bool cDeviceScanSubsystem::WaitForEPGScan(void)
 
 void cDeviceScanSubsystem::LockAcquired(void)
 {
-  PAT()->LockAcquired();
-  EIT()->LockAcquired();
-  SDT()->LockAcquired();
-  MGT()->LockAcquired();
-  STT()->LockAcquired();
-  VCT()->LockAcquired();
-  PSIPEIT()->LockAcquired();
+  for (std::set<cScanReceiver*>::iterator it = m_receivers.begin(); it != m_receivers.end(); ++it)
+    (*it)->LockAcquired();
 }
 
 void cDeviceScanSubsystem::LockLost(void)
 {
-  PAT()->LockLost();
-  EIT()->LockLost();
-  SDT()->LockLost();
-  MGT()->LockLost();
-  STT()->LockLost();
-  VCT()->LockLost();
-  PSIPEIT()->LockLost();
+  for (std::set<cScanReceiver*>::iterator it = m_receivers.begin(); it != m_receivers.end(); ++it)
+    (*it)->LockLost();
 }
 
 void cDeviceScanSubsystem::Notify(const Observable &obs, const ObservableMessage msg)
@@ -217,6 +184,16 @@ void cDeviceScanSubsystem::OnChannelNamesScanned(const ChannelPtr& channel)
 void cDeviceScanSubsystem::OnEventScanned(const EventPtr& event)
 {
   cScheduleManager::Get().AddEvent(event);
+}
+
+unsigned int cDeviceScanSubsystem::GetGpsUtcOffset(void)
+{
+  return m_psipstt->GetGpsUtcOffset();
+}
+
+void cDeviceScanSubsystem::AttachEITPids(const vector<uint16_t>& pids)
+{
+  m_psipeit->AttachPids(pids);
 }
 
 }

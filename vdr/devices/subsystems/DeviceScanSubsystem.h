@@ -29,14 +29,12 @@
 
 namespace VDR
 {
-class cEventScanner;
+class cScanReceiver;
 class cEit;
 class cPat;
-class cSdt;
 class cPsipMgt;
 class cPsipEit;
 class cPsipStt;
-class cPsipVct;
 
 class cDeviceScanSubsystem : protected cDeviceSubsystem,
                              public    Observer,
@@ -60,25 +58,19 @@ public:
   virtual void OnChannelNamesScanned(const ChannelPtr& channel);
   virtual void OnEventScanned(const EventPtr& event);
 
-  cPat* PAT(void) const { return m_pat; }
-  cEit* EIT(void) const { return m_eit; }
-  cSdt* SDT(void) const { return m_sdt; }
-  cPsipMgt* MGT(void) const { return m_mgt; }
-  cPsipStt* STT(void) const { return m_stt; }
-  cPsipVct* VCT(void) const { return m_vct; }
-  cPsipEit* PSIPEIT(void) const { return m_psipeit; }
+  unsigned int GetGpsUtcOffset(void);
+  void AttachEITPids(const std::vector<uint16_t>& pids);
+
 private:
   void LockAcquired(void);
   void LockLost(void);
 
-  cPat*                 m_pat;
-  cEit*                 m_eit;
-  cSdt*                 m_sdt;
-  cPsipMgt*             m_mgt;
-  cPsipEit*             m_psipeit;
-  cPsipStt*             m_stt;
-  cPsipVct*             m_vct;
-  bool                  m_receiversAttached;
+  cPat*                      m_pat;
+  cEit*                      m_eit;
+  cPsipMgt*                  m_mgt;
+  cPsipEit*                  m_psipeit;
+  cPsipStt*                  m_psipstt;
+  std::set<cScanReceiver*>   m_receivers;
   PLATFORM::CMutex           m_mutex;
   PLATFORM::CCondition<bool> m_lockCondition;
   bool                       m_locked;
