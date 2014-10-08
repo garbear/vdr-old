@@ -73,6 +73,7 @@ cScanReceiver::cScanReceiver(cDevice* device, size_t nbPids, const uint16_t* pid
 bool cScanReceiver::Attach(void)
 {
   bool retval = true;
+  dsyslog("attach %d pids to receiver %p", m_pids.size(), this);
   for (std::vector<uint16_t>::const_iterator it = m_pids.begin(); it != m_pids.end(); ++it)
     retval &= m_device->Receiver()->AttachReceiver(this, *it);
 
@@ -80,6 +81,11 @@ bool cScanReceiver::Attach(void)
   {
     PLATFORM::CLockObject lock(m_mutex);
     m_attached = true;
+    dsyslog("%p attached", this);
+  }
+  else
+  {
+    dsyslog("%p failed to attach", this);
   }
   return retval;
 }
@@ -93,8 +99,8 @@ void cScanReceiver::Detach(void)
 
 bool cScanReceiver::WaitForScan(uint32_t iTimeout /* = TRANSPONDER_TIMEOUT */)
 {
-  PLATFORM::CLockObject lock(m_mutex);
-  return m_scannedEvent.Wait(m_mutex, m_scanned, iTimeout);
+  PLATFORM::CLockObject lock(m_scannedmutex);
+  return m_scannedEvent.Wait(m_scannedmutex, m_scanned, iTimeout);
 }
 
 void cScanReceiver::LockAcquired(void)
@@ -106,9 +112,12 @@ void cScanReceiver::LockAcquired(void)
 
 void cScanReceiver::LockLost(void)
 {
-  PLATFORM::CLockObject lock(m_mutex);
-  m_locked = false;
-  m_scanned = false;
+  {
+    PLATFORM::CLockObject lock(m_mutex);
+    m_locked = false;
+    m_scanned = false;
+  }
+  Detach();
 }
 
 void cScanReceiver::Receive(const std::vector<uint8_t>& data)
@@ -153,15 +162,21 @@ void cScanReceiver::RemovePids(void)
 
 void cScanReceiver::SetScanned(void)
 {
-  PLATFORM::CLockObject lock(m_mutex);
+  PLATFORM::CLockObject lock(m_scannedmutex);
   m_scanned = true;
   m_scannedEvent.Broadcast();
 }
 
 void cScanReceiver::ResetScanned(void)
 {
-  PLATFORM::CLockObject lock(m_mutex);
+  PLATFORM::CLockObject lock(m_scannedmutex);
   m_scanned = false;
+}
+
+bool cScanReceiver::Scanned(void) const
+{
+  PLATFORM::CLockObject lock(m_scannedmutex);
+  return m_scanned;
 }
 
 }

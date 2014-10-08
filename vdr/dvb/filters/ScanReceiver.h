@@ -56,10 +56,12 @@ protected:
   void RemovePids(void);
   void SetScanned(void);
   void ResetScanned(void);
+  bool Scanned(void) const;
 
   cDevice*                   m_device;
   bool                       m_locked;
   PLATFORM::CMutex           m_mutex;
+  PLATFORM::CMutex           m_scannedmutex;
 
 private:
   bool                       m_scanned;
