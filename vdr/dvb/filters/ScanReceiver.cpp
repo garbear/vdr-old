@@ -73,7 +73,6 @@ cScanReceiver::cScanReceiver(cDevice* device, size_t nbPids, const uint16_t* pid
 bool cScanReceiver::Attach(void)
 {
   bool retval = true;
-  dsyslog("attach %d pids to receiver %p", m_pids.size(), this);
   for (std::vector<uint16_t>::const_iterator it = m_pids.begin(); it != m_pids.end(); ++it)
     retval &= m_device->Receiver()->AttachReceiver(this, *it);
 
@@ -81,11 +80,6 @@ bool cScanReceiver::Attach(void)
   {
     PLATFORM::CLockObject lock(m_mutex);
     m_attached = true;
-    dsyslog("%p attached", this);
-  }
-  else
-  {
-    dsyslog("%p failed to attach", this);
   }
   return retval;
 }
