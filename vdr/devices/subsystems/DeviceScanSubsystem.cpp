@@ -147,7 +147,10 @@ void cDeviceScanSubsystem::StopScan()
 
 bool cDeviceScanSubsystem::WaitForTransponderScan(void)
 {
-  return Type() == TRANSPONDER_ATSC ? m_mgt->WaitForScan() : m_pat->WaitForScan();
+  bool retval = true;
+  if (Type() == TRANSPONDER_ATSC)
+    retval &= m_mgt->WaitForScan();
+  return m_pat->WaitForScan() && retval;
 }
 
 bool cDeviceScanSubsystem::WaitForEPGScan(void)
