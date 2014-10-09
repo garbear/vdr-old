@@ -35,6 +35,9 @@ public:
   virtual ~cPsipVct(void) { }
 
   void ReceivePacket(uint16_t pid, const uint8_t* data);
+
+  bool InATSC(void) const { return true; }
+  bool InDVB(void) const { return false; }
 };
 
 }

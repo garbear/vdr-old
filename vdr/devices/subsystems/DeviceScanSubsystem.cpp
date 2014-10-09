@@ -81,17 +81,15 @@ cDeviceScanSubsystem::cDeviceScanSubsystem(cDevice* device)
   m_receivers.insert(m_pat);
   m_receivers.insert(m_eit);
   m_receivers.insert(m_mgt);
-  m_atscReceivers.insert(m_psipeit);
-  m_atscReceivers.insert(m_psipstt);
-  m_atscReceivers.insert(new cSdt(device));
-  m_atscReceivers.insert(new cPsipVct(device));
+  m_receivers.insert(m_psipeit);
+  m_receivers.insert(m_psipstt);
+  m_receivers.insert(new cSdt(device));
+  m_receivers.insert(new cPsipVct(device));
 }
 
 cDeviceScanSubsystem::~cDeviceScanSubsystem(void)
 {
   for (std::set<cScanReceiver*>::iterator it = m_receivers.begin(); it != m_receivers.end(); ++it)
-    delete *it;
-  for (std::set<cScanReceiver*>::iterator it = m_atscReceivers.begin(); it != m_atscReceivers.end(); ++it)
     delete *it;
 }
 
@@ -119,15 +117,21 @@ TRANSPONDER_TYPE cDeviceScanSubsystem::Type(void)
 bool cDeviceScanSubsystem::AttachReceivers(void)
 {
   bool retval(true);
-  for (std::set<cScanReceiver*>::iterator it = Receivers().begin(); it != Receivers().end(); ++it)
-    retval &= (*it)->Attach();
+  for (std::set<cScanReceiver*>::iterator it = m_receivers.begin(); it != m_receivers.end(); ++it)
+  {
+    if (ReceiverOk(*it))
+      retval &= (*it)->Attach();
+  }
   return retval;
 }
 
 void cDeviceScanSubsystem::DetachReceivers(void)
 {
-  for (std::set<cScanReceiver*>::iterator it = Receivers().begin(); it != Receivers().end(); ++it)
-    (*it)->Detach();
+  for (std::set<cScanReceiver*>::iterator it = m_receivers.begin(); it != m_receivers.end(); ++it)
+  {
+    if (ReceiverOk(*it))
+      (*it)->Detach();
+  }
 }
 
 void cDeviceScanSubsystem::StartScan()
@@ -152,14 +156,25 @@ bool cDeviceScanSubsystem::WaitForEPGScan(void)
 
 void cDeviceScanSubsystem::LockAcquired(void)
 {
-  for (std::set<cScanReceiver*>::iterator it = Receivers().begin(); it != Receivers().end(); ++it)
-    (*it)->LockAcquired();
+  for (std::set<cScanReceiver*>::iterator it = m_receivers.begin(); it != m_receivers.end(); ++it)
+  {
+    if (ReceiverOk(*it))
+      (*it)->LockAcquired();
+  }
 }
 
 void cDeviceScanSubsystem::LockLost(void)
 {
-  for (std::set<cScanReceiver*>::iterator it = Receivers().begin(); it != Receivers().end(); ++it)
-    (*it)->LockLost();
+  for (std::set<cScanReceiver*>::iterator it = m_receivers.begin(); it != m_receivers.end(); ++it)
+  {
+    if (ReceiverOk(*it))
+      (*it)->LockLost();
+  }
+}
+
+bool cDeviceScanSubsystem::ReceiverOk(cScanReceiver* receiver) const
+{
+  return receiver && ((m_type == TRANSPONDER_ATSC && receiver->InATSC()) || (m_type != TRANSPONDER_ATSC && receiver->InDVB()));
 }
 
 void cDeviceScanSubsystem::Notify(const Observable &obs, const ObservableMessage msg)

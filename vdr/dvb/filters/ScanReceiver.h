@@ -50,6 +50,9 @@ public:
   virtual void LockLost(void);
   virtual void LostPriority(void) { }
 
+  virtual bool InATSC(void) const = 0;
+  virtual bool InDVB(void) const = 0;
+
 protected:
   void AddPid(uint16_t pid);
   void RemovePid(uint16_t pid);

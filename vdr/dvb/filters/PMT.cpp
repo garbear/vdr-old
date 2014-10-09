@@ -29,6 +29,7 @@
 #include "devices/Remux.h"
 #include "devices/subsystems/DeviceChannelSubsystem.h"
 #include "devices/subsystems/DeviceReceiverSubsystem.h"
+#include "devices/subsystems/DeviceScanSubsystem.h"
 #include "dvb/CADescriptor.h"
 #include "settings/Settings.h"
 #include "utils/CommonMacros.h"
@@ -117,7 +118,7 @@ void cPmt::ReceivePacket(uint16_t pid, const uint8_t* data)
     {
       if ((*it).pid == pid && (*it).sid == pmt.getServiceId())
       {
-        cChannelManager::Get().MergeChannelProps(CreateChannel(pmt, (*it).tsid));
+        m_device->Scan()->OnChannelPropsScanned(CreateChannel(pmt, (*it).tsid));
         m_filters.erase(it);
         RemovePid(pid);
         break;

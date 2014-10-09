@@ -55,6 +55,9 @@ public:
   void ReceivePacket(uint16_t pid, const uint8_t* data);
   void ScanChannels() { WaitForScan(); }
 
+  bool InATSC(void) const { return false; }
+  bool InDVB(void) const { return true; }
+
 private:
   SI::TableId    m_tableId;
   cSectionSyncer m_sectionSyncer;

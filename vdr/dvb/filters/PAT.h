@@ -40,6 +40,9 @@ public:
   void ReceivePacket(uint16_t pid, const uint8_t* data);
   bool WaitForScan(uint32_t iTimeout = TRANSPONDER_TIMEOUT);
 
+  bool InATSC(void) const { return false; }
+  bool InDVB(void) const { return true; }
+
 private:
   cPmt m_pmt;
 };

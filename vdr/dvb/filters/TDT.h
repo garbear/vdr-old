@@ -43,6 +43,9 @@ public:
   void ReceivePacket(uint16_t pid, const uint8_t* data);
 
   time_t GetTime(void);
+
+  bool InATSC(void) const { return true; }
+  bool InDVB(void) const { return false; }
 };
 
 }

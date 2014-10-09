@@ -67,7 +67,7 @@ public:
 private:
   void LockAcquired(void);
   void LockLost(void);
-  std::set<cScanReceiver*>& Receivers(void) { return Type() == TRANSPONDER_ATSC ? m_atscReceivers : m_receivers; }
+  bool ReceiverOk(cScanReceiver* receiver) const;
 
   cPat*                      m_pat;
   cEit*                      m_eit;
@@ -75,7 +75,6 @@ private:
   cPsipEit*                  m_psipeit;
   cPsipStt*                  m_psipstt;
   std::set<cScanReceiver*>   m_receivers;
-  std::set<cScanReceiver*>   m_atscReceivers;
   PLATFORM::CMutex           m_mutex;
   PLATFORM::CCondition<bool> m_lockCondition;
   bool                       m_locked;

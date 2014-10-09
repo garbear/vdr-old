@@ -44,6 +44,9 @@ public:
 
   void ReceivePacket(uint16_t pid, const uint8_t* data);
 
+  bool InATSC(void) const { return false; }
+  bool InDVB(void) const { return true; }
+
 private:
   void GetText(SI::Descriptor* d, uint8_t tid, uint16_t nid, uint16_t tsid,
       std::string& strTitle, std::string& strShortText, std::string& strDescription);

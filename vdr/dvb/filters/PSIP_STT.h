@@ -47,6 +47,9 @@ public:
    */
   unsigned int GetGpsUtcOffset(void) const { return m_iLastOffset; }
 
+  bool InATSC(void) const { return true; }
+  bool InDVB(void) const { return false; }
+
 private:
   unsigned int m_iLastOffset;
 };

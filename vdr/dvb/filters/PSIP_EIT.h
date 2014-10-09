@@ -40,6 +40,9 @@ public:
   void AttachPids(const std::vector<uint16_t>& pids);
   void ReceivePacket(uint16_t pid, const uint8_t* data);
   void LockLost(void);
+
+  bool InATSC(void) const { return true; }
+  bool InDVB(void) const { return false; }
 };
 
 }

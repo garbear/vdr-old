@@ -94,6 +94,8 @@ void cScanReceiver::Detach(void)
 bool cScanReceiver::WaitForScan(uint32_t iTimeout /* = TRANSPONDER_TIMEOUT */)
 {
   PLATFORM::CLockObject lock(m_scannedmutex);
+  if (m_pids.empty())
+    return true;
   return m_scannedEvent.Wait(m_scannedmutex, m_scanned, iTimeout);
 }
 
