@@ -118,6 +118,8 @@ void* cScanner::Process()
     if (newHandle)
     {
       bool bSuccess = m_setup.device->Scan()->WaitForTransponderScan();
+      if (bSuccess)
+        cChannelManager::Get().NotifyObservers();
       dsyslog("%s %d MHz", bSuccess ? "Successfully scanned" : "Failed to scan", transponder.FrequencyMHz());
       newHandle->Release();
     }
