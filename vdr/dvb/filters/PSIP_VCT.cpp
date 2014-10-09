@@ -26,6 +26,7 @@
 #include "channels/ChannelManager.h"
 #include "devices/Device.h"
 #include "devices/subsystems/DeviceChannelSubsystem.h"
+#include "devices/subsystems/DeviceScanSubsystem.h"
 #include "utils/log/Log.h"
 #include "utils/UTF8Utils.h"
 
@@ -118,7 +119,7 @@ void cPsipVct::ReceivePacket(uint16_t pid, const uint8_t* data)
       if (channelInfo.isHidden())
         continue;
 
-      cChannelManager::Get().AddChannel(channel);
+      m_device->Scan()->OnChannelNamesScanned(channel);
     }
   }
 }
