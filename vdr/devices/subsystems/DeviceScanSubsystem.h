@@ -32,6 +32,7 @@ namespace VDR
 class cScanReceiver;
 class cEit;
 class cPat;
+class cSdt;
 class cPsipMgt;
 class cPsipEit;
 class cPsipStt;
@@ -64,6 +65,8 @@ public:
   TRANSPONDER_TYPE Type(void);
   void SetType(TRANSPONDER_TYPE type) { m_type = type; }
 
+  cSdt* SDT(void) const { return m_sdt; }
+
 private:
   void LockAcquired(void);
   void LockLost(void);
@@ -71,6 +74,7 @@ private:
 
   cPat*                      m_pat;
   cEit*                      m_eit;
+  cSdt*                      m_sdt;
   cPsipMgt*                  m_mgt;
   cPsipEit*                  m_psipeit;
   cPsipStt*                  m_psipstt;

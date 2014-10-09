@@ -24,9 +24,11 @@
 
 #include "PAT.h"
 #include "PMT.h"
+#include "SDT.h"
 #include "channels/Channel.h"
 #include "devices/Device.h"
 #include "devices/subsystems/DeviceReceiverSubsystem.h"
+#include "devices/subsystems/DeviceScanSubsystem.h"
 #include "utils/log/Log.h"
 
 #include <libsi/si.h>
@@ -55,7 +57,8 @@ void cPat::LockLost(void)
 bool cPat::WaitForScan(uint32_t iTimeout /* = TRANSPONDER_TIMEOUT */)
 {
   return cScanReceiver::WaitForScan(iTimeout) &&
-      m_pmt.WaitForScan(iTimeout);
+      m_pmt.WaitForScan(iTimeout) &&
+      m_device->Scan()->SDT()->WaitForScan(iTimeout);
 }
 
 void cPat::ReceivePacket(uint16_t pid, const uint8_t* data)

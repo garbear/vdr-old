@@ -72,6 +72,7 @@ cDeviceScanSubsystem::cDeviceScanSubsystem(cDevice* device)
    m_pat(new cPat(device)),
    m_eit(new cEit(device)),
    m_mgt(new cPsipMgt(device)),
+   m_sdt(new cSdt(device)),
    m_psipeit(new cPsipEit(device)),
    m_psipstt(new cPsipStt(device)),
    m_locked(false),
@@ -83,7 +84,7 @@ cDeviceScanSubsystem::cDeviceScanSubsystem(cDevice* device)
   m_receivers.insert(m_mgt);
   m_receivers.insert(m_psipeit);
   m_receivers.insert(m_psipstt);
-  m_receivers.insert(new cSdt(device));
+  m_receivers.insert(m_sdt);
   m_receivers.insert(new cPsipVct(device));
 }
 
