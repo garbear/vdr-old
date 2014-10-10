@@ -56,8 +56,8 @@ void cTunerHandle::LostPriority(void)
     m_callbacks->LostPriority();
 }
 
-void cTunerHandle::Release(void)
+void cTunerHandle::Release(bool notify /* = true */)
 {
   if (m_tuner)
-    m_tuner->Release(this);
+    m_tuner->Release(this, notify);
 }

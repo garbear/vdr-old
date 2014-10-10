@@ -117,7 +117,7 @@ void cVNSIDemuxer::Close()
     m_VideoBuffer = NULL;
     if (m_tunerHandle)
     {
-      m_tunerHandle->Release();
+      m_tunerHandle->Release(false);
       m_tunerHandle = cTunerHandle::EmptyHandle;
     }
   }

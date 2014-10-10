@@ -62,7 +62,7 @@ public:
   void LockLost(void);
   void LostPriority(void);
 
-  void Release(void);
+  void Release(bool notify = true);
 
   static const TunerHandlePtr EmptyHandle;
 
