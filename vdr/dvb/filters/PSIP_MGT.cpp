@@ -98,6 +98,7 @@ void cPsipMgt::ReceivePacket(uint16_t pid, const uint8_t* data)
     m_device->Scan()->AttachEITPids(eitPids);
 
     SetScanned();
+    Detach();
   }
 }
 
