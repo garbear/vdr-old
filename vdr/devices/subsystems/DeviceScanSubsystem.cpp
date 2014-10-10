@@ -149,7 +149,8 @@ bool cDeviceScanSubsystem::WaitForTransponderScan(void)
 {
   bool retval = true;
   if (Type() == TRANSPONDER_ATSC)
-    retval &= m_mgt->WaitForScan();
+    retval &= m_mgt->WaitForScan() &&
+              m_psipeit->WaitForScan();
   return m_pat->WaitForScan() && retval;
 }
 
