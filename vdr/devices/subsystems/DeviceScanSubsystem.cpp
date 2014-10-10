@@ -155,7 +155,7 @@ bool cDeviceScanSubsystem::WaitForTransponderScan(void)
 
 bool cDeviceScanSubsystem::WaitForEPGScan(void)
 {
-  return Type() == TRANSPONDER_ATSC ? m_psipeit->WaitForScan(EPG_TIMEOUT) : m_eit->WaitForScan(EPG_TIMEOUT);
+  return Type() == TRANSPONDER_ATSC ? m_mgt->WaitForScan() && m_psipeit->WaitForScan(EPG_TIMEOUT) : m_eit->WaitForScan(EPG_TIMEOUT);
 }
 
 void cDeviceScanSubsystem::LockAcquired(void)
@@ -229,7 +229,10 @@ unsigned int cDeviceScanSubsystem::GetGpsUtcOffset(void)
 void cDeviceScanSubsystem::AttachEITPids(const vector<uint16_t>& pids)
 {
   if (Type() == TRANSPONDER_ATSC)
+  {
     m_psipeit->AttachPids(pids);
+    m_psipeit->Attach();
+  }
   //TODO
 }
 
