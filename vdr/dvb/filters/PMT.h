@@ -50,7 +50,7 @@ public:
 
   void Detach(void);
 
-  bool InATSC(void) const { return false; }
+  bool InATSC(void) const { return true; }
   bool InDVB(void) const { return true; }
 
 private:
