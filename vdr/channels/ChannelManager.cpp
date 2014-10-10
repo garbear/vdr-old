@@ -143,8 +143,13 @@ void cChannelManager::MergeChannelNamesAndModulation(const ChannelPtr& channel)
       if (channel->ATSCSourceID() != ATSC_SOURCE_ID_NONE)
         (*itChannel)->SetATSCSourceId(channel->ATSCSourceID());
 
-      dsyslog("updated channel %s", (*itChannel)->Name().c_str());
-      (*itChannel)->NotifyObservers();
+      if ((*itChannel)->Changed())
+      {
+        dsyslog("updated channel: %s (%d-%d, TSID=%u, SID=%u, source=%u)",
+            (*itChannel)->ShortName().c_str(), (*itChannel)->Number(), (*itChannel)->SubNumber(),
+            (*itChannel)->ID().Tsid(), (*itChannel)->ID().Sid(), (*itChannel)->ATSCSourceID());
+        (*itChannel)->NotifyObservers();
+      }
       break;
     }
   }
@@ -153,7 +158,9 @@ void cChannelManager::MergeChannelNamesAndModulation(const ChannelPtr& channel)
   {
     channel->RegisterObserver(this);
     m_channels.push_back(channel);
-    dsyslog("added channel %s", channel->Name().c_str());
+    dsyslog("added channel: %s (%d-%d, TSID=%u, SID=%u, source=%u)",
+        channel->ShortName().c_str(), channel->Number(), channel->SubNumber(),
+        channel->ID().Tsid(), channel->ID().Sid(), channel->ATSCSourceID());
     SetChanged();
   }
 }

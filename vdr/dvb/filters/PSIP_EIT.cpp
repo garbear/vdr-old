@@ -117,7 +117,8 @@ void cPsipEit::ReceivePacket(uint16_t pid, const uint8_t* data)
     }
   }
 
-  dsyslog("EIT: Found PID %u with %u events", pid, numEvents);
+  if (numEvents > 0)
+    dsyslog("EIT: Found PID %u with %u events", pid, numEvents);
 }
 
 void cPsipEit::LockLost(void)

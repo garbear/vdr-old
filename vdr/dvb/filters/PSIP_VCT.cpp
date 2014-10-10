@@ -111,11 +111,6 @@ void cPsipVct::ReceivePacket(uint16_t pid, const uint8_t* data)
       channel->SetId(0, channelInfo.getTSID(), channelInfo.getServiceId());
       channel->SetATSCSourceId(channelInfo.getSourceID());
 
-      dsyslog("VCT: %s: %s (%d-%d, TSID=%u, SID=%u, source=%u)",
-          channelInfo.isHidden() ? "Skipping hidden channel" : "Found channel",
-          channel->ShortName().c_str(), channel->Number(), channel->SubNumber(),
-          channel->ID().Tsid(), channel->ID().Sid(), channelInfo.getSourceID());
-
       if (channelInfo.isHidden())
         continue;
 
