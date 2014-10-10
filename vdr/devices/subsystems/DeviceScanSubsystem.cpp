@@ -177,9 +177,9 @@ void cDeviceScanSubsystem::LockLost(void)
   }
 }
 
-bool cDeviceScanSubsystem::ReceiverOk(cScanReceiver* receiver) const
+bool cDeviceScanSubsystem::ReceiverOk(cScanReceiver* receiver)
 {
-  return receiver && ((m_type == TRANSPONDER_ATSC && receiver->InATSC()) || (m_type != TRANSPONDER_ATSC && receiver->InDVB()));
+  return receiver && ((Type() == TRANSPONDER_ATSC && receiver->InATSC()) || (Type() != TRANSPONDER_ATSC && receiver->InDVB()));
 }
 
 void cDeviceScanSubsystem::Notify(const Observable &obs, const ObservableMessage msg)

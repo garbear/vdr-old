@@ -70,7 +70,7 @@ public:
 private:
   void LockAcquired(void);
   void LockLost(void);
-  bool ReceiverOk(cScanReceiver* receiver) const;
+  bool ReceiverOk(cScanReceiver* receiver);
 
   cPat*                      m_pat;
   cEit*                      m_eit;
