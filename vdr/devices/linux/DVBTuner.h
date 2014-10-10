@@ -141,7 +141,8 @@ private:
   // Tuning properties
   cTransponder                      m_transponder;
   volatile fe_status_t              m_status;
-  PLATFORM::CEvent                  m_lockEvent;
+  bool                              m_event;
+  PLATFORM::CCondition<bool>        m_lockEvent;
   PLATFORM::CMutex                  m_mutex;
 
   // Satellite properties

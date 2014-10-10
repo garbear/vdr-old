@@ -108,6 +108,7 @@ cDvbTuner::cDvbTuner(cDvbDevice *device)
    m_subsystemId(0),
    m_apiVersion(Version::EmptyVersion),
    m_status(FE_STATUS_UNKNOWN),
+   m_event(false),
    m_lastDiseqc(NULL),
    m_scr(NULL),
    m_bLnbPowerTurnedOn(false),
@@ -442,7 +443,10 @@ bool cDvbTuner::Tune(const cTransponder& transponder)
 
     const uint32_t timeLeftMs = timeout.TimeLeft();
     if (timeLeftMs > 0)
-      m_lockEvent.Wait(timeLeftMs);
+    {
+      CLockObject lock(m_mutex);
+      m_lockEvent.Wait(m_mutex, m_event, timeLeftMs);
+    }
   }
 
   dsyslog("Dvb tuner: tuning timed out after %d ms", GetTimeMs() - startMs);
@@ -687,8 +691,7 @@ void* cDvbTuner::Process(void)
     // Read all the events off the queue, so we can poll until backend gets
     // another tune message
     struct dvb_frontend_event event;
-    while (ioctl(m_fileDescriptor, FE_GET_EVENT, &event) == 0); // empty
-
+    while (ioctl(m_fileDescriptor, FE_GET_EVENT, &event) == 0) { Sleep(TUNER_POLL_TIMEOUT_MS); } // empty
 
     {
       CLockObject lock(m_mutex);
@@ -712,6 +715,8 @@ void* cDvbTuner::Process(void)
         {
           SetChanged();
           bLocked = true;
+          CLockObject lock(m_mutex);
+          m_event = true;
           m_lockEvent.Broadcast();
         }
         else if (bWasSynced && !bIsSynced)
@@ -739,6 +744,8 @@ void* cDvbTuner::Process(void)
       bLostLock = false;
       NotifyObservers(ObservableMessageChannelLostLock);
     }
+
+    Sleep(TUNER_POLL_TIMEOUT_MS);
   }
 
   m_lastDiseqc = NULL;
@@ -780,6 +787,7 @@ void cDvbTuner::ClearTransponder(void)
     cDeviceManager::Get().PrimaryDevice()->PID()->DelLivePids(); // 'device' is const, so we must do it this way
   */
 
+  m_event = false;
   m_lockEvent.Broadcast();
 }
 
