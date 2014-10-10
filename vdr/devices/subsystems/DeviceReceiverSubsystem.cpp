@@ -72,13 +72,7 @@ void *cDeviceReceiverSubsystem::Process()
 
   while (!IsStopped())
   {
-    bool bHasReceivers;
-    {
-      CLockObject lock(m_mutexReceiver);
-      bHasReceivers = !m_resources.empty();
-    }
-
-    if (!bHasReceivers)
+    if (!SyncResources())
     {
       usleep(MAX_IDLE_DELAY_MS * 1000);
       continue;
@@ -89,17 +83,12 @@ void *cDeviceReceiverSubsystem::Process()
       vector<uint8_t> packet;
       if (Read(packet))
       {
-        std::set<iReceiver*>* receivers = NULL;
         uint16_t pid = TsPid(packet.data());
+        CLockObject lock(m_mutexReceiverRead);
+        PidResourceMap::iterator it = m_resources.find(pid);
+        if (it != m_resources.end())
         {
-          CLockObject lock(m_mutexReceiver);
-          PidResourceMap::iterator it = m_resources.find(pid);
-          if (it != m_resources.end())
-            receivers = &it->second->receivers;
-        }
-        if (receivers)
-        {
-          for (std::set<iReceiver*>::iterator receiverit = receivers->begin(); receiverit != receivers->end(); ++receiverit)
+          for (std::set<iReceiver*>::iterator receiverit = it->second->receivers.begin(); receiverit != it->second->receivers.end(); ++receiverit)
             (*receiverit)->Receive(packet);
         }
       }
@@ -151,34 +140,34 @@ bool cDeviceReceiverSubsystem::AttachReceiver(iReceiver* receiver, const Channel
 
 void cDeviceReceiverSubsystem::DetachReceiverPid(iReceiver* receiver, uint16_t pid)
 {
-  CloseResourceForReceiver(pid, receiver);
+  PLATFORM::CLockObject lock(m_mutexReceiverRead);
+  PLATFORM::CLockObject lock2(m_mutexReceiverWrite);
+  m_resourcesRemoved[pid] = receiver;
 }
 
 void cDeviceReceiverSubsystem::DetachReceiver(iReceiver* receiver)
 {
-  CloseResourceForReceiver(receiver);
-
-  //TODO
-  if (CommonInterface()->m_camSlot)
-    CommonInterface()->m_camSlot->StopDecrypting();
+  PLATFORM::CLockObject lock(m_mutexReceiverRead);
+  PLATFORM::CLockObject lock2(m_mutexReceiverWrite);
+  m_receiversRemoved.insert(receiver);
 }
 
 void cDeviceReceiverSubsystem::DetachAllReceivers(void)
 {
-  CLockObject lock(m_mutexReceiver);
-  while (!m_resources.empty())
+  CLockObject lock(m_mutexReceiverRead);
+  while (SyncResources())
     DetachReceiver(*m_resources.begin()->second->receivers.begin());
 }
 
 bool cDeviceReceiverSubsystem::Receiving(void) const
 {
-  CLockObject lock(m_mutexReceiver);
+  CLockObject lock(m_mutexReceiverRead);
   return !m_resources.empty();
 }
 
 bool cDeviceReceiverSubsystem::OpenResourceForReceiver(uint16_t pid, STREAM_TYPE streamType, iReceiver* receiver)
 {
-  PLATFORM::CLockObject lock(m_mutexReceiver);
+  PLATFORM::CLockObject lock(m_mutexReceiverRead);
   PidReceivers* receivers = GetReceivers(pid, streamType);
   if (receivers)
   {
@@ -188,9 +177,34 @@ bool cDeviceReceiverSubsystem::OpenResourceForReceiver(uint16_t pid, STREAM_TYPE
   return false;
 }
 
+bool cDeviceReceiverSubsystem::SyncResources(void)
+{
+  PLATFORM::CLockObject lock(m_mutexReceiverRead);
+  PLATFORM::CLockObject lock2(m_mutexReceiverWrite);
+
+  for (std::map<uint16_t, iReceiver*>::iterator it = m_resourcesRemoved.begin(); it != m_resourcesRemoved.end(); ++it)
+    CloseResourceForReceiver(it->first, it->second);
+  m_resourcesRemoved.clear();
+
+  for (std::set<iReceiver*>::iterator it = m_receiversRemoved.begin(); it != m_receiversRemoved.end(); ++it)
+    CloseResourceForReceiver(*it);
+  m_receiversRemoved.clear();
+
+  for (std::map<uint16_t, addedReceiver>::iterator it = m_resourcesAdded.begin(); it != m_resourcesAdded.end(); ++it)
+    OpenResourceForReceiver(it->first, it->second.type, it->second.receiver);
+  m_resourcesAdded.clear();
+
+  if (m_resources.empty())
+  {
+    if (CommonInterface()->m_camSlot)
+      CommonInterface()->m_camSlot->StopDecrypting();
+    return false;
+  }
+  return true;
+}
+
 void cDeviceReceiverSubsystem::CloseResourceForReceiver(uint16_t pid, iReceiver* receiver)
 {
-  PLATFORM::CLockObject lock(m_mutexReceiver);
   PidResourceMap::iterator it = m_resources.find(pid);
   if (it != m_resources.end())
   {
@@ -208,7 +222,6 @@ void cDeviceReceiverSubsystem::CloseResourceForReceiver(uint16_t pid, iReceiver*
 
 void cDeviceReceiverSubsystem::CloseResourceForReceiver(iReceiver* receiver)
 {
-  PLATFORM::CLockObject lock(m_mutexReceiver);
   for (PidResourceMap::iterator it = m_resources.begin(); it != m_resources.end(); ++it)
   {
     PidReceivers* receivers = it->second;
@@ -226,7 +239,7 @@ void cDeviceReceiverSubsystem::CloseResourceForReceiver(iReceiver* receiver)
 struct PidReceivers* cDeviceReceiverSubsystem::GetReceivers(uint16_t pid, STREAM_TYPE streamType)
 {
   PidReceivers* receivers;
-  PLATFORM::CLockObject lock(m_mutexReceiver);
+  PLATFORM::CLockObject lock(m_mutexReceiverRead);
   PidResourceMap::iterator it = m_resources.find(pid);
   if (it == m_resources.end())
   {

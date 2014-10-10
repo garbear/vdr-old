@@ -123,9 +123,15 @@ private:
   PidReceivers* GetReceivers(uint16_t pid, STREAM_TYPE streamType);
   void CloseResourceForReceiver(iReceiver* receiver);
   void CloseResourceForReceiver(uint16_t pid, iReceiver* receiver);
+  bool SyncResources(void);
 
+  typedef struct { iReceiver* receiver; STREAM_TYPE type; } addedReceiver;
   PidResourceMap      m_resources;
-  PLATFORM::CMutex    m_mutexReceiver;
+  std::map<uint16_t, addedReceiver> m_resourcesAdded;
+  std::map<uint16_t, iReceiver*>    m_resourcesRemoved;
+  std::set<iReceiver*>              m_receiversRemoved;
+  PLATFORM::CMutex    m_mutexReceiverRead;
+  PLATFORM::CMutex    m_mutexReceiverWrite;
 };
 
 }
