@@ -54,6 +54,8 @@ public:
   virtual bool InDVB(void) const = 0;
 
   virtual void AddPid(uint16_t pid);
+  size_t NbPids(void) const { return m_pids.size(); }
+  bool   HasPids(void) const { return !m_pids.empty(); }
 
 protected:
   void RemovePid(uint16_t pid);
