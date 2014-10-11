@@ -261,6 +261,7 @@ struct PidReceivers* cDeviceReceiverSubsystem::GetReceivers(uint16_t pid, STREAM
 {
   PidReceivers* receivers;
   PLATFORM::CLockObject lock(m_mutexReceiverRead);
+  PLATFORM::CLockObject lock2(m_mutexReceiverWrite);
   PidResourceMap::iterator it = m_resources.find(pid);
   if (it == m_resources.end())
   {
