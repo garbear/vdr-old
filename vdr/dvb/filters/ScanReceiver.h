@@ -53,8 +53,9 @@ public:
   virtual bool InATSC(void) const = 0;
   virtual bool InDVB(void) const = 0;
 
+  virtual void AddPid(uint16_t pid);
+
 protected:
-  void AddPid(uint16_t pid);
   void RemovePid(uint16_t pid);
   void RemovePids(void);
   void SetScanned(void);
