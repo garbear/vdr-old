@@ -120,7 +120,8 @@ void cPmt::ReceivePacket(uint16_t pid, const uint8_t* data)
       {
         m_device->Scan()->OnChannelPropsScanned(CreateChannel(pmt, (*it).tsid));
         m_filters.erase(it);
-        RemovePid(pid);
+        if (!HasPid(pid))
+          RemovePid(pid);
         break;
       }
     }
