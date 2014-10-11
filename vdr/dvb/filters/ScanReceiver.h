@@ -52,6 +52,8 @@ public:
 
   virtual bool InATSC(void) const = 0;
   virtual bool InDVB(void) const = 0;
+  virtual bool InChannelScan(void) const { return false; }
+
 
   virtual void AddPid(uint16_t pid);
   size_t NbPids(void) const { return m_pids.size(); }

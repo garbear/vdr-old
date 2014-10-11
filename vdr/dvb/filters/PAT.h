@@ -42,6 +42,7 @@ public:
 
   bool InATSC(void) const { return true; }
   bool InDVB(void) const { return true; }
+  bool InChannelScan(void) const { return true; }
 
 private:
   cPmt m_pmt;

@@ -52,6 +52,7 @@ public:
 
   bool InATSC(void) const { return true; }
   bool InDVB(void) const { return true; }
+  bool InChannelScan(void) const { return true; }
 
 private:
   ChannelPtr CreateChannel(/* const */ SI::PMT& pmt, uint16_t tsid) const; // TODO: libsi fails at const-correctness
