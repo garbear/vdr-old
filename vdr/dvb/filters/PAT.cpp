@@ -57,8 +57,7 @@ void cPat::LockLost(void)
 bool cPat::WaitForScan(uint32_t iTimeout /* = TRANSPONDER_TIMEOUT */)
 {
   return cScanReceiver::WaitForScan(iTimeout) &&
-      m_pmt.WaitForScan(iTimeout) &&
-      m_device->Scan()->SDT()->WaitForScan(iTimeout);
+      m_pmt.WaitForScan(iTimeout);
 }
 
 void cPat::ReceivePacket(uint16_t pid, const uint8_t* data)
