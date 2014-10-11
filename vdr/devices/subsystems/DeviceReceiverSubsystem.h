@@ -76,6 +76,9 @@ public:
    */
   bool Receiving(void) const;
 
+  bool HasReceiver(iReceiver* receiver) const;
+  bool HasReceiverPid(iReceiver* receiver, uint16_t pid) const;
+
 protected:
   /*!
    * Inherited from CThread. Read and dispatch TS packets in a loop.

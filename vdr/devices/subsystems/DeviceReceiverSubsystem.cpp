@@ -138,6 +138,22 @@ bool cDeviceReceiverSubsystem::AttachReceiver(iReceiver* receiver, const Channel
   return bAllOpened;
 }
 
+bool cDeviceReceiverSubsystem::HasReceiver(iReceiver* receiver) const
+{
+  PLATFORM::CLockObject lock(m_mutexReceiverRead);
+  for (PidResourceMap::const_iterator it = m_resources.begin(); it != m_resources.end(); ++it)
+    if (it->second->receivers.find(receiver) != it->second->receivers.end())
+      return true;
+  return false;
+}
+
+bool cDeviceReceiverSubsystem::HasReceiverPid(iReceiver* receiver, uint16_t pid) const
+{
+  PLATFORM::CLockObject lock(m_mutexReceiverRead);
+  PidResourceMap::const_iterator it = m_resources.find(pid);
+  return (it == m_resources.end()) ? false : it->second->receivers.find(receiver) != it->second->receivers.end();
+}
+
 void cDeviceReceiverSubsystem::DetachReceiverPid(iReceiver* receiver, uint16_t pid)
 {
   PLATFORM::CLockObject lock(m_mutexReceiverRead);
