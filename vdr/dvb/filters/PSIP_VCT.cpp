@@ -116,6 +116,7 @@ void cPsipVct::ReceivePacket(uint16_t pid, const uint8_t* data)
 
       m_device->Scan()->OnChannelNamesScanned(channel);
     }
+    SetScanned();
   }
 }
 
