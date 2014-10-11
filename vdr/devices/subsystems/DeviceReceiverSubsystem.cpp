@@ -158,21 +158,26 @@ void cDeviceReceiverSubsystem::DetachReceiverPid(iReceiver* receiver, uint16_t p
 {
   PLATFORM::CLockObject lock(m_mutexReceiverRead);
   PLATFORM::CLockObject lock2(m_mutexReceiverWrite);
-  m_resourcesRemoved[pid] = receiver;
+  if (HasReceiverPid(receiver, pid))
+    m_resourcesRemoved[pid] = receiver;
 }
 
 void cDeviceReceiverSubsystem::DetachReceiver(iReceiver* receiver)
 {
   PLATFORM::CLockObject lock(m_mutexReceiverRead);
   PLATFORM::CLockObject lock2(m_mutexReceiverWrite);
-  m_receiversRemoved.insert(receiver);
+  if (HasReceiver(receiver))
+    m_receiversRemoved.insert(receiver);
 }
 
 void cDeviceReceiverSubsystem::DetachAllReceivers(void)
 {
   CLockObject lock(m_mutexReceiverRead);
-  while (SyncResources())
-    DetachReceiver(*m_resources.begin()->second->receivers.begin());
+  if (!m_resources.empty())
+  {
+    while (SyncResources())
+      DetachReceiver(*m_resources.begin()->second->receivers.begin());
+  }
 }
 
 bool cDeviceReceiverSubsystem::Receiving(void) const
