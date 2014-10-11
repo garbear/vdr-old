@@ -100,8 +100,9 @@ void cPsipMgt::ReceivePacket(uint16_t pid, const uint8_t* data)
 
     dsyslog("MGT: Discovered %lu EIT tables and %lu MGT tables", eitPids, mgtPids);
 
-    SetScanned();
-    Detach();
+    RemovePid(pid);
+    if (!HasPids())
+      SetScanned();
   }
 }
 
