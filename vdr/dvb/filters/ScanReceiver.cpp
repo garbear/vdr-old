@@ -162,9 +162,12 @@ void cScanReceiver::RemovePids(void)
 
 void cScanReceiver::SetScanned(void)
 {
-  dsyslog("%s scan completed", m_name.c_str());
   PLATFORM::CLockObject lock(m_scannedmutex);
-  m_scanned = true;
+  if (!m_scanned)
+  {
+    dsyslog("%s scan completed", m_name.c_str());
+    m_scanned = true;
+  }
   m_scannedEvent.Broadcast();
 }
 
