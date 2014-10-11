@@ -227,14 +227,4 @@ unsigned int cDeviceScanSubsystem::GetGpsUtcOffset(void)
   return Type() == TRANSPONDER_ATSC ? m_psipstt->GetGpsUtcOffset() : 0;
 }
 
-void cDeviceScanSubsystem::AttachEITPids(const vector<uint16_t>& pids)
-{
-  if (Type() == TRANSPONDER_ATSC)
-  {
-    m_psipeit->AttachPids(pids);
-    m_psipeit->Attach();
-  }
-  //TODO
-}
-
 }

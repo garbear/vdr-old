@@ -60,7 +60,6 @@ public:
   virtual void OnEventScanned(const EventPtr& event);
 
   unsigned int GetGpsUtcOffset(void);
-  void AttachEITPids(const std::vector<uint16_t>& pids);
 
   TRANSPONDER_TYPE Type(void);
   void SetType(TRANSPONDER_TYPE type) { m_type = type; }
