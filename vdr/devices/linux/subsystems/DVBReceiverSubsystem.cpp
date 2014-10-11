@@ -56,6 +56,7 @@ public:
   virtual void Close(void);
 
   uint8_t StreamType(void) const { return m_streamType; }
+  std::string ToString(void) const;
 
 private:
   const STREAM_TYPE       m_streamType;
@@ -73,6 +74,11 @@ cDvbReceiverResource::cDvbReceiverResource(uint16_t pid, STREAM_TYPE streamType,
 {
 }
 
+std::string cDvbReceiverResource::ToString(void) const
+{
+  return StringUtils::Format("PID %u%s", Pid(), m_streamType != STREAM_TYPE_UNDEFINED ? StringUtils::Format(" (type %u)", m_streamType).c_str() : "");
+}
+
 bool cDvbReceiverResource::Open(void)
 {
   // Calculate strings
@@ -85,7 +91,7 @@ bool cDvbReceiverResource::Open(void)
     m_handle = open(strDvbPath.c_str(), O_RDWR | O_NONBLOCK);
     if (m_handle == FILE_DESCRIPTOR_INVALID)
     {
-      esyslog("Couldn't open PES filter (pid=%u, streamType=%u)", Pid(), m_streamType);
+      esyslog("Couldn't open %s: invalid handle", ToString().c_str());
       return false;
     }
 
@@ -99,7 +105,7 @@ bool cDvbReceiverResource::Open(void)
 
     if (ioctl(m_handle, DMX_SET_PES_FILTER, &pesFilterParams) < 0)
     {
-      esyslog("Couldn't set PES filter (pid=%u, streamType=%u)", Pid(), m_streamType);
+      esyslog("Couldn't open %s: ioctl failed", ToString().c_str());
       Close();
       return false;
     }
@@ -120,7 +126,7 @@ bool cDvbReceiverResource::Open(void)
 #endif
 
   assert(m_handle >= 0);
-  dsyslog("Opened PES filter (pid=%u, streamType=%u)", Pid(), m_streamType);
+  dsyslog("Opened %s", ToString().c_str());
 
   return true;
 }
@@ -148,7 +154,7 @@ void cDvbReceiverResource::Close(void)
 
     close(m_handle);
     m_handle = FILE_DESCRIPTOR_INVALID;
-    dsyslog("Closed PES filter (pid=%u, streamType=%u)", Pid(), m_streamType);
+    dsyslog("Closed %s", ToString().c_str());
   }
 }
 
