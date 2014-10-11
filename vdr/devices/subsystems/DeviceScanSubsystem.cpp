@@ -149,7 +149,7 @@ bool cDeviceScanSubsystem::WaitForTransponderScan(void)
 {
   bool retval = true;
   for (std::set<cScanReceiver*>::iterator it = m_receivers.begin(); it != m_receivers.end(); ++it)
-    if (ReceiverOk(*it))
+    if (ReceiverOk(*it) && (*it)->InChannelScan())
       retval &= (*it)->WaitForScan();
   return retval;
 }
