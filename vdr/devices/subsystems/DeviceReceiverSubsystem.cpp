@@ -72,12 +72,6 @@ void *cDeviceReceiverSubsystem::Process()
 
   while (!IsStopped())
   {
-    if (!SyncResources())
-    {
-      usleep(MAX_IDLE_DELAY_MS * 1000);
-      continue;
-    }
-
     if (Poll() && !IsStopped())
     {
       vector<uint8_t> packet;
@@ -85,6 +79,12 @@ void *cDeviceReceiverSubsystem::Process()
       {
         uint16_t pid = TsPid(packet.data());
         CLockObject lock(m_mutexReceiverRead);
+        if (!SyncResources())
+        {
+          usleep(MAX_IDLE_DELAY_MS * 1000);
+          continue;
+        }
+
         PidResourceMap::iterator it = m_resources.find(pid);
         if (it != m_resources.end())
         {
