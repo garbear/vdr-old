@@ -50,7 +50,8 @@ void cPsipMgt::ReceivePacket(uint16_t pid, const uint8_t* data)
   SI::PSIP_MGT mgt(data);
   if (mgt.CheckCRCAndParse() && mgt.getTableId() == TableIdMGT)
   {
-    vector<uint16_t> eitPids; // Packet IDs of discovered EIT tables
+    size_t eitPids = 0;
+    size_t mgtPids = 0;
 
     SI::PSIP_MGT::TableInfo tableInfo;
     for (SI::Loop::Iterator it; mgt.tableInfoLoop.getNext(tableInfo, it);)
@@ -63,39 +64,41 @@ void cPsipMgt::ReceivePacket(uint16_t pid, const uint8_t* data)
       {
       case 0x0000: // Terrestrial VCT with current_next_indicator='1'
       case 0x0001: // Terrestrial VCT with current_next_indicator='0'
-        //filters.push_back(shared_ptr<cFilter>(new cVct(tablePid, true)));
+        m_device->Scan()->PsipMGT()->AddPid(tablePid);
+        ++mgtPids;
         break;
       case 0x0002: // Cable VCT with current_next_indicator='1'
       case 0x0003: // Cable VCT with current_next_indicator='0'
-        //filters.push_back(shared_ptr<cFilter>(new cVct(GetDevice(), tablePid, false)));
+        m_device->Scan()->PsipMGT()->AddPid(tablePid);
+        ++mgtPids;
         break;
       case 0x0004: // Channel ETT
-        //filters.push_back(shared_ptr<cFilter>(new cChannelEtt(GetDevice(), tablePid)));
+        //TODO filters.push_back(shared_ptr<cFilter>(new cChannelEtt(GetDevice(), tablePid)));
         break;
       case 0x0005: // DCCSCT
-        //filters.push_back(shared_ptr<cFilter>(new cDccst(GetDevice(), tablePid)));
+        //TODO filters.push_back(shared_ptr<cFilter>(new cDccst(GetDevice(), tablePid)));
         break;
       case 0x0100 ... 0x017F: // EIT-0 to EIT-127
       {
         //filters.push_back(shared_ptr<cFilter>(new cEitPsip(GetDevice(), tablePid, tableType - 0x0100)));
         const unsigned short eitNumber = tableType - 0x0100;
-        eitPids.push_back(tablePid);
+        m_device->Scan()->PsipEIT()->AddPid(tablePid);
+        ++eitPids;
         break;
       }
       case 0x0200 ... 0x027F: // Event ETT-0 to event ETT-127
-        //filters.push_back(shared_ptr<cFilter>(new cEventEttPsip(GetDevice(), tablePid, tableType - 0x0200)));
+        //TODO filters.push_back(shared_ptr<cFilter>(new cEventEttPsip(GetDevice(), tablePid, tableType - 0x0200)));
         break;
       case 0x0301 ... 0x03FF: // RRT with rating_region 1-255
-        //filters.push_back(shared_ptr<cFilter>(new cRrt(GetDevice(), tablePid, tableType - 0x0300)));
+        //TODO filters.push_back(shared_ptr<cFilter>(new cRrt(GetDevice(), tablePid, tableType - 0x0300)));
         break;
       case 0x1400 ... 0x14FF: // DCCT with dcc_id 0x00-0xFF
-        //filters.push_back(shared_ptr<cFilter>(new cDcct(GetDevice(), tablePid, tableType - 0x1400)));
+        //TODO filters.push_back(shared_ptr<cFilter>(new cDcct(GetDevice(), tablePid, tableType - 0x1400)));
         break;
       }
     }
 
-    dsyslog("MGT: Discovered %d EIT tables", eitPids.size());
-    m_device->Scan()->AttachEITPids(eitPids);
+    dsyslog("MGT: Discovered %lu EIT tables and %lu MGT tables", eitPids, mgtPids);
 
     SetScanned();
     Detach();
