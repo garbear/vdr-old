@@ -77,7 +77,7 @@ void LogVtype(uint8_t oldVtype, uint8_t newVtype)
 }
 
 cPmt::cPmt(cDevice* device)
- : cScanReceiver(device)
+ : cScanReceiver(device, "PMT")
 {
 }
 

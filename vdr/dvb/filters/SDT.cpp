@@ -88,7 +88,7 @@ ChannelPtr SdtFoundService(ChannelPtr channel, int nid, int tid, int sid)
 */
 
 cSdt::cSdt(cDevice* device, SI::TableId tableId /* = SI::TableIdSDT */)
- : cScanReceiver(device, PID_SDT),
+ : cScanReceiver(device, "SDT", PID_SDT),
    m_tableId(tableId)
 {
 }

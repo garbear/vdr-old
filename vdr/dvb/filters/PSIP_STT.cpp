@@ -39,7 +39,7 @@ namespace VDR
 {
 
 cPsipStt::cPsipStt(cDevice* device) :
-    cScanReceiver(device, PID_STT),
+    cScanReceiver(device, "STT", PID_STT),
     m_iLastOffset(0)
 {
 }

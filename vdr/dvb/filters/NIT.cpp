@@ -62,7 +62,7 @@ enum eSystemType
 };
 
 cNit::cNit(cDevice* device)
- : cScanReceiver(device, PID_NIT),
+ : cScanReceiver(device, "NIT", PID_NIT),
    m_networkId(NETWORK_ID_UNKNOWN)
  {
 //  OpenResource(PID_NIT, TableIdNIT);

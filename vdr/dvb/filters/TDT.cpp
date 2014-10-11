@@ -52,7 +52,7 @@ namespace VDR
 //CDateTime cTdt::m_lastAdj;
 
 cTdt::cTdt(cDevice* device)
- : cScanReceiver(device, PID_TDT)
+ : cScanReceiver(device, "TDT", PID_TDT)
 {
 }
 

@@ -53,7 +53,7 @@ namespace VDR
 {
 
 cPsipEit::cPsipEit(cDevice* device)
- : cScanReceiver(device)
+ : cScanReceiver(device, "EIT (PSIP)")
 {
 }
 

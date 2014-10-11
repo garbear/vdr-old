@@ -54,7 +54,7 @@ namespace VDR
 static uint16_t eit_pids[3] = {PID_EIT, 0x0300, 0x441};
 
 cEit::cEit(cDevice* device)
- : cScanReceiver(device, 3, eit_pids),
+ : cScanReceiver(device, "EIT", 3, eit_pids),
    m_extendedEventDescriptors(NULL)
 {
 //  OpenResource(PID_EIT, TableIdEIT_presentFollowing,     0xFE); // actual(0x4E) / other(0x4F) TS, present / following

@@ -43,7 +43,7 @@ namespace VDR
 {
 
 cPat::cPat(cDevice* device) :
-    cScanReceiver(device, PID_PAT),
+    cScanReceiver(device, "PAT", PID_PAT),
     m_pmt(device)
 {
 }

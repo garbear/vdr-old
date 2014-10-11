@@ -34,24 +34,26 @@ using namespace std;
 namespace VDR
 {
 
-cScanReceiver::cScanReceiver(cDevice* device) :
+cScanReceiver::cScanReceiver(cDevice* device, const std::string& name) :
     m_device(device),
     m_locked(false),
     m_scanned(false),
-    m_attached(false)
+    m_attached(false),
+    m_name(name)
 {
 }
 
-cScanReceiver::cScanReceiver(cDevice* device, uint16_t pid) :
+cScanReceiver::cScanReceiver(cDevice* device, const std::string& name, uint16_t pid) :
     m_device(device),
     m_locked(false),
     m_scanned(false),
-    m_attached(false)
+    m_attached(false),
+    m_name(name)
 {
   m_pids.push_back(pid);
 }
 
-cScanReceiver::cScanReceiver(cDevice* device, const std::vector<uint16_t>& pids) :
+cScanReceiver::cScanReceiver(cDevice* device, const std::string& name, const std::vector<uint16_t>& pids) :
     m_device(device),
     m_locked(false),
     m_scanned(false),
@@ -60,7 +62,7 @@ cScanReceiver::cScanReceiver(cDevice* device, const std::vector<uint16_t>& pids)
 {
 }
 
-cScanReceiver::cScanReceiver(cDevice* device, size_t nbPids, const uint16_t* pids) :
+cScanReceiver::cScanReceiver(cDevice* device, const std::string& name, size_t nbPids, const uint16_t* pids) :
     m_device(device),
     m_locked(false),
     m_scanned(false),

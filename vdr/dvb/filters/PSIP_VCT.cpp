@@ -42,7 +42,7 @@ namespace VDR
 {
 
 cPsipVct::cPsipVct(cDevice* device) :
-    cScanReceiver(device, PID_VCT)
+    cScanReceiver(device, "VCT", PID_VCT)
 {
 }
 

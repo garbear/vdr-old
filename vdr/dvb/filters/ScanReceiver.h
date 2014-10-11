@@ -32,10 +32,10 @@ class cDevice;
 class cScanReceiver : public iReceiver
 {
 public:
-  cScanReceiver(cDevice* device);
-  cScanReceiver(cDevice* device, uint16_t pid);
-  cScanReceiver(cDevice* device, const std::vector<uint16_t>& pids);
-  cScanReceiver(cDevice* device, size_t nbPids, const uint16_t* pids);
+  cScanReceiver(cDevice* device, const std::string& name);
+  cScanReceiver(cDevice* device, const std::string& name, uint16_t pid);
+  cScanReceiver(cDevice* device, const std::string& name, const std::vector<uint16_t>& pids);
+  cScanReceiver(cDevice* device, const std::string& name, size_t nbPids, const uint16_t* pids);
   virtual ~cScanReceiver(void) { }
 
   void Receive(const std::vector<uint8_t>& data);
@@ -71,6 +71,7 @@ private:
   PLATFORM::CCondition<bool> m_scannedEvent;
   std::vector<uint16_t>      m_pids;
   bool                       m_attached;
+  std::string                m_name;
 };
 
 }

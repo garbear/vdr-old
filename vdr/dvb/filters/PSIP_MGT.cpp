@@ -41,7 +41,7 @@ namespace VDR
 {
 
 cPsipMgt::cPsipMgt(cDevice* device) :
-    cScanReceiver(device, PID_MGT)
+    cScanReceiver(device, "MGT", PID_MGT)
 {
 }
 
