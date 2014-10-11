@@ -66,6 +66,11 @@ public:
   void SetType(TRANSPONDER_TYPE type) { m_type = type; }
 
   cSdt* SDT(void) const { return m_sdt; }
+  cPat* PAT(void) const { return m_pat; }
+  cEit* EIT(void) const { return m_eit; }
+  cPsipMgt* PsipMGT(void) const { return m_mgt; }
+  cPsipStt* PsipSTT(void) const { return m_psipstt; }
+  cPsipEit* PsipEIT(void) const { return m_psipeit; }
 
 private:
   void LockAcquired(void);
