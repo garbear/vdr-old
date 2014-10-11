@@ -77,7 +77,8 @@ cDeviceScanSubsystem::cDeviceScanSubsystem(cDevice* device)
    m_psipstt(new cPsipStt(device)),
    m_locked(false),
    m_type(TRANSPONDER_INVALID),
-   m_device(device)
+   m_device(device),
+   m_scanFinished(true)
 {
   m_receivers.insert(m_pat);
   m_receivers.insert(m_eit);
@@ -115,6 +116,30 @@ TRANSPONDER_TYPE cDeviceScanSubsystem::Type(void)
   return m_type;
 }
 
+void cDeviceScanSubsystem::SetScanned(cScanReceiver* receiver)
+{
+  CLockObject lock(m_waitingMutex);
+  std::set<cScanReceiver*>::iterator it = m_waitingForReceivers.find(receiver);
+  if (it != m_waitingForReceivers.end())
+  {
+    m_waitingForReceivers.erase(it);
+    m_scanFinished = m_waitingForReceivers.empty();
+  }
+
+  if (m_scanFinished)
+    m_waitingCondition.Broadcast();
+}
+
+void cDeviceScanSubsystem::ResetScanned(cScanReceiver* receiver)
+{
+  CLockObject lock(m_waitingMutex);
+  if (m_waitingForReceivers.find(receiver) == m_waitingForReceivers.end())
+  {
+    m_waitingForReceivers.insert(receiver);
+    m_scanFinished = false;
+  }
+}
+
 bool cDeviceScanSubsystem::AttachReceivers(void)
 {
   bool retval(true);
@@ -122,6 +147,13 @@ bool cDeviceScanSubsystem::AttachReceivers(void)
   {
     if (ReceiverOk(*it))
       retval &= (*it)->Attach();
+
+    if ((*it)->InChannelScan())
+    {
+      CLockObject lock(m_waitingMutex);
+      m_scanFinished = false;
+      m_waitingForReceivers.insert(*it);
+    }
   }
   return retval;
 }
@@ -133,6 +165,11 @@ void cDeviceScanSubsystem::DetachReceivers(void)
     if (ReceiverOk(*it))
       (*it)->Detach();
   }
+
+  CLockObject lock(m_waitingMutex);
+  m_scanFinished = m_waitingForReceivers.empty();
+  m_waitingForReceivers.clear();
+  m_waitingCondition.Broadcast();
 }
 
 void cDeviceScanSubsystem::StartScan()
@@ -147,11 +184,8 @@ void cDeviceScanSubsystem::StopScan()
 
 bool cDeviceScanSubsystem::WaitForTransponderScan(void)
 {
-  bool retval = true;
-  for (std::set<cScanReceiver*>::iterator it = m_receivers.begin(); it != m_receivers.end(); ++it)
-    if (ReceiverOk(*it) && (*it)->InChannelScan())
-      retval &= (*it)->WaitForScan();
-  return retval;
+  CLockObject lock(m_waitingMutex);
+  return m_waitingCondition.Wait(m_waitingMutex, m_scanFinished, TRANSPONDER_TIMEOUT);
 }
 
 bool cDeviceScanSubsystem::WaitForEPGScan(void)

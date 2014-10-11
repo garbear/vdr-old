@@ -163,13 +163,16 @@ void cScanReceiver::RemovePids(void)
 
 void cScanReceiver::SetScanned(void)
 {
-  PLATFORM::CLockObject lock(m_scannedmutex);
-  if (!m_scanned)
   {
-    dsyslog("%s scan completed", m_name.c_str());
-    m_scanned = true;
+    PLATFORM::CLockObject lock(m_scannedmutex);
+    if (!m_scanned)
+    {
+      dsyslog("%s scan completed", m_name.c_str());
+      m_scanned = true;
+    }
+    m_scannedEvent.Broadcast();
   }
-  m_scannedEvent.Broadcast();
+  m_device->Scan()->SetScanned(this);
 }
 
 void cScanReceiver::ResetScanned(void)

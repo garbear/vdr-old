@@ -71,6 +71,9 @@ public:
   cPsipStt* PsipSTT(void) const { return m_psipstt; }
   cPsipEit* PsipEIT(void) const { return m_psipeit; }
 
+  void SetScanned(cScanReceiver* receiver);
+  void ResetScanned(cScanReceiver* receiver);
+
 private:
   void LockAcquired(void);
   void LockLost(void);
@@ -88,6 +91,10 @@ private:
   bool                       m_locked;
   TRANSPONDER_TYPE           m_type;
   cDevice*                   m_device;
+  std::set<cScanReceiver*>   m_waitingForReceivers;
+  bool                       m_scanFinished;
+  PLATFORM::CMutex           m_waitingMutex;
+  PLATFORM::CCondition<bool> m_waitingCondition;
 };
 
 }
