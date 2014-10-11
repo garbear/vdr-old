@@ -75,15 +75,16 @@ cScanReceiver::cScanReceiver(cDevice* device, const std::string& name, size_t nb
 bool cScanReceiver::Attach(void)
 {
   bool retval = true;
-  for (std::vector<uint16_t>::const_iterator it = m_pids.begin(); it != m_pids.end(); ++it)
-    retval &= m_device->Receiver()->AttachReceiver(this, *it);
+  PLATFORM::CLockObject lock(m_mutex);
 
-  if (retval)
-  {
-    PLATFORM::CLockObject lock(m_mutex);
-    m_attached = true;
-  }
-  return retval;
+  if (m_attached)
+    return true;
+
+  m_attached = true;
+  for (std::vector<uint16_t>::const_iterator it = m_pids.begin(); it != m_pids.end(); ++it)
+    m_attached &= m_device->Receiver()->AttachReceiver(this, *it);
+
+  return m_attached;
 }
 
 void cScanReceiver::Detach(void)
