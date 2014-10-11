@@ -148,10 +148,10 @@ void cDeviceScanSubsystem::StopScan()
 bool cDeviceScanSubsystem::WaitForTransponderScan(void)
 {
   bool retval = true;
-  if (Type() == TRANSPONDER_ATSC)
-    retval &= m_mgt->WaitForScan() &&
-              m_psipeit->WaitForScan();
-  return m_pat->WaitForScan() && retval;
+  for (std::set<cScanReceiver*>::iterator it = m_receivers.begin(); it != m_receivers.end(); ++it)
+    if (ReceiverOk(*it))
+      retval &= (*it)->WaitForScan();
+  return retval;
 }
 
 bool cDeviceScanSubsystem::WaitForEPGScan(void)
