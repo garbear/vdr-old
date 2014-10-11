@@ -134,8 +134,7 @@ void cScanReceiver::AddPid(uint16_t pid)
   if (std::find(m_pids.begin(), m_pids.end(), pid) != m_pids.end())
     return;
   m_pids.push_back(pid);
-  if (m_attached)
-    m_device->Receiver()->AttachReceiver(this, pid);
+  m_attached &= m_device->Receiver()->AttachReceiver(this, pid);
 }
 
 void cScanReceiver::RemovePid(uint16_t pid)
