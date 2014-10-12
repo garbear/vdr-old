@@ -57,6 +57,7 @@ public:
 
   bool InATSC(void) const { return false; }
   bool InDVB(void) const { return true; }
+  bool InChannelScan(void) const { return true; }
 
   void Detach(void);
 
