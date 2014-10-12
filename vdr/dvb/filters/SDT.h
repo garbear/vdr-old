@@ -58,6 +58,8 @@ public:
   bool InATSC(void) const { return false; }
   bool InDVB(void) const { return true; }
 
+  void Detach(void);
+
 private:
   SI::TableId    m_tableId;
   cSectionSyncer m_sectionSyncer;

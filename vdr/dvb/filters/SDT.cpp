@@ -93,14 +93,18 @@ cSdt::cSdt(cDevice* device, SI::TableId tableId /* = SI::TableIdSDT */)
 {
 }
 
+void cSdt::Detach(void)
+{
+  m_sectionSyncer.Reset();
+  cScanReceiver::Detach();
+}
+
 void cSdt::ReceivePacket(uint16_t pid, const uint8_t* data)
 {
-  cSectionSyncer syncSdt;
-
   SI::SDT sdt(data);
   if (sdt.CheckCRCAndParse())
   {
-    cSectionSyncer::SYNC_STATUS status = syncSdt.Sync(sdt.getVersionNumber(), sdt.getSectionNumber(), sdt.getLastSectionNumber());
+    cSectionSyncer::SYNC_STATUS status = m_sectionSyncer.Sync(sdt.getVersionNumber(), sdt.getSectionNumber(), sdt.getLastSectionNumber());
     if (status == cSectionSyncer::SYNC_STATUS_NOT_SYNCED)
       return;
     if (status == cSectionSyncer::SYNC_STATUS_OLD_VERSION)
