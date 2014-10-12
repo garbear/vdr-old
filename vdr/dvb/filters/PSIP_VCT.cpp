@@ -49,6 +49,7 @@ cPsipVct::cPsipVct(cDevice* device) :
 void cPsipVct::Detach(void)
 {
   m_sectionSyncer.Reset();
+  cScanReceiver::Detach();
 }
 
 void cPsipVct::ReceivePacket(uint16_t pid, const uint8_t* data)
