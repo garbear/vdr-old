@@ -166,17 +166,6 @@ TunerHandlePtr cDeviceChannelSubsystem::Acquire(const ChannelPtr& channel, devic
       /** add new registration */
       handle = TunerHandlePtr(new cTunerHandle(type, this, callbacks, channel));
       m_activeTransponders.push_back(handle);
-
-      if (switchNeeded)
-      {
-        dsyslog("switch to %s", handle->ToString().c_str());
-        if (!SwitchChannel(channel))
-        {
-          Release(handle);
-          dsyslog("failed to switch to %s", handle->ToString().c_str());
-          handle = cTunerHandle::EmptyHandle;
-        }
-      }
     }
   }
 
@@ -188,10 +177,21 @@ TunerHandlePtr cDeviceChannelSubsystem::Acquire(const ChannelPtr& channel, devic
       (*it)->LockLost();
       (*it)->LostPriority();
     }
+
+    if (switchNeeded)
+    {
+      dsyslog("switch to %s", handle->ToString().c_str());
+      if (!SwitchChannel(channel))
+      {
+        Release(handle);
+        dsyslog("failed to switch to %s", handle->ToString().c_str());
+        handle = cTunerHandle::EmptyHandle;
+      }
+    }
   }
   else
   {
-    handle = TunerHandlePtr();
+    handle = cTunerHandle::EmptyHandle;
   }
 
   return handle;
