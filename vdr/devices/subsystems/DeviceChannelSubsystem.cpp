@@ -121,10 +121,10 @@ TunerHandlePtr cDeviceChannelSubsystem::Acquire(const ChannelPtr& channel, devic
 {
   bool valid(true);
   bool switchNeeded(true);
-  TunerHandlePtr handle;
+  TunerHandlePtr handle = TunerHandlePtr(new cTunerHandle(type, this, callbacks, channel));
   std::vector<TunerHandlePtr> lowerPrio;
 
-  dsyslog("acquire subscription for channel %uMHz prio %d", channel->GetTransponder().FrequencyMHz(), type);
+  dsyslog("acquire subscription for %s", handle->ToString().c_str());
 
   {
     CLockObject lock(m_mutex);
@@ -136,13 +136,13 @@ TunerHandlePtr cDeviceChannelSubsystem::Acquire(const ChannelPtr& channel, devic
         if ((*it)->Type() > type)
         {
           /** subscription with lower prio than this one */
-          dsyslog("stopping subscription for %uMHz prio %d", (*it)->Channel()->GetTransponder().FrequencyMHz(), (*it)->Type());
+          dsyslog("stopping subscription: %s", (*it)->ToString().c_str());
           lowerPrio.push_back(*it);
         }
         else if ((*it)->Type() < type)
         {
           /** subscription with higher prio than this one */
-          dsyslog("cannot acquire new subscription for channel %uMHz prio %d: channel %uMHz has a higher prio %d", channel->GetTransponder().FrequencyMHz(), type,  (*it)->Channel()->GetTransponder().FrequencyMHz(), (*it)->Type());
+          dsyslog("cannot acquire new subscription for %s: channel %s", handle->ToString().c_str(),  (*it)->ToString().c_str());
           valid = false;
         }
       }
@@ -169,11 +169,11 @@ TunerHandlePtr cDeviceChannelSubsystem::Acquire(const ChannelPtr& channel, devic
 
       if (switchNeeded)
       {
-        dsyslog("switch to %uMHz prio %d", channel->GetTransponder().FrequencyMHz(), type);
+        dsyslog("switch to %s", handle->ToString().c_str());
         if (!SwitchChannel(channel))
         {
           Release(handle);
-          dsyslog("failed to switch to %uMHz prio %d", channel->GetTransponder().FrequencyMHz(), type);
+          dsyslog("failed to switch to %s", handle->ToString().c_str());
           handle = cTunerHandle::EmptyHandle;
         }
       }
@@ -188,6 +188,10 @@ TunerHandlePtr cDeviceChannelSubsystem::Acquire(const ChannelPtr& channel, devic
       (*it)->LockLost();
       (*it)->LostPriority();
     }
+  }
+  else
+  {
+    handle = TunerHandlePtr();
   }
 
   return handle;
