@@ -58,6 +58,7 @@ public:
 
   ChannelPtr Channel(void) const { return m_channel; }
   device_tuning_type_t Type(void) const { return m_type; }
+  std::string ToString(void) const;
   void LockAcquired(void);
   void LockLost(void);
   void LostPriority(void);

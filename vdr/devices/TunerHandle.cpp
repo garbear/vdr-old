@@ -38,6 +38,30 @@ cTunerHandle::~cTunerHandle(void)
 {
 }
 
+std::string cTunerHandle::ToString(void) const
+{
+  const char* type;
+  switch (m_type)
+  {
+  case TUNING_TYPE_RECORDING:
+    type = "recording";
+    break;
+  case TUNING_TYPE_LIVE_TV:
+    type = "live tv";
+    break;
+  case TUNING_TYPE_CHANNEL_SCAN:
+    type = "channel scan";
+    break;
+  case TUNING_TYPE_EPG_SCAN:
+    type = "epg scan";
+    break;
+  default:
+    type = "unknown subscription";
+    break;
+  }
+  return StringUtils::Format("%s on frequency %u MHz", type, m_channel->GetTransponder().FrequencyMHz());
+}
+
 void cTunerHandle::LockAcquired(void)
 {
   if (m_callbacks)
