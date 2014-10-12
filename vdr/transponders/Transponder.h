@@ -70,8 +70,8 @@ public:
   unsigned int FrequencyKHz(void) const           { return m_frequencyHz / 1000; }
   unsigned int FrequencyMHz(void) const           { return m_frequencyHz / (1000 * 1000); }
   void SetFrequencyHz(unsigned int frequencyHz)   { m_frequencyHz = frequencyHz; }
-  void SetFrequencyKHz(unsigned int frequencyKHz) { m_frequencyHz = frequencyKHz / 1000; }
-  void SetFrequencyMHz(unsigned int frequencyMHz) { m_frequencyHz = frequencyMHz / (1000 * 1000); }
+  void SetFrequencyKHz(unsigned int frequencyKHz) { m_frequencyHz = frequencyKHz * 1000; }
+  void SetFrequencyMHz(unsigned int frequencyMHz) { m_frequencyHz = frequencyMHz * (1000 * 1000); }
 
   fe_spectral_inversion_t Inversion(void) const        { return m_inversion; }
   void SetInversion(fe_spectral_inversion_t inversion) { m_inversion = inversion; }
