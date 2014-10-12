@@ -61,7 +61,7 @@ public:
    * map.
    */
   bool AttachReceiver(iReceiver* receiver, const ChannelPtr& channel);
-  bool AttachReceiver(iReceiver* receiver, uint16_t pid);
+  bool AttachReceiver(iReceiver* receiver, uint16_t pid, STREAM_TYPE type = STREAM_TYPE_UNDEFINED);
 
   /*!
    * Detaches the given receiver from this device. Pointer is removed from
@@ -128,9 +128,15 @@ private:
   void CloseResourceForReceiver(uint16_t pid, iReceiver* receiver);
   bool SyncResources(void);
 
-  typedef struct { iReceiver* receiver; STREAM_TYPE type; } addedReceiver;
-  PidResourceMap      m_resources;
-  std::map<uint16_t, addedReceiver> m_resourcesAdded;
+  typedef struct
+  {
+    iReceiver*  receiver;
+    STREAM_TYPE type;
+    uint16_t    pid;
+  } addedReceiver;
+
+  PidResourceMap                    m_resourcesActive;
+  std::vector<addedReceiver>        m_resourcesAdded;
   std::map<uint16_t, iReceiver*>    m_resourcesRemoved;
   std::set<iReceiver*>              m_receiversRemoved;
   PLATFORM::CMutex    m_mutexReceiverRead;

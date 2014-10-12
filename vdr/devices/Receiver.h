@@ -65,15 +65,6 @@ public:
 
   virtual void LostPriority(void) {}
 
-  std::string DumpData(const std::vector<uint8_t>& data)
-  {
-    char dump[1000];
-    int wptr = 0;
-    for (unsigned int ptr = 0; ptr < 188 && ptr < data.size(); ++ptr)
-      wptr += snprintf(dump + wptr, 4, "%02X:", data[ptr]);
-    dump[wptr] = 0;
-    return dump;
-  }
 private:
 };
 
