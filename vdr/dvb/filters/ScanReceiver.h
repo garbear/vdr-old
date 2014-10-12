@@ -24,6 +24,8 @@
 
 #include "channels/ChannelTypes.h"
 #include "devices/Receiver.h"
+#include "dvb/PsiBuffer.h"
+#include <map>
 
 namespace VDR
 {
@@ -66,17 +68,17 @@ protected:
   void ResetScanned(void);
   bool Scanned(void) const;
 
-  cDevice*                   m_device;
-  bool                       m_locked;
-  PLATFORM::CMutex           m_mutex;
-  PLATFORM::CMutex           m_scannedmutex;
+  cDevice*                       m_device;
+  bool                           m_locked;
+  PLATFORM::CMutex               m_mutex;
+  PLATFORM::CMutex               m_scannedmutex;
 
 private:
-  bool                       m_scanned;
-  PLATFORM::CCondition<bool> m_scannedEvent;
-  std::vector<uint16_t>      m_pids;
-  bool                       m_attached;
-  std::string                m_name;
+  bool                           m_scanned;
+  PLATFORM::CCondition<bool>     m_scannedEvent;
+  std::map<uint16_t, cPsiBuffer> m_pids;
+  bool                           m_attached;
+  std::string                    m_name;
 };
 
 }
