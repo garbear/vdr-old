@@ -152,6 +152,7 @@ set(VDR_SRCS
 	vdr/dvb/CADescriptor.cpp
 	vdr/dvb/CADescriptorHandler.cpp
 	vdr/dvb/DiSEqC.cpp
+	vdr/dvb/PsiBuffer.cpp
 	vdr/dvb/filters/EIT.cpp
 	vdr/dvb/filters/Filter.cpp
 	vdr/dvb/filters/NIT.cpp
