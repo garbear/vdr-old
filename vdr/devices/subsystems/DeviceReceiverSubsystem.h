@@ -79,6 +79,11 @@ public:
   bool HasReceiver(iReceiver* receiver) const;
   bool HasReceiverPid(iReceiver* receiver, uint16_t pid) const;
 
+  /*!
+   * \brief Detaches all receivers from this device.
+   */
+  virtual void DetachAllReceivers(void);
+
 protected:
   /*!
    * Inherited from CThread. Read and dispatch TS packets in a loop.
@@ -121,11 +126,6 @@ protected:
   virtual bool WaitForSync(uint64_t timeout = 0);
 
 private:
-  /*!
-   * \brief Detaches all receivers from this device.
-   */
-  virtual void DetachAllReceivers(void);
-
   bool OpenResourceForReceiver(uint16_t pid, STREAM_TYPE streamType, iReceiver* receiver);
   PidReceivers* GetReceivers(uint16_t pid, STREAM_TYPE streamType);
   void CloseResourceForReceiver(iReceiver* receiver);

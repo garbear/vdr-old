@@ -62,8 +62,7 @@ cDeviceChannelSubsystem::cDeviceChannelSubsystem(cDevice *device)
 
 bool cDeviceChannelSubsystem::SwitchChannel(const ChannelPtr& channel)
 {
-  //TODO
-//  Receiver()->Stop();
+  Receiver()->DetachAllReceivers();
 
   // Tell the camSlot about the channel switch and add all PIDs of this
   // channel to it, for possible later decryption
