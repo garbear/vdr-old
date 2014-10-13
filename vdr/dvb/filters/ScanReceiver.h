@@ -63,15 +63,15 @@ public:
   virtual bool IsPsiReceiver(void) const { return true; }
   const std::string& Name(void) const { return m_name; }
 
-  bool Sync(uint8_t version, int sectionNumber, int endSectionNumber);
   bool Synced(void) const { return m_sectionSyncer.Synced(); }
+  bool Scanned(void) const;
 
 protected:
+  bool Sync(uint8_t version, int sectionNumber, int endSectionNumber);
   void RemovePid(uint16_t pid);
   void RemovePids(void);
   void SetScanned(void);
   void ResetScanned(void);
-  bool Scanned(void) const;
   bool DynamicPid(uint16_t pid) const;
 
   cDevice*         m_device;
