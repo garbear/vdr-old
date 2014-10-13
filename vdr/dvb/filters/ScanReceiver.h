@@ -60,6 +60,7 @@ public:
   virtual void AddPid(uint16_t pid);
   virtual bool HasPids(void) const { return !m_pidsAdded.empty(); }
   virtual bool IsPsiReceiver(void) const { return true; }
+  const std::string& Name(void) const { return m_name; }
 
 protected:
   void RemovePid(uint16_t pid);

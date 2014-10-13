@@ -57,7 +57,8 @@ cScanReceiver::cScanReceiver(cDevice* device, const std::string& name, const std
     m_device(device),
     m_locked(false),
     m_scanned(false),
-    m_attached(false)
+    m_attached(false),
+    m_name(name)
 {
   for (std::vector<uint16_t>::const_iterator it = pids.begin(); it != pids.end(); ++it)
     m_pids.insert(*it);
@@ -67,7 +68,8 @@ cScanReceiver::cScanReceiver(cDevice* device, const std::string& name, size_t nb
     m_device(device),
     m_locked(false),
     m_scanned(false),
-    m_attached(false)
+    m_attached(false),
+    m_name(name)
 {
   for (size_t ptr = 0; ptr < nbPids; ++ptr)
     m_pids.insert(pids[ptr]);
