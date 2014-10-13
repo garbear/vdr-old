@@ -35,7 +35,7 @@ public:
   virtual void Deinitialise(void);
 
   virtual bool Poll(void);
-  virtual bool Read(std::vector<uint8_t>& data);
+  virtual bool Read(TsPacket data);
   virtual PidResourcePtr CreateResource(uint16_t pid, STREAM_TYPE streamType);
 
 private:

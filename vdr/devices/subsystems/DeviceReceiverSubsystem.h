@@ -114,7 +114,7 @@ protected:
    * Gets exactly one TS packet from the DVR of this device, or returns false if
    * no new data is ready.
    */
-  virtual bool Read(std::vector<uint8_t>& data) = 0;
+  virtual bool Read(TsPacket data) = 0;
 
   virtual bool WaitForSync(uint64_t timeout = 0);
 

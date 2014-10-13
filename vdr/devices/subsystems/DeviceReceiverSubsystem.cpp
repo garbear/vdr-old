@@ -71,7 +71,7 @@ void *cDeviceReceiverSubsystem::Process()
   if (!Initialise())
     return NULL;
 
-  vector<uint8_t> packet;
+  TsPacket packet;
   uint16_t pid;
   PidResourceMap::iterator pidIt;
   const uint8_t* psidata;
@@ -88,7 +88,6 @@ void *cDeviceReceiverSubsystem::Process()
     if (Poll() && !IsStopped())
     {
       /** read new data */
-      packet.clear();
       if (Read(packet))
       {
         CLockObject lock(m_mutexReceiverRead);
@@ -98,12 +97,12 @@ void *cDeviceReceiverSubsystem::Process()
           continue;
 
         /** find resources attached to the PID that we received */
-        pid = TsPid(packet.data());
+        pid = TsPid(packet);
         pidIt = m_resourcesActive.find(pid);
         if (pidIt != m_resourcesActive.end())
         {
           validpsi = pidIt->second->buffer ?
-            pidIt->second->buffer->AddTsData(packet.data(), packet.size(), &psidata, &psidatalen) :
+            pidIt->second->buffer->AddTsData(packet, TS_SIZE, &psidata, &psidatalen) :
             false;
 
           /** distribute the packet to all receivers */
@@ -117,7 +116,7 @@ void *cDeviceReceiverSubsystem::Process()
             }
             else
             {
-              (*receiverit)->Receive(pid, packet.data(), packet.size());
+              (*receiverit)->Receive(pid, packet, TS_SIZE);
             }
           }
         }

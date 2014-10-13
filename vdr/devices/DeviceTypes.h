@@ -21,6 +21,7 @@
 #pragma once
 
 #include "dvb/PsiBuffer.h"
+#include "Remux.h"
 #include <set>
 #include <map>
 #include <shared_ptr/shared_ptr.hpp>
@@ -46,5 +47,7 @@ typedef struct PidReceivers {
 } PidReceivers;
 
 typedef std::map<uint16_t, PidReceivers*> PidResourceMap; // pid -> resource + receivers
+
+typedef uint8_t TsPacket[TS_SIZE];
 
 }

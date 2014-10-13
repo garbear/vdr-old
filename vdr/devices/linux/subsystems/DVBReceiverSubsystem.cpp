@@ -195,7 +195,7 @@ bool cDvbReceiverSubsystem::Poll(void)
   return Poller.Poll(100);
 }
 
-bool cDvbReceiverSubsystem::Read(vector<uint8_t>& data)
+bool cDvbReceiverSubsystem::Read(TsPacket data)
 {
   int count = 0;
   if (!m_ringBuffer.Get(count) || count < TS_SIZE)
@@ -231,7 +231,7 @@ bool cDvbReceiverSubsystem::Read(vector<uint8_t>& data)
     }
 
     m_ringBuffer.Del(TS_SIZE);
-    data.assign(p, p + TS_SIZE);
+    memcpy(data, p, TS_SIZE);//TODO pass the pointer up, no copy
     return true;
   }
 
