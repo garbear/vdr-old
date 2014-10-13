@@ -119,9 +119,8 @@ void *cDeviceReceiverSubsystem::Process()
               (*receiverit)->Receive(pid, packet, TS_SIZE);
             }
           }
-
-          Consumed();
         }
+        Consumed();
       }
     }
   }
