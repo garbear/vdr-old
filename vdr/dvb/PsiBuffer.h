@@ -38,5 +38,6 @@ namespace VDR
     size_t  m_cursize;
     size_t  m_sectionSize;
     bool    m_start;
+    bool    m_copy;
   };
 }

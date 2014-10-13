@@ -29,17 +29,20 @@ namespace VDR
 cPsiBuffer::cPsiBuffer(void) :
     m_cursize(0),
     m_sectionSize(0),
-    m_start(false)
+    m_start(false),
+    m_copy(true)
 {
-  memset(m_data, 0, sizeof(m_data));
+  Reset();
 }
 
 void cPsiBuffer::Reset(void)
 {
+  if (m_copy)
+    memset(m_data, 0, sizeof(m_data));
   m_cursize     = 0;
   m_sectionSize = 0;
   m_start       = false;
-  memset(m_data, 0, sizeof(m_data));
+  m_copy        = false;
 }
 
 const uint8_t* cPsiBuffer::AddTsData(const uint8_t* data, size_t len)
@@ -78,6 +81,13 @@ const uint8_t* cPsiBuffer::AddTsData(const uint8_t* data, size_t len)
   if (bnew)
     m_sectionSize = SI::Section::getLength(payload + 1);
 
+  if (!m_copy && payloadlen >= m_sectionSize)
+  {
+    m_cursize = payloadlen;
+    return payload;
+  }
+
+  m_copy = true;
   memcpy(m_data + m_cursize, payload, payloadlen);
   m_cursize += payloadlen;
 
