@@ -50,7 +50,9 @@ cScanReceiver::cScanReceiver(cDevice* device, const std::string& name, uint16_t 
     m_attached(false),
     m_name(name)
 {
-  m_pids.insert(make_pair(pid, cPsiBuffer()));
+  cPsiBuffer* buffer = cPsiBuffers::Get().Allocate();
+  if (buffer)
+    m_pids.insert(make_pair(pid, buffer));
 }
 
 cScanReceiver::cScanReceiver(cDevice* device, const std::string& name, const std::vector<uint16_t>& pids) :
@@ -59,8 +61,13 @@ cScanReceiver::cScanReceiver(cDevice* device, const std::string& name, const std
     m_scanned(false),
     m_attached(false)
 {
+  cPsiBuffer* buffer;
   for (std::vector<uint16_t>::const_iterator it = pids.begin(); it != pids.end(); ++it)
-    m_pids.insert(make_pair(*it, cPsiBuffer()));
+  {
+    buffer = cPsiBuffers::Get().Allocate();
+    if (buffer)
+      m_pids.insert(make_pair(*it, buffer));
+  }
 }
 
 cScanReceiver::cScanReceiver(cDevice* device, const std::string& name, size_t nbPids, const uint16_t* pids) :
@@ -69,8 +76,13 @@ cScanReceiver::cScanReceiver(cDevice* device, const std::string& name, size_t nb
     m_scanned(false),
     m_attached(false)
 {
+  cPsiBuffer* buffer;
   for (size_t ptr = 0; ptr < nbPids; ++ptr)
-    m_pids.insert(make_pair(pids[ptr], cPsiBuffer()));
+  {
+    buffer = cPsiBuffers::Get().Allocate();
+    if (buffer)
+      m_pids.insert(make_pair(pids[ptr], buffer));
+  }
 }
 
 bool cScanReceiver::Attach(void)
@@ -82,7 +94,7 @@ bool cScanReceiver::Attach(void)
     return true;
 
   m_attached = true;
-  for (std::map<uint16_t, cPsiBuffer>::const_iterator it = m_pids.begin(); it != m_pids.end(); ++it)
+  for (std::map<uint16_t, cPsiBuffer*>::const_iterator it = m_pids.begin(); it != m_pids.end(); ++it)
     m_attached &= m_device->Receiver()->AttachReceiver(this, it->first);
 
   return m_attached;
@@ -90,8 +102,8 @@ bool cScanReceiver::Attach(void)
 
 void cScanReceiver::Detach(void)
 {
-  m_device->Receiver()->DetachReceiver(this);
   PLATFORM::CLockObject lock(m_mutex);
+  RemovePids();
   m_attached = false;
 }
 
@@ -126,10 +138,10 @@ void cScanReceiver::Receive(const std::vector<uint8_t>& data)
     return;
 
   uint16_t pid = TsPid(data.data());
-  std::map<uint16_t, cPsiBuffer>::iterator it = m_pids.find(pid);
+  std::map<uint16_t, cPsiBuffer*>::iterator it = m_pids.find(pid);
   if (it != m_pids.end())
   {
-    const uint8_t* payload = it->second.AddTsData(data.data(), data.size());
+    const uint8_t* payload = it->second->AddTsData(data.data(), data.size());
     if (payload)
       ReceivePacket(pid, payload + 1);
   }
@@ -140,17 +152,32 @@ void cScanReceiver::AddPid(uint16_t pid)
   PLATFORM::CLockObject lock(m_mutex);
   if (m_pids.find(pid) != m_pids.end())
     return;
-  m_pids.insert(make_pair(pid, cPsiBuffer()));
-  m_attached &= m_device->Receiver()->AttachReceiver(this, pid);
+  cPsiBuffer* buffer = cPsiBuffers::Get().Allocate();
+  if (buffer)
+  {
+    m_pids.insert(make_pair(pid, buffer));
+    m_pidsAdded.insert(pid);
+    m_attached &= m_device->Receiver()->AttachReceiver(this, pid);
+  }
+  else
+  {
+    m_attached = false;
+  }
 }
 
 void cScanReceiver::RemovePid(uint16_t pid)
 {
   PLATFORM::CLockObject lock(m_mutex);
-  std::map<uint16_t, cPsiBuffer>::iterator it = m_pids.find(pid);
+  std::map<uint16_t, cPsiBuffer*>::iterator it = m_pids.find(pid);
   if (it != m_pids.end())
   {
-    m_pids.erase(it);
+    if (DynamicPid(pid))
+    {
+      cPsiBuffers::Get().Release(it->second);
+      m_pidsAdded.erase(pid);
+      m_pids.erase(it);
+    }
+
     if (m_attached)
       m_device->Receiver()->DetachReceiverPid(this, pid);
   }
@@ -159,12 +186,21 @@ void cScanReceiver::RemovePid(uint16_t pid)
 void cScanReceiver::RemovePids(void)
 {
   PLATFORM::CLockObject lock(m_mutex);
-  if (m_attached)
+  std::vector<uint16_t> pidsRemoved;
+
+  for (std::map<uint16_t, cPsiBuffer*>::iterator it = m_pids.begin(); it != m_pids.end(); ++it)
   {
-    for (std::map<uint16_t, cPsiBuffer>::iterator it = m_pids.begin(); it != m_pids.end(); ++it)
-      m_device->Receiver()->DetachReceiverPid(this, it->first);
+    m_device->Receiver()->DetachReceiverPid(this, it->first);
+
+    if (DynamicPid(it->first))
+    {
+      cPsiBuffers::Get().Release(it->second);
+      pidsRemoved.push_back(it->first);
+    }
   }
-  m_pids.clear();
+
+  for (std::vector<uint16_t>::const_iterator it = pidsRemoved.begin(); it != pidsRemoved.end(); ++it)
+    m_pids.erase(*it);
 }
 
 void cScanReceiver::SetScanned(void)
@@ -191,6 +227,11 @@ bool cScanReceiver::Scanned(void) const
 {
   PLATFORM::CLockObject lock(m_scannedmutex);
   return m_scanned;
+}
+
+bool cScanReceiver::DynamicPid(uint16_t pid) const
+{
+  return m_pidsAdded.find(pid) != m_pidsAdded.end();
 }
 
 }

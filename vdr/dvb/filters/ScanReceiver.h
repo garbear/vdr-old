@@ -38,7 +38,7 @@ public:
   cScanReceiver(cDevice* device, const std::string& name, uint16_t pid);
   cScanReceiver(cDevice* device, const std::string& name, const std::vector<uint16_t>& pids);
   cScanReceiver(cDevice* device, const std::string& name, size_t nbPids, const uint16_t* pids);
-  virtual ~cScanReceiver(void) { }
+  virtual ~cScanReceiver(void) { Detach(); }
 
   void Receive(const std::vector<uint8_t>& data);
   virtual void ReceivePacket(uint16_t pid, const uint8_t* data) = 0;
@@ -67,18 +67,20 @@ protected:
   void SetScanned(void);
   void ResetScanned(void);
   bool Scanned(void) const;
+  bool DynamicPid(uint16_t pid) const;
 
-  cDevice*                       m_device;
-  bool                           m_locked;
-  PLATFORM::CMutex               m_mutex;
-  PLATFORM::CMutex               m_scannedmutex;
+  cDevice*         m_device;
+  bool             m_locked;
+  PLATFORM::CMutex m_mutex;
+  PLATFORM::CMutex m_scannedmutex;
 
 private:
-  bool                           m_scanned;
-  PLATFORM::CCondition<bool>     m_scannedEvent;
-  std::map<uint16_t, cPsiBuffer> m_pids;
-  bool                           m_attached;
-  std::string                    m_name;
+  bool                            m_scanned;
+  PLATFORM::CCondition<bool>      m_scannedEvent;
+  std::map<uint16_t, cPsiBuffer*> m_pids;
+  std::set<uint16_t>              m_pidsAdded;
+  bool                            m_attached;
+  std::string                     m_name;
 };
 
 }
