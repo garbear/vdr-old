@@ -57,6 +57,7 @@ public:
   };
 
   SYNC_STATUS Sync(uint8_t version, int sectionNumber, int endSectionNumber);
+  bool Synced(void) const { return m_bSynced; }
 
 private:
   uint8_t m_previousVersion;
