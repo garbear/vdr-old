@@ -82,6 +82,8 @@ void* cScanner::Process()
   TRANSPONDER_TYPE type = m_setup.dvbType;
   if (type == TRANSPONDER_INVALID)
     type = m_setup.device->Scan()->Type();
+  else
+    m_setup.device->Scan()->SetType(TRANSPONDER_ATSC);
 
   switch (type)
   {
