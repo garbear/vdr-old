@@ -19,7 +19,10 @@
  */
 #pragma once
 
-#define PSI_MAX_SIZE (4096)
+#include <platform/threads/mutex.h>
+
+#define PSI_MAX_SIZE    (4096)
+#define PSI_MAX_BUFFERS (20)
 
 namespace VDR
 {
@@ -33,11 +36,30 @@ namespace VDR
     void Reset(void);
     size_t Size(void) const { return m_cursize; }
 
+    void SetPosition(size_t position) { m_position = position; }
+    size_t Position(void) const { return m_position; }
+
   private:
     uint8_t m_data[PSI_MAX_SIZE];
     size_t  m_cursize;
     size_t  m_sectionSize;
     bool    m_start;
     bool    m_copy;
+    size_t  m_position;
+  };
+
+  class cPsiBuffers
+  {
+  public:
+    virtual ~cPsiBuffers(void) {}
+
+    cPsiBuffer* Allocate(void);
+    void Release(cPsiBuffer* buffer);
+
+  private:
+    cPsiBuffers(void);
+    cPsiBuffer       m_buffers[PSI_MAX_BUFFERS];
+    bool             m_used[PSI_MAX_BUFFERS];
+    PLATFORM::CMutex m_mutex;
   };
 }

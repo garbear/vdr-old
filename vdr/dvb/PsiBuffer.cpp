@@ -94,5 +94,33 @@ const uint8_t* cPsiBuffer::AddTsData(const uint8_t* data, size_t len)
   return m_cursize >= m_sectionSize ? m_data : NULL;
 }
 
+cPsiBuffers::cPsiBuffers(void)
+{
+  for (size_t ptr = 0; ptr < PSI_MAX_BUFFERS; ++ptr)
+    m_buffers[ptr].SetPosition(ptr);
+  memset(m_used, false, sizeof(m_used));
+}
+
+cPsiBuffer* cPsiBuffers::Allocate(void)
+{
+  PLATFORM::CLockObject lock(m_mutex);
+  for (size_t ptr = 0; ptr < PSI_MAX_BUFFERS; ++ptr)
+  {
+    if (!m_used[ptr])
+    {
+      m_used[ptr] = true;
+      return &m_buffers[ptr];
+    }
+  }
+  return NULL;
+}
+
+void cPsiBuffers::Release(cPsiBuffer* buffer)
+{
+  PLATFORM::CLockObject lock(m_mutex);
+  m_used[buffer->Position()] = false;
+  buffer->Reset();
+}
+
 
 }
