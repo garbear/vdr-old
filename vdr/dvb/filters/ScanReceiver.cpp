@@ -50,7 +50,7 @@ cScanReceiver::cScanReceiver(cDevice* device, const std::string& name, uint16_t 
     m_attached(false),
     m_name(name)
 {
-  cPsiBuffer* buffer = cPsiBuffers::Get().Allocate();
+  cPsiBuffer* buffer = cPsiBuffers::Get().Allocate(pid);
   if (buffer)
     m_pids.insert(make_pair(pid, buffer));
 }
@@ -64,7 +64,7 @@ cScanReceiver::cScanReceiver(cDevice* device, const std::string& name, const std
   cPsiBuffer* buffer;
   for (std::vector<uint16_t>::const_iterator it = pids.begin(); it != pids.end(); ++it)
   {
-    buffer = cPsiBuffers::Get().Allocate();
+    buffer = cPsiBuffers::Get().Allocate(*it);
     if (buffer)
       m_pids.insert(make_pair(*it, buffer));
   }
@@ -79,7 +79,7 @@ cScanReceiver::cScanReceiver(cDevice* device, const std::string& name, size_t nb
   cPsiBuffer* buffer;
   for (size_t ptr = 0; ptr < nbPids; ++ptr)
   {
-    buffer = cPsiBuffers::Get().Allocate();
+    buffer = cPsiBuffers::Get().Allocate(pids[ptr]);
     if (buffer)
       m_pids.insert(make_pair(pids[ptr], buffer));
   }
@@ -152,7 +152,7 @@ void cScanReceiver::AddPid(uint16_t pid)
   PLATFORM::CLockObject lock(m_mutex);
   if (m_pids.find(pid) != m_pids.end())
     return;
-  cPsiBuffer* buffer = cPsiBuffers::Get().Allocate();
+  cPsiBuffer* buffer = cPsiBuffers::Get().Allocate(pid);
   if (buffer)
   {
     m_pids.insert(make_pair(pid, buffer));

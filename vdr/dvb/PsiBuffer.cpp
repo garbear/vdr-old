@@ -31,7 +31,9 @@ cPsiBuffer::cPsiBuffer(void) :
     m_cursize(0),
     m_sectionSize(0),
     m_start(false),
-    m_copy(true)
+    m_copy(true),
+    m_position(~0),
+    m_pid(~0)
 {
   Reset();
 }
@@ -99,7 +101,7 @@ cPsiBuffers::cPsiBuffers(void)
 {
   for (size_t ptr = 0; ptr < PSI_MAX_BUFFERS; ++ptr)
     m_buffers[ptr].SetPosition(ptr);
-  memset(m_used, false, sizeof(m_used));
+  memset(m_used, 0, sizeof(m_used));
 }
 
 cPsiBuffers& cPsiBuffers::Get(void)
@@ -108,17 +110,27 @@ cPsiBuffers& cPsiBuffers::Get(void)
   return _instance;
 }
 
-cPsiBuffer* cPsiBuffers::Allocate(void)
+cPsiBuffer* cPsiBuffers::Allocate(uint16_t pid)
 {
   PLATFORM::CLockObject lock(m_mutex);
+  std::map<uint16_t, size_t>::iterator it = m_pidMap.find(pid);
+  if (it != m_pidMap.end())
+  {
+    ++m_used[it->second];
+    return &m_buffers[it->second];
+  }
+
   for (size_t ptr = 0; ptr < PSI_MAX_BUFFERS; ++ptr)
   {
-    if (!m_used[ptr])
+    if (m_used[ptr] == 0)
     {
-      m_used[ptr] = true;
+      m_used[ptr] = 1;
+      m_buffers[ptr].SetPid(pid);
+      m_pidMap[pid] = ptr;
       return &m_buffers[ptr];
     }
   }
+
   esyslog("failed to allocate psi buffer");
   return NULL;
 }
@@ -126,9 +138,11 @@ cPsiBuffer* cPsiBuffers::Allocate(void)
 void cPsiBuffers::Release(cPsiBuffer* buffer)
 {
   PLATFORM::CLockObject lock(m_mutex);
-  m_used[buffer->Position()] = false;
-  buffer->Reset();
+  if (--m_used[buffer->Position()] == 0)
+  {
+    m_pidMap.erase(buffer->Pid());
+    buffer->Reset();
+  }
 }
-
 
 }
