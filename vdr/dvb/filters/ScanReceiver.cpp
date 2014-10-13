@@ -96,6 +96,7 @@ void cScanReceiver::Detach(void)
 {
   PLATFORM::CLockObject lock(m_mutex);
   RemovePids();
+  m_sectionSyncer.Reset();
   if (m_attached)
   {
     m_attached = false;
@@ -208,6 +209,11 @@ bool cScanReceiver::Scanned(void) const
 bool cScanReceiver::DynamicPid(uint16_t pid) const
 {
   return m_pidsAdded.find(pid) != m_pidsAdded.end();
+}
+
+bool cScanReceiver::Sync(uint8_t version, int sectionNumber, int endSectionNumber)
+{
+  return m_sectionSyncer.Sync(version, sectionNumber, endSectionNumber) == cSectionSyncer::SYNC_STATUS_NEW_VERSION;
 }
 
 }

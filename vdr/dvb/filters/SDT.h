@@ -23,7 +23,6 @@
 #pragma once
 
 #include "channels/ChannelTypes.h"
-#include "dvb/filters/Filter.h"
 #include "ScanReceiver.h"
 
 #include <libsi/si.h>
@@ -59,11 +58,8 @@ public:
   bool InDVB(void) const { return true; }
   bool InChannelScan(void) const { return true; }
 
-  void Detach(void);
-
 private:
-  SI::TableId    m_tableId;
-  cSectionSyncer m_sectionSyncer;
+  SI::TableId m_tableId;
 };
 
 }

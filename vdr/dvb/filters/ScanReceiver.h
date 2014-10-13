@@ -25,6 +25,7 @@
 #include "channels/ChannelTypes.h"
 #include "devices/Receiver.h"
 #include "dvb/PsiBuffer.h"
+#include "dvb/filters/Filter.h"
 #include <map>
 
 namespace VDR
@@ -62,6 +63,9 @@ public:
   virtual bool IsPsiReceiver(void) const { return true; }
   const std::string& Name(void) const { return m_name; }
 
+  bool Sync(uint8_t version, int sectionNumber, int endSectionNumber);
+  bool Synced(void) const { return m_sectionSyncer.Synced(); }
+
 protected:
   void RemovePid(uint16_t pid);
   void RemovePids(void);
@@ -76,12 +80,13 @@ protected:
   PLATFORM::CMutex m_scannedmutex;
 
 private:
-  bool                            m_scanned;
-  PLATFORM::CCondition<bool>      m_scannedEvent;
-  std::set<uint16_t>              m_pids;
-  std::set<uint16_t>              m_pidsAdded;
-  bool                            m_attached;
-  std::string                     m_name;
+  bool                       m_scanned;
+  PLATFORM::CCondition<bool> m_scannedEvent;
+  std::set<uint16_t>         m_pids;
+  std::set<uint16_t>         m_pidsAdded;
+  bool                       m_attached;
+  std::string                m_name;
+  cSectionSyncer             m_sectionSyncer;
 };
 
 }

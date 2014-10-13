@@ -40,11 +40,6 @@ public:
   bool InATSC(void) const { return true; }
   bool InDVB(void) const { return false; }
   bool InChannelScan(void) const { return true; }
-
-  void Detach(void);
-
-private:
-  cSectionSyncer m_sectionSyncer;
 };
 
 }

@@ -46,19 +46,12 @@ cPsipVct::cPsipVct(cDevice* device) :
 {
 }
 
-void cPsipVct::Detach(void)
-{
-  m_sectionSyncer.Reset();
-  cScanReceiver::Detach();
-}
-
 void cPsipVct::ReceivePacket(uint16_t pid, const uint8_t* data)
 {
   SI::PSIP_VCT vct(data);
   if (vct.CheckCRCAndParse() && (vct.getTableId() == TableIdTVCT || vct.getTableId() == TableIdCVCT))
   {
-    cSectionSyncer::SYNC_STATUS status = m_sectionSyncer.Sync(vct.getVersionNumber(), vct.getSectionNumber(), vct.getLastSectionNumber());
-    if (status == cSectionSyncer::SYNC_STATUS_NOT_SYNCED || status == cSectionSyncer::SYNC_STATUS_OLD_VERSION)
+    if (!Sync(vct.getVersionNumber(), vct.getSectionNumber(), vct.getLastSectionNumber()))
       return;
 
     SI::PSIP_VCT::ChannelInfo channelInfo;
