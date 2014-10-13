@@ -22,6 +22,7 @@
 #include <stddef.h>
 #include "PsiBuffer.h"
 #include "devices/Remux.h"
+#include "utils/log/Log.h"
 
 namespace VDR
 {
@@ -101,6 +102,12 @@ cPsiBuffers::cPsiBuffers(void)
   memset(m_used, false, sizeof(m_used));
 }
 
+cPsiBuffers& cPsiBuffers::Get(void)
+{
+  static cPsiBuffers _instance;
+  return _instance;
+}
+
 cPsiBuffer* cPsiBuffers::Allocate(void)
 {
   PLATFORM::CLockObject lock(m_mutex);
@@ -112,6 +119,7 @@ cPsiBuffer* cPsiBuffers::Allocate(void)
       return &m_buffers[ptr];
     }
   }
+  esyslog("failed to allocate psi buffer");
   return NULL;
 }
 
