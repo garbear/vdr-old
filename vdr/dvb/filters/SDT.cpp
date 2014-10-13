@@ -220,6 +220,8 @@ void cSdt::ReceivePacket(uint16_t pid, const uint8_t* data)
         DELETENULL(d);
       }
     }
+
+    SetScanned();
   }
 }
 
