@@ -22,6 +22,8 @@
  */
 
 #include "SDT.h"
+#include "devices/Device.h"
+#include "devices/subsystems/DeviceChannelSubsystem.h"
 #include "channels/Channel.h"
 #include "channels/ChannelManager.h"
 #include "utils/CommonMacros.h"
@@ -114,10 +116,11 @@ void cSdt::ReceivePacket(uint16_t pid, const uint8_t* data)
 
     //HEXDUMP(data.data(), Length);
 
+    cTransponder transponder = m_device->Channel()->GetCurrentlyTunedTransponder();
     SI::SDT::Service SiSdtService;
     for (SI::Loop::Iterator it; sdt.serviceLoop.getNext(SiSdtService, it);)
     {
-      ChannelPtr channel = cChannelManager::Get().GetByTransportAndService(sdt.getOriginalNetworkId(), sdt.getTransportStreamId(), SiSdtService.getServiceId());
+      ChannelPtr channel = cChannelManager::Get().GetByTransportAndService(transponder, sdt.getTransportStreamId(), SiSdtService.getServiceId());
       if (!channel)
         continue;
 
@@ -182,7 +185,7 @@ void cSdt::ReceivePacket(uint16_t pid, const uint8_t* data)
                 StringUtils::Trim(strShortName);
 
                 channel->SetName(strName, strShortName, strProviderName);
-                isyslog("updating channel name: %s (%s)\n", strName.c_str(), strShortName.c_str());
+                isyslog("updating channel name: %s (%s)", strName.c_str(), strShortName.c_str());
               }
               default:
                 break;
