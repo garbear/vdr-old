@@ -207,29 +207,34 @@ bool cDeviceReceiverSubsystem::OpenResourceForReceiver(uint16_t pid, STREAM_TYPE
 
 bool cDeviceReceiverSubsystem::SyncResources(void)
 {
-  PLATFORM::CLockObject lock(m_mutexReceiverRead);
-  PLATFORM::CLockObject lock2(m_mutexReceiverWrite);
-
-  for (std::map<uint16_t, iReceiver*>::iterator it = m_resourcesRemoved.begin(); it != m_resourcesRemoved.end(); ++it)
-    CloseResourceForReceiver(it->first, it->second);
-  m_resourcesRemoved.clear();
-
-  for (std::set<iReceiver*>::iterator it = m_receiversRemoved.begin(); it != m_receiversRemoved.end(); ++it)
-    CloseResourceForReceiver(*it);
-  m_receiversRemoved.clear();
-
-  for (std::vector<addedReceiver>::iterator it = m_resourcesAdded.begin(); it != m_resourcesAdded.end(); ++it)
-    OpenResourceForReceiver((*it).pid, (*it).type, (*it).receiver);
-  m_resourcesAdded.clear();
-
-  if (m_resourcesActive.empty())
+  bool retval = true;
   {
-    if (CommonInterface()->m_camSlot)
-      CommonInterface()->m_camSlot->StopDecrypting();
-    usleep(MAX_IDLE_DELAY_MS * 1000);
-    return false;
+    PLATFORM::CLockObject lock(m_mutexReceiverRead);
+    PLATFORM::CLockObject lock2(m_mutexReceiverWrite);
+
+    for (std::map<uint16_t, iReceiver*>::iterator it = m_resourcesRemoved.begin(); it != m_resourcesRemoved.end(); ++it)
+      CloseResourceForReceiver(it->first, it->second);
+    m_resourcesRemoved.clear();
+
+    for (std::set<iReceiver*>::iterator it = m_receiversRemoved.begin(); it != m_receiversRemoved.end(); ++it)
+      CloseResourceForReceiver(*it);
+    m_receiversRemoved.clear();
+
+    for (std::vector<addedReceiver>::iterator it = m_resourcesAdded.begin(); it != m_resourcesAdded.end(); ++it)
+      OpenResourceForReceiver((*it).pid, (*it).type, (*it).receiver);
+    m_resourcesAdded.clear();
+
+    if (m_resourcesActive.empty())
+    {
+      if (CommonInterface()->m_camSlot)
+        CommonInterface()->m_camSlot->StopDecrypting();
+      retval = false;
+    }
   }
-  return true;
+
+  if (!retval)
+    Sleep(MAX_IDLE_DELAY_MS);
+  return retval;
 }
 
 void cDeviceReceiverSubsystem::CloseResourceForReceiver(uint16_t pid, iReceiver* receiver)
