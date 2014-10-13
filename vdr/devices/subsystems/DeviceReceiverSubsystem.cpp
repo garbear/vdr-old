@@ -72,19 +72,19 @@ void *cDeviceReceiverSubsystem::Process()
 
   while (!IsStopped())
   {
+    if (!SyncResources())
+      continue;
+
     if (Poll() && !IsStopped())
     {
       vector<uint8_t> packet;
       if (Read(packet))
       {
-        uint16_t pid = TsPid(packet.data());
         CLockObject lock(m_mutexReceiverRead);
         if (!SyncResources())
-        {
-          usleep(MAX_IDLE_DELAY_MS * 1000);
           continue;
-        }
 
+        uint16_t pid = TsPid(packet.data());
         PidResourceMap::iterator it = m_resourcesActive.find(pid);
         if (it != m_resourcesActive.end())
         {
@@ -226,6 +226,7 @@ bool cDeviceReceiverSubsystem::SyncResources(void)
   {
     if (CommonInterface()->m_camSlot)
       CommonInterface()->m_camSlot->StopDecrypting();
+    usleep(MAX_IDLE_DELAY_MS * 1000);
     return false;
   }
   return true;
