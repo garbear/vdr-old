@@ -22,8 +22,10 @@
  */
 
 #include "SDT.h"
+#include "PAT.h"
 #include "devices/Device.h"
 #include "devices/subsystems/DeviceChannelSubsystem.h"
+#include "devices/subsystems/DeviceScanSubsystem.h"
 #include "channels/Channel.h"
 #include "channels/ChannelManager.h"
 #include "utils/CommonMacros.h"
@@ -100,6 +102,9 @@ void cSdt::ReceivePacket(uint16_t pid, const uint8_t* data)
   SI::SDT sdt(data);
   if (sdt.CheckCRCAndParse())
   {
+    /** wait for the PMT scan to complete first */
+    if (!m_device->Scan()->PAT()->PmtScanned())
+      return;
     if (!Sync(sdt.getVersionNumber(), sdt.getSectionNumber(), sdt.getLastSectionNumber()))
       return;
 
