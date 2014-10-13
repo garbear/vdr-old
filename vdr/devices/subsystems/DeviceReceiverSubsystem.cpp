@@ -167,25 +167,15 @@ bool cDeviceReceiverSubsystem::HasReceiverPid(iReceiver* receiver, uint16_t pid)
 void cDeviceReceiverSubsystem::DetachReceiverPid(iReceiver* receiver, uint16_t pid)
 {
   PLATFORM::CLockObject lock(m_mutexReceiverRead);
-  bool wait(false);
-
+  PLATFORM::CLockObject lock2(m_mutexReceiverWrite);
+  if (HasReceiverPid(receiver, pid))
   {
-    PLATFORM::CLockObject lock2(m_mutexReceiverWrite);
-    if (HasReceiverPid(receiver, pid))
-    {
-      m_resourcesRemoved[pid] = receiver;
-      wait = true;
-    }
-  }
-
-  if (wait)
-  {
+    m_resourcesRemoved[pid] = receiver;
     m_synced = false;
-    m_syncCondition.Wait(m_mutexReceiverRead, m_synced);
   }
 }
 
-void cDeviceReceiverSubsystem::DetachReceiver(iReceiver* receiver)
+void cDeviceReceiverSubsystem::DetachReceiver(iReceiver* receiver, bool bWait /* = false */)
 {
   PLATFORM::CLockObject lock(m_mutexReceiverRead);
   bool wait(false);
@@ -195,15 +185,13 @@ void cDeviceReceiverSubsystem::DetachReceiver(iReceiver* receiver)
     if (HasReceiver(receiver))
     {
       m_receiversRemoved.insert(receiver);
+      m_synced = false;
       wait = true;
     }
   }
 
-  if (wait)
-  {
-    m_synced = false;
+  if (wait && bWait)
     m_syncCondition.Wait(m_mutexReceiverRead, m_synced);
-  }
 }
 
 void cDeviceReceiverSubsystem::DetachAllReceivers(void)

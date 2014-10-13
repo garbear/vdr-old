@@ -68,7 +68,7 @@ public:
    * m_receiverResources, and all resources that fall out of scope will be
    * closed RAII-style.
    */
-  void DetachReceiver(iReceiver* receiver);
+  void DetachReceiver(iReceiver* receiver, bool bWait = false);
   void DetachReceiverPid(iReceiver* receiver, uint16_t pid);
 
   /*!
