@@ -143,17 +143,18 @@ void cDeviceScanSubsystem::ResetScanned(cScanReceiver* receiver)
 bool cDeviceScanSubsystem::AttachReceivers(void)
 {
   bool retval(true);
-  dsyslog("attaching scan receivers");
   for (std::set<cScanReceiver*>::iterator it = m_receivers.begin(); it != m_receivers.end(); ++it)
   {
     if (ReceiverOk(*it))
+    {
       retval &= (*it)->Attach();
 
-    if ((*it)->InChannelScan())
-    {
-      CLockObject lock(m_waitingMutex);
-      m_scanFinished = false;
-      m_waitingForReceivers.insert(*it);
+      if ((*it)->InChannelScan())
+      {
+        CLockObject lock(m_waitingMutex);
+        m_scanFinished = false;
+        m_waitingForReceivers.insert(*it);
+      }
     }
   }
   return retval;
