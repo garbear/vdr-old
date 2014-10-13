@@ -109,6 +109,15 @@ bool cPmt::HasPid(uint16_t pid) const
   return false;
 }
 
+bool cPmt::HasUnsyncedPids(void) const
+{
+  PLATFORM::CLockObject lock(m_mutex);
+  for (std::vector<PMTFilter>::const_iterator it = m_filters.begin(); it != m_filters.end(); ++it)
+    if (!(*it).sync.Synced())
+      return true;
+  return false;
+}
+
 void cPmt::ReceivePacket(uint16_t pid, const uint8_t* data)
 {
   SI::PMT pmt(data);
@@ -118,15 +127,15 @@ void cPmt::ReceivePacket(uint16_t pid, const uint8_t* data)
     {
       if ((*it).pid == pid && (*it).sid == pmt.getServiceId())
       {
+        cSectionSyncer::SYNC_STATUS status = (*it).sync.Sync(pmt.getVersionNumber(), pmt.getSectionNumber(), pmt.getLastSectionNumber());
+        if (status == cSectionSyncer::SYNC_STATUS_NOT_SYNCED || status == cSectionSyncer::SYNC_STATUS_OLD_VERSION)
+          return;
+
         m_device->Scan()->OnChannelPropsScanned(CreateChannel(pmt, (*it).tsid));
-        m_filters.erase(it);
-        if (!HasPid(pid))
-          RemovePid(pid);
-        break;
       }
     }
 
-    if (m_filters.empty())
+    if (!HasUnsyncedPids())
       SetScanned();
   }
 }

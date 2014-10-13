@@ -25,6 +25,7 @@
 #include "channels/Channel.h"
 #include "channels/ChannelTypes.h"
 #include "ScanReceiver.h"
+#include "Filter.h"
 
 #include <libsi/section.h>
 #include <stdint.h>
@@ -34,9 +35,10 @@ namespace VDR
 
 typedef struct
 {
-  uint16_t pid;
-  uint16_t tsid;
-  uint16_t sid;
+  uint16_t       pid;
+  uint16_t       tsid;
+  uint16_t       sid;
+  cSectionSyncer sync;
 } PMTFilter;
 
 class cPmt : public cScanReceiver
@@ -61,6 +63,7 @@ private:
   void SetCaDescriptors(const ChannelPtr& channel, /* const */ SI::PMT& pmt) const; // TODO: libsi fails at const-correctness
 
   bool HasPid(uint16_t pid) const;
+  bool HasUnsyncedPids(void) const;
 
   std::vector<PMTFilter> m_filters;
 };
