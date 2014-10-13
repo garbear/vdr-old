@@ -195,7 +195,12 @@ bool cDvbReceiverSubsystem::Poll(void)
   return Poller.Poll(100);
 }
 
-bool cDvbReceiverSubsystem::Read(TsPacket data)
+void cDvbReceiverSubsystem::Consumed(void)
+{
+  m_ringBuffer.Del(TS_SIZE);
+}
+
+TsPacket cDvbReceiverSubsystem::Read(void)
 {
   int count = 0;
   if (!m_ringBuffer.Get(count) || count < TS_SIZE)
@@ -206,7 +211,7 @@ bool cDvbReceiverSubsystem::Read(TsPacket data)
         esyslog("Driver buffer overflow on device %d", Device()->Index());
       else if (errno != 0 && errno != EAGAIN && errno != EINTR)
         esyslog("Error reading dvr device: %m");
-      return false;
+      return NULL;
     }
   }
 
@@ -227,15 +232,13 @@ bool cDvbReceiverSubsystem::Read(TsPacket data)
 
       m_ringBuffer.Del(count);
       esyslog("Skipped %d bytes to sync on TS packet on device %d", count, Device()->Index());
-      return false;
+      return NULL;
     }
 
-    m_ringBuffer.Del(TS_SIZE);
-    memcpy(data, p, TS_SIZE);//TODO pass the pointer up, no copy
-    return true;
+    return p;
   }
 
-  return false;
+  return NULL;
 }
 
 PidResourcePtr cDvbReceiverSubsystem::CreateResource(uint16_t pid, STREAM_TYPE streamType)

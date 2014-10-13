@@ -114,7 +114,9 @@ protected:
    * Gets exactly one TS packet from the DVR of this device, or returns false if
    * no new data is ready.
    */
-  virtual bool Read(TsPacket data) = 0;
+  virtual TsPacket Read(void) = 0;
+
+  virtual void Consumed(void) = 0;
 
   virtual bool WaitForSync(uint64_t timeout = 0);
 

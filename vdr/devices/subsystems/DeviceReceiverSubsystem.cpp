@@ -88,7 +88,7 @@ void *cDeviceReceiverSubsystem::Process()
     if (Poll() && !IsStopped())
     {
       /** read new data */
-      if (Read(packet))
+      if ((packet = Read()) != NULL)
       {
         CLockObject lock(m_mutexReceiverRead);
 
@@ -119,6 +119,8 @@ void *cDeviceReceiverSubsystem::Process()
               (*receiverit)->Receive(pid, packet, TS_SIZE);
             }
           }
+
+          Consumed();
         }
       }
     }

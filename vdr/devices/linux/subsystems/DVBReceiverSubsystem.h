@@ -35,7 +35,8 @@ public:
   virtual void Deinitialise(void);
 
   virtual bool Poll(void);
-  virtual bool Read(TsPacket data);
+  virtual TsPacket Read(void);
+  virtual void Consumed(void);
   virtual PidResourcePtr CreateResource(uint16_t pid, STREAM_TYPE streamType);
 
 private:
