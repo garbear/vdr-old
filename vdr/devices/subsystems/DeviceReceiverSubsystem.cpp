@@ -89,8 +89,12 @@ void *cDeviceReceiverSubsystem::Process()
         PidResourceMap::iterator it = m_resourcesActive.find(pid);
         if (it != m_resourcesActive.end())
         {
+          iReceiver* receiver;
           for (std::set<iReceiver*>::iterator receiverit = it->second->receivers.begin(); receiverit != it->second->receivers.end(); ++receiverit)
-            (*receiverit)->Receive(packet);
+          {
+            receiver = *receiverit;
+            receiver->Receive(packet);
+          }
         }
       }
     }
@@ -170,6 +174,7 @@ void cDeviceReceiverSubsystem::DetachReceiverPid(iReceiver* receiver, uint16_t p
   PLATFORM::CLockObject lock2(m_mutexReceiverWrite);
   if (HasReceiverPid(receiver, pid))
   {
+    //TODO doesn't work when multiple receivers are listening to the same pid!
     m_resourcesRemoved[pid] = receiver;
     m_synced = false;
   }
@@ -182,7 +187,7 @@ void cDeviceReceiverSubsystem::DetachReceiver(iReceiver* receiver, bool bWait /*
 
   {
     PLATFORM::CLockObject lock2(m_mutexReceiverWrite);
-    if (HasReceiver(receiver))
+    if (HasReceiver(receiver) && m_receiversRemoved.find(receiver) == m_receiversRemoved.end())
     {
       m_receiversRemoved.insert(receiver);
       m_synced = false;
@@ -269,6 +274,7 @@ void cDeviceReceiverSubsystem::CloseResourceForReceiver(uint16_t pid, iReceiver*
     std::set<iReceiver*>::iterator receiverit = receivers->receivers.find(receiver);
     if (receiverit != receivers->receivers.end())
       receivers->receivers.erase(receiverit);
+
     if (receivers->receivers.empty())
     {
       delete it->second;
@@ -279,18 +285,23 @@ void cDeviceReceiverSubsystem::CloseResourceForReceiver(uint16_t pid, iReceiver*
 
 void cDeviceReceiverSubsystem::CloseResourceForReceiver(iReceiver* receiver)
 {
+  std::vector<uint16_t> emptyPids;
   for (PidResourceMap::iterator it = m_resourcesActive.begin(); it != m_resourcesActive.end(); ++it)
   {
     PidReceivers* receivers = it->second;
     std::set<iReceiver*>::iterator receiverit = receivers->receivers.find(receiver);
     if (receiverit != receivers->receivers.end())
       receivers->receivers.erase(receiverit);
+
     if (receivers->receivers.empty())
     {
       delete it->second;
-      m_resourcesActive.erase(it);
+      emptyPids.push_back(it->first);
     }
   }
+
+  for (std::vector<uint16_t>::const_iterator it = emptyPids.begin(); it != emptyPids.end(); ++it)
+    m_resourcesActive.erase(*it);
 }
 
 struct PidReceivers* cDeviceReceiverSubsystem::GetReceivers(uint16_t pid, STREAM_TYPE streamType)
