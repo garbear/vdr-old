@@ -116,6 +116,8 @@ protected:
    */
   virtual bool Read(std::vector<uint8_t>& data) = 0;
 
+  virtual bool WaitForSync(uint64_t timeout = 0);
+
 private:
   /*!
    * \brief Detaches all receivers from this device.
@@ -139,8 +141,10 @@ private:
   std::vector<addedReceiver>        m_resourcesAdded;
   std::map<uint16_t, iReceiver*>    m_resourcesRemoved;
   std::set<iReceiver*>              m_receiversRemoved;
-  PLATFORM::CMutex    m_mutexReceiverRead;
-  PLATFORM::CMutex    m_mutexReceiverWrite;
+  PLATFORM::CMutex                  m_mutexReceiverRead;
+  PLATFORM::CMutex                  m_mutexReceiverWrite;
+  bool                              m_synced;
+  PLATFORM::CCondition<bool>        m_syncCondition;
 };
 
 }
