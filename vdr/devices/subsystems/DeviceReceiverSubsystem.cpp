@@ -71,29 +71,54 @@ void *cDeviceReceiverSubsystem::Process()
   if (!Initialise())
     return NULL;
 
+  vector<uint8_t> packet;
+  uint16_t pid;
+  PidResourceMap::iterator pidIt;
+  const uint8_t* psidata;
+  size_t psidatalen;
+  bool validpsi;
+
   while (!IsStopped())
   {
+    /** nothing to read if there are no PIDs */
     if (!SyncResources())
       continue;
 
+    /** wait for new data */
     if (Poll() && !IsStopped())
     {
-      vector<uint8_t> packet;
+      /** read new data */
+      packet.clear();
       if (Read(packet))
       {
         CLockObject lock(m_mutexReceiverRead);
+
+        /** sync resources, as PIDs may have been removed while we were waiting for data */
         if (!SyncResources())
           continue;
 
-        uint16_t pid = TsPid(packet.data());
-        PidResourceMap::iterator it = m_resourcesActive.find(pid);
-        if (it != m_resourcesActive.end())
+        /** find resources attached to the PID that we received */
+        pid = TsPid(packet.data());
+        pidIt = m_resourcesActive.find(pid);
+        if (pidIt != m_resourcesActive.end())
         {
-          iReceiver* receiver;
-          for (std::set<iReceiver*>::iterator receiverit = it->second->receivers.begin(); receiverit != it->second->receivers.end(); ++receiverit)
+          validpsi = pidIt->second->buffer ?
+            pidIt->second->buffer->AddTsData(packet.data(), packet.size(), &psidata, &psidatalen) :
+            false;
+
+          /** distribute the packet to all receivers */
+          for (std::set<iReceiver*>::iterator receiverit = pidIt->second->receivers.begin(); receiverit != pidIt->second->receivers.end(); ++receiverit)
           {
-            receiver = *receiverit;
-            receiver->Receive(packet);
+            if ((*receiverit)->IsPsiReceiver())
+            {
+              /** only send full data */
+              if (validpsi)
+                (*receiverit)->Receive(pid, psidata, psidatalen);
+            }
+            else
+            {
+              (*receiverit)->Receive(pid, packet.data(), packet.size());
+            }
           }
         }
       }
@@ -221,6 +246,8 @@ bool cDeviceReceiverSubsystem::OpenResourceForReceiver(uint16_t pid, STREAM_TYPE
   PidReceivers* receivers = GetReceivers(pid, streamType);
   if (receivers)
   {
+    if (receiver->IsPsiReceiver() && !receivers->buffer)
+      receivers->buffer = cPsiBuffers::Get().Allocate(pid);
     receivers->receivers.insert(receiver);
     return true;
   }
@@ -277,6 +304,8 @@ void cDeviceReceiverSubsystem::CloseResourceForReceiver(uint16_t pid, iReceiver*
 
     if (receivers->receivers.empty())
     {
+      if (receivers->buffer)
+        cPsiBuffers::Get().Release(receivers->buffer);
       delete it->second;
       m_resourcesActive.erase(it);
     }
@@ -295,6 +324,8 @@ void cDeviceReceiverSubsystem::CloseResourceForReceiver(iReceiver* receiver)
 
     if (receivers->receivers.empty())
     {
+      if (receivers->buffer)
+        cPsiBuffers::Get().Release(receivers->buffer);
       delete it->second;
       emptyPids.push_back(it->first);
     }
@@ -323,6 +354,7 @@ struct PidReceivers* cDeviceReceiverSubsystem::GetReceivers(uint16_t pid, STREAM
     }
     else
     {
+      receivers->buffer = NULL;
       m_resourcesActive[pid] = receivers;
     }
   }

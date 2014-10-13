@@ -50,9 +50,7 @@ cScanReceiver::cScanReceiver(cDevice* device, const std::string& name, uint16_t 
     m_attached(false),
     m_name(name)
 {
-  cPsiBuffer* buffer = cPsiBuffers::Get().Allocate(pid);
-  if (buffer)
-    m_pids.insert(make_pair(pid, buffer));
+  m_pids.insert(pid);
 }
 
 cScanReceiver::cScanReceiver(cDevice* device, const std::string& name, const std::vector<uint16_t>& pids) :
@@ -61,13 +59,8 @@ cScanReceiver::cScanReceiver(cDevice* device, const std::string& name, const std
     m_scanned(false),
     m_attached(false)
 {
-  cPsiBuffer* buffer;
   for (std::vector<uint16_t>::const_iterator it = pids.begin(); it != pids.end(); ++it)
-  {
-    buffer = cPsiBuffers::Get().Allocate(*it);
-    if (buffer)
-      m_pids.insert(make_pair(*it, buffer));
-  }
+    m_pids.insert(*it);
 }
 
 cScanReceiver::cScanReceiver(cDevice* device, const std::string& name, size_t nbPids, const uint16_t* pids) :
@@ -76,13 +69,8 @@ cScanReceiver::cScanReceiver(cDevice* device, const std::string& name, size_t nb
     m_scanned(false),
     m_attached(false)
 {
-  cPsiBuffer* buffer;
   for (size_t ptr = 0; ptr < nbPids; ++ptr)
-  {
-    buffer = cPsiBuffers::Get().Allocate(pids[ptr]);
-    if (buffer)
-      m_pids.insert(make_pair(pids[ptr], buffer));
-  }
+    m_pids.insert(pids[ptr]);
 }
 
 bool cScanReceiver::Attach(void)
@@ -94,8 +82,8 @@ bool cScanReceiver::Attach(void)
     return true;
 
   m_attached = true;
-  for (std::map<uint16_t, cPsiBuffer*>::const_iterator it = m_pids.begin(); it != m_pids.end(); ++it)
-    m_attached &= m_device->Receiver()->AttachReceiver(this, it->first);
+  for (std::set<uint16_t>::const_iterator it = m_pids.begin(); it != m_pids.end(); ++it)
+    m_attached &= m_device->Receiver()->AttachReceiver(this, *it);
 
   return m_attached;
 }
@@ -132,19 +120,9 @@ void cScanReceiver::LockLost(void)
   Detach();
 }
 
-void cScanReceiver::Receive(const std::vector<uint8_t>& data)
+void cScanReceiver::Receive(const uint16_t pid, const uint8_t* data, const size_t len)
 {
-  if (TsError(data.data()) || !TsHasPayload(data.data()))
-    return;
-
-  uint16_t pid = TsPid(data.data());
-  std::map<uint16_t, cPsiBuffer*>::iterator it = m_pids.find(pid);
-  if (it != m_pids.end())
-  {
-    const uint8_t* payload = it->second->AddTsData(data.data(), data.size());
-    if (payload)
-      ReceivePacket(pid, payload + 1);
-  }
+  ReceivePacket(pid, data + 1);
 }
 
 void cScanReceiver::AddPid(uint16_t pid)
@@ -152,28 +130,21 @@ void cScanReceiver::AddPid(uint16_t pid)
   PLATFORM::CLockObject lock(m_mutex);
   if (m_pids.find(pid) != m_pids.end())
     return;
-  cPsiBuffer* buffer = cPsiBuffers::Get().Allocate(pid);
-  if (buffer)
+  if (m_device->Receiver()->AttachReceiver(this, pid))
   {
-    m_pids.insert(make_pair(pid, buffer));
     m_pidsAdded.insert(pid);
-    m_attached &= m_device->Receiver()->AttachReceiver(this, pid);
-  }
-  else
-  {
-    m_attached = false;
+    m_pids.insert(pid);
   }
 }
 
 void cScanReceiver::RemovePid(uint16_t pid)
 {
   PLATFORM::CLockObject lock(m_mutex);
-  std::map<uint16_t, cPsiBuffer*>::iterator it = m_pids.find(pid);
+  std::set<uint16_t>::iterator it = m_pids.find(pid);
   if (it != m_pids.end())
   {
     if (DynamicPid(pid))
     {
-      cPsiBuffers::Get().Release(it->second);
       m_pidsAdded.erase(pid);
       m_pids.erase(it);
     }
@@ -188,15 +159,12 @@ void cScanReceiver::RemovePids(void)
   PLATFORM::CLockObject lock(m_mutex);
   std::vector<uint16_t> pidsRemoved;
 
-  for (std::map<uint16_t, cPsiBuffer*>::iterator it = m_pids.begin(); it != m_pids.end(); ++it)
+  for (std::set<uint16_t>::iterator it = m_pids.begin(); it != m_pids.end(); ++it)
   {
-    m_device->Receiver()->DetachReceiverPid(this, it->first);
+    m_device->Receiver()->DetachReceiverPid(this, *it);
 
-    if (DynamicPid(it->first))
-    {
-      cPsiBuffers::Get().Release(it->second);
-      pidsRemoved.push_back(it->first);
-    }
+    if (DynamicPid(*it))
+      pidsRemoved.push_back(*it);
   }
 
   for (std::vector<uint16_t>::const_iterator it = pidsRemoved.begin(); it != pidsRemoved.end(); ++it)

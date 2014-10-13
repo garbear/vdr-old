@@ -118,12 +118,12 @@ void cRecorder::Stop(void)
   StopThread(3);
 }
 
-void cRecorder::Receive(const std::vector<uint8_t>& data)
+void cRecorder::Receive(const uint16_t pid, const uint8_t* data, const size_t len)
 {
   if (!IsStopped()) {
-     int p = m_ringBuffer->Put(data.data(), data.size());
-     if (p != data.size() && !IsStopped())
-        m_ringBuffer->ReportOverflow(data.size() - p);
+     int p = m_ringBuffer->Put(data, len);
+     if (p != len && !IsStopped())
+        m_ringBuffer->ReportOverflow(len - p);
      }
 }
 

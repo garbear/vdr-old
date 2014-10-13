@@ -48,20 +48,20 @@ void cPsiBuffer::Reset(void)
   m_copy        = false;
 }
 
-const uint8_t* cPsiBuffer::AddTsData(const uint8_t* data, size_t len)
+bool cPsiBuffer::AddTsData(const uint8_t* data, size_t len, const uint8_t** outdata, size_t* outlen)
 {
   bool bnew(false);
   if (TsError(data))
   {
     /** skip invalid data */
     Reset();
-    return NULL;
+    return false;
   }
 
   if (!TsHasPayload(data))
   {
     /** need payload */
-    return NULL;
+    return false;
   }
 
   if (TsPayloadStart(data))
@@ -73,7 +73,7 @@ const uint8_t* cPsiBuffer::AddTsData(const uint8_t* data, size_t len)
   else if (!m_sectionSize)
   {
     /** need section start */
-    return NULL;
+    return false;
   }
 
   int payloadoffset = TsPayloadOffset(data);
@@ -87,14 +87,22 @@ const uint8_t* cPsiBuffer::AddTsData(const uint8_t* data, size_t len)
   if (!m_copy && payloadlen >= m_sectionSize)
   {
     m_cursize = payloadlen;
-    return payload;
+    *outdata = payload;
+    *outlen  = payloadlen;
+    return true;
   }
 
   m_copy = true;
   memcpy(m_data + m_cursize, payload, payloadlen);
   m_cursize += payloadlen;
 
-  return m_cursize >= m_sectionSize ? m_data : NULL;
+  if (m_cursize >= m_sectionSize)
+  {
+    *outdata = m_data;
+    *outlen  = m_cursize;
+    return true;
+  }
+  return false;
 }
 
 cPsiBuffers::cPsiBuffers(void)

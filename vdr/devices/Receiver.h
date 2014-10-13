@@ -57,7 +57,7 @@ public:
    * only ONCE, so the iReceiver must make sure that it will be able to buffer
    * the data if necessary.
    */
-  virtual void Receive(const std::vector<uint8_t>& data) = 0;
+  virtual void Receive(const uint16_t pid, const uint8_t* data, const size_t len) = 0;
 
   virtual void LockAcquired(void) {}
 
@@ -65,6 +65,7 @@ public:
 
   virtual void LostPriority(void) {}
 
+  virtual bool IsPsiReceiver(void) const { return false; }
 private:
 };
 

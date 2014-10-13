@@ -122,7 +122,10 @@ void cSdt::ReceivePacket(uint16_t pid, const uint8_t* data)
     {
       ChannelPtr channel = cChannelManager::Get().GetByTransportAndService(transponder, sdt.getTransportStreamId(), SiSdtService.getServiceId());
       if (!channel)
+      {
+        dsyslog("SDT: can't find channel with tsid:%u ssid:%u", sdt.getTransportStreamId(), SiSdtService.getServiceId());
         continue;
+      }
 
       SI::Descriptor * d;
       for (SI::Loop::Iterator it2; (d = SiSdtService.serviceDescriptors.getNext(it2));)

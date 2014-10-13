@@ -47,7 +47,7 @@ class cVideoBufferSimple : public cVideoBuffer
 {
 friend class cVideoBuffer;
 public:
-  virtual void Receive(const std::vector<uint8_t>& data);
+  virtual void Receive(const uint16_t pid, const uint8_t* data, const size_t len);
   virtual int ReadBlock(uint8_t **buf, unsigned int size, time_t &endTime, time_t &wrapTime);
 
 protected:
@@ -70,9 +70,9 @@ cVideoBufferSimple::~cVideoBufferSimple()
     delete m_Buffer;
 }
 
-void cVideoBufferSimple::Receive(const std::vector<uint8_t>& data)
+void cVideoBufferSimple::Receive(const uint16_t pid, const uint8_t* data, const size_t len)
 {
-  m_Buffer->Put(data.data(), data.size());
+  m_Buffer->Put(data, len);
 }
 
 int cVideoBufferSimple::ReadBlock(uint8_t **buf, unsigned int size, time_t &endTime, time_t &wrapTime)
@@ -206,7 +206,7 @@ class cVideoBufferRAM : public cVideoBufferTimeshift
 {
 friend class cVideoBuffer;
 public:
-  virtual void Receive(const std::vector<uint8_t>& data);
+  virtual void Receive(const uint16_t pid, const uint8_t* data, const size_t len);
   virtual int ReadBlock(uint8_t **buf, unsigned int size, time_t &endTime, time_t &wrapTime);
   virtual void SetPos(off_t pos);
 
@@ -252,10 +252,10 @@ void cVideoBufferRAM::SetPos(off_t pos)
   m_BytesConsumed = 0;
 }
 
-void cVideoBufferRAM::Receive(const std::vector<uint8_t>& data)
+void cVideoBufferRAM::Receive(const uint16_t pid, const uint8_t* data, const size_t len)
 {
-  const uint8_t* buf  = data.data();
-  size_t         size = data.size();
+  const uint8_t* buf  = data;
+  size_t         size = len;
 
   if (Available() + MARGIN >= m_BufferSize)
   {
@@ -347,7 +347,7 @@ class cVideoBufferFile : public cVideoBufferTimeshift
 friend class cVideoBuffer;
 public:
   virtual off_t GetPosMax();
-  virtual void Receive(const std::vector<uint8_t>& data);
+  virtual void Receive(const uint16_t pid, const uint8_t* data, const size_t len);
   virtual int ReadBlock(uint8_t **buf, unsigned int size, time_t &endTime, time_t &wrapTime);
   virtual void SetPos(off_t pos);
 
@@ -460,10 +460,10 @@ off_t cVideoBufferFile::GetPosMax()
   return posMax;
 }
 
-void cVideoBufferFile::Receive(const std::vector<uint8_t>& data)
+void cVideoBufferFile::Receive(const uint16_t pid, const uint8_t* data, const size_t len)
 {
-  const uint8_t* buf  = data.data();
-  size_t         size = data.size();
+  const uint8_t* buf  = data;
+  size_t         size = len;
 
   if (Available() + MARGIN >= m_BufferSize)
   {
@@ -642,7 +642,7 @@ class cVideoBufferRecording : public cVideoBufferFile
 friend class cVideoBuffer;
 public:
   virtual off_t GetPosMax();
-  virtual void Receive(const std::vector<uint8_t>& data);
+  virtual void Receive(const uint16_t pid, const uint8_t* data, const size_t len);
   virtual int ReadBlock(uint8_t **buf, unsigned int size, time_t &endTime, time_t &wrapTime);
   virtual time_t GetRefTime();
 
@@ -679,7 +679,7 @@ off_t cVideoBufferRecording::GetPosMax()
   return cVideoBufferFile::GetPosMax();
 }
 
-void cVideoBufferRecording::Receive(const std::vector<uint8_t>& data)
+void cVideoBufferRecording::Receive(const uint16_t pid, const uint8_t* data, const size_t len)
 {
 
 }
@@ -795,7 +795,7 @@ class cVideoBufferTest : public cVideoBufferFile
 friend class cVideoBuffer;
 public:
   virtual off_t GetPosMax();
-  virtual void Receive(const std::vector<uint8_t>& data);
+  virtual void Receive(const uint16_t pid, const uint8_t* data, const size_t len);
 
 protected:
   cVideoBufferTest(const std::string& filename);
@@ -830,7 +830,7 @@ off_t cVideoBufferTest::GetPosEnd()
   return end;
 }
 
-void cVideoBufferTest::Receive(const std::vector<uint8_t>& data)
+void cVideoBufferTest::Receive(const uint16_t pid, const uint8_t* data, const size_t len)
 {
 
 }

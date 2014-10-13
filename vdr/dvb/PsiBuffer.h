@@ -33,7 +33,7 @@ namespace VDR
     cPsiBuffer(void);
     virtual ~cPsiBuffer(void) {}
 
-    const uint8_t* AddTsData(const uint8_t* data, size_t len);
+    bool AddTsData(const uint8_t* data, size_t len, const uint8_t** outdata, size_t* outlen);
     void Reset(void);
     size_t Size(void) const { return m_cursize; }
 

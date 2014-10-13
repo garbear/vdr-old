@@ -40,8 +40,8 @@ public:
   cScanReceiver(cDevice* device, const std::string& name, size_t nbPids, const uint16_t* pids);
   virtual ~cScanReceiver(void) { Detach(); }
 
-  void Receive(const std::vector<uint8_t>& data);
-  virtual void ReceivePacket(uint16_t pid, const uint8_t* data) = 0;
+  void Receive(const uint16_t pid, const uint8_t* data, const size_t len);
+  virtual void ReceivePacket(const uint16_t pid, const uint8_t* data) = 0;
   virtual bool Attach(void);
   virtual void Detach(void);
   virtual bool WaitForScan(uint32_t iTimeout = TRANSPONDER_TIMEOUT);
@@ -58,8 +58,8 @@ public:
 
 
   virtual void AddPid(uint16_t pid);
-  size_t NbPids(void) const { return m_pids.size(); }
-  bool   HasPids(void) const { return !m_pids.empty(); }
+  virtual bool HasPids(void) const { return !m_pidsAdded.empty(); }
+  virtual bool IsPsiReceiver(void) const { return true; }
 
 protected:
   void RemovePid(uint16_t pid);
@@ -77,7 +77,7 @@ protected:
 private:
   bool                            m_scanned;
   PLATFORM::CCondition<bool>      m_scannedEvent;
-  std::map<uint16_t, cPsiBuffer*> m_pids;
+  std::set<uint16_t>              m_pids;
   std::set<uint16_t>              m_pidsAdded;
   bool                            m_attached;
   std::string                     m_name;
