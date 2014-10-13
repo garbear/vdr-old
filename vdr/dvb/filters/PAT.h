@@ -44,6 +44,7 @@ public:
   bool InDVB(void) const { return true; }
   bool InChannelScan(void) const { return true; }
 
+  bool PmtScanned(void) const { return m_pmt.Scanned(); }
 private:
   cPmt m_pmt;
 };
