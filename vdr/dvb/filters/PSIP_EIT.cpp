@@ -23,6 +23,7 @@
 
 #include "PSIP_EIT.h"
 #include "PSIP_STT.h"
+#include "PAT.h"
 #include "channels/ChannelManager.h"
 #include "devices/DeviceManager.h"
 #include "devices/subsystems/DeviceChannelSubsystem.h"
@@ -72,6 +73,12 @@ void cPsipEit::ReceivePacket(uint16_t pid, const uint8_t* data)
   SI::PSIP_EIT psipEit(data);
   if (psipEit.CheckCRCAndParse())
   {
+    /** wait for the PMT scan to complete first */
+    if (!m_device->Scan()->PAT()->PmtScanned())
+      return;
+    if (!Sync(psipEit.getVersionNumber(), psipEit.getSectionNumber(), psipEit.getLastSectionNumber()))
+      return;
+
     SI::PSIP_EIT::Event psipEitEvent;
     for (SI::Loop::Iterator it; psipEit.eventLoop.getNext(psipEitEvent, it); )
     {
