@@ -86,15 +86,19 @@ void* cScanner::Process()
   switch (type)
   {
   case TRANSPONDER_ATSC:
+    dsyslog("Scanning ATSC frequencies");
     transponders = new cAtscTransponderFactory(caps, m_setup.atscModulation);
     break;
   case TRANSPONDER_CABLE:
+    dsyslog("Scanning DVB-C frequencies");
     transponders = new cCableTransponderFactory(caps, m_setup.dvbcSymbolRate);
     break;
   case TRANSPONDER_SATELLITE:
+    dsyslog("Scanning DVB-S frequencies");
     transponders = new cSatelliteTransponderFactory(caps, m_setup.satelliteIndex);
     break;
   case TRANSPONDER_TERRESTRIAL:
+    dsyslog("Scanning DVB-T frequencies");
     transponders = new cTerrestrialTransponderFactory(caps);
     break;
   }
