@@ -85,6 +85,8 @@ bool cScanReceiver::Attach(void)
   for (std::set<uint16_t>::const_iterator it = m_pids.begin(); it != m_pids.end(); ++it)
     m_attached &= m_device->Receiver()->AttachReceiver(this, *it);
 
+  dsyslog(m_attached ? "%s filter attached" : "failed to attach %s filter", m_name.c_str());
+
   return m_attached;
 }
 
@@ -92,7 +94,11 @@ void cScanReceiver::Detach(void)
 {
   PLATFORM::CLockObject lock(m_mutex);
   RemovePids();
-  m_attached = false;
+  if (m_attached)
+  {
+    m_attached = false;
+    dsyslog("%s filter detached", m_name.c_str());
+  }
 }
 
 bool cScanReceiver::WaitForScan(uint32_t iTimeout /* = TRANSPONDER_TIMEOUT */)
