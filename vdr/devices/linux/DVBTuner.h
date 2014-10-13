@@ -142,6 +142,7 @@ private:
   cTransponder                      m_transponder;
   volatile fe_status_t              m_status;
   bool                              m_event;
+  bool                              m_tuned;
   PLATFORM::CCondition<bool>        m_lockEvent;
   PLATFORM::CMutex                  m_mutex;
 

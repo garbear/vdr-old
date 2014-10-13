@@ -109,6 +109,7 @@ cDvbTuner::cDvbTuner(cDvbDevice *device)
    m_apiVersion(Version::EmptyVersion),
    m_status(FE_STATUS_UNKNOWN),
    m_event(false),
+   m_tuned(false),
    m_lastDiseqc(NULL),
    m_scr(NULL),
    m_bLnbPowerTurnedOn(false),
@@ -553,6 +554,7 @@ bool cDvbTuner::TuneDevice(const cTransponder& transponder)
     return false;
 
   m_transponder = transponder;
+  m_tuned = true;
 
   return true;
 }
@@ -771,10 +773,18 @@ bool cDvbTuner::IsTunedTo(const cTransponder& transponder) const
 
 void cDvbTuner::ClearTransponder(void)
 {
+  CLockObject lock(m_mutex);
+  if (m_tuned)
+    m_tuned = false;
+  else
+    return;
+
+  lock.Unlock();
+
   SetChanged();
   NotifyObservers(ObservableMessageChannelLostLock);
 
-  CLockObject lock(m_mutex);
+  lock.Lock();
 
   m_transponder.Reset();
   m_status = FE_STATUS_UNKNOWN;
