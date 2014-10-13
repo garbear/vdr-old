@@ -22,7 +22,7 @@
 #include <platform/threads/mutex.h>
 
 #define PSI_MAX_SIZE    (4096)
-#define PSI_MAX_BUFFERS (20)
+#define PSI_MAX_BUFFERS (40)
 
 namespace VDR
 {
@@ -51,6 +51,7 @@ namespace VDR
   class cPsiBuffers
   {
   public:
+    static cPsiBuffers& Get(void);
     virtual ~cPsiBuffers(void) {}
 
     cPsiBuffer* Allocate(void);
