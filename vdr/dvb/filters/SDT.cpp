@@ -167,16 +167,23 @@ void cSdt::ReceivePacket(uint16_t pid, const uint8_t* data)
                 // Some cable providers don't mark short channel names according to the
                 // standard, but rather go their own way and use "name>short name" or
                 // "name, short name"
-                if (strShortName.empty() && channel->GetTransponder().IsCable())
+                if (strShortName.empty())
                 {
-                  size_t pos = strName.find('>'); // fix for UPC Wien
-                  if (pos == string::npos)
-                    pos = strName.find(','); // fix for "Kabel Deutschland"
-
-                  if (pos != string::npos)
+                  if (channel->GetTransponder().IsCable())
                   {
-                    strShortName = strName.substr(pos + 1);
-                    strName = strName.substr(0, pos);
+                    size_t pos = strName.find('>'); // fix for UPC Wien
+                    if (pos == string::npos)
+                      pos = strName.find(','); // fix for "Kabel Deutschland"
+
+                    if (pos != string::npos)
+                    {
+                      strShortName = strName.substr(pos + 1);
+                      strName = strName.substr(0, pos);
+                    }
+                  }
+                  else
+                  {
+                    strShortName = strName;
                   }
                 }
 
@@ -185,7 +192,7 @@ void cSdt::ReceivePacket(uint16_t pid, const uint8_t* data)
                 StringUtils::Trim(strShortName);
 
                 channel->SetName(strName, strShortName, strProviderName);
-                isyslog("updating channel name: %s (%s)", strName.c_str(), strShortName.c_str());
+                isyslog("updating channel name: %s%s", strName.c_str(), strShortName != strName ? StringUtils::Format(" (%s)", strShortName.c_str()).c_str() : "");
               }
               default:
                 break;
