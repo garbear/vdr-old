@@ -105,7 +105,7 @@ void cSdt::ReceivePacket(uint16_t pid, const uint8_t* data)
     /** wait for the PMT scan to complete first */
     if (!m_device->Scan()->PAT()->PmtScanned())
       return;
-    if (!Sync(sdt.getVersionNumber(), sdt.getSectionNumber(), sdt.getLastSectionNumber()))
+    if (!Sync(pid, sdt.getVersionNumber(), sdt.getSectionNumber(), sdt.getLastSectionNumber()))
       return;
 
     cTransponder transponder = m_device->Channel()->GetCurrentlyTunedTransponder();

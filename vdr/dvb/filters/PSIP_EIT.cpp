@@ -76,7 +76,7 @@ void cPsipEit::ReceivePacket(uint16_t pid, const uint8_t* data)
     /** wait for the PMT scan to complete first */
     if (!m_device->Scan()->PAT()->PmtScanned())
       return;
-    if (!Sync(psipEit.getVersionNumber(), psipEit.getSectionNumber(), psipEit.getLastSectionNumber()))
+    if (!Sync(pid, psipEit.getVersionNumber(), psipEit.getSectionNumber(), psipEit.getLastSectionNumber()))
       return;
 
     SI::PSIP_EIT::Event psipEitEvent;

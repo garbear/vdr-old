@@ -63,11 +63,11 @@ public:
   virtual bool IsPsiReceiver(void) const { return true; }
   const std::string& Name(void) const { return m_name; }
 
-  bool Synced(void) const { return m_sectionSyncer.Synced(); }
   bool Scanned(void) const;
+  bool Synced(uint16_t pid) const;
 
 protected:
-  bool Sync(uint8_t version, int sectionNumber, int endSectionNumber);
+  bool Sync(uint16_t pid, uint8_t version, int sectionNumber, int endSectionNumber);
   void RemovePid(uint16_t pid);
   void RemovePids(void);
   void SetScanned(void);
@@ -86,7 +86,7 @@ private:
   std::set<uint16_t>         m_pidsAdded;
   bool                       m_attached;
   std::string                m_name;
-  cSectionSyncer             m_sectionSyncer;
+  std::map<uint16_t, cSectionSyncer*> m_sectionSyncers;
 };
 
 }

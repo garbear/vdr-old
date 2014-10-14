@@ -51,6 +51,7 @@ cScanReceiver::cScanReceiver(cDevice* device, const std::string& name, uint16_t 
     m_name(name)
 {
   m_pids.insert(pid);
+  m_sectionSyncers.insert(make_pair(pid, new cSectionSyncer));
 }
 
 cScanReceiver::cScanReceiver(cDevice* device, const std::string& name, const std::vector<uint16_t>& pids) :
@@ -61,7 +62,10 @@ cScanReceiver::cScanReceiver(cDevice* device, const std::string& name, const std
     m_name(name)
 {
   for (std::vector<uint16_t>::const_iterator it = pids.begin(); it != pids.end(); ++it)
+  {
+    m_sectionSyncers.insert(make_pair(*it, new cSectionSyncer));
     m_pids.insert(*it);
+  }
 }
 
 cScanReceiver::cScanReceiver(cDevice* device, const std::string& name, size_t nbPids, const uint16_t* pids) :
@@ -72,7 +76,10 @@ cScanReceiver::cScanReceiver(cDevice* device, const std::string& name, size_t nb
     m_name(name)
 {
   for (size_t ptr = 0; ptr < nbPids; ++ptr)
+  {
+    m_sectionSyncers.insert(make_pair(pids[ptr], new cSectionSyncer));
     m_pids.insert(pids[ptr]);
+  }
 }
 
 bool cScanReceiver::Attach(void)
@@ -96,7 +103,8 @@ void cScanReceiver::Detach(void)
 {
   PLATFORM::CLockObject lock(m_mutex);
   RemovePids();
-  m_sectionSyncer.Reset();
+  for (std::map<uint16_t, cSectionSyncer*>::iterator it = m_sectionSyncers.begin(); it != m_sectionSyncers.end(); ++it)
+    it->second->Reset();
   if (m_attached)
   {
     m_attached = false;
@@ -141,6 +149,7 @@ void cScanReceiver::AddPid(uint16_t pid)
     return;
   if (m_device->Receiver()->AttachReceiver(this, pid))
   {
+    m_sectionSyncers.insert(make_pair(pid, new cSectionSyncer));
     m_pidsAdded.insert(pid);
     m_pids.insert(pid);
   }
@@ -154,6 +163,12 @@ void cScanReceiver::RemovePid(uint16_t pid)
   {
     if (DynamicPid(pid))
     {
+      std::map<uint16_t, cSectionSyncer*>::iterator cit = m_sectionSyncers.find(pid);
+      if (cit != m_sectionSyncers.end())
+      {
+        delete cit->second;
+        m_sectionSyncers.erase(cit);
+      }
       m_pidsAdded.erase(pid);
       m_pids.erase(it);
     }
@@ -173,7 +188,16 @@ void cScanReceiver::RemovePids(void)
     m_device->Receiver()->DetachReceiverPid(this, *it);
 
     if (DynamicPid(*it))
+    {
+      std::map<uint16_t, cSectionSyncer*>::iterator cit = m_sectionSyncers.find(*it);
+      if (cit != m_sectionSyncers.end())
+      {
+        delete cit->second;
+        m_sectionSyncers.erase(cit);
+      }
+
       pidsRemoved.push_back(*it);
+    }
   }
 
   for (std::vector<uint16_t>::const_iterator it = pidsRemoved.begin(); it != pidsRemoved.end(); ++it)
@@ -211,9 +235,20 @@ bool cScanReceiver::DynamicPid(uint16_t pid) const
   return m_pidsAdded.find(pid) != m_pidsAdded.end();
 }
 
-bool cScanReceiver::Sync(uint8_t version, int sectionNumber, int endSectionNumber)
+bool cScanReceiver::Sync(uint16_t pid, uint8_t version, int sectionNumber, int endSectionNumber)
 {
-  return m_sectionSyncer.Sync(version, sectionNumber, endSectionNumber) == cSectionSyncer::SYNC_STATUS_NEW_VERSION;
+  std::map<uint16_t, cSectionSyncer*>::iterator it = m_sectionSyncers.find(pid);
+  return it != m_sectionSyncers.end() ?
+      it->second->Sync(version, sectionNumber, endSectionNumber) == cSectionSyncer::SYNC_STATUS_NEW_VERSION :
+      false;
+}
+
+bool cScanReceiver::Synced(uint16_t pid) const
+{
+  std::map<uint16_t, cSectionSyncer*>::const_iterator it = m_sectionSyncers.find(pid);
+  return it != m_sectionSyncers.end() ?
+      it->second->Synced() :
+      false;
 }
 
 }

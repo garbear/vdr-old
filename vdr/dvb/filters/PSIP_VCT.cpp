@@ -55,7 +55,7 @@ void cPsipVct::ReceivePacket(uint16_t pid, const uint8_t* data)
     /** wait for the PMT scan to complete first */
     if (!m_device->Scan()->PAT()->PmtScanned())
       return;
-    if (!Sync(vct.getVersionNumber(), vct.getSectionNumber(), vct.getLastSectionNumber()))
+    if (!Sync(pid, vct.getVersionNumber(), vct.getSectionNumber(), vct.getLastSectionNumber()))
       return;
 
     SI::PSIP_VCT::ChannelInfo channelInfo;

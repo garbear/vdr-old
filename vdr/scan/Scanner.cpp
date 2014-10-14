@@ -83,7 +83,7 @@ void* cScanner::Process()
   if (type == TRANSPONDER_INVALID)
     type = m_setup.device->Scan()->Type();
   else
-    m_setup.device->Scan()->SetType(TRANSPONDER_ATSC);
+    m_setup.device->Scan()->SetType(TRANSPONDER_TERRESTRIAL);
 
   switch (type)
   {

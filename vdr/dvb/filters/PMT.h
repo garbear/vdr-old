@@ -38,7 +38,6 @@ typedef struct
   uint16_t       pid;
   uint16_t       tsid;
   uint16_t       sid;
-  cSectionSyncer sync;
 } PMTFilter;
 
 class cPmt : public cScanReceiver
