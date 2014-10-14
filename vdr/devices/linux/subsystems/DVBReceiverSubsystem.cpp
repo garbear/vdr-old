@@ -36,7 +36,7 @@
 
 using namespace std;
 
-#define TS_PACKET_BUFFER_SIZE    (5 * TS_SIZE) // Buffer up to 5 TS packets
+#define TS_PACKET_BUFFER_SIZE    (25 * TS_SIZE) // Buffer up to 25 TS packets
 #define FILE_DESCRIPTOR_INVALID  (-1)
 
 //#define PID_DEBUGGING(x...) dsyslog(x)
