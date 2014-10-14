@@ -39,6 +39,9 @@ using namespace std;
 #define TS_PACKET_BUFFER_SIZE    (5 * TS_SIZE) // Buffer up to 5 TS packets
 #define FILE_DESCRIPTOR_INVALID  (-1)
 
+//#define PID_DEBUGGING(x...) dsyslog(x)
+#define PID_DEBUGGING(x...) {}
+
 namespace VDR
 {
 
@@ -126,7 +129,7 @@ bool cDvbReceiverResource::Open(void)
 #endif
 
   assert(m_handle >= 0);
-  dsyslog("Opened %s", ToString().c_str());
+  PID_DEBUGGING("Opened %s", ToString().c_str());
 
   return true;
 }
@@ -154,7 +157,7 @@ void cDvbReceiverResource::Close(void)
 
     close(m_handle);
     m_handle = FILE_DESCRIPTOR_INVALID;
-    dsyslog("Closed %s", ToString().c_str());
+    PID_DEBUGGING("Closed %s", ToString().c_str());
   }
 }
 
