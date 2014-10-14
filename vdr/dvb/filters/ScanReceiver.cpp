@@ -31,6 +31,9 @@
 
 using namespace std;
 
+//#define FILTER_DEBUGGING(x...) dsyslog(x)
+#define FILTER_DEBUGGING(x...) {}
+
 namespace VDR
 {
 
@@ -94,7 +97,10 @@ bool cScanReceiver::Attach(void)
   for (std::set<uint16_t>::const_iterator it = m_pids.begin(); it != m_pids.end(); ++it)
     m_attached &= m_device->Receiver()->AttachReceiver(this, *it);
 
-  dsyslog(m_attached ? "%s filter attached" : "failed to attach %s filter", m_name.c_str());
+  if (!m_attached)
+    esyslog("failed to attach %s filter", m_name.c_str());
+  else
+    FILTER_DEBUGGING("%s filter attached", m_name.c_str());
 
   return m_attached;
 }
@@ -108,7 +114,7 @@ void cScanReceiver::Detach(void)
   if (m_attached)
   {
     m_attached = false;
-    dsyslog("%s filter detached", m_name.c_str());
+    FILTER_DEBUGGING("%s filter detached", m_name.c_str());
   }
 }
 
@@ -210,7 +216,7 @@ void cScanReceiver::SetScanned(void)
     PLATFORM::CLockObject lock(m_scannedmutex);
     if (!m_scanned)
     {
-      dsyslog("%s scan completed", m_name.c_str());
+      FILTER_DEBUGGING("%s scan completed", m_name.c_str());
       m_scanned = true;
     }
     m_scannedEvent.Broadcast();
