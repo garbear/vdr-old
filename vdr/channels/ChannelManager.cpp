@@ -143,7 +143,13 @@ void cChannelManager::MergeChannelNamesAndModulation(const ChannelPtr& channel)
       if (channel->ATSCSourceID() != ATSC_SOURCE_ID_NONE)
         (*itChannel)->SetATSCSourceId(channel->ATSCSourceID());
 
-      (*itChannel)->NotifyObservers();
+      if ((*itChannel)->Changed())
+      {
+        dsyslog("updated channel: %s (%d-%d, TSID=%u, SID=%u, source=%u)",
+            (*itChannel)->ShortName().c_str(), (*itChannel)->Number(), (*itChannel)->SubNumber(),
+            (*itChannel)->ID().Tsid(), (*itChannel)->ID().Sid(), (*itChannel)->ATSCSourceID());
+        (*itChannel)->NotifyObservers();
+      }
       break;
     }
   }
@@ -152,6 +158,9 @@ void cChannelManager::MergeChannelNamesAndModulation(const ChannelPtr& channel)
   {
     channel->RegisterObserver(this);
     m_channels.push_back(channel);
+    dsyslog("added channel: %s (%d-%d, TSID=%u, SID=%u, source=%u)",
+        channel->ShortName().c_str(), channel->Number(), channel->SubNumber(),
+        channel->ID().Tsid(), channel->ID().Sid(), channel->ATSCSourceID());
     SetChanged();
   }
 }
@@ -187,13 +196,13 @@ ChannelPtr cChannelManager::GetByChannelUID(uint32_t channelUid) const
   return cChannel::EmptyChannel;
 }
 
-ChannelPtr cChannelManager::GetByTransportAndService(uint16_t network, uint16_t transport, uint16_t service)
+ChannelPtr cChannelManager::GetByTransportAndService(const cTransponder& transponder, uint16_t transport, uint16_t service)
 {
   CLockObject lock(m_mutex);
 
   for (ChannelVector::const_iterator itChannel = m_channels.begin(); itChannel != m_channels.end(); ++itChannel)
   {
-    if ((*itChannel)->ID().Nid()  == network &&
+    if ((*itChannel)->GetTransponder() == transponder &&
         (*itChannel)->ID().Tsid() == transport &&
         (*itChannel)->ID().Sid()  == service)
       return (*itChannel);

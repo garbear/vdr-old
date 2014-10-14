@@ -29,9 +29,13 @@
 
 namespace VDR
 {
-class cChannelPropsScanner;
-class cChannelNamesScanner;
-class cEventScanner;
+class cScanReceiver;
+class cEit;
+class cPat;
+class cSdt;
+class cPsipMgt;
+class cPsipEit;
+class cPsipStt;
 
 class cDeviceScanSubsystem : protected cDeviceSubsystem,
                              public    Observer,
@@ -46,6 +50,8 @@ public:
 
   bool WaitForTransponderScan(void);
   bool WaitForEPGScan(void);
+  bool AttachReceivers(void);
+  void DetachReceivers(void);
 
   virtual void Notify(const Observable &obs, const ObservableMessage msg);
 
@@ -53,10 +59,42 @@ public:
   virtual void OnChannelNamesScanned(const ChannelPtr& channel);
   virtual void OnEventScanned(const EventPtr& event);
 
+  unsigned int GetGpsUtcOffset(void);
+
+  TRANSPONDER_TYPE Type(void);
+  void SetType(TRANSPONDER_TYPE type) { m_type = type; }
+
+  cSdt* SDT(void) const { return m_sdt; }
+  cPat* PAT(void) const { return m_pat; }
+  cEit* EIT(void) const { return m_eit; }
+  cPsipMgt* PsipMGT(void) const { return m_mgt; }
+  cPsipStt* PsipSTT(void) const { return m_psipstt; }
+  cPsipEit* PsipEIT(void) const { return m_psipeit; }
+
+  void SetScanned(cScanReceiver* receiver);
+  void ResetScanned(cScanReceiver* receiver);
+
 private:
-  cChannelPropsScanner* m_channelPropsScanner;
-  cChannelNamesScanner* m_channelNamesScanner;
-  cEventScanner*        m_eventScanner;
+  void LockAcquired(void);
+  void LockLost(void);
+  bool ReceiverOk(cScanReceiver* receiver);
+
+  cPat*                      m_pat;
+  cEit*                      m_eit;
+  cSdt*                      m_sdt;
+  cPsipMgt*                  m_mgt;
+  cPsipEit*                  m_psipeit;
+  cPsipStt*                  m_psipstt;
+  std::set<cScanReceiver*>   m_receivers;
+  PLATFORM::CMutex           m_mutex;
+  PLATFORM::CCondition<bool> m_lockCondition;
+  bool                       m_locked;
+  TRANSPONDER_TYPE           m_type;
+  cDevice*                   m_device;
+  std::set<cScanReceiver*>   m_waitingForReceivers;
+  bool                       m_scanFinished;
+  PLATFORM::CMutex           m_waitingMutex;
+  PLATFORM::CCondition<bool> m_waitingCondition;
 };
 
 }

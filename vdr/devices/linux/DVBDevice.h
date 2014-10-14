@@ -53,7 +53,6 @@ class cDvbAudioSubsystem;
 class cDvbChannelSubsystem;
 class cDvbCommonInterfaceSubsystem;
 class cDvbReceiverSubsystem;
-class cDvbSectionFilterSubsystem;
 
 class cDvbDevice : public cDevice, public Observer
 {
@@ -87,7 +86,6 @@ public:
   cDvbChannelSubsystem         *DvbChannel() const;
   cDvbCommonInterfaceSubsystem *DvbCommonInterface() const;
   cDvbReceiverSubsystem        *DvbReceiver() const;
-  cDvbSectionFilterSubsystem   *DvbSectionFilter() const;
 
 public: // TODO: Make private!
   cDvbTuner    m_dvbTuner;

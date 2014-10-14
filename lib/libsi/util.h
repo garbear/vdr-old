@@ -36,6 +36,8 @@ typedef time_t si_time_t;
                              (60 * ((10*((x##_m & 0xF0)>>4)) + (x##_m & 0xF))) + \
                              ((10*((x##_s & 0xF0)>>4)) + (x##_s & 0xF)))
 
+#define CHECK_VALID_DATA(x,y) if (!(x)) { y.setInvalid(); return; }
+
 namespace SI {
 
 //Holds an array of unsigned char which is deleted
@@ -61,13 +63,14 @@ public:
    template <typename T> const T* getData() const { return (T*)(data+off); }
    template <typename T> const T* getData(int offset) const { return (T*)(data+offset+off); }
       //sets p to point to data+offset, increments offset
-   template <typename T> void setPointerAndOffset(const T* &p, int &offset) const { p=(T*)getData(offset); offset+=sizeof(T); }
+   template <typename T> void setPointerAndOffset(const T* &p, int &offset) const { p=(T*)getData(offset); if (offset + sizeof(T) < size) offset+=sizeof(T); }
    unsigned char operator[](const int index) const { return data ? data[off+index] : (unsigned char)0; }
    int getLength() const { return size; }
    u_int16_t TwoBytes(const int index) const { return data ? u_int16_t((data[off+index] << 8) | data[off+index+1]) : u_int16_t(0); }
    u_int32_t FourBytes(const int index) const { return data ? u_int32_t((data[off+index] << 24) | (data[off+index+1] << 16) | (data[off+index+2] << 8) | data[off+index+3]) : u_int32_t(0); }
 
    bool isValid() const { return valid; }
+   void setInvalid(void) { valid = false; }
    bool checkSize(int offset);
 
    void addOffset(int offset) { off+=offset; }

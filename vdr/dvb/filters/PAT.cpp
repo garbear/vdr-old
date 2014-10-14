@@ -24,7 +24,11 @@
 
 #include "PAT.h"
 #include "PMT.h"
+#include "SDT.h"
 #include "channels/Channel.h"
+#include "devices/Device.h"
+#include "devices/subsystems/DeviceReceiverSubsystem.h"
+#include "devices/subsystems/DeviceScanSubsystem.h"
 #include "utils/log/Log.h"
 
 #include <libsi/si.h>
@@ -38,40 +42,51 @@ using namespace std;
 namespace VDR
 {
 
-cPat::cPat(cDevice* device)
- : cFilter(device),
-   m_bAbort(false)
+cPat::cPat(cDevice* device) :
+    cScanReceiver(device, "PAT", PID_PAT),
+    m_pmt(device)
 {
-  OpenResource(PID_PAT, TableIdPAT);
 }
 
-bool cPat::ScanChannels(iFilterCallback* callback)
+void cPat::LockLost(void)
 {
-  bool bSuccess = true;
-  m_bAbort      = false;
+  cScanReceiver::LockLost();
+  m_pmt.Detach();
+}
 
-  uint16_t        pid;  // Packet ID
-  vector<uint8_t> data; // Section data
-  if (GetSection(pid, data) && !m_bAbort)
+bool cPat::WaitForScan(uint32_t iTimeout /* = TRANSPONDER_TIMEOUT */)
+{
+  return cScanReceiver::WaitForScan(iTimeout) &&
+      m_pmt.WaitForScan(iTimeout);
+}
+
+void cPat::ReceivePacket(uint16_t pid, const uint8_t* data)
+{
+  SI::PAT tsPAT(data);
+  if (tsPAT.CheckCRCAndParse() && tsPAT.getTableId() == TableIdPAT)
   {
-    SI::PAT tsPAT(data.data());
-    if (tsPAT.CheckCRCAndParse())
+    bool haspmt = false;
+    if (!Sync(pid, tsPAT.getVersionNumber(), tsPAT.getSectionNumber(), tsPAT.getLastSectionNumber()))
+      return;
+
+    SI::PAT::Association assoc;
+    for (SI::Loop::Iterator it; tsPAT.associationLoop.getNext(assoc, it); )
     {
-      SI::PAT::Association assoc;
-      for (SI::Loop::Iterator it; !m_bAbort && tsPAT.associationLoop.getNext(assoc, it); )
-      {
-        // TODO: Let's do something with the NIT PID
-        if (assoc.isNITPid())
-          continue;
+      // TODO: Let's do something with the NIT PID
+      if (assoc.isNITPid())
+        continue;
 
-        dsyslog("PAT: Scanning for PMT table with TSID=%d, SID=%d", tsPAT.getTransportStreamId(), assoc.getServiceId());
+      haspmt = true;
+      dsyslog("PAT: Scanning for PMT table with TSID=%d, SID=%d", tsPAT.getTransportStreamId(), assoc.getServiceId());
+      m_pmt.AddTransport(tsPAT.getTransportStreamId(), assoc.getServiceId(), assoc.getPid());
+    }
 
-        cPmt pmt(GetDevice(), tsPAT.getTransportStreamId(), assoc.getServiceId(), assoc.getPid());
-        bSuccess &= pmt.ScanChannel(callback);
-      }
+    if (haspmt)
+    {
+      m_pmt.Attach();
+      SetScanned();
     }
   }
-  return bSuccess && !m_bAbort;
 }
 
 }

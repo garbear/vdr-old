@@ -22,7 +22,7 @@
  */
 #pragma once
 
-#include "dvb/filters/Filter.h"
+#include "ScanReceiver.h"
 #include "epg/Event.h"
 
 #include <map>
@@ -31,13 +31,17 @@
 namespace VDR
 {
 
-class cPsipEit : public cFilter
+class cPsipEit : public cScanReceiver
 {
 public:
-  cPsipEit(cDevice* device, const std::vector<uint16_t>& pids);
+  cPsipEit(cDevice* device);
   virtual ~cPsipEit(void) { }
 
-  bool ScanEvents(iFilterCallback* callback, unsigned int gpsUtcOffset);
+  void AttachPids(const std::vector<uint16_t>& pids);
+  void ReceivePacket(uint16_t pid, const uint8_t* data);
+
+  bool InATSC(void) const { return true; }
+  bool InDVB(void) const { return false; }
 };
 
 }

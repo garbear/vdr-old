@@ -30,7 +30,6 @@
 #include "devices/subsystems/DevicePlayerSubsystem.h"
 #include "devices/subsystems/DeviceReceiverSubsystem.h"
 #include "devices/subsystems/DeviceScanSubsystem.h"
-#include "devices/subsystems/DeviceSectionFilterSubsystem.h"
 #include "devices/subsystems/DeviceSPUSubsystem.h"
 #include "devices/subsystems/DeviceTrackSubsystem.h"
 #include "devices/subsystems/DeviceVideoFormatSubsystem.h"
@@ -55,7 +54,6 @@ void cSubsystems::Free() const
   delete Player;
   delete Receiver;
   delete Scan;
-  delete SectionFilter;
   delete SPU;
   delete Track;
   delete VideoFormat;
@@ -69,7 +67,6 @@ void cSubsystems::AssertValid() const
   assert(Player);
   assert(Receiver);
   assert(Scan);
-  assert(SectionFilter);
   assert(SPU);
   assert(Track);
   assert(VideoFormat);
@@ -103,7 +100,6 @@ void cDevice::Deinitialise(void)
 {
   m_bInitialised = false;
   Channel()->UnregisterObserver(Scan());
-  SectionFilter()->Stop();
   Receiver()->Stop();
 }
 

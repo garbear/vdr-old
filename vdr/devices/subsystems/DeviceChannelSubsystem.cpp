@@ -23,7 +23,7 @@
 #include "DeviceCommonInterfaceSubsystem.h"
 #include "DevicePlayerSubsystem.h"
 #include "DeviceReceiverSubsystem.h"
-#include "DeviceSectionFilterSubsystem.h"
+#include "DeviceScanSubsystem.h"
 #include "DeviceSPUSubsystem.h"
 #include "devices/commoninterface/CI.h"
 #include "devices/Device.h"
@@ -62,9 +62,7 @@ cDeviceChannelSubsystem::cDeviceChannelSubsystem(cDevice *device)
 
 bool cDeviceChannelSubsystem::SwitchChannel(const ChannelPtr& channel)
 {
-  // Stop section handling
-  SectionFilter()->Stop();
-  Receiver()->Stop();
+  Receiver()->DetachAllReceivers();
 
   // Tell the camSlot about the channel switch and add all PIDs of this
   // channel to it, for possible later decryption
@@ -73,8 +71,6 @@ bool cDeviceChannelSubsystem::SwitchChannel(const ChannelPtr& channel)
 
   if (Tune(channel->GetTransponder()))
   {
-    // Start section handling
-    SectionFilter()->Start();
     Receiver()->Start();
 
     // Start decrypting any PIDs that might have been set in SetChannelDevice():
@@ -124,10 +120,10 @@ TunerHandlePtr cDeviceChannelSubsystem::Acquire(const ChannelPtr& channel, devic
 {
   bool valid(true);
   bool switchNeeded(true);
-  TunerHandlePtr handle;
+  TunerHandlePtr handle = TunerHandlePtr(new cTunerHandle(type, this, callbacks, channel));
   std::vector<TunerHandlePtr> lowerPrio;
 
-  dsyslog("acquire subscription for channel %uMHz prio %d", channel->GetTransponder().FrequencyMHz(), type);
+  dsyslog("acquire subscription for %s", handle->ToString().c_str());
 
   {
     CLockObject lock(m_mutex);
@@ -139,13 +135,13 @@ TunerHandlePtr cDeviceChannelSubsystem::Acquire(const ChannelPtr& channel, devic
         if ((*it)->Type() > type)
         {
           /** subscription with lower prio than this one */
-          dsyslog("stopping subscription for %uMHz prio %d", (*it)->Channel()->GetTransponder().FrequencyMHz(), (*it)->Type());
+          dsyslog("stopping subscription: %s", (*it)->ToString().c_str());
           lowerPrio.push_back(*it);
         }
         else if ((*it)->Type() < type)
         {
           /** subscription with higher prio than this one */
-          dsyslog("cannot acquire new subscription for channel %uMHz prio %d: channel %uMHz has a higher prio %d", channel->GetTransponder().FrequencyMHz(), type,  (*it)->Channel()->GetTransponder().FrequencyMHz(), (*it)->Type());
+          dsyslog("cannot acquire new subscription for %s: channel %s", handle->ToString().c_str(),  (*it)->ToString().c_str());
           valid = false;
         }
       }
@@ -169,17 +165,6 @@ TunerHandlePtr cDeviceChannelSubsystem::Acquire(const ChannelPtr& channel, devic
       /** add new registration */
       handle = TunerHandlePtr(new cTunerHandle(type, this, callbacks, channel));
       m_activeTransponders.push_back(handle);
-
-      if (switchNeeded)
-      {
-        dsyslog("switch to %uMHz prio %d", channel->GetTransponder().FrequencyMHz(), type);
-        if (!SwitchChannel(channel))
-        {
-          Release(handle);
-          dsyslog("failed to switch to %uMHz prio %d", channel->GetTransponder().FrequencyMHz(), type);
-          handle = cTunerHandle::EmptyHandle;
-        }
-      }
     }
   }
 
@@ -187,26 +172,46 @@ TunerHandlePtr cDeviceChannelSubsystem::Acquire(const ChannelPtr& channel, devic
   {
     /** notify lower prio that they lost prio */
     for (std::vector<TunerHandlePtr>::iterator it = lowerPrio.begin(); it != lowerPrio.end(); ++it)
+    {
+      (*it)->LockLost();
       (*it)->LostPriority();
+    }
+
+    if (switchNeeded)
+    {
+      dsyslog("switch to %s", handle->ToString().c_str());
+      if (!SwitchChannel(channel))
+      {
+        Release(handle);
+        dsyslog("failed to switch to %s", handle->ToString().c_str());
+        handle = cTunerHandle::EmptyHandle;
+      }
+    }
+  }
+  else
+  {
+    handle = cTunerHandle::EmptyHandle;
   }
 
   return handle;
 }
 
-void cDeviceChannelSubsystem::Release(TunerHandlePtr& handle)
+void cDeviceChannelSubsystem::Release(TunerHandlePtr& handle, bool notify /* = true */)
 {
   CLockObject lock(m_mutex);
   std::vector<TunerHandlePtr>::iterator it = std::find(m_activeTransponders.begin(), m_activeTransponders.end(), handle);
   if (it != m_activeTransponders.end())
   {
     m_activeTransponders.erase(it);
+    if (notify)
+      handle->LockLost();
     dsyslog("released subscription for channel %uMHz prio %d", handle->Channel()->GetTransponder().FrequencyMHz(), handle->Type());
   }
   if (m_activeTransponders.empty())
     ClearChannel();
 }
 
-void cDeviceChannelSubsystem::Release(cTunerHandle* handle)
+void cDeviceChannelSubsystem::Release(cTunerHandle* handle, bool notify /* = true */)
 {
   CLockObject lock(m_mutex);
   for (std::vector<TunerHandlePtr>::iterator it = m_activeTransponders.begin(); it != m_activeTransponders.end(); ++it)
@@ -214,6 +219,8 @@ void cDeviceChannelSubsystem::Release(cTunerHandle* handle)
     if ((*it).get() == handle)
     {
       m_activeTransponders.erase(it);
+      if (notify)
+        handle->LockLost();
       dsyslog("released subscription for channel %uMHz prio %d", handle->Channel()->GetTransponder().FrequencyMHz(), handle->Type());
       break;
     }

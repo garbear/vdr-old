@@ -41,7 +41,6 @@ class cDevicePIDSubsystem;
 class cDevicePlayerSubsystem;
 class cDeviceReceiverSubsystem;
 class cDeviceScanSubsystem;
-class cDeviceSectionFilterSubsystem;
 class cDeviceSPUSubsystem;
 class cDeviceTrackSubsystem;
 class cDeviceVideoFormatSubsystem;
@@ -58,7 +57,6 @@ struct cSubsystems
   cDevicePlayerSubsystem          *Player;
   cDeviceReceiverSubsystem        *Receiver;
   cDeviceScanSubsystem            *Scan;
-  cDeviceSectionFilterSubsystem   *SectionFilter;
   cDeviceSPUSubsystem             *SPU;
   cDeviceTrackSubsystem           *Track;
   cDeviceVideoFormatSubsystem     *VideoFormat;
@@ -121,7 +119,6 @@ public:
   cDevicePlayerSubsystem*          Player(void)          const { return m_subsystems.Player; }
   cDeviceReceiverSubsystem*        Receiver(void)        const { return m_subsystems.Receiver; }
   cDeviceScanSubsystem*            Scan(void)            const { return m_subsystems.Scan; }
-  cDeviceSectionFilterSubsystem*   SectionFilter(void)   const { return m_subsystems.SectionFilter; }
   cDeviceSPUSubsystem*             SPU(void)             const { return m_subsystems.SPU; }
   cDeviceTrackSubsystem*           Track(void)           const { return m_subsystems.Track; }
   cDeviceVideoFormatSubsystem*     VideoFormat(void)     const { return m_subsystems.VideoFormat; }

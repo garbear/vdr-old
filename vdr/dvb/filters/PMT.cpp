@@ -23,7 +23,13 @@
 
 #include "PMT.h"
 #include "channels/Channel.h"
+#include "channels/ChannelManager.h"
 #include "Config.h"
+#include "devices/Device.h"
+#include "devices/Remux.h"
+#include "devices/subsystems/DeviceChannelSubsystem.h"
+#include "devices/subsystems/DeviceReceiverSubsystem.h"
+#include "devices/subsystems/DeviceScanSubsystem.h"
 #include "dvb/CADescriptor.h"
 #include "settings/Settings.h"
 #include "utils/CommonMacros.h"
@@ -70,45 +76,79 @@ void LogVtype(uint8_t oldVtype, uint8_t newVtype)
       GetVtype(oldVtype), GetVtype(newVtype));
 }
 
-cPmt::cPmt(cDevice* device, uint16_t tsid, uint16_t sid, uint16_t pid)
- : cFilter(device),
-   m_tsid(tsid),
-   m_sid(sid)
+cPmt::cPmt(cDevice* device)
+ : cScanReceiver(device, "PMT")
 {
-  OpenResource(pid, TableIdPMT);
 }
 
-bool cPmt::ScanChannel(iFilterCallback* callback)
+bool cPmt::AddTransport(uint16_t tsid, uint16_t sid, uint16_t pid)
 {
-  uint16_t        pid;  // Packet ID
-  vector<uint8_t> data; // Section data
-  if (GetSection(pid, data))
-  {
-    SI::PMT pmt(data.data());
-    if (pmt.CheckCRCAndParse())
-    {
-      if (m_sid == pmt.getServiceId())
-        callback->OnChannelPropsScanned(CreateChannel(pmt));
-      else
-        esyslog("PMT service ID mismatch! Expected %u, found %d", m_sid, pmt.getServiceId());
-    }
-    return true;
-  }
+  PLATFORM::CLockObject lock(m_mutex);
+  for (std::vector<PMTFilter>::const_iterator it = m_filters.begin(); it != m_filters.end(); ++it)
+    if ((*it).pid == pid && (*it).tsid == tsid && (*it).sid == sid)
+      return true;
+
+  PMTFilter newfilter;
+  newfilter.tsid = tsid;
+  newfilter.sid  = sid;
+  newfilter.pid  = pid;
+
+  bool retval = true;
+  ResetScanned();
+  m_filters.push_back(newfilter);
+  AddPid(pid);
+  return retval;
+}
+
+bool cPmt::HasPid(uint16_t pid) const
+{
+  PLATFORM::CLockObject lock(m_mutex);
+  for (std::vector<PMTFilter>::const_iterator it = m_filters.begin(); it != m_filters.end(); ++it)
+    if ((*it).pid == pid)
+      return true;
   return false;
 }
 
-ChannelPtr cPmt::CreateChannel(/* const */ SI::PMT& pmt) const // TODO: libsi fails at const-correctness
+bool cPmt::HasUnsyncedPids(void) const
+{
+  PLATFORM::CLockObject lock(m_mutex);
+  for (std::vector<PMTFilter>::const_iterator it = m_filters.begin(); it != m_filters.end(); ++it)
+    if (!Synced((*it).pid))
+      return true;
+  return false;
+}
+
+void cPmt::ReceivePacket(uint16_t pid, const uint8_t* data)
+{
+  SI::PMT pmt(data);
+  if (pmt.CheckCRCAndParse() && pmt.getTableId() == TableIdPMT)
+  {
+    if (!Sync(pid, pmt.getVersionNumber(), pmt.getSectionNumber(), pmt.getLastSectionNumber()))
+      return;
+
+    for (std::vector<PMTFilter>::iterator it = m_filters.begin(); it != m_filters.end(); ++it)
+    {
+      if ((*it).pid == pid && (*it).sid == pmt.getServiceId())
+        m_device->Scan()->OnChannelPropsScanned(CreateChannel(pmt, (*it).tsid));
+    }
+
+    if (!HasUnsyncedPids())
+      SetScanned();
+  }
+}
+
+ChannelPtr cPmt::CreateChannel(/* const */ SI::PMT& pmt, uint16_t tsid) const // TODO: libsi fails at const-correctness
 {
   ChannelPtr channel = ChannelPtr(new cChannel);
 
-  SetIds(channel);
+  channel->SetId(0, tsid, pmt.getServiceId()); // TODO: How to find the NIT of a new channel?
   SetStreams(channel, pmt);
   SetCaDescriptors(channel, pmt);
-  channel->SetTransponder(GetTransponder());
+  channel->SetTransponder(m_device->Channel()->GetCurrentlyTunedTransponder());
 
   // Log a comma-separated list of streams we found in the channel
   stringstream logStreams;
-  logStreams << "PMT: Found channel with SID=" << m_sid << " and streams: " << channel->GetVideoStream().vpid << " (Video)";
+  logStreams << "PMT: Found channel with SID=" << pmt.getServiceId() << " and streams: " << channel->GetVideoStream().vpid << " (Video)";
   for (vector<AudioStream>::const_iterator it = channel->GetAudioStreams().begin(); it != channel->GetAudioStreams().end(); ++it)
     logStreams << ", " << it->apid << " (Audio)";
   for (vector<DataStream>::const_iterator it = channel->GetDataStreams().begin(); it != channel->GetDataStreams().end(); ++it)
@@ -120,12 +160,6 @@ ChannelPtr cPmt::CreateChannel(/* const */ SI::PMT& pmt) const // TODO: libsi fa
   dsyslog("%s", logStreams.str().c_str());
 
   return channel;
-}
-
-void cPmt::SetIds(const ChannelPtr& channel) const
-{
-  const uint16_t nit = 0; // TODO: How to find the NIT of a new channel?
-  channel->SetId(nit, m_tsid, m_sid);
 }
 
 void cPmt::SetStreams(const ChannelPtr& channel, /* const */ SI::PMT& pmt) const // TODO: libsi fails at const-correctness
@@ -421,6 +455,13 @@ void cPmt::SetCaDescriptors(const ChannelPtr& channel, /* const */ SI::PMT& pmt)
   }
 
   channel->SetCaDescriptors(caDescriptors);
+}
+
+void cPmt::Detach(void)
+{
+  cScanReceiver::Detach();
+  m_filters.clear();
+  RemovePids();
 }
 
 }

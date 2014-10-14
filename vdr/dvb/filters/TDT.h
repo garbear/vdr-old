@@ -22,7 +22,7 @@
  */
 #pragma once
 
-#include "dvb/filters/Filter.h"
+#include "ScanReceiver.h"
 #include "lib/platform/threads/mutex.h"
 
 namespace VDR
@@ -34,13 +34,18 @@ public:
   virtual ~iTdtScannerCallback() { }
 };
 
-class cTdt : public cFilter
+class cTdt : public cScanReceiver
 {
 public:
   cTdt(cDevice* device);
   virtual ~cTdt(void) { }
 
+  void ReceivePacket(uint16_t pid, const uint8_t* data);
+
   time_t GetTime(void);
+
+  bool InATSC(void) const { return true; }
+  bool InDVB(void) const { return false; }
 };
 
 }

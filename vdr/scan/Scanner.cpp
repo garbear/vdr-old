@@ -80,31 +80,27 @@ void* cScanner::Process()
     return NULL;
   const fe_caps_t caps = dvbDevice->m_dvbTuner.Capabilities();
   TRANSPONDER_TYPE type = m_setup.dvbType;
-  if (m_setup.dvbType == TRANSPONDER_INVALID)
-  {
-    if (dvbDevice->Channel()->ProvidesSource(TRANSPONDER_ATSC))
-      type = TRANSPONDER_ATSC;
-    else if (dvbDevice->Channel()->ProvidesSource(TRANSPONDER_CABLE))
-      type = TRANSPONDER_CABLE;
-    else if (dvbDevice->Channel()->ProvidesSource(TRANSPONDER_SATELLITE))
-      type = TRANSPONDER_SATELLITE;
-    else if (dvbDevice->Channel()->ProvidesSource(TRANSPONDER_TERRESTRIAL))
-      type = TRANSPONDER_TERRESTRIAL;
-  }
-
+  if (type == TRANSPONDER_INVALID)
+    type = m_setup.device->Scan()->Type();
+  else
+    m_setup.device->Scan()->SetType(TRANSPONDER_TERRESTRIAL);
 
   switch (type)
   {
   case TRANSPONDER_ATSC:
+    dsyslog("Scanning ATSC frequencies");
     transponders = new cAtscTransponderFactory(caps, m_setup.atscModulation);
     break;
   case TRANSPONDER_CABLE:
+    dsyslog("Scanning DVB-C frequencies");
     transponders = new cCableTransponderFactory(caps, m_setup.dvbcSymbolRate);
     break;
   case TRANSPONDER_SATELLITE:
+    dsyslog("Scanning DVB-S frequencies");
     transponders = new cSatelliteTransponderFactory(caps, m_setup.satelliteIndex);
     break;
   case TRANSPONDER_TERRESTRIAL:
+    dsyslog("Scanning DVB-T frequencies");
     transponders = new cTerrestrialTransponderFactory(caps);
     break;
   }
@@ -128,6 +124,7 @@ void* cScanner::Process()
     if (newHandle)
     {
       bool bSuccess = m_setup.device->Scan()->WaitForTransponderScan();
+      cChannelManager::Get().NotifyObservers();
       dsyslog("%s %d MHz", bSuccess ? "Successfully scanned" : "Failed to scan", transponder.FrequencyMHz());
       newHandle->Release();
     }

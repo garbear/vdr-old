@@ -22,7 +22,12 @@
  */
 
 #include "PSIP_VCT.h"
+#include "PAT.h"
 #include "channels/Channel.h"
+#include "channels/ChannelManager.h"
+#include "devices/Device.h"
+#include "devices/subsystems/DeviceChannelSubsystem.h"
+#include "devices/subsystems/DeviceScanSubsystem.h"
 #include "utils/log/Log.h"
 #include "utils/UTF8Utils.h"
 
@@ -37,101 +42,87 @@ using namespace std;
 namespace VDR
 {
 
-cPsipVct::cPsipVct(cDevice* device)
- : cFilter(device),
-   m_bAbort(false)
+cPsipVct::cPsipVct(cDevice* device) :
+    cScanReceiver(device, "VCT", PID_VCT)
 {
-  OpenResource(PID_VCT, TableIdTVCT);
-  OpenResource(PID_VCT, TableIdCVCT);
 }
 
-bool cPsipVct::ScanChannels(iFilterCallback* callback)
+void cPsipVct::ReceivePacket(uint16_t pid, const uint8_t* data)
 {
-  bool bSuccess = false;
-  m_bAbort      = false;
-
-  // TODO: Might be multiple sections, need section syncer
-
-  uint16_t        pid;  // Packet ID
-  vector<uint8_t> data; // Section data
-  if (GetSection(pid, data) && !m_bAbort)
+  SI::PSIP_VCT vct(data);
+  if (vct.CheckCRCAndParse() && (vct.getTableId() == TableIdTVCT || vct.getTableId() == TableIdCVCT))
   {
-    bSuccess = true;
+    /** wait for the PMT scan to complete first */
+    if (!m_device->Scan()->PAT()->PmtScanned())
+      return;
+    if (!Sync(pid, vct.getVersionNumber(), vct.getSectionNumber(), vct.getLastSectionNumber()))
+      return;
 
-    SI::PSIP_VCT vct(data.data());
-    if (vct.CheckCRCAndParse())
+    SI::PSIP_VCT::ChannelInfo channelInfo;
+    for (SI::Loop::Iterator it; vct.channelInfoLoop.getNext(channelInfo, it); )
     {
-      SI::PSIP_VCT::ChannelInfo channelInfo;
-      for (SI::Loop::Iterator it; !m_bAbort && vct.channelInfoLoop.getNext(channelInfo, it); )
+      ChannelPtr channel = ChannelPtr(new cChannel);
+
+      // Short name
+      char buffer[22] = { };
+      channelInfo.getShortName(buffer);
+      channel->SetName(buffer, buffer, ""); // TODO: Parse descriptors for long name
+
+      Descriptor* dtor;
+      SI::Loop::Iterator it2;
+      if ((dtor = channelInfo.channelDescriptors.getNext(it2, PSIP_ExtendedChannelNameDescriptorTag)))
       {
-        ChannelPtr channel = ChannelPtr(new cChannel);
+        CharArray tmp = dtor->getData();
+        std::vector<uint32_t> utf8Symbols;
+        for (int i = 0; i < dtor->getLength(); ++i)
+          utf8Symbols.push_back(tmp[i]);
 
-        // Short name
-        char buffer[22] = { };
-        channelInfo.getShortName(buffer);
-        channel->SetName(buffer, buffer, ""); // TODO: Parse descriptors for long name
-
-        Descriptor* dtor;
-        SI::Loop::Iterator it2;
-        if ((dtor = channelInfo.channelDescriptors.getNext(it2, PSIP_ExtendedChannelNameDescriptorTag)))
-        {
-          CharArray tmp = dtor->getData();
-          std::vector<uint32_t> utf8Symbols;
-          for (int i = 0; i < dtor->getLength(); ++i)
-            utf8Symbols.push_back(tmp[i]);
-
-          std::string strDecoded = cUtf8Utils::Utf8FromArray(utf8Symbols);
-          isyslog("TEST: found name descriptor %s length %d", strDecoded.c_str(), dtor->getLength());
-        }
-
-        // Number and subnumber
-        channel->SetNumber(channelInfo.getMajorNumber(), channelInfo.getMinorNumber());
-
-        // Transponder and modulation mode
-        cTransponder transponder(GetTransponder());
-
-        ModulationMode modulation = (ModulationMode)channelInfo.getModulationMode();
-        //unsigned int symbolRateHz = 0;
-        switch (modulation)
-        {
-        case ModulationModeSCTE_1:
-          transponder.SetModulation(QAM_64);
-          //transponder.SetSymbolRate(5057000); // TODO: Why was symbol rate set for an ATSC transponder?
-          break;
-        case ModulationModeSCTE_2:
-          transponder.SetModulation(QAM_256);
-          //transponder.SetSymbolRate(5361000); // TODO: Why was symbol rate set for an ATSC transponder?
-          break;
-        case ModulationModeATSC_VSB8:
-          transponder.SetModulation(VSB_8);
-          break;
-        case ModulationModeATSC_VSB16:
-          transponder.SetModulation(VSB_16);
-          break;
-        default:
-          break;
-        }
-
-        channel->SetTransponder(transponder);
-
-        // Transport Stream ID (TID) and program number / service ID (SID)
-        // TODO: SID is 0xFFFF for analog channels
-        channel->SetId(0, channelInfo.getTSID(), channelInfo.getServiceId());
-        channel->SetATSCSourceId(channelInfo.getSourceID());
-
-        dsyslog("VCT: %s: %s (%d-%d, TSID=%u, SID=%u, source=%u)",
-            channelInfo.isHidden() ? "Skipping hidden channel" : "Found channel",
-            channel->ShortName().c_str(), channel->Number(), channel->SubNumber(),
-            channel->ID().Tsid(), channel->ID().Sid(), channelInfo.getSourceID());
-
-        if (channelInfo.isHidden())
-          continue;
-
-        callback->OnChannelNamesScanned(channel);
+        std::string strDecoded = cUtf8Utils::Utf8FromArray(utf8Symbols);
+        isyslog("TEST: found name descriptor %s length %d", strDecoded.c_str(), dtor->getLength());
       }
+
+      // Number and subnumber
+      channel->SetNumber(channelInfo.getMajorNumber(), channelInfo.getMinorNumber());
+
+      // Transponder and modulation mode
+      cTransponder transponder(m_device->Channel()->GetCurrentlyTunedTransponder());
+
+      ModulationMode modulation = (ModulationMode)channelInfo.getModulationMode();
+      //unsigned int symbolRateHz = 0;
+      switch (modulation)
+      {
+      case ModulationModeSCTE_1:
+        transponder.SetModulation(QAM_64);
+        //transponder.SetSymbolRate(5057000); // TODO: Why was symbol rate set for an ATSC transponder?
+        break;
+      case ModulationModeSCTE_2:
+        transponder.SetModulation(QAM_256);
+        //transponder.SetSymbolRate(5361000); // TODO: Why was symbol rate set for an ATSC transponder?
+        break;
+      case ModulationModeATSC_VSB8:
+        transponder.SetModulation(VSB_8);
+        break;
+      case ModulationModeATSC_VSB16:
+        transponder.SetModulation(VSB_16);
+        break;
+      default:
+        break;
+      }
+
+      channel->SetTransponder(transponder);
+
+      // Transport Stream ID (TID) and program number / service ID (SID)
+      // TODO: SID is 0xFFFF for analog channels
+      channel->SetId(0, channelInfo.getTSID(), channelInfo.getServiceId());
+      channel->SetATSCSourceId(channelInfo.getSourceID());
+
+      if (channelInfo.isHidden())
+        continue;
+
+      m_device->Scan()->OnChannelNamesScanned(channel);
     }
+    SetScanned();
   }
-  return bSuccess && !m_bAbort;
 }
 
 }

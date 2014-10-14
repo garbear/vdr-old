@@ -50,10 +50,10 @@ using namespace PLATFORM;
 
 #define INVALID_FD                 -1
 
-#define DVBS_LOCK_TIMEOUT_MS       3000
-#define DVBC_LOCK_TIMEOUT_MS       3000
-#define DVBT_LOCK_TIMEOUT_MS       3000
-#define ATSC_LOCK_TIMEOUT_MS       3000
+#define DVBS_LOCK_TIMEOUT_MS       2000
+#define DVBC_LOCK_TIMEOUT_MS       2000
+#define DVBT_LOCK_TIMEOUT_MS       2000
+#define ATSC_LOCK_TIMEOUT_MS       2000
 
 #define TUNER_POLL_TIMEOUT_MS      100 // tuning usually takes about a second
 
@@ -108,6 +108,8 @@ cDvbTuner::cDvbTuner(cDvbDevice *device)
    m_subsystemId(0),
    m_apiVersion(Version::EmptyVersion),
    m_status(FE_STATUS_UNKNOWN),
+   m_tunedLock(false),
+   m_tunedSignal(false),
    m_lastDiseqc(NULL),
    m_scr(NULL),
    m_bLnbPowerTurnedOn(false),
@@ -422,32 +424,17 @@ bool cDvbTuner::Tune(const cTransponder& transponder)
 
   CTimeout timeout(GetLockTimeout(transponder.Type()));
 
-  usleep(TUNE_DELAY_MS * 1000);
-
   // Device is tuning. Create the event-handling thread. Thread stays running
   // even after tuner gets lock until ClearTransponder() is called.
   CreateThread(false);
 
-  while (timeout.TimeLeft() > 0)
-  {
-    if (HasLock())
-    {
-      dsyslog("Dvb tuner: tuned to channel %u in %d ms", transponder.ChannelNumber(), GetTimeMs() - startMs);
+  CLockObject lock(m_mutex);
+  if (m_lockEvent.Wait(m_mutex, m_tunedLock, GetLockTimeout(transponder.Type())))
+    dsyslog("Dvb tuner: tuned to channel %u in %d ms", transponder.ChannelNumber(), GetTimeMs() - startMs);
+  else
+    dsyslog("Dvb tuner: tuning timed out after %d ms", GetTimeMs() - startMs);
 
-      //if (m_bondedTuner && m_device->IsPrimaryDevice())
-      //  cDeviceManager::Get().PrimaryDevice()->PID()->DelLivePids(); // 'device' is const, so we must do it this way
-
-      return true;
-    }
-
-    const uint32_t timeLeftMs = timeout.TimeLeft();
-    if (timeLeftMs > 0)
-      m_lockEvent.Wait(timeLeftMs);
-  }
-
-  dsyslog("Dvb tuner: tuning timed out after %d ms", GetTimeMs() - startMs);
-
-  return false;
+  return m_tunedLock;
 }
 
 bool cDvbTuner::TuneDevice(const cTransponder& transponder)
@@ -549,6 +536,9 @@ bool cDvbTuner::TuneDevice(const cTransponder& transponder)
     return false;
 
   m_transponder = transponder;
+  m_tunedSignal = true;
+  usleep(TUNE_DELAY_MS * 1000);
+  m_tuneCondition.Signal();
 
   return true;
 }
@@ -669,6 +659,11 @@ void* cDvbTuner::Process(void)
   while (!IsStopped())
   {
     // Wait for backend to get a tune message
+    {
+      CLockObject lock(m_mutex);
+      if (!m_tuneCondition.Wait(m_mutex, m_tunedSignal, 500))
+        continue;
+    }
 
     // According to MythTv, waiting for DVB events fails with several DVB cards.
     // They either don't send the required events or delete them from the event
@@ -687,8 +682,7 @@ void* cDvbTuner::Process(void)
     // Read all the events off the queue, so we can poll until backend gets
     // another tune message
     struct dvb_frontend_event event;
-    while (ioctl(m_fileDescriptor, FE_GET_EVENT, &event) == 0); // empty
-
+    while (ioctl(m_fileDescriptor, FE_GET_EVENT, &event) == 0) { Sleep(TUNER_POLL_TIMEOUT_MS); } // empty
 
     {
       CLockObject lock(m_mutex);
@@ -712,6 +706,8 @@ void* cDvbTuner::Process(void)
         {
           SetChanged();
           bLocked = true;
+          CLockObject lock(m_mutex);
+          m_tunedLock = true;
           m_lockEvent.Broadcast();
         }
         else if (bWasSynced && !bIsSynced)
@@ -739,6 +735,8 @@ void* cDvbTuner::Process(void)
       bLostLock = false;
       NotifyObservers(ObservableMessageChannelLostLock);
     }
+
+    Sleep(TUNER_POLL_TIMEOUT_MS);
   }
 
   m_lastDiseqc = NULL;
@@ -764,10 +762,18 @@ bool cDvbTuner::IsTunedTo(const cTransponder& transponder) const
 
 void cDvbTuner::ClearTransponder(void)
 {
+  CLockObject lock(m_mutex);
+  if (m_tunedSignal)
+    m_tunedSignal = false;
+  else
+    return;
+
+  lock.Unlock();
+
   SetChanged();
   NotifyObservers(ObservableMessageChannelLostLock);
 
-  CLockObject lock(m_mutex);
+  lock.Lock();
 
   m_transponder.Reset();
   m_status = FE_STATUS_UNKNOWN;
@@ -780,6 +786,7 @@ void cDvbTuner::ClearTransponder(void)
     cDeviceManager::Get().PrimaryDevice()->PID()->DelLivePids(); // 'device' is const, so we must do it this way
   */
 
+  m_tunedLock = false;
   m_lockEvent.Broadcast();
 }
 

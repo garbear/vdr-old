@@ -132,8 +132,8 @@ public:
 
   bool TuningAllowed(device_tuning_type_t type, const cTransponder& transponder);
 
-  void Release(TunerHandlePtr& handle);
-  void Release(cTunerHandle* handle);
+  void Release(TunerHandlePtr& handle, bool notify = true);
+  void Release(cTunerHandle* handle, bool notify = true);
   TunerHandlePtr Acquire(const ChannelPtr& channel, device_tuning_type_t type, iTunerHandleCallbacks* callbacks);
   bool CanTune(device_tuning_type_t type);
   void Notify(const Observable &obs, const ObservableMessage msg);

@@ -62,7 +62,7 @@ void cTransfer::Stop(void)
 #define MAXRETRIES    20 // max. number of retries for a single TS packet
 #define RETRYWAIT      5 // time (in ms) between two retries
 
-void cTransfer::Receive(const std::vector<uint8_t>& data)
+void cTransfer::Receive(const uint16_t pid, const uint8_t* data, const size_t len)
 {
   if (cPlayer::IsAttached())
   {
@@ -72,7 +72,7 @@ void cTransfer::Receive(const std::vector<uint8_t>& data)
     // handled when offered the first time, so that's why we try several times:
     for (int i = 0; i < MAXRETRIES; i++)
     {
-      if (PlayTs(data.data(), data.size()) > 0)
+      if (PlayTs(data, len) > 0)
         return;
       PLATFORM::CEvent::Sleep(RETRYWAIT);
     }

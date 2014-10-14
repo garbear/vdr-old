@@ -140,20 +140,19 @@ set(VDR_SRCS
 	vdr/devices/linux/subsystems/DVBChannelSubsystem.cpp
 	vdr/devices/linux/subsystems/DVBCommonInterfaceSubsystem.cpp
 	vdr/devices/linux/subsystems/DVBReceiverSubsystem.cpp
-	vdr/devices/linux/subsystems/DVBSectionFilterSubsystem.cpp
 	vdr/devices/subsystems/DeviceChannelSubsystem.cpp
 	vdr/devices/subsystems/DeviceCommonInterfaceSubsystem.cpp
 	vdr/devices/subsystems/DeviceImageGrabSubsystem.cpp
 	vdr/devices/subsystems/DevicePlayerSubsystem.cpp
 	vdr/devices/subsystems/DeviceReceiverSubsystem.cpp
 	vdr/devices/subsystems/DeviceScanSubsystem.cpp
-	vdr/devices/subsystems/DeviceSectionFilterSubsystem.cpp
 	vdr/devices/subsystems/DeviceSPUSubsystem.cpp
 	vdr/devices/subsystems/DeviceTrackSubsystem.cpp
 	vdr/devices/subsystems/DeviceVideoFormatSubsystem.cpp
 	vdr/dvb/CADescriptor.cpp
 	vdr/dvb/CADescriptorHandler.cpp
 	vdr/dvb/DiSEqC.cpp
+	vdr/dvb/PsiBuffer.cpp
 	vdr/dvb/filters/EIT.cpp
 	vdr/dvb/filters/Filter.cpp
 	vdr/dvb/filters/NIT.cpp
@@ -163,6 +162,7 @@ set(VDR_SRCS
 	vdr/dvb/filters/PSIP_MGT.cpp
 	vdr/dvb/filters/PSIP_STT.cpp
 	vdr/dvb/filters/PSIP_VCT.cpp
+	vdr/dvb/filters/ScanReceiver.cpp
 	vdr/dvb/filters/SDT.cpp
 	vdr/dvb/filters/TDT.cpp
 	vdr/epg/Component.cpp

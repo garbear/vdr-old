@@ -36,8 +36,11 @@
 
 using namespace std;
 
-#define TS_PACKET_BUFFER_SIZE    (5 * TS_SIZE) // Buffer up to 5 TS packets
+#define TS_PACKET_BUFFER_SIZE    (25 * TS_SIZE) // Buffer up to 25 TS packets
 #define FILE_DESCRIPTOR_INVALID  (-1)
+
+//#define PID_DEBUGGING(x...) dsyslog(x)
+#define PID_DEBUGGING(x...) {}
 
 namespace VDR
 {
@@ -56,6 +59,7 @@ public:
   virtual void Close(void);
 
   uint8_t StreamType(void) const { return m_streamType; }
+  std::string ToString(void) const;
 
 private:
   const STREAM_TYPE       m_streamType;
@@ -73,6 +77,11 @@ cDvbReceiverResource::cDvbReceiverResource(uint16_t pid, STREAM_TYPE streamType,
 {
 }
 
+std::string cDvbReceiverResource::ToString(void) const
+{
+  return StringUtils::Format("PID %u%s", Pid(), m_streamType != STREAM_TYPE_UNDEFINED ? StringUtils::Format(" (type %u)", m_streamType).c_str() : "");
+}
+
 bool cDvbReceiverResource::Open(void)
 {
   // Calculate strings
@@ -85,7 +94,7 @@ bool cDvbReceiverResource::Open(void)
     m_handle = open(strDvbPath.c_str(), O_RDWR | O_NONBLOCK);
     if (m_handle == FILE_DESCRIPTOR_INVALID)
     {
-      esyslog("Couldn't open PES filter (pid=%u, streamType=%u)", Pid(), m_streamType);
+      esyslog("Couldn't open %s: invalid handle", ToString().c_str());
       return false;
     }
 
@@ -99,7 +108,7 @@ bool cDvbReceiverResource::Open(void)
 
     if (ioctl(m_handle, DMX_SET_PES_FILTER, &pesFilterParams) < 0)
     {
-      esyslog("Couldn't set PES filter (pid=%u, streamType=%u)", Pid(), m_streamType);
+      esyslog("Couldn't open %s: ioctl failed", ToString().c_str());
       Close();
       return false;
     }
@@ -120,7 +129,7 @@ bool cDvbReceiverResource::Open(void)
 #endif
 
   assert(m_handle >= 0);
-  dsyslog("Opened PES filter (pid=%u, streamType=%u)", Pid(), m_streamType);
+  PID_DEBUGGING("Opened %s", ToString().c_str());
 
   return true;
 }
@@ -132,27 +141,23 @@ void cDvbReceiverResource::Close(void)
     if (ioctl(m_handle, DMX_STOP) < 0)
       LOG_ERROR;
 
-    /* TODO: Why was this called on close?
-
-    if (StreamType() <= ptTeletext)
-    {
-      dmx_pes_filter_params pesFilterParams = { };
-
-      pesFilterParams.pid     = 0x1FFF;
-      pesFilterParams.input   = DMX_IN_FRONTEND;
-      pesFilterParams.output  = DMX_OUT_DECODER;
-      pesFilterParams.pes_type= DMX_PES_OTHER;
-      pesFilterParams.flags   = DMX_IMMEDIATE_START;
-
-      if (ioctl(m_handle, DMX_SET_PES_FILTER, &pesFilterParams) < 0)
-        LOG_ERROR;
-    }
-
-    */
+//    if (StreamType() <= ptTeletext)
+//    {
+//      dmx_pes_filter_params pesFilterParams = { };
+//
+//      pesFilterParams.pid     = 0x1FFF;
+//      pesFilterParams.input   = DMX_IN_FRONTEND;
+//      pesFilterParams.output  = DMX_OUT_DECODER;
+//      pesFilterParams.pes_type= DMX_PES_OTHER;
+//      pesFilterParams.flags   = DMX_IMMEDIATE_START;
+//
+//      if (ioctl(m_handle, DMX_SET_PES_FILTER, &pesFilterParams) < 0)
+//        LOG_ERROR;
+//    }
 
     close(m_handle);
     m_handle = FILE_DESCRIPTOR_INVALID;
-    dsyslog("Closed PES filter (pid=%u, streamType=%u)", Pid(), m_streamType);
+    PID_DEBUGGING("Closed %s", ToString().c_str());
   }
 }
 
@@ -193,7 +198,12 @@ bool cDvbReceiverSubsystem::Poll(void)
   return Poller.Poll(100);
 }
 
-bool cDvbReceiverSubsystem::Read(vector<uint8_t>& data)
+void cDvbReceiverSubsystem::Consumed(void)
+{
+  m_ringBuffer.Del(TS_SIZE);
+}
+
+TsPacket cDvbReceiverSubsystem::Read(void)
 {
   int count = 0;
   if (!m_ringBuffer.Get(count) || count < TS_SIZE)
@@ -204,7 +214,7 @@ bool cDvbReceiverSubsystem::Read(vector<uint8_t>& data)
         esyslog("Driver buffer overflow on device %d", Device()->Index());
       else if (errno != 0 && errno != EAGAIN && errno != EINTR)
         esyslog("Error reading dvr device: %m");
-      return false;
+      return NULL;
     }
   }
 
@@ -225,15 +235,13 @@ bool cDvbReceiverSubsystem::Read(vector<uint8_t>& data)
 
       m_ringBuffer.Del(count);
       esyslog("Skipped %d bytes to sync on TS packet on device %d", count, Device()->Index());
-      return false;
+      return NULL;
     }
 
-    m_ringBuffer.Del(TS_SIZE);
-    data.assign(p, p + TS_SIZE);
-    return true;
+    return p;
   }
 
-  return false;
+  return NULL;
 }
 
 PidResourcePtr cDvbReceiverSubsystem::CreateResource(uint16_t pid, STREAM_TYPE streamType)

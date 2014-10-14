@@ -23,6 +23,8 @@
 
 #include "PSIP_STT.h"
 #include "channels/Channel.h"
+#include "devices/Device.h"
+#include "devices/subsystems/DeviceReceiverSubsystem.h"
 #include "utils/log/Log.h"
 
 #include <libsi/si.h>
@@ -36,33 +38,23 @@ using namespace std;
 namespace VDR
 {
 
-cPsipStt::cPsipStt(cDevice* device)
- : cFilter(device)
+cPsipStt::cPsipStt(cDevice* device) :
+    cScanReceiver(device, "STT", PID_STT),
+    m_iLastOffset(0)
 {
-  OpenResource(PID_STT, TableIdSTT);
 }
 
-unsigned int cPsipStt::GetGpsUtcOffset(void)
+void cPsipStt::ReceivePacket(uint16_t pid, const uint8_t* data)
 {
-  // Static scope to cache return value
-  static unsigned int gpsUtcOffset = 0;
-
-  if (gpsUtcOffset == 0)
+  if (m_iLastOffset == 0)
   {
-    uint16_t        pid;  // Packet ID
-    vector<uint8_t> data; // Section data
-    if (GetSection(pid, data))
+    SI::PSIP_STT stt(data);
+    if (stt.CheckCRCAndParse() && stt.getTableId() == TableIdSTT)
     {
-      SI::PSIP_STT stt(data.data());
-      if (stt.CheckCRCAndParse())
-        gpsUtcOffset = stt.getGpsUtcOffset();
+      m_iLastOffset = stt.getGpsUtcOffset();
+      dsyslog("UTC offset set to %d", m_iLastOffset);
     }
-
-    if (gpsUtcOffset == 0)
-      esyslog("Error: unable to get GPS/UTC offset, assuming 0 seconds");
   }
-
-  return gpsUtcOffset;
 }
 
 }

@@ -23,7 +23,7 @@
 #pragma once
 
 #include "channels/ChannelTypes.h"
-#include "dvb/filters/Filter.h"
+#include "ScanReceiver.h"
 #include "libsi/si.h"
 
 #include <stdint.h>
@@ -45,13 +45,16 @@ public:
 
 class cDevice;
 
-class cNit : public cFilter
+class cNit : public cScanReceiver
 {
 public:
   cNit(cDevice* device);
   virtual ~cNit() { }
 
-  ChannelVector GetTransponders();
+  void ReceivePacket(uint16_t pid, const uint8_t* data);
+
+  bool InATSC(void) const { return true; }
+  bool InDVB(void) const { return true; }
 
 private:
   struct Network

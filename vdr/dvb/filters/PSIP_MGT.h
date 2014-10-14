@@ -22,7 +22,7 @@
  */
 #pragma once
 
-#include "dvb/filters/Filter.h"
+#include "ScanReceiver.h"
 #include "epg/EPGTypes.h"
 
 #include <stdint.h>
@@ -30,21 +30,17 @@
 
 namespace VDR
 {
-
-class cPsipMgt : public cFilter
+class cPsipMgt : public cScanReceiver
 {
 public:
   cPsipMgt(cDevice* device);
   virtual ~cPsipMgt() { }
 
-  /*!
-   * Scan the PSIP tables for all data referenced by the MGT.
-   */
-  bool ScanPSIPData(iFilterCallback* callback);
-  void Abort(void) { m_bAbort = true; }
+  void ReceivePacket(uint16_t pid, const uint8_t* data);
 
-private:
-  bool m_bAbort;
+  bool InATSC(void) const { return true; }
+  bool InDVB(void) const { return false; }
+  bool InChannelScan(void) const { return true; }
 };
 
 }

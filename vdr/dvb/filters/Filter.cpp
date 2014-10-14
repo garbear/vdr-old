@@ -22,7 +22,6 @@
 #include "Filter.h"
 #include "devices/Device.h"
 #include "devices/subsystems/DeviceChannelSubsystem.h"
-#include "devices/subsystems/DeviceSectionFilterSubsystem.h"
 
 #include <assert.h>
 #include <vector>
@@ -63,52 +62,6 @@ cSectionSyncer::SYNC_STATUS cSectionSyncer::Sync(uint8_t version, int sectionNum
     m_previousVersion = version;
 
   return SYNC_STATUS_NEW_VERSION;
-}
-
-// --- cFilter ----------------------------------------------------------------
-
-cFilter::cFilter(cDevice* device)
- : m_device(device),
-   m_transponder(device->Channel()->GetCurrentlyTunedTransponder())
-{
-  assert(m_device);
-  m_device->SectionFilter()->RegisterFilter(this);
-}
-
-cFilter::~cFilter(void)
-{
-  m_device->SectionFilter()->UnregisterFilter(this);
-}
-
-void cFilter::OpenResource(u_short pid, u_char tid, u_char mask /* = 0xFF */)
-{
-  PidResourcePtr newResource = m_device->SectionFilter()->OpenResourceInternal(pid, tid, mask); // TODO
-
-  if (newResource)
-    m_resources.insert(newResource);
-}
-
-void cFilter::CloseResource(u_short pid)
-{
-  bool bResourceFound = false;
-
-  for (PidResourceSet::iterator it = m_resources.begin(); it != m_resources.end(); ++it)
-  {
-    if ((*it)->Pid())
-    {
-      m_resources.erase(it);
-      bResourceFound = true;
-      break;
-    }
-  }
-
-  // Resource is already closed?
-  //assert(bResourceFound);
-}
-
-bool cFilter::GetSection(uint16_t& pid, std::vector<uint8_t>& data)
-{
-  return m_device->SectionFilter()->GetSection(m_resources, pid, data);
 }
 
 }

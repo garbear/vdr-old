@@ -23,8 +23,12 @@
 #include "DeviceChannelSubsystem.h"
 #include "channels/ChannelManager.h"
 #include "devices/Device.h"
+#include "devices/linux/DVBDevice.h"
+#include "dvb/filters/EIT.h"
 #include "dvb/filters/PAT.h"
 #include "dvb/filters/PSIP_MGT.h"
+#include "dvb/filters/PSIP_EIT.h"
+#include "dvb/filters/PSIP_STT.h"
 #include "dvb/filters/PSIP_VCT.h"
 #include "dvb/filters/SDT.h"
 #include "epg/Event.h"
@@ -37,7 +41,6 @@ using namespace PLATFORM;
 using namespace std;
 
 // TODO: This can be shorted by fetching PMT tables in parallel
-#define TRANSPONDER_TIMEOUT 5000
 #define EPG_TIMEOUT         10000
 
 namespace VDR
@@ -61,213 +64,158 @@ protected:
   PLATFORM::CEvent       m_exitEvent;
 };
 
-class cChannelPropsScanner : public cSectionScanner
-{
-public:
-  cChannelPropsScanner(cDevice* device, iFilterCallback* callback) : cSectionScanner(device, callback), m_pat(NULL) { }
-  virtual ~cChannelPropsScanner(void) { Abort(); delete m_pat; }
-  void Start(void);
-  void Abort(void);
-
-protected:
-  void* Process(void);
-  cPat* m_pat;
-};
-
-class cChannelNamesScanner : public cSectionScanner
-{
-public:
-  cChannelNamesScanner(cDevice* device, iFilterCallback* callback) : cSectionScanner(device, callback), m_vct(NULL), m_sdt(NULL), m_bAbort(false) { }
-  virtual ~cChannelNamesScanner(void) { Abort(); delete m_vct; delete m_sdt;}
-  void Abort(void);
-  void Start(void);
-
-protected:
-  void* Process(void);
-  bool      m_bAbort;
-  cPsipVct* m_vct;
-  cSdt*     m_sdt;
-};
-
-class cEventScanner : public cSectionScanner
-{
-public:
-  cEventScanner(cDevice* device, iFilterCallback* callback) : cSectionScanner(device, callback), m_mgt(NULL) { }
-  virtual ~cEventScanner(void) { Abort(); delete m_mgt; }
-  void Abort(void);
-  void Start(void);
-
-protected:
-  void* Process(void);
-  cPsipMgt* m_mgt;
-};
-
-/*
- * cSectionScanner
- */
-cSectionScanner::cSectionScanner(cDevice* device, iFilterCallback* callback)
- : m_device(device),
-   m_callback(callback),
-   m_bSuccess(true)
-{
-}
-
-bool cSectionScanner::WaitForExit(unsigned int timeoutMs)
-{
-  StopThread(timeoutMs);
-  return m_bSuccess;
-}
-
-/*
- * cChannelPropsScanner
- */
-void* cChannelPropsScanner::Process(void)
-{
-  m_bSuccess = m_pat->ScanChannels(m_callback);
-  cChannelManager::Get().NotifyObservers();
-
-  return NULL;
-}
-
-void cChannelPropsScanner::Start(void)
-{
-  StopThread(0);
-  if (m_pat)
-    delete m_pat;
-  m_pat = new cPat(m_device);
-  CreateThread(true);
-}
-
-void cChannelPropsScanner::Abort(void)
-{
-  if (m_pat)
-    m_pat->Abort();
-  StopThread(-1);
-}
-
-/*
- * cChannelNamesScanner
- */
-void* cChannelNamesScanner::Process(void)
-{
-  m_bSuccess = false;
-  m_bAbort   = false;
-
-  // TODO: Use SDT for non-ATSC tuners
-  m_bSuccess = m_vct->ScanChannels(m_callback);
-
-  if (m_bSuccess && !m_bAbort) {
-    m_sdt->ScanChannels();
-  }
-
-  cChannelManager::Get().NotifyObservers();
-
-  return NULL;
-}
-
-void cChannelNamesScanner::Start(void)
-{
-  StopThread(0);
-  if (m_vct)
-    delete m_vct;
-  m_vct = new cPsipVct(m_device);
-  if (m_sdt)
-    delete m_sdt;
-  m_sdt = new cSdt(m_device);
-  CreateThread(true);
-}
-
-void cChannelNamesScanner::Abort(void)
-{
-  m_bAbort = true;
-  if (m_vct)
-    m_vct->Abort();
-  if (m_sdt)
-    m_sdt->Abort();
-  StopThread(-1);
-}
-
-/*
- * cEventScanner
- */
-void* cEventScanner::Process(void)
-{
-  m_bSuccess = m_mgt->ScanPSIPData(m_callback);
-
-  cScheduleManager::Get().NotifyObservers();
-
-  return NULL;
-}
-
-void cEventScanner::Start(void)
-{
-  StopThread(0);
-  if (m_mgt)
-    delete m_mgt;
-  m_mgt = new cPsipMgt(m_device);
-  CreateThread(true);
-}
-
-void cEventScanner::Abort(void)
-{
-  if (m_mgt)
-    m_mgt->Abort();
-  StopThread(-1);
-}
-
 /*
  * cDeviceScanSubsystem
  */
 cDeviceScanSubsystem::cDeviceScanSubsystem(cDevice* device)
  : cDeviceSubsystem(device),
-   m_channelPropsScanner(new cChannelPropsScanner(device, this)),
-   m_channelNamesScanner(new cChannelNamesScanner(device, this)),
-   m_eventScanner(new cEventScanner(device, this))
+   m_pat(new cPat(device)),
+   m_eit(new cEit(device)),
+   m_mgt(new cPsipMgt(device)),
+   m_sdt(new cSdt(device)),
+   m_psipeit(new cPsipEit(device)),
+   m_psipstt(new cPsipStt(device)),
+   m_locked(false),
+   m_type(TRANSPONDER_INVALID),
+   m_device(device),
+   m_scanFinished(true)
 {
+  m_receivers.insert(m_pat);
+  m_receivers.insert(m_eit);
+  m_receivers.insert(m_mgt);
+  m_receivers.insert(m_psipeit);
+  m_receivers.insert(m_psipstt);
+  m_receivers.insert(m_sdt);
+  m_receivers.insert(new cPsipVct(device));
 }
 
 cDeviceScanSubsystem::~cDeviceScanSubsystem(void)
 {
-  delete m_channelNamesScanner;
-  delete m_channelPropsScanner;
-  delete m_eventScanner;
+  for (std::set<cScanReceiver*>::iterator it = m_receivers.begin(); it != m_receivers.end(); ++it)
+    delete *it;
+}
+
+TRANSPONDER_TYPE cDeviceScanSubsystem::Type(void)
+{
+  if (m_type == TRANSPONDER_INVALID)
+  {
+    //XXX
+    cDvbDevice* dvbDevice = static_cast<cDvbDevice*>(m_device);
+    if (dvbDevice)
+    {
+      if (dvbDevice->Channel()->ProvidesSource(TRANSPONDER_ATSC))
+        m_type = TRANSPONDER_ATSC;
+      else if (dvbDevice->Channel()->ProvidesSource(TRANSPONDER_CABLE))
+        m_type = TRANSPONDER_CABLE;
+      else if (dvbDevice->Channel()->ProvidesSource(TRANSPONDER_SATELLITE))
+        m_type = TRANSPONDER_SATELLITE;
+      else if (dvbDevice->Channel()->ProvidesSource(TRANSPONDER_TERRESTRIAL))
+        m_type = TRANSPONDER_TERRESTRIAL;
+    }
+  }
+  return m_type;
+}
+
+void cDeviceScanSubsystem::SetScanned(cScanReceiver* receiver)
+{
+  CLockObject lock(m_waitingMutex);
+  std::set<cScanReceiver*>::iterator it = m_waitingForReceivers.find(receiver);
+  if (it != m_waitingForReceivers.end())
+  {
+    m_waitingForReceivers.erase(it);
+    m_scanFinished = m_waitingForReceivers.empty();
+  }
+
+  if (m_scanFinished)
+    m_waitingCondition.Broadcast();
+}
+
+void cDeviceScanSubsystem::ResetScanned(cScanReceiver* receiver)
+{
+  CLockObject lock(m_waitingMutex);
+  if (m_waitingForReceivers.find(receiver) == m_waitingForReceivers.end())
+  {
+    m_waitingForReceivers.insert(receiver);
+    m_scanFinished = false;
+  }
+}
+
+bool cDeviceScanSubsystem::AttachReceivers(void)
+{
+  bool retval(true);
+  for (std::set<cScanReceiver*>::iterator it = m_receivers.begin(); it != m_receivers.end(); ++it)
+  {
+    if (ReceiverOk(*it))
+    {
+      retval &= (*it)->Attach();
+
+      if ((*it)->InChannelScan())
+      {
+        CLockObject lock(m_waitingMutex);
+        m_scanFinished = false;
+        m_waitingForReceivers.insert(*it);
+      }
+    }
+  }
+  return retval;
+}
+
+void cDeviceScanSubsystem::DetachReceivers(void)
+{
+  for (std::set<cScanReceiver*>::iterator it = m_receivers.begin(); it != m_receivers.end(); ++it)
+  {
+    if (ReceiverOk(*it))
+      (*it)->Detach();
+  }
+
+  CLockObject lock(m_waitingMutex);
+  m_scanFinished = m_waitingForReceivers.empty();
+  m_waitingForReceivers.clear();
+  m_waitingCondition.Broadcast();
 }
 
 void cDeviceScanSubsystem::StartScan()
 {
-  m_channelPropsScanner->Start();
-  m_channelNamesScanner->Start();
-  m_eventScanner->Start();
+  AttachReceivers();
 }
 
 void cDeviceScanSubsystem::StopScan()
 {
-  m_channelPropsScanner->Abort();
-  m_channelNamesScanner->Abort();
-  m_eventScanner->Abort();
+  DetachReceivers();
 }
 
 bool cDeviceScanSubsystem::WaitForTransponderScan(void)
 {
-  const int64_t startMs = GetTimeMs();
-  const int64_t timeoutMs = TRANSPONDER_TIMEOUT;
-
-  if (m_channelPropsScanner->WaitForExit(timeoutMs))
-  {
-    const int64_t duration = GetTimeMs() - startMs;
-    const int64_t timeLeft = timeoutMs - duration;
-    return m_channelNamesScanner->WaitForExit(std::max(timeLeft, (int64_t)1));
-  }
-
-  return false;
+  CLockObject lock(m_waitingMutex);
+  return m_waitingCondition.Wait(m_waitingMutex, m_scanFinished, TRANSPONDER_TIMEOUT);
 }
 
 bool cDeviceScanSubsystem::WaitForEPGScan(void)
 {
-  const int64_t startMs = GetTimeMs();
-  const int64_t timeoutMs = EPG_TIMEOUT;
+  return Type() == TRANSPONDER_ATSC ? m_mgt->WaitForScan() && m_psipeit->WaitForScan(EPG_TIMEOUT) : m_eit->WaitForScan(EPG_TIMEOUT);
+}
 
-  return m_eventScanner->WaitForExit(timeoutMs);
+void cDeviceScanSubsystem::LockAcquired(void)
+{
+  for (std::set<cScanReceiver*>::iterator it = m_receivers.begin(); it != m_receivers.end(); ++it)
+  {
+    if (ReceiverOk(*it))
+      (*it)->LockAcquired();
+  }
+}
+
+void cDeviceScanSubsystem::LockLost(void)
+{
+  for (std::set<cScanReceiver*>::iterator it = m_receivers.begin(); it != m_receivers.end(); ++it)
+  {
+    if (ReceiverOk(*it))
+      (*it)->LockLost();
+  }
+}
+
+bool cDeviceScanSubsystem::ReceiverOk(cScanReceiver* receiver)
+{
+  return receiver && ((Type() == TRANSPONDER_ATSC && receiver->InATSC()) || (Type() != TRANSPONDER_ATSC && receiver->InDVB()));
 }
 
 void cDeviceScanSubsystem::Notify(const Observable &obs, const ObservableMessage msg)
@@ -277,11 +225,17 @@ void cDeviceScanSubsystem::Notify(const Observable &obs, const ObservableMessage
   case ObservableMessageChannelLock:
   {
     StartScan();
+    LockAcquired();
+    PLATFORM::CLockObject lock(m_mutex);
+    m_locked = true;
+    m_lockCondition.Signal();
     break;
   }
   case ObservableMessageChannelLostLock:
   {
-    StopScan();
+    LockLost();
+    PLATFORM::CLockObject lock(m_mutex);
+    m_locked = false;
     break;
   }
   default:
@@ -302,6 +256,11 @@ void cDeviceScanSubsystem::OnChannelNamesScanned(const ChannelPtr& channel)
 void cDeviceScanSubsystem::OnEventScanned(const EventPtr& event)
 {
   cScheduleManager::Get().AddEvent(event);
+}
+
+unsigned int cDeviceScanSubsystem::GetGpsUtcOffset(void)
+{
+  return Type() == TRANSPONDER_ATSC ? m_psipstt->GetGpsUtcOffset() : 0;
 }
 
 }

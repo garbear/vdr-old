@@ -23,7 +23,7 @@
 #pragma once
 
 #include "channels/ChannelTypes.h"
-#include "dvb/filters/Filter.h"
+#include "ScanReceiver.h"
 
 #include <libsi/si.h>
 
@@ -45,19 +45,21 @@ public:
   virtual ~iSdtScannerCallback() { }
 };
 
-class cSdt : public cFilter
+class cSdt : public cScanReceiver
 {
 public:
   cSdt(cDevice* device, SI::TableId tableId = SI::TableIdSDT);
   virtual ~cSdt(void) { }
 
-  void ScanChannels();
-  void Abort(void) { m_bAbort = true; }
+  void ReceivePacket(uint16_t pid, const uint8_t* data);
+  void ScanChannels() { WaitForScan(); }
+
+  bool InATSC(void) const { return true; }
+  bool InDVB(void) const { return true; }
+  bool InChannelScan(void) const { return true; }
 
 private:
-  bool           m_bAbort;
-  SI::TableId    m_tableId;
-  cSectionSyncer m_sectionSyncer;
+  SI::TableId m_tableId;
 };
 
 }

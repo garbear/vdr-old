@@ -61,18 +61,28 @@ public:
    * map.
    */
   bool AttachReceiver(iReceiver* receiver, const ChannelPtr& channel);
+  bool AttachReceiver(iReceiver* receiver, uint16_t pid, STREAM_TYPE type = STREAM_TYPE_UNDEFINED);
 
   /*!
    * Detaches the given receiver from this device. Pointer is removed from
    * m_receiverResources, and all resources that fall out of scope will be
    * closed RAII-style.
    */
-  void DetachReceiver(iReceiver* receiver);
+  void DetachReceiver(iReceiver* receiver, bool bWait = false);
+  void DetachReceiverPid(iReceiver* receiver, uint16_t pid);
 
   /*!
    * Returns true if any receivers are attached to this device.
    */
   bool Receiving(void) const;
+
+  bool HasReceiver(iReceiver* receiver) const;
+  bool HasReceiverPid(iReceiver* receiver, uint16_t pid) const;
+
+  /*!
+   * \brief Detaches all receivers from this device.
+   */
+  virtual void DetachAllReceivers(void);
 
 protected:
   /*!
@@ -109,38 +119,34 @@ protected:
    * Gets exactly one TS packet from the DVR of this device, or returns false if
    * no new data is ready.
    */
-  virtual bool Read(std::vector<uint8_t>& data) = 0;
+  virtual TsPacket Read(void) = 0;
+
+  virtual void Consumed(void) = 0;
+
+  virtual bool WaitForSync(uint64_t timeout = 0);
 
 private:
-  typedef std::map<iReceiver*, PidResourceSet> ReceiverResourceMap; // receiver -> resources
+  bool OpenResourceForReceiver(uint16_t pid, STREAM_TYPE streamType, iReceiver* receiver);
+  PidReceivers* GetReceivers(uint16_t pid, STREAM_TYPE streamType);
+  void CloseResourceForReceiver(iReceiver* receiver);
+  void CloseResourceForReceiver(uint16_t pid, iReceiver* receiver);
+  bool SyncResources(void);
 
-  /*!
-   * Utility function: returns an open resource with the given properties, or
-   * empty pointer if no resources with the given properties are open.
-   */
-  PidResourcePtr GetOpenResource(const PidResourcePtr& needle);
+  typedef struct
+  {
+    iReceiver*  receiver;
+    STREAM_TYPE type;
+    uint16_t    pid;
+  } addedReceiver;
 
-  /*!
-   * \brief Detaches all receivers from this device.
-   */
-  virtual void DetachAllReceivers(void);
-
-  /*!
-   * Open resources for all the PIDs belonging to channel.
-   * \return A collection of open resources
-   */
-  bool OpenResources(const ChannelPtr& channel, PidResourceSet& openResources);
-
-  /*!
-   * Opens resource for the given PID and stream type and inserts it into
-   * openResources on success. If a handle is already open, a copy of the
-   * shared pointer will be added to pidHandles instead. Returns false if no
-   * resource was added to openResources.
-   */
-  PidResourcePtr OpenResourceInternal(uint16_t pid, STREAM_TYPE streamType);
-
-  ReceiverResourceMap m_receiverResources;
-  PLATFORM::CMutex    m_mutexReceiver;
+  PidResourceMap                    m_resourcesActive;
+  std::vector<addedReceiver>        m_resourcesAdded;
+  std::map<uint16_t, iReceiver*>    m_resourcesRemoved;
+  std::set<iReceiver*>              m_receiversRemoved;
+  PLATFORM::CMutex                  m_mutexReceiverRead;
+  PLATFORM::CMutex                  m_mutexReceiverWrite;
+  bool                              m_synced;
+  PLATFORM::CCondition<bool>        m_syncCondition;
 };
 
 }
