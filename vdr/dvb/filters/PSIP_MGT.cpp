@@ -53,6 +53,9 @@ void cPsipMgt::ReceivePacket(uint16_t pid, const uint8_t* data)
     size_t eitPids = 0;
     size_t mgtPids = 0;
 
+    if (!Sync(pid, mgt.getVersionNumber(), mgt.getSectionNumber(), mgt.getLastSectionNumber()))
+      return;
+
     SI::PSIP_MGT::TableInfo tableInfo;
     for (SI::Loop::Iterator it; mgt.tableInfoLoop.getNext(tableInfo, it);)
     {
@@ -99,10 +102,7 @@ void cPsipMgt::ReceivePacket(uint16_t pid, const uint8_t* data)
     }
 
     dsyslog("MGT: Discovered %lu EIT tables and %lu MGT tables", eitPids, mgtPids);
-
-    RemovePid(pid);
-    if (!HasPids())
-      SetScanned();
+    SetScanned();
   }
 }
 

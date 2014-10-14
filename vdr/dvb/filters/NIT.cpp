@@ -80,16 +80,11 @@ void cNit::ReceivePacket(uint16_t pid, const uint8_t* data)
     {
       // TODO: Handle TableIdNIT_other/
       SI::TableId tid = nit.getTableId();
-      if (tid != TableIdNIT)
+      if (tid != TableIdNIT && tid != TableIdNIT_other)
         return;
 
-      cSectionSyncer::SYNC_STATUS status = syncNit.Sync(nit.getVersionNumber(), nit.getSectionNumber(), nit.getLastSectionNumber());
-      if (status == cSectionSyncer::SYNC_STATUS_NOT_SYNCED)
+      if (!Sync(pid, nit.getVersionNumber(), nit.getSectionNumber(), nit.getLastSectionNumber()))
         return;
-      if (status == cSectionSyncer::SYNC_STATUS_OLD_VERSION)
-        return;
-
-      assert(status == cSectionSyncer::SYNC_STATUS_NEW_VERSION);
 
       // Add the network if we aren't already tracking it
       if (networks.find(nit.getNetworkId()) == networks.end())

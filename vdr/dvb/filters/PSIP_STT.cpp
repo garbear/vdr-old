@@ -50,7 +50,10 @@ void cPsipStt::ReceivePacket(uint16_t pid, const uint8_t* data)
   {
     SI::PSIP_STT stt(data);
     if (stt.CheckCRCAndParse() && stt.getTableId() == TableIdSTT)
+    {
       m_iLastOffset = stt.getGpsUtcOffset();
+      dsyslog("UTC offset set to %d", m_iLastOffset);
+    }
   }
 }
 
