@@ -146,10 +146,14 @@ cPsiBuffer* cPsiBuffers::Allocate(uint16_t pid)
 void cPsiBuffers::Release(cPsiBuffer* buffer)
 {
   PLATFORM::CLockObject lock(m_mutex);
-  if (--m_used[buffer->Position()] == 0)
+  if (buffer->Position() >= 0 && buffer->Position() < PSI_MAX_BUFFERS)
   {
-    m_pidMap.erase(buffer->Pid());
-    buffer->Reset();
+    if (m_used[buffer->Position()] > 0)
+     --m_used[buffer->Position()];
+
+    if (m_used[buffer->Position()] == 0)
+      m_pidMap.erase(buffer->Pid());
+      buffer->Reset();
   }
 }
 
