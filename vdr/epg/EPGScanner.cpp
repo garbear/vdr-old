@@ -37,6 +37,8 @@
 using namespace PLATFORM;
 using namespace std;
 
+#define EPG_SCAN_INTERVAL_MS (3000000)
+
 namespace VDR
 {
 
@@ -46,12 +48,20 @@ cEPGScanner& cEPGScanner::Get(void)
   return _instance;
 }
 
-cEPGScanner::cEPGScanner(void)
+cEPGScanner::cEPGScanner(void) :
+    m_scanTriggered(false)
 {
+  CreateThread(true);
 }
 
 bool cEPGScanner::Start(void)
 {
+  {
+    CLockObject lock(m_mutex);
+    m_scanTriggered = true;
+    m_condition.Signal();
+  }
+
   if (!IsRunning())
   {
     CreateThread(true);
@@ -63,7 +73,14 @@ bool cEPGScanner::Start(void)
 
 void cEPGScanner::Stop(bool bWait)
 {
-  StopThread(bWait ? 0 : -1);
+  StopThread(-1);
+  {
+    CLockObject lock(m_mutex);
+    m_scanTriggered = true;
+    m_condition.Signal();
+  }
+  if (bWait)
+    StopThread(0);
 }
 
 void* cEPGScanner::Process()
@@ -72,6 +89,13 @@ void* cEPGScanner::Process()
   DevicePtr device;
   while (!IsStopped())
   {
+    {
+      CLockObject lock(m_mutex);
+      m_condition.Wait(m_mutex, m_scanTriggered, EPG_SCAN_INTERVAL_MS);
+      if (IsStopped() || !m_scanTriggered)
+        continue;
+    }
+
     // TODO get a free tuner, not the first one
     device = cDeviceManager::Get().GetDevice(0);
     channels = cChannelManager::Get().GetCurrent();
@@ -96,10 +120,6 @@ void* cEPGScanner::Process()
           Sleep(1000);
       }
     }
-
-    CTimeout timeout(3000000);
-    while (timeout.TimeLeft() && !IsStopped())
-      Sleep(1000);
   }
 
   return NULL;
