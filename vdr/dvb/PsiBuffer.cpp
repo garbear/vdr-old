@@ -84,6 +84,9 @@ bool cPsiBuffer::AddTsData(const uint8_t* data, size_t len, const uint8_t** outd
   if (bnew)
     m_sectionSize = SI::Section::getLength(payload + 1);
 
+  if (len != TS_SIZE)
+    m_copy = true;
+
   if (!m_copy && payloadlen >= m_sectionSize)
   {
     m_cursize = payloadlen;
@@ -100,6 +103,7 @@ bool cPsiBuffer::AddTsData(const uint8_t* data, size_t len, const uint8_t** outd
   {
     *outdata = m_data;
     *outlen  = m_cursize;
+    m_cursize = 0;
     return true;
   }
   return false;
