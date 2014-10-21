@@ -112,6 +112,12 @@ bool cDvbReceiverResource::Open(void)
       Close();
       return false;
     }
+
+    if (ioctl(m_handle, DMX_START, 0)) {
+      esyslog("Couldn't open %s: ioctl failed", ToString().c_str());
+      Close();
+      return false;
+    }
   }
 
   // TODO: Magic code that makes everything work on Android
