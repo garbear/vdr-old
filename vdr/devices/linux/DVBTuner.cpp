@@ -163,6 +163,9 @@ bool cDvbTuner::Open(void)
 
   isyslog("DVB tuner: Detected DVB API version %s", m_apiVersion.c_str());
 
+  if (!InitialiseHardware())
+    return false;
+
   // Log delivery systems and modulations
   vector<string> vecDeliverySystems;
   for (vector<fe_delivery_system_t>::const_iterator it = m_deliverySystems.begin(); it != m_deliverySystems.end(); ++it)
@@ -1019,6 +1022,30 @@ void cDvbTuner::ExecuteDiseqc(const cDiseqc* Diseqc, unsigned int* Frequency)
 
   if (Diseqc->IsScr())
     m_diseqcMutex.Unlock();
+}
+
+bool cDvbTuner::InitialiseHardware(void)
+{
+#if defined(TARGET_ANDROID)
+  const std::string strAsyncFifoPath = StringUtils::Format("/sys/class/stb/asyncfifo%d_source", m_device->Frontend());
+  CFile demuxSource;
+
+  // TODO: Magic code that makes everything work on Android
+  if (demuxSource.OpenForWrite(strAsyncFifoPath, false))
+  {
+    const std::string strCmd = StringUtils::Format("dmx%u", m_device->Frontend());
+    demuxSource.Write(strCmd.c_str(), strCmd.length());
+    demuxSource.Close();
+    return true;
+  }
+  else
+  {
+    dsyslog("Can't open %s", strAsyncFifoPath.c_str());
+    return false;
+  }
+#endif
+
+  return true;
 }
 
 }

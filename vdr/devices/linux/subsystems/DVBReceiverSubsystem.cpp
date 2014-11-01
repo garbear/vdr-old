@@ -85,13 +85,9 @@ std::string cDvbReceiverResource::ToString(void) const
 bool cDvbReceiverResource::Open(void)
 {
   // Calculate strings
-  const std::string strDvbPath = m_device->DvbPath(DEV_DVB_DEMUX);
-  const std::string strAsyncFifoPath = StringUtils::Format("/sys/class/stb/asyncfifo%d_source", m_device->Frontend());
-  const std::string strCmd = StringUtils::Format("dmx%u", m_device->Frontend());
-
   if (m_handle == FILE_DESCRIPTOR_INVALID)
   {
-    m_handle = open(strDvbPath.c_str(), O_RDWR | O_NONBLOCK);
+    m_handle = open(m_device->DvbPath(DEV_DVB_DEMUX).c_str(), O_RDWR | O_NONBLOCK);
     if (m_handle == FILE_DESCRIPTOR_INVALID)
     {
       esyslog("Couldn't open %s: invalid handle", ToString().c_str());
@@ -113,20 +109,6 @@ bool cDvbReceiverResource::Open(void)
       return false;
     }
   }
-
-  // TODO: Magic code that makes everything work on Android
-#if defined(TARGET_ANDROID)
-  CFile demuxSource;
-  if (demuxSource.OpenForWrite(strAsyncFifoPath, false))
-  {
-    demuxSource.Write(strCmd.c_str(), strCmd.length());
-    demuxSource.Close();
-  }
-  else
-  {
-    dsyslog("Can't open %s", strAsyncFifoPath.c_str());
-  }
-#endif
 
   assert(m_handle >= 0);
   PID_DEBUGGING("Opened %s", ToString().c_str());

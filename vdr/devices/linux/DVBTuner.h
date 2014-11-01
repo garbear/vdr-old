@@ -127,6 +127,8 @@ private:
   unsigned int GetTunedFrequencyHz(const cTransponder& transponder); // TODO: const
   static std::string StatusToString(const fe_status_t status);
 
+  bool InitialiseHardware(void);
+
   cDvbDevice* const                 m_device;
   bool                              m_bIsOpen;
 
