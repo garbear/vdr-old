@@ -45,24 +45,6 @@ using namespace std;
 
 namespace VDR
 {
-class cSectionScanner : protected PLATFORM::CThread
-{
-public:
-  cSectionScanner(cDevice* device, iFilterCallback* callback);
-  virtual ~cSectionScanner(void) { }
-
-  /*!
-   * Returns true if the scan ran until completion, or false if it was
-   * terminated early (even if some data was reported to callback).
-   */
-  bool WaitForExit(unsigned int timeoutMs);
-
-protected:
-  cDevice* const         m_device;
-  iFilterCallback* const m_callback;
-  volatile bool          m_bSuccess;
-  PLATFORM::CEvent       m_exitEvent;
-};
 
 /*
  * cDeviceScanSubsystem
