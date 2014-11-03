@@ -273,7 +273,6 @@ set(VDR_TEST_SRCS
 	vdr/test/gtest/TestBasicEnvironment.cpp
 	vdr/test/gtest/TestUtils.cpp
 	vdr/test/gtest/vdr-test.cpp
-	vdr/utils/test/TestRegExp.cpp
 	vdr/utils/test/TestStringUtils.cpp
 	vdr/utils/test/TestSynchronousAbort.cpp
 	vdr/utils/test/TestXBMCTinyXML.cpp
@@ -282,6 +281,10 @@ set(VDR_TEST_SRCS
 	vdr/utils/url/test/TestUrlOptions.cpp
 	vdr/utils/url/test/TestURLUtils.cpp
 )
+
+if(HAVE_PCRE)
+  list(APPEND VDR_TEST_SRCS vdr/utils/test/TestRegExp.cpp)
+endif(HAVE_PCRE)
 
 set(VDR_MAIN vdr/main.cpp)
 set(VDR_ADDON vdr/addon.cpp)
