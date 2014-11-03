@@ -23,11 +23,12 @@
 #include "RecordingConfig.h"
 #include "recordings/marks/Mark.h"
 #include "Config.h"
+#include "epg/EPGTypes.h"
 #include "filesystem/File.h"
 #include "filesystem/ResumeFile.h"
 #include "lib/platform/threads/threads.h"
-#include "timers/Timers.h"
 #include "timers/TimerTypes.h"
+#include "utils/DateTime.h"
 
 #include <stdint.h>
 #include <time.h>

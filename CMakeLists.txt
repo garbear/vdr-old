@@ -199,8 +199,7 @@ set(VDR_SRCS
 	vdr/settings/AllowedHosts.cpp
 	vdr/settings/Settings.cpp
 	vdr/timers/Timer.cpp
-	vdr/timers/Timers.cpp
-	vdr/timers/TimerTime.cpp
+	vdr/timers/TimerManager.cpp
 	vdr/transponders/CountryUtils.cpp
 	vdr/transponders/dvb_wrapper.cpp
 	vdr/transponders/SatelliteUtils.cpp

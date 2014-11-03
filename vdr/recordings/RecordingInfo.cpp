@@ -29,6 +29,7 @@
 #include "epg/Event.h"
 #include "epg/Component.h"
 #include "utils/log/Log.h"
+#include "utils/Tools.h"
 #include "utils/XBMCTinyXML.h"
 
 #include <string>

@@ -32,6 +32,7 @@
 #include "recordings/Recordings.h"
 #include "settings/AllowedHosts.h"
 #include "settings/Settings.h"
+#include "timers/TimerManager.h"
 #include "utils/log/Log.h"
 #include "utils/Shutdown.h"
 #include "utils/StringUtils.h"
@@ -68,6 +69,7 @@ cVNSIServer::cVNSIServer(int listenPort)
 
   m_bChannelsModified = false;
   m_bEventsModified = false;
+  m_bTimersModified = false;
 
   m_ServerFD = socket(AF_INET, SOCK_STREAM, 0);
   if(m_ServerFD == -1)
@@ -117,6 +119,11 @@ void cVNSIServer::Notify(const Observable &obs, const ObservableMessage msg)
     m_bChannelsModified = true;
   }
   else if (msg == ObservableMessageEventChanged)
+  {
+    PLATFORM::CLockObject lock(m_mutex);
+    m_bEventsModified = true;
+  }
+  else if (msg == ObservableMessageTimerChanged)
   {
     PLATFORM::CLockObject lock(m_mutex);
     m_bEventsModified = true;
@@ -179,6 +186,7 @@ void* cVNSIServer::Process(void)
 
   cTimeMs chanTimer(0);
   cTimeMs epgTimer(0);
+  cTimeMs timerTimer(0);
 
   // get initial state of the recordings
   int recState = -1;
@@ -203,6 +211,7 @@ void* cVNSIServer::Process(void)
 
   cChannelManager::Get().RegisterObserver(this);
   cScheduleManager::Get().RegisterObserver(this);
+  cTimerManager::Get().RegisterObserver(this);
 
   isyslog("VNSI Server started on port %d", m_ServerPort);
   isyslog("Channel streaming timeout: %i seconds", cSettings::Get().m_StreamTimeout);
@@ -267,13 +276,16 @@ void* cVNSIServer::Process(void)
       }
 
       // update timers
-      if(cTimers::Get().Modified())
+      if(m_clients.size() > 0 && timerTimer.TimedOut())
       {
-        isyslog("Timers state changed, requesting clients to reload timers");
-        for (ClientList::iterator i = m_clients.begin(); i != m_clients.end(); i++)
+        if (m_bTimersModified)
         {
-         (*i)->TimerChange();
+          m_bTimersModified = false;
+          isyslog("Timers state changed, requesting clients to reload timers");
+          for (ClientList::iterator i = m_clients.begin(); i != m_clients.end(); i++)
+            (*i)->TimerChange();
         }
+        timerTimer.Set(5000);
       }
 
       // update epg
@@ -282,6 +294,7 @@ void* cVNSIServer::Process(void)
         if (m_bEventsModified)
         {
           m_bEventsModified = false;
+          isyslog("Schedule changed, requesting clients to reload events");
           for (ClientList::iterator i = m_clients.begin(); i != m_clients.end(); i++)
             (*i)->EpgChange();
         }
@@ -303,6 +316,7 @@ void* cVNSIServer::Process(void)
 
   cChannelManager::Get().UnregisterObserver(this);
   cScheduleManager::Get().UnregisterObserver(this);
+  cTimerManager::Get().UnregisterObserver(this);
 
   return NULL;
 }

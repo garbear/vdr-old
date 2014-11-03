@@ -34,6 +34,8 @@
 #include "filesystem/VideoFile.h"
 #include "filesystem/FileName.h"
 #include "settings/Settings.h"
+#include "timers/Timer.h"
+#include "timers/TimerManager.h"
 #include "utils/CRC32.h"
 #include "utils/I18N.h"
 #include "utils/log/Log.h"
@@ -399,7 +401,7 @@ cRecording::cRecording(TimerPtr Timer, const EventPtr& event)
     if (Timer->IsRepeatingEvent())
     {
       Timer->SetRecordingFilename(m_strName); // this was an instant recording, so let's set the actual data
-      cTimers::Get().SetModified();
+      cTimerManager::Get().NotifyObservers();
     }
   }
   else if (Timer->IsRepeatingEvent() || !cSettings::Get().m_bRecordSubtitleName)
@@ -412,9 +414,9 @@ cRecording::cRecording(TimerPtr Timer, const EventPtr& event)
   }
   // substitute characters that would cause problems in file names:
   StringUtils::Replace(m_strName, '\n', ' ');
-  m_start = Timer->StartTimeAsTime();
-  m_iPriority = Timer->Priority();
-  m_iLifetimeDays = Timer->LifetimeDays();
+  Timer->StartTime().GetAsTime(m_start);
+  m_iPriority = 0; // TODO
+  m_iLifetimeDays = Timer->Lifetime().GetDays();
   // handle info:
   m_recordingInfo = new cRecordingInfo(Timer->Channel(), event);
   m_recordingInfo->SetPriority(m_iPriority);

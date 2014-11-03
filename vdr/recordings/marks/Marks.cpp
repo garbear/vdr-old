@@ -26,6 +26,7 @@
 #include "recordings/RecordingUserCommand.h"
 #include "utils/log/Log.h"
 #include "utils/StringUtils.h"
+#include "utils/Tools.h"
 #include "utils/XBMCTinyXML.h"
 
 using namespace PLATFORM;

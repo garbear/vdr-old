@@ -25,7 +25,6 @@
 #include "recordings/Recording.h"
 #include "recordings/RecordingCutter.h"
 #include "settings/Settings.h"
-#include "timers/Timers.h"
 #include "Tools.h"
 #include "utils/CalendarUtils.h"
 #include "utils/log/Log.h"
@@ -223,9 +222,9 @@ bool cShutdownHandler::ConfirmRestart(bool Interactive)
 //        return false;
      }
 
-  TimerPtr timer = cTimers::Get().GetNextActiveTimer();
-  time_t Next  = timer ? timer->StartTimeAsTime() : 0;
-  time_t Delta = timer ? Next - time(NULL) : 0;
+//  TimerPtr timer = cTimers::Get().GetNextActiveTimer();
+//  time_t Next  = timer ? timer->StartTimeAsTime() : 0;
+//  time_t Delta = timer ? Next - time(NULL) : 0;
 
 //XXX  if (cRecordControls::Active() || (Next && Delta <= 0)) {
 //     // VPS recordings in timer end margin may cause Delta <= 0

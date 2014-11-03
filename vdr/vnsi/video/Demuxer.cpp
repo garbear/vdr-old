@@ -28,7 +28,7 @@
 #include "Config.h"
 #include "devices/DeviceManager.h"
 #include "Streamer.h"
-#include "timers/Timers.h"
+#include "timers/TimerManager.h"
 #include "utils/log/Log.h"
 
 #include <assert.h>
@@ -73,12 +73,14 @@ bool cVNSIDemuxer::Open(const ChannelPtr& channel, int serial)
   }
   else if (serial == -1)
   {
-    cRecording* rec = cTimers::Get().GetActiveRecording(channel);
+    /* TODO
+    cRecording* rec = cTimerManager::Get().GetActiveRecording(channel);
     if (rec)
     {
       recording = true;
       m_VideoBuffer = cVideoBuffer::Create(rec);
     }
+    */
   }
 
   if (!recording)

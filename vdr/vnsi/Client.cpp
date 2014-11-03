@@ -42,7 +42,8 @@
 #include "recordings/Recordings.h"
 #include "recordings/marks/Marks.h"
 #include "settings/Settings.h"
-#include "timers/Timers.h"
+#include "timers/Timer.h"
+#include "timers/TimerManager.h"
 #include "transponders/CountryUtils.h"
 #include "transponders/SatelliteUtils.h"
 #include "utils/CommonMacros.h"
@@ -97,7 +98,7 @@ void* cVNSIClient::Process(void)
   uint32_t dataLength;
   uint8_t* data;
 
-  cTimers::Get().RegisterObserver(this);
+  cTimerManager::Get().RegisterObserver(this);
 
   while (!IsStopped())
   {
@@ -165,7 +166,7 @@ void* cVNSIClient::Process(void)
      possible running stream here */
   StopChannelStreaming();
 
-  cTimers::Get().UnregisterObserver(this);
+  cTimerManager::Get().UnregisterObserver(this);
 
   return NULL;
 }
@@ -196,9 +197,7 @@ void cVNSIClient::Notify(const Observable &obs, const ObservableMessage msg)
 {
   switch (msg)
   {
-  case ObservableMessageTimerAdded:
   case ObservableMessageTimerChanged:
-  case ObservableMessageTimerDeleted:
     TimerChange();
     break;
   default:
@@ -1224,7 +1223,7 @@ bool cVNSIClient::processTIMER_GetCount() /* OPCODE 80 */
 {
   CLockObject lock(m_timerLock);
 
-  size_t count = cTimers::Get().Size();
+  size_t count = cTimerManager::Get().TimerCount();
 
   m_resp->add_U32(count);
 
@@ -1237,35 +1236,34 @@ bool cVNSIClient::processTIMER_Get() /* OPCODE 81 */
 {
   CLockObject lock(m_timerLock);
 
-  uint32_t number = m_req->extract_U32();
-
-  size_t numTimers = cTimers::Get().Size();
-  if (numTimers > 0)
+  uint32_t index = m_req->extract_U32();
+  TimerPtr timer = cTimerManager::Get().GetByIndex(index);
+  if (timer)
   {
-    TimerPtr timer = cTimers::Get().GetByIndex(number-1);
-    if (timer)
-    {
-      m_resp->add_U32(VNSI_RET_OK);
+    m_resp->add_U32(VNSI_RET_OK);
 
-      m_resp->add_U32(timer->Index()+1); //TODO
-      m_resp->add_U32(timer->HasFlags(tfActive));
-      m_resp->add_U32(timer->Recording());
-      m_resp->add_U32(timer->Pending());
-      m_resp->add_U32(timer->Priority());
-      m_resp->add_U32(timer->LifetimeDays());
-      m_resp->add_U32(timer->Channel()->Number());
-      m_resp->add_U32(timer->Channel()->UID());
-      m_resp->add_U32(timer->StartTimeAsTime());
-      m_resp->add_U32(timer->EndTimeAsTime());
-      m_resp->add_U32(timer->Day());
-      m_resp->add_U32(timer->WeekDays());
-      m_resp->add_String(m_toUTF8.Convert(timer->RecordingFilename().c_str()));
-    }
-    else
-      m_resp->add_U32(VNSI_RET_DATAUNKNOWN);
+    time_t startTime;
+    timer->StartTime().GetAsTime(startTime);
+
+    time_t endTime;
+    timer->EndTime().GetAsTime(endTime);
+
+    uint32_t priority = 0; // TODO
+
+    m_resp->add_U32(timer->Index());
+    m_resp->add_U32(timer->IsActive());
+    m_resp->add_U32(timer->IsRecording());
+    m_resp->add_U32(timer->IsPending());
+    m_resp->add_U32(priority);
+    m_resp->add_U32(timer->Lifetime().GetDays());
+    m_resp->add_U32(timer->Channel()->Number());
+    m_resp->add_U32(timer->Channel()->UID());
+    m_resp->add_U32(startTime);
+    m_resp->add_U32(endTime);
+    m_resp->add_U32(timer->StartTime().GetDay());
+    m_resp->add_U32(timer->WeekdayMask());
+    m_resp->add_String(m_toUTF8.Convert(timer->RecordingFilename().c_str()));
   }
-  else
-    m_resp->add_U32(VNSI_RET_DATAUNKNOWN);
 
   m_resp->finalise();
   m_socket.write(m_resp->getPtr(), m_resp->getLen());
@@ -1276,25 +1274,35 @@ bool cVNSIClient::processTIMER_GetList() /* OPCODE 82 */
 {
   CLockObject lock(m_timerLock);
 
-  std::vector<TimerPtr> timers = cTimers::Get().GetTimers();
+  TimerVector timers = cTimerManager::Get().GetTimers();
 
   m_resp->add_U32(timers.size());
 
   for (std::vector<TimerPtr>::const_iterator it = timers.begin(); it != timers.end(); ++it)
   {
-    m_resp->add_U32((*it)->Index());
-    m_resp->add_U32((*it)->HasFlags(tfActive));
-    m_resp->add_U32((*it)->Recording());
-    m_resp->add_U32((*it)->Pending());
-    m_resp->add_U32((*it)->Priority());
-    m_resp->add_U32((*it)->LifetimeDays());
-    m_resp->add_U32((*it)->Channel()->Number());
-    m_resp->add_U32((*it)->Channel()->UID());
-    m_resp->add_U32((*it)->StartTimeAsTime());
-    m_resp->add_U32((*it)->EndTimeAsTime());
-    m_resp->add_U32((*it)->Day());
-    m_resp->add_U32((*it)->WeekDays());
-    m_resp->add_String(m_toUTF8.Convert((*it)->RecordingFilename().c_str()));
+    const TimerPtr& timer = *it;
+
+    time_t startTime;
+    timer->StartTime().GetAsTime(startTime);
+
+    time_t endTime;
+    timer->EndTime().GetAsTime(endTime);
+
+    uint32_t priority = 0; // TODO
+
+    m_resp->add_U32(timer->Index());
+    m_resp->add_U32(timer->IsActive());
+    m_resp->add_U32(timer->IsRecording());
+    m_resp->add_U32(timer->IsPending());
+    m_resp->add_U32(priority);
+    m_resp->add_U32(timer->Lifetime().GetDays());
+    m_resp->add_U32(timer->Channel()->Number());
+    m_resp->add_U32(timer->Channel()->UID());
+    m_resp->add_U32(startTime);
+    m_resp->add_U32(endTime);
+    m_resp->add_U32(timer->StartTime().GetDay());
+    m_resp->add_U32(timer->WeekdayMask());
+    m_resp->add_String(m_toUTF8.Convert(timer->RecordingFilename().c_str()));
   }
 
   m_resp->finalise();
@@ -1306,14 +1314,15 @@ bool cVNSIClient::processTIMER_Add() /* OPCODE 83 */
 {
   CLockObject lock(m_timerLock);
 
-  uint32_t flags      = m_req->extract_U32() > 0 ? tfActive : tfNone;
+  uint32_t flags      = m_req->extract_U32();
+  bool bIsActive      = flags > 0;
   uint32_t priority   = m_req->extract_U32();
   uint32_t lifetime   = m_req->extract_U32();
   uint32_t channelid  = m_req->extract_U32();
   time_t startTime    = m_req->extract_U32();
   time_t stopTime     = m_req->extract_U32();
-  time_t day          = m_req->extract_U32();
-  uint32_t weekdays   = m_req->extract_U32();
+  time_t firstDay     = m_req->extract_U32(); // 0 if event is non-repeating
+  uint32_t weekdayMask= m_req->extract_U32();
   const char *file    = m_req->extract_String();
 
   ChannelPtr channel = cChannelManager::Get().GetByChannelUID(channelid);
@@ -1325,27 +1334,31 @@ bool cVNSIClient::processTIMER_Add() /* OPCODE 83 */
   }
   else
   {
-    // XXX fix the protocol to use the duration
-    cTimer* timer = new cTimer(channel, CTimerTime::FromVNSI(startTime, stopTime, day, weekdays), flags, priority, lifetime, file);
+    TimerPtr timer = TimerPtr(new cTimer(startTime,
+                                         stopTime,
+                                         CDateTimeSpan(lifetime, 0, 0, 0),
+                                         weekdayMask,
+                                         channel,
+                                         bIsActive,
+                                         file));
     delete[] file;
 
-    TimerPtr t = cTimers::Get().GetTimer(timer);
-    if (!t)
+    if (cTimerManager::Get().AddTimer(timer))
     {
-      isyslog("Timer %s added", timer->ToDescr().c_str());
+      isyslog("Timer %u added", timer->Index());
       m_resp->add_U32(VNSI_RET_OK);
       m_resp->finalise();
       m_socket.write(m_resp->getPtr(), m_resp->getLen());
-      cTimers::Get().Add(TimerPtr(timer));
+
+      cTimerManager::Get().NotifyObservers();
+
       return true;
     }
     else
     {
-      esyslog("Timer already defined: %u %s", t->Index() + 1, t->ToDescr().c_str());
+      esyslog("Timer already defined");
       m_resp->add_U32(VNSI_RET_DATALOCKED);
     }
-
-    delete timer;
   }
 
   m_resp->finalise();
@@ -1357,39 +1370,33 @@ bool cVNSIClient::processTIMER_Delete() /* OPCODE 84 */
 {
   CLockObject lock(m_timerLock);
 
-  uint32_t number = m_req->extract_U32();
+  uint32_t index = m_req->extract_U32();
   bool     force  = m_req->extract_U32();
 
-  TimerPtr timer = cTimers::Get().GetByIndex(number);
-  if (timer)
+  if (cTimerManager::Get().RemoveTimer(index, force))
   {
-    if (timer->Recording())
-    {
-      if (force)
-      {
-        timer->Skip();
-//XXX   cRecordControls::Process(time(NULL));
-      }
-      else
-      {
-        esyslog("Timer \"%i\" is recording and can be deleted (use force=1 to stop it)", number);
-        m_resp->add_U32(VNSI_RET_RECRUNNING);
-        m_resp->finalise();
-        m_socket.write(m_resp->getPtr(), m_resp->getLen());
-        return true;
-      }
-    }
-    isyslog("Deleting timer %s", timer->ToDescr().c_str());
+    isyslog("Deleted timer %u", index);
     m_resp->add_U32(VNSI_RET_OK);
-    cTimers::Get().Del(timer);
+  }
+  else if (cTimerManager::Get().GetByIndex(index) && !force)
+  {
+    esyslog("Timer %u is recording and can only be force-deleted", index);
+    m_resp->add_U32(VNSI_RET_RECRUNNING);
+    m_resp->finalise();
+    m_socket.write(m_resp->getPtr(), m_resp->getLen());
+    return true;
   }
   else
   {
-    esyslog("Unable to delete timer - invalid timer identifier");
+    esyslog("Unable to delete timer - invalid timer identifier %u", index);
     m_resp->add_U32(VNSI_RET_DATAINVALID);
   }
+
   m_resp->finalise();
   m_socket.write(m_resp->getPtr(), m_resp->getLen());
+
+  cTimerManager::Get().NotifyObservers();
+
   return true;
 }
 
@@ -1401,7 +1408,7 @@ bool cVNSIClient::processTIMER_Update() /* OPCODE 85 */
   uint32_t index  = m_req->extract_U32();
   bool active     = m_req->extract_U32();
 
-  TimerPtr timer = cTimers::Get().GetByIndex(index);
+  TimerPtr timer = cTimerManager::Get().GetByIndex(index);
   if (!timer)
   {
     esyslog("Timer \"%u\" not defined", index);
@@ -1411,43 +1418,39 @@ bool cVNSIClient::processTIMER_Update() /* OPCODE 85 */
     return true;
   }
 
-  cTimer& timerData = *timer;
-
   if (length == 8)
   {
-    if (active)
-      timerData.SetFlags(tfActive);
-    else
-      timerData.ClrFlags(tfActive);
+    timer->SetActive(active);
   }
   else
   {
-    uint32_t flags      = active ? tfActive : tfNone;
     uint32_t priority   = m_req->extract_U32();
     uint32_t lifetime   = m_req->extract_U32();
     uint32_t channelid  = m_req->extract_U32();
     time_t startTime    = m_req->extract_U32();
     time_t stopTime     = m_req->extract_U32();
     time_t day          = m_req->extract_U32();
-    uint32_t weekdays   = m_req->extract_U32();
+    uint32_t weekdayMask= m_req->extract_U32();
     const char *file    = m_req->extract_String();
 
     ChannelPtr channel = cChannelManager::Get().GetByChannelUID(channelid);
     if(channel)
     {
-      // XXX fix the protocol to use the duration
-      cTimer newData(channel, CTimerTime::FromVNSI(startTime, stopTime, day, weekdays), flags, priority, lifetime, file);
-      timerData = newData;
+      timer->SetTime(startTime, stopTime, CDateTimeSpan(lifetime, 0, 0, 0), weekdayMask);
+      timer->SetChannel(channel);
+      timer->SetActive(active);
+      timer->SetRecordingFilename(file);
     }
 
     delete[] file;
   }
 
-  cTimers::Get().SetModified();
-
   m_resp->add_U32(VNSI_RET_OK);
   m_resp->finalise();
   m_socket.write(m_resp->getPtr(), m_resp->getLen());
+
+  cTimerManager::Get().NotifyObservers();
+
   return true;
 }
 
@@ -1631,7 +1634,8 @@ bool cVNSIClient::processRECORDINGS_Delete() /* OPCODE 104 */
   {
     dsyslog("deleting recording: %s", recording->Name().c_str());
 
-    TimerPtr tmrRecording = cTimers::Get().GetTimerForRecording(recording);
+    /* TODO
+    TimerPtr tmrRecording = cTimerManager::Get().GetTimerForRecording(recording);
     if (tmrRecording)
     {
       esyslog("Recording \"%s\" is in use by timer %d", recording->Name().c_str(), tmrRecording->Index() + 1);
@@ -1652,6 +1656,7 @@ bool cVNSIClient::processRECORDINGS_Delete() /* OPCODE 104 */
         m_resp->add_U32(VNSI_RET_ERROR);
       }
     }
+    */
   }
   else
   {

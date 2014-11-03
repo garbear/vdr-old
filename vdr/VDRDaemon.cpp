@@ -29,7 +29,7 @@
 #include "recordings/Recordings.h"
 #include "settings/AllowedHosts.h"
 #include "settings/Settings.h"
-#include "timers/Timers.h"
+#include "timers/TimerManager.h"
 #include "utils/log/Log.h"
 #include "utils/Shutdown.h"
 #include "vnsi/Server.h"
@@ -78,7 +78,7 @@ bool cVDRDaemon::LoadConfig(void)
 
   cSettings::Get().Load();
   cChannelManager::Get().Load();
-  cTimers::Get().Load();
+  cTimerManager::Get().LoadTimers();
   CAllowedHosts::Get().Load();
 
 //  if (!Diseqcs.Load("special://home/system/diseqc.conf"))
@@ -92,7 +92,7 @@ bool cVDRDaemon::LoadConfig(void)
 
 bool cVDRDaemon::SaveConfig(void)
 {
-  cTimers::Get().Save();
+  cTimerManager::Get().SaveTimers();
 
   return true;
 }
@@ -134,9 +134,7 @@ void *cVDRDaemon::Process()
   isyslog("VDR version %s started", VDRVERSION);
   while (!IsStopped())
   {
-    cTimers::Get().ProcessOnce();
-
-    m_sleepEvent.Wait(100);
+    m_sleepEvent.Wait();
   }
   DeInit();
   m_exitEvent.Broadcast();

@@ -53,6 +53,7 @@ protected:
   unsigned int     m_IdCnt;
   bool             m_bChannelsModified;
   bool             m_bEventsModified;
+  bool             m_bTimersModified;
   PLATFORM::CMutex m_mutex;
 };
 

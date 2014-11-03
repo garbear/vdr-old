@@ -20,127 +20,133 @@
  */
 #pragma once
 
-#include "TimerTime.h"
 #include "TimerTypes.h"
-#include "channels/Channel.h"
 #include "channels/ChannelTypes.h"
-#include "devices/TunerHandle.h"
-#include "epg/EPGTypes.h"
+#include "utils/DateTime.h"
+#include "utils/Observer.h"
 
 #include <stddef.h>
-#include <limits.h>
+#include <stdint.h>
+#include <string>
+#include <time.h>
 
 class TiXmlNode;
 
 namespace VDR
 {
-class cRecording;
 
-enum eTimerFlags
-{
-  tfNone      = 0,
-  tfActive    = 1 << 0,
-  tfInstant   = 1 << 1,
-  tfVps       = 1 << 2,
-  tfRecording = 1 << 3,
-  tfAll       = 0xFFFF,
-};
-
-enum eTimerMatch
-{
-  tmNone,
-  tmPartial,
-  tmFull
-};
-
-class cSchedules;
-class cRecorder;
-
-class cTimer
+class cTimer : public Observable
 {
 public:
+  /*!
+   * Construct a timer with default/specified params. Timer index is set to
+   * TIMER_INVALID_INDEX.
+   *
+   * A timer is considered unchanged (Observable::Changed() returns false) for
+   * newly constructed/deserialised timers. Assigning an index does not mark
+   * time timer as changed. Once assigned, an index cannot be changed.
+   */
   cTimer(void);
-  cTimer(ChannelPtr channel, const CTimerTime& time, uint32_t iTimerFlags, uint32_t iPriority, uint32_t iLifetimeDays, const char *strRecordingFilename);
-  cTimer(const EventPtr& event);
-  cTimer(const cTimer &Timer);
-  virtual ~cTimer();
+  cTimer(const CDateTime&     startTime,
+         const CDateTime&     endTime,
+         const CDateTimeSpan& lifetime,
+         uint8_t              weekdayMask,
+         const ChannelPtr&    channel,
+         bool                 bActive,
+         std::string          strRecordingFilename);
 
-  static const TimerPtr EmptyTimer;
+  virtual ~cTimer(void) { }
 
-  cTimer& operator= (const cTimer &Timer);
-  bool operator==(const cTimer &Timer);
-  virtual int Compare(const cTimer &Timer) const;
+  static TimerPtr EmptyTimer;
 
-  bool Recording(void) const                { return m_recorder != NULL; }
-  bool Pending(void) const                  { return m_bPending; }
-  CDateTime LastRecordingAttempt(void) const{ return m_lastRecordingAttempt; }
-  bool RecordingAttemptAllowed(void) const;
-  bool InVpsMargin(void) const              { return m_bInVpsMargin; }
-  uint Flags(void) const                    { return m_iTimerFlags; }
-  ChannelPtr Channel(void) const            { return m_channel; }
-  time_t Day(void) const                    { return m_time.DayAsTime(); }
-  int WeekDays(void) const                  { return m_time.WeekDayMask(); }
-  CDateTime Start(void) const               { return m_time.FirstStart(); }
-  int DurationSecs(void) const              { return m_time.DurationSecs(); }
-  int Priority(void) const                  { return m_iPriority; }
-  int LifetimeDays(void) const              { return m_iLifetimeDays; }
-  std::string RecordingFilename(void) const { return m_strRecordingFilename; }
-  EventPtr Event(void) const;
+  /*!
+   * Set timer params (excluding index) to match the specified timer. Timer is
+   * marked as changed if any params are modified.
+   */
+  cTimer& operator=(const cTimer& rhs);
 
-  std::string ToDescr(void) const;
+  /*!
+   * Timer params
+   *   - Index:      Unique timer ID, monotonically increases as new timers are
+   *                 added. Initialised as TIMER_INVALID_INDEX upon construction.
+   *   - Start time: Date and time of the timer's first occurrence.
+   *   - End time:   Start time plus duration; NOT the last occurrence of a
+   *                 repeating timer.
+   *   - Lifetime:   Timer encompasses all occurrences that begin <= (start time + lifetime).
+   *   - Weekday Mask: SMTWRFS, Sunday is LSB; set to 0 for non-repeating event.
+   *   - Channel:    Channel that this timer is assigned to.
+   *   - Active:     Timer may be disabled to allow the addition of conflicting
+   *                 timers.
+   *   - Filename:   The filename of the recording is derived from this.
+   */
+  unsigned int     Index(void) const             { return m_index; }
+  const CDateTime& StartTime(void) const         { return m_startTime; }
+  const CDateTime& EndTime(void) const           { return m_endTime; }
+  CDateTimeSpan    Duration(void) const          { return m_endTime - m_startTime; }
+  const CDateTimeSpan& Lifetime(void) const      { return m_lifetime; }
+  uint8_t          WeekdayMask(void) const       { return m_weekdayMask; }
+  bool             IsRepeatingEvent(void) const  { return (m_weekdayMask != 0) ; }
+  ChannelPtr       Channel(void) const           { return m_channel; }
+  bool             IsActive(void) const          { return m_bActive; }
+  std::string      RecordingFilename(void) const { return m_strRecordingFilename; }
 
+  /*!
+   * A timer is valid if it has a channel, a valid start time, and the end time
+   * occurs after the start time.
+   */
+  bool IsValid(void) const;
+
+  /*!
+   * Assign timer a unique index. Only succeeds if index was previously invalid;
+   * changing a valid index has no effect and SetIndex() will return false.
+   *
+   * SetIndex() does not mark timer as changed.
+   */
+  bool SetIndex(unsigned int index);
+
+  /*!
+   * Set the timer params. Timer is marked as changed only if params actually
+   * change.
+   */
+  void SetTime(const CDateTime& startTime,
+               const CDateTime& endTime,
+               const CDateTimeSpan& lifetime,
+               uint8_t weekdayMask);
+  void SetChannel(const ChannelPtr& channel);
+  void SetActive(bool bActive);
+  void SetRecordingFilename(const std::string& strFile);
+
+  // TODO
+  bool IsPending(void) const   { return CDateTime::GetUTCDateTime() <= (m_startTime + m_lifetime); }
+  bool IsExpired(void) const   { return m_endTime + m_lifetime < CDateTime::GetUTCDateTime(); }
+  bool IsRecording(void) const { return false; }
+
+  /*!
+   * Serialise timer. Fails if timer is invalid.
+   */
   bool SerialiseTimer(TiXmlNode *node) const;
+
+  /*!
+   * Deserialise timer. Fails if timer has already been assigned an index or if
+   * the deserialised timer is invalid. Timer is marked as unchanged after
+   * deserialisation.
+   */
   bool DeserialiseTimer(const TiXmlNode *node);
 
-  bool IsRepeatingEvent(void) const;
-  bool Matches(CDateTime checkTime = CDateTime::GetCurrentDateTime(), bool bDirectly = false, int iMarginSeconds = 0);
-  eTimerMatch MatchesEvent(const EventPtr& Event, int *Overlap = NULL);
-  bool Expired(void) const;
-  time_t StartTimeAsTime(void) const;
-  CDateTime StartTime(void) const { return m_time.Start(); }
-  time_t EndTimeAsTime(void) const;
-  CDateTime EndTime(void) const { return m_time.End(); }
-  bool HasFlags(uint Flags) const;
-  size_t Index(void) const { return m_index; }
-
-  void SetRecordingFilename(const std::string& strFile);
-  //void SetEventFromSchedule(cSchedules *Schedules = NULL); // TODO
-  void ClearEvent(void);
-  void SetEvent(const EventPtr& event);
-  void SetRecording(cRecorder* recorder, cRecording* recording);
-  cRecording* GetRecording(void) const { return m_recording; }
-  void SetPending(bool Pending);
-  void SetInVpsMargin(bool InVpsMargin);
-  void SetDuration(int iDurationSecs);
-  void SetPriority(int Priority);
-  void SetLifetimeDays(int iLifetimeDays);
-  void SetFlags(uint Flags);
-  void ClrFlags(uint Flags);
-  void InvFlags(uint Flags);
-  void SetIndex(size_t index) { m_index = index; }
-
-  void Skip(void);
-
-  bool StartRecording(void);
-  bool CheckRecordingStatus(const CDateTime& Now);
-  //void SwitchTransponder(const CDateTime& Now); // TODO
-
-  static int CompareTimers(const cTimer *a, const cTimer *b);
-
 private:
-  CTimerTime    m_time;
-  CDateTime     m_lastEPGEventCheck;       ///< last time we searched for a matching event
-  CDateTime     m_lastRecordingAttempt;    ///< last time we started a recording (so we don't spam when it fails)
-  bool          m_bPending;
-  bool          m_bInVpsMargin;
-  uint          m_iTimerFlags;             ///< flags for this timer. see eTimerFlags
-  uint32_t      m_iPriority;               ///< lower priority is deleted first when we run out of disk space
-  uint32_t      m_iLifetimeDays;           ///< recording is deleted after this many days if lower than MAXLIFETIME
-  std::string   m_strRecordingFilename;    ///< filename of the recording or empty if not recording or recorded
-  ChannelPtr    m_channel;                 ///< the channel to record
-  cRecorder*    m_recorder;                ///< the recorder that's being used while this timer is being recorded
-  cRecording*   m_recording;               ///< the recording that is currently running
-  size_t        m_index; // XXX (re)move me
-  TunerHandlePtr m_tunerHandle;
+  void Reset(void);
+
+  static std::string WeekdayMaskToString(uint8_t weekdayMask);
+  static uint8_t StringToWeekdayMask(const std::string& strWeekdayMask);
+
+  unsigned int  m_index;
+  CDateTime     m_startTime;
+  CDateTime     m_endTime;
+  CDateTimeSpan m_lifetime;
+  uint8_t       m_weekdayMask;
+  ChannelPtr    m_channel;
+  bool          m_bActive;
+  std::string   m_strRecordingFilename;
 };
+
 }

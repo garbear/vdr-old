@@ -25,7 +25,6 @@
 #include "channels/Channel.h"
 #include "channels/ChannelManager.h"
 #include "settings/Settings.h"
-#include "timers/Timers.h"
 #include "utils/log/Log.h"
 #include "utils/XBMCTinyXML.h"
 #include "Config.h"
