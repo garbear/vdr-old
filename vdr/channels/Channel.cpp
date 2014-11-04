@@ -148,25 +148,28 @@ void cChannel::Reset(void)
 
 cChannel& cChannel::operator=(const cChannel& rhs)
 {
-  m_channelId       = rhs.m_channelId;
-  m_name            = rhs.m_name;
-  m_shortName       = rhs.m_shortName;
-  m_provider        = rhs.m_provider;
-  m_portalName      = rhs.m_portalName;
-  m_number          = rhs.m_number;
-  m_subNumber       = rhs.m_subNumber;
-  m_videoStream     = rhs.m_videoStream;
-  m_audioStreams    = rhs.m_audioStreams;
-  m_dataStreams     = rhs.m_dataStreams;
-  m_subtitleStreams = rhs.m_subtitleStreams;
-  m_teletextStream  = rhs.m_teletextStream;
-  m_caDescriptors   = rhs.m_caDescriptors;
-  m_transponder     = rhs.m_transponder;
+  if (this != &rhs)
+  {
+    m_channelId       = rhs.m_channelId;
+    m_name            = rhs.m_name;
+    m_shortName       = rhs.m_shortName;
+    m_provider        = rhs.m_provider;
+    m_portalName      = rhs.m_portalName;
+    m_number          = rhs.m_number;
+    m_subNumber       = rhs.m_subNumber;
+    m_videoStream     = rhs.m_videoStream;
+    m_audioStreams    = rhs.m_audioStreams;
+    m_dataStreams     = rhs.m_dataStreams;
+    m_subtitleStreams = rhs.m_subtitleStreams;
+    m_teletextStream  = rhs.m_teletextStream;
+    m_caDescriptors   = rhs.m_caDescriptors;
+    m_transponder     = rhs.m_transponder;
 
-  // TODO
-  m_linkChannels = NULL;
+    // TODO
+    m_linkChannels = NULL;
 
-  SetChanged();
+    SetChanged();
+  }
 
   return *this;
 }
