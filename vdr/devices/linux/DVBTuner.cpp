@@ -431,8 +431,13 @@ bool cDvbTuner::Tune(const cTransponder& transponder)
   // even after tuner gets lock until ClearTransponder() is called.
   CreateThread(false);
 
+  // Some drivers report stale status immediately after tuning. Give stale lock
+  // events a chance to clear, then reset m_tunedLock and wait for real lock events
+  Sleep(TUNE_DELAY_MS);
   CLockObject lock(m_mutex);
-  if (m_lockEvent.Wait(m_mutex, m_tunedLock, GetLockTimeout(transponder.Type())))
+  m_tunedLock = false;
+
+  if (m_lockEvent.Wait(m_mutex, m_tunedLock, GetLockTimeout(transponder.Type()) - TUNE_DELAY_MS))
     dsyslog("Dvb tuner: tuned to channel %u in %d ms", transponder.ChannelNumber(), GetTimeMs() - startMs);
   else
     dsyslog("Dvb tuner: tuning timed out after %d ms", GetTimeMs() - startMs);
@@ -540,7 +545,6 @@ bool cDvbTuner::TuneDevice(const cTransponder& transponder)
 
   m_transponder = transponder;
   m_tunedSignal = true;
-  usleep(TUNE_DELAY_MS * 1000);
   m_tuneCondition.Signal();
 
   return true;
