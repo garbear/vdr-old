@@ -60,7 +60,7 @@ using namespace PLATFORM;
 #define DEBUG_SIGNALSTRENGTH       1
 #define DEBUG_SIGNALQUALITY        1
 
-#define TUNE_DELAY_MS              100 // Some drivers report stale status immediately after FE_SET_FRONTEND
+#define TUNE_DELAY_MS              100 // Some drivers report stale status immediately after tuning
 
 namespace VDR
 {
@@ -425,10 +425,8 @@ bool cDvbTuner::Tune(const cTransponder& transponder)
 
   int64_t startMs = GetTimeMs();
 
-  CTimeout timeout(GetLockTimeout(transponder.Type()));
-
   // Device is tuning. Create the event-handling thread. Thread stays running
-  // even after tuner gets lock until ClearTransponder() is called.
+  // even after tuner gets lock.
   CreateThread(false);
 
   // Some drivers report stale status immediately after tuning. Give stale lock
