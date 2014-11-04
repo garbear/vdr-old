@@ -85,8 +85,10 @@ bool ISTRANSPONDER(int frequencyMHz1, int frequencyMHz2)
 const ChannelPtr cChannel::EmptyChannel;
 
 cChannel::cChannel(void)
+ : m_number(0),
+   m_subNumber(0),
+   m_linkChannels(NULL)
 {
-  Reset();
 }
 
 cChannel::cChannel(const cChannel& channel)
@@ -140,6 +142,8 @@ void cChannel::Reset(void)
   m_dataStreams.clear();
   m_subtitleStreams.clear();
   m_transponder.Reset();
+
+  SetChanged();
 }
 
 cChannel& cChannel::operator=(const cChannel& rhs)
