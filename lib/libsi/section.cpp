@@ -26,6 +26,9 @@ namespace SI {
 void PAT::Parse() {
    int offset=0;
    data.setPointerAndOffset<const pat>(s, offset);
+
+   CHECK_VALID_DATA(s->table_id == TableIdPAT, data);
+
    associationLoop.setData(data+offset, getLength()-offset-4);
 }
 
@@ -48,6 +51,11 @@ void PAT::Association::Parse() {
 /*********************** CAT ***********************/
 
 void CAT::Parse() {
+   const cat* s;
+   int offset=0;
+   data.setPointerAndOffset<const cat>(s, offset);
+   CHECK_VALID_DATA(s->table_id == TableIdCAT, data);
+
    loop.setData(data+sizeof(cat), getLength()-sizeof(cat)-4);
 }
 
@@ -56,6 +64,9 @@ void CAT::Parse() {
 void PMT::Parse() {
    int offset=0;
    data.setPointerAndOffset<const pmt>(s, offset);
+
+   CHECK_VALID_DATA(s->table_id == TableIdPMT, data);
+
    commonDescriptors.setDataAndOffset(data+offset, HILO(s->program_info_length), offset);
    streamLoop.setData(data+offset, getLength()-offset-4);
 }
@@ -99,6 +110,9 @@ int NIT::getNetworkId() const {
 void NIT::Parse() {
    int offset=0;
    data.setPointerAndOffset<const nit>(s, offset);
+
+   CHECK_VALID_DATA(s->table_id == TableIdNIT || s->table_id == TableIdNIT_other, data);
+
    commonDescriptors.setDataAndOffset(data+offset, HILO(s->network_descriptor_length), offset);
    const nit_mid *mid;
    data.setPointerAndOffset<const nit_mid>(mid, offset);
@@ -124,6 +138,9 @@ void NIT::TransportStream::Parse() {
 void SDT::Parse() {
    int offset=0;
    data.setPointerAndOffset<const sdt>(s, offset);
+
+   CHECK_VALID_DATA(s->table_id == TableIdSDT || s->table_id == TableIdSDT_other, data);
+
    serviceLoop.setData(data+offset, getLength()-offset-4); //4 is for CRC
 }
 
@@ -196,6 +213,9 @@ bool EIT::isActualTS() const {
 void EIT::Parse() {
    int offset=0;
    data.setPointerAndOffset<const eit>(s, offset);
+
+   CHECK_VALID_DATA(TableIdEIT_presentFollowing <= s->table_id && s->table_id <= TableIdEIT_schedule_Other_last, data);
+
    //printf("%d %d %d %d %d\n", getServiceId(), getTransportStreamId(), getOriginalNetworkId(), isPresentFollowing(), isActualTS());
    eventLoop.setData(data+offset, getLength()-offset-4); //4 is for CRC
 }
@@ -263,6 +283,8 @@ time_t TDT::getTime() const {
 
 void TDT::Parse() {
    s=data.getData<const tdt>();
+
+   CHECK_VALID_DATA(s->table_id == TableIdTDT, data);
 }
 
 /*********************** TOT ***********************/
@@ -274,6 +296,9 @@ time_t TOT::getTime() const {
 void TOT::Parse() {
    int offset=0;
    data.setPointerAndOffset<const tot>(s, offset);
+
+   CHECK_VALID_DATA(s->table_id == TableIdTOT, data);
+
    descriptorLoop.setData(data+offset, getLength()-offset-4);
 }
 
@@ -283,6 +308,9 @@ void RST::Parse() {
    int offset=0;
    const rst *s;
    data.setPointerAndOffset<const rst>(s, offset);
+
+   CHECK_VALID_DATA(s->table_id == TableIdRST, data);
+
    infoLoop.setData(data+offset, getLength()-offset);
 }
 
@@ -323,6 +351,9 @@ int AIT::getAITVersion() const {
 void AIT::Parse() {
    int offset=0;
    data.setPointerAndOffset<const ait>(first, offset);
+
+   CHECK_VALID_DATA(first->table_id == TableIdAIT, data);
+
    commonDescriptors.setDataAndOffset(data+offset, HILO(first->common_descriptors_length), offset);
    const ait_mid *mid;
    data.setPointerAndOffset<const ait_mid>(mid, offset);
@@ -352,6 +383,9 @@ void AIT::Application::Parse() {
 void PremiereCIT::Parse() {
    int offset=0;
    data.setPointerAndOffset<const pcit>(s, offset);
+
+   CHECK_VALID_DATA(s->table_id == TableIdPremiereCIT, data);
+
    eventDescriptors.setData(data+offset, HILO(s->descriptors_loop_length));
 }
 
@@ -368,6 +402,9 @@ time_t PremiereCIT::getDuration() const {
 void PSIP_MGT::Parse() {
    int offset=0;
    data.setPointerAndOffset<const mgt>(s, offset);
+
+   CHECK_VALID_DATA(s->table_id == TableIdMGT, data);
+
    const int tableCount = HILO(s->tables_defined);
    tableInfoLoop.setDataAndOffset(data+offset, getTableInfoLoopLength(data+offset, tableCount), offset);
    const mgt_mid *mid;
@@ -422,6 +459,8 @@ void PSIP_VCT::Parse() {
    int offset=0;
    data.setPointerAndOffset<const vct>(s, offset);
    CHECK_VALID_DATA((offset == sizeof(const vct)), data);
+
+   CHECK_VALID_DATA(s->table_id == TableIdTVCT || s->table_id == TableIdCVCT, data);
 
    const int channelCount = s->num_channels_in_section;
 
@@ -532,6 +571,8 @@ void PSIP_EIT::Parse() {
   int offset=0;
   data.setPointerAndOffset<const psip_eit>(s, offset);
 
+  CHECK_VALID_DATA(s->table_id == TableIdEIT, data);
+
   int eventLoopOffset = offset;
 
   const unsigned int eventCount = s->num_events_in_section;
@@ -603,6 +644,7 @@ int PSIP_EIT::getSourceId() const {
 void PSIP_STT::Parse() {
    int offset=0;
    data.setPointerAndOffset<const stt>(s, offset);
+   CHECK_VALID_DATA(s->table_id == TableIdSTT, data);
 }
 
 int PSIP_STT::getGpsUtcOffset() const {

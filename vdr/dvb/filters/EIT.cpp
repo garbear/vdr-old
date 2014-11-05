@@ -69,7 +69,7 @@ void cEit::ReceivePacket(uint16_t pid, const uint8_t* data)
     EventVector events;
 
     SI::EIT tsEIT(data);
-    if (tsEIT.CheckCRCAndParse() /* && tsEIT.getTableId() >= SI::TableIdEIT_presentFollowing */) // TODO: Do we need this check?
+    if (tsEIT.CheckCRCAndParse())
     {
       // We need the current time for handling PDC descriptors
       CDateTime now = CDateTime::GetUTCDateTime();

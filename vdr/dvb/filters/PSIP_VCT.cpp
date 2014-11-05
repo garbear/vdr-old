@@ -50,7 +50,7 @@ cPsipVct::cPsipVct(cDevice* device) :
 void cPsipVct::ReceivePacket(uint16_t pid, const uint8_t* data)
 {
   SI::PSIP_VCT vct(data);
-  if (vct.CheckCRCAndParse() && (vct.getTableId() == TableIdTVCT || vct.getTableId() == TableIdCVCT))
+  if (vct.CheckCRCAndParse())
   {
     /** wait for the PMT scan to complete first */
     if (!m_device->Scan()->PAT()->PmtScanned())
