@@ -44,8 +44,8 @@ public:
 
   time_t GetTime(void);
 
-  bool InATSC(void) const { return true; }
-  bool InDVB(void) const { return false; }
+  bool InATSC(void) const { return false; }
+  bool InDVB(void) const { return true; }
 };
 
 }

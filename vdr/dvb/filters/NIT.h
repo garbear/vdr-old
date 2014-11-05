@@ -53,7 +53,7 @@ public:
 
   void ReceivePacket(uint16_t pid, const uint8_t* data);
 
-  bool InATSC(void) const { return true; }
+  bool InATSC(void) const { return false; }
   bool InDVB(void) const { return true; }
 
 private:
