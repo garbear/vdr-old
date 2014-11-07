@@ -219,7 +219,7 @@ bool cTimer::Deserialise(const TiXmlNode* node)
 
   {
     const char* attr = elem->Attribute(TIMER_XML_ATTR_INDEX);
-    m_id = attr ? StringUtils::IntVal(attr, TIMER_INVALID_ID) : 0;
+    m_id = attr ? StringUtils::IntVal(attr, TIMER_INVALID_ID) : TIMER_INVALID_ID;
   }
 
   cChannelID chanId;
