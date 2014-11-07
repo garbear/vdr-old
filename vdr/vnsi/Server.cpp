@@ -126,7 +126,7 @@ void cVNSIServer::Notify(const Observable &obs, const ObservableMessage msg)
   else if (msg == ObservableMessageTimerChanged)
   {
     PLATFORM::CLockObject lock(m_mutex);
-    m_bEventsModified = true;
+    m_bTimersModified = true;
   }
 }
 
