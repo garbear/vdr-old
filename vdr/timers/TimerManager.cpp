@@ -36,7 +36,7 @@ namespace VDR
 {
 
 cTimerManager::cTimerManager(void)
- : m_maxIndex(TIMER_INVALID_INDEX)
+ : m_maxID(TIMER_INVALID_ID)
 {
 }
 
@@ -52,11 +52,11 @@ cTimerManager::~cTimerManager(void)
     it->second->UnregisterObserver(this);
 }
 
-TimerPtr cTimerManager::GetByIndex(unsigned int index) const
+TimerPtr cTimerManager::GetByID(unsigned int id) const
 {
   CLockObject lock(m_mutex);
 
-  TimerMap::const_iterator it = m_timers.find(index);
+  TimerMap::const_iterator it = m_timers.find(id);
   if (it != m_timers.end())
     return it->second;
 
@@ -83,16 +83,16 @@ size_t cTimerManager::TimerCount(void) const
 
 bool cTimerManager::AddTimer(const TimerPtr& newTimer)
 {
-  if (newTimer && newTimer->Index() == TIMER_INVALID_INDEX && newTimer->IsValid())
+  if (newTimer && newTimer->ID() == TIMER_INVALID_ID && newTimer->IsValid())
   {
     CLockObject lock(m_mutex);
 
     if (TimerConflicts(*newTimer))
       return false;
 
-    newTimer->SetIndex(++m_maxIndex);
+    newTimer->SetID(++m_maxID);
     newTimer->RegisterObserver(this);
-    m_timers.insert(std::make_pair(newTimer->Index(), newTimer));
+    m_timers.insert(std::make_pair(newTimer->ID(), newTimer));
 
     SetChanged();
 
@@ -102,11 +102,11 @@ bool cTimerManager::AddTimer(const TimerPtr& newTimer)
   return false;
 }
 
-bool cTimerManager::UpdateTimer(unsigned int index, const cTimer& updatedTimer)
+bool cTimerManager::UpdateTimer(unsigned int id, const cTimer& updatedTimer)
 {
   CLockObject lock(m_mutex);
 
-  TimerPtr timer = GetByIndex(index);
+  TimerPtr timer = GetByID(id);
   if (timer)
   {
     // If timer is being enabled, check for conflicts
@@ -121,14 +121,14 @@ bool cTimerManager::UpdateTimer(unsigned int index, const cTimer& updatedTimer)
   return false;
 }
 
-bool cTimerManager::RemoveTimer(unsigned int index, bool bInterruptRecording)
+bool cTimerManager::RemoveTimer(unsigned int id, bool bInterruptRecording)
 {
   CLockObject lock(m_mutex);
 
-  TimerMap::iterator it = m_timers.find(index);
+  TimerMap::iterator it = m_timers.find(id);
   if (it != m_timers.end())
   {
-    bool bRecording = it->second->IsRecording();
+    bool bRecording = it->second->IsRecording(CDateTime::GetUTCDateTime());
     if (bRecording && !bInterruptRecording)
       return false;
 
@@ -173,7 +173,7 @@ bool cTimerManager::TimerConflicts(const cTimer& timer) const
   return false;
 }
 
-void cTimerManager::Notify(const Observable &obs, const ObservableMessage msg)
+void cTimerManager::Notify(const Observable& obs, const ObservableMessage msg)
 {
   switch (msg)
   {
@@ -208,7 +208,7 @@ bool cTimerManager::LoadTimers(void)
   return true;
 }
 
-bool cTimerManager::LoadTimers(const std::string &file)
+bool cTimerManager::LoadTimers(const std::string& file)
 {
   CLockObject lock(m_mutex);
   m_timers.clear();
@@ -219,47 +219,43 @@ bool cTimerManager::LoadTimers(const std::string &file)
 
   m_strFilename = file;
 
-  TiXmlElement *root = xmlDoc.RootElement();
+  TiXmlElement* root = xmlDoc.RootElement();
   if (root == NULL)
     return false;
 
   if (!StringUtils::EqualsNoCase(root->ValueStr(), TIMER_XML_ROOT))
   {
-    esyslog("failed to find root element '%s' in file '%s'", TIMER_XML_ROOT, file.c_str());
+    esyslog("Failed to find root element '%s' in file '%s'", TIMER_XML_ROOT, file.c_str());
     return false;
   }
 
-  const TiXmlNode *timerNode = root->FirstChild(TIMER_XML_ELM_TIMER);
-  while (timerNode != NULL)
+  const TiXmlNode* node = root->FirstChild(TIMER_XML_ELM_TIMER);
+  while (node != NULL)
   {
     TimerPtr timer = TimerPtr(new cTimer);
 
-    if (timer->DeserialiseTimer(timerNode) && !GetByIndex(timer->Index()))
+    if (timer->Deserialise(node) && !GetByID(timer->ID()))
     {
-      if (timer->Index() > m_maxIndex)
-        m_maxIndex = timer->Index();
+      if (timer->ID() > m_maxID)
+        m_maxID = timer->ID();
 
-      m_timers.insert(make_pair(timer->Index(), timer));
-    }
-    else
-    {
-      esyslog("failed to find deserialise timer in file '%s'", file.c_str());
+      m_timers.insert(make_pair(timer->ID(), timer));
     }
 
-    timerNode = timerNode->NextSibling(TIMER_XML_ELM_TIMER);
+    node = node->NextSibling(TIMER_XML_ELM_TIMER);
   }
 
   return true;
 }
 
-bool cTimerManager::SaveTimers(const string &file /* = ""*/)
+bool cTimerManager::SaveTimers(const string& file /* = "" */)
 {
   CXBMCTinyXML xmlDoc;
-  TiXmlDeclaration *decl = new TiXmlDeclaration("1.0", "", "");
+  TiXmlDeclaration* decl = new TiXmlDeclaration("1.0", "", "");
   xmlDoc.LinkEndChild(decl);
 
   TiXmlElement rootElement(TIMER_XML_ROOT);
-  TiXmlNode *root = xmlDoc.InsertEndChild(rootElement);
+  TiXmlNode* root = xmlDoc.InsertEndChild(rootElement);
   if (root == NULL)
     return false;
 
@@ -268,8 +264,8 @@ bool cTimerManager::SaveTimers(const string &file /* = ""*/)
   for (TimerMap::const_iterator itTimer = m_timers.begin(); itTimer != m_timers.end(); ++itTimer)
   {
     TiXmlElement timerElement(TIMER_XML_ELM_TIMER);
-    TiXmlNode *timerNode = root->InsertEndChild(timerElement);
-    itTimer->second->SerialiseTimer(timerNode);
+    TiXmlNode* node = root->InsertEndChild(timerElement);
+    itTimer->second->Serialise(node);
   }
 
   if (!file.empty())
@@ -277,10 +273,10 @@ bool cTimerManager::SaveTimers(const string &file /* = ""*/)
 
   assert(!m_strFilename.empty());
 
-  isyslog("saving timers to '%s'", m_strFilename.c_str());
+  isyslog("Saving timers to '%s'", m_strFilename.c_str());
   if (!xmlDoc.SafeSaveFile(m_strFilename))
   {
-    esyslog("failed to save timers: could not write to '%s'", m_strFilename.c_str());
+    esyslog("Failed to save timers: could not write to '%s'", m_strFilename.c_str());
     return false;
   }
   return true;

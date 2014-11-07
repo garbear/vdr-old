@@ -151,6 +151,8 @@ public:
 
   void SetPortalName(const std::string& strPortalName);
 
+  bool IsValid(void) const { return m_channelId.IsValid(); }
+
   /*!
    *
    */

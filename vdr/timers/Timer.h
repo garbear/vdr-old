@@ -39,12 +39,8 @@ class cTimer : public Observable
 {
 public:
   /*!
-   * Construct a timer with default/specified params. Timer index is set to
-   * TIMER_INVALID_INDEX.
-   *
-   * A timer is considered unchanged (Observable::Changed() returns false) for
-   * newly constructed/deserialised timers. Assigning an index does not mark
-   * time timer as changed. Once assigned, an index cannot be changed.
+   * Construct a timer with default or specified properties. Timer ID is
+   * initialised to TIMER_INVALID_INDEX and must be set via SetID().
    */
   cTimer(void);
   cTimer(const CDateTime&     startTime,
@@ -53,33 +49,27 @@ public:
          uint8_t              weekdayMask,
          const ChannelPtr&    channel,
          bool                 bActive,
-         std::string          strRecordingFilename);
+         std::string          strTimerFilename);
 
   virtual ~cTimer(void) { }
 
   static TimerPtr EmptyTimer;
 
   /*!
-   * Set timer params (excluding index) to match the specified timer. Timer is
-   * marked as changed if any params are modified.
+   * Timer properties
+   *   - ID:           Unique identifier for the timer; immutable once set
+   *   - Start time:   Date and time of the timer's first occurrence
+   *   - End time:     Start time plus duration; NOT the last occurrence of a
+   *                   repeating timer
+   *   - Lifetime:     Timer encompasses all occurrences that begin before or on
+   *                   (start time + lifetime)
+   *   - Weekday mask: SMTWRFS, Sunday is LSB; set to 0 for non-repeating event
+   *   - Channel:      Channel that this timer is assigned to
+   *   - Active:       Timer may be disabled to allow the addition of conflicting
+   *                   timers (default value is TRUE)
+   *   - Filename:     The filename of the timer is derived from this
    */
-  cTimer& operator=(const cTimer& rhs);
-
-  /*!
-   * Timer params
-   *   - Index:      Unique timer ID, monotonically increases as new timers are
-   *                 added. Initialised as TIMER_INVALID_INDEX upon construction.
-   *   - Start time: Date and time of the timer's first occurrence.
-   *   - End time:   Start time plus duration; NOT the last occurrence of a
-   *                 repeating timer.
-   *   - Lifetime:   Timer encompasses all occurrences that begin <= (start time + lifetime).
-   *   - Weekday Mask: SMTWRFS, Sunday is LSB; set to 0 for non-repeating event.
-   *   - Channel:    Channel that this timer is assigned to.
-   *   - Active:     Timer may be disabled to allow the addition of conflicting
-   *                 timers.
-   *   - Filename:   The filename of the recording is derived from this.
-   */
-  unsigned int     Index(void) const             { return m_index; }
+  unsigned int     ID(void) const                { return m_id; }
   const CDateTime& StartTime(void) const         { return m_startTime; }
   const CDateTime& EndTime(void) const           { return m_endTime; }
   CDateTimeSpan    Duration(void) const          { return m_endTime - m_startTime; }
@@ -91,23 +81,24 @@ public:
   std::string      RecordingFilename(void) const { return m_strRecordingFilename; }
 
   /*!
-   * A timer is valid if it has a channel, a valid start time, and the end time
-   * occurs after the start time.
-   */
-  bool IsValid(void) const;
-
-  /*!
-   * Assign timer a unique index. Only succeeds if index was previously invalid;
-   * changing a valid index has no effect and SetIndex() will return false.
+   * Set the timer ID. This ID should be unique among timers.
    *
-   * SetIndex() does not mark timer as changed.
+   * The ID may only be set once. If the timer already has a valid ID then
+   * SetID() has no effect and returns false.
+   *
+   * Setting the ID does not mark the timer as changed.
    */
-  bool SetIndex(unsigned int index);
+  bool SetID(unsigned int id);
 
   /*!
-   * Set the timer params. Timer is marked as changed only if params actually
-   * change.
+   * Set timer properties. Properties can be set all at once via operator=(),
+   * or sequentially via the Set*() methods. operator=() does not set the ID.
+   *
+   * Timer will be marked as changed if any properties (excluding ID) are
+   * modified.
    */
+  cTimer& operator=(const cTimer& rhs);
+
   void SetTime(const CDateTime& startTime,
                const CDateTime& endTime,
                const CDateTimeSpan& lifetime,
@@ -116,30 +107,50 @@ public:
   void SetActive(bool bActive);
   void SetRecordingFilename(const std::string& strFile);
 
+  /*!
+   * A timer is valid if:
+   *   (1) m_id           is a valid ID (i.e. is not TIMER_INVALID_ID)
+   *   (2) m_startTime    is a valid CDateTime object
+   *   (3) m_endTime      is a valid CDateTime object
+   *   (4) m_startTime < m_endTime
+   *   (5) m_channel      is a valid channel
+   *
+   * HOWEVER, the ID check (1) may be skipped by setting bCheckID to false.
+   * This allows the timer manager to check validity before assigning an ID.
+   */
+  bool IsValid(bool bCheckID = true) const;
+  void LogInvalidProperties(bool bCheckID = true) const;
+
   // TODO
-  bool IsPending(void) const   { return CDateTime::GetUTCDateTime() <= (m_startTime + m_lifetime); }
-  bool IsExpired(void) const   { return m_endTime + m_lifetime < CDateTime::GetUTCDateTime(); }
-  bool IsRecording(void) const { return false; }
+  bool IsPending(const CDateTime& now) const   { return now <= m_startTime + m_lifetime; }
+  bool IsExpired(const CDateTime& now) const   { return m_startTime + m_lifetime < now; }
+  bool IsRecording(const CDateTime& now) const { return false; }
 
   /*!
-   * Serialise timer. Fails if timer is invalid.
+   * Serialise the timer. If serialisation succeeds, the serialised timer is
+   * guaranteed to be valid (IsValid() returns true); otherwise, false is
+   * returned.
    */
-  bool SerialiseTimer(TiXmlNode *node) const;
+  bool Serialise(TiXmlNode* node) const;
 
   /*!
-   * Deserialise timer. Fails if timer has already been assigned an index or if
-   * the deserialised timer is invalid. Timer is marked as unchanged after
-   * deserialisation.
+   * Deserialise the timer. If deserialisation succeeds, the deserialised timer
+   * is guaranteed to be valid (IsValid() returns true); otherwise, false is
+   * returned.
+   *
+   * Deserialisation will fail if the timer already has a valid ID.
+   *
+   * Upon deserialisation, the timer is marked as unchanged. (This mirrors
+   * the state of a newly-constructed timer.)
    */
-  bool DeserialiseTimer(const TiXmlNode *node);
+  bool Deserialise(const TiXmlNode* node);
 
 private:
-  void Reset(void);
-
+  // Stringify methods
   static std::string WeekdayMaskToString(uint8_t weekdayMask);
   static uint8_t StringToWeekdayMask(const std::string& strWeekdayMask);
 
-  unsigned int  m_index;
+  unsigned int  m_id;
   CDateTime     m_startTime;
   CDateTime     m_endTime;
   CDateTimeSpan m_lifetime;

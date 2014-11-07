@@ -24,7 +24,7 @@
 #include <shared_ptr/shared_ptr.hpp>
 #include <vector>
 
-#define TIMER_INVALID_INDEX   0
+#define TIMER_INVALID_ID      0
 
 #define TIMER_MASK_SUNDAY     (1 << 0)
 #define TIMER_MASK_MONDAY     (1 << 1)
@@ -40,6 +40,6 @@ namespace VDR
 class cTimer;
 typedef VDR::shared_ptr<cTimer> TimerPtr;
 typedef std::vector<TimerPtr>   TimerVector;
-typedef std::map<unsigned int, TimerPtr> TimerMap; // Index -> timer
+typedef std::map<unsigned int, TimerPtr> TimerMap; // ID -> timer
 
 }

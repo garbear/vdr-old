@@ -34,8 +34,10 @@ namespace VDR
 TimerPtr cTimer::EmptyTimer;
 
 cTimer::cTimer(void)
+: m_id(TIMER_INVALID_ID),
+  m_weekdayMask(0),
+  m_bActive(true)
 {
-  Reset();
 }
 
 cTimer::cTimer(const CDateTime& startTime,
@@ -45,7 +47,7 @@ cTimer::cTimer(const CDateTime& startTime,
                const ChannelPtr& channel,
                bool bActive,
                std::string strRecordingFilename)
- : m_index(TIMER_INVALID_INDEX),
+ : m_id(TIMER_INVALID_ID),
    m_startTime(startTime),
    m_endTime(endTime),
    m_lifetime(lifetime),
@@ -56,16 +58,14 @@ cTimer::cTimer(const CDateTime& startTime,
 {
 }
 
-void cTimer::Reset(void)
+bool cTimer::SetID(unsigned int id)
 {
-  m_index = TIMER_INVALID_INDEX;
-  m_startTime.Reset();
-  m_endTime.Reset();
-  m_lifetime = CDateTimeSpan();
-  m_weekdayMask = 0;
-  m_channel.reset();
-  m_bActive = true;
-  m_strRecordingFilename.clear();
+  if (m_id == TIMER_INVALID_ID)
+  {
+    m_id = id;
+    return true;
+  }
+  return false;
 }
 
 cTimer& cTimer::operator=(const cTimer& rhs)
@@ -78,22 +78,6 @@ cTimer& cTimer::operator=(const cTimer& rhs)
     SetRecordingFilename(rhs.m_strRecordingFilename);
   }
   return *this;
-}
-
-bool cTimer::IsValid(void) const
-{
-  return m_channel && m_channel->ID().IsValid() && // Channel must be valid
-         m_startTime.IsValid()                  && // Start time must be valid
-         m_startTime < m_endTime;                  // Start time must be < end time (implies end time is valid)
-}
-
-bool cTimer::SetIndex(unsigned int index)
-{
-  if (m_index != TIMER_INVALID_INDEX)
-    return false;
-
-  m_index = index;
-  return true;
 }
 
 void cTimer::SetTime(const CDateTime& startTime, const CDateTime& endTime, const CDateTimeSpan& lifetime, uint8_t weekdayMask)
@@ -138,135 +122,146 @@ void cTimer::SetRecordingFilename(const std::string& strFile)
   }
 }
 
-bool cTimer::SerialiseTimer(TiXmlNode *node) const
+bool cTimer::IsValid(bool bCheckID /* = true */) const
+{
+  return (bCheckID ? m_id != TIMER_INVALID_ID : true) && // Condition (1)
+         m_startTime.IsValid()                        && // Condition (2)
+         m_endTime.IsValid()                          && // Condition (3)
+         m_startTime < m_endTime                      && // Condition (4)
+         m_channel && m_channel->IsValid();              // Condition (5)
+}
+
+void cTimer::LogInvalidProperties(bool bCheckID /* = true */) const
+{
+  // Check condition (1)
+  if (bCheckID && m_id == TIMER_INVALID_ID)
+    esyslog("Invalid timer: ID has not been set");
+
+  // Check conditions (2) and (3)
+  if (!m_startTime.IsValid() || !m_endTime.IsValid())
+  {
+    esyslog("Invalid timer %u: invalid %s", m_id,
+        m_endTime.IsValid() ? "start time" :
+            m_startTime.IsValid() ? "end time" :
+                "start and end time");
+  }
+
+  time_t startTime;
+  time_t endTime;
+
+  m_startTime.GetAsTime(startTime);
+  m_endTime.GetAsTime(endTime);
+
+  // Check condition (4)
+  if (m_startTime >= m_endTime)
+    esyslog("Invalid timer %u: start time (%d) is >= end time (%d)", m_id, startTime, endTime);
+
+  // Check condition (5)
+  if (!m_channel || !m_channel->IsValid())
+    esyslog("Invalid timer %u: invalid channel", m_id);
+}
+
+bool cTimer::Serialise(TiXmlNode* node) const
 {
   if (node == NULL)
     return false;
 
-  TiXmlElement *timerElement = node->ToElement();
-  if (timerElement == NULL)
+  TiXmlElement* elem = node->ToElement();
+  if (elem == NULL)
     return false;
 
-  if (m_index == TIMER_INVALID_INDEX)
+  if (!IsValid())
   {
-    esyslog("Error saving timer: invalid index");
+    LogInvalidProperties();
     return false;
   }
 
-  if (!m_channel || !m_channel->ID().IsValid())
-  {
-    esyslog("Error saving timer %u: invalid channel", m_index);
-    return false;
-  }
-
-  if (!m_startTime.IsValid())
-  {
-    esyslog("Error saving timer %u: invalid start time", m_index);
-    return false;
-  }
-
-  if (m_startTime >= m_endTime)
-  {
-    esyslog("Error saving timer %u: start time is >= end time", m_index);
-    return false;
-  }
-
-  assert(IsValid());
-
-  timerElement->SetAttribute(TIMER_XML_ATTR_INDEX, m_index);
+  elem->SetAttribute(TIMER_XML_ATTR_INDEX, m_id);
 
   time_t startTime;
   m_startTime.GetAsTime(startTime);
-  timerElement->SetAttribute(TIMER_XML_ATTR_START, startTime);
+  elem->SetAttribute(TIMER_XML_ATTR_START, startTime);
 
   time_t endTime;
   m_endTime.GetAsTime(endTime);
-  timerElement->SetAttribute(TIMER_XML_ATTR_END, endTime);
+  elem->SetAttribute(TIMER_XML_ATTR_END, endTime);
 
-  timerElement->SetAttribute(TIMER_XML_ATTR_LIFETIME, m_lifetime.GetDays());
+  elem->SetAttribute(TIMER_XML_ATTR_LIFETIME, m_lifetime.GetDays());
 
   if (m_weekdayMask)
-    timerElement->SetAttribute(TIMER_XML_ATTR_DAY_MASK, WeekdayMaskToString(m_weekdayMask));
+    elem->SetAttribute(TIMER_XML_ATTR_DAY_MASK, WeekdayMaskToString(m_weekdayMask));
 
   if (!m_channel->ID().Serialise(node))
     return false;
 
   if (!m_bActive)
-    timerElement->SetAttribute(TIMER_XML_ATTR_DISABLED, "true");
+    elem->SetAttribute(TIMER_XML_ATTR_DISABLED, "true");
 
-  timerElement->SetAttribute(TIMER_XML_ATTR_FILENAME, m_strRecordingFilename);
+  elem->SetAttribute(TIMER_XML_ATTR_FILENAME, m_strRecordingFilename);
 
   return true;
 }
 
-bool cTimer::DeserialiseTimer(const TiXmlNode *node)
+bool cTimer::Deserialise(const TiXmlNode* node)
 {
   if (node == NULL)
     return false;
 
-  const TiXmlElement *elem = node->ToElement();
+  const TiXmlElement* elem = node->ToElement();
   if (elem == NULL)
     return false;
 
-  if (m_index != TIMER_INVALID_INDEX)
+  if (m_id != TIMER_INVALID_ID)
   {
-    esyslog("Error loading timer: timer already has a valid index (%u)", m_index);
+    esyslog("Error loading timer: object already has a valid index (%u)", m_id);
     return false;
   }
 
-  Reset();
-
-  if (const char* attr = elem->Attribute(TIMER_XML_ATTR_INDEX))
-    m_index = StringUtils::IntVal(attr, TIMER_INVALID_INDEX);
-
-  if (m_index == TIMER_INVALID_INDEX)
   {
-    esyslog("Error loading timer: invalid index");
-    return false;
+    const char* attr = elem->Attribute(TIMER_XML_ATTR_INDEX);
+    m_id = attr ? StringUtils::IntVal(attr, TIMER_INVALID_ID) : 0;
   }
 
   cChannelID chanId;
   chanId.Deserialise(node);
-  if (chanId.IsValid())
-    m_channel = cChannelManager::Get().GetByChannelID(chanId);
+  m_channel = cChannelManager::Get().GetByChannelID(chanId);
 
-  if (!m_channel)
   {
-    esyslog("Error loading timer %u: no channel for ID [%s]", m_index, chanId.ToString().c_str());
-    return false;
+    const char* attr = elem->Attribute(TIMER_XML_ATTR_START);
+    m_startTime = (time_t)(attr ? StringUtils::IntVal(attr) : 0);
   }
 
-  if (const char* attr = elem->Attribute(TIMER_XML_ATTR_START))
-    m_startTime = (time_t)StringUtils::IntVal(attr);
-
-  if (!m_startTime.IsValid())
   {
-    esyslog("Error loading timer %u: invalid start time", m_index);
-    return false;
+    const char* attr = elem->Attribute(TIMER_XML_ATTR_END);
+    m_endTime = (time_t)(attr ? StringUtils::IntVal(attr) : 0);
   }
 
-  if (const char* attr = elem->Attribute(TIMER_XML_ATTR_END))
-    m_endTime = (time_t)StringUtils::IntVal(attr);
-
-  if (m_startTime >= m_endTime)
   {
-    esyslog("Error loading timer %u: start time is >= end time", m_index);
-    return false;
+    const char* attr = elem->Attribute(TIMER_XML_ATTR_LIFETIME);
+    m_lifetime.SetDateTimeSpan(0, 0, 0, attr ? StringUtils::IntVal(attr) : 0);
   }
 
-  assert(IsValid());
+  {
+    const char* attr = elem->Attribute(TIMER_XML_ATTR_DAY_MASK);
+    m_weekdayMask = attr ? StringToWeekdayMask(attr) : 0;
+  }
 
-  if (const char* attr = elem->Attribute(TIMER_XML_ATTR_LIFETIME))
-    m_lifetime = CDateTimeSpan(StringUtils::IntVal(attr), 0, 0, 0);
+  {
+    const char* attr = elem->Attribute(TIMER_XML_ATTR_DISABLED);
+    const bool bDisabled = (attr ? StringUtils::EqualsNoCase(attr, "true") : false);
+    m_bActive = !bDisabled;
+  }
 
-  if (const char* attr = elem->Attribute(TIMER_XML_ATTR_DAY_MASK))
-    m_weekdayMask = StringToWeekdayMask(attr);
+  {
+    const char* attr = elem->Attribute(TIMER_XML_ATTR_FILENAME);
+    m_strRecordingFilename = attr ? attr : "";
+  }
 
-  if (const char* attr = elem->Attribute(TIMER_XML_ATTR_DISABLED))
-    m_bActive = !StringUtils::EqualsNoCase(attr, "true");
-
-  if (const char* attr = elem->Attribute(TIMER_XML_ATTR_FILENAME))
-    m_strRecordingFilename = attr;
+  if (!IsValid())
+  {
+    LogInvalidProperties();
+    return false;
+  }
 
   SetChanged(false);
 

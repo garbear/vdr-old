@@ -22,7 +22,6 @@
 
 #include "TimerTypes.h"
 #include "lib/platform/threads/mutex.h"
-#include "utils/DateTime.h"
 #include "utils/Observer.h"
 
 namespace VDR
@@ -34,51 +33,51 @@ public:
   static cTimerManager& Get(void);
   ~cTimerManager(void);
 
-  TimerPtr    GetByIndex(unsigned int index) const;
+  TimerPtr    GetByID(unsigned int id) const;
   TimerVector GetTimers(void) const;
   size_t      TimerCount(void) const;
 
   /*!
-   * Add a timer and assign it an index. Fails if newTimer already has a valid
-   * index, if newTimer's params are invalid, or if newTimer has a time conflict
-   * with an active timer.
+   * Add a timer and assign it an ID. Fails if newTimer already has a valid
+   * ID, if newTimer's properties are invalid, or if newTimer has a time
+   * conflict with an active timer. (TODO: Allow conflicting timers to support
+   * multiple devices).
    *
    * Returns true if newTimer is added. As a side effect, newTimer will be
-   * assigned a valid index.
+   * assigned a valid ID.
    */
   bool AddTimer(const TimerPtr& newTimer);
 
   /*!
-   * Update the timer with the given index. The index of updatedTimer is
-   * ignored.
+   * Update the timer with the given ID. The ID of updatedTimer is ignored.
    *
-   * Returns false if there is no timer with the given index, or an attempt to
+   * Returns false if there is no timer with the given ID, or an attempt to
    * activate a disabled timer causes a time conflict with another active timer.
-   * Returns true otherwise (even if no params are modified).
+   * Returns true otherwise (even if no properties are modified).
    */
-  bool UpdateTimer(unsigned int index, const cTimer& updatedTimer);
+  bool UpdateTimer(unsigned int id, const cTimer& updatedTimer);
 
   /*!
-   * Remove the timer with the given index. If timer is recording,
+   * Remove the timer with the given ID. If timer is recording,
    * bInterruptRecording must be set to true or this will fail. Returns true if
    * the timer was removed.
    */
-  bool RemoveTimer(unsigned int index, bool bInterruptRecording);
+  bool RemoveTimer(unsigned int id, bool bInterruptRecording);
 
-  virtual void Notify(const Observable &obs, const ObservableMessage msg);
+  virtual void Notify(const Observable& obs, const ObservableMessage msg);
   void NotifyObservers(void);
 
   bool LoadTimers(void);
-  bool LoadTimers(const std::string &file);
-  bool SaveTimers(const std::string &file = "");
+  bool LoadTimers(const std::string& file);
+  bool SaveTimers(const std::string& file = "");
 
 private:
   bool TimerConflicts(const cTimer& timer) const;
 
   cTimerManager(void);
 
-  TimerMap         m_timers;      // Index -> timer
-  unsigned int     m_maxIndex;    // Monotonically increasing timer index
+  TimerMap         m_timers;      // ID -> timer
+  unsigned int     m_maxID;       // Monotonically increasing timer ID
   std::string      m_strFilename; // timers.xml filename
 
   PLATFORM::CMutex m_mutex;

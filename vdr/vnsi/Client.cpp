@@ -1237,7 +1237,7 @@ bool cVNSIClient::processTIMER_Get() /* OPCODE 81 */
   CLockObject lock(m_timerLock);
 
   uint32_t index = m_req->extract_U32();
-  TimerPtr timer = cTimerManager::Get().GetByIndex(index);
+  TimerPtr timer = cTimerManager::Get().GetByID(index);
   if (timer)
   {
     m_resp->add_U32(VNSI_RET_OK);
@@ -1250,10 +1250,10 @@ bool cVNSIClient::processTIMER_Get() /* OPCODE 81 */
 
     uint32_t priority = 0; // TODO
 
-    m_resp->add_U32(timer->Index());
+    m_resp->add_U32(timer->ID());
     m_resp->add_U32(timer->IsActive());
-    m_resp->add_U32(timer->IsRecording());
-    m_resp->add_U32(timer->IsPending());
+    m_resp->add_U32(timer->IsRecording(CDateTime::GetUTCDateTime()));
+    m_resp->add_U32(timer->IsPending(CDateTime::GetUTCDateTime()));
     m_resp->add_U32(priority);
     m_resp->add_U32(timer->Lifetime().GetDays());
     m_resp->add_U32(timer->Channel()->Number());
@@ -1290,10 +1290,10 @@ bool cVNSIClient::processTIMER_GetList() /* OPCODE 82 */
 
     uint32_t priority = 0; // TODO
 
-    m_resp->add_U32(timer->Index());
+    m_resp->add_U32(timer->ID());
     m_resp->add_U32(timer->IsActive());
-    m_resp->add_U32(timer->IsRecording());
-    m_resp->add_U32(timer->IsPending());
+    m_resp->add_U32(timer->IsRecording(CDateTime::GetUTCDateTime()));
+    m_resp->add_U32(timer->IsPending(CDateTime::GetUTCDateTime()));
     m_resp->add_U32(priority);
     m_resp->add_U32(timer->Lifetime().GetDays());
     m_resp->add_U32(timer->Channel()->Number());
@@ -1345,7 +1345,7 @@ bool cVNSIClient::processTIMER_Add() /* OPCODE 83 */
 
     if (cTimerManager::Get().AddTimer(timer))
     {
-      isyslog("Timer %u added", timer->Index());
+      isyslog("Timer %u added", timer->ID());
       m_resp->add_U32(VNSI_RET_OK);
       m_resp->finalise();
       m_socket.write(m_resp->getPtr(), m_resp->getLen());
@@ -1378,7 +1378,7 @@ bool cVNSIClient::processTIMER_Delete() /* OPCODE 84 */
     isyslog("Deleted timer %u", index);
     m_resp->add_U32(VNSI_RET_OK);
   }
-  else if (cTimerManager::Get().GetByIndex(index) && !force)
+  else if (cTimerManager::Get().GetByID(index) && !force)
   {
     esyslog("Timer %u is recording and can only be force-deleted", index);
     m_resp->add_U32(VNSI_RET_RECRUNNING);
@@ -1408,7 +1408,7 @@ bool cVNSIClient::processTIMER_Update() /* OPCODE 85 */
   uint32_t index  = m_req->extract_U32();
   bool active     = m_req->extract_U32();
 
-  TimerPtr timer = cTimerManager::Get().GetByIndex(index);
+  TimerPtr timer = cTimerManager::Get().GetByID(index);
   if (!timer)
   {
     esyslog("Timer \"%u\" not defined", index);
