@@ -80,7 +80,6 @@ bool cVDRDaemon::LoadConfig(void)
   cSettings::Get().Load();
   cChannelManager::Get().Load();
   cScheduleManager::Get().Load();
-  cTimerManager::Get().LoadTimers();
   cRecordingManager::Get().Load();
   CAllowedHosts::Get().Load();
 
@@ -95,7 +94,6 @@ bool cVDRDaemon::LoadConfig(void)
 
 bool cVDRDaemon::SaveConfig(void)
 {
-  cTimerManager::Get().SaveTimers();
   cRecordingManager::Get().Save();
 
   return true;
@@ -120,6 +118,8 @@ bool cVDRDaemon::Init()
   // Channel:
   if (!cDeviceManager::Get().WaitForAllDevicesReady(DEVICEREADYTIMEOUT))
     dsyslog("some devices are not ready after %d seconds", DEVICEREADYTIMEOUT);
+
+  cTimerManager::Get().Start();
 
   return CreateThread(true);
 }
@@ -160,6 +160,8 @@ void cVDRDaemon::OnSignal(int signum)
 
 void cVDRDaemon::DeInit()
 {
+  cTimerManager::Get().Stop();
+
   cDeviceManager::Get().Shutdown();
 
   cChannelManager::Get().Clear();

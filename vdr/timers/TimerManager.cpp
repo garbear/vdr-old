@@ -22,12 +22,14 @@
 #include "TimerManager.h"
 #include "Timer.h"
 #include "TimerDefinitions.h"
+#include "utils/DateTime.h"
 #include "utils/log/Log.h"
 #include "utils/StringUtils.h"
 #include "utils/XBMCTinyXML.h"
 
 #include <algorithm>
 #include <assert.h>
+#include <limits.h>
 
 using namespace PLATFORM;
 using namespace std;
@@ -52,43 +54,59 @@ cTimerManager::~cTimerManager(void)
     it->second->UnregisterObserver(this);
 }
 
-TimerPtr cTimerManager::GetByID(unsigned int id) const
+void cTimerManager::Start(void)
 {
-  CLockObject lock(m_mutex);
-
-  TimerMap::const_iterator it = m_timers.find(id);
-  if (it != m_timers.end())
-    return it->second;
-
-  return cTimer::EmptyTimer;
+  if (m_timers.empty())
+    LoadTimers();
+  CreateThread(false);
 }
 
-TimerVector cTimerManager::GetTimers(void) const
+void cTimerManager::Stop(void)
 {
-  TimerVector timers;
-
-  CLockObject lock(m_mutex);
-
-  for (TimerMap::const_iterator it = m_timers.begin(); it != m_timers.end(); ++it)
-    timers.push_back(it->second);
-
-  return timers;
+  StopThread(-1);
+  m_timerNotifyEvent.Broadcast();
 }
 
-size_t cTimerManager::TimerCount(void) const
+void* cTimerManager::Process(void)
 {
-  CLockObject lock(m_mutex);
-  return m_timers.size();
+  while (!IsStopped())
+  {
+    const CDateTime now = CDateTime::GetUTCDateTime();
+
+    TimerVector idleTimers = GetIdleTimers(now);
+    if (idleTimers.empty())
+    {
+      m_timerNotifyEvent.Wait();
+      continue;
+    }
+
+    // Sort timers for greedy processing
+    std::sort(idleTimers.begin(), idleTimers.end(), cTimerSorter(now));
+
+    // Start occurring timers
+    TimerVector::iterator itTimer = idleTimers.begin();
+    while (itTimer != idleTimers.end() && (*itTimer)->IsOccurring(now))
+      (*itTimer++)->StartRecording();
+
+    // Sleep until first pending timer
+    if (itTimer != idleTimers.end())
+    {
+      CDateTimeSpan waitTime = (*itTimer)->GetOccurrence(now) - now;
+      m_timerNotifyEvent.Wait(std::min(ULONG_MAX, (unsigned long)waitTime.GetSecondsTotal() * 1000));
+    }
+  }
+  return NULL;
 }
 
 bool cTimerManager::AddTimer(const TimerPtr& newTimer)
 {
-  if (newTimer && newTimer->ID() == TIMER_INVALID_ID && newTimer->IsValid())
+  if (newTimer && newTimer->ID() == TIMER_INVALID_ID && newTimer->IsValid(false))
   {
     CLockObject lock(m_mutex);
 
-    if (TimerConflicts(*newTimer))
-      return false;
+    for (TimerMap::const_iterator it = m_timers.begin(); it != m_timers.end(); ++it)
+      if (it->second->Conflicts(*newTimer))
+        return false;
 
     newTimer->SetID(++m_maxID);
     newTimer->RegisterObserver(this);
@@ -102,6 +120,34 @@ bool cTimerManager::AddTimer(const TimerPtr& newTimer)
   return false;
 }
 
+TimerPtr cTimerManager::GetByID(unsigned int id) const
+{
+  CLockObject lock(m_mutex);
+
+  TimerMap::const_iterator it = m_timers.find(id);
+  if (it != m_timers.end())
+    return it->second;
+
+  return cTimer::EmptyTimer;
+}
+
+TimerVector cTimerManager::GetTimers(void) const
+{
+  CLockObject lock(m_mutex);
+
+  TimerVector timers;
+  for (TimerMap::const_iterator it = m_timers.begin(); it != m_timers.end(); ++it)
+    timers.push_back(it->second);
+
+  return timers;
+}
+
+size_t cTimerManager::TimerCount(void) const
+{
+  CLockObject lock(m_mutex);
+  return m_timers.size();
+}
+
 bool cTimerManager::UpdateTimer(unsigned int id, const cTimer& updatedTimer)
 {
   CLockObject lock(m_mutex);
@@ -110,8 +156,12 @@ bool cTimerManager::UpdateTimer(unsigned int id, const cTimer& updatedTimer)
   if (timer)
   {
     // If timer is being enabled, check for conflicts
-    if (!timer->IsActive() && updatedTimer.IsActive() && TimerConflicts(updatedTimer))
-      return false;
+    if (!timer->IsActive() && updatedTimer.IsActive())
+    {
+      for (TimerMap::const_iterator it = m_timers.begin(); it != m_timers.end(); ++it)
+        if (it->second->Conflicts(updatedTimer))
+          return false;
+    }
 
     *timer = updatedTimer;
     timer->NotifyObservers();
@@ -128,9 +178,12 @@ bool cTimerManager::RemoveTimer(unsigned int id, bool bInterruptRecording)
   TimerMap::iterator it = m_timers.find(id);
   if (it != m_timers.end())
   {
-    bool bRecording = it->second->IsRecording(CDateTime::GetUTCDateTime());
-    if (bRecording && !bInterruptRecording)
-      return false;
+    if (it->second->IsRecording(CDateTime::GetUTCDateTime()))
+    {
+      if (!bInterruptRecording)
+        return false;
+      it->second->StopRecording();
+    }
 
     it->second->UnregisterObserver(this);
     m_timers.erase(it);
@@ -143,34 +196,27 @@ bool cTimerManager::RemoveTimer(unsigned int id, bool bInterruptRecording)
   return false;
 }
 
-bool cTimerManager::TimerConflicts(const cTimer& timer) const
+TimerVector cTimerManager::GetIdleTimers(const CDateTime& now) const
 {
-  // TODO: include lifetime, weekday mask
+  CLockObject lock(m_mutex);
+
+  TimerVector idleTimers;
   for (TimerMap::const_iterator it = m_timers.begin(); it != m_timers.end(); ++it)
   {
-    const TimerPtr& existingTimer = it->second;
-
-    // Timer can't conflict with itself
-    if (&timer == existingTimer.get())
-      continue;
-
-    // Skip inactive timers
-    if (!existingTimer->IsActive())
-      continue;
-
-    // Case 1: timer ends before existing timer starts; doesn't conflict
-    if (timer.EndTime() <= existingTimer->StartTime())
-      continue;
-
-    // Case 2: timer starts after existing timer ends; doesn't conflict
-    if (timer.StartTime() >= existingTimer->EndTime())
-      continue;
-
-    // Conflict detected
-    return true;
+    const TimerPtr& timer = it->second;
+    if (  // (1) Timer is active
+          timer->IsActive() &&
+          // (2) Timer is idle
+          !timer->IsRecording(now) &&
+          // (3) Timer is not expired
+          !timer->IsExpired(now)
+       )
+    {
+      idleTimers.push_back(it->second);
+    }
   }
 
-  return false;
+  return idleTimers;
 }
 
 void cTimerManager::Notify(const Observable& obs, const ObservableMessage msg)
@@ -191,6 +237,7 @@ void cTimerManager::NotifyObservers()
   if (Changed())
   {
     Observable::NotifyObservers(ObservableMessageTimerChanged);
+    m_timerNotifyEvent.Broadcast();
     SaveTimers();
   }
 }

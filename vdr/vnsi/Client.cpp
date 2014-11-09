@@ -1249,10 +1249,12 @@ bool cVNSIClient::processTIMER_Get() /* OPCODE 81 */
 
     uint32_t priority = 0; // TODO
 
+    const CDateTime now = CDateTime::GetUTCDateTime();
+
     m_resp->add_U32(timer->ID());
     m_resp->add_U32(timer->IsActive());
-    m_resp->add_U32(timer->IsRecording(CDateTime::GetUTCDateTime()));
-    m_resp->add_U32(timer->IsPending(CDateTime::GetUTCDateTime()));
+    m_resp->add_U32(timer->IsRecording(now));
+    m_resp->add_U32(!timer->IsExpired(now));
     m_resp->add_U32(priority);
     m_resp->add_U32(timer->Lifetime().GetDays());
     m_resp->add_U32(timer->Channel()->Number());
@@ -1261,7 +1263,7 @@ bool cVNSIClient::processTIMER_Get() /* OPCODE 81 */
     m_resp->add_U32(endTime);
     m_resp->add_U32(timer->StartTime().GetDay());
     m_resp->add_U32(timer->WeekdayMask());
-    m_resp->add_String(m_toUTF8.Convert(timer->RecordingFilename().c_str()));
+    m_resp->add_String(m_toUTF8.Convert(timer->Filename().c_str()));
   }
 
   m_resp->finalise();
@@ -1289,10 +1291,12 @@ bool cVNSIClient::processTIMER_GetList() /* OPCODE 82 */
 
     uint32_t priority = 0; // TODO
 
+    const CDateTime now = CDateTime::GetUTCDateTime();
+
     m_resp->add_U32(timer->ID());
     m_resp->add_U32(timer->IsActive());
-    m_resp->add_U32(timer->IsRecording(CDateTime::GetUTCDateTime()));
-    m_resp->add_U32(timer->IsPending(CDateTime::GetUTCDateTime()));
+    m_resp->add_U32(timer->IsRecording(now));
+    m_resp->add_U32(!timer->IsExpired(now));
     m_resp->add_U32(priority);
     m_resp->add_U32(timer->Lifetime().GetDays());
     m_resp->add_U32(timer->Channel()->Number());
@@ -1301,7 +1305,7 @@ bool cVNSIClient::processTIMER_GetList() /* OPCODE 82 */
     m_resp->add_U32(endTime);
     m_resp->add_U32(timer->StartTime().GetDay());
     m_resp->add_U32(timer->WeekdayMask());
-    m_resp->add_String(m_toUTF8.Convert(timer->RecordingFilename().c_str()));
+    m_resp->add_String(m_toUTF8.Convert(timer->Filename().c_str()));
   }
 
   m_resp->finalise();
@@ -1333,13 +1337,14 @@ bool cVNSIClient::processTIMER_Add() /* OPCODE 83 */
   }
   else
   {
+    const CDateTime deadline = CDateTime(startTime) + CDateTimeSpan(lifetime, 0, 0, 0);
     TimerPtr timer = TimerPtr(new cTimer(startTime,
                                          stopTime,
-                                         CDateTimeSpan(lifetime, 0, 0, 0),
                                          weekdayMask,
+                                         deadline,
                                          channel,
-                                         bIsActive,
-                                         file));
+                                         file,
+                                         bIsActive));
     delete[] file;
 
     if (cTimerManager::Get().AddTimer(timer))
@@ -1435,10 +1440,11 @@ bool cVNSIClient::processTIMER_Update() /* OPCODE 85 */
     ChannelPtr channel = cChannelManager::Get().GetByChannelUID(channelid);
     if(channel)
     {
-      timer->SetTime(startTime, stopTime, CDateTimeSpan(lifetime, 0, 0, 0), weekdayMask);
+      timer->SetFilename(file);
+      const CDateTime deadline = CDateTime(startTime) + CDateTimeSpan(lifetime, 0, 0, 0);
+      timer->SetTime(startTime, stopTime, weekdayMask, deadline);
       timer->SetChannel(channel);
       timer->SetActive(active);
-      timer->SetRecordingFilename(file);
     }
 
     delete[] file;

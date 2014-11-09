@@ -24,9 +24,9 @@
 #define TIMER_XML_ELM_TIMER      "timer"
 
 #define TIMER_XML_ATTR_INDEX     "id"
+#define TIMER_XML_ATTR_FILENAME  "filename"
 #define TIMER_XML_ATTR_START     "start"
 #define TIMER_XML_ATTR_END       "end"
-#define TIMER_XML_ATTR_LIFETIME  "lifetime"
 #define TIMER_XML_ATTR_DAY_MASK  "day_mask"
+#define TIMER_XML_ATTR_EXPIRES   "expires"
 #define TIMER_XML_ATTR_DISABLED  "disabled"
-#define TIMER_XML_ATTR_FILENAME  "filename"

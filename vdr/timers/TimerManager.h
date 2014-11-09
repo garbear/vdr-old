@@ -21,32 +21,43 @@
 #pragma once
 
 #include "TimerTypes.h"
+#include "lib/platform/threads/threads.h"
 #include "lib/platform/threads/mutex.h"
 #include "utils/Observer.h"
 
 namespace VDR
 {
 
-class cTimerManager : public Observer, public Observable
+class CDateTime;
+
+class cTimerManager : protected PLATFORM::CThread,
+                      public Observer,
+                      public Observable
 {
 public:
   static cTimerManager& Get(void);
-  ~cTimerManager(void);
+  virtual ~cTimerManager(void);
 
-  TimerPtr    GetByID(unsigned int id) const;
-  TimerVector GetTimers(void) const;
-  size_t      TimerCount(void) const;
+  void Start(void);
+  void Stop(void);
 
   /*!
    * Add a timer and assign it an ID. Fails if newTimer already has a valid
    * ID, if newTimer's properties are invalid, or if newTimer has a time
    * conflict with an active timer. (TODO: Allow conflicting timers to support
-   * multiple devices).
+   * multiple devices.)
    *
    * Returns true if newTimer is added. As a side effect, newTimer will be
    * assigned a valid ID.
    */
   bool AddTimer(const TimerPtr& newTimer);
+
+  /*!
+   * Access timers.
+   */
+  TimerPtr    GetByID(unsigned int id) const;
+  TimerVector GetTimers(void) const;
+  size_t      TimerCount(void) const;
 
   /*!
    * Update the timer with the given ID. The ID of updatedTimer is ignored.
@@ -58,29 +69,43 @@ public:
   bool UpdateTimer(unsigned int id, const cTimer& updatedTimer);
 
   /*!
-   * Remove the timer with the given ID. If timer is recording,
-   * bInterruptRecording must be set to true or this will fail. Returns true if
-   * the timer was removed.
+   * Remove the timer with the given ID. Fails and returns fails if a timer is
+   * currently recording; set bInterruptRecording to true to override this by
+   * stopping recordings in progress. Returns true if the timer was removed.
    */
   bool RemoveTimer(unsigned int id, bool bInterruptRecording);
 
   virtual void Notify(const Observable& obs, const ObservableMessage msg);
   void NotifyObservers(void);
 
+protected:
+  /*!
+   * Start recordings when timers are triggered. Timers are sorted in order of
+   * increasing start time and processed greedily.
+   */
+  virtual void* Process(void);
+
   bool LoadTimers(void);
   bool LoadTimers(const std::string& file);
   bool SaveTimers(const std::string& file = "");
 
 private:
-  bool TimerConflicts(const cTimer& timer) const;
-
   cTimerManager(void);
+
+  /*!
+   * Get a vector of timers for processing. Includes timers that are:
+   *   (1) Active
+   *   (2) Idle (not recording)
+   *   (3) Not expired
+   */
+  TimerVector GetIdleTimers(const CDateTime& now) const;
 
   TimerMap         m_timers;      // ID -> timer
   unsigned int     m_maxID;       // Monotonically increasing timer ID
   std::string      m_strFilename; // timers.xml filename
 
   PLATFORM::CMutex m_mutex;
+  PLATFORM::CEvent m_timerNotifyEvent;
 };
 
 }
