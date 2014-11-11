@@ -108,23 +108,28 @@ void cDeviceManager::Shutdown(void)
   m_devices.clear();
 }
 
-TunerHandlePtr cDeviceManager::OpenVideoInput(iReceiver* receiver, const ChannelPtr& channel)
+TunerHandlePtr cDeviceManager::OpenVideoInput(iReceiver* receiver, device_tuning_type_t type, const ChannelPtr& channel)
 {
   TunerHandlePtr handle;
-  DevicePtr device = GetDevice(0); // TODO
 
-  if (device)
+  if (type == TUNING_TYPE_LIVE_TV   ||
+      type == TUNING_TYPE_RECORDING)
   {
-    TunerHandlePtr newHandle = device->Acquire(channel, TUNING_TYPE_LIVE_TV, receiver);
-    if (newHandle && !device->Receiver()->AttachReceiver(receiver, channel))
+    DevicePtr device = GetDevice(0); // TODO
+
+    if (device)
     {
-      /** failed to attach receiver */
-      device->Release(newHandle);
-    }
-    else if (newHandle)
-    {
-      /** handle acquired and receiver attached */
-      handle = newHandle;
+      TunerHandlePtr newHandle = device->Acquire(channel, type, receiver);
+      if (newHandle && !device->Receiver()->AttachReceiver(receiver, channel))
+      {
+        /** failed to attach receiver */
+        device->Release(newHandle);
+      }
+      else if (newHandle)
+      {
+        /** handle acquired and receiver attached */
+        handle = newHandle;
+      }
     }
   }
 
