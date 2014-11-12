@@ -62,7 +62,6 @@ public:
   static unsigned int TranslateSymbolRate(eDvbcSymbolRate sr);
   static eDvbcSymbolRate TranslateSymbolRate(unsigned int sr);
 
-  TRANSPONDER_TYPE        dvbType;
   eDvbcSymbolRate         dvbcSymbolRate;
   SATELLITE::eSatellite   satelliteIndex;
   ATSC_MODULATION         atscModulation; // Either VSB over-the-air (VSB_8) or QAM Annex B cable TV (QAM_256)

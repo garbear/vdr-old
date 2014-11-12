@@ -57,7 +57,6 @@ TEST(Scanner, Scan)
     if (cDvbDevices::IsATSC(device->Name()))
     {
       cScanConfig config;
-      config.dvbType = TRANSPONDER_ATSC;
       config.atscModulation = ATSC_MODULATION_VSB_8;
       config.device = *it;
 

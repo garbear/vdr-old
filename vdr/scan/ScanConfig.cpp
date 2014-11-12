@@ -30,8 +30,7 @@ namespace VDR
 {
 
 cScanConfig::cScanConfig()
- : dvbType(TRANSPONDER_TERRESTRIAL),
-   dvbcSymbolRate(eSR_AUTO),
+ : dvbcSymbolRate(eSR_AUTO),
    satelliteIndex(SATELLITE::S19E2), // Default to Astra 19.2
    atscModulation(ATSC_MODULATION_BOTH)
 {

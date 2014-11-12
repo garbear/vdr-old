@@ -61,9 +61,6 @@ public:
 
   unsigned int GetGpsUtcOffset(void);
 
-  TRANSPONDER_TYPE Type(void);
-  void SetType(TRANSPONDER_TYPE type) { m_type = type; }
-
   cSdt* SDT(void) const { return m_sdt; }
   cPat* PAT(void) const { return m_pat; }
   cEit* EIT(void) const { return m_eit; }

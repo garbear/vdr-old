@@ -77,27 +77,6 @@ cDeviceScanSubsystem::~cDeviceScanSubsystem(void)
     delete *it;
 }
 
-TRANSPONDER_TYPE cDeviceScanSubsystem::Type(void)
-{
-  if (m_type == TRANSPONDER_INVALID)
-  {
-    //XXX
-    cDvbDevice* dvbDevice = static_cast<cDvbDevice*>(m_device);
-    if (dvbDevice)
-    {
-      if (dvbDevice->Channel()->ProvidesSource(TRANSPONDER_ATSC))
-        m_type = TRANSPONDER_ATSC;
-      else if (dvbDevice->Channel()->ProvidesSource(TRANSPONDER_CABLE))
-        m_type = TRANSPONDER_CABLE;
-      else if (dvbDevice->Channel()->ProvidesSource(TRANSPONDER_SATELLITE))
-        m_type = TRANSPONDER_SATELLITE;
-      else if (dvbDevice->Channel()->ProvidesSource(TRANSPONDER_TERRESTRIAL))
-        m_type = TRANSPONDER_TERRESTRIAL;
-    }
-  }
-  return m_type;
-}
-
 void cDeviceScanSubsystem::SetScanned(cScanReceiver* receiver)
 {
   CLockObject lock(m_waitingMutex);
@@ -174,7 +153,9 @@ bool cDeviceScanSubsystem::WaitForTransponderScan(void)
 
 bool cDeviceScanSubsystem::WaitForEPGScan(void)
 {
-  return Type() == TRANSPONDER_ATSC ? m_mgt->WaitForScan() && m_psipeit->WaitForScan(EPG_TIMEOUT) : m_eit->WaitForScan(EPG_TIMEOUT);
+  return Channel()->ProvidesSource(TRANSPONDER_ATSC) ?
+      m_mgt->WaitForScan() && m_psipeit->WaitForScan(EPG_TIMEOUT) :
+          m_eit->WaitForScan(EPG_TIMEOUT);
 }
 
 void cDeviceScanSubsystem::LockAcquired(void)
@@ -197,7 +178,14 @@ void cDeviceScanSubsystem::LockLost(void)
 
 bool cDeviceScanSubsystem::ReceiverOk(cScanReceiver* receiver)
 {
-  return receiver && ((Type() == TRANSPONDER_ATSC && receiver->InATSC()) || (Type() != TRANSPONDER_ATSC && receiver->InDVB()));
+  if (receiver)
+  {
+    if (Channel()->ProvidesSource(TRANSPONDER_ATSC) && receiver->InATSC())
+      return true;
+    if (!Channel()->ProvidesSource(TRANSPONDER_ATSC) && receiver->InDVB())
+      return true;
+  }
+  return false;
 }
 
 void cDeviceScanSubsystem::Notify(const Observable &obs, const ObservableMessage msg)
@@ -242,7 +230,7 @@ void cDeviceScanSubsystem::OnEventScanned(const EventPtr& event)
 
 unsigned int cDeviceScanSubsystem::GetGpsUtcOffset(void)
 {
-  return Type() == TRANSPONDER_ATSC ? m_psipstt->GetGpsUtcOffset() : 0;
+  return Channel()->ProvidesSource(TRANSPONDER_ATSC) ? m_psipstt->GetGpsUtcOffset() : 0;
 }
 
 }

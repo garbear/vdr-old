@@ -1861,8 +1861,6 @@ bool cVNSIClient::processSCAN_Start() /* OPCODE 143 */
 {
   cScanConfig config;
 
-  // For now, force values to ATSC
-  config.dvbType         = TRANSPONDER_ATSC;
   config.atscModulation  = ATSC_MODULATION_VSB_8;
   config.device          = cDeviceManager::Get().GetDevice(0); // TODO: Support multiple devices
 

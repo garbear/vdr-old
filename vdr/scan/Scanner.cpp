@@ -79,30 +79,26 @@ void* cScanner::Process()
   if (!dvbDevice)
     return NULL;
   const fe_caps_t caps = dvbDevice->m_dvbTuner.Capabilities();
-  TRANSPONDER_TYPE type = m_setup.dvbType;
-  if (type == TRANSPONDER_INVALID)
-    type = m_setup.device->Scan()->Type();
-  else
-    m_setup.device->Scan()->SetType(TRANSPONDER_TERRESTRIAL);
 
-  switch (type)
+  if (m_setup.device->Channel()->ProvidesSource(TRANSPONDER_ATSC))
   {
-  case TRANSPONDER_ATSC:
     dsyslog("Scanning ATSC frequencies");
     transponders = new cAtscTransponderFactory(caps, m_setup.atscModulation);
-    break;
-  case TRANSPONDER_CABLE:
+  }
+  else if (m_setup.device->Channel()->ProvidesSource(TRANSPONDER_CABLE))
+  {
     dsyslog("Scanning DVB-C frequencies");
     transponders = new cCableTransponderFactory(caps, m_setup.dvbcSymbolRate);
-    break;
-  case TRANSPONDER_SATELLITE:
+  }
+  else if (m_setup.device->Channel()->ProvidesSource(TRANSPONDER_SATELLITE))
+  {
     dsyslog("Scanning DVB-S frequencies");
     transponders = new cSatelliteTransponderFactory(caps, m_setup.satelliteIndex);
-    break;
-  case TRANSPONDER_TERRESTRIAL:
+  }
+  else if (m_setup.device->Channel()->ProvidesSource(TRANSPONDER_TERRESTRIAL))
+  {
     dsyslog("Scanning DVB-T frequencies");
     transponders = new cTerrestrialTransponderFactory(caps);
-    break;
   }
 
   if (!transponders)
