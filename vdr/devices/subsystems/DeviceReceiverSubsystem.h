@@ -57,27 +57,21 @@ public:
 
   /*!
    * Attaches the given receiver to this device. Resources for all the streams
-   * that channel provides are associated with the receiver in the m_receiverResources
-   * map.
+   * that channel provides are opened and associated with the receiver.
    */
   bool AttachReceiver(iReceiver* receiver, const ChannelPtr& channel);
   bool AttachReceiver(iReceiver* receiver, uint16_t pid, STREAM_TYPE type = STREAM_TYPE_UNDEFINED);
 
   /*!
-   * Detaches the given receiver from this device. Pointer is removed from
-   * m_receiverResources, and all resources that fall out of scope will be
-   * closed RAII-style.
+   * Detaches the given receiver from this device.
    */
-  void DetachReceiver(iReceiver* receiver, bool bWait = false);
+  void DetachReceiver(iReceiver* receiver);
   void DetachReceiverPid(iReceiver* receiver, uint16_t pid);
 
   /*!
    * Returns true if any receivers are attached to this device.
    */
   bool Receiving(void) const;
-
-  bool HasReceiver(iReceiver* receiver) const;
-  bool HasReceiverPid(iReceiver* receiver, uint16_t pid) const;
 
   /*!
    * \brief Detaches all receivers from this device.
@@ -102,17 +96,13 @@ protected:
   virtual void Deinitialise(void) = 0;
 
   /*!
-   * \brief Does the actual PID setting on this device.
-   * \param bOn Indicates whether the PID shall be added or deleted
-   * \param handle The PID handle
-   *        * handle->handle can be used by the device to store information it
-   *          needs to receive this PID (for instance a file handle)
-   *        * handle->used indicates how many receivers are using this PID
-   * \param type Indicates some special types of PIDs, which the device may need
-   *        to set in a specific way.
+   * Allocate a new resource. Must not return an empty pointer.
    */
   virtual PidResourcePtr CreateResource(uint16_t pid, STREAM_TYPE streamType) = 0;
 
+  /*!
+   * Wait until data is ready to be read.
+   */
   virtual bool Poll(void) = 0;
 
   /*!
@@ -121,32 +111,18 @@ protected:
    */
   virtual TsPacket Read(void) = 0;
 
+  /*!
+   * Report that the TS packet delivered by Read() was used.
+   */
   virtual void Consumed(void) = 0;
 
-  virtual bool WaitForSync(uint64_t timeout = 0);
-
 private:
-  bool OpenResourceForReceiver(uint16_t pid, STREAM_TYPE streamType, iReceiver* receiver);
-  PidReceivers* GetReceivers(uint16_t pid, STREAM_TYPE streamType);
-  void CloseResourceForReceiver(iReceiver* receiver);
-  void CloseResourceForReceiver(uint16_t pid, iReceiver* receiver);
-  bool SyncResources(void);
+  ReceiverHandlePtr    GetReceiverHandle(iReceiver* receiver) const;
+  std::set<iReceiver*> GetReceivers(void) const;
+  PidResourcePtr       GetResource(uint16_t pid) const;
 
-  typedef struct
-  {
-    iReceiver*  receiver;
-    STREAM_TYPE type;
-    uint16_t    pid;
-  } addedReceiver;
-
-  PidResourceMap                    m_resourcesActive;
-  std::vector<addedReceiver>        m_resourcesAdded;
-  std::map<uint16_t, iReceiver*>    m_resourcesRemoved;
-  std::set<iReceiver*>              m_receiversRemoved;
-  PLATFORM::CMutex                  m_mutexReceiverRead;
-  PLATFORM::CMutex                  m_mutexReceiverWrite;
-  bool                              m_synced;
-  PLATFORM::CCondition<bool>        m_syncCondition;
+  ReceiverPidTable m_receiverPidTable; // Receiver <-> PID associations
+  PLATFORM::CMutex m_mutex;
 };
 
 }

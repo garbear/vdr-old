@@ -114,6 +114,10 @@ void cScanReceiver::Detach(void)
   if (m_attached)
   {
     m_attached = false;
+
+    for (std::set<uint16_t>::const_iterator it = m_pids.begin(); it != m_pids.end(); ++it)
+      m_device->Receiver()->DetachReceiverPid(this, *it);
+
     FILTER_DEBUGGING("%s filter detached", m_name.c_str());
   }
 }

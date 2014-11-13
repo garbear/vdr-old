@@ -18,36 +18,40 @@
  *  <http://www.gnu.org/licenses/>.
  *
  */
-#pragma once
 
-#include "Receiver.h"
-
-#include <set>
-#include <shared_ptr/shared_ptr.hpp>
-#include <utility>
-#include <vector>
+#include "PIDResource.h"
+#include "dvb/PsiBuffer.h"
 
 namespace VDR
 {
 
-class cDevice;
-typedef VDR::shared_ptr<cDevice> DevicePtr;
-typedef std::vector<DevicePtr>   DeviceVector;
-
-class cPidResource;
-class cReceiverHandle
+cPidResource::cPidResource(uint16_t pid)
+ : m_pid(pid),
+   m_tid(0),
+   m_buffer(cPsiBuffers::Get().Allocate(pid))
 {
-public:
-  cReceiverHandle(iReceiver* rcvr) : receiver(rcvr) { receiver->Start(); }
-  ~cReceiverHandle(void) { receiver->Stop(); }
-  iReceiver* const receiver;
-};
+}
 
-typedef VDR::shared_ptr<cPidResource>                PidResourcePtr;
-typedef VDR::shared_ptr<cReceiverHandle>             ReceiverHandlePtr;
-typedef std::pair<ReceiverHandlePtr, PidResourcePtr> ReceiverPidEdge;
-typedef std::set<ReceiverPidEdge>                    ReceiverPidTable; // Junction table to store relationships
+cPidResource::cPidResource(uint16_t pid, uint8_t tid)
+ : m_pid(pid),
+   m_tid(tid),
+   m_buffer(cPsiBuffers::Get().Allocate(pid))
+{
+}
 
-typedef uint8_t* TsPacket;
+cPidResource::~cPidResource(void)
+{
+  cPsiBuffers::Get().Release(m_buffer);
+}
+
+std::string cPidResource::ToString(void) const
+{
+  char buf[16];
+  if (m_tid > 0)
+    snprintf(buf, 16, "[%u:%u]", m_pid, m_tid);
+  else
+    snprintf(buf, 16, "[%u]", m_pid);
+  return buf;
+}
 
 }

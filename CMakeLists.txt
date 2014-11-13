@@ -131,6 +131,7 @@ set(VDR_SRCS
 	vdr/devices/Device.cpp
 	vdr/devices/DeviceManager.cpp
 	vdr/devices/DeviceSubsystem.cpp
+	vdr/devices/PIDResource.cpp
 	vdr/devices/Remux.cpp
 	vdr/devices/Transfer.cpp
 	vdr/devices/TunerHandle.cpp

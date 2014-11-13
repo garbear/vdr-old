@@ -21,30 +21,26 @@
 #pragma once
 
 #include <stdint.h>
+#include <stdio.h>
 #include <string>
 
 namespace VDR
 {
 
+class cPsiBuffer;
+
 /*!
  * Represents a resource (possibly a POSIX file handle) that is associated with
  * a DVB packet ID. This is meant to abstract handles used by the Section Filter
  * and Receiver subsystems.
- *
- * TODO: Because the two subsystems were recently merged, they contain duplicate
- *       code providing similar functionality. This code should be merged.
- *
- * TODO: Consider an abstraction of a PID resource that provides data, such as
- *       the Section Filter subsystem's resources, as opposed to a resource
- *       held to enable data from a shared resource, like the Receiver
- *       subsystem's DVR device.
  */
 class cPidResource
 {
 public:
-  cPidResource(uint16_t pid) : m_pid(pid), m_tid(0) { }
-  cPidResource(uint16_t pid, uint8_t tid) : m_pid(pid), m_tid(tid) { }
-  virtual ~cPidResource(void) { }
+  cPidResource(uint16_t pid);
+  cPidResource(uint16_t pid, uint8_t tid);
+
+  virtual ~cPidResource(void);
 
   virtual bool Equals(const cPidResource* other) const = 0;
 
@@ -53,19 +49,15 @@ public:
 
   uint16_t Pid(void) const { return m_pid; }
   uint8_t  Tid(void) const { return m_tid; }
-  std::string ToString(void) const
-  {
-    char buf[16];
-    if (m_tid > 0)
-      snprintf(buf, 16, "[%u:%u]", m_pid, m_tid);
-    else
-      snprintf(buf, 16, "[%u]", m_pid);
-    return buf;
-  }
+
+  cPsiBuffer* Buffer(void) const { return m_buffer; }
+
+  std::string ToString(void) const;
 
 private:
-  const uint16_t m_pid;
-  const uint8_t  m_tid;
+  const uint16_t    m_pid; // Packet ID
+  const uint8_t     m_tid; // Table ID
+  cPsiBuffer* const m_buffer;
 };
 
 }

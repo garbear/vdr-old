@@ -136,7 +136,7 @@ void cDeviceManager::CloseVideoInput(iReceiver* receiver)
   DevicePtr device = GetDevice(0); // TODO
 
   if (device)
-    device->Receiver()->DetachReceiver(receiver, true);
+    device->Receiver()->DetachReceiver(receiver);
 }
 
 void cDeviceManager::Notify(const Observable &obs, const ObservableMessage msg)

@@ -26,6 +26,7 @@
 #include "devices/Device.h"
 #include "devices/Receiver.h"
 #include "devices/Remux.h"
+#include "dvb/PsiBuffer.h"
 #include "utils/CommonMacros.h"
 #include "utils/log/Log.h"
 
@@ -45,8 +46,7 @@ namespace VDR
 {
 
 cDeviceReceiverSubsystem::cDeviceReceiverSubsystem(cDevice *device)
- : cDeviceSubsystem(device),
-   m_synced(true)
+ : cDeviceSubsystem(device)
 {
 }
 
@@ -73,40 +73,30 @@ void *cDeviceReceiverSubsystem::Process()
 
   TsPacket packet;
   uint16_t pid;
-  PidResourceMap::iterator pidIt;
   const uint8_t* psidata;
   size_t psidatalen;
   bool validpsi;
 
   while (!IsStopped())
   {
-    /** nothing to read if there are no PIDs */
-    if (!SyncResources())
-      continue;
-
     /** wait for new data */
     if (Poll() && !IsStopped())
     {
       /** read new data */
       if ((packet = Read()) != NULL)
       {
-        CLockObject lock(m_mutexReceiverRead);
-
-        /** sync resources, as PIDs may have been removed while we were waiting for data */
-        if (!SyncResources())
-          continue;
+        CLockObject lock(m_mutex);
 
         /** find resources attached to the PID that we received */
         pid = TsPid(packet);
-        pidIt = m_resourcesActive.find(pid);
-        if (pidIt != m_resourcesActive.end())
+        PidResourcePtr pidPtr = GetResource(pid);
+        if (pidPtr)
         {
-          validpsi = pidIt->second->buffer ?
-            pidIt->second->buffer->AddTsData(packet, TS_SIZE, &psidata, &psidatalen) :
-            false;
+          validpsi = pidPtr->Buffer()->AddTsData(packet, TS_SIZE, &psidata, &psidatalen);
 
           /** distribute the packet to all receivers */
-          for (std::set<iReceiver*>::iterator receiverit = pidIt->second->receivers.begin(); receiverit != pidIt->second->receivers.end(); ++receiverit)
+          std::set<iReceiver*> receivers = GetReceivers();
+          for (std::set<iReceiver*>::iterator receiverit = receivers.begin(); receiverit != receivers.end(); ++receiverit)
           {
             if ((*receiverit)->IsPsiReceiver())
             {
@@ -130,22 +120,59 @@ void *cDeviceReceiverSubsystem::Process()
   return NULL;
 }
 
+ReceiverHandlePtr cDeviceReceiverSubsystem::GetReceiverHandle(iReceiver* receiver) const
+{
+  for (ReceiverPidTable::const_iterator it = m_receiverPidTable.begin(); it != m_receiverPidTable.end(); ++it)
+  {
+    if (it->first->receiver == receiver)
+      return it->first;
+  }
+  return ReceiverHandlePtr();
+}
+
+std::set<iReceiver*> cDeviceReceiverSubsystem::GetReceivers(void) const
+{
+  std::set<iReceiver*> receivers;
+  for (ReceiverPidTable::const_iterator it = m_receiverPidTable.begin(); it != m_receiverPidTable.end(); ++it)
+    receivers.insert(it->first->receiver);
+  return receivers;
+}
+
+PidResourcePtr cDeviceReceiverSubsystem::GetResource(uint16_t pid) const
+{
+  for (ReceiverPidTable::const_iterator it = m_receiverPidTable.begin(); it != m_receiverPidTable.end(); ++it)
+  {
+    if (it->second->Pid() == pid)
+      return it->second;
+  }
+  return PidResourcePtr();
+}
+
 bool cDeviceReceiverSubsystem::AttachReceiver(iReceiver* receiver, uint16_t pid, STREAM_TYPE type /* = STREAM_TYPE_UNDEFINED */)
 {
-  addedReceiver newcrv;
-  newcrv.receiver = receiver;
-  newcrv.type     = type;
-  newcrv.pid      = pid;
-  CLockObject lock(m_mutexReceiverRead);
-  CLockObject lock2(m_mutexReceiverWrite);
-  m_resourcesAdded.push_back(newcrv);
-  m_synced = false;
+  CLockObject lock(m_mutex);
+
+  ReceiverHandlePtr receiverHandle = GetReceiverHandle(receiver);
+  if (!receiverHandle)
+    receiverHandle = ReceiverHandlePtr(new cReceiverHandle(receiver));
+
+  PidResourcePtr resource = GetResource(pid);
+  if (!resource)
+  {
+    resource = CreateResource(pid, type);
+    if (!resource->Open())
+      return false;
+  }
+
+  m_receiverPidTable.insert(ReceiverPidEdge(receiverHandle, resource));
 
   return true;
 }
 
 bool cDeviceReceiverSubsystem::AttachReceiver(iReceiver* receiver, const ChannelPtr& channel)
 {
+  CLockObject lock(m_mutex);
+
   bool bAllOpened(true);
 
   if (channel->GetVideoStream().vpid)
@@ -177,199 +204,41 @@ bool cDeviceReceiverSubsystem::AttachReceiver(iReceiver* receiver, const Channel
   return bAllOpened;
 }
 
-bool cDeviceReceiverSubsystem::HasReceiver(iReceiver* receiver) const
-{
-  PLATFORM::CLockObject lock(m_mutexReceiverRead);
-  for (PidResourceMap::const_iterator it = m_resourcesActive.begin(); it != m_resourcesActive.end(); ++it)
-    if (it->second->receivers.find(receiver) != it->second->receivers.end())
-      return true;
-  return false;
-}
-
-bool cDeviceReceiverSubsystem::HasReceiverPid(iReceiver* receiver, uint16_t pid) const
-{
-  PLATFORM::CLockObject lock(m_mutexReceiverRead);
-  PidResourceMap::const_iterator it = m_resourcesActive.find(pid);
-  return (it == m_resourcesActive.end()) ? false : it->second->receivers.find(receiver) != it->second->receivers.end();
-}
-
 void cDeviceReceiverSubsystem::DetachReceiverPid(iReceiver* receiver, uint16_t pid)
 {
-  PLATFORM::CLockObject lock(m_mutexReceiverRead);
-  PLATFORM::CLockObject lock2(m_mutexReceiverWrite);
-  if (HasReceiverPid(receiver, pid))
-  {
-    //TODO doesn't work when multiple receivers are listening to the same pid!
-    m_resourcesRemoved[pid] = receiver;
-    m_synced = false;
-  }
+  CLockObject lock(m_mutex);
+
+  const ReceiverPidEdge needle(GetReceiverHandle(receiver), GetResource(pid));
+  ReceiverPidTable::iterator it = m_receiverPidTable.find(needle);
+  if (it != m_receiverPidTable.end())
+    m_receiverPidTable.erase(it);
 }
 
-void cDeviceReceiverSubsystem::DetachReceiver(iReceiver* receiver, bool bWait /* = false */)
+void cDeviceReceiverSubsystem::DetachReceiver(iReceiver* receiver)
 {
-  PLATFORM::CLockObject lock(m_mutexReceiverRead);
-  bool wait(false);
+  CLockObject lock(m_mutex);
 
+  for (ReceiverPidTable::iterator it = m_receiverPidTable.begin(); it != m_receiverPidTable.end(); )
   {
-    PLATFORM::CLockObject lock2(m_mutexReceiverWrite);
-    if (HasReceiver(receiver) && m_receiversRemoved.find(receiver) == m_receiversRemoved.end())
-    {
-      m_receiversRemoved.insert(receiver);
-      m_synced = false;
-      wait = true;
-    }
+    if (it->first->receiver == receiver)
+      m_receiverPidTable.erase(it++);
+    else
+      ++it;
   }
-
-  if (wait && bWait)
-    m_syncCondition.Wait(m_mutexReceiverRead, m_synced);
 }
 
 void cDeviceReceiverSubsystem::DetachAllReceivers(void)
 {
-  CLockObject lock(m_mutexReceiverRead);
-  if (!m_resourcesActive.empty())
-  {
-    while (SyncResources())
-      DetachReceiver(*m_resourcesActive.begin()->second->receivers.begin());
-  }
+  CLockObject lock(m_mutex);
+
+  m_receiverPidTable.clear();
 }
 
 bool cDeviceReceiverSubsystem::Receiving(void) const
 {
-  CLockObject lock(m_mutexReceiverRead);
-  return !m_resourcesActive.empty();
-}
+  CLockObject lock(m_mutex);
 
-bool cDeviceReceiverSubsystem::OpenResourceForReceiver(uint16_t pid, STREAM_TYPE streamType, iReceiver* receiver)
-{
-  PLATFORM::CLockObject lock(m_mutexReceiverRead);
-  PidReceivers* receivers = GetReceivers(pid, streamType);
-  if (receivers)
-  {
-    if (receiver->IsPsiReceiver() && !receivers->buffer)
-      receivers->buffer = cPsiBuffers::Get().Allocate(pid);
-    receivers->receivers.insert(receiver);
-    return true;
-  }
-  return false;
-}
-
-bool cDeviceReceiverSubsystem::SyncResources(void)
-{
-  bool retval = true;
-  {
-    PLATFORM::CLockObject lock(m_mutexReceiverRead);
-
-    {
-      PLATFORM::CLockObject lock2(m_mutexReceiverWrite);
-
-      for (std::map<uint16_t, iReceiver*>::iterator it = m_resourcesRemoved.begin(); it != m_resourcesRemoved.end(); ++it)
-        CloseResourceForReceiver(it->first, it->second);
-      m_resourcesRemoved.clear();
-
-      for (std::set<iReceiver*>::iterator it = m_receiversRemoved.begin(); it != m_receiversRemoved.end(); ++it)
-        CloseResourceForReceiver(*it);
-      m_receiversRemoved.clear();
-
-      for (std::vector<addedReceiver>::iterator it = m_resourcesAdded.begin(); it != m_resourcesAdded.end(); ++it)
-        OpenResourceForReceiver((*it).pid, (*it).type, (*it).receiver);
-      m_resourcesAdded.clear();
-
-      if (m_resourcesActive.empty())
-      {
-        if (CommonInterface()->m_camSlot)
-          CommonInterface()->m_camSlot->StopDecrypting();
-        retval = false;
-      }
-    }
-
-    m_synced = true;
-    m_syncCondition.Broadcast();
-  }
-
-  if (!retval)
-    Sleep(MAX_IDLE_DELAY_MS);
-  return retval;
-}
-
-void cDeviceReceiverSubsystem::CloseResourceForReceiver(uint16_t pid, iReceiver* receiver)
-{
-  PidResourceMap::iterator it = m_resourcesActive.find(pid);
-  if (it != m_resourcesActive.end())
-  {
-    PidReceivers* receivers = it->second;
-    std::set<iReceiver*>::iterator receiverit = receivers->receivers.find(receiver);
-    if (receiverit != receivers->receivers.end())
-      receivers->receivers.erase(receiverit);
-
-    if (receivers->receivers.empty())
-    {
-      if (receivers->buffer)
-        cPsiBuffers::Get().Release(receivers->buffer);
-      delete it->second;
-      m_resourcesActive.erase(it);
-    }
-  }
-}
-
-void cDeviceReceiverSubsystem::CloseResourceForReceiver(iReceiver* receiver)
-{
-  std::vector<uint16_t> emptyPids;
-  for (PidResourceMap::iterator it = m_resourcesActive.begin(); it != m_resourcesActive.end(); ++it)
-  {
-    PidReceivers* receivers = it->second;
-    std::set<iReceiver*>::iterator receiverit = receivers->receivers.find(receiver);
-    if (receiverit != receivers->receivers.end())
-      receivers->receivers.erase(receiverit);
-
-    if (receivers->receivers.empty())
-    {
-      if (receivers->buffer)
-        cPsiBuffers::Get().Release(receivers->buffer);
-      delete it->second;
-      emptyPids.push_back(it->first);
-    }
-  }
-
-  for (std::vector<uint16_t>::const_iterator it = emptyPids.begin(); it != emptyPids.end(); ++it)
-    m_resourcesActive.erase(*it);
-}
-
-struct PidReceivers* cDeviceReceiverSubsystem::GetReceivers(uint16_t pid, STREAM_TYPE streamType)
-{
-  PidReceivers* receivers;
-  PLATFORM::CLockObject lock(m_mutexReceiverRead);
-  PLATFORM::CLockObject lock2(m_mutexReceiverWrite);
-  PidResourceMap::iterator it = m_resourcesActive.find(pid);
-  if (it == m_resourcesActive.end())
-  {
-    receivers = new PidReceivers;
-    if (!receivers)
-      return NULL;
-    receivers->resource = CreateResource(pid, streamType);
-    if (!receivers->resource->Open())
-    {
-      delete receivers;
-      receivers = NULL;
-    }
-    else
-    {
-      receivers->buffer = NULL;
-      m_resourcesActive[pid] = receivers;
-    }
-  }
-  else
-  {
-    receivers = it->second;
-  }
-
-  return receivers;
-}
-
-bool cDeviceReceiverSubsystem::WaitForSync(uint64_t timeout /* = 0 */)
-{
-  PLATFORM::CLockObject lock(m_mutexReceiverRead);
-  return m_syncCondition.Wait(m_mutexReceiverRead, m_synced, timeout);
+  return !m_receiverPidTable.empty();
 }
 
 }
