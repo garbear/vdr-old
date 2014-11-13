@@ -156,8 +156,10 @@ void cPsiBuffers::Release(cPsiBuffer* buffer)
      --m_used[buffer->Position()];
 
     if (m_used[buffer->Position()] == 0)
+    {
       m_pidMap.erase(buffer->Pid());
       buffer->Reset();
+    }
   }
 }
 
