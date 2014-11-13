@@ -22,8 +22,6 @@
 #include "FileName.h"
 #include "Config.h"
 #include "devices/Remux.h"
-#include "filesystem/Videodir.h"
-#include "filesystem/VideoFile.h"
 #include "utils/log/Log.h"
 
 #include <fcntl.h>
@@ -41,7 +39,6 @@ namespace VDR
 
 cFileName::cFileName(const std::string& strFileName, bool Record, bool Blocking, bool IsPesRecording)
 {
-  m_file = NULL;
   m_iFileNumber = 0;
   m_bRecord = Record;
   m_bBlocking = Blocking;
@@ -117,17 +114,17 @@ bool cFileName::GetLastPatPmtVersions(int &PatVersion, int &PmtVersion)
   return false;
 }
 
-CVideoFile *cFileName::Open(void)
+CFile* cFileName::Open(void)
 {
-  if (!m_file)
+  if (!m_file.IsOpen())
   {
     int BlockingFlag = m_bBlocking ? 0 : O_NONBLOCK;
     std::string fileName = m_strFileName + m_strFileOffset;
     if (m_bRecord)
     {
       dsyslog("recording to '%s'", fileName.c_str());
-      m_file = OpenVideoFile(fileName.c_str(), O_RDWR | O_CREAT | O_LARGEFILE | BlockingFlag);
-      if (!m_file)
+
+      if (!m_file.OpenForWrite(fileName))
         LOG_ERROR_STR(fileName.c_str());
     }
     else
@@ -135,28 +132,23 @@ CVideoFile *cFileName::Open(void)
       if (CFile::Exists(fileName))
       {
         dsyslog("playing '%s'", fileName.c_str());
-        m_file = CVideoFile::Create(fileName.c_str(), O_RDONLY | O_LARGEFILE | BlockingFlag);
-        if (!m_file)
+
+        if (!m_file.Open(fileName, O_RDONLY | O_LARGEFILE | BlockingFlag))
           LOG_ERROR_STR(fileName.c_str());
       }
       else if (errno != ENOENT)
         LOG_ERROR_STR(fileName.c_str());
     }
   }
-  return m_file;
+  return m_file.IsOpen() ? &m_file : NULL;
 }
 
 void cFileName::Close(void)
 {
-  if (m_file)
-  {
-    if (CloseVideoFile(m_file) < 0)
-      LOG_ERROR_STR((m_strFileName + m_strFileOffset).c_str());
-    m_file = NULL;
-  }
+  m_file.Close();
 }
 
-CVideoFile *cFileName::SetOffset(int Number, off_t Offset)
+CFile *cFileName::SetOffset(int Number, off_t Offset)
 {
   if (m_iFileNumber != Number)
     Close();
@@ -194,19 +186,19 @@ CVideoFile *cFileName::SetOffset(int Number, off_t Offset)
     }
     if (Open() >= 0)
     {
-      if (!m_bRecord && Offset >= 0 && m_file && m_file->Seek(Offset, SEEK_SET) != Offset)
+      if (!m_bRecord && Offset >= 0 && m_file.IsOpen() && m_file.Seek(Offset, SEEK_SET) != Offset)
       {
         LOG_ERROR_STR((m_strFileName + m_strFileOffset).c_str());
         return NULL;
       }
     }
-    return m_file;
+    return &m_file;
   }
   esyslog("ERROR: max number of files (%d) exceeded", MaxFilesPerRecording);
   return NULL;
 }
 
-CVideoFile *cFileName::NextFile(void)
+CFile *cFileName::NextFile(void)
 {
   return SetOffset(m_iFileNumber + 1);
 }

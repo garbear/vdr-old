@@ -22,7 +22,6 @@
 
 #include "utils/CommonIncludes.h" // off_t problems on x86
 
-#include "ResumeFile.h"
 #include "filesystem/File.h"
 #include "lib/platform/threads/threads.h"
 
@@ -51,8 +50,6 @@ public:
   int Get(uint16_t FileNumber, off_t FileOffset);
   int Last(void) { CatchUp(); return m_iLast; }
        ///< Returns the index of the last entry in this file, or -1 if the file is empty.
-  int GetResume(void) { return m_resumeFile.Read(); }
-  bool StoreResume(int Index) { return m_resumeFile.Save(Index); }
   bool IsStillRecording(void);
   void Delete(void);
   static int GetLength(const std::string& strFileName, bool IsPesRecording = false);
@@ -70,7 +67,6 @@ private:
   int                  m_iSize, m_iLast;
   tIndexTs *           m_index;
   bool                 m_bIsPesRecording;
-  cResumeFile          m_resumeFile;
   cIndexFileGenerator* m_indexFileGenerator;
   PLATFORM::CMutex     m_mutex;
 };

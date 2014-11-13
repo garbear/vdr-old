@@ -21,6 +21,7 @@
 #pragma once
 
 #include "utils/CommonIncludes.h" // off_t problems on x86
+#include "filesystem/File.h"
 
 #include <stdint.h>
 #include <stdio.h>
@@ -28,8 +29,6 @@
 
 namespace VDR
 {
-class CVideoFile;
-
 class cFileName
 {
 public:
@@ -38,13 +37,13 @@ public:
   std::string Name(void) { return m_strFileName + m_strFileOffset; }
   uint16_t Number(void) { return m_iFileNumber; }
   bool GetLastPatPmtVersions(int &PatVersion, int &PmtVersion);
-  CVideoFile *Open(void);
+  CFile* Open(void);
   void Close(void);
-  CVideoFile *SetOffset(int Number, off_t Offset = 0); // yes, Number is int for easier internal calculating
-  CVideoFile *NextFile(void);
+  CFile *SetOffset(int Number, off_t Offset = 0); // yes, Number is int for easier internal calculating
+  CFile *NextFile(void);
 
 private:
-  CVideoFile* m_file;
+  CFile       m_file;
   uint16_t    m_iFileNumber;
   std::string m_strFileName;
   std::string m_strFileOffset;

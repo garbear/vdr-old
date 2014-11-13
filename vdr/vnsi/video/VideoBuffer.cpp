@@ -26,7 +26,7 @@
 #include "VideoBuffer.h"
 #include "RecPlayer.h"
 #include "devices/Remux.h"
-#include "filesystem/Videodir.h"
+#include "filesystem/Directory.h"
 #include "lib/platform/threads/mutex.h"
 #include "recordings/Recording.h"
 #include "settings/Settings.h"
@@ -412,7 +412,7 @@ bool cVideoBufferFile::Init()
   }
   else
   {
-    m_Filename = m_Filename = StringUtils::Format("%s/Timeshift-%d.vnsi", VideoDirectory, m_ClientID);
+    m_Filename = m_Filename = StringUtils::Format("%s/Timeshift-%d.vnsi", cSettings::Get().m_VideoDirectory.c_str(), m_ClientID);
   }
 
   if (m_file.OpenForWrite(m_Filename, true))

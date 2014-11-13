@@ -28,8 +28,7 @@
 #include "channels/ChannelFilter.h"
 #include "channels/ChannelManager.h"
 #include "epg/ScheduleManager.h"
-#include "filesystem/Videodir.h"
-#include "recordings/Recordings.h"
+#include "recordings/RecordingManager.h"
 #include "settings/AllowedHosts.h"
 #include "settings/Settings.h"
 #include "timers/TimerManager.h"
@@ -205,7 +204,7 @@ void* cVNSIServer::Process(void)
   }
   else
   {
-    cmd = StringUtils::Format("rm -f %s/*.vnsi", VideoDirectory);
+    cmd = StringUtils::Format("rm -f %s/*.vnsi", cSettings::Get().m_VideoDirectory.c_str());
   }
   int ret = system(cmd.c_str());
 

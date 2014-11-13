@@ -201,7 +201,6 @@ void* cIndexFileGenerator::Process(void)
 }
 
 cIndexFile::cIndexFile(const std::string& strFileName, bool Record, bool IsPesRecording, bool PauseLive)
-:m_resumeFile(strFileName, IsPesRecording)
 {
   m_iSize = 0;
   m_iLast = -1;
@@ -220,7 +219,6 @@ cIndexFile::cIndexFile(const std::string& strFileName, bool Record, bool IsPesRe
      if (!Record && !CFile::Exists(m_strFilename)) {
         // Index file doesn't exist, so try to regenerate it:
         if (!m_bIsPesRecording) { // sorry, can only do this for TS recordings
-           m_resumeFile.Delete(); // just in case
            m_indexFileGenerator = new cIndexFileGenerator(strFileName);
            // Wait until the index file exists:
            time_t tmax = time(NULL) + MAXWAITFORINDEXFILE;

@@ -37,9 +37,9 @@
 #include "devices/DeviceManager.h"
 #include "epg/Event.h"
 #include "epg/ScheduleManager.h"
-#include "filesystem/Videodir.h"
-#include "recordings/RecordingInfo.h"
-#include "recordings/Recordings.h"
+#include "filesystem/Directory.h"
+#include "recordings/Recording.h"
+#include "recordings/RecordingManager.h"
 #include "recordings/marks/Marks.h"
 #include "settings/Settings.h"
 #include "timers/Timer.h"
@@ -1460,7 +1460,9 @@ bool cVNSIClient::processTIMER_Update() /* OPCODE 85 */
 bool cVNSIClient::processRECORDINGS_GetDiskSpace() /* OPCODE 100 */
 {
   disk_space_t space;
-  unsigned int Percent = VideoDiskSpace(space);
+  CDirectory::CalculateDiskSpace(cSettings::Get().m_VideoDirectory, space);
+
+  unsigned int Percent = (space.free + space.used) ? space.used * 100 / (space.free + space.used) : 0;
 
   m_resp->add_U32((space.free + space.used) / MEGABYTE(1));
   m_resp->add_U32(space.free / MEGABYTE(1));
