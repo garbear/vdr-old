@@ -27,8 +27,9 @@
 #include "lib/platform/threads/mutex.h"
 #include "lib/platform/threads/threads.h"
 
-#include <map>
+#include <set>
 #include <stdint.h>
+#include <utility>
 
 namespace VDR
 {
@@ -48,6 +49,20 @@ enum ePidType
 
 class cDeviceReceiverSubsystem : protected cDeviceSubsystem, public PLATFORM::CThread
 {
+protected:
+  class cReceiverHandle
+  {
+  public:
+    cReceiverHandle(iReceiver* rcvr);
+    ~cReceiverHandle(void);
+    iReceiver* const receiver;
+  };
+
+  typedef VDR::shared_ptr<cPidResource>                PidResourcePtr;
+  typedef VDR::shared_ptr<cReceiverHandle>             ReceiverHandlePtr;
+  typedef std::pair<ReceiverHandlePtr, PidResourcePtr> ReceiverPidEdge;
+  typedef std::set<ReceiverPidEdge>                    ReceiverPidTable; // Junction table to store relationships
+
 public:
   cDeviceReceiverSubsystem(cDevice *device);
   virtual ~cDeviceReceiverSubsystem(void);

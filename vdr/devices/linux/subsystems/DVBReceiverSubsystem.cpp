@@ -226,7 +226,7 @@ TsPacket cDvbReceiverSubsystem::Read(void)
   return NULL;
 }
 
-PidResourcePtr cDvbReceiverSubsystem::CreateResource(uint16_t pid, STREAM_TYPE streamType)
+cDeviceReceiverSubsystem::PidResourcePtr cDvbReceiverSubsystem::CreateResource(uint16_t pid, STREAM_TYPE streamType)
 {
   return PidResourcePtr(new cDvbReceiverResource(pid, streamType, Device<cDvbDevice>()));
 }

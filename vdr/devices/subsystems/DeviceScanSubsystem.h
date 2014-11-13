@@ -27,6 +27,8 @@
 #include "transponders/Transponder.h"
 #include "utils/Observer.h"
 
+#include <set>
+
 namespace VDR
 {
 class cScanReceiver;

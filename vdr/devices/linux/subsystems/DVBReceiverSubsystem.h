@@ -31,6 +31,7 @@ public:
   cDvbReceiverSubsystem(cDevice *device);
   virtual ~cDvbReceiverSubsystem() { }
 
+protected:
   virtual bool Initialise(void);
   virtual void Deinitialise(void);
 

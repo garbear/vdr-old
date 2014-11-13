@@ -31,8 +31,6 @@
 #include "utils/log/Log.h"
 
 #include <algorithm>
-#include <assert.h>
-#include <unistd.h> // for usleep()
 
 using namespace PLATFORM;
 using namespace std;
@@ -44,6 +42,21 @@ using namespace std;
 
 namespace VDR
 {
+
+// --- cDeviceReceiverSubsystem::cReceiverHandle -------------------------------
+
+cDeviceReceiverSubsystem::cReceiverHandle::cReceiverHandle(iReceiver* rcvr)
+ : receiver(rcvr)
+{
+  receiver->Start();
+}
+
+cDeviceReceiverSubsystem::cReceiverHandle::~cReceiverHandle(void)
+{
+  receiver->Stop();
+}
+
+// --- cDeviceReceiverSubsystem ------------------------------------------------
 
 cDeviceReceiverSubsystem::cDeviceReceiverSubsystem(cDevice *device)
  : cDeviceSubsystem(device)
@@ -120,7 +133,7 @@ void *cDeviceReceiverSubsystem::Process()
   return NULL;
 }
 
-ReceiverHandlePtr cDeviceReceiverSubsystem::GetReceiverHandle(iReceiver* receiver) const
+cDeviceReceiverSubsystem::ReceiverHandlePtr cDeviceReceiverSubsystem::GetReceiverHandle(iReceiver* receiver) const
 {
   for (ReceiverPidTable::const_iterator it = m_receiverPidTable.begin(); it != m_receiverPidTable.end(); ++it)
   {
@@ -138,7 +151,7 @@ std::set<iReceiver*> cDeviceReceiverSubsystem::GetReceivers(void) const
   return receivers;
 }
 
-PidResourcePtr cDeviceReceiverSubsystem::GetResource(uint16_t pid) const
+cDeviceReceiverSubsystem::PidResourcePtr cDeviceReceiverSubsystem::GetResource(uint16_t pid) const
 {
   for (ReceiverPidTable::const_iterator it = m_receiverPidTable.begin(); it != m_receiverPidTable.end(); ++it)
   {
