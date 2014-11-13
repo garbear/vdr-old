@@ -175,30 +175,35 @@ bool cDeviceReceiverSubsystem::AttachReceiver(iReceiver* receiver, const Channel
 
   bool bAllOpened(true);
 
-  if (channel->GetVideoStream().vpid)
+  if (bAllOpened && channel->GetVideoStream().vpid)
     bAllOpened &= AttachReceiver(receiver, channel->GetVideoStream().vpid, channel->GetVideoStream().vtype);
 
-  if (channel->GetVideoStream().ppid != channel->GetVideoStream().vpid)
+  if (bAllOpened && channel->GetVideoStream().ppid != channel->GetVideoStream().vpid)
     bAllOpened &= AttachReceiver(receiver, channel->GetVideoStream().ppid);
 
-  for (vector<AudioStream>::const_iterator it = channel->GetAudioStreams().begin(); it != channel->GetAudioStreams().end(); ++it)
+  for (vector<AudioStream>::const_iterator it = channel->GetAudioStreams().begin(); bAllOpened && it != channel->GetAudioStreams().end(); ++it)
     bAllOpened &= AttachReceiver(receiver, it->apid, it->atype);
 
-  for (vector<DataStream>::const_iterator it = channel->GetDataStreams().begin(); it != channel->GetDataStreams().end(); ++it)
+  for (vector<DataStream>::const_iterator it = channel->GetDataStreams().begin(); bAllOpened && it != channel->GetDataStreams().end(); ++it)
     bAllOpened &= AttachReceiver(receiver, it->dpid, it->dtype);
 
-  for (vector<SubtitleStream>::const_iterator it = channel->GetSubtitleStreams().begin(); it != channel->GetSubtitleStreams().end(); ++it)
+  for (vector<SubtitleStream>::const_iterator it = channel->GetSubtitleStreams().begin(); bAllOpened && it != channel->GetSubtitleStreams().end(); ++it)
     bAllOpened &= AttachReceiver(receiver, it->spid);
 
-  if (channel->GetTeletextStream().tpid)
+  if (bAllOpened && channel->GetTeletextStream().tpid)
     bAllOpened &= AttachReceiver(receiver, channel->GetTeletextStream().tpid);
 
-  // TODO: Or should we bail if any stream fails to open? (this was VDR's behavior)
-
-  if (CommonInterface()->m_camSlot)
+  if (bAllOpened)
   {
-    CommonInterface()->m_camSlot->StartDecrypting();
-    CommonInterface()->m_startScrambleDetection = time(NULL);
+    if (CommonInterface()->m_camSlot)
+    {
+      CommonInterface()->m_camSlot->StartDecrypting();
+      CommonInterface()->m_startScrambleDetection = time(NULL);
+    }
+  }
+  else
+  {
+    DetachReceiver(receiver);
   }
 
   return bAllOpened;
