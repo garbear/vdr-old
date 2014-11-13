@@ -27,6 +27,7 @@
 #include "devices/TunerHandle.h"
 #include "devices/subsystems/DeviceChannelSubsystem.h"
 #include "devices/subsystems/DeviceScanSubsystem.h"
+#include "epg/ScheduleManager.h"
 #include "utils/log/Log.h"
 
 
@@ -111,6 +112,7 @@ void* cEPGScanner::Process()
       if (newHandle)
       {
         device->Scan()->WaitForEPGScan();
+        cScheduleManager::Get().NotifyObservers();
         newHandle->Release();
       }
       else
