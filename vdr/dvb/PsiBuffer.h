@@ -21,26 +21,28 @@
 
 #include <platform/threads/mutex.h>
 #include <map>
+#include <vector>
 
 #define PSI_MAX_SIZE    (4096)
-#define PSI_MAX_BUFFERS (40)
 
 namespace VDR
 {
   class cPsiBuffer
   {
   public:
-    cPsiBuffer(void);
+    cPsiBuffer(unsigned int position);
     virtual ~cPsiBuffer(void) {}
 
     bool AddTsData(const uint8_t* data, size_t len, const uint8_t** outdata, size_t* outlen);
     void Reset(void);
     size_t Size(void) const { return m_cursize; }
 
-    void SetPosition(size_t position) { m_position = position; }
     size_t Position(void) const { return m_position; }
     void SetPid(uint16_t pid) { m_pid = pid; }
     uint16_t Pid(void) const { return m_pid; }
+    void IncUsed(void) { ++m_used; }
+    void DecUsed(void) { --m_used; }
+    bool Used(void) const { return m_used != 0; }
 
   private:
     uint8_t  m_data[PSI_MAX_SIZE];
@@ -48,23 +50,25 @@ namespace VDR
     size_t   m_sectionSize;
     bool     m_start;
     bool     m_copy;
-    size_t   m_position;
+    const size_t m_position;
     uint16_t m_pid;
+    unsigned int m_used;
   };
 
   class cPsiBuffers
   {
   public:
     static cPsiBuffers& Get(void);
-    virtual ~cPsiBuffers(void) {}
+    virtual ~cPsiBuffers(void);
 
     cPsiBuffer* Allocate(uint16_t pid);
     void Release(cPsiBuffer* buffer);
 
   private:
+    void EnsureSize(size_t size);
+
     cPsiBuffers(void);
-    cPsiBuffer                 m_buffers[PSI_MAX_BUFFERS];
-    unsigned int               m_used[PSI_MAX_BUFFERS];
+    std::vector<cPsiBuffer*>   m_buffers;
     std::map<uint16_t, size_t> m_pidMap;
     PLATFORM::CMutex           m_mutex;
   };

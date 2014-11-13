@@ -27,12 +27,12 @@
 namespace VDR
 {
 
-cPsiBuffer::cPsiBuffer(void) :
+cPsiBuffer::cPsiBuffer(unsigned int position) :
     m_cursize(0),
     m_sectionSize(0),
     m_start(false),
     m_copy(true),
-    m_position(~0),
+    m_position(position),
     m_pid(~0)
 {
   Reset();
@@ -111,9 +111,12 @@ bool cPsiBuffer::AddTsData(const uint8_t* data, size_t len, const uint8_t** outd
 
 cPsiBuffers::cPsiBuffers(void)
 {
-  for (size_t ptr = 0; ptr < PSI_MAX_BUFFERS; ++ptr)
-    m_buffers[ptr].SetPosition(ptr);
-  memset(m_used, 0, sizeof(m_used));
+}
+
+cPsiBuffers::~cPsiBuffers(void)
+{
+  for (std::vector<cPsiBuffer*>::iterator it = m_buffers.begin(); it != m_buffers.end(); ++it)
+    delete *it;
 }
 
 cPsiBuffers& cPsiBuffers::Get(void)
@@ -128,38 +131,45 @@ cPsiBuffer* cPsiBuffers::Allocate(uint16_t pid)
   std::map<uint16_t, size_t>::iterator it = m_pidMap.find(pid);
   if (it != m_pidMap.end())
   {
-    ++m_used[it->second];
-    return &m_buffers[it->second];
+    m_buffers[it->second]->IncUsed();
+    return m_buffers[it->second];
   }
 
-  for (size_t ptr = 0; ptr < PSI_MAX_BUFFERS; ++ptr)
-  {
-    if (m_used[ptr] == 0)
-    {
-      m_used[ptr] = 1;
-      m_buffers[ptr].SetPid(pid);
-      m_pidMap[pid] = ptr;
-      return &m_buffers[ptr];
-    }
-  }
+  size_t ptr = 0;
+  while (ptr < m_buffers.size() && m_buffers[ptr]->Used())
+    ++ptr;
 
-  esyslog("failed to allocate psi buffer");
-  return NULL;
+  EnsureSize(ptr + 1);
+  m_buffers[ptr]->IncUsed();
+  m_buffers[ptr]->SetPid(pid);
+  m_pidMap[pid] = ptr;
+  return m_buffers[ptr];
 }
 
 void cPsiBuffers::Release(cPsiBuffer* buffer)
 {
   PLATFORM::CLockObject lock(m_mutex);
-  if (buffer->Position() >= 0 && buffer->Position() < PSI_MAX_BUFFERS)
+  if (buffer->Position() >= 0 && buffer->Position() < m_buffers.size())
   {
-    if (m_used[buffer->Position()] > 0)
-     --m_used[buffer->Position()];
+    if (m_buffers[buffer->Position()]->Used())
+      m_buffers[buffer->Position()]->DecUsed();
 
-    if (m_used[buffer->Position()] == 0)
+    if (!m_buffers[buffer->Position()]->Used())
     {
       m_pidMap.erase(buffer->Pid());
       buffer->Reset();
     }
+  }
+}
+
+void cPsiBuffers::EnsureSize(size_t size)
+{
+  if (size > m_buffers.size())
+  {
+    const size_t oldSize = m_buffers.size();
+    m_buffers.resize(size);
+    for (size_t ptr = oldSize; ptr < m_buffers.size(); ++ptr)
+      m_buffers[ptr] = new cPsiBuffer(ptr);
   }
 }
 
