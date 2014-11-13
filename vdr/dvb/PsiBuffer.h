@@ -21,9 +21,9 @@
 
 #include <platform/threads/mutex.h>
 #include <map>
-#include <vector>
 
 #define PSI_MAX_SIZE    (4096)
+#define PSI_MAX_BUFFERS (40)
 
 namespace VDR
 {
@@ -41,9 +41,6 @@ namespace VDR
     size_t Position(void) const { return m_position; }
     void SetPid(uint16_t pid) { m_pid = pid; }
     uint16_t Pid(void) const { return m_pid; }
-    void IncUsed(void) { ++m_used; }
-    void DecUsed(void) { --m_used; }
-    bool Used(void) const { return m_used != 0; }
 
   private:
     uint8_t  m_data[PSI_MAX_SIZE];
@@ -53,7 +50,6 @@ namespace VDR
     bool     m_copy;
     size_t   m_position;
     uint16_t m_pid;
-    unsigned int m_used;
   };
 
   class cPsiBuffers
@@ -66,10 +62,9 @@ namespace VDR
     void Release(cPsiBuffer* buffer);
 
   private:
-    void EnsureSize(size_t size);
-
     cPsiBuffers(void);
-    std::vector<cPsiBuffer>    m_buffers;
+    cPsiBuffer                 m_buffers[PSI_MAX_BUFFERS];
+    unsigned int               m_used[PSI_MAX_BUFFERS];
     std::map<uint16_t, size_t> m_pidMap;
     PLATFORM::CMutex           m_mutex;
   };
