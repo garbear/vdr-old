@@ -24,6 +24,7 @@
 #include "channels/ChannelManager.h"
 #include "devices/DeviceManager.h"
 #include "dvb/DiSEqC.h"
+#include "epg/ScheduleManager.h"
 #include "filesystem/Directory.h"
 #include "filesystem/SpecialProtocol.h"
 #include "recordings/Recordings.h"
@@ -78,6 +79,7 @@ bool cVDRDaemon::LoadConfig(void)
 
   cSettings::Get().Load();
   cChannelManager::Get().Load();
+  cScheduleManager::Get().Load();
   cTimerManager::Get().LoadTimers();
   CAllowedHosts::Get().Load();
 
