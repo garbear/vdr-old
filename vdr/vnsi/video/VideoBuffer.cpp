@@ -33,6 +33,7 @@
 #include "utils/CommonMacros.h"
 #include "utils/log/Log.h"
 #include "utils/Ringbuffer.h"
+#include "utils/StringUtils.h"
 
 #include <fcntl.h>
 #include <sys/stat.h>
@@ -647,17 +648,17 @@ public:
   virtual time_t GetRefTime();
 
 protected:
-  cVideoBufferRecording(cRecording *rec);
+  cVideoBufferRecording(const RecordingPtr& rec);
   virtual ~cVideoBufferRecording();
   virtual bool Init();
   virtual off_t Available();
   off_t GetPosEnd();
   cRecPlayer *m_RecPlayer;
-  cRecording *m_Recording;
+  RecordingPtr m_Recording;
   cTimeMs m_ScanTimer;
 };
 
-cVideoBufferRecording::cVideoBufferRecording(cRecording *rec)
+cVideoBufferRecording::cVideoBufferRecording(const RecordingPtr& rec)
 {
   m_Recording = rec;
   m_ReadCacheSize = 0;
@@ -707,7 +708,9 @@ bool cVideoBufferRecording::Init()
 
 time_t cVideoBufferRecording::GetRefTime()
 {
-  return m_Recording->Start();
+  time_t tmStart;
+  m_Recording->StartTime().GetAsTime(tmStart);
+  return tmStart;
 }
 
 off_t cVideoBufferRecording::Available()
@@ -964,9 +967,9 @@ cVideoBuffer* cVideoBuffer::Create(const std::string& filename)
     return buffer;
 }
 
-cVideoBuffer* cVideoBuffer::Create(cRecording *rec)
+cVideoBuffer* cVideoBuffer::Create(const RecordingPtr& rec)
 {
-  isyslog("Open recording: %s", rec->FileName().c_str());
+  isyslog("Open recording: %s", rec->URL().c_str());
   cVideoBufferRecording *buffer = new cVideoBufferRecording(rec);
   if (!buffer->Init())
   {

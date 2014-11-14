@@ -2,10 +2,6 @@
  *      Copyright (C) 2013-2014 Garrett Brown
  *      Copyright (C) 2013-2014 Lars Op den Kamp
  *      Portions Copyright (C) 2000, 2003, 2006, 2008, 2013 Klaus Schmidinger
- *      Portions Copyright (C) 2007 Chris Tallon
- *      Portions Copyright (C) 2010 Alwin Esch (Team XBMC)
- *      Portions Copyright (C) 2010, 2011 Alexander Pipelka
- *      Portions Copyright (C) 2005-2013 Team XBMC
  *
  *  This Program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -25,37 +21,23 @@
 #pragma once
 
 #include "lib/platform/threads/threads.h"
-#include "utils/Observer.h"
 
-#include <list>
+#include <string>
 
 namespace VDR
 {
 
-class cVNSIClient;
-
-class cVNSIServer : public PLATFORM::CThread, public Observer
+class cIndexFileGenerator : protected PLATFORM::CThread
 {
 public:
-  cVNSIServer(int listenPort);
-  virtual ~cVNSIServer(void);
+  cIndexFileGenerator(const std::string& strRecordingName);
+  virtual ~cIndexFileGenerator(void);
 
-  void Notify(const Observable &obs, const ObservableMessage msg);
 protected:
-  typedef std::list<cVNSIClient*> ClientList;
+  virtual void* Process(void);
 
-  void* Process(void);
-  void NewClientConnected(int fd);
-
-  int              m_ServerPort;
-  int              m_ServerFD;
-  ClientList       m_clients;
-  unsigned int     m_IdCnt;
-  bool             m_bChannelsModified;
-  bool             m_bEventsModified;
-  bool             m_bTimersModified;
-  bool             m_bRecordingsModified;
-  PLATFORM::CMutex m_mutex;
+private:
+  std::string m_strRecordingName;
 };
 
 }

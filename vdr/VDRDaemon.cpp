@@ -27,7 +27,7 @@
 #include "epg/ScheduleManager.h"
 #include "filesystem/Directory.h"
 #include "filesystem/SpecialProtocol.h"
-#include "recordings/Recordings.h"
+#include "recordings/RecordingManager.h"
 #include "settings/AllowedHosts.h"
 #include "settings/Settings.h"
 #include "timers/TimerManager.h"
@@ -81,6 +81,7 @@ bool cVDRDaemon::LoadConfig(void)
   cChannelManager::Get().Load();
   cScheduleManager::Get().Load();
   cTimerManager::Get().LoadTimers();
+  cRecordingManager::Get().Load();
   CAllowedHosts::Get().Load();
 
 //  if (!Diseqcs.Load("special://home/system/diseqc.conf"))
@@ -95,6 +96,7 @@ bool cVDRDaemon::LoadConfig(void)
 bool cVDRDaemon::SaveConfig(void)
 {
   cTimerManager::Get().SaveTimers();
+  cRecordingManager::Get().Save();
 
   return true;
 }
@@ -103,9 +105,6 @@ bool cVDRDaemon::Init()
 {
   if (!LoadConfig())
     return false;
-
-  // Recordings:
-  Recordings.Update(true);
 
   if (cDeviceManager::Get().Initialise() == 0)
   {

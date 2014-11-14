@@ -187,10 +187,11 @@ set(VDR_SRCS
 	#vdr/recordings/marks/Marks.cpp
 	vdr/recordings/Recorder.cpp
 	vdr/recordings/Recording.cpp
-	vdr/recordings/RecordingCutter.cpp
-	vdr/recordings/RecordingInfo.cpp
-	vdr/recordings/RecordingUserCommand.cpp
-	vdr/recordings/Recordings.cpp
+	#vdr/recordings/RecordingCutter.cpp
+	#vdr/recordings/RecordingInfo.cpp
+	vdr/recordings/RecordingManager.cpp
+	#vdr/recordings/RecordingUserCommand.cpp
+	#vdr/recordings/Recordings.cpp
 	vdr/scan/CNICodes.cpp
 	vdr/scan/ScanConfig.cpp
 	vdr/scan/Scanner.cpp

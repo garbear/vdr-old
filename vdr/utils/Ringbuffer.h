@@ -25,7 +25,7 @@
 
 namespace VDR
 {
-class CVideoFile;
+class CFile;
 
 class cRingBuffer {
 private:
@@ -99,8 +99,8 @@ public:
     ///< Only one actual read() call is done.
     ///< Returns the number of bytes actually read and stored, or
     ///< an error value from the actual read() call.
-  int Read(CVideoFile *File, int Max = 0);
-    ///< Like Read(int FileHandle, int Max), but reads from a CVideoFile).
+  int Read(CFile& File, int Max = 0);
+    ///< Like Read(int FileHandle, int Max), but reads from a CFile).
   int Put(const uint8_t *Data, int Count);
     ///< Puts at most Count bytes of Data into the ring buffer.
     ///< Returns the number of bytes actually stored.

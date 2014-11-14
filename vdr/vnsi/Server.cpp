@@ -69,6 +69,7 @@ cVNSIServer::cVNSIServer(int listenPort)
   m_bChannelsModified = false;
   m_bEventsModified = false;
   m_bTimersModified = false;
+  m_bRecordingsModified = false;
 
   m_ServerFD = socket(AF_INET, SOCK_STREAM, 0);
   if(m_ServerFD == -1)
@@ -126,6 +127,11 @@ void cVNSIServer::Notify(const Observable &obs, const ObservableMessage msg)
   {
     PLATFORM::CLockObject lock(m_mutex);
     m_bTimersModified = true;
+  }
+  else if (msg == ObservableMessageRecordingChanged)
+  {
+    PLATFORM::CLockObject lock(m_mutex);
+    m_bRecordingsModified = true;
   }
 }
 
@@ -186,10 +192,7 @@ void* cVNSIServer::Process(void)
   cTimeMs chanTimer(0);
   cTimeMs epgTimer(0);
   cTimeMs timerTimer(0);
-
-  // get initial state of the recordings
-  int recState = -1;
-  Recordings.StateChanged(recState);
+  cTimeMs recordingTimer(0);
 
   // delete old timeshift file
   std::string cmd;
@@ -211,6 +214,7 @@ void* cVNSIServer::Process(void)
   cChannelManager::Get().RegisterObserver(this);
   cScheduleManager::Get().RegisterObserver(this);
   cTimerManager::Get().RegisterObserver(this);
+  cRecordingManager::Get().RegisterObserver(this);
 
   isyslog("VNSI Server started on port %d", m_ServerPort);
   isyslog("Channel streaming timeout: %i seconds", cSettings::Get().m_StreamTimeout);
@@ -266,12 +270,16 @@ void* cVNSIServer::Process(void)
       }
 
       // update recordings
-      if(Recordings.StateChanged(recState))
+      if(m_clients.size() > 0 && recordingTimer.TimedOut())
       {
-        isyslog("Recordings state changed (%i)", recState);
-        isyslog("Requesting clients to reload recordings list");
-        for (ClientList::iterator i = m_clients.begin(); i != m_clients.end(); i++)
-          (*i)->RecordingsChange();
+        if (m_bRecordingsModified)
+        {
+          m_bRecordingsModified = false;
+          isyslog("Recordings state changed, requesting clients to reload recordings");
+          for (ClientList::iterator i = m_clients.begin(); i != m_clients.end(); i++)
+            (*i)->RecordingsChange();
+        }
+        recordingTimer.Set(5000);
       }
 
       // update timers
@@ -316,6 +324,7 @@ void* cVNSIServer::Process(void)
   cChannelManager::Get().UnregisterObserver(this);
   cScheduleManager::Get().UnregisterObserver(this);
   cTimerManager::Get().UnregisterObserver(this);
+  cRecordingManager::Get().UnregisterObserver(this);
 
   return NULL;
 }

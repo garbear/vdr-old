@@ -26,6 +26,7 @@
 #include "devices/Device.h"
 #include "devices/DeviceManager.h"
 #include "Player.h"
+#include "utils/log/Log.h"
 
 #include <limits.h>
 

@@ -23,6 +23,7 @@
 #include "Config.h"
 #include "devices/Remux.h"
 #include "utils/log/Log.h"
+#include "utils/StringUtils.h"
 
 #include <fcntl.h>
 //XXX

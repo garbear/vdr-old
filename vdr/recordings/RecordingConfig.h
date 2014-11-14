@@ -73,15 +73,6 @@
 
 #define DEFAULTFRAMESPERSECOND 25.0
 
-#define RECORDERBUFSIZE  (MEGABYTE(20) / TS_SIZE * TS_SIZE) // multiple of TS_SIZE
-
-// The maximum time we wait before assuming that a recorded video data stream
-// is broken:
-#define MAXBROKENTIMEOUT 30000 // milliseconds
-
-#define MINFREEDISKSPACE    MEGABYTE(512)
-#define DISKCHECKINTERVAL   100 // seconds
-
 #define RECORDING_START_INTERVAL_SECS (60) // don't try to start the same recording more than once a minute
 
 #define VPSLOOKAHEADTIME      24 // hours within which VPS timers will make sure their events are up to date

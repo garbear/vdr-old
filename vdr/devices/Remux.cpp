@@ -26,6 +26,7 @@
 #include "libsi/section.h"
 #include "libsi/descriptor.h"
 #include "recordings/Recording.h"
+#include "recordings/RecordingConfig.h"
 #include "utils/CommonMacros.h"
 #include "utils/I18N.h"
 #include "utils/log/Log.h"

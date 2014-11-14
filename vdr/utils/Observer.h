@@ -40,6 +40,7 @@ typedef enum
   ObservableMessageCAMReady,
   ObservableMessageCAMNotReady,
   ObservableMessageTimerChanged,
+  ObservableMessageRecordingChanged,
 } ObservableMessage;
 
 class Observer

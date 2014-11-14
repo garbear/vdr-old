@@ -217,10 +217,10 @@ bool cShutdownHandler::ConfirmShutdown(bool Interactive)
 
 bool cShutdownHandler::ConfirmRestart(bool Interactive)
 {
-  if (cCutter::Active()) {
+//  if (cCutter::Active()) {
 //XXX     if (!Interactive || !Interface->Confirm(tr("Editing - restart anyway?")))
 //        return false;
-     }
+//     }
 
 //  TimerPtr timer = cTimers::Get().GetNextActiveTimer();
 //  time_t Next  = timer ? timer->StartTimeAsTime() : 0;

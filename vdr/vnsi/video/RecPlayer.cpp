@@ -29,8 +29,10 @@
 
 #include "RecPlayer.h"
 #include "filesystem/File.h"
+#include "recordings/Recording.h"
 #include "recordings/filesystem/IndexFile.h"
 #include "utils/log/Log.h"
+#include "utils/StringUtils.h"
 
 #include <fcntl.h>
 #include <sys/stat.h>
@@ -42,11 +44,11 @@ using namespace std;
 namespace VDR
 {
 
-cRecPlayer::cRecPlayer(cRecording* rec, bool inProgress)
+cRecPlayer::cRecPlayer(const RecordingPtr& rec, bool inProgress)
 {
   m_file          = NULL;
   m_fileOpen      = -1;
-  m_recordingFilename = rec->FileName();
+  m_recordingFilename = rec->URL();
   m_inProgress = inProgress;
 
   // FIXME find out max file path / name lengths
