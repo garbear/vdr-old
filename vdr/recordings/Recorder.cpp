@@ -108,9 +108,9 @@ bool cRecorder::NextFile(void)
   return m_recordFile != NULL;
 }
 
-void cRecorder::Start(void)
+bool cRecorder::Start(void)
 {
-  CreateThread();
+  return CreateThread();
 }
 
 void cRecorder::Stop(void)

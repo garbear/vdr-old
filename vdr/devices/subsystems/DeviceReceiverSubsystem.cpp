@@ -48,7 +48,11 @@ namespace VDR
 cDeviceReceiverSubsystem::cReceiverHandle::cReceiverHandle(iReceiver* rcvr)
  : receiver(rcvr)
 {
-  receiver->Start();
+}
+
+bool cDeviceReceiverSubsystem::cReceiverHandle::Start(void)
+{
+  return receiver->Start();
 }
 
 cDeviceReceiverSubsystem::cReceiverHandle::~cReceiverHandle(void)
@@ -167,7 +171,11 @@ bool cDeviceReceiverSubsystem::AttachReceiver(iReceiver* receiver, uint16_t pid,
 
   ReceiverHandlePtr receiverHandle = GetReceiverHandle(receiver);
   if (!receiverHandle)
+  {
     receiverHandle = ReceiverHandlePtr(new cReceiverHandle(receiver));
+    if (!receiverHandle->Start())
+      return false;
+  }
 
   PidResourcePtr resource = GetResource(pid);
   if (!resource)

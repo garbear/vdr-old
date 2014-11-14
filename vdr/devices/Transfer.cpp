@@ -46,12 +46,13 @@ cTransfer::~cTransfer(void)
   cPlayer::Detach();
 }
 
-void cTransfer::Start(void)
+bool cTransfer::Start(void)
 {
   PlayTs(patPmtGenerator.GetPat(), TS_SIZE);
   int Index = 0;
   while (uint8_t *pmt = patPmtGenerator.GetPmt(Index))
     PlayTs(pmt, TS_SIZE);
+  return true;
 }
 
 void cTransfer::Stop(void)

@@ -39,12 +39,12 @@ public:
   /*!
    * Called just before the receiver is attached to a device. It can be used to
    * do things like starting a thread. It is guaranteed that Receive() will not
-   * be called before Start().
+   * be called before Start(). Return false to abort the receiver.
    */
-  virtual void Start(void) = 0;
+  virtual bool Start(void) = 0;
 
   /*!
-   * Called just before the receiver is removed from a device. It can be used to
+   * Called after the receiver is removed from a device. It can be used to
    * do things like stopping a thread.
    */
   virtual void Stop(void) = 0;

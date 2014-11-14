@@ -47,7 +47,7 @@ public:
   virtual void Detach(void);
   virtual bool WaitForScan(uint32_t iTimeout = TRANSPONDER_TIMEOUT);
 
-  virtual void Start(void) {}
+  virtual bool Start(void) { return true; }
   virtual void Stop(void) {}
   virtual void LockAcquired(void);
   virtual void LockLost(void);

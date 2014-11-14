@@ -55,6 +55,7 @@ protected:
   public:
     cReceiverHandle(iReceiver* rcvr);
     ~cReceiverHandle(void);
+    bool Start(void);
     iReceiver* const receiver;
   };
 

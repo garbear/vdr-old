@@ -873,9 +873,10 @@ cVideoBuffer::cVideoBuffer()
   m_bufferWrapTime = 0;
 }
 
-void cVideoBuffer::Start(void)
+bool cVideoBuffer::Start(void)
 {
   m_InputAttached = true;
+  return true;
 }
 
 void cVideoBuffer::Stop(void)

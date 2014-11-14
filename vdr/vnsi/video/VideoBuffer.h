@@ -46,7 +46,7 @@ class cVideoBuffer : public iReceiver
 public:
   virtual ~cVideoBuffer(void) { }
 
-  virtual void Start(void);
+  virtual bool Start(void);
   virtual void Stop(void);
   virtual void Receive(const uint16_t pid, const uint8_t* data, const size_t len) = 0;
 
