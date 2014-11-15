@@ -27,6 +27,7 @@
 #include "dvb/PsiBuffer.h"
 
 #include <map>
+#include <set>
 #include <vector>
 
 namespace VDR
@@ -79,11 +80,11 @@ protected:
   bool Sync(uint16_t pid, uint8_t version, int sectionNumber, int endSectionNumber);
   virtual void AddFilter(const filter_properties& filter);
   virtual bool HasFilters(void) {  return !m_filtersAdded.empty(); }
-  void RemoveFilter(uint16_t pid);
+  void RemoveFilter(const filter_properties& filter);
   void RemoveFilters(void);
   void SetScanned(void);
   void ResetScanned(void);
-  bool DynamicFilter(uint16_t pid) const;
+  bool DynamicFilter(const filter_properties& filter) const;
 
   cDevice*         m_device;
   bool             m_locked;
@@ -93,11 +94,11 @@ protected:
 private:
   bool                       m_scanned;
   PLATFORM::CCondition<bool> m_scannedEvent;
-  std::vector<filter_properties> m_filters;
-  std::vector<filter_properties> m_filtersAdded;
+  std::set<filter_properties> m_filters;
+  std::set<filter_properties> m_filtersAdded;
   bool                       m_attached;
   std::string                m_name;
-  std::map<uint16_t, cSectionSyncer*> m_sectionSyncers;
+  std::map<filter_properties, cSectionSyncer*> m_sectionSyncers;
 };
 
 }

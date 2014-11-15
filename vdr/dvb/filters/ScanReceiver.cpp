@@ -38,11 +38,15 @@ using namespace std;
 namespace VDR
 {
 
-bool operator==(const cScanReceiver::filter_properties& lhs, const cScanReceiver::filter_properties& rhs)
+bool operator<(const cScanReceiver::filter_properties& lhs, const cScanReceiver::filter_properties& rhs)
 {
-  return rhs.pid  == lhs.pid &&
-         rhs.tid  == lhs.tid &&
-         rhs.mask == lhs.mask;
+  if (rhs.pid  < lhs.pid)  return true;
+  if (lhs.pid  < rhs.pid)  return false;
+  if (rhs.tid  < lhs.tid)  return true;
+  if (lhs.tid  < rhs.tid)  return false;
+  if (rhs.mask < lhs.mask) return true;
+  if (lhs.mask < rhs.mask) return false;
+  return false;
 }
 
 // --- cScanReceiver -----------------------------------------------------------
@@ -63,8 +67,8 @@ cScanReceiver::cScanReceiver(cDevice* device, const std::string& name, const fil
     m_attached(false),
     m_name(name)
 {
-  m_filters.push_back(filter);
-  m_sectionSyncers.insert(make_pair(filter.pid, new cSectionSyncer));
+  m_filters.insert(filter);
+  m_sectionSyncers.insert(make_pair(filter, new cSectionSyncer));
 }
 
 cScanReceiver::cScanReceiver(cDevice* device, const std::string& name, const std::vector<filter_properties>& filters) :
@@ -76,8 +80,8 @@ cScanReceiver::cScanReceiver(cDevice* device, const std::string& name, const std
 {
   for (std::vector<filter_properties>::const_iterator it = filters.begin(); it != filters.end(); ++it)
   {
-    m_sectionSyncers.insert(make_pair(it->pid, new cSectionSyncer));
-    m_filters.push_back(*it);
+    m_sectionSyncers.insert(make_pair(*it, new cSectionSyncer));
+    m_filters.insert(*it);
   }
 }
 
@@ -90,8 +94,8 @@ cScanReceiver::cScanReceiver(cDevice* device, const std::string& name, size_t nb
 {
   for (size_t ptr = 0; ptr < nbFilters; ++ptr)
   {
-    m_sectionSyncers.insert(make_pair(filters[ptr].pid, new cSectionSyncer));
-    m_filters.push_back(filters[ptr]);
+    m_sectionSyncers.insert(make_pair(filters[ptr], new cSectionSyncer));
+    m_filters.insert(filters[ptr]);
   }
 }
 
@@ -104,7 +108,7 @@ bool cScanReceiver::Attach(void)
     return true;
 
   m_attached = true;
-  for (std::vector<filter_properties>::const_iterator it = m_filters.begin(); it != m_filters.end(); ++it)
+  for (std::set<filter_properties>::const_iterator it = m_filters.begin(); m_attached && it != m_filters.end(); ++it)
     m_attached &= m_device->Receiver()->AttachStreamingReceiver(this, it->pid, it->tid, it->mask);
 
   if (!m_attached)
@@ -119,14 +123,14 @@ void cScanReceiver::Detach(void)
 {
   PLATFORM::CLockObject lock(m_mutex);
   RemoveFilters();
-  for (std::map<uint16_t, cSectionSyncer*>::iterator it = m_sectionSyncers.begin(); it != m_sectionSyncers.end(); ++it)
+  for (std::map<filter_properties, cSectionSyncer*>::iterator it = m_sectionSyncers.begin(); it != m_sectionSyncers.end(); ++it)
     it->second->Reset();
   if (m_attached)
   {
     m_attached = false;
 
-    for (std::vector<filter_properties>::const_iterator it = m_filters.begin(); it != m_filters.end(); ++it)
-      m_device->Receiver()->DetachReceiverPid(this, it->pid);
+    for (std::set<filter_properties>::const_iterator it = m_filters.begin(); it != m_filters.end(); ++it)
+      m_device->Receiver()->DetachStreamingReceiver(this, it->pid, it->tid, it->mask);
 
     FILTER_DEBUGGING("%s filter detached", m_name.c_str());
   }
@@ -165,48 +169,36 @@ void cScanReceiver::Receive(const uint16_t pid, const uint8_t* data, const size_
 void cScanReceiver::AddFilter(const filter_properties& filter)
 {
   PLATFORM::CLockObject lock(m_mutex);
-  std::vector<filter_properties>::const_iterator it = std::find(m_filters.begin(), m_filters.end(), filter);
-  if (it != m_filters.end())
+  if (m_filters.find(filter) != m_filters.end())
     return;
   if (m_device->Receiver()->AttachStreamingReceiver(this, filter.pid, filter.tid, filter.mask))
   {
-    m_sectionSyncers.insert(make_pair(filter.pid, new cSectionSyncer));
-    m_filtersAdded.push_back(filter);
-    m_filters.push_back(filter);
+    m_sectionSyncers.insert(make_pair(filter, new cSectionSyncer));
+    m_filtersAdded.insert(filter);
+    m_filters.insert(filter);
   }
 }
 
-void cScanReceiver::RemoveFilter(uint16_t pid)
+void cScanReceiver::RemoveFilter(const filter_properties& filter)
 {
   PLATFORM::CLockObject lock(m_mutex);
-
-  std::vector<filter_properties>::iterator it      = m_filters.begin();
-  std::vector<filter_properties>::iterator itAdded = m_filtersAdded.begin();
-
-  for ( ; it != m_filters.end(); ++it)
-    if (it->pid == pid)
-      break;
-
-  for ( ; itAdded != m_filtersAdded.end(); ++itAdded)
-    if (itAdded->pid == pid)
-      break;
-
+  std::set<filter_properties>::iterator it = m_filters.find(filter);
   if (it != m_filters.end())
   {
-    if (DynamicFilter(pid))
+    if (DynamicFilter(filter))
     {
-      std::map<uint16_t, cSectionSyncer*>::iterator cit = m_sectionSyncers.find(pid);
+      std::map<filter_properties, cSectionSyncer*>::iterator cit = m_sectionSyncers.find(*it);
       if (cit != m_sectionSyncers.end())
       {
         delete cit->second;
         m_sectionSyncers.erase(cit);
       }
-      m_filtersAdded.erase(itAdded);
+      m_filtersAdded.erase(filter);
       m_filters.erase(it);
     }
 
     if (m_attached)
-      m_device->Receiver()->DetachReceiverPid(this, pid);
+      m_device->Receiver()->DetachStreamingReceiver(this, filter.pid, filter.tid, filter.mask);
   }
 }
 
@@ -215,13 +207,13 @@ void cScanReceiver::RemoveFilters(void)
   PLATFORM::CLockObject lock(m_mutex);
   std::vector<filter_properties> filtersRemoved;
 
-  for (std::vector<filter_properties>::iterator it = m_filters.begin(); it != m_filters.end(); ++it)
+  for (std::set<filter_properties>::iterator it = m_filters.begin(); it != m_filters.end(); ++it)
   {
-    m_device->Receiver()->DetachReceiverPid(this, it->pid);
+    m_device->Receiver()->DetachStreamingReceiver(this, it->pid, it->tid, it->mask);
 
-    if (DynamicFilter(it->pid))
+    if (DynamicFilter(*it))
     {
-      std::map<uint16_t, cSectionSyncer*>::iterator cit = m_sectionSyncers.find(it->pid);
+      std::map<filter_properties, cSectionSyncer*>::iterator cit = m_sectionSyncers.find(*it);
       if (cit != m_sectionSyncers.end())
       {
         delete cit->second;
@@ -233,11 +225,7 @@ void cScanReceiver::RemoveFilters(void)
   }
 
   for (std::vector<filter_properties>::const_iterator it = filtersRemoved.begin(); it != filtersRemoved.end(); ++it)
-  {
-    std::vector<filter_properties>::iterator it2 = std::find(m_filters.begin(), m_filters.end(), *it);
-    assert(it2 != m_filters.end());
-    m_filters.erase(it2);
-  }
+    m_filters.erase(*it);
 }
 
 void cScanReceiver::SetScanned(void)
@@ -266,28 +254,29 @@ bool cScanReceiver::Scanned(void) const
   return m_scanned;
 }
 
-bool cScanReceiver::DynamicFilter(uint16_t pid) const
+bool cScanReceiver::DynamicFilter(const filter_properties& filter) const
 {
-  for (std::vector<filter_properties>::const_iterator it = m_filtersAdded.begin(); it != m_filtersAdded.end(); ++it)
-    if (it->pid == pid)
-      return true;
-  return false;
+  return m_filtersAdded.find(filter) != m_filtersAdded.end();
 }
 
 bool cScanReceiver::Sync(uint16_t pid, uint8_t version, int sectionNumber, int endSectionNumber)
 {
-  std::map<uint16_t, cSectionSyncer*>::iterator it = m_sectionSyncers.find(pid);
-  return it != m_sectionSyncers.end() ?
-      it->second->Sync(version, sectionNumber, endSectionNumber) == cSectionSyncer::SYNC_STATUS_NEW_VERSION :
-      false;
+  for (std::map<filter_properties, cSectionSyncer*>::iterator it = m_sectionSyncers.begin(); it != m_sectionSyncers.end(); ++it)
+  {
+    if (it->first.pid == pid)
+      return it->second->Sync(version, sectionNumber, endSectionNumber) == cSectionSyncer::SYNC_STATUS_NEW_VERSION;
+  }
+  return false;
 }
 
 bool cScanReceiver::Synced(uint16_t pid) const
 {
-  std::map<uint16_t, cSectionSyncer*>::const_iterator it = m_sectionSyncers.find(pid);
-  return it != m_sectionSyncers.end() ?
-      it->second->Synced() :
-      false;
+  for (std::map<filter_properties, cSectionSyncer*>::const_iterator it = m_sectionSyncers.begin(); it != m_sectionSyncers.end(); ++it)
+  {
+    if (it->first.pid == pid)
+      return it->second->Synced();
+  }
+  return false;
 }
 
 }

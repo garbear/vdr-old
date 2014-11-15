@@ -79,7 +79,8 @@ public:
    * Detaches the given receiver from this device.
    */
   void DetachReceiver(iReceiver* receiver);
-  void DetachReceiverPid(iReceiver* receiver, uint16_t pid);
+  void DetachStreamingReceiver(iReceiver* receiver, uint16_t pid, uint8_t tid, uint8_t mask);
+  void DetachMultiplexedReceiver(iReceiver* receiver, uint16_t pid, STREAM_TYPE type = STREAM_TYPE_UNDEFINED);
 
   /*!
    * Returns true if any receivers are attached to this device.
@@ -147,7 +148,8 @@ private:
   ReceiverHandlePtr    GetReceiverHandle(iReceiver* receiver) const;
   std::set<iReceiver*> GetReceivers(void) const;
   std::set<iReceiver*> GetReceivers(const PidResourcePtr& resource) const;
-  PidResourcePtr       GetResource(uint16_t pid) const;
+  PidResourcePtr       GetResource(const PidResourcePtr& needle) const;
+  PidResourcePtr       GetMultiplexedResource(uint16_t pid) const; // Streaming resources can't be identified by PID alone
 
   ReceiverPidTable m_receiverPidTable; // Receiver <-> PID associations
   PLATFORM::CMutex m_mutex;

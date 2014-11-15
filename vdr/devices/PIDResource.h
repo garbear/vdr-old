@@ -44,6 +44,13 @@ public:
 
   virtual bool Equals(const cPidResource* other) const = 0;
 
+  /*!
+   * Returns true if the pid can uniquely describe the resource. If the resource
+   * requires other properties to perform the comparison (e.g. streaming
+   * resources require tid to be compared as well), then this return false.
+   */
+  virtual bool Equals(uint16_t pid) const = 0;
+
   virtual bool Open(void) = 0;
   virtual void Close(void) = 0;
 

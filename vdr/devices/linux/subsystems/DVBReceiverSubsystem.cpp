@@ -111,6 +111,7 @@ public:
   virtual ~cDvbStreamingResource(void) { Close(); }
 
   virtual bool Equals(const cPidResource* other) const;
+  virtual bool Equals(uint16_t pid) const { return false; }
 
   virtual bool Open(void);
 
@@ -200,6 +201,7 @@ public:
   virtual ~cDvbMultiplexedResource(void) { Close(); }
 
   virtual bool Equals(const cPidResource* other) const;
+  virtual bool Equals(uint16_t pid) const { return Pid() == pid; }
 
   virtual bool Open(void);
 

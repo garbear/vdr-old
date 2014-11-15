@@ -125,7 +125,7 @@ void *cDeviceReceiverSubsystem::Process()
 
         /** find resources attached to the PID that we received */
         pid = TsPid(packet);
-        PidResourcePtr pidPtr = GetResource(pid);
+        PidResourcePtr pidPtr = GetMultiplexedResource(pid);
         if (pidPtr)
         {
           validpsi = pidPtr->Buffer()->AddTsData(packet, TS_SIZE, &psidata, &psidatalen);
@@ -196,14 +196,45 @@ std::set<iReceiver*> cDeviceReceiverSubsystem::GetReceivers(const PidResourcePtr
   return receivers;
 }
 
-cDeviceReceiverSubsystem::PidResourcePtr cDeviceReceiverSubsystem::GetResource(uint16_t pid) const
+cDeviceReceiverSubsystem::PidResourcePtr cDeviceReceiverSubsystem::GetResource(const PidResourcePtr& needle) const
 {
   for (ReceiverPidTable::const_iterator it = m_receiverPidTable.begin(); it != m_receiverPidTable.end(); ++it)
   {
-    if (it->second->Pid() == pid)
+    if (it->second->Equals(needle.get()))
       return it->second;
   }
   return PidResourcePtr();
+}
+
+cDeviceReceiverSubsystem::PidResourcePtr cDeviceReceiverSubsystem::GetMultiplexedResource(uint16_t pid) const
+{
+  for (ReceiverPidTable::const_iterator it = m_receiverPidTable.begin(); it != m_receiverPidTable.end(); ++it)
+  {
+    if (it->second->Equals(pid))
+      return it->second;
+  }
+  return PidResourcePtr();
+}
+
+bool cDeviceReceiverSubsystem::AttachStreamingReceiver(iReceiver* receiver, uint16_t pid, uint8_t tid, uint8_t mask)
+{
+  CLockObject lock(m_mutex);
+
+  ReceiverHandlePtr receiverHandle = GetReceiverHandle(receiver);
+  if (!receiverHandle)
+  {
+    receiverHandle = ReceiverHandlePtr(new cReceiverHandle(receiver));
+    if (!receiverHandle->Start())
+      return false;
+  }
+
+  PidResourcePtr resource = CreateStreamingResource(pid, tid, mask);
+  if (GetResource(resource) || !resource->Open())
+    return false;
+
+  m_receiverPidTable.insert(ReceiverPidEdge(receiverHandle, resource));
+
+  return true;
 }
 
 bool cDeviceReceiverSubsystem::AttachMultiplexedReceiver(iReceiver* receiver, uint16_t pid, STREAM_TYPE type /* = STREAM_TYPE_UNDEFINED */)
@@ -218,13 +249,9 @@ bool cDeviceReceiverSubsystem::AttachMultiplexedReceiver(iReceiver* receiver, ui
       return false;
   }
 
-  PidResourcePtr resource = GetResource(pid);
-  if (!resource)
-  {
-    resource = CreateMultiplexedResource(pid, type);
-    if (!resource->Open())
-      return false;
-  }
+  PidResourcePtr resource = CreateMultiplexedResource(pid, type);
+  if (GetResource(resource) || !resource->Open())
+    return false;
 
   m_receiverPidTable.insert(ReceiverPidEdge(receiverHandle, resource));
 
@@ -271,37 +298,21 @@ bool cDeviceReceiverSubsystem::AttachMultiplexedReceiver(iReceiver* receiver, co
   return bAllOpened;
 }
 
-bool cDeviceReceiverSubsystem::AttachStreamingReceiver(iReceiver* receiver, uint16_t pid, uint8_t tid, uint8_t mask)
+void cDeviceReceiverSubsystem::DetachStreamingReceiver(iReceiver* receiver, uint16_t pid, uint8_t tid, uint8_t mask)
 {
   CLockObject lock(m_mutex);
 
-  ReceiverHandlePtr receiverHandle = GetReceiverHandle(receiver);
-  if (!receiverHandle)
-  {
-    receiverHandle = ReceiverHandlePtr(new cReceiverHandle(receiver));
-    if (!receiverHandle->Start())
-      return false;
-  }
-
-  PidResourcePtr resource = GetResource(pid);
-  if (!resource)
-  {
-    resource = CreateStreamingResource(pid, tid, mask);
-    if (!resource->Open())
-      return false;
-  }
-
-  m_receiverPidTable.insert(ReceiverPidEdge(receiverHandle, resource));
-
-  return true;
+  const ReceiverPidEdge needle(GetReceiverHandle(receiver), GetResource(CreateStreamingResource(pid, tid, mask)));
+  ReceiverPidTable::iterator it = m_receiverPidTable.find(needle);
+  if (it != m_receiverPidTable.end())
+    m_receiverPidTable.erase(it);
 }
 
-
-void cDeviceReceiverSubsystem::DetachReceiverPid(iReceiver* receiver, uint16_t pid)
+void cDeviceReceiverSubsystem::DetachMultiplexedReceiver(iReceiver* receiver, uint16_t pid, STREAM_TYPE type /* = STREAM_TYPE_UNDEFINED */)
 {
   CLockObject lock(m_mutex);
 
-  const ReceiverPidEdge needle(GetReceiverHandle(receiver), GetResource(pid));
+  const ReceiverPidEdge needle(GetReceiverHandle(receiver), CreateMultiplexedResource(pid, type));
   ReceiverPidTable::iterator it = m_receiverPidTable.find(needle);
   if (it != m_receiverPidTable.end())
     m_receiverPidTable.erase(it);
