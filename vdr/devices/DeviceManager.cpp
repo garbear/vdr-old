@@ -120,7 +120,7 @@ TunerHandlePtr cDeviceManager::OpenVideoInput(iReceiver* receiver, device_tuning
     if (device)
     {
       TunerHandlePtr newHandle = device->Acquire(channel, type, receiver);
-      if (newHandle && !device->Receiver()->AttachReceiver(receiver, channel))
+      if (newHandle && !device->Receiver()->AttachMultiplexedReceiver(receiver, channel))
       {
         /** failed to attach receiver */
         device->Release(newHandle);

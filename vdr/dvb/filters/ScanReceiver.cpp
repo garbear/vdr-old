@@ -96,7 +96,7 @@ bool cScanReceiver::Attach(void)
 
   m_attached = true;
   for (std::set<uint16_t>::const_iterator it = m_pids.begin(); it != m_pids.end(); ++it)
-    m_attached &= m_device->Receiver()->AttachReceiver(this, *it);
+    m_attached &= m_device->Receiver()->AttachMultiplexedReceiver(this, *it);
 
   if (!m_attached)
     esyslog("failed to attach %s filter", m_name.c_str());
@@ -158,7 +158,7 @@ void cScanReceiver::AddPid(uint16_t pid)
   PLATFORM::CLockObject lock(m_mutex);
   if (m_pids.find(pid) != m_pids.end())
     return;
-  if (m_device->Receiver()->AttachReceiver(this, pid))
+  if (m_device->Receiver()->AttachMultiplexedReceiver(this, pid))
   {
     m_sectionSyncers.insert(make_pair(pid, new cSectionSyncer));
     m_pidsAdded.insert(pid);

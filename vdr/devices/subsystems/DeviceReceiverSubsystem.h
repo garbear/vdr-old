@@ -35,16 +35,12 @@ namespace VDR
 {
 
 class iReceiver;
-class cRingBufferLinear;
 
-enum ePidType
+enum POLL_RESULT
 {
-  ptAudio,
-  ptVideo,
-  ptPcr,
-  ptTeletext,
-  ptDolby,
-  ptOther
+  POLL_RESULT_NOT_READY,
+  POLL_RESULT_STREAMING_READY,
+  POLL_RESULT_MULTIPLEXED_READY
 };
 
 class cDeviceReceiverSubsystem : protected cDeviceSubsystem, public PLATFORM::CThread
@@ -75,8 +71,9 @@ public:
    * Attaches the given receiver to this device. Resources for all the streams
    * that channel provides are opened and associated with the receiver.
    */
-  bool AttachReceiver(iReceiver* receiver, const ChannelPtr& channel);
-  bool AttachReceiver(iReceiver* receiver, uint16_t pid, STREAM_TYPE type = STREAM_TYPE_UNDEFINED);
+  bool AttachStreamingReceiver(iReceiver* receiver, uint16_t pid, uint8_t tid, uint8_t mask);
+  bool AttachMultiplexedReceiver(iReceiver* receiver, const ChannelPtr& channel);
+  bool AttachMultiplexedReceiver(iReceiver* receiver, uint16_t pid, STREAM_TYPE type = STREAM_TYPE_UNDEFINED);
 
   /*!
    * Detaches the given receiver from this device.
@@ -114,27 +111,42 @@ protected:
   /*!
    * Allocate a new resource. Must not return an empty pointer.
    */
-  virtual PidResourcePtr CreateResource(uint16_t pid, STREAM_TYPE streamType) = 0;
+  virtual PidResourcePtr CreateStreamingResource(uint16_t pid, uint8_t tid, uint8_t mask) = 0;
+  virtual PidResourcePtr CreateMultiplexedResource(uint16_t pid, STREAM_TYPE streamType) = 0;
 
   /*!
-   * Wait until data is ready to be read.
+   * Wait until data is ready to be read. Poll() returns three conditions:
+   *
+   * POLL_RESULT_NOT_READY:
+   *     Poll() timed out and no streaming or multiplexed resources are ready to
+   *     be read.
+   *
+   * POLL_RESULT_STREAMING_READY:
+   *     A streaming resource is ready to be read. streamingResource is set to
+   *     the ready resource.
+   *
+   * POLL_RESULT_MULTIPLEXED_READY:
+   *     A multiplexed resources is ready to be ready. streamingResource is ignored.
    */
-  virtual bool Poll(void) = 0;
+  virtual POLL_RESULT Poll(PidResourcePtr& streamingResource) = 0;
 
   /*!
-   * Gets exactly one TS packet from the DVR of this device, or returns false if
+   * Gets exactly one TS packet from the DVR of this device, or returns NULL if
    * no new data is ready.
    */
-  virtual TsPacket Read(void) = 0;
+  virtual TsPacket ReadMultiplexed(void) = 0;
 
   /*!
    * Report that the TS packet delivered by Read() was used.
    */
   virtual void Consumed(void) = 0;
 
+  std::set<PidResourcePtr> GetResources(void) const;
+
 private:
   ReceiverHandlePtr    GetReceiverHandle(iReceiver* receiver) const;
   std::set<iReceiver*> GetReceivers(void) const;
+  std::set<iReceiver*> GetReceivers(const PidResourcePtr& resource) const;
   PidResourcePtr       GetResource(uint16_t pid) const;
 
   ReceiverPidTable m_receiverPidTable; // Receiver <-> PID associations

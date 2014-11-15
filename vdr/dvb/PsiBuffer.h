@@ -37,6 +37,8 @@ namespace VDR
     void Reset(void);
     size_t Size(void) const { return m_cursize; }
 
+    uint8_t* Data(void) { return m_data; }
+    const uint8_t* Data(void) const { return m_data; }
     size_t Position(void) const { return m_position; }
     void SetPid(uint16_t pid) { m_pid = pid; }
     uint16_t Pid(void) const { return m_pid; }

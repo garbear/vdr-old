@@ -22,13 +22,16 @@
 #include "DVBReceiverSubsystem.h"
 #include "devices/Remux.h"
 #include "devices/linux/DVBDevice.h"
+#include "dvb/PsiBuffer.h" // for PSI_MAX_SIZE
 #include "filesystem/File.h"
 #include "filesystem/Poller.h"
 #include "utils/log/Log.h"
 #include "utils/Ringbuffer.h"
 #include "utils/StringUtils.h"
+#include "utils/Tools.h"
 
 #include <fcntl.h>
+#include <poll.h>
 #include <string>
 #include <sys/ioctl.h>
 #include <linux/dvb/dmx.h>
@@ -38,6 +41,7 @@ using namespace std;
 
 #define TS_PACKET_BUFFER_SIZE    (25 * TS_SIZE) // Buffer up to 25 TS packets
 #define FILE_DESCRIPTOR_INVALID  (-1)
+#define POLL_TIMEOUT_MS          1000
 
 #define PID_DEBUGGING(x...) dsyslog(x)
 //#define PID_DEBUGGING(x...) {}
@@ -67,6 +71,7 @@ public:
   virtual ~cDvbResource(void) { }
 
   RESOURCE_TYPE Type(void) const { return m_type; }
+  int Handle(void) const { return m_handle; }
 
   virtual void Close(void);
 
@@ -108,6 +113,8 @@ public:
   virtual bool Equals(const cPidResource* other) const;
 
   virtual bool Open(void);
+
+  virtual bool Read(const uint8_t** outdata, size_t* outlen);
 
   uint8_t Tid(void) const  { return m_tid; }
   uint8_t Mask(void) const { return m_mask; }
@@ -160,6 +167,18 @@ bool cDvbStreamingResource::Open(void)
   PID_DEBUGGING("Opened %s", ToString().c_str());
 
   return true;
+}
+
+bool cDvbStreamingResource::Read(const uint8_t** outdata, size_t* outlen)
+{
+  ssize_t bytesRead = safe_read(m_handle, Buffer()->Data(), PSI_MAX_SIZE);
+  if (read > 0)
+  {
+    *outdata = Buffer()->Data();
+    *outlen  = bytesRead;
+    return true;
+  }
+  return false;
 }
 
 std::string cDvbStreamingResource::ToString(void) const
@@ -267,10 +286,67 @@ void cDvbReceiverSubsystem::Deinitialise(void)
   m_ringBuffer.Clear();
 }
 
-bool cDvbReceiverSubsystem::Poll(void)
+POLL_RESULT cDvbReceiverSubsystem::Poll(PidResourcePtr& streamingResource)
 {
-  cPoller Poller(m_fd_dvr);
-  return Poller.Poll(100);
+  bool bMultiplexedResources = false; // Set to true if any resources are multiplexed
+
+  // Build a list of file descriptors to poll
+  vector<pollfd> vecPfds;
+
+  // Add the file descriptors of all streaming resources
+  std::set<PidResourcePtr> resources = GetResources();
+  for (std::set<PidResourcePtr>::const_iterator it = resources.begin(); it != resources.end(); ++it)
+  {
+    const cDvbResource* resource = dynamic_cast<const cDvbResource*>(it->get());
+    if (resource && resource->Type() == RESOURCE_TYPE_STREAMING)
+    {
+      pollfd pfd = { resource->Handle(), POLLIN | POLLERR, 0 };
+      vecPfds.push_back(pfd);
+    }
+    else if (resource && resource->Type() == RESOURCE_TYPE_MULTIPLEXING)
+    {
+      bMultiplexedResources = true;
+    }
+  }
+
+  // Add the file descriptor for the multiplexed resources
+  if (bMultiplexedResources)
+  {
+    pollfd pfd = { m_fd_dvr, POLLIN | POLLERR, 0 };
+    vecPfds.push_back(pfd);
+  }
+
+  if (!vecPfds.empty())
+  {
+    if (poll(vecPfds.data(), vecPfds.size(), POLL_TIMEOUT_MS) > 0)
+    {
+      // Look for file descriptor that signaled poll()
+      for (unsigned int i = 0; i < vecPfds.size(); i++)
+      {
+        if (vecPfds[i].revents & (POLLIN | POLLERR))
+        {
+          const int signaledFd = vecPfds[i].fd;
+
+          // Check if the multiplexed resource is ready
+          if (signaledFd == m_fd_dvr)
+            return POLL_RESULT_MULTIPLEXED_READY;
+
+          // Check if a streaming resource is ready
+          for (std::set<PidResourcePtr>::const_iterator it = resources.begin(); it != resources.end(); ++it)
+          {
+            const cDvbResource* resource = dynamic_cast<const cDvbResource*>(it->get());
+            if (resource && resource->Handle() == signaledFd)
+            {
+              streamingResource = *it;
+              return POLL_RESULT_STREAMING_READY;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  return POLL_RESULT_NOT_READY;
 }
 
 void cDvbReceiverSubsystem::Consumed(void)
@@ -278,7 +354,7 @@ void cDvbReceiverSubsystem::Consumed(void)
   m_ringBuffer.Del(TS_SIZE);
 }
 
-TsPacket cDvbReceiverSubsystem::Read(void)
+TsPacket cDvbReceiverSubsystem::ReadMultiplexed(void)
 {
   int count = 0;
   if (!m_ringBuffer.Get(count) || count < TS_SIZE)
@@ -319,7 +395,12 @@ TsPacket cDvbReceiverSubsystem::Read(void)
   return NULL;
 }
 
-cDeviceReceiverSubsystem::PidResourcePtr cDvbReceiverSubsystem::CreateResource(uint16_t pid, STREAM_TYPE streamType)
+cDeviceReceiverSubsystem::PidResourcePtr cDvbReceiverSubsystem::CreateStreamingResource(uint16_t pid, uint8_t tid, uint8_t mask)
+{
+  return PidResourcePtr(new cDvbStreamingResource(pid, tid, mask, Device<cDvbDevice>()));
+}
+
+cDeviceReceiverSubsystem::PidResourcePtr cDvbReceiverSubsystem::CreateMultiplexedResource(uint16_t pid, STREAM_TYPE streamType)
 {
   return PidResourcePtr(new cDvbMultiplexedResource(pid, streamType, Device<cDvbDevice>()));
 }

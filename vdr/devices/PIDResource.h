@@ -47,6 +47,11 @@ public:
   virtual bool Open(void) = 0;
   virtual void Close(void) = 0;
 
+  /*!
+   * Override this is if the resource can stream data.
+   */
+  virtual bool Read(const uint8_t** outdata, size_t* outlen) { return false; }
+
   uint16_t    Pid(void) const    { return m_pid; }
   cPsiBuffer* Buffer(void) const { return m_buffer; }
 
