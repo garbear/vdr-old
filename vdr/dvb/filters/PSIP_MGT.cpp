@@ -67,12 +67,12 @@ void cPsipMgt::ReceivePacket(uint16_t pid, const uint8_t* data)
       {
       case 0x0000: // Terrestrial VCT with current_next_indicator='1'
       case 0x0001: // Terrestrial VCT with current_next_indicator='0'
-        m_device->Scan()->PsipMGT()->AddPid(tablePid);
+        //m_device->Scan()->PsipVCT()->AddPid(tablePid); // VCT already opens tablePid (0x1FFB)
         ++mgtPids;
         break;
       case 0x0002: // Cable VCT with current_next_indicator='1'
       case 0x0003: // Cable VCT with current_next_indicator='0'
-        m_device->Scan()->PsipMGT()->AddPid(tablePid);
+        //m_device->Scan()->PsipVCT()->AddPid(tablePid); // VCT already opens tablePid (0x1FFB)
         ++mgtPids;
         break;
       case 0x0004: // Channel ETT
