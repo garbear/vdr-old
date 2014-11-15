@@ -26,8 +26,9 @@
 #include "channels/Channel.h"
 #include "channels/ChannelManager.h"
 #include "devices/Device.h"
-#include "devices/subsystems/DeviceChannelSubsystem.h"
 #include "devices/subsystems/DeviceScanSubsystem.h"
+#include "transponders/Transponder.h"
+#include "utils/CommonMacros.h"
 #include "utils/log/Log.h"
 #include "utils/UTF8Utils.h"
 
@@ -42,8 +43,14 @@ using namespace std;
 namespace VDR
 {
 
+static const cScanReceiver::filter_properties stt_pids[] =
+{
+  { PID_VCT, TableIdTVCT, 0xFF },
+  { PID_VCT, TableIdCVCT, 0xFF },
+};
+
 cPsipVct::cPsipVct(cDevice* device) :
-    cScanReceiver(device, "VCT", PID_VCT)
+    cScanReceiver(device, "VCT", ARRAY_SIZE(stt_pids), stt_pids)
 {
 }
 

@@ -91,8 +91,18 @@ ChannelPtr SdtFoundService(ChannelPtr channel, int nid, int tid, int sid)
 }
 */
 
+static const cScanReceiver::filter_properties sdt_pids[] =
+{
+  { PID_SDT, TableIdSDT, 0xFF },
+};
+
+static const cScanReceiver::filter_properties sdt_other_pids[] =
+{
+  { PID_SDT, TableIdSDT_other, 0xFF },
+};
+
 cSdt::cSdt(cDevice* device, SI::TableId tableId /* = SI::TableIdSDT */)
- : cScanReceiver(device, "SDT", PID_SDT),
+ : cScanReceiver(device, "SDT", tableId == SI::TableIdSDT ? *sdt_pids : *sdt_other_pids),
    m_tableId(tableId)
 {
 }

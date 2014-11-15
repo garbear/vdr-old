@@ -51,17 +51,21 @@ using namespace std;
 
 namespace VDR
 {
-static uint16_t eit_pids[3] = {PID_EIT, 0x0300, 0x441};
+
+// TODO: Verify that all drivers accept mask < 0xFF
+static const cScanReceiver::filter_properties eit_pids[] =
+{
+  { PID_EIT, TableIdEIT_presentFollowing,     0xFE }, // actual(0x4E) / other(0x4F) TS, present / following
+  { PID_EIT, TableIdEIT_schedule_first,       0xF0 }, // actual TS, schedule(0x50) / schedule for future days (0x5X)
+  { PID_EIT, TableIdEIT_schedule_Other_first, 0xF0 }, // other  TS, schedule(0x60) / schedule for future days (0x6X)
+  { 0x0300,  TableIdPAT,                      0x00 }, // Dish Network EEPG
+  { 0x0441,  TableIdPAT,                      0x00 }, // Bell ExpressVU EEPG
+};
 
 cEit::cEit(cDevice* device)
- : cScanReceiver(device, "EIT", 3, eit_pids),
+ : cScanReceiver(device, "EIT", ARRAY_SIZE(eit_pids), eit_pids),
    m_extendedEventDescriptors(NULL)
 {
-//  OpenResource(PID_EIT, TableIdEIT_presentFollowing,     0xFE); // actual(0x4E) / other(0x4F) TS, present / following
-//  OpenResource(PID_EIT, TableIdEIT_schedule_first,       0xF0); // actual TS, schedule(0x50) / schedule for future days (0x5X)
-//  OpenResource(PID_EIT, TableIdEIT_schedule_Other_first, 0xF0); // other  TS, schedule(0x60) / schedule for future days (0x6X)
-//  OpenResource(0x0300,  TableIdPAT,                      0x00); // Dish Network EEPG
-//  OpenResource(0x0441,  TableIdPAT,                      0x00); // Bell ExpressVU EEPG
 }
 
 void cEit::ReceivePacket(uint16_t pid, const uint8_t* data)

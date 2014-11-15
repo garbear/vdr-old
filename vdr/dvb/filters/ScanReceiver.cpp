@@ -38,6 +38,15 @@ using namespace std;
 namespace VDR
 {
 
+bool operator==(const cScanReceiver::filter_properties& lhs, const cScanReceiver::filter_properties& rhs)
+{
+  return rhs.pid  == lhs.pid &&
+         rhs.tid  == lhs.tid &&
+         rhs.mask == lhs.mask;
+}
+
+// --- cScanReceiver -----------------------------------------------------------
+
 cScanReceiver::cScanReceiver(cDevice* device, const std::string& name) :
     m_device(device),
     m_locked(false),
@@ -47,42 +56,42 @@ cScanReceiver::cScanReceiver(cDevice* device, const std::string& name) :
 {
 }
 
-cScanReceiver::cScanReceiver(cDevice* device, const std::string& name, uint16_t pid) :
+cScanReceiver::cScanReceiver(cDevice* device, const std::string& name, const filter_properties& filter) :
     m_device(device),
     m_locked(false),
     m_scanned(false),
     m_attached(false),
     m_name(name)
 {
-  m_pids.insert(pid);
-  m_sectionSyncers.insert(make_pair(pid, new cSectionSyncer));
+  m_filters.push_back(filter);
+  m_sectionSyncers.insert(make_pair(filter.pid, new cSectionSyncer));
 }
 
-cScanReceiver::cScanReceiver(cDevice* device, const std::string& name, const std::vector<uint16_t>& pids) :
+cScanReceiver::cScanReceiver(cDevice* device, const std::string& name, const std::vector<filter_properties>& filters) :
     m_device(device),
     m_locked(false),
     m_scanned(false),
     m_attached(false),
     m_name(name)
 {
-  for (std::vector<uint16_t>::const_iterator it = pids.begin(); it != pids.end(); ++it)
+  for (std::vector<filter_properties>::const_iterator it = filters.begin(); it != filters.end(); ++it)
   {
-    m_sectionSyncers.insert(make_pair(*it, new cSectionSyncer));
-    m_pids.insert(*it);
+    m_sectionSyncers.insert(make_pair(it->pid, new cSectionSyncer));
+    m_filters.push_back(*it);
   }
 }
 
-cScanReceiver::cScanReceiver(cDevice* device, const std::string& name, size_t nbPids, const uint16_t* pids) :
+cScanReceiver::cScanReceiver(cDevice* device, const std::string& name, size_t nbFilters, const filter_properties* filters) :
     m_device(device),
     m_locked(false),
     m_scanned(false),
     m_attached(false),
     m_name(name)
 {
-  for (size_t ptr = 0; ptr < nbPids; ++ptr)
+  for (size_t ptr = 0; ptr < nbFilters; ++ptr)
   {
-    m_sectionSyncers.insert(make_pair(pids[ptr], new cSectionSyncer));
-    m_pids.insert(pids[ptr]);
+    m_sectionSyncers.insert(make_pair(filters[ptr].pid, new cSectionSyncer));
+    m_filters.push_back(filters[ptr]);
   }
 }
 
@@ -95,8 +104,8 @@ bool cScanReceiver::Attach(void)
     return true;
 
   m_attached = true;
-  for (std::set<uint16_t>::const_iterator it = m_pids.begin(); it != m_pids.end(); ++it)
-    m_attached &= m_device->Receiver()->AttachMultiplexedReceiver(this, *it);
+  for (std::vector<filter_properties>::const_iterator it = m_filters.begin(); it != m_filters.end(); ++it)
+    m_attached &= m_device->Receiver()->AttachStreamingReceiver(this, it->pid, it->tid, it->mask);
 
   if (!m_attached)
     esyslog("failed to attach %s filter", m_name.c_str());
@@ -109,15 +118,15 @@ bool cScanReceiver::Attach(void)
 void cScanReceiver::Detach(void)
 {
   PLATFORM::CLockObject lock(m_mutex);
-  RemovePids();
+  RemoveFilters();
   for (std::map<uint16_t, cSectionSyncer*>::iterator it = m_sectionSyncers.begin(); it != m_sectionSyncers.end(); ++it)
     it->second->Reset();
   if (m_attached)
   {
     m_attached = false;
 
-    for (std::set<uint16_t>::const_iterator it = m_pids.begin(); it != m_pids.end(); ++it)
-      m_device->Receiver()->DetachReceiverPid(this, *it);
+    for (std::vector<filter_properties>::const_iterator it = m_filters.begin(); it != m_filters.end(); ++it)
+      m_device->Receiver()->DetachReceiverPid(this, it->pid);
 
     FILTER_DEBUGGING("%s filter detached", m_name.c_str());
   }
@@ -126,7 +135,7 @@ void cScanReceiver::Detach(void)
 bool cScanReceiver::WaitForScan(uint32_t iTimeout /* = TRANSPONDER_TIMEOUT */)
 {
   PLATFORM::CLockObject lock(m_scannedmutex);
-  if (m_pids.empty())
+  if (m_filters.empty())
     return true;
   return m_scannedEvent.Wait(m_scannedmutex, m_scanned, iTimeout);
 }
@@ -150,29 +159,41 @@ void cScanReceiver::LockLost(void)
 
 void cScanReceiver::Receive(const uint16_t pid, const uint8_t* data, const size_t len)
 {
-  ReceivePacket(pid, data + 1);
+  ReceivePacket(pid, data);
 }
 
-void cScanReceiver::AddPid(uint16_t pid)
+void cScanReceiver::AddFilter(const filter_properties& filter)
 {
   PLATFORM::CLockObject lock(m_mutex);
-  if (m_pids.find(pid) != m_pids.end())
+  std::vector<filter_properties>::const_iterator it = std::find(m_filters.begin(), m_filters.end(), filter);
+  if (it != m_filters.end())
     return;
-  if (m_device->Receiver()->AttachMultiplexedReceiver(this, pid))
+  if (m_device->Receiver()->AttachStreamingReceiver(this, filter.pid, filter.tid, filter.mask))
   {
-    m_sectionSyncers.insert(make_pair(pid, new cSectionSyncer));
-    m_pidsAdded.insert(pid);
-    m_pids.insert(pid);
+    m_sectionSyncers.insert(make_pair(filter.pid, new cSectionSyncer));
+    m_filtersAdded.push_back(filter);
+    m_filters.push_back(filter);
   }
 }
 
-void cScanReceiver::RemovePid(uint16_t pid)
+void cScanReceiver::RemoveFilter(uint16_t pid)
 {
   PLATFORM::CLockObject lock(m_mutex);
-  std::set<uint16_t>::iterator it = m_pids.find(pid);
-  if (it != m_pids.end())
+
+  std::vector<filter_properties>::iterator it      = m_filters.begin();
+  std::vector<filter_properties>::iterator itAdded = m_filtersAdded.begin();
+
+  for ( ; it != m_filters.end(); ++it)
+    if (it->pid == pid)
+      break;
+
+  for ( ; itAdded != m_filtersAdded.end(); ++itAdded)
+    if (itAdded->pid == pid)
+      break;
+
+  if (it != m_filters.end())
   {
-    if (DynamicPid(pid))
+    if (DynamicFilter(pid))
     {
       std::map<uint16_t, cSectionSyncer*>::iterator cit = m_sectionSyncers.find(pid);
       if (cit != m_sectionSyncers.end())
@@ -180,8 +201,8 @@ void cScanReceiver::RemovePid(uint16_t pid)
         delete cit->second;
         m_sectionSyncers.erase(cit);
       }
-      m_pidsAdded.erase(pid);
-      m_pids.erase(it);
+      m_filtersAdded.erase(itAdded);
+      m_filters.erase(it);
     }
 
     if (m_attached)
@@ -189,30 +210,34 @@ void cScanReceiver::RemovePid(uint16_t pid)
   }
 }
 
-void cScanReceiver::RemovePids(void)
+void cScanReceiver::RemoveFilters(void)
 {
   PLATFORM::CLockObject lock(m_mutex);
-  std::vector<uint16_t> pidsRemoved;
+  std::vector<filter_properties> filtersRemoved;
 
-  for (std::set<uint16_t>::iterator it = m_pids.begin(); it != m_pids.end(); ++it)
+  for (std::vector<filter_properties>::iterator it = m_filters.begin(); it != m_filters.end(); ++it)
   {
-    m_device->Receiver()->DetachReceiverPid(this, *it);
+    m_device->Receiver()->DetachReceiverPid(this, it->pid);
 
-    if (DynamicPid(*it))
+    if (DynamicFilter(it->pid))
     {
-      std::map<uint16_t, cSectionSyncer*>::iterator cit = m_sectionSyncers.find(*it);
+      std::map<uint16_t, cSectionSyncer*>::iterator cit = m_sectionSyncers.find(it->pid);
       if (cit != m_sectionSyncers.end())
       {
         delete cit->second;
         m_sectionSyncers.erase(cit);
       }
 
-      pidsRemoved.push_back(*it);
+      filtersRemoved.push_back(*it);
     }
   }
 
-  for (std::vector<uint16_t>::const_iterator it = pidsRemoved.begin(); it != pidsRemoved.end(); ++it)
-    m_pids.erase(*it);
+  for (std::vector<filter_properties>::const_iterator it = filtersRemoved.begin(); it != filtersRemoved.end(); ++it)
+  {
+    std::vector<filter_properties>::iterator it2 = std::find(m_filters.begin(), m_filters.end(), *it);
+    assert(it2 != m_filters.end());
+    m_filters.erase(it2);
+  }
 }
 
 void cScanReceiver::SetScanned(void)
@@ -241,9 +266,12 @@ bool cScanReceiver::Scanned(void) const
   return m_scanned;
 }
 
-bool cScanReceiver::DynamicPid(uint16_t pid) const
+bool cScanReceiver::DynamicFilter(uint16_t pid) const
 {
-  return m_pidsAdded.find(pid) != m_pidsAdded.end();
+  for (std::vector<filter_properties>::const_iterator it = m_filtersAdded.begin(); it != m_filtersAdded.end(); ++it)
+    if (it->pid == pid)
+      return true;
+  return false;
 }
 
 bool cScanReceiver::Sync(uint16_t pid, uint8_t version, int sectionNumber, int endSectionNumber)

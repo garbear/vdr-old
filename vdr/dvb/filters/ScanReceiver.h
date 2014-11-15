@@ -27,6 +27,7 @@
 #include "dvb/PsiBuffer.h"
 
 #include <map>
+#include <vector>
 
 namespace VDR
 {
@@ -36,10 +37,20 @@ class cSectionSyncer;
 class cScanReceiver : public iReceiver
 {
 public:
+  struct filter_properties
+  {
+    uint16_t pid;
+    uint8_t  tid;
+    uint8_t  mask;
+  };
+
+protected:
   cScanReceiver(cDevice* device, const std::string& name);
-  cScanReceiver(cDevice* device, const std::string& name, uint16_t pid);
-  cScanReceiver(cDevice* device, const std::string& name, const std::vector<uint16_t>& pids);
-  cScanReceiver(cDevice* device, const std::string& name, size_t nbPids, const uint16_t* pids);
+  cScanReceiver(cDevice* device, const std::string& name, const filter_properties& filter);
+  cScanReceiver(cDevice* device, const std::string& name, const std::vector<filter_properties>& filters);
+  cScanReceiver(cDevice* device, const std::string& name, size_t nbFilters, const filter_properties* filters);
+
+public:
   virtual ~cScanReceiver(void) { Detach(); }
 
   void Receive(const uint16_t pid, const uint8_t* data, const size_t len);
@@ -58,9 +69,6 @@ public:
   virtual bool InDVB(void) const = 0;
   virtual bool InChannelScan(void) const { return false; }
 
-
-  virtual void AddPid(uint16_t pid);
-  virtual bool HasPids(void) const { return !m_pidsAdded.empty(); }
   virtual bool IsPsiReceiver(void) const { return true; }
   const std::string& Name(void) const { return m_name; }
 
@@ -69,11 +77,13 @@ public:
 
 protected:
   bool Sync(uint16_t pid, uint8_t version, int sectionNumber, int endSectionNumber);
-  void RemovePid(uint16_t pid);
-  void RemovePids(void);
+  virtual void AddFilter(const filter_properties& filter);
+  virtual bool HasFilters(void) {  return !m_filtersAdded.empty(); }
+  void RemoveFilter(uint16_t pid);
+  void RemoveFilters(void);
   void SetScanned(void);
   void ResetScanned(void);
-  bool DynamicPid(uint16_t pid) const;
+  bool DynamicFilter(uint16_t pid) const;
 
   cDevice*         m_device;
   bool             m_locked;
@@ -83,8 +93,8 @@ protected:
 private:
   bool                       m_scanned;
   PLATFORM::CCondition<bool> m_scannedEvent;
-  std::set<uint16_t>         m_pids;
-  std::set<uint16_t>         m_pidsAdded;
+  std::vector<filter_properties> m_filters;
+  std::vector<filter_properties> m_filtersAdded;
   bool                       m_attached;
   std::string                m_name;
   std::map<uint16_t, cSectionSyncer*> m_sectionSyncers;

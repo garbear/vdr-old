@@ -96,7 +96,8 @@ bool cPmt::AddTransport(uint16_t tsid, uint16_t sid, uint16_t pid)
   bool retval = true;
   ResetScanned();
   m_filters.push_back(newfilter);
-  AddPid(pid);
+  filter_properties pmtFilter = { pid, TableIdPMT, 0xFF };
+  AddFilter(pmtFilter);
   return retval;
 }
 
@@ -461,7 +462,7 @@ void cPmt::Detach(void)
 {
   cScanReceiver::Detach();
   m_filters.clear();
-  RemovePids();
+  RemoveFilters();
 }
 
 }

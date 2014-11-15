@@ -61,8 +61,14 @@ enum eSystemType
   DVB_SYSTEM_2 = 1  // SYS_DVBS2 or SYS_DVBT2
 };
 
+static const cScanReceiver::filter_properties nit_pids[] =
+{
+  { PID_NIT, TableIdNIT,       0xFF },
+  { PID_NIT, TableIdNIT_other, 0xFF },
+};
+
 cNit::cNit(cDevice* device)
- : cScanReceiver(device, "NIT", PID_NIT),
+ : cScanReceiver(device, "NIT", ARRAY_SIZE(nit_pids), nit_pids),
    m_networkId(NETWORK_ID_UNKNOWN)
  {
 //  OpenResource(PID_NIT, TableIdNIT);
