@@ -33,7 +33,7 @@ cPsiBuffer::cPsiBuffer(unsigned int position) :
     m_start(false),
     m_copy(true),
     m_position(position),
-    m_pid(~0)
+    m_resource(NULL)
 {
   Reset();
 }
@@ -125,11 +125,11 @@ cPsiBuffers& cPsiBuffers::Get(void)
   return _instance;
 }
 
-cPsiBuffer* cPsiBuffers::Allocate(uint16_t pid)
+cPsiBuffer* cPsiBuffers::Allocate(cPidResource* resource)
 {
   PLATFORM::CLockObject lock(m_mutex);
-  std::map<uint16_t, size_t>::iterator it = m_pidMap.find(pid);
-  if (it != m_pidMap.end())
+  std::map<cPidResource*, size_t>::iterator it = m_resourceMap.find(resource);
+  if (it != m_resourceMap.end())
   {
     m_buffers[it->second]->IncUsed();
     return m_buffers[it->second];
@@ -141,8 +141,8 @@ cPsiBuffer* cPsiBuffers::Allocate(uint16_t pid)
 
   EnsureSize(ptr + 1);
   m_buffers[ptr]->IncUsed();
-  m_buffers[ptr]->SetPid(pid);
-  m_pidMap[pid] = ptr;
+  m_buffers[ptr]->SetResource(resource);
+  m_resourceMap[resource] = ptr;
   return m_buffers[ptr];
 }
 
@@ -156,7 +156,7 @@ void cPsiBuffers::Release(cPsiBuffer* buffer)
 
     if (!m_buffers[buffer->Position()]->Used())
     {
-      m_pidMap.erase(buffer->Pid());
+      m_resourceMap.erase(buffer->Resource());
       buffer->Reset();
     }
   }

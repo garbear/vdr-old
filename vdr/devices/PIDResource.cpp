@@ -27,13 +27,13 @@ namespace VDR
 
 cPidResource::cPidResource(uint16_t pid)
  : m_pid(pid),
-   m_buffer(cPsiBuffers::Get().Allocate(pid))
+   m_buffer(cPsiBuffers::Get().Allocate(this))
 {
 }
 
 cPidResource::cPidResource(uint16_t pid, uint8_t tid)
  : m_pid(pid),
-   m_buffer(cPsiBuffers::Get().Allocate(pid))
+   m_buffer(cPsiBuffers::Get().Allocate(this))
 {
 }
 
