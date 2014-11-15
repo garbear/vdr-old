@@ -37,6 +37,7 @@ public:
 
   virtual bool ProvidesSource(TRANSPONDER_TYPE source) const;
   virtual bool ProvidesTransponder(const cChannel &channel) const;
+  virtual bool ProvidesChannel(const cChannel &channel) const { return false; } // Not implemented
   virtual bool ProvidesEIT() const;
   virtual unsigned int NumProvidedSystems() const;
   virtual int SignalStrength() const;

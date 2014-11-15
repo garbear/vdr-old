@@ -41,13 +41,13 @@ public:
   /*!
    * \brief Returns true if this device can provide the given source
    */
-  virtual bool ProvidesSource(TRANSPONDER_TYPE source) const { return false; }
+  virtual bool ProvidesSource(TRANSPONDER_TYPE source) const = 0;
 
   /*!
    * \brief Returns true if this device can provide the transponder of the given
    *        Channel (which implies that it can provide the Channel's source)
    */
-  virtual bool ProvidesTransponder(const cChannel &channel) const { return false; }
+  virtual bool ProvidesTransponder(const cChannel &channel) const = 0;
 
   /*!
    * \brief Returns true if this device can provide the given channel
@@ -60,7 +60,7 @@ public:
    * \return The default implementation always returns false, so a derived
    *         cDevice class able to provide channels must implement this function
    */
-  virtual bool ProvidesChannel(const cChannel &channel, bool *needsDetachReceivers = NULL) const { return false; }
+  virtual bool ProvidesChannel(const cChannel &channel) const = 0;
 
   /*!
    * \brief Returns true if this device provides EIT data and thus wants to be
@@ -99,12 +99,12 @@ public:
    * \return A local copy of one of the channels in the global cChannels list.
    *         May be NULL if the device is not tuned to any transponder.
    */
-  virtual cTransponder GetCurrentlyTunedTransponder() const { return cTransponder::EmptyTransponder; }
+  virtual cTransponder GetCurrentlyTunedTransponder() const = 0;
 
   /*!
    * \brief Returns true if this device is currently tuned to the given Channel's transponder
    */
-  virtual bool IsTunedToTransponder(const cChannel &channel) const { return false; }
+  virtual bool IsTunedToTransponder(const cTransponder& transponder) const = 0;
 
   /*!
    * \brief Returns the number of seconds this device is still occupied for
