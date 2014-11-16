@@ -32,6 +32,9 @@
 #include <string>
 #include <vector>
 
+#define MAXLANGCODE1 4 // a 3 letter language code, zero terminated
+#define MAXLANGCODE2 8 // up to two 3 letter language codes, separated by '+' and zero terminated
+
 class TiXmlNode;
 
 namespace VDR
@@ -51,7 +54,7 @@ struct AudioStream
   std::string alang; // Audio stream language
 };
 
-struct DataStream // dolby (AC3 + DTS)
+struct DataStream // Alternatively, DolbyStream; stream types (AC3, DTS) are dolby
 {
   uint16_t    dpid;  // Data stream packet ID
   STREAM_TYPE dtype; // Data stream type (see enum _stream_type in si_ext.h)
@@ -72,140 +75,102 @@ struct TeletextStream
   uint16_t    tpid; // Teletext stream packet ID
 };
 
-
-#define CHANNEL_NAME_UNKNOWN  "???"
-
-// TODO
-class cTimer2
-{
-public:
-  const cChannel *Channel(void) const { return NULL; }
-};
-
-//#include "config.h"
-//#include "thread.h"
-//#include "tools.h"
-
 // TODO: Move to cTransponder and figure out wtf this does
 // I suspect that the polarization masking is involved somehow
 bool ISTRANSPONDER(int frequencyMHz1, int frequencyMHz2);
 
-#define MAXLANGCODE1 4 // a 3 letter language code, zero terminated
-#define MAXLANGCODE2 8 // up to two 3 letter language codes, separated by '+' and zero terminated
-
-#define CA_FTA           0x0000
-#define CA_DVB_MIN       0x0001
-#define CA_DVB_MAX       0x000F
-#define CA_USER_MIN      0x0010
-#define CA_USER_MAX      0x00FF
-#define CA_ENCRYPTED_MIN 0x0100
-#define CA_ENCRYPTED_MAX 0xFFFF
-
-class cLinkChannel : public cListObject
+/*!
+ * Channel Abstraction
+ *
+ * Channels have the following properties:
+ *    - ID:            Identifier object
+ *    - UID:           Unique identifier derived from identifier object
+ *    - Name:          Description of the service
+ *    - Short name:    Brief description of the service
+ *    - Provider name: Provider name
+ *    - Portal name:   Portal name, not used in ATSC
+ *    - Number:        The channel number, or major channel number in ATSC
+ *    - Sub number:    The minor channel number in ATSC
+ *    - Streams:       Properties describing the TS streams associated with this channel
+ *    - Transponder:   The properties required to tune to this channel
+ */
+class cChannel : public Observable
 {
 public:
-  cLinkChannel(ChannelPtr channel) : m_channel(channel) { }
-  ChannelPtr Channel(void) { return m_channel; }
-
-private:
-  ChannelPtr m_channel;
-};
-
-class cLinkChannels : public cList<cLinkChannel>
-{
-};
-
-//typedef std::vector<cLinkChannel*> cLinkChannels;
-
-class cSchedule;
-
-class cChannel : public cListObject, public Observable
-{
-public:
-  cChannel(void);
-  cChannel(const cChannel& channel);
-  ~cChannel(void);
-
-  void Reset(void);
-
-  cChannel& operator=(const cChannel& rhs);
-
-  ChannelPtr Clone(void) const;
-
   static const ChannelPtr EmptyChannel;
 
-  const cChannelID& ID(void) const { return m_channelId; }
-  void SetId(uint16_t nid, uint16_t tsid, uint16_t sid);
-  const int32_t ATSCSourceID(void) const { return m_channelId.ATSCSourceId(); }
-  void SetATSCSourceId(int32_t id) { m_channelId.SetATSCSourceID(id); }
-  uint32_t UID(void) const { return m_channelId.Hash(); }
+  // Construct/deconstruct channel object
+  cChannel(void);
+  virtual ~cChannel(void) { }
+  ChannelPtr Clone(void) const;
+  cChannel& operator=(const cChannel& rhs);
 
-  const std::string& Name(void)       const { return m_name; }
-  const std::string& ShortName(void)  const { return m_shortName; }
-  const std::string& Provider(void)   const { return m_provider; }
+  // Get channel identifiers
+  const cChannelID& ID(void) const           { return m_channelId; }
+  uint16_t          Nid()  const             { return m_channelId.Nid(); }
+  uint16_t          Tsid() const             { return m_channelId.Tsid();; }
+  uint16_t          Sid()  const             { return m_channelId.Sid();; }
+  int32_t           ATSCSourceID(void) const { return m_channelId.ATSCSourceId(); }
+  uint32_t          UID(void) const          { return m_channelId.Hash(); }
+
+  // Set channel identifiers
+  void SetId(const cChannelID& newId);
+  void SetId(uint16_t nid          = 0,
+             uint16_t tsid         = 0,
+             uint16_t sid          = 0,
+             int32_t  atscSourceId = ATSC_SOURCE_ID_NONE);
+  void SetATSCSourceId(int32_t atscSourceId);
+
+  // Get channel properties
+  const std::string& Name(void) const       { return m_name; }
+  const std::string& ShortName(void) const  { return m_shortName; }
+  const std::string& Provider(void) const   { return m_provider; }
   const std::string& PortalName(void) const { return m_portalName; }
+  unsigned int       Number(void) const     { return m_number; }
+  unsigned int       SubNumber(void) const  { return m_subNumber; }
 
+  // Set channel properties
   void SetName(const std::string& strName,
                const std::string& strShortName,
                const std::string& strProvider);
-
   void SetPortalName(const std::string& strPortalName);
+  void SetNumber(unsigned int number, unsigned int subNumber = 0);
 
-  bool IsValid(void) const { return m_channelId.IsValid(); }
-
-  /*!
-   *
-   */
-  const VideoStream&                 GetVideoStream(void)                  const { return m_videoStream; }
-  const AudioStream&                 GetAudioStream(unsigned int index)    const;
-  const DataStream&                  GetDataStream(unsigned int index)     const;
+  // Get streams
+  const VideoStream&                 GetVideoStream(void) const      { return m_videoStream; }
+  const AudioStream&                 GetAudioStream(unsigned int index) const;
+  const std::vector<AudioStream>&    GetAudioStreams(void) const     { return m_audioStreams; }
+  const DataStream&                  GetDataStream(unsigned int index) const;
+  const std::vector<DataStream>&     GetDataStreams(void) const      { return m_dataStreams; }
   const SubtitleStream&              GetSubtitleStream(unsigned int index) const;
-  const TeletextStream&              GetTeletextStream(void)               const { return m_teletextStream; }
-  uint16_t                           GetCaId(unsigned int index)           const;
+  const std::vector<SubtitleStream>& GetSubtitleStreams(void) const  { return m_subtitleStreams; }
+  const TeletextStream&              GetTeletextStream(void) const   { return m_teletextStream; }
+  const CaDescriptorVector&          GetCaDescriptors(void) const    { return m_caDescriptors; }
+  uint16_t                           GetCaId(unsigned int index) const;
+  std::vector<uint16_t>              GetCaIds(void) const;
+  std::set<uint16_t>                 GetPids(void) const; // Get the PIDs associated with all streams
 
-  const std::vector<AudioStream>&    GetAudioStreams(void)    const { return m_audioStreams; }
-  const std::vector<DataStream>&     GetDataStreams(void)     const { return m_dataStreams; }
-  const std::vector<SubtitleStream>& GetSubtitleStreams(void) const { return m_subtitleStreams; }
-  const CaDescriptorVector&          GetCaDescriptors(void)   const { return m_caDescriptors; }
-  std::vector<uint16_t>              GetCaIds(void)           const;
-
-  /*!
-   * Get the PIDs associated with all streams
-   */
-  std::set<uint16_t> GetPids(void) const;
-
+  // Set streams
   void SetStreams(const VideoStream& videoStream,
                   const std::vector<AudioStream>& audioStreams,
                   const std::vector<DataStream>& dataStreams,
                   const std::vector<SubtitleStream>& subtitleStreams,
                   const TeletextStream& teletextStream);
-
   void SetSubtitlingDescriptors(const std::vector<SubtitleStream>& subtitleStreams);
-
   void SetCaDescriptors(const CaDescriptorVector& caDescriptors);
 
-  const cTransponder& GetTransponder(void) const       { return m_transponder; }
-        cTransponder& GetTransponder(void)             { return m_transponder; }
-  void SetTransponder(const cTransponder& transponder) { m_transponder = transponder; }
+  // Get transponder
+  const cTransponder& GetTransponder(void) const { return m_transponder; }
+        cTransponder& GetTransponder(void)       { return m_transponder; }
+  unsigned int        FrequencyHz(void) const    { return m_transponder.FrequencyHz(); }
+  unsigned int        FrequencyKHz(void) const   { return m_transponder.FrequencyKHz(); }
+  unsigned int        FrequencyMHz(void) const   { return m_transponder.FrequencyMHz(); }
 
-  unsigned int Number(void) const { return m_number; }
-  unsigned int SubNumber(void) const { return m_subNumber; }
+  // Set transponder
+  void SetTransponder(const cTransponder& transponder);
 
-  void SetNumber(unsigned int number, unsigned int subNumber = 0);
-
-  /*!
-   * \brief Returns the transponder frequency in MHz, plus the polarization in
-   * the case of a satellite. The polarization takes the form of a mask in the
-   * 100 GHz range (see cTransponder::WTF()).
-   */
-  unsigned int FrequencyMHzWithPolarization() const;
-
-  //const cLinkChannels& LinkChannels(void)       const { return m_linkChannels; }
-  //void SetLinkChannels(cLinkChannels& channels) { m_linkChannels = channels; }
-  void SetLinkChannels(cLinkChannels *linkChannels);
-
-  bool HasTimer(void) const { return false; } //TODO
-  bool HasTimer(const std::vector<cTimer2> &timers) const; // TODO: cTimer2
+  // A channel is valid if its ID is valid
+  bool IsValid(void) const { return m_channelId.IsValid(); }
 
   bool Serialise(TiXmlNode* node) const;
   bool Deserialise(const TiXmlNode* node);
@@ -216,21 +181,15 @@ private:
   std::string                 m_shortName;
   std::string                 m_provider;
   std::string                 m_portalName;
-
   unsigned int                m_number;
   unsigned int                m_subNumber;
-
   VideoStream                 m_videoStream;     // Max 1
   std::vector<AudioStream>    m_audioStreams;    // Max 32
   std::vector<DataStream>     m_dataStreams;     // Max 16
   std::vector<SubtitleStream> m_subtitleStreams; // Max 32
   TeletextStream              m_teletextStream;  // Max 1
   CaDescriptorVector          m_caDescriptors;   // Max 12
-
   cTransponder                m_transponder;
-
-  cLinkChannels*              m_linkChannels;
-  //cLinkChannels               m_linkChannels;
 };
 
 }

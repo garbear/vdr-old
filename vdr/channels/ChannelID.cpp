@@ -31,9 +31,10 @@ namespace VDR
 
 const cChannelID cChannelID::InvalidID;
 
-cChannelID::cChannelID(uint16_t nid  /* = 0 */,
-                       uint16_t tsid /* = 0 */,
-                       uint16_t sid  /* = 0 */)
+cChannelID::cChannelID(uint16_t nid          /* = 0 */,
+                       uint16_t tsid         /* = 0 */,
+                       uint16_t sid          /* = 0 */,
+                       int32_t  atscSourceId /* = ATSC_SOURCE_ID_NONE */)
  : m_nid(nid),
    m_tsid(tsid),
    m_sid(sid),
@@ -75,7 +76,7 @@ void cChannelID::SetID(uint16_t nid, uint16_t tsid, uint16_t sid)
   m_sid  = sid;
 }
 
-void cChannelID::SetATSCSourceID(uint16_t sourceId)
+void cChannelID::SetAtscSourceID(uint16_t sourceId)
 {
   m_atscSourceId = sourceId;
 }

@@ -33,9 +33,10 @@ namespace VDR
 class cChannelID
 {
 public:
-  cChannelID(uint16_t nid  = 0,
-             uint16_t tsid = 0,
-             uint16_t sid  = 0);
+  cChannelID(uint16_t nid          = 0,
+             uint16_t tsid         = 0,
+             uint16_t sid          = 0,
+             int32_t  atscSourceId = ATSC_SOURCE_ID_NONE);
 
   bool operator==(const cChannelID &rhs) const;
   bool operator!=(const cChannelID &rhs) const { return !(*this == rhs); }
@@ -53,7 +54,7 @@ public:
   int32_t  ATSCSourceId(void) const { return m_atscSourceId; }
 
   void SetID(uint16_t nid, uint16_t tsid, uint16_t sid);
-  void SetATSCSourceID(uint16_t sourceId);
+  void SetAtscSourceID(uint16_t sourceId);
 
   bool Serialise(TiXmlNode* node) const;
   bool Deserialise(const TiXmlNode* node);

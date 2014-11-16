@@ -171,7 +171,6 @@ void cEit::ReceivePacket(uint16_t pid, const uint8_t* data)
           string strDescription;
           vector<CEpgComponent> components;
           vector<uint8_t> contents;
-          cLinkChannels linkChannels;
 
           SI::Descriptor* d;
           for (SI::Loop::Iterator it2;

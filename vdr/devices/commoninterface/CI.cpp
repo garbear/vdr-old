@@ -46,6 +46,14 @@
 using namespace PLATFORM;
 using namespace std;
 
+#define CA_FTA           0x0000
+#define CA_DVB_MIN       0x0001
+#define CA_DVB_MAX       0x000F
+#define CA_USER_MIN      0x0010
+#define CA_USER_MAX      0x00FF
+#define CA_ENCRYPTED_MIN 0x0100
+#define CA_ENCRYPTED_MAX 0xFFFF
+
 namespace VDR
 {
 
@@ -1924,10 +1932,10 @@ void cCamSlot::SetPid(int Pid, bool Active)
 void cCamSlot::AddChannel(const cChannel& Channel)
 {
   CLockObject lock(mutex);
-  if (m_source != Channel.GetTransponder().Type() || transponder != Channel.FrequencyMHzWithPolarization())
+  if (m_source != Channel.GetTransponder().Type() || transponder != Channel.FrequencyMHz())
     StopDecrypting();
   m_source = Channel.GetTransponder().Type();
-  transponder = Channel.FrequencyMHzWithPolarization();
+  transponder = Channel.FrequencyMHz();
   if (Channel.GetCaId(0) >= CA_ENCRYPTED_MIN)
   {
     AddPid(Channel.ID().Sid(), Channel.GetVideoStream().vpid, STREAM_TYPE_VIDEO);
@@ -1951,7 +1959,7 @@ bool cCamSlot::CanDecrypt(const cChannel& channel)
   CLockObject lock(mutex);
   cCiConditionalAccessSupport *cas = (cCiConditionalAccessSupport *)GetSessionByResourceId(RI_CONDITIONAL_ACCESS_SUPPORT);
   if (cas && cas->RepliesToQuery()) {
-     cCiCaPmt CaPmt(CPCI_QUERY, channel.GetTransponder().Type(), channel.FrequencyMHzWithPolarization(), channel.ID().Sid(), GetCaSystemIds());
+     cCiCaPmt CaPmt(CPCI_QUERY, channel.GetTransponder().Type(), channel.FrequencyMHz(), channel.ID().Sid(), GetCaSystemIds());
      CaPmt.SetListManagement(CPLM_ADD); // WORKAROUND: CPLM_ONLY doesn't work with Alphacrypt 3.09 (deletes existing CA_PMTs)
 
      CaPmt.AddPid(channel.GetVideoStream().vpid, STREAM_TYPE_VIDEO);
