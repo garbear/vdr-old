@@ -150,6 +150,7 @@ private:
   std::set<iReceiver*> GetReceivers(const PidResourcePtr& resource) const;
   PidResourcePtr       GetResource(const PidResourcePtr& needle) const;
   PidResourcePtr       GetMultiplexedResource(uint16_t pid) const; // Streaming resources can't be identified by PID alone
+  bool                 AttachReceiver(iReceiver* receiver, const PidResourcePtr& resource);
 
   ReceiverPidTable m_receiverPidTable; // Receiver <-> PID associations
   PLATFORM::CMutex m_mutex;

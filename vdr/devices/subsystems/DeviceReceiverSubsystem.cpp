@@ -111,7 +111,7 @@ void *cDeviceReceiverSubsystem::Process()
       {
         CLockObject lock(m_mutex);
 
-        /** distribute the packet to all receivers */
+        /** distribute the packet to receivers holding this resource */
         std::set<iReceiver*> receivers = GetReceivers(resource);
         for (std::set<iReceiver*>::iterator receiverit = receivers.begin(); receiverit != receivers.end(); ++receiverit)
           (*receiverit)->Receive(resource->Pid(), psidata, psidatalen);
@@ -220,42 +220,14 @@ bool cDeviceReceiverSubsystem::AttachStreamingReceiver(iReceiver* receiver, uint
 {
   CLockObject lock(m_mutex);
 
-  ReceiverHandlePtr receiverHandle = GetReceiverHandle(receiver);
-  if (!receiverHandle)
-  {
-    receiverHandle = ReceiverHandlePtr(new cReceiverHandle(receiver));
-    if (!receiverHandle->Start())
-      return false;
-  }
-
-  PidResourcePtr resource = CreateStreamingResource(pid, tid, mask);
-  if (GetResource(resource) || !resource->Open())
-    return false;
-
-  m_receiverPidTable.insert(ReceiverPidEdge(receiverHandle, resource));
-
-  return true;
+  return AttachReceiver(receiver, CreateStreamingResource(pid, tid, mask));
 }
 
 bool cDeviceReceiverSubsystem::AttachMultiplexedReceiver(iReceiver* receiver, uint16_t pid, STREAM_TYPE type /* = STREAM_TYPE_UNDEFINED */)
 {
   CLockObject lock(m_mutex);
 
-  ReceiverHandlePtr receiverHandle = GetReceiverHandle(receiver);
-  if (!receiverHandle)
-  {
-    receiverHandle = ReceiverHandlePtr(new cReceiverHandle(receiver));
-    if (!receiverHandle->Start())
-      return false;
-  }
-
-  PidResourcePtr resource = CreateMultiplexedResource(pid, type);
-  if (GetResource(resource) || !resource->Open())
-    return false;
-
-  m_receiverPidTable.insert(ReceiverPidEdge(receiverHandle, resource));
-
-  return true;
+  return AttachReceiver(receiver, CreateMultiplexedResource(pid, type));
 }
 
 bool cDeviceReceiverSubsystem::AttachMultiplexedReceiver(iReceiver* receiver, const ChannelPtr& channel)
@@ -296,6 +268,30 @@ bool cDeviceReceiverSubsystem::AttachMultiplexedReceiver(iReceiver* receiver, co
   }
 
   return bAllOpened;
+}
+
+bool cDeviceReceiverSubsystem::AttachReceiver(iReceiver* receiver, const PidResourcePtr& resource)
+{
+  PidResourcePtr openResource = GetResource(resource);
+  if (!openResource)
+  {
+    // Resource hasn't been opened, try to open it now and bail on failure
+    if (!resource->Open())
+      return false;
+    openResource = resource;
+  }
+
+  ReceiverHandlePtr receiverHandle = GetReceiverHandle(receiver);
+  if (!receiverHandle)
+  {
+    if (!receiver->Start())
+      return false;
+    receiverHandle = ReceiverHandlePtr(new cReceiverHandle(receiver));
+  }
+
+  m_receiverPidTable.insert(ReceiverPidEdge(receiverHandle, openResource));
+
+  return true;
 }
 
 void cDeviceReceiverSubsystem::DetachStreamingReceiver(iReceiver* receiver, uint16_t pid, uint8_t tid, uint8_t mask)
