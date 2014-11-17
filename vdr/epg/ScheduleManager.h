@@ -34,6 +34,7 @@ namespace VDR
 {
 
 class CChannelFilter;
+class cTransponder;
 
 class cScheduleManager : protected Observer, public Observable
 {
@@ -47,7 +48,7 @@ public:
   void CleanTables(void);
   */
 
-  void AddEvent(const EventPtr& event);
+  void AddEvent(const EventPtr& event, const cTransponder& transponder);
   EventPtr GetEvent(const cChannelID& channelId, unsigned int eventId) const;
   EventVector GetEvents(const cChannelID& channelID) const;
   std::vector<cChannelID> GetUpdatedChannels(const std::map<int, CDateTime>& lastUpdated, CChannelFilter& filter) const;

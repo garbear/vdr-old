@@ -57,6 +57,13 @@ public:
   unsigned int ID(void) const { return m_eventID; }
 
   /*!
+   * ID used to matched events from the EIT table to channels in the VCT
+   * (ATSC only)
+   */
+  uint32_t AtscSourceID(void) const { return m_atscSourceId; }
+  void SetAtscSourceID(uint32_t atscSourceId);
+
+  /*!
    * Title of this event
    */
   const std::string& Title(void) const { return m_strTitle; }
@@ -176,6 +183,7 @@ public:
 private:
   // XBMC data
   const unsigned int   m_eventID;
+  uint32_t             m_atscSourceId;
   // TODO: ATSC Source ID
   std::string          m_strTitle;
   std::string          m_strPlotOutline; // sub title / short text (m_strShortText)

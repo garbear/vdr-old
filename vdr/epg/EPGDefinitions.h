@@ -32,6 +32,7 @@
 #define EPG_XML_ELM_CONTENT       "content"
 
 #define EPG_XML_ATTR_EVENT_ID     "id"
+#define EPG_XML_ATTR_ATSC_SOURCE_ID "atscsourceid"
 #define EPG_XML_ATTR_START_TIME   "start"
 #define EPG_XML_ATTR_END_TIME     "end"
 #define EPG_XML_ATTR_GENRE        "genre"

@@ -25,6 +25,7 @@
 #include "channels/ChannelFilter.h"
 #include "channels/ChannelManager.h"
 #include "settings/Settings.h"
+#include "transponders/Transponder.h"
 #include "utils/log/Log.h"
 #include "utils/StringUtils.h"
 #include "utils/XBMCTinyXML.h"
@@ -47,11 +48,21 @@ cScheduleManager::~cScheduleManager(void)
     itPair->second->UnregisterObserver(this);
 }
 
-void cScheduleManager::AddEvent(const EventPtr& event)
+void cScheduleManager::AddEvent(const EventPtr& event, const cTransponder& transponder)
 {
   cChannelID channelId = event->ChannelID();
-  if (!channelId.IsValid())
-    return;
+
+  if (!channelId.IsValid() && event->AtscSourceID() != 0)
+  {
+    ChannelPtr channel = cChannelManager::Get().GetByFrequencyAndATSCSourceId(transponder.FrequencyHz(),event->AtscSourceID());
+    if (channel)
+      channelId = channel->ID();
+    else
+    {
+      dsyslog("failed to find channel for event - freq=%u source=%u",transponder.FrequencyHz(), event->AtscSourceID());
+      return;
+    }
+  }
 
   CLockObject lock(m_mutex);
 

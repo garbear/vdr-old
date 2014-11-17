@@ -47,6 +47,7 @@ cEvent::cEvent(unsigned int eventID)
 
 void cEvent::Reset(void)
 {
+  m_atscSourceId = 0;
   m_strTitle.clear();
   m_strPlotOutline.clear();
   m_strPlot.clear();
@@ -69,6 +70,7 @@ cEvent& cEvent::operator=(const cEvent& rhs)
 {
   if (this != &rhs)
   {
+    SetAtscSourceID(rhs.AtscSourceID());
     SetTitle(rhs.Title());
     SetPlotOutline(rhs.PlotOutline());
     SetPlot(rhs.Plot());
@@ -85,6 +87,15 @@ cEvent& cEvent::operator=(const cEvent& rhs)
     SetContents(rhs.Contents());
   }
   return *this;
+}
+
+void cEvent::SetAtscSourceID(uint32_t atscSourceId)
+{
+  if (m_atscSourceId != atscSourceId)
+  {
+    m_atscSourceId = atscSourceId;
+    SetChanged();
+  }
 }
 
 void cEvent::SetTitle(const std::string& strTitle)
@@ -497,6 +508,9 @@ bool cEvent::Serialise(TiXmlNode* node) const
 
   elem->SetAttribute(EPG_XML_ATTR_EVENT_ID, m_eventID);
 
+  if (m_atscSourceId != 0)
+    elem->SetAttribute(EPG_XML_ATTR_ATSC_SOURCE_ID, m_atscSourceId);
+
   if (!m_strTitle.empty())
     AddEventElement(elem, EPG_XML_ELM_TITLE, m_strTitle);
   if (!m_strPlotOutline.empty())
@@ -612,6 +626,10 @@ bool cEvent::Deserialise(const TiXmlNode* node)
     return false;
 
   Reset();
+
+  const char* atscSourceId  = elem->Attribute(EPG_XML_ATTR_ATSC_SOURCE_ID);
+  if (atscSourceId)
+    m_atscSourceId = StringUtils::IntVal(atscSourceId);
 
   const TiXmlNode* titleNode = elem->FirstChild(EPG_XML_ELM_TITLE);
   if (titleNode != NULL)

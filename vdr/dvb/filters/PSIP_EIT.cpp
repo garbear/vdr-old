@@ -111,15 +111,11 @@ void cPsipEit::ReceivePacket(uint16_t pid, const uint8_t* data)
 
       thisEvent->SetTitle(StringUtils::Join(titleStrings, "/"));
 
-      ChannelPtr channel = cChannelManager::Get().GetByFrequencyAndATSCSourceId(m_device->Channel()->GetCurrentlyTunedTransponder().FrequencyHz(), psipEit.getSourceId());
-      if (channel)
-        thisEvent->SetChannelID(channel->ID());
-      else
-        dsyslog("failed to find channel for event - freq=%u source=%u", m_device->Channel()->GetCurrentlyTunedTransponder().FrequencyHz(), psipEit.getSourceId());
+      thisEvent->SetAtscSourceID(psipEit.getSourceId());
 
-        thisEvent->FixEpgBugs();
+      thisEvent->FixEpgBugs();
 
-        cScheduleManager::Get().AddEvent(thisEvent);
+      cScheduleManager::Get().AddEvent(thisEvent, m_device->Channel()->GetCurrentlyTunedTransponder());
       numEvents++;
     }
   }

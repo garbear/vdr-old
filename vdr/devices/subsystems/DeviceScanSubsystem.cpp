@@ -24,6 +24,7 @@
 #include "channels/ChannelManager.h"
 #include "devices/Device.h"
 #include "devices/linux/DVBDevice.h"
+#include "devices/subsystems/DeviceChannelSubsystem.h"
 #include "dvb/filters/EIT.h"
 #include "dvb/filters/PAT.h"
 #include "dvb/filters/PSIP_MGT.h"
@@ -225,7 +226,7 @@ void cDeviceScanSubsystem::OnChannelNamesScanned(const ChannelPtr& channel)
 
 void cDeviceScanSubsystem::OnEventScanned(const EventPtr& event)
 {
-  cScheduleManager::Get().AddEvent(event);
+  cScheduleManager::Get().AddEvent(event, m_device->Channel()->GetCurrentlyTunedTransponder());
 }
 
 unsigned int cDeviceScanSubsystem::GetGpsUtcOffset(void)
