@@ -155,7 +155,6 @@ set(VDR_SRCS
 	vdr/dvb/DiSEqC.cpp
 	vdr/dvb/PsiBuffer.cpp
 	vdr/dvb/filters/EIT.cpp
-	vdr/dvb/filters/Filter.cpp
 	vdr/dvb/filters/NIT.cpp
 	vdr/dvb/filters/PAT.cpp
 	vdr/dvb/filters/PMT.cpp
@@ -164,6 +163,7 @@ set(VDR_SRCS
 	vdr/dvb/filters/PSIP_STT.cpp
 	vdr/dvb/filters/PSIP_VCT.cpp
 	vdr/dvb/filters/ScanReceiver.cpp
+	vdr/dvb/filters/SectionSyncer.cpp
 	vdr/dvb/filters/SDT.cpp
 	vdr/dvb/filters/TDT.cpp
 	vdr/epg/Component.cpp

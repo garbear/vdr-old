@@ -22,7 +22,7 @@
  */
 
 #include "NIT.h"
-#include "Filter.h"
+#include "SectionSyncer.h"
 #include "channels/Channel.h"
 #include "devices/Device.h"
 #include "devices/subsystems/DeviceChannelSubsystem.h"

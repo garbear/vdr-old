@@ -25,7 +25,6 @@
 #include "channels/Channel.h"
 #include "channels/ChannelTypes.h"
 #include "ScanReceiver.h"
-#include "Filter.h"
 
 #include <libsi/section.h>
 #include <stdint.h>

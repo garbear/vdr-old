@@ -19,14 +19,7 @@
  *
  */
 
-#include "Filter.h"
-#include "devices/Device.h"
-#include "devices/subsystems/DeviceChannelSubsystem.h"
-
-#include <assert.h>
-#include <vector>
-
-using namespace std;
+#include "SectionSyncer.h"
 
 #define INVALID_VERSION  0xFF
 

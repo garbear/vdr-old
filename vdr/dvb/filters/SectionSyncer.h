@@ -20,27 +20,11 @@
  */
 #pragma once
 
-#include "channels/ChannelTypes.h"
-#include "devices/DeviceTypes.h"
-#include "epg/EPGTypes.h"
-#include "transponders/Transponder.h"
 
 #include <stdint.h>
-#include <vector>
 
 namespace VDR
 {
-class cChannelID;
-
-class iFilterCallback
-{
-public:
-  virtual void OnChannelPropsScanned(const ChannelPtr& channel) { }
-  virtual void OnChannelNamesScanned(const ChannelPtr& channel) { }
-  virtual void OnEventScanned(const EventPtr& event) { }
-
-  virtual ~iFilterCallback(void) { }
-};
 
 class cSectionSyncer
 {

@@ -24,7 +24,6 @@
 
 #include "channels/ChannelTypes.h"
 #include "ScanReceiver.h"
-#include "Filter.h"
 
 namespace VDR
 {

@@ -20,8 +20,9 @@
  */
 #pragma once
 
+#include "channels/ChannelTypes.h"
 #include "devices/DeviceSubsystem.h"
-#include "dvb/filters/Filter.h"
+#include "epg/EPGTypes.h"
 #include "lib/platform/threads/mutex.h"
 #include "lib/platform/threads/threads.h"
 #include "transponders/Transponder.h"
@@ -40,8 +41,7 @@ class cPsipEit;
 class cPsipStt;
 
 class cDeviceScanSubsystem : protected cDeviceSubsystem,
-                             public    Observer,
-                             public    iFilterCallback
+                             public    Observer
 {
 public:
   cDeviceScanSubsystem(cDevice* device);

@@ -25,12 +25,13 @@
 #include "channels/ChannelTypes.h"
 #include "devices/Receiver.h"
 #include "dvb/PsiBuffer.h"
-#include "dvb/filters/Filter.h"
+
 #include <map>
 
 namespace VDR
 {
 class cDevice;
+class cSectionSyncer;
 
 class cScanReceiver : public iReceiver
 {

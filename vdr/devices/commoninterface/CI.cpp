@@ -28,6 +28,7 @@
 #include "devices/subsystems/DeviceReceiverSubsystem.h"
 #include "dvb/CADescriptorHandler.h"
 #include "dvb/filters/PAT.h"
+#include "transponders/Transponder.h"
 #include "utils/CommonMacros.h"
 #include "utils/log/Log.h"
 #include "utils/Tools.h"

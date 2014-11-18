@@ -22,6 +22,7 @@
  */
 
 #include "ScanReceiver.h"
+#include "SectionSyncer.h"
 #include "devices/Device.h"
 #include "devices/Remux.h"
 #include "devices/subsystems/DeviceReceiverSubsystem.h"
