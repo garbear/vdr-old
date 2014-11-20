@@ -32,8 +32,8 @@
 
 using namespace std;
 
-//#define FILTER_DEBUGGING(x...) dsyslog(x)
-#define FILTER_DEBUGGING(x...) {}
+#define FILTER_DEBUGGING(x...) dsyslog(x)
+//#define FILTER_DEBUGGING(x...) {}
 
 namespace VDR
 {
