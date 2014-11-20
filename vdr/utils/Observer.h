@@ -113,8 +113,9 @@ public:
   /*!
    * @brief Send a message to all observers when m_bObservableChanged is true.
    * @param message The message to send.
+   * @return true If the message was sent
    */
-  virtual void NotifyObservers(const ObservableMessage message = ObservableMessageNone);
+  virtual bool NotifyObservers(const ObservableMessage message = ObservableMessageNone);
 
   /*!
    * @brief Mark an observable changed.

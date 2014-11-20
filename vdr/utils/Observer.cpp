@@ -118,7 +118,7 @@ void Observable::UnregisterObserver(Observer *obs)
   }
 }
 
-void Observable::NotifyObservers(const ObservableMessage message /* = ObservableMessageNone */)
+bool Observable::NotifyObservers(const ObservableMessage message /* = ObservableMessageNone */)
 {
   bool bNotify(false);
   {
@@ -128,7 +128,12 @@ void Observable::NotifyObservers(const ObservableMessage message /* = Observable
   }
 
   if (bNotify)
+  {
     SendMessage(*this, message);
+    return true;
+  }
+
+  return false;
 }
 
 void Observable::SetChanged(bool SetTo)
