@@ -25,6 +25,7 @@
 #include "epg/EPGTypes.h"
 #include "lib/platform/threads/mutex.h"
 #include "lib/platform/threads/threads.h"
+#include "lib/platform/util/timeutils.h"
 #include "transponders/Transponder.h"
 #include "utils/Observer.h"
 
@@ -94,6 +95,8 @@ private:
   bool                       m_scanFinished;
   PLATFORM::CMutex           m_waitingMutex;
   PLATFORM::CCondition<bool> m_waitingCondition;
+  PLATFORM::CTimeout         m_transponderScanTimeout;
+  PLATFORM::CTimeout         m_epgScanTimeout;
 };
 
 }

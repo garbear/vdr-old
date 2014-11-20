@@ -138,6 +138,8 @@ void cDeviceScanSubsystem::DetachReceivers(void)
 
 void cDeviceScanSubsystem::StartScan()
 {
+  m_transponderScanTimeout.Init(TRANSPONDER_TIMEOUT);
+  m_epgScanTimeout.Init(EPG_TIMEOUT);
   AttachReceivers();
 }
 
@@ -148,15 +150,52 @@ void cDeviceScanSubsystem::StopScan()
 
 bool cDeviceScanSubsystem::WaitForTransponderScan(void)
 {
+  uint32_t timeleft;
+
   CLockObject lock(m_waitingMutex);
-  return m_waitingCondition.Wait(m_waitingMutex, m_scanFinished, TRANSPONDER_TIMEOUT);
+
+  return // Wait for lock (blocks until all receivers are attached and resources
+         // are opened)
+         (timeleft = m_transponderScanTimeout.TimeLeft()) > 0     &&
+         m_lockCondition.Wait(m_waitingMutex, m_locked, timeleft) &&
+
+         // Wait for transponder scan
+         (timeleft = m_transponderScanTimeout.TimeLeft()) > 0     &&
+         m_waitingCondition.Wait(m_waitingMutex, m_scanFinished, timeleft);
 }
 
 bool cDeviceScanSubsystem::WaitForEPGScan(void)
 {
-  return Channel()->ProvidesSource(TRANSPONDER_ATSC) ?
-      m_mgt->WaitForScan() && m_psipeit->WaitForScan(EPG_TIMEOUT) :
-          m_eit->WaitForScan(EPG_TIMEOUT);
+  uint32_t timeleft;
+
+  // Wait for lock (blocks until all receivers are attached and resources
+  // are opened)
+  {
+    CLockObject lock(m_waitingMutex);
+
+    if ((timeleft = m_epgScanTimeout.TimeLeft()) == 0          ||
+        !m_lockCondition.Wait(m_waitingMutex, m_locked, timeleft))
+    {
+      return false;
+    }
+  }
+
+  if (Channel()->ProvidesSource(TRANSPONDER_ATSC))
+  {
+    return // Wait for MGT
+           (timeleft = m_epgScanTimeout.TimeLeft()) > 0 &&
+           m_mgt->WaitForScan(timeleft)                 &&
+
+           // Wait for EIT (PSIP)
+           (timeleft = m_epgScanTimeout.TimeLeft()) > 0 &&
+           m_psipeit->WaitForScan(timeleft);
+  }
+  else
+  {
+    return // Wait for EIT
+           (timeleft = m_epgScanTimeout.TimeLeft()) > 0 &&
+           m_eit->WaitForScan(timeleft);
+  }
 }
 
 void cDeviceScanSubsystem::LockAcquired(void)
