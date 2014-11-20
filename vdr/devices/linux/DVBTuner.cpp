@@ -688,7 +688,6 @@ void* cDvbTuner::Process(void)
     // another tune message
     struct dvb_frontend_event event;
     while (ioctl(m_fileDescriptor, FE_GET_EVENT, &event) == 0) { Sleep(TUNER_POLL_TIMEOUT_MS); } // empty
-
     {
       CLockObject lock(m_mutex);
       bSuccess = (ioctl(m_fileDescriptor, FE_READ_STATUS, &status) >= 0);
