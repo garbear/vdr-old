@@ -51,8 +51,13 @@ namespace VDR
 //CMutex    cTdt::m_mutex;
 //CDateTime cTdt::m_lastAdj;
 
+static const cScanReceiver::filter_properties tdt_pids[] =
+{
+  { PID_TDT, TableIdTDT, 0xFF },
+};
+
 cTdt::cTdt(cDevice* device)
- : cScanReceiver(device, "TDT", PID_TDT)
+ : cScanReceiver(device, "TDT", *tdt_pids)
 {
 }
 

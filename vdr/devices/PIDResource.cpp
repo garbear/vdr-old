@@ -27,31 +27,19 @@ namespace VDR
 
 cPidResource::cPidResource(uint16_t pid)
  : m_pid(pid),
-   m_tid(0),
-   m_buffer(cPsiBuffers::Get().Allocate(pid))
+   m_buffer(cPsiBuffers::Get().Allocate(this))
 {
 }
 
 cPidResource::cPidResource(uint16_t pid, uint8_t tid)
  : m_pid(pid),
-   m_tid(tid),
-   m_buffer(cPsiBuffers::Get().Allocate(pid))
+   m_buffer(cPsiBuffers::Get().Allocate(this))
 {
 }
 
 cPidResource::~cPidResource(void)
 {
   cPsiBuffers::Get().Release(m_buffer);
-}
-
-std::string cPidResource::ToString(void) const
-{
-  char buf[16];
-  if (m_tid > 0)
-    snprintf(buf, 16, "[%u:%u]", m_pid, m_tid);
-  else
-    snprintf(buf, 16, "[%u]", m_pid);
-  return buf;
 }
 
 }

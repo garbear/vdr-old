@@ -40,8 +40,13 @@ using namespace std;
 namespace VDR
 {
 
+static const cScanReceiver::filter_properties mgt_pids[] =
+{
+  { PID_MGT, TableIdMGT, 0xFF },
+};
+
 cPsipMgt::cPsipMgt(cDevice* device) :
-    cScanReceiver(device, "MGT", PID_MGT)
+    cScanReceiver(device, "MGT", *mgt_pids)
 {
 }
 

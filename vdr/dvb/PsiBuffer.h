@@ -27,6 +27,8 @@
 
 namespace VDR
 {
+  class cPidResource;
+
   class cPsiBuffer
   {
   public:
@@ -37,9 +39,11 @@ namespace VDR
     void Reset(void);
     size_t Size(void) const { return m_cursize; }
 
+    uint8_t* Data(void) { return m_data; }
+    const uint8_t* Data(void) const { return m_data; }
     size_t Position(void) const { return m_position; }
-    void SetPid(uint16_t pid) { m_pid = pid; }
-    uint16_t Pid(void) const { return m_pid; }
+    void SetResource(cPidResource* resource) { m_resource = resource; }
+    cPidResource* Resource(void) const { return m_resource; }
     void IncUsed(void) { ++m_used; }
     void DecUsed(void) { --m_used; }
     bool Used(void) const { return m_used != 0; }
@@ -51,7 +55,7 @@ namespace VDR
     bool     m_start;
     bool     m_copy;
     const size_t m_position;
-    uint16_t m_pid;
+    cPidResource* m_resource;
     unsigned int m_used;
   };
 
@@ -61,7 +65,7 @@ namespace VDR
     static cPsiBuffers& Get(void);
     virtual ~cPsiBuffers(void);
 
-    cPsiBuffer* Allocate(uint16_t pid);
+    cPsiBuffer* Allocate(cPidResource* resource);
     void Release(cPsiBuffer* buffer);
 
   private:
@@ -69,7 +73,7 @@ namespace VDR
 
     cPsiBuffers(void);
     std::vector<cPsiBuffer*>   m_buffers;
-    std::map<uint16_t, size_t> m_pidMap;
+    std::map<cPidResource*, size_t> m_resourceMap;
     PLATFORM::CMutex           m_mutex;
   };
 }

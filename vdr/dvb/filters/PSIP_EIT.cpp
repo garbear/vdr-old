@@ -58,10 +58,10 @@ cPsipEit::cPsipEit(cDevice* device)
 {
 }
 
-void cPsipEit::AttachPids(const std::vector<uint16_t>& pids)
+void cPsipEit::AddPid(uint16_t pid)
 {
-  for (std::vector<uint16_t>::const_iterator it = pids.begin(); it != pids.end(); ++it)
-    AddPid(*it);
+  filter_properties eitFilter = { pid, TableIdEIT, 0xFF };
+  AddFilter(eitFilter);
 }
 
 void cPsipEit::ReceivePacket(uint16_t pid, const uint8_t* data)

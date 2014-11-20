@@ -37,7 +37,7 @@ public:
   cPsipEit(cDevice* device);
   virtual ~cPsipEit(void) { }
 
-  void AttachPids(const std::vector<uint16_t>& pids);
+  void AddPid(uint16_t pid);
   void ReceivePacket(uint16_t pid, const uint8_t* data);
 
   bool InATSC(void) const { return true; }

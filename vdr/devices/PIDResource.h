@@ -31,8 +31,8 @@ class cPsiBuffer;
 
 /*!
  * Represents a resource (possibly a POSIX file handle) that is associated with
- * a DVB packet ID. This is meant to abstract handles used by the Section Filter
- * and Receiver subsystems.
+ * a DVB packet ID. This is used to abstract handles used by the Receiver
+ * subsystem.
  */
 class cPidResource
 {
@@ -44,19 +44,28 @@ public:
 
   virtual bool Equals(const cPidResource* other) const = 0;
 
+  /*!
+   * Returns true if the pid can uniquely describe the resource. If the resource
+   * requires other properties to perform the comparison (e.g. streaming
+   * resources require tid to be compared as well), then this return false.
+   */
+  virtual bool Equals(uint16_t pid) const = 0;
+
   virtual bool Open(void) = 0;
   virtual void Close(void) = 0;
 
-  uint16_t Pid(void) const { return m_pid; }
-  uint8_t  Tid(void) const { return m_tid; }
+  /*!
+   * Override this is if the resource can stream data.
+   */
+  virtual bool Read(const uint8_t** outdata, size_t* outlen) { return false; }
 
+  uint16_t    Pid(void) const    { return m_pid; }
   cPsiBuffer* Buffer(void) const { return m_buffer; }
 
-  std::string ToString(void) const;
+  virtual std::string ToString(void) const = 0;
 
 private:
   const uint16_t    m_pid; // Packet ID
-  const uint8_t     m_tid; // Table ID
   cPsiBuffer* const m_buffer;
 };
 

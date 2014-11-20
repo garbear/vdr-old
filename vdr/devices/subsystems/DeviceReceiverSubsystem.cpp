@@ -93,20 +93,39 @@ void *cDeviceReceiverSubsystem::Process()
   const uint8_t* psidata;
   size_t psidatalen;
   bool validpsi;
+  PidResourcePtr resource;
 
   while (!IsStopped())
   {
-    /** wait for new data */
-    if (Poll() && !IsStopped())
+    if (!Receiving())
     {
-      /** read new data */
-      if ((packet = Read()) != NULL)
+      CThread::Sleep(100);
+      continue;
+    }
+
+    /** wait for new data */
+    switch (Poll(resource))
+    {
+      case POLL_RESULT_STREAMING_READY:
+      if (!IsStopped() && resource->Read(&psidata, &psidatalen))
+      {
+        CLockObject lock(m_mutex);
+
+        /** distribute the packet to receivers holding this resource */
+        std::set<iReceiver*> receivers = GetReceivers(resource);
+        for (std::set<iReceiver*>::iterator receiverit = receivers.begin(); receiverit != receivers.end(); ++receiverit)
+          (*receiverit)->Receive(resource->Pid(), psidata, psidatalen);
+      }
+      break;
+
+      case POLL_RESULT_MULTIPLEXED_READY:
+      if (!IsStopped() && (packet = ReadMultiplexed()) != NULL)
       {
         CLockObject lock(m_mutex);
 
         /** find resources attached to the PID that we received */
         pid = TsPid(packet);
-        PidResourcePtr pidPtr = GetResource(pid);
+        PidResourcePtr pidPtr = GetMultiplexedResource(pid);
         if (pidPtr)
         {
           validpsi = pidPtr->Buffer()->AddTsData(packet, TS_SIZE, &psidata, &psidatalen);
@@ -129,12 +148,25 @@ void *cDeviceReceiverSubsystem::Process()
         }
         Consumed();
       }
+      break;
+
+      case POLL_RESULT_NOT_READY:
+      default:
+        break;
     }
   }
 
   Deinitialise();
 
   return NULL;
+}
+
+std::set<cDeviceReceiverSubsystem::PidResourcePtr> cDeviceReceiverSubsystem::GetResources(void) const
+{
+  std::set<PidResourcePtr> resources;
+  for (ReceiverPidTable::const_iterator it = m_receiverPidTable.begin(); it != m_receiverPidTable.end(); ++it)
+    resources.insert(it->second);
+  return resources;
 }
 
 cDeviceReceiverSubsystem::ReceiverHandlePtr cDeviceReceiverSubsystem::GetReceiverHandle(iReceiver* receiver) const
@@ -155,64 +187,72 @@ std::set<iReceiver*> cDeviceReceiverSubsystem::GetReceivers(void) const
   return receivers;
 }
 
-cDeviceReceiverSubsystem::PidResourcePtr cDeviceReceiverSubsystem::GetResource(uint16_t pid) const
+std::set<iReceiver*> cDeviceReceiverSubsystem::GetReceivers(const PidResourcePtr& resource) const
+{
+  std::set<iReceiver*> receivers;
+  for (ReceiverPidTable::const_iterator it = m_receiverPidTable.begin(); it != m_receiverPidTable.end(); ++it)
+    if (resource == it->second)
+      receivers.insert(it->first->receiver);
+  return receivers;
+}
+
+cDeviceReceiverSubsystem::PidResourcePtr cDeviceReceiverSubsystem::GetResource(const PidResourcePtr& needle) const
 {
   for (ReceiverPidTable::const_iterator it = m_receiverPidTable.begin(); it != m_receiverPidTable.end(); ++it)
   {
-    if (it->second->Pid() == pid)
+    if (it->second->Equals(needle.get()))
       return it->second;
   }
   return PidResourcePtr();
 }
 
-bool cDeviceReceiverSubsystem::AttachReceiver(iReceiver* receiver, uint16_t pid, STREAM_TYPE type /* = STREAM_TYPE_UNDEFINED */)
+cDeviceReceiverSubsystem::PidResourcePtr cDeviceReceiverSubsystem::GetMultiplexedResource(uint16_t pid) const
+{
+  for (ReceiverPidTable::const_iterator it = m_receiverPidTable.begin(); it != m_receiverPidTable.end(); ++it)
+  {
+    if (it->second->Equals(pid))
+      return it->second;
+  }
+  return PidResourcePtr();
+}
+
+bool cDeviceReceiverSubsystem::AttachStreamingReceiver(iReceiver* receiver, uint16_t pid, uint8_t tid, uint8_t mask)
 {
   CLockObject lock(m_mutex);
 
-  ReceiverHandlePtr receiverHandle = GetReceiverHandle(receiver);
-  if (!receiverHandle)
-  {
-    receiverHandle = ReceiverHandlePtr(new cReceiverHandle(receiver));
-    if (!receiverHandle->Start())
-      return false;
-  }
-
-  PidResourcePtr resource = GetResource(pid);
-  if (!resource)
-  {
-    resource = CreateResource(pid, type);
-    if (!resource->Open())
-      return false;
-  }
-
-  m_receiverPidTable.insert(ReceiverPidEdge(receiverHandle, resource));
-
-  return true;
+  return AttachReceiver(receiver, CreateStreamingResource(pid, tid, mask));
 }
 
-bool cDeviceReceiverSubsystem::AttachReceiver(iReceiver* receiver, const ChannelPtr& channel)
+bool cDeviceReceiverSubsystem::AttachMultiplexedReceiver(iReceiver* receiver, uint16_t pid, STREAM_TYPE type /* = STREAM_TYPE_UNDEFINED */)
+{
+  CLockObject lock(m_mutex);
+
+  return AttachReceiver(receiver, CreateMultiplexedResource(pid, type));
+}
+
+bool cDeviceReceiverSubsystem::AttachMultiplexedReceiver(iReceiver* receiver, const ChannelPtr& channel)
 {
   CLockObject lock(m_mutex);
 
   bool bAllOpened(true);
 
   if (bAllOpened && channel->GetVideoStream().vpid)
-    bAllOpened &= AttachReceiver(receiver, channel->GetVideoStream().vpid, channel->GetVideoStream().vtype);
+    bAllOpened &= AttachMultiplexedReceiver(receiver, channel->GetVideoStream().vpid, channel->GetVideoStream().vtype);
 
   if (bAllOpened && channel->GetVideoStream().ppid != channel->GetVideoStream().vpid)
-    bAllOpened &= AttachReceiver(receiver, channel->GetVideoStream().ppid);
+    bAllOpened &= AttachMultiplexedReceiver(receiver, channel->GetVideoStream().ppid);
 
   for (vector<AudioStream>::const_iterator it = channel->GetAudioStreams().begin(); bAllOpened && it != channel->GetAudioStreams().end(); ++it)
-    bAllOpened &= AttachReceiver(receiver, it->apid, it->atype);
+    bAllOpened &= AttachMultiplexedReceiver(receiver, it->apid, it->atype);
 
   for (vector<DataStream>::const_iterator it = channel->GetDataStreams().begin(); bAllOpened && it != channel->GetDataStreams().end(); ++it)
-    bAllOpened &= AttachReceiver(receiver, it->dpid, it->dtype);
+    bAllOpened &= AttachMultiplexedReceiver(receiver, it->dpid, it->dtype);
 
   for (vector<SubtitleStream>::const_iterator it = channel->GetSubtitleStreams().begin(); bAllOpened && it != channel->GetSubtitleStreams().end(); ++it)
-    bAllOpened &= AttachReceiver(receiver, it->spid);
+    bAllOpened &= AttachMultiplexedReceiver(receiver, it->spid);
 
   if (bAllOpened && channel->GetTeletextStream().tpid)
-    bAllOpened &= AttachReceiver(receiver, channel->GetTeletextStream().tpid);
+    bAllOpened &= AttachMultiplexedReceiver(receiver, channel->GetTeletextStream().tpid);
 
   if (bAllOpened)
   {
@@ -230,11 +270,45 @@ bool cDeviceReceiverSubsystem::AttachReceiver(iReceiver* receiver, const Channel
   return bAllOpened;
 }
 
-void cDeviceReceiverSubsystem::DetachReceiverPid(iReceiver* receiver, uint16_t pid)
+bool cDeviceReceiverSubsystem::AttachReceiver(iReceiver* receiver, const PidResourcePtr& resource)
+{
+  PidResourcePtr openResource = GetResource(resource);
+  if (!openResource)
+  {
+    // Resource hasn't been opened, try to open it now and bail on failure
+    if (!resource->Open())
+      return false;
+    openResource = resource;
+  }
+
+  ReceiverHandlePtr receiverHandle = GetReceiverHandle(receiver);
+  if (!receiverHandle)
+  {
+    if (!receiver->Start())
+      return false;
+    receiverHandle = ReceiverHandlePtr(new cReceiverHandle(receiver));
+  }
+
+  m_receiverPidTable.insert(ReceiverPidEdge(receiverHandle, openResource));
+
+  return true;
+}
+
+void cDeviceReceiverSubsystem::DetachStreamingReceiver(iReceiver* receiver, uint16_t pid, uint8_t tid, uint8_t mask)
 {
   CLockObject lock(m_mutex);
 
-  const ReceiverPidEdge needle(GetReceiverHandle(receiver), GetResource(pid));
+  const ReceiverPidEdge needle(GetReceiverHandle(receiver), GetResource(CreateStreamingResource(pid, tid, mask)));
+  ReceiverPidTable::iterator it = m_receiverPidTable.find(needle);
+  if (it != m_receiverPidTable.end())
+    m_receiverPidTable.erase(it);
+}
+
+void cDeviceReceiverSubsystem::DetachMultiplexedReceiver(iReceiver* receiver, uint16_t pid, STREAM_TYPE type /* = STREAM_TYPE_UNDEFINED */)
+{
+  CLockObject lock(m_mutex);
+
+  const ReceiverPidEdge needle(GetReceiverHandle(receiver), CreateMultiplexedResource(pid, type));
   ReceiverPidTable::iterator it = m_receiverPidTable.find(needle);
   if (it != m_receiverPidTable.end())
     m_receiverPidTable.erase(it);

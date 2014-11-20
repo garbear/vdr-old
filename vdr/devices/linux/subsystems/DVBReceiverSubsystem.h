@@ -35,10 +35,11 @@ protected:
   virtual bool Initialise(void);
   virtual void Deinitialise(void);
 
-  virtual bool Poll(void);
-  virtual TsPacket Read(void);
+  virtual POLL_RESULT Poll(PidResourcePtr& streamingResource);
+  virtual TsPacket ReadMultiplexed(void);
   virtual void Consumed(void);
-  virtual PidResourcePtr CreateResource(uint16_t pid, STREAM_TYPE streamType);
+  virtual PidResourcePtr CreateStreamingResource(uint16_t pid, uint8_t tid, uint8_t mask);
+  virtual PidResourcePtr CreateMultiplexedResource(uint16_t pid, STREAM_TYPE streamType);
 
 private:
   // The DVR device (will be opened and closed as needed)

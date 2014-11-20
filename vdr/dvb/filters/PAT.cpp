@@ -42,8 +42,13 @@ using namespace std;
 namespace VDR
 {
 
+static const cScanReceiver::filter_properties pat_pids[] =
+{
+  { PID_PAT, TableIdPAT, 0xFF },
+};
+
 cPat::cPat(cDevice* device) :
-    cScanReceiver(device, "PAT", PID_PAT),
+    cScanReceiver(device, "PAT", *pat_pids),
     m_pmt(device)
 {
 }

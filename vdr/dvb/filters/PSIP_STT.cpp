@@ -38,8 +38,13 @@ using namespace std;
 namespace VDR
 {
 
+static const cScanReceiver::filter_properties stt_pids[] =
+{
+  { PID_STT, TableIdSTT, 0xFF },
+};
+
 cPsipStt::cPsipStt(cDevice* device) :
-    cScanReceiver(device, "STT", PID_STT),
+    cScanReceiver(device, "STT", *stt_pids),
     m_iLastOffset(0)
 {
 }
