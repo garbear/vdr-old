@@ -92,7 +92,7 @@ private:
   TRANSPONDER_TYPE           m_type;
   cDevice*                   m_device;
   std::set<cScanReceiver*>   m_waitingForReceivers;
-  bool                       m_scanFinished;
+  bool                       m_scanFinished; // invariant: true when m_waitingForReceivers is empty
   PLATFORM::CMutex           m_waitingMutex;
   PLATFORM::CCondition<bool> m_waitingCondition;
   PLATFORM::CTimeout         m_transponderScanTimeout;
