@@ -95,10 +95,13 @@ void cDeviceScanSubsystem::SetScanned(cScanReceiver* receiver)
 void cDeviceScanSubsystem::ResetScanned(cScanReceiver* receiver)
 {
   CLockObject lock(m_waitingMutex);
-  if (m_waitingForReceivers.find(receiver) == m_waitingForReceivers.end())
+  if (receiver->InChannelScan())
   {
-    m_waitingForReceivers.insert(receiver);
-    m_scanFinished = false;
+    if (m_waitingForReceivers.find(receiver) == m_waitingForReceivers.end())
+    {
+      m_waitingForReceivers.insert(receiver);
+      m_scanFinished = false;
+    }
   }
 }
 
