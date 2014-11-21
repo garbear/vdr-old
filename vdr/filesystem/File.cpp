@@ -31,7 +31,6 @@
 #endif
 
 #include <memory>
-#include <auto_ptr.h>
 
 using namespace std;
 
@@ -297,7 +296,7 @@ unsigned int CFile::GetChunkSize()
 
 bool CFile::Exists(const string &url)
 {
-  std::auto_ptr<IFile> pFile(CreateLoader(url));
+  std::shared_ptr<IFile> pFile(CreateLoader(url));
   if (!pFile.get())
     return false;
   return pFile->Exists(url);
@@ -308,7 +307,7 @@ int CFile::Stat(const string &url, struct __stat64 *buffer)
   if (buffer)
     memset(buffer, 0, sizeof(struct __stat64));
 
-  std::auto_ptr<IFile> pFile(CreateLoader(url));
+  std::shared_ptr<IFile> pFile(CreateLoader(url));
   if (!pFile.get())
     return -1;
   return pFile->Stat(url, buffer);
@@ -316,7 +315,7 @@ int CFile::Stat(const string &url, struct __stat64 *buffer)
 
 bool CFile::Delete(const string &url)
 {
-  std::auto_ptr<IFile> pFile(CreateLoader(url));
+  std::shared_ptr<IFile> pFile(CreateLoader(url));
   if (!pFile.get())
     return false;
   return pFile->Delete(url);
@@ -324,7 +323,7 @@ bool CFile::Delete(const string &url)
 
 bool CFile::Rename(const string &url, const string &urlnew)
 {
-  std::auto_ptr<IFile> pFile(CreateLoader(url));
+  std::shared_ptr<IFile> pFile(CreateLoader(url));
   if (!pFile.get())
     return false;
   return pFile->Rename(url, urlnew);
@@ -332,7 +331,7 @@ bool CFile::Rename(const string &url, const string &urlnew)
 
 bool CFile::SetHidden(const string &url, bool hidden)
 {
-  std::auto_ptr<IFile> pFile(CreateLoader(url));
+  std::shared_ptr<IFile> pFile(CreateLoader(url));
   if (!pFile.get())
     return false;
   return pFile->SetHidden(url, false);

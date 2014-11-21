@@ -21,18 +21,18 @@
 #pragma once
 
 #include <set>
-#include <shared_ptr/shared_ptr.hpp>
+#include <memory>
 #include <vector>
 
 namespace VDR
 {
 
 class cFilter;
-typedef VDR::shared_ptr<cFilter> FilterPtr;
+typedef std::shared_ptr<cFilter> FilterPtr;
 typedef std::vector<FilterPtr>   FilterVector;
 
 class cCaDescriptor;
-typedef VDR::shared_ptr<cCaDescriptor> CaDescriptorPtr;
+typedef std::shared_ptr<cCaDescriptor> CaDescriptorPtr;
 typedef std::vector<CaDescriptorPtr>   CaDescriptorVector;
 
 }

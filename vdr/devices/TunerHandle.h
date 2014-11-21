@@ -22,6 +22,7 @@
 
 #include "channels/Channel.h"
 #include "channels/ChannelTypes.h"
+#include <memory>
 
 namespace VDR
 {
@@ -48,7 +49,7 @@ public:
 };
 
 class cTunerHandle;
-typedef VDR::shared_ptr<cTunerHandle> TunerHandlePtr;
+typedef std::shared_ptr<cTunerHandle> TunerHandlePtr;
 
 class cTunerHandle
 {

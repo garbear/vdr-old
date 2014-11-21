@@ -30,6 +30,7 @@
 #include <set>
 #include <stdint.h>
 #include <utility>
+#include <memory>
 
 namespace VDR
 {
@@ -55,8 +56,8 @@ protected:
     iReceiver* const receiver;
   };
 
-  typedef VDR::shared_ptr<cPidResource>                PidResourcePtr;
-  typedef VDR::shared_ptr<cReceiverHandle>             ReceiverHandlePtr;
+  typedef std::shared_ptr<cPidResource>                PidResourcePtr;
+  typedef std::shared_ptr<cReceiverHandle>             ReceiverHandlePtr;
   typedef std::pair<ReceiverHandlePtr, PidResourcePtr> ReceiverPidEdge;
   typedef std::set<ReceiverPidEdge>                    ReceiverPidTable; // Junction table to store relationships
 

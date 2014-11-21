@@ -30,7 +30,6 @@
 #endif
 
 #include <memory>
-#include <auto_ptr.h>
 #include <sys/stat.h>
 #include <sys/statfs.h>
 #include <unistd.h>
@@ -64,7 +63,7 @@ bool CDirectory::GetDirectory(const string &strPath, DirectoryListing &items, co
 {
   try
   {
-    auto_ptr<IDirectory> pDirectory(CreateLoader(strPath, bForceLocal));
+    std::shared_ptr<IDirectory> pDirectory(CreateLoader(strPath, bForceLocal));
     if (!pDirectory.get())
       return false;
     pDirectory->SetFlags(flags);
@@ -108,7 +107,7 @@ bool CDirectory::Create(const string &strPath)
 {
   try
   {
-    auto_ptr<IDirectory> pDirectory(CreateLoader(strPath));
+    std::shared_ptr<IDirectory> pDirectory(CreateLoader(strPath));
     if (!pDirectory.get())
       return false;
     return pDirectory->Create(strPath);
@@ -124,7 +123,7 @@ bool CDirectory::Exists(const string &strPath)
 {
   try
   {
-    auto_ptr<IDirectory> pDirectory(CreateLoader(strPath));
+    std::shared_ptr<IDirectory> pDirectory(CreateLoader(strPath));
     if (!pDirectory.get())
       return false;
     return pDirectory->Exists(strPath);
@@ -140,7 +139,7 @@ bool CDirectory::Remove(const string &strPath)
 {
   try
   {
-    auto_ptr<IDirectory> pDirectory(CreateLoader(strPath));
+    std::shared_ptr<IDirectory> pDirectory(CreateLoader(strPath));
     if (!pDirectory.get())
       return false;
     return pDirectory->Remove(strPath);
@@ -156,7 +155,7 @@ bool CDirectory::Rename(const string &strPath, const string &strNewPath)
 {
   try
   {
-    auto_ptr<IDirectory> pDirectory(CreateLoader(strPath));
+    std::shared_ptr<IDirectory> pDirectory(CreateLoader(strPath));
     if (!pDirectory.get())
       return false;
     return pDirectory->Rename(strPath, strNewPath);
@@ -172,7 +171,7 @@ bool CDirectory::CalculateDiskSpace(const string &strPath, disk_space_t& space)
 {
   try
   {
-    auto_ptr<IDirectory> pDirectory(CreateLoader(strPath));
+    std::shared_ptr<IDirectory> pDirectory(CreateLoader(strPath));
     if (!pDirectory.get())
       return false;
     return pDirectory->DiskSpace(strPath, space);

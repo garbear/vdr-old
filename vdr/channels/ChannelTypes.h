@@ -20,7 +20,7 @@
  */
 #pragma once
 
-#include <shared_ptr/shared_ptr.hpp>
+#include <memory>
 #include <vector>
 
 namespace VDR
@@ -63,7 +63,7 @@ enum STREAM_TYPE
 };
 
 class cChannel;
-typedef VDR::shared_ptr<cChannel> ChannelPtr;
+typedef std::shared_ptr<cChannel> ChannelPtr;
 typedef std::vector<ChannelPtr>   ChannelVector;
 
 }

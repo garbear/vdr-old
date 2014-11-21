@@ -22,7 +22,7 @@
 
 #include "xbmc/xbmc_epg_types.h"
 
-#include <shared_ptr/shared_ptr.hpp>
+#include <memory>
 #include <sys/types.h>
 #include <vector>
 
@@ -30,11 +30,11 @@ namespace VDR
 {
 
 class cSchedule;
-typedef VDR::shared_ptr<cSchedule> SchedulePtr;
+typedef std::shared_ptr<cSchedule> SchedulePtr;
 typedef std::vector<SchedulePtr>   ScheduleVector;
 
 class cEvent;
-typedef VDR::shared_ptr<cEvent> EventPtr;
+typedef std::shared_ptr<cEvent> EventPtr;
 typedef std::vector<EventPtr>   EventVector;
 
 typedef u_int32_t tEventID;

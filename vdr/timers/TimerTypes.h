@@ -21,7 +21,7 @@
 #pragma once
 
 #include <map>
-#include <shared_ptr/shared_ptr.hpp>
+#include <memory>
 #include <vector>
 
 #define TIMER_INVALID_ID      0
@@ -38,7 +38,7 @@ namespace VDR
 {
 
 class cTimer;
-typedef VDR::shared_ptr<cTimer> TimerPtr;
+typedef std::shared_ptr<cTimer> TimerPtr;
 typedef std::vector<TimerPtr>   TimerVector;
 typedef std::map<unsigned int, TimerPtr> TimerMap; // ID -> timer
 

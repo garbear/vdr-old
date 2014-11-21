@@ -46,7 +46,7 @@
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
-#include "shared_ptr/shared_ptr.hpp"
+#include <memory>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/ioctl.h>

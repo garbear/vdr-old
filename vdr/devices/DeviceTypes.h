@@ -20,14 +20,14 @@
  */
 #pragma once
 
-#include <shared_ptr/shared_ptr.hpp>
+#include <memory>
 #include <vector>
 
 namespace VDR
 {
 
 class cDevice;
-typedef VDR::shared_ptr<cDevice> DevicePtr;
+typedef std::shared_ptr<cDevice> DevicePtr;
 typedef std::vector<DevicePtr>   DeviceVector;
 
 typedef uint8_t* TsPacket;
