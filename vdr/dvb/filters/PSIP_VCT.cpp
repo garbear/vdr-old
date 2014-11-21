@@ -26,6 +26,7 @@
 #include "channels/Channel.h"
 #include "channels/ChannelManager.h"
 #include "devices/Device.h"
+#include "devices/subsystems/DeviceChannelSubsystem.h"
 #include "devices/subsystems/DeviceScanSubsystem.h"
 #include "transponders/Transponder.h"
 #include "utils/CommonMacros.h"
