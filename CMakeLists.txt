@@ -298,12 +298,12 @@ add_library(${VDR_LIBRARY} SHARED ${VDR_ADDON} ${VDR_SRCS} ${VDR_FS_SRC_XBMC} ${
 set_target_properties(${VDR_LIBRARY} PROPERTIES DEFINE_SYMBOL TARGET_XBMC)
 target_link_libraries(${VDR_LIBRARY} ${LIBS})
 
-set(VDR_TEST_EXECUTABLE test-vdr.bin)
-add_executable(${VDR_TEST_EXECUTABLE} ${VDR_SRCS} ${VDR_FS_SRC_NATIVE} ${VDR_TEST_SRCS})
-target_link_libraries(${VDR_TEST_EXECUTABLE} gtest ${LIBS})
+#set(VDR_TEST_EXECUTABLE test-vdr.bin)
+#add_executable(${VDR_TEST_EXECUTABLE} ${VDR_SRCS} ${VDR_FS_SRC_NATIVE} ${VDR_TEST_SRCS})
+#target_link_libraries(${VDR_TEST_EXECUTABLE} gtest ${LIBS})
 
-add_test(
-	NAME ${VDR_TEST_EXECUTABLE}
-	COMMAND ${VDR_TEST_EXECUTABLE}
-)
+#add_test(
+#	NAME ${VDR_TEST_EXECUTABLE}
+#	COMMAND ${VDR_TEST_EXECUTABLE}
+#)
 
