@@ -23,43 +23,60 @@
 #include "TimerDefinitions.h"
 #include "channels/Channel.h"
 #include "channels/ChannelManager.h"
+#include "devices/DeviceManager.h"
 #include "epg/Event.h"
+#include "recordings/Recording.h"
+#include "recordings/RecordingManager.h"
 #include "utils/log/Log.h"
 #include "utils/StringUtils.h"
 #include "utils/XBMCTinyXML.h"
+
+#include <assert.h>
 
 namespace VDR
 {
 
 TimerPtr cTimer::EmptyTimer;
 
+static const CDateTimeSpan ONE_DAY = CDateTimeSpan(1, 0, 0, 0);
+
+// --- cTimerSorter ------------------------------------------------------------
+
+bool cTimerSorter::operator()(const TimerPtr& lhs, const TimerPtr& rhs) const
+{
+  return lhs->GetOccurrence(m_now) < rhs->GetOccurrence(m_now);
+}
+
+// --- cTimer ------------------------------------------------------------------
+
 cTimer::cTimer(void)
-: m_id(TIMER_INVALID_ID),
-  m_weekdayMask(0),
-  m_bActive(true)
+ : m_id(TIMER_INVALID_ID),
+   m_weekdayMask(0),
+   m_bActive(true)
 {
 }
 
-cTimer::cTimer(const CDateTime& startTime,
-               const CDateTime& endTime,
-               const CDateTimeSpan& lifetime,
-               uint8_t weekdayMask,
-               const ChannelPtr& channel,
-               bool bActive,
-               std::string strRecordingFilename)
+cTimer::cTimer(const CDateTime&   startTime,
+               const CDateTime&   endTime,
+               uint8_t            weekdayMask,
+               const CDateTime&   deadline,
+               const ChannelPtr&  channel,
+               const std::string& strFilename,
+               bool               bActive)
  : m_id(TIMER_INVALID_ID),
+   m_strFilename(strFilename),
    m_startTime(startTime),
    m_endTime(endTime),
-   m_lifetime(lifetime),
-   m_weekdayMask(weekdayMask),
+   m_weekdayMask(weekdayMask & 0x7f),
+   m_expires(GetExpiration(startTime, m_weekdayMask, deadline)),
    m_channel(channel),
-   m_bActive(bActive),
-   m_strRecordingFilename(strRecordingFilename)
+   m_bActive(bActive)
 {
 }
 
 bool cTimer::SetID(unsigned int id)
 {
+  PLATFORM::CLockObject lock(m_mutex);
   if (m_id == TIMER_INVALID_ID)
   {
     m_id = id;
@@ -72,31 +89,70 @@ cTimer& cTimer::operator=(const cTimer& rhs)
 {
   if (this != &rhs)
   {
-    SetTime(rhs.m_startTime, rhs.m_endTime, rhs.m_lifetime, rhs.m_weekdayMask);
+    PLATFORM::CLockObject lock(m_mutex);
+
+    SetFilename(rhs.m_strFilename);
+    SetTime(rhs.m_startTime, rhs.m_endTime, rhs.m_weekdayMask, rhs.m_expires);
     SetChannel(rhs.m_channel);
     SetActive(rhs.m_bActive);
-    SetRecordingFilename(rhs.m_strRecordingFilename);
   }
   return *this;
 }
 
-void cTimer::SetTime(const CDateTime& startTime, const CDateTime& endTime, const CDateTimeSpan& lifetime, uint8_t weekdayMask)
+CDateTime cTimer::GetExpiration(const CDateTime& startTime, uint8_t weekdayMask, const CDateTime& deadline)
 {
-  if (m_startTime   != startTime ||
-      m_endTime     != endTime   ||
-      m_lifetime    != lifetime  ||
-      m_weekdayMask != weekdayMask)
+  CDateTime last = startTime;
+
+  const bool bIsRepeating = (weekdayMask != 0);
+  if (bIsRepeating)
+  {
+    // Fast forward to the deadline
+    while (last + ONE_DAY < deadline)
+      last += ONE_DAY;
+
+    // Rewind until we satisfy the weekday mask, but don't rewind past start time
+    while ((weekdayMask & (1 << last.GetDayOfWeek()) == 0) && (last - ONE_DAY) > startTime)
+      last -= ONE_DAY;
+  }
+
+  return last;
+}
+
+void cTimer::SetFilename(const std::string& strFilename)
+{
+  PLATFORM::CLockObject lock(m_mutex);
+
+  if (m_strFilename != strFilename)
+  {
+    m_strFilename = strFilename;
+    SetChanged();
+  }
+}
+
+void cTimer::SetTime(const CDateTime& startTime, const CDateTime& endTime, uint8_t weekdayMask, const CDateTime& deadline)
+{
+  weekdayMask &= 0x7f;
+  CDateTime expires = GetExpiration(startTime, weekdayMask, deadline);
+
+  PLATFORM::CLockObject lock(m_mutex);
+
+  if (m_startTime   != startTime   ||
+      m_endTime     != endTime     ||
+      m_weekdayMask != weekdayMask ||
+      m_expires     != expires)
   {
     m_startTime   = startTime;
     m_endTime     = endTime;
-    m_lifetime    = lifetime;
     m_weekdayMask = weekdayMask;
+    m_expires     = expires;
     SetChanged();
   }
 }
 
 void cTimer::SetChannel(const ChannelPtr& channel)
 {
+  PLATFORM::CLockObject lock(m_mutex);
+
   if (m_channel != channel)
   {
     m_channel = channel;
@@ -106,6 +162,8 @@ void cTimer::SetChannel(const ChannelPtr& channel)
 
 void cTimer::SetActive(bool bActive)
 {
+  PLATFORM::CLockObject lock(m_mutex);
+
   if (m_bActive != bActive)
   {
     m_bActive = bActive;
@@ -113,17 +171,10 @@ void cTimer::SetActive(bool bActive)
   }
 }
 
-void cTimer::SetRecordingFilename(const std::string& strFile)
-{
-  if (m_strRecordingFilename != strFile)
-  {
-    m_strRecordingFilename = strFile;
-    SetChanged();
-  }
-}
-
 bool cTimer::IsValid(bool bCheckID /* = true */) const
 {
+  PLATFORM::CLockObject lock(m_mutex);
+
   return (bCheckID ? m_id != TIMER_INVALID_ID : true) && // Condition (1)
          m_startTime.IsValid()                        && // Condition (2)
          m_endTime.IsValid()                          && // Condition (3)
@@ -161,8 +212,111 @@ void cTimer::LogInvalidProperties(bool bCheckID /* = true */) const
     esyslog("Invalid timer %u: invalid channel", m_id);
 }
 
+bool cTimer::IsOccurring(const CDateTime& now) const
+{
+  PLATFORM::CLockObject lock(m_mutex);
+
+  // Check lifetime bounds
+  if (StartTime() <= now && !IsExpired(now))
+  {
+    // Iterate over timer lifetime looking for intersections
+    for (CDateTime occurenceStart = m_startTime; occurenceStart <= m_expires; occurenceStart += ONE_DAY)
+    {
+      // Satisfy the weekday mask if present
+      if (!IsRepeatingEvent() || OccursOnWeekday(occurenceStart.GetDayOfWeek()))
+      {
+        // Check if now intersects the occurrence
+        if (occurenceStart <= now && now < occurenceStart + Duration())
+          return true;
+      }
+    }
+  }
+  return false;
+}
+
+CDateTime cTimer::GetOccurrence(const CDateTime& now) const
+{
+  PLATFORM::CLockObject lock(m_mutex);
+
+  // Case (1): timer is expired
+  if (IsExpired(now))
+    return Expires();
+
+  // Case (2): timer is occurring
+  if (IsOccurring(now))
+  {
+    assert(!IsOccurring(now - Duration()));
+    return GetOccurrence(now - Duration());
+  }
+
+  // Case (3): timer is pending and thus must have a future occurrence on a
+  // valid weekday
+  CDateTime nextOccurrence = m_startTime;
+  if (IsRepeatingEvent())
+  {
+    while (nextOccurrence <= now)
+      nextOccurrence += ONE_DAY;
+    while (!OccursOnWeekday(nextOccurrence.GetDayOfWeek()))
+      nextOccurrence += ONE_DAY;
+  }
+  assert(IsOccurring(nextOccurrence) && !IsExpired(nextOccurrence));
+  return nextOccurrence;
+}
+
+bool cTimer::Conflicts(const cTimer& timer) const
+{
+  return false; // TODO
+}
+
+void cTimer::StartRecording(void)
+{
+  PLATFORM::CLockObject lock(m_mutex);
+
+  const CDateTime now = CDateTime::GetUTCDateTime();
+
+  if (!IsActive() || !IsOccurring(now))
+    return;
+
+  // If a recording has already been started, retrieve it from cRecordingManager
+  if (!IsRecording(now))
+    m_recording = cRecordingManager::Get().GetByChannel(m_channel, now);
+
+  if (IsRecording(now))
+  {
+    m_recording->Resume();
+  }
+  else
+  {
+    const CDateTime startTime = GetOccurrence(now);
+    m_recording = RecordingPtr(new cRecording(m_strFilename,
+                                              "TEST", // TODO
+                                              m_channel,
+                                              startTime,
+                                              startTime + Duration()));
+    cRecordingManager::Get().AddRecording(m_recording);
+  }
+}
+
+void cTimer::StopRecording(void)
+{
+  PLATFORM::CLockObject lock(m_mutex);
+
+  if (IsRecording(CDateTime::GetUTCDateTime()))
+    m_recording->Interrupt();
+}
+
+bool cTimer::IsRecording(const CDateTime& now) const
+{
+  PLATFORM::CLockObject lock(m_mutex);
+
+  return m_recording && m_recording->IsValid() &&
+         m_recording->StartTime() <= now && now < m_recording->EndTime();
+}
+
 bool cTimer::Serialise(TiXmlNode* node) const
 {
+  PLATFORM::CLockObject lock(m_mutex);
+
   if (node == NULL)
     return false;
 
@@ -178,6 +332,8 @@ bool cTimer::Serialise(TiXmlNode* node) const
 
   elem->SetAttribute(TIMER_XML_ATTR_INDEX, m_id);
 
+  elem->SetAttribute(TIMER_XML_ATTR_FILENAME, m_strFilename);
+
   time_t startTime;
   m_startTime.GetAsTime(startTime);
   elem->SetAttribute(TIMER_XML_ATTR_START, startTime);
@@ -186,10 +342,13 @@ bool cTimer::Serialise(TiXmlNode* node) const
   m_endTime.GetAsTime(endTime);
   elem->SetAttribute(TIMER_XML_ATTR_END, endTime);
 
-  elem->SetAttribute(TIMER_XML_ATTR_LIFETIME, m_lifetime.GetDays());
-
   if (m_weekdayMask)
     elem->SetAttribute(TIMER_XML_ATTR_DAY_MASK, WeekdayMaskToString(m_weekdayMask));
+
+  time_t tmExpires;
+  m_expires.GetAsTime(tmExpires);
+  if (tmExpires > 0)
+    elem->SetAttribute(TIMER_XML_ATTR_EXPIRES, tmExpires);
 
   if (!m_channel->ID().Serialise(node))
     return false;
@@ -197,13 +356,13 @@ bool cTimer::Serialise(TiXmlNode* node) const
   if (!m_bActive)
     elem->SetAttribute(TIMER_XML_ATTR_DISABLED, "true");
 
-  elem->SetAttribute(TIMER_XML_ATTR_FILENAME, m_strRecordingFilename);
-
   return true;
 }
 
 bool cTimer::Deserialise(const TiXmlNode* node)
 {
+  PLATFORM::CLockObject lock(m_mutex);
+
   if (node == NULL)
     return false;
 
@@ -222,9 +381,10 @@ bool cTimer::Deserialise(const TiXmlNode* node)
     m_id = attr ? StringUtils::IntVal(attr, TIMER_INVALID_ID) : TIMER_INVALID_ID;
   }
 
-  cChannelID chanId;
-  chanId.Deserialise(node);
-  m_channel = cChannelManager::Get().GetByChannelID(chanId);
+  {
+    const char* attr = elem->Attribute(TIMER_XML_ATTR_FILENAME);
+    m_strFilename = attr ? attr : "";
+  }
 
   {
     const char* attr = elem->Attribute(TIMER_XML_ATTR_START);
@@ -237,24 +397,23 @@ bool cTimer::Deserialise(const TiXmlNode* node)
   }
 
   {
-    const char* attr = elem->Attribute(TIMER_XML_ATTR_LIFETIME);
-    m_lifetime.SetDateTimeSpan(0, 0, 0, attr ? StringUtils::IntVal(attr) : 0);
-  }
-
-  {
     const char* attr = elem->Attribute(TIMER_XML_ATTR_DAY_MASK);
     m_weekdayMask = attr ? StringToWeekdayMask(attr) : 0;
   }
 
   {
+    const char* attr = elem->Attribute(TIMER_XML_ATTR_EXPIRES);
+    m_expires = (time_t)(attr ? StringUtils::IntVal(attr) : 0);
+  }
+
+  cChannelID chanId;
+  chanId.Deserialise(node);
+  m_channel = cChannelManager::Get().GetByChannelID(chanId);
+
+  {
     const char* attr = elem->Attribute(TIMER_XML_ATTR_DISABLED);
     const bool bDisabled = (attr ? StringUtils::EqualsNoCase(attr, "true") : false);
     m_bActive = !bDisabled;
-  }
-
-  {
-    const char* attr = elem->Attribute(TIMER_XML_ATTR_FILENAME);
-    m_strRecordingFilename = attr ? attr : "";
   }
 
   if (!IsValid())

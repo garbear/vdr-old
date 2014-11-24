@@ -20,54 +20,56 @@
  */
 #pragma once
 
-#include "Recording.h"
+#include "utils/CommonIncludes.h" // off_t problems on x86
+#include "RecordingTypes.h"
 #include "channels/ChannelTypes.h"
 #include "devices/Receiver.h"
 #include "devices/Remux.h"
-#include "epg/EPGTypes.h"
+#include "filesystem/File.h"
 #include "lib/platform/threads/threads.h"
+#include "lib/platform/util/timeutils.h"
+#include "utils/Observer.h"
 #include "utils/Ringbuffer.h"
 
-#include <stdint.h>
+#include <string>
 
 namespace VDR
 {
-class cFileName;
-class cIndexFile;
-class cRecordingInfo;
 
-class cRecorder : public iReceiver, PLATFORM::CThread
+class CDateTimeSpan;
+class cRecording;
+
+class cRecorder : public    iReceiver,
+                  protected PLATFORM::CThread,
+                  public    Observer
 {
 public:
-  /*!
-   * Creates a new recorder for the given Channel that will record into the
-   * specified filename
-   */
-  cRecorder(const std::string& strFileName, const ChannelPtr& channel);
+  cRecorder(cRecording* recording);
   virtual ~cRecorder(void);
-
-  void SetEvent(const EventPtr& event);
 
   virtual bool Start(void);
   virtual void Stop(void);
   virtual void Receive(const uint16_t pid, const uint8_t* data, const size_t len);
+
+  virtual void LostPriority(void);
+
+  virtual void Notify(const Observable& obs, const ObservableMessage msg);
 
 protected:
   virtual void* Process(void);
 
 private:
   bool RunningLowOnDiskSpace(void);
-  bool NextFile(void);
 
-  cRingBufferLinear* m_ringBuffer;
-  cFrameDetector*    m_frameDetector;
-  cPatPmtGenerator   m_patPmtGenerator;
-  cFileName*         m_fileName;
-  cIndexFile*        m_index;
-  CVideoFile*        m_recordFile;
-  std::string        m_strRecordingName;
+  cRecording* const  m_recording;
+  std::string        m_strRecordingPath;
+  cFrameDetector     m_frameDetector;
+  CFile              m_file;
+  cRingBufferLinear  m_ringBuffer;
   off_t              m_fileSize;
-  time_t             m_lastDiskSpaceCheck;
-  cRecordingInfo*    m_recordingInfo;
+  PLATFORM::CTimeout m_checkDiskSpaceTimeout;
+  cPatPmtGenerator   m_patPmtGenerator;
+  const PLATFORM::CTimeout m_endTimer;
 };
+
 }

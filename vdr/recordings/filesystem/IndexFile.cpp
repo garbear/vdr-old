@@ -23,12 +23,14 @@
 #include "FileName.h"
 #include "devices/Remux.h"
 #include "filesystem/Directory.h"
-#include "recordings/Recordings.h"
-#include "recordings/RecordingInfo.h"
+#include "recordings/IndexFileGenerator.h"
+#include "recordings/RecordingConfig.h"
+#include "recordings/RecordingManager.h"
 #include "utils/CommonMacros.h"
 #include "utils/log/Log.h"
 #include "utils/I18N.h"
 #include "utils/Ringbuffer.h"
+#include "utils/StringUtils.h"
 
 using namespace PLATFORM;
 
@@ -65,143 +67,8 @@ struct tIndexTs {
 #define MAXWAITFORINDEXFILE     10 // max. time to wait for the regenerated index file (seconds)
 #define INDEXFILECHECKINTERVAL 500 // ms between checks for existence of the regenerated index file
 #define INDEXFILETESTINTERVAL   10 // ms between tests for the size of the index file in case of pausing live video
-#define IFG_BUFFER_SIZE KILOBYTE(100)
-
-class cIndexFileGenerator : public PLATFORM::CThread {
-private:
-  std::string m_strRecordingName;
-protected:
-  virtual void* Process(void);
-public:
-  cIndexFileGenerator(const std::string& strRecordingName);
-  ~cIndexFileGenerator();
-  };
-
-cIndexFileGenerator::cIndexFileGenerator(const std::string& strRecordingName)
-:m_strRecordingName(strRecordingName)
-{
-  CreateThread();
-}
-
-cIndexFileGenerator::~cIndexFileGenerator()
-{
-  StopThread(3000);
-}
-
-void* cIndexFileGenerator::Process(void)
-{
-  bool IndexFileComplete = false;
-  bool IndexFileWritten = false;
-  bool Rewind = false;
-  cFileName FileName(m_strRecordingName.c_str(), false);
-  CVideoFile *ReplayFile = FileName.Open();
-  cRingBufferLinear Buffer(IFG_BUFFER_SIZE, MIN_TS_PACKETS_FOR_FRAME_DETECTOR * TS_SIZE);
-  cPatPmtParser PatPmtParser;
-  cFrameDetector FrameDetector;
-  cIndexFile IndexFile(m_strRecordingName.c_str(), true);
-  int BufferChunks = KILOBYTE(1); // no need to read a lot at the beginning when parsing PAT/PMT
-  off_t FileSize = 0;
-  off_t FrameOffset = -1;
-  isyslog(tr("Regenerating index file"));
-  while (!IsStopped()) {
-        // Rewind input file:
-        if (Rewind) {
-           ReplayFile = FileName.SetOffset(1);
-           Buffer.Clear();
-           Rewind = false;
-           }
-        // Process data:
-        int Length;
-        uint8_t *Data = Buffer.Get(Length);
-        if (Data) {
-           if (FrameDetector.Synced()) {
-              // Step 3 - generate the index:
-              if (TsPid(Data) == PATPID)
-                 FrameOffset = FileSize; // the PAT/PMT is at the beginning of an I-frame
-              int Processed = FrameDetector.Analyze(Data, Length);
-              if (Processed > 0) {
-                 if (FrameDetector.NewFrame()) {
-                    IndexFile.Write(FrameDetector.IndependentFrame(), FileName.Number(), FrameOffset >= 0 ? FrameOffset : FileSize);
-                    FrameOffset = -1;
-                    IndexFileWritten = true;
-                    }
-                 FileSize += Processed;
-                 Buffer.Del(Processed);
-                 }
-              }
-           else if (PatPmtParser.Vpid()) {
-              // Step 2 - sync FrameDetector:
-              int Processed = FrameDetector.Analyze(Data, Length);
-              if (Processed > 0) {
-                 if (FrameDetector.Synced()) {
-                    // Synced FrameDetector, so rewind for actual processing:
-                    Rewind = true;
-                    }
-                 Buffer.Del(Processed);
-                 }
-              }
-           else {
-              // Step 1 - parse PAT/PMT:
-              uint8_t *p = Data;
-              while (Length >= TS_SIZE) {
-                    int Pid = TsPid(p);
-                    if (Pid == PATPID)
-                       PatPmtParser.ParsePat(p, TS_SIZE);
-                    else if (PatPmtParser.IsPmtPid(Pid))
-                       PatPmtParser.ParsePmt(p, TS_SIZE);
-                    Length -= TS_SIZE;
-                    p += TS_SIZE;
-                    if (PatPmtParser.Vpid()) {
-                       // Found Vpid, so rewind to sync FrameDetector:
-                       FrameDetector.SetPid(PatPmtParser.Vpid(), PatPmtParser.Vtype());
-                       BufferChunks = IFG_BUFFER_SIZE;
-                       Rewind = true;
-                       break;
-                       }
-                    }
-              Buffer.Del(p - Data);
-              }
-           }
-        // Read data:
-        else if (ReplayFile) {
-           int Result = Buffer.Read(ReplayFile, BufferChunks);
-           if (Result == 0) { // EOF
-              ReplayFile = FileName.NextFile();
-              FileSize = 0;
-              FrameOffset = -1;
-              Buffer.Clear();
-              }
-           }
-        // Recording has been processed:
-        else {
-           IndexFileComplete = true;
-           break;
-           }
-        }
-  if (IndexFileComplete) {
-     if (IndexFileWritten) {
-        cRecordingInfo RecordingInfo(m_strRecordingName);
-        if (RecordingInfo.Read()) {
-           if (FrameDetector.FramesPerSecond() > 0 && !DoubleEqual(RecordingInfo.FramesPerSecond(), FrameDetector.FramesPerSecond())) {
-              RecordingInfo.SetFramesPerSecond(FrameDetector.FramesPerSecond());
-              RecordingInfo.Write();
-              Recordings.UpdateByName(m_strRecordingName);
-              }
-           }
-        isyslog(tr("Index file regeneration complete"));
-        return NULL;
-        }
-     else
-       esyslog(tr("Index file regeneration failed!"));
-     }
-  // Delete the index file if the recording has not been processed entirely:
-  IndexFile.Delete();
-
-  return NULL;
-}
 
 cIndexFile::cIndexFile(const std::string& strFileName, bool Record, bool IsPesRecording, bool PauseLive)
-:m_resumeFile(strFileName, IsPesRecording)
 {
   m_iSize = 0;
   m_iLast = -1;
@@ -220,7 +87,6 @@ cIndexFile::cIndexFile(const std::string& strFileName, bool Record, bool IsPesRe
      if (!Record && !CFile::Exists(m_strFilename)) {
         // Index file doesn't exist, so try to regenerate it:
         if (!m_bIsPesRecording) { // sorry, can only do this for TS recordings
-           m_resumeFile.Delete(); // just in case
            m_indexFileGenerator = new cIndexFileGenerator(strFileName);
            // Wait until the index file exists:
            time_t tmax = time(NULL) + MAXWAITFORINDEXFILE;
@@ -541,6 +407,7 @@ int cIndexFile::GetLength(const std::string& strFileName, bool IsPesRecording)
 bool GenerateIndex(const char *FileName)
 {
   if (CDirectory::CanWrite(FileName)) {
+     /* TODO
      cRecording Recording(FileName);
      if (!Recording.Name().empty()) {
         if (!Recording.IsPesRecording()) {
@@ -559,6 +426,7 @@ bool GenerateIndex(const char *FileName)
         }
      else
         fprintf(stderr, "'%s' is not a recording\n", FileName);
+     */
      }
   else
      fprintf(stderr, "'%s' is not a directory\n", FileName);

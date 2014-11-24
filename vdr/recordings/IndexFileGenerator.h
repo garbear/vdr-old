@@ -20,20 +20,24 @@
  */
 #pragma once
 
+#include "lib/platform/threads/threads.h"
+
 #include <string>
 
 namespace VDR
 {
-class cResumeFile
+
+class cIndexFileGenerator : protected PLATFORM::CThread
 {
 public:
-  cResumeFile(const std::string& strFileName, bool IsPesRecording);
-  ~cResumeFile();
-  int Read(void);
-  bool Save(int Index);
-  void Delete(void);
+  cIndexFileGenerator(const std::string& strRecordingName);
+  virtual ~cIndexFileGenerator(void);
+
+protected:
+  virtual void* Process(void);
+
 private:
-  std::string m_strFileName;
-  bool        m_bIsPesRecording;
+  std::string m_strRecordingName;
 };
+
 }

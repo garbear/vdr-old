@@ -20,44 +20,18 @@
  */
 #pragma once
 
-#include "utils/CommonIncludes.h" // off_t problems on x86
+#include <map>
+#include <shared_ptr/shared_ptr.hpp>
+#include <vector>
 
-#include "File.h"
-
-#include <stddef.h>
-#include <sys/types.h>
+#define RECORDING_INVALID_ID   0
 
 namespace VDR
 {
 
-class CVideoFile
-{
-public:
-  CVideoFile(void);
-  virtual ~CVideoFile();
-
-  bool Open(const char *FileName, int Flags, mode_t Mode = DEFFILEMODE);
-  void Close(void);
-  void SetReadAhead(size_t ra);
-  off_t Seek(off_t Offset, int Whence);
-  ssize_t Read(void *Data, size_t Size);
-  ssize_t Write(const void *Data, size_t Size);
-
-  static CVideoFile *Create(const char *FileName, int Flags, mode_t Mode = DEFFILEMODE);
-
-private:
-  int FadviseDrop(off_t Offset, off_t Len);
-
-  CFile  m_file;
-  off_t  m_curpos;
-  off_t  m_cachedstart;
-  off_t  m_cachedend;
-  off_t  m_begin;
-  off_t  m_lastpos;
-  off_t  m_ahead;
-  size_t m_readahead;
-  size_t m_written;
-  size_t m_totwritten;
-};
+class cRecording;
+typedef VDR::shared_ptr<cRecording> RecordingPtr;
+typedef std::vector<RecordingPtr>   RecordingVector;
+typedef std::map<unsigned int, RecordingPtr> RecordingMap; // ID -> Recording
 
 }

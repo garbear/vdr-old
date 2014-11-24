@@ -43,22 +43,30 @@ namespace VDR
 
 // --- cPacketBuffer ---------------------------------------------------------
 
-class cPacketBuffer {
+class cPacketBuffer
+{
+public:
+  cPacketBuffer(void);
+  ~cPacketBuffer(void);
+
+  /*!
+   * Appends Length bytes of Data to this packet buffer.
+   */
+  void Append(uint8_t *Data, int Length);
+
+  /*!
+   * Flushes the content of this packet buffer into the given Data, starting at
+   * position Length, and clears the buffer afterwards. Length will be
+   * incremented accordingly. If Length plus the total length of the stored
+   * packets would exceed MaxLength, nothing is copied.
+   */
+  void Flush(uint8_t *Data, int &Length, int MaxLength);
+
 private:
   uint8_t* data;
   int      size;
   int      length;
-public:
-  cPacketBuffer(void);
-  ~cPacketBuffer();
-  void Append(uint8_t *Data, int Length);
-       ///< Appends Length bytes of Data to this packet buffer.
-  void Flush(uint8_t *Data, int &Length, int MaxLength);
-       ///< Flushes the content of this packet buffer into the given Data, starting
-       ///< at position Length, and clears the buffer afterwards. Length will be
-       ///< incremented accordingly. If Length plus the total length of the stored
-       ///< packets would exceed MaxLength, nothing is copied.
-  };
+};
 
 cPacketBuffer::cPacketBuffer(void)
 {
@@ -97,39 +105,30 @@ void cPacketBuffer::Flush(uint8_t *Data, int &Length, int MaxLength)
 
 // --- cPacketStorage --------------------------------------------------------
 
-class cPacketStorage {
-private:
-  cPacketBuffer *buffers[MAXPID];
+class cPacketStorage
+{
 public:
-  cPacketStorage(void);
-  ~cPacketStorage();
   void Append(int Pid, uint8_t *Data, int Length);
   void Flush(int Pid, uint8_t *Data, int &Length, int MaxLength);
-  };
 
-cPacketStorage::cPacketStorage(void)
-{
-  for (int i = 0; i < MAXPID; i++)
-      buffers[i] = NULL;
-}
-
-cPacketStorage::~cPacketStorage()
-{
-  for (int i = 0; i < MAXPID; i++)
-      delete buffers[i];
-}
+private:
+  std::map<uint16_t, std::vector<uint8_t> > buffers;
+};
 
 void cPacketStorage::Append(int Pid, uint8_t *Data, int Length)
 {
-  if (!buffers[Pid])
-     buffers[Pid] = new cPacketBuffer;
-  buffers[Pid]->Append(Data, Length);
+  std::vector<uint8_t>& data = buffers[Pid];
+  std::vector<uint8_t> data(Data, Data + Length);
+  buffers[Pid].push_back(data.begin(), data.end());
 }
 
 void cPacketStorage::Flush(int Pid, uint8_t *Data, int &Length, int MaxLength)
 {
-  if (buffers[Pid])
-     buffers[Pid]->Flush(Data, Length, MaxLength);
+  if ()
+  std::vector<uint8_t>& data = buffers[Pid];
+  memcpy(Data + Length, data.data(), data.size());
+  Length += data.size();
+  data.clear();
 }
 
 // --- cMpeg2Fixer -----------------------------------------------------------

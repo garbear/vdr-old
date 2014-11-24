@@ -20,127 +20,161 @@
  */
 #pragma once
 
-#include "RecordingConfig.h"
-#include "recordings/marks/Mark.h"
-#include "Config.h"
-#include "epg/EPGTypes.h"
-#include "filesystem/File.h"
-#include "filesystem/ResumeFile.h"
-#include "lib/platform/threads/threads.h"
-#include "timers/TimerTypes.h"
+#include "RecordingTypes.h"
+#include "channels/ChannelTypes.h"
+#include "devices/TunerHandle.h"
 #include "utils/DateTime.h"
+#include "utils/Observer.h"
 
-#include <stdint.h>
-#include <time.h>
+#include <string>
+
+class TiXmlNode;
 
 namespace VDR
 {
-class cRecordingInfo;
-class CVideoFile;
 
-extern int InstanceId;
+class cRecorder;
 
-typedef enum
+class cRecording : public Observable
 {
-  RECORDING_FILE_LIMITS_UNIX,
-  RECORDING_FILE_LIMITS_MSDOS,
-} recording_file_limits_t;
-
-class cRecording
-{
-  friend class cRecordings;
 public:
-  cRecording(TimerPtr Timer, const EventPtr& event);
-  cRecording(const std::string& strFileName);
-  virtual ~cRecording();
-  bool operator==(const cRecording& other) const;
-  time_t Start(void) const { return m_start; }
-  CDateTime Start2(void) const { return CDateTime(m_start).GetAsUTCDateTime(); } //XXX
-  int Priority(void) const { return m_iPriority; }
-  int LifetimeDays(void) const { return m_iLifetimeDays; }
-  time_t Deleted(void) const { return m_deleted; }
-  std::string Name(void) const { return m_strName; }
-  std::string FileName(void);
-  uint32_t UID(void);
-  const cRecordingInfo *Info(void) const { return m_recordingInfo; }
-  std::string PrefixFileName(char Prefix);
-  int HierarchyLevels(void) const;
-  void ResetResume(void);
-  double FramesPerSecond(void) const { return m_dFramesPerSecond; }
-  int NumFrames(void);
-       ///< Returns the number of frames in this recording.
-       ///< If the number of frames is unknown, -1 will be returned.
-  int LengthInSeconds(void);
-       ///< Returns the length (in seconds) of this recording, or -1 in case of error.
-  size_t FileSizeMB(void);
-       ///< Returns the total file size of this recording (in MB), or -1 if the file
-       ///< size is unknown.
-  bool IsNew(void) { return GetResume() <= 0; }
-  bool IsEdited(void) const;
-  bool IsPesRecording(void) const { return m_bIsPesRecording; }
-  bool IsOnVideoDirectoryFileSystem(void);
-  void ReadInfo(void);
-  bool WriteInfo(void);
-  void SetStartTime(time_t Start);
-       ///< Sets the start time of this recording to the given value.
-       ///< If a filename has already been set for this recording, it will be
-       ///< deleted and a new one will be generated (using the new start time)
-       ///< at the next call to FileName().
-       ///< Use this function with care - it does not check whether a recording with
-       ///< this new name already exists, and if there is one, results may be
-       ///< unexpected!
-  bool Delete(void);
-       ///< Changes the file name so that it will no longer be visible in the "Recordings" menu
-       ///< Returns false in case of error
-  bool Remove(void);
-       ///< Actually removes the file from the disk
-       ///< Returns false in case of error
-  bool Undelete(void);
-       ///< Changes the file name so that it will be visible in the "Recordings" menu again and
-       ///< not processed by cRemoveDeletedRecordingsThread.
-       ///< Returns false in case of error
+  /*!
+   * Construct a recording with default values or from exiting data. Recording
+   * ID is initialised to RECORDING_INVALID_ID and must be set via SetID(). Once
+   * set, recording ID is immutable.
+   */
+  cRecording(void);
+  cRecording(const std::string&   strFoldername, /* requried */
+             const std::string&   strTitle,      /* requried */
+             const ChannelPtr&    channel,       /* required */
+             const CDateTime&     startTime,     /* required */
+             const CDateTime&     endTime,       /* required */
+             const CDateTime&     expires        = CDateTime(),
+             const CDateTimeSpan& resumePosition = CDateTimeSpan(),
+             unsigned int         playCount      = 0,
+             unsigned int         priority       = 0);
 
-  static int SecondsToFrames(int Seconds, double FramesPerSecond = DEFAULTFRAMESPERSECOND);
-        // Returns the number of frames corresponding to the given number of seconds.
+  virtual ~cRecording(void);
 
-  static int ReadFrame(CVideoFile *f, uint8_t *b, int Length, int Max);
+  static RecordingPtr EmptyRecording;
 
-  static std::string ExchangeChars(const std::string& strSubject, bool ToFileSystem);
-        // Exchanges the characters in the given string to or from a file system
-        // specific representation (depending on ToFileSystem). The given string will
-        // be modified and may be reallocated if more space is needed. The return
-        // value points to the resulting string, which may be different from s.
+  /*!
+   * Recording properties
+   *   - ID:              Unique identifier for the recording; immutable once set
+   *   - Folder name:     The foldername (under special://home/video) containing
+   *                      recordings belonging to the timer
+   *   - Title:           The title; used as the recording's filename
+   *   - URL:             The full path of the recording
+   *   - Channel:         Channel being recorded
+   *   - Start time:      UTC time when the recording began
+   *   - End time:        UTC time when the recording ended (must be > start time)
+   *   - Expires:         UTC time when the recording expires
+   *   - Resume Position: Last played position relative to start time
+   *   - Play count:      As described
+   *   - Priority:        ??? in the interval [0, 100]
+   *   - IsPesRecording:  ???
+   *   - FramesPerSecond: Set by recorder during recording
+   */
+  unsigned int         ID(void) const            { return m_id; }
+  const std::string&   Foldername(void) const    { return m_strFoldername; }
+  const std::string&   Title(void) const         { return m_strTitle; }
+  std::string          URL(void) const;
+  const ChannelPtr&    Channel(void) const       { return m_channel; }
+  const CDateTime&     StartTime(void) const     { return m_startTime; }
+  const CDateTime&     EndTime(void) const       { return m_endTime; }
+  const CDateTime&     Expires(void) const       { return m_expires; }
+  const CDateTimeSpan& ResumePositon(void) const { return m_resumePosition; }
+  unsigned int         PlayCount(void) const     { return m_playCount; }
+  unsigned int         Priority(void) const      { return m_priority; }
+  bool                 IsPesRecording(void) const { return false; } // TODO
 
-  static void SetFileLimits(const recording_file_limits_t limits);
+  /*!
+   * Set the recording ID. This ID should be unique among recordings.
+   *
+   * The ID may only be set once. If the recording already has a valid ID then
+   * SetID() has no effect and returns false.
+   *
+   * Setting the ID does not mark the recording as changed.
+   */
+  bool SetID(unsigned int id);
 
-  static int      DirectoryPathMax;
-  static int      DirectoryNameMax;
-  static bool     DirectoryEncoding;
+  /*!
+   * Set recording properties. Properties can be set all at once via operator=(),
+   * or sequentially via the Set*() methods. operator=() does not set the ID.
+   *
+   * Recording will be marked as changed if any properties (excluding ID) are
+   * modified.
+   */
+  cRecording& operator=(const cRecording& rhs);
+
+  void SetFoldername(const std::string& strFoldername);
+  void SetTitle(const std::string& strTitle);
+  void SetChannel(const ChannelPtr& channel);
+  void SetTime(const CDateTime& startTime, const CDateTime& endTime);
+  void SetExpires(const CDateTime& expires);
+  void SetResumePosition(const CDateTimeSpan& resumePosition);
+  void SetPlayCount(unsigned int playCount);
+  void SetPriority(unsigned int priority);
+
+  /*!
+   * A recording is valid if:
+   *   (1) m_id            is a valid ID (i.e. is not RECORDING_INVALID_ID)
+   *   (2) m_strFoldername is a valid folder name
+   *   (3) m_strTitle      is a valid file name
+   *   (4) m_channel       is a valid channel
+   *   (5) m_startTime     is a valid CDateTime object
+   *   (6) m_endTime       is a valid CDateTime object
+   *   (7) m_startTime < m_endTime
+   *
+   * HOWEVER, the ID check (1) may be skipped by setting bCheckID to false.
+   * This allows the recording manager to check validity before assigning an ID.
+   */
+  bool IsValid(bool bCheckID = true) const;
+  void LogInvalidProperties(bool bCheckID = true) const;
+
+  /*!
+   * Start/resume recording. Has no effect if already started.
+   */
+  void Resume(void);
+
+  /*!
+   * Stop/interrupt recording. Has no effect if already stopped.
+   */
+  void Interrupt(void);
+
+  /*!
+   * Serialise the recording. If serialisation succeeds, the serialised
+   * recording is guaranteed to be valid (IsValid() returns true); otherwise,
+   * false is returned.
+   */
+  bool Serialise(TiXmlNode* node) const;
+
+  /*!
+   * Deserialise the recording. If deserialisation succeeds, the deserialised
+   * recording is guaranteed to be valid (IsValid() returns true); otherwise,
+   * false is returned.
+   *
+   * Deserialisation will fail if the recording already has a valid ID.
+   *
+   * Upon deserialisation, the recording is marked as unchanged. (This mirrors
+   * the state of a newly-constructed recording.)
+   */
+  bool Deserialise(const TiXmlNode* node);
 
 private:
-  cRecording(const cRecording&); // can't copy cRecording
-  cRecording &operator=(const cRecording &); // can't assign cRecording
-  static char *StripEpisodeName(char *s, bool Strip);
-  int GetResume(void);
-
-  static char *ExchangeCharsXXX(char *s, bool ToFileSystem);
-
-  int             m_iResume;
-  std::string     m_strFileName;
-  std::string     m_strName;
-  ssize_t         m_iFileSizeMB;
-  int             m_iNumFrames;
-  int             m_iChannel;
-  int             m_iInstanceId;
-  bool            m_bIsPesRecording;
-  int             m_iIsOnVideoDirectoryFileSystem; // -1 = unknown, 0 = no, 1 = yes
-  double          m_dFramesPerSecond;
-  cRecordingInfo* m_recordingInfo;
-  time_t          m_start;
-  int             m_iPriority;
-  int             m_iLifetimeDays;
-  time_t          m_deleted;
-  int64_t         m_hash;
-  PLATFORM::CMutex m_mutex;
+  unsigned int   m_id;
+  std::string    m_strFoldername;
+  std::string    m_strTitle;
+  ChannelPtr     m_channel;
+  CDateTime      m_startTime;
+  CDateTime      m_endTime;
+  CDateTime      m_expires;
+  CDateTimeSpan  m_resumePosition;
+  unsigned int   m_playCount;
+  unsigned int   m_priority;
+  float          m_fps;
+  cRecorder*     m_recorder;
+  TunerHandlePtr m_tunerHandle;
 };
+
 }

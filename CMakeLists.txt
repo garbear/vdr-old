@@ -180,19 +180,18 @@ set(VDR_SRCS
 	vdr/filesystem/Poller.cpp
 	vdr/filesystem/ReadDir.cpp
 	vdr/filesystem/SpecialProtocol.cpp
-	vdr/filesystem/Videodir.cpp
-	vdr/filesystem/VideoFile.cpp
 	vdr/recordings/filesystem/FileName.cpp
 	vdr/recordings/filesystem/IndexFile.cpp
-	vdr/recordings/filesystem/ResumeFile.cpp
-	vdr/recordings/marks/Mark.cpp
-	vdr/recordings/marks/Marks.cpp
+	vdr/recordings/IndexFileGenerator.cpp
+	#vdr/recordings/marks/Mark.cpp
+	#vdr/recordings/marks/Marks.cpp
 	vdr/recordings/Recorder.cpp
 	vdr/recordings/Recording.cpp
-	vdr/recordings/RecordingCutter.cpp
-	vdr/recordings/RecordingInfo.cpp
-	vdr/recordings/RecordingUserCommand.cpp
-	vdr/recordings/Recordings.cpp
+	#vdr/recordings/RecordingCutter.cpp
+	#vdr/recordings/RecordingInfo.cpp
+	vdr/recordings/RecordingManager.cpp
+	#vdr/recordings/RecordingUserCommand.cpp
+	#vdr/recordings/Recordings.cpp
 	vdr/scan/CNICodes.cpp
 	vdr/scan/ScanConfig.cpp
 	vdr/scan/Scanner.cpp

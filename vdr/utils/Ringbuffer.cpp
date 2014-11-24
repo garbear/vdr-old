@@ -22,7 +22,7 @@
 #include "Ringbuffer.h"
 #include "CommonMacros.h"
 #include "Tools.h"
-#include "filesystem/VideoFile.h"
+#include "filesystem/File.h"
 #include "utils/log/Log.h"
 
 #include <stdlib.h>
@@ -279,7 +279,7 @@ int cRingBufferLinear::Read(int FileHandle, int Max)
   return Count;
 }
 
-int cRingBufferLinear::Read(CVideoFile *File, int Max)
+int cRingBufferLinear::Read(CFile& File, int Max)
 {
   int Tail = tail;
   int diff = Tail - head;
@@ -291,7 +291,7 @@ int cRingBufferLinear::Read(CVideoFile *File, int Max)
   if (free > 0) {
      if (0 < Max && Max < free)
         free = Max;
-     Count = File->Read(buffer + head, free);
+     Count = File.Read(buffer + head, free);
      if (Count > 0) {
         int Head = head + Count;
         if (Head >= Size())

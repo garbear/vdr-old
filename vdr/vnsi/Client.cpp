@@ -37,9 +37,9 @@
 #include "devices/DeviceManager.h"
 #include "epg/Event.h"
 #include "epg/ScheduleManager.h"
-#include "filesystem/Videodir.h"
-#include "recordings/RecordingInfo.h"
-#include "recordings/Recordings.h"
+#include "filesystem/Directory.h"
+#include "recordings/Recording.h"
+#include "recordings/RecordingManager.h"
 #include "recordings/marks/Marks.h"
 #include "settings/Settings.h"
 #include "timers/Timer.h"
@@ -776,12 +776,11 @@ bool cVNSIClient::processChannelStream_Seek() /* OPCODE 22 */
 
 bool cVNSIClient::processRecStream_Open() /* OPCODE 40 */
 {
-  cRecording *recording = NULL;
-
   uint32_t uid = m_req->extract_U32();
-  recording = Recordings.FindByUID(uid);
 
-  if (recording && m_RecPlayer == NULL)
+  RecordingPtr recording = cRecordingManager::Get().GetByID(uid);
+
+  if (recording)
   {
     m_RecPlayer = new cRecPlayer(recording);
 
@@ -1250,10 +1249,12 @@ bool cVNSIClient::processTIMER_Get() /* OPCODE 81 */
 
     uint32_t priority = 0; // TODO
 
+    const CDateTime now = CDateTime::GetUTCDateTime();
+
     m_resp->add_U32(timer->ID());
     m_resp->add_U32(timer->IsActive());
-    m_resp->add_U32(timer->IsRecording(CDateTime::GetUTCDateTime()));
-    m_resp->add_U32(timer->IsPending(CDateTime::GetUTCDateTime()));
+    m_resp->add_U32(timer->IsRecording(now));
+    m_resp->add_U32(!timer->IsExpired(now));
     m_resp->add_U32(priority);
     m_resp->add_U32(timer->Lifetime().GetDays());
     m_resp->add_U32(timer->Channel()->Number());
@@ -1262,7 +1263,7 @@ bool cVNSIClient::processTIMER_Get() /* OPCODE 81 */
     m_resp->add_U32(endTime);
     m_resp->add_U32(timer->StartTime().GetDay());
     m_resp->add_U32(timer->WeekdayMask());
-    m_resp->add_String(m_toUTF8.Convert(timer->RecordingFilename().c_str()));
+    m_resp->add_String(m_toUTF8.Convert(timer->Filename().c_str()));
   }
 
   m_resp->finalise();
@@ -1290,10 +1291,12 @@ bool cVNSIClient::processTIMER_GetList() /* OPCODE 82 */
 
     uint32_t priority = 0; // TODO
 
+    const CDateTime now = CDateTime::GetUTCDateTime();
+
     m_resp->add_U32(timer->ID());
     m_resp->add_U32(timer->IsActive());
-    m_resp->add_U32(timer->IsRecording(CDateTime::GetUTCDateTime()));
-    m_resp->add_U32(timer->IsPending(CDateTime::GetUTCDateTime()));
+    m_resp->add_U32(timer->IsRecording(now));
+    m_resp->add_U32(!timer->IsExpired(now));
     m_resp->add_U32(priority);
     m_resp->add_U32(timer->Lifetime().GetDays());
     m_resp->add_U32(timer->Channel()->Number());
@@ -1302,7 +1305,7 @@ bool cVNSIClient::processTIMER_GetList() /* OPCODE 82 */
     m_resp->add_U32(endTime);
     m_resp->add_U32(timer->StartTime().GetDay());
     m_resp->add_U32(timer->WeekdayMask());
-    m_resp->add_String(m_toUTF8.Convert(timer->RecordingFilename().c_str()));
+    m_resp->add_String(m_toUTF8.Convert(timer->Filename().c_str()));
   }
 
   m_resp->finalise();
@@ -1334,13 +1337,14 @@ bool cVNSIClient::processTIMER_Add() /* OPCODE 83 */
   }
   else
   {
+    const CDateTime deadline = CDateTime(startTime) + CDateTimeSpan(lifetime, 0, 0, 0);
     TimerPtr timer = TimerPtr(new cTimer(startTime,
                                          stopTime,
-                                         CDateTimeSpan(lifetime, 0, 0, 0),
                                          weekdayMask,
+                                         deadline,
                                          channel,
-                                         bIsActive,
-                                         file));
+                                         file,
+                                         bIsActive));
     delete[] file;
 
     if (cTimerManager::Get().AddTimer(timer))
@@ -1436,10 +1440,11 @@ bool cVNSIClient::processTIMER_Update() /* OPCODE 85 */
     ChannelPtr channel = cChannelManager::Get().GetByChannelUID(channelid);
     if(channel)
     {
-      timer->SetTime(startTime, stopTime, CDateTimeSpan(lifetime, 0, 0, 0), weekdayMask);
+      timer->SetFilename(file);
+      const CDateTime deadline = CDateTime(startTime) + CDateTimeSpan(lifetime, 0, 0, 0);
+      timer->SetTime(startTime, stopTime, weekdayMask, deadline);
       timer->SetChannel(channel);
       timer->SetActive(active);
-      timer->SetRecordingFilename(file);
     }
 
     delete[] file;
@@ -1460,7 +1465,9 @@ bool cVNSIClient::processTIMER_Update() /* OPCODE 85 */
 bool cVNSIClient::processRECORDINGS_GetDiskSpace() /* OPCODE 100 */
 {
   disk_space_t space;
-  unsigned int Percent = VideoDiskSpace(space);
+  CDirectory::CalculateDiskSpace(cSettings::Get().m_VideoDirectory, space);
+
+  unsigned int Percent = (space.free + space.used) ? space.used * 100 / (space.free + space.used) : 0;
 
   m_resp->add_U32((space.free + space.used) / MEGABYTE(1));
   m_resp->add_U32(space.free / MEGABYTE(1));
@@ -1473,8 +1480,7 @@ bool cVNSIClient::processRECORDINGS_GetDiskSpace() /* OPCODE 100 */
 
 bool cVNSIClient::processRECORDINGS_GetCount() /* OPCODE 101 */
 {
-  Recordings.Load();
-  m_resp->add_U32(Recordings.Size());
+  m_resp->add_U32(cRecordingManager::Get().RecordingCount());
 
   m_resp->finalise();
   m_socket.write(m_resp->getPtr(), m_resp->getLen());
@@ -1484,96 +1490,53 @@ bool cVNSIClient::processRECORDINGS_GetCount() /* OPCODE 101 */
 bool cVNSIClient::processRECORDINGS_GetList() /* OPCODE 102 */
 {
   CLockObject lock(m_timerLock);
-  CThreadLock RecordingsLock(&Recordings);
-  std::vector<cRecording*> recordings = Recordings.Recordings();
-  for (std::vector<cRecording*>::const_iterator it = recordings.begin(); it != recordings.end(); ++it)
+
+  RecordingVector recordings = cRecordingManager::Get().GetRecordings();
+  for (RecordingVector::const_iterator it = recordings.begin(); it != recordings.end(); ++it)
   {
-    const EventPtr& event = (*it)->Info()->GetEvent();
+    const RecordingPtr& recording = *it;
 
-    CDateTime recordingStart;
-    int       recordingDuration = 0;
-    if (event.get() != NULL)
-    {
-      recordingStart    = event->StartTime();
-      recordingDuration = event->DurationSecs();
-    }
-    else
-    {
-//      cRecordControl *rc = cRecordControls::GetRecordControl(recording->FileName());
-//      if (rc)
-//      {
-//        recordingStart    = rc->Timer()->StartTime();
-//        recordingDuration = rc->Timer()->StopTime() - recordingStart;
-//      }
-//      else
-//      {
-        recordingStart = (*it)->Start2();
-//      }
-    }
-    dsyslog("GRI: RC: recordingStart=%s recordingDuration=%i", recordingStart.GetAsSaveString().c_str(), recordingDuration);
-
-    // recording_time
+    // Start time
     time_t tmStart;
-    recordingStart.GetAsTime(tmStart);
+    recording->StartTime().GetAsTime(tmStart);
     m_resp->add_U32(tmStart);
 
-    // duration
-    m_resp->add_U32(recordingDuration);
+    // Duration
+    time_t tmEnd;
+    recording->EndTime().GetAsTime(tmEnd);
+    m_resp->add_U32(tmEnd - tmStart);
 
-    // priority
-    m_resp->add_U32((*it)->Priority());
+    // Priority
+    m_resp->add_U32(recording->Priority());
 
-    // lifetime
-    m_resp->add_U32((*it)->LifetimeDays());
+    // Lifetime
+    time_t tmExpires;
+    recording->Expires().GetAsTime(tmExpires);
+    time_t lifetimeSecs = tmExpires - tmStart;
+    m_resp->add_U32(lifetimeSecs > 0 ? CDateTimeSpan(0, 0, 0, lifetimeSecs).GetDays() : 0);
 
-    // channel_name
-    m_resp->add_String(!(*it)->Info()->ChannelName().empty() ? m_toUTF8.Convert((*it)->Info()->ChannelName().c_str()) : "");
+    // Channel name
+    std::string strChannelName = recording->Channel()->Name();
+    m_resp->add_String(m_toUTF8.Convert(strChannelName.c_str()));
 
-    char* fullname = strdup((*it)->Name().c_str());
-    char* recname = strrchr(fullname, FOLDERDELIMCHAR);
-    char* directory = NULL;
+    // Title
+    std::string strTitle = "TITLE"; // TODO
+    m_resp->add_String(m_toUTF8.Convert(strTitle.c_str()));
 
-    if(recname == NULL) {
-      recname = fullname;
-    }
-    else {
-      *recname = 0;
-      recname++;
-      directory = fullname;
-    }
+    // Plot outline
+    std::string strPlotOutline = "PLOT_OUTLINE"; // TODO
+    m_resp->add_String(m_toUTF8.Convert(strPlotOutline.c_str()));
 
-    // title
-    m_resp->add_String(m_toUTF8.Convert(recname));
+    // Plot
+    std::string strPlot = "PLOT"; // TODO
+    m_resp->add_String(m_toUTF8.Convert(strPlot.c_str()));
 
-    // subtitle
-    if (!(*it)->Info()->ShortText().empty())
-      m_resp->add_String(m_toUTF8.Convert((*it)->Info()->ShortText().c_str()));
-    else
-      m_resp->add_String("");
+    // Directory
+    std::string strDirectory = "DIRECTORY"; // TODO
+    m_resp->add_String(m_toUTF8.Convert(strDirectory.c_str()));
 
-    // description
-    if (!(*it)->Info()->Description().empty())
-      m_resp->add_String(m_toUTF8.Convert((*it)->Info()->Description().c_str()));
-    else
-      m_resp->add_String("");
-
-    // directory
-    if(directory != NULL) {
-      char* p = directory;
-      while(*p != 0) {
-        if(*p == FOLDERDELIMCHAR) *p = '/';
-        if(*p == '_') *p = ' ';
-        p++;
-      }
-      while(*directory == '/') directory++;
-    }
-
-    m_resp->add_String((isempty(directory)) ? "" : m_toUTF8.Convert(directory));
-
-    // filename / uid of recording
-    m_resp->add_U32((*it)->UID());
-
-    free(fullname);
+    // ID
+    m_resp->add_U32(recording->ID());
   }
 
   m_resp->finalise();
@@ -1585,35 +1548,18 @@ bool cVNSIClient::processRECORDINGS_Rename() /* OPCODE 103 */
 {
   uint32_t    uid          = m_req->extract_U32();
   char*       newtitle     = m_req->extract_String();
-  cRecording* recording    = Recordings.FindByUID(uid);
   int         r            = VNSI_RET_DATAINVALID;
 
-  if(recording != NULL) {
-    // get filename and remove last part (recording time)
-    char* filename_old = strdup((const char*)recording->FileName().c_str());
-    char* sep = strrchr(filename_old, '/');
-    if(sep != NULL) {
-      *sep = 0;
-    }
+  RecordingPtr recording    = cRecordingManager::Get().GetByID(uid);
 
-    // replace spaces in newtitle
-    strreplace(newtitle, ' ', '_');
-    char* filename_new = new char[1024];
-    strncpy(filename_new, filename_old, 512);
-    sep = strrchr(filename_new, '/');
-    if(sep != NULL) {
-      sep++;
-      *sep = 0;
-    }
-    strncat(filename_new, newtitle, 512);
-
-    isyslog("renaming recording '%s' to '%s'", filename_old, filename_new);
-    r = rename(filename_old, filename_new);
-    Recordings.Update();
-
-    free(filename_old);
-    delete[] filename_new;
+  if (recording)
+  {
+    // TODO: Join filename and directory
+    recording->SetTitle(newtitle);
+    cRecordingManager::Get().NotifyObservers();
   }
+
+  delete[] newtitle;
 
   m_resp->add_U32(r);
   m_resp->finalise();
@@ -1624,44 +1570,16 @@ bool cVNSIClient::processRECORDINGS_Rename() /* OPCODE 103 */
 
 bool cVNSIClient::processRECORDINGS_Delete() /* OPCODE 104 */
 {
-  std::string recName;
-  cRecording* recording = NULL;
-
   uint32_t uid = m_req->extract_U32();
-  recording = Recordings.FindByUID(uid);
 
-  if (recording)
+  if (!cRecordingManager::Get().RemoveRecording(uid))
   {
-    dsyslog("deleting recording: %s", recording->Name().c_str());
-
-    /* TODO
-    TimerPtr tmrRecording = cTimerManager::Get().GetTimerForRecording(recording);
-    if (tmrRecording)
-    {
-      esyslog("Recording \"%s\" is in use by timer %d", recording->Name().c_str(), tmrRecording->Index() + 1);
-      m_resp->add_U32(VNSI_RET_DATALOCKED);
-    }
-    else
-    {
-      //XXX
-      if (recording->Delete())
-      {
-        // Copy svdrdeveldevelp's way of doing this, see if it works
-        Recordings.DelByName(recording->FileName());
-        m_resp->add_U32(VNSI_RET_OK);
-      }
-      else
-      {
-        esyslog("Error while deleting recording!");
-        m_resp->add_U32(VNSI_RET_ERROR);
-      }
-    }
-    */
+    esyslog("Error removing recording %u", uid);
+    m_resp->add_U32(VNSI_RET_ERROR);
   }
   else
   {
-    esyslog("Error in recording name \"%s\"", recName.c_str()); // TODO: This variable is never set?
-    m_resp->add_U32(VNSI_RET_DATAUNKNOWN);
+    m_resp->add_U32(VNSI_RET_OK);
   }
 
   m_resp->finalise();
@@ -1672,27 +1590,16 @@ bool cVNSIClient::processRECORDINGS_Delete() /* OPCODE 104 */
 
 bool cVNSIClient::processRECORDINGS_GetEdl() /* OPCODE 105 */
 {
-  std::string recName; // TODO: This variable is unused?
-  cRecording* recording = NULL;
-
   uint32_t uid = m_req->extract_U32();
-  recording = Recordings.FindByUID(uid);
 
-  if (recording)
-  {
-    cMarks marks;
-    if(marks.Load(recording->FileName(), recording->FramesPerSecond(), recording->IsPesRecording()))
-    {
-      cMark* mark = NULL;
-      double fps = recording->FramesPerSecond();
-      while((mark = marks.GetNextBegin(mark)) != NULL)
-      {
-        m_resp->add_U64(mark->Position() *1000 / fps);
-        m_resp->add_U64(mark->Position() *1000 / fps);
-        m_resp->add_S32(2);
-      }
-    }
-  }
+  RecordingPtr recording = cRecordingManager::Get().GetByID(uid);
+
+  // TODO
+
+  //m_resp->add_U64(mark->Position() *1000 / fps);
+  //m_resp->add_U64(mark->Position() *1000 / fps);
+  //m_resp->add_S32(2);
+
   m_resp->finalise();
   m_socket.write(m_resp->getPtr(), m_resp->getLen());
 

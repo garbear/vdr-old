@@ -25,6 +25,7 @@
 #pragma once
 
 #include "devices/Receiver.h"
+#include "recordings/RecordingTypes.h"
 #include "utils/Timer.h"
 
 #include <stdint.h>
@@ -38,8 +39,6 @@ namespace VDR
 
 #define VIDEOBUFFER_NO_DATA (-1)
 #define VIDEOBUFFER_EOF     (-2)
-
-class cRecording;
 
 class cVideoBuffer : public iReceiver
 {
@@ -66,7 +65,7 @@ public:
    */
   static cVideoBuffer* Create(int clientID, uint8_t timeshift);
   static cVideoBuffer* Create(const std::string& filename);
-  static cVideoBuffer* Create(cRecording *rec);
+  static cVideoBuffer* Create(const RecordingPtr& rec);
 
 protected:
   cVideoBuffer(void);

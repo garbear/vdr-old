@@ -30,15 +30,17 @@
 #ifndef VNSI_RECPLAYER_H
 #define VNSI_RECPLAYER_H
 
-#include "recordings/Recording.h"
-#include "utils/Tools.h"
+#include "recordings/RecordingTypes.h"
 
+#include <stdint.h>
 #include <stdio.h>
+#include <string>
 #include <vector>
 
 namespace VDR
 {
 
+class CFile;
 class cIndexFile;
 
 class cSegment
@@ -51,7 +53,7 @@ class cSegment
 class cRecPlayer
 {
 public:
-  cRecPlayer(cRecording* rec, bool inProgress = false);
+  cRecPlayer(const RecordingPtr& rec, bool inProgress = false);
   ~cRecPlayer();
   uint64_t getLengthBytes();
   uint32_t getLengthFrames();

@@ -20,776 +20,353 @@
  */
 
 #include "Recording.h"
-#include "Recordings.h"
-#include "RecordingInfo.h"
-#include "RecordingUserCommand.h"
+#include "Recorder.h"
+#include "RecordingDefinitions.h"
 #include "channels/ChannelManager.h"
-//#include "interface.h"
-#include "devices/Remux.h"
-#include "epg/Event.h"
-#include "filesystem/Directory.h"
-#include "filesystem/IndexFile.h"
-#include "filesystem/ReadDir.h"
-#include "filesystem/Videodir.h"
-#include "filesystem/VideoFile.h"
-#include "filesystem/FileName.h"
+#include "devices/DeviceManager.h"
 #include "settings/Settings.h"
-#include "timers/Timer.h"
-#include "timers/TimerManager.h"
-#include "utils/CRC32.h"
-#include "utils/I18N.h"
 #include "utils/log/Log.h"
-#include "utils/Ringbuffer.h"
 #include "utils/StringUtils.h"
-#include "utils/UTF8Utils.h"
-#include "utils/url/URLUtils.h"
 
-#include <algorithm>
-#include <ctype.h>
-#include <dirent.h>
-#include <errno.h>
-#include <fcntl.h>
-#define __STDC_FORMAT_MACROS // Required for format specifiers
-#include <inttypes.h>
-#include <math.h>
-#include <stdio.h>
-#include <string.h>
-#include <sys/stat.h>
-#include <unistd.h>
-
-
-using namespace PLATFORM;
+#include <tinyxml.h>
 
 namespace VDR
 {
 
-int cRecording::DirectoryPathMax = PATH_MAX - 1;
-int cRecording::DirectoryNameMax = NAME_MAX;
-bool cRecording::DirectoryEncoding = false;
-int InstanceId = 0;
+RecordingPtr cRecording::EmptyRecording;
 
-// --- cRecording ------------------------------------------------------------
-
-#define RESUME_NOT_INITIALIZED (-2)
-
-struct tCharExchange { char a; char b; };
-tCharExchange CharExchange[] = {
-  { FOLDERDELIMCHAR,  '/' },
-  { '/',  FOLDERDELIMCHAR },
-  { ' ',  '_'    },
-  // backwards compatibility:
-  { '\'', '\''   },
-  { '\'', '\x01' },
-  { '/',  '\x02' },
-  { 0, 0 }
-  };
-
-const char *InvalidChars = "\"\\/:*?|<>#";
-
-bool NeedsConversion(const char *p)
+cRecording::cRecording(void)
+: m_id(RECORDING_INVALID_ID),
+  m_playCount(0),
+  m_priority(0),
+  m_recorder(NULL)
 {
-  return cRecording::DirectoryEncoding &&
-         (strchr(InvalidChars, *p) // characters that can't be part of a Windows file/directory name
-          || *p == '.' && (!*(p + 1) || *(p + 1) == FOLDERDELIMCHAR)); // Windows can't handle '.' at the end of file/directory names
 }
 
-std::string PrefixVideoFileName(const std::string& strFileName, char Prefix)
+cRecording::cRecording(const std::string&   strFoldername,
+                       const std::string&   strTitle,
+                       const ChannelPtr&    channel,
+                       const CDateTime&     startTime,
+                       const CDateTime&     endTime,
+                       const CDateTime&     expires,
+                       const CDateTimeSpan& resumePosition,
+                       unsigned int         playCount,
+                       unsigned int         priority)
+: m_id(RECORDING_INVALID_ID),
+  m_strFoldername(strFoldername),
+  m_strTitle(strTitle),
+  m_channel(channel),
+  m_startTime(startTime),
+  m_endTime(endTime),
+  m_expires(expires),
+  m_resumePosition(resumePosition),
+  m_playCount(playCount),
+  m_priority(priority),
+  m_recorder(NULL)
 {
-  std::string retval;
-  char PrefixedName[strFileName.size() + 2];
-
-  const char* strFileNameCstr = strFileName.c_str();
-  const char *p = strFileNameCstr + strFileName.size(); // p points at the terminating 0
-  int n = 2;
-  while (p-- > strFileNameCstr && n > 0)
-  {
-    if (*p == '/')
-    {
-      if (--n == 0)
-      {
-        int l = p - strFileNameCstr + 1;
-        strncpy(PrefixedName, strFileNameCstr, l);
-        PrefixedName[l] = Prefix;
-        strcpy(PrefixedName + l + 1, p + 1);
-        retval = PrefixedName;
-        break;
-      }
-    }
-  }
-  return retval;
 }
 
-char *cRecording::ExchangeCharsXXX(char *s, bool ToFileSystem)
+cRecording::~cRecording(void)
 {
-  char *p = s;
-  while (*p)
-  {
-    if (DirectoryEncoding)
-    {
-      // Some file systems can't handle all characters, so we
-      // have to take extra efforts to encode/decode them:
-      if (ToFileSystem)
-      {
-        switch (*p)
-          {
-        // characters that can be mapped to other characters:
-        case ' ':
-          *p = '_';
-          break;
-        case FOLDERDELIMCHAR:
-          *p = '/';
-          break;
-        case '/':
-          *p = FOLDERDELIMCHAR;
-          break;
-          // characters that have to be encoded:
-        default:
-          if (NeedsConversion(p))
-          {
-            int l = p - s;
-            if (char *NewBuffer = (char *) realloc(s, strlen(s) + 10))
-            {
-              s = NewBuffer;
-              p = s + l;
-              char buf[4];
-              sprintf(buf, "#%02X", (unsigned char) *p);
-              memmove(p + 2, p, strlen(p) + 1);
-              strncpy(p, buf, 3);
-              p += 2;
-            }
-            else
-              esyslog("ERROR: out of memory");
-          }
-          }
-      }
-      else
-      {
-        switch (*p)
-          {
-        // mapped characters:
-        case '_':
-          *p = ' ';
-          break;
-        case FOLDERDELIMCHAR:
-          *p = '/';
-          break;
-        case '/':
-          *p = FOLDERDELIMCHAR;
-          break;
-          // encoded characters:
-        case '#':
-          {
-            if (strlen(p) > 2 && isxdigit(*(p + 1)) && isxdigit(*(p + 2)))
-            {
-              char buf[3];
-              sprintf(buf, "%c%c", *(p + 1), *(p + 2));
-              uint8_t c = uint8_t(strtol(buf, NULL, 16));
-              if (c)
-              {
-                *p = c;
-                memmove(p + 1, p + 3, strlen(p) - 2);
-              }
-            }
-          }
-          break;
-          // backwards compatibility:
-        case '\x01':
-          *p = '\'';
-          break;
-        case '\x02':
-          *p = '/';
-          break;
-        case '\x03':
-          *p = ':';
-          break;
-        default:
-          ;
-          }
-      }
-    }
-    else
-    {
-      for (struct tCharExchange *ce = CharExchange; ce->a && ce->b; ce++)
-      {
-        if (*p == (ToFileSystem ? ce->a : ce->b))
-        {
-          *p = ToFileSystem ? ce->b : ce->a;
-          break;
-        }
-      }
-    }
-    p++;
-  }
-  return s;
+  Interrupt();
+  delete m_recorder;
 }
 
-char *LimitNameLengthsXXX(char *s, int PathMax, int NameMax)
+std::string cRecording::URL(void) const
 {
-  // Limits the total length of the directory path in 's' to PathMax, and each
-  // individual directory name to NameMax. The lengths of characters that need
-  // conversion when using 's' as a file name are taken into account accordingly.
-  // If a directory name exceeds NameMax, it will be truncated. If the whole
-  // directory path exceeds PathMax, individual directory names will be shortened
-  // (from right to left) until the limit is met, or until the currently handled
-  // directory name consists of only a single character. All operations are performed
-  // directly on the given 's', which may become shorter (but never longer) than
-  // the original value.
-  // Returns a pointer to 's'.
-  int Length = strlen(s);
-  int PathLength = 0;
-  // Collect the resulting lengths of each character:
-  bool NameTooLong = false;
-  int8_t a[Length];
-  int n = 0;
-  int NameLength = 0;
-  for (char *p = s; *p; p++)
-  {
-    if (*p == FOLDERDELIMCHAR)
-    {
-      a[n] = -1; // FOLDERDELIMCHAR is a single character, neg. sign marks it
-      NameTooLong |= NameLength > NameMax;
-      NameLength = 0;
-      PathLength += 1;
-    }
-    else if (NeedsConversion(p))
-    {
-      a[n] = 3; // "#xx"
-      NameLength += 3;
-      PathLength += 3;
-    }
-    else
-    {
-      int8_t l = cUtf8Utils::Utf8CharLen(p);
-      a[n] = l;
-      NameLength += l;
-      PathLength += l;
-      while (l-- > 1)
-      {
-        a[++n] = 0;
-        p++;
-      }
-    }
-    n++;
-  }
-  NameTooLong |= NameLength > NameMax;
-  // Limit names to NameMax:
-  if (NameTooLong)
-  {
-    while (n > 0)
-    {
-      // Calculate the length of the current name:
-      int NameLength = 0;
-      int i = n;
-      int b = i;
-      while (i-- > 0 && a[i] >= 0)
-      {
-        NameLength += a[i];
-        b = i;
-      }
-      // Shorten the name if necessary:
-      if (NameLength > NameMax)
-      {
-        int l = 0;
-        i = n;
-        while (i-- > 0 && a[i] >= 0)
-        {
-          l += a[i];
-          if (NameLength - l <= NameMax)
-          {
-            memmove(s + i, s + n, Length - n + 1);
-            memmove(a + i, a + n, Length - n + 1);
-            Length -= n - i;
-            PathLength -= l;
-            break;
-          }
-        }
-      }
-      // Switch to the next name:
-      n = b - 1;
-    }
-  }
-  // Limit path to PathMax:
-  n = Length;
-  while (PathLength > PathMax && n > 0)
-  {
-    // Calculate how much to cut off the current name:
-    int i = n;
-    int b = i;
-    int l = 0;
-    while (--i > 0 && a[i - 1] >= 0)
-    {
-      if (a[i] > 0)
-      {
-        l += a[i];
-        b = i;
-        if (PathLength - l <= PathMax)
-          break;
-      }
-    }
-    // Shorten the name if necessary:
-    if (l > 0)
-    {
-      memmove(s + b, s + n, Length - n + 1);
-      Length -= n - b;
-      PathLength -= l;
-    }
-    // Switch to the next name:
-    n = i - 1;
-  }
-  return s;
+  // TODO
+  return cSettings::Get().m_VideoDirectory + "/" + m_strFoldername + "/" + m_strTitle + ".ts";
 }
 
-std::string LimitNameLengths(const std::string& strSubject, int PathMax, int NameMax)
+bool cRecording::SetID(unsigned int id)
 {
-  char* ns = LimitNameLengthsXXX(strdup(strSubject.c_str()), PathMax, NameMax);
-  std::string strReturn = ns;
-  free(ns);
-  return strReturn;
-}
-
-std::string cRecording::ExchangeChars(const std::string& strSubject, bool ToFileSystem)
-{
-  std::string strTrimmedSubject(strSubject);
-  StringUtils::Trim(strTrimmedSubject);
-
-  char* ns = ExchangeCharsXXX(strdup(strTrimmedSubject.c_str()), ToFileSystem);
-  std::string strReturn = ns;
-  free(ns);
-
-  if (*strReturn.rbegin() == '/')
-    strReturn = strReturn.substr(0, strReturn.size() - 1);
-
-  return strReturn;
-}
-
-cRecording::cRecording(TimerPtr Timer, const EventPtr& event)
-{
-  m_iResume = RESUME_NOT_INITIALIZED;
-  m_iFileSizeMB = -1; // unknown
-  m_iChannel = Timer->Channel()->Number();
-  m_iInstanceId = InstanceId;
-  m_bIsPesRecording = false;
-  m_iIsOnVideoDirectoryFileSystem = -1; // unknown
-  m_dFramesPerSecond = DEFAULTFRAMESPERSECOND;
-  m_iNumFrames = -1;
-  m_deleted = 0;
-  m_hash = -1;
-  // set up the actual name:
-  std::string strTitle = event.get() != NULL ? event->Title() : "";
-  std::string strSubtitle = event.get() != NULL ? event->PlotOutline() : "";
-  if (strTitle.empty())
-    strTitle = Timer->Channel()->Name();
-  if (strSubtitle.empty())
-    strSubtitle = " ";
-  size_t macroTitle = Timer->RecordingFilename().find(TIMERMACRO_TITLE);
-  size_t macroEpisode = Timer->RecordingFilename().find(TIMERMACRO_EPISODE);
-  if (macroTitle != std::string::npos || macroEpisode != std::string::npos)
+  if (m_id == RECORDING_INVALID_ID)
   {
-    std::string strName = Timer->RecordingFilename();
-    StringUtils::Replace(strName, TIMERMACRO_TITLE, strTitle);
-    StringUtils::Replace(strName, TIMERMACRO_EPISODE, strSubtitle);
-    m_strName = strName;
-    // avoid blanks at the end:
-    size_t l = m_strName.size();
-    while (l-- > 2)
-    {
-      if (m_strName.at(l) == ' ' && m_strName.at(l - 1) != FOLDERDELIMCHAR)
-        m_strName.erase(l);
-      else
-        break;
-    }
-    if (Timer->IsRepeatingEvent())
-    {
-      Timer->SetRecordingFilename(m_strName); // this was an instant recording, so let's set the actual data
-      cTimerManager::Get().NotifyObservers();
-    }
+    m_id = id;
+    return true;
   }
-  else if (Timer->IsRepeatingEvent() || !cSettings::Get().m_bRecordSubtitleName)
+  return false;
+}
+
+cRecording& cRecording::operator=(const cRecording& rhs)
+{
+  if (this != &rhs)
   {
-    m_strName = Timer->RecordingFilename();
+    SetFoldername(rhs.m_strFoldername);
+    SetTitle(rhs.m_strTitle);
+    SetChannel(rhs.m_channel);
+    SetTime(rhs.m_startTime, rhs.m_endTime);
+    SetExpires(rhs.m_expires);
+    SetResumePosition(rhs.m_resumePosition);
+    SetPlayCount(rhs.m_playCount);
+    SetPriority(rhs.m_priority);
+  }
+  return *this;
+}
+
+void cRecording::SetFoldername(const std::string& strFoldername)
+{
+  if (m_strFoldername != strFoldername)
+  {
+    m_strFoldername = strFoldername;
+    SetChanged();
+  }
+}
+
+void cRecording::SetTitle(const std::string& strTitle)
+{
+  if (m_strTitle != strTitle)
+  {
+    m_strTitle = strTitle;
+    SetChanged();
+  }
+}
+
+void cRecording::SetChannel(const ChannelPtr& channel)
+{
+  if (m_channel != channel)
+  {
+    m_channel = channel;
+    SetChanged();
+  }
+}
+
+void cRecording::SetTime(const CDateTime& startTime, const CDateTime& endTime)
+{
+  if (m_startTime != startTime || m_endTime != endTime)
+  {
+    m_startTime = startTime;
+    m_endTime = endTime;
+    SetChanged();
+  }
+}
+
+void cRecording::SetExpires(const CDateTime& expires)
+{
+  if (m_expires != expires)
+  {
+    m_expires = expires;
+    SetChanged();
+  }
+}
+
+void cRecording::SetResumePosition(const CDateTimeSpan& resumePosition)
+{
+  if (m_resumePosition != resumePosition)
+  {
+    m_resumePosition = resumePosition;
+    SetChanged();
+  }
+}
+
+void cRecording::SetPlayCount(unsigned int playCount)
+{
+  if (m_playCount != playCount)
+  {
+    m_playCount = playCount;
+    SetChanged();
+  }
+}
+
+void cRecording::SetPriority(unsigned int priority)
+{
+  if (m_priority != priority)
+  {
+    m_priority = priority;
+    SetChanged();
+  }
+}
+
+bool cRecording::IsValid(bool bCheckID /* = true */) const
+{
+  return (bCheckID ? m_id != RECORDING_INVALID_ID : true) && // Condition (1)
+         !m_strFoldername.empty()                         && // Condition (2)
+         !m_strTitle.empty()                              && // Condition (3)
+         m_channel && m_channel->IsValid()                && // Condition (4)
+         m_startTime.IsValid()                            && // Condition (5)
+         m_endTime.IsValid()                              && // Condition (6)
+         m_startTime < m_endTime;                            // Condition (7)
+}
+
+void cRecording::LogInvalidProperties(bool bCheckID /* = true */) const
+{
+  // Check condition (1)
+  if (bCheckID && m_id == RECORDING_INVALID_ID)
+    esyslog("Invalid recording: ID has not been set");
+
+  // Check conditions (2) and (3)
+  if (m_strFoldername.empty() || m_strTitle.empty())
+  {
+    esyslog("Invalid recording %u: invalid %s", m_id,
+        !m_strTitle.empty() ? "folder name" :
+            !m_strFoldername.empty() ? "title" :
+                "folder name and title");
+  }
+
+  // Check condition (4)
+  if (!m_channel || !m_channel->IsValid())
+    esyslog("Invalid timer %u: invalid channel", m_id);
+
+  // Check conditions (5) and (6)
+  if (!m_startTime.IsValid() || !m_endTime.IsValid())
+  {
+    esyslog("Invalid recording %u: invalid %s", m_id,
+        m_endTime.IsValid() ? "start time" :
+            m_startTime.IsValid() ? "end time" :
+                "start and end time");
   }
   else
   {
-    m_strName = StringUtils::Format("%s~%s", Timer->RecordingFilename().c_str(), strSubtitle.c_str());
+    time_t startTime;
+    time_t endTime;
+
+    m_startTime.GetAsTime(startTime);
+    m_endTime.GetAsTime(endTime);
+
+    // Check condition (7)
+    if (m_startTime >= m_endTime)
+      esyslog("Invalid recording %u: start time (%d) is >= end time (%d)", m_id, startTime, endTime);
   }
-  // substitute characters that would cause problems in file names:
-  StringUtils::Replace(m_strName, '\n', ' ');
-  Timer->StartTime().GetAsTime(m_start);
-  m_iPriority = 0; // TODO
-  m_iLifetimeDays = Timer->Lifetime().GetDays();
-  // handle info:
-  m_recordingInfo = new cRecordingInfo(Timer->Channel(), event);
-  m_recordingInfo->SetPriority(m_iPriority);
-  m_recordingInfo->SetLifetime(m_iLifetimeDays);
 }
 
-cRecording::cRecording(const std::string& strFileName)
+void cRecording::Resume(void)
 {
-  m_iResume                       = RESUME_NOT_INITIALIZED;
-  m_iFileSizeMB                   = -1; // unknown
-  m_iChannel                      = -1;
-  m_iInstanceId                   = -1;
-  m_iPriority                     = MAXPRIORITY; // assume maximum in case there is no info file
-  m_iLifetimeDays                     = MAXLIFETIME;
-  m_bIsPesRecording               = false;
-  m_iIsOnVideoDirectoryFileSystem = -1; // unknown
-  m_dFramesPerSecond              = DEFAULTFRAMESPERSECOND;
-  m_iNumFrames                    = -1;
-  m_deleted                       = 0;
-  m_hash                          = -1;
-  m_strFileName                   = strFileName;
-
-  //XXX fix this up
-
-  m_strName = URLUtils::GetFileName(strFileName);
-//  size_t pos = m_strFileName.find(VideoDirectory);
-//  if (pos != std::string::npos)
-//    m_strFileName.erase((size_t)pos, strlen(VideoDirectory));
-//  const char *p = strrchr(m_strFileName.c_str(), '/');
-
-  m_recordingInfo = new cRecordingInfo(m_strFileName);
-  if (!m_strName.empty())
+  if (!m_tunerHandle)
   {
-    //XXX
-    const char* p = m_strName.c_str();
-     time_t now = time(NULL);
-     struct tm tm_r;
-     struct tm t = *localtime_r(&now, &tm_r); // this initializes the time zone in 't'
-     t.tm_isdst = -1; // makes sure mktime() will determine the correct DST setting
-     if (7 == sscanf(p /*+ 1*/, DATAFORMATTS, &t.tm_year, &t.tm_mon, &t.tm_mday, &t.tm_hour, &t.tm_min, &m_iChannel, &m_iInstanceId)
-      || 7 == sscanf(p /*+ 1*/, DATAFORMATPES, &t.tm_year, &t.tm_mon, &t.tm_mday, &t.tm_hour, &t.tm_min, &m_iPriority, &m_iLifetimeDays)) {
-        t.tm_year -= 1900;
-        t.tm_mon--;
-        t.tm_sec = 0;
-        m_start = mktime(&t);
-//        m_strName = strFileName;
-//        m_strName.erase(p - strFileName.c_str());
-        m_strName = ExchangeChars(m_strName, false);
-        m_bIsPesRecording = m_iInstanceId < 0;
-        }
-     else
-        return;
-     GetResume();
-     // read an optional info file:
-     std::string InfoFileName = StringUtils::Format("%s%s", m_strFileName.c_str(), INFOFILESUFFIX);
-     if (!m_recordingInfo->Read(InfoFileName))
-     {
-       esyslog("ERROR: EPG data problem in file %s", InfoFileName.c_str());
-     }
-     else if (!m_bIsPesRecording)
-     {
-       m_iPriority        = m_recordingInfo->Priority();
-       m_iLifetimeDays    = m_recordingInfo->Lifetime();
-       m_dFramesPerSecond = m_recordingInfo->FramesPerSecond();
-     }
-     else if (!CFile::Exists(InfoFileName))
-     {
-       m_recordingInfo->SetTitle(m_strName);
-     }
-     else
-     {
-        LOG_ERROR_STR(InfoFileName.c_str());
-     }
-   }
-}
+    if (!m_recorder)
+      m_recorder = new cRecorder(this);
 
-cRecording::~cRecording()
-{
-  delete m_recordingInfo;
-}
-
-bool cRecording::operator==(const cRecording& other) const
-{
-  return m_strFileName.compare(other.m_strFileName) == 0;
-}
-
-char *cRecording::StripEpisodeName(char *s, bool Strip)
-{
-  char *t = s, *s1 = NULL, *s2 = NULL;
-  while (*t) {
-        if (*t == '/') {
-           if (s1) {
-              if (s2)
-                 s1 = s2;
-              s2 = t;
-              }
-           else
-              s1 = t;
-           }
-        t++;
-        }
-  if (s1 && s2) {
-     // To have folders sorted before plain recordings, the '/' s1 points to
-     // is replaced by the character '1'. All other slashes will be replaced
-     // by '0' in SortName() (see below), which will result in the desired
-     // sequence:
-     *s1 = '1';
-     if (Strip) {
-        s1++;
-        memmove(s1, s2, t - s2 + 1);
-        }
-     }
-  return s;
-}
-
-int cRecording::GetResume(void)
-{
-  PLATFORM::CLockObject lock(m_mutex);
-  if (m_iResume == RESUME_NOT_INITIALIZED) {
-     cResumeFile ResumeFile(FileName(), m_bIsPesRecording);
-     m_iResume = ResumeFile.Read();
-     }
-  return m_iResume;
-}
-
-std::string cRecording::FileName(void)
-{
-  PLATFORM::CLockObject lock(m_mutex);
-  if (m_strFileName.empty())
-  {
-    struct tm tm_r;
-    struct tm *t = localtime_r(&m_start, &tm_r);
-    const char* fmt = m_bIsPesRecording ? NAMEFORMATPES : NAMEFORMATTS;
-    int ch = m_bIsPesRecording ? m_iPriority : m_iChannel;
-    int ri = m_bIsPesRecording ? m_iLifetimeDays : m_iInstanceId;
-    std::string strName = LimitNameLengths(m_strName, DirectoryPathMax - strlen(VideoDirectory) - 1 - 42, DirectoryNameMax); // 42 = length of an actual recording directory name (generated with DATAFORMATTS) plus some reserve
-    if (strName.compare(m_strName.c_str()))
-      dsyslog("recording file name '%s' truncated to '%s'", m_strName.c_str(), strName.c_str());
-    strName = ExchangeChars(strName, true);
-    m_strFileName = StringUtils::Format(fmt, VideoDirectory, strName.c_str(), t->tm_year + 1900, t->tm_mon + 1, t->tm_mday, t->tm_hour, t->tm_min, ch, ri);
+    m_tunerHandle = cDeviceManager::Get().OpenVideoInput(m_recorder, TUNING_TYPE_RECORDING, m_channel);
   }
-
-  return m_strFileName;
 }
 
-uint32_t cRecording::UID(void)
+void cRecording::Interrupt(void)
 {
-  /** stored so the id doesn't change when the filename changes */
-  PLATFORM::CLockObject lock(m_mutex);
-  if (m_hash < 0)
-    m_hash = (int64_t)CCRC32::CRC32(FileName());
-  return (uint32_t)m_hash;
-}
-
-std::string cRecording::PrefixFileName(char Prefix)
-{
-  PLATFORM::CLockObject lock(m_mutex);
-  std::string p = PrefixVideoFileName(FileName(), Prefix);
-  if (!p.empty())
+  if (m_tunerHandle)
   {
-    m_strFileName = p;
-    return m_strFileName;
+    cDeviceManager::Get().CloseVideoInput(m_recorder);
+    m_tunerHandle->Release();
+    m_tunerHandle = cTunerHandle::EmptyHandle;
   }
-  return p;
 }
 
-int cRecording::HierarchyLevels(void) const
+bool cRecording::Serialise(TiXmlNode* node) const
 {
-  PLATFORM::CLockObject lock(m_mutex);
-  const char *s = m_strName.c_str();
-  int level = 0;
-  while (*++s)
+  if (node == NULL)
+    return false;
+
+  TiXmlElement* elem = node->ToElement();
+  if (elem == NULL)
+    return false;
+
+  if (!IsValid())
   {
-    if (*s == FOLDERDELIMCHAR)
-      level++;
-  }
-  return level;
-}
-
-bool cRecording::IsEdited(void) const
-{
-  PLATFORM::CLockObject lock(m_mutex);
-  size_t pos = m_strName.find(FOLDERDELIMCHAR);
-  return pos != std::string::npos &&
-      pos + 1 < m_strName.size() &&
-      m_strName.at(pos + 1) == '%';
-}
-
-bool cRecording::IsOnVideoDirectoryFileSystem(void)
-{
-  PLATFORM::CLockObject lock(m_mutex);
-  if (m_iIsOnVideoDirectoryFileSystem < 0)
-     m_iIsOnVideoDirectoryFileSystem = VDR::IsOnVideoDirectoryFileSystem(FileName());
-  return m_iIsOnVideoDirectoryFileSystem;
-}
-
-void cRecording::ReadInfo(void)
-{
-  PLATFORM::CLockObject lock(m_mutex);
-  m_recordingInfo->Read();
-  m_iPriority        = m_recordingInfo->Priority();
-  m_iLifetimeDays    = m_recordingInfo->Lifetime();
-  m_dFramesPerSecond = m_recordingInfo->FramesPerSecond();
-}
-
-bool cRecording::WriteInfo(void)
-{
-  PLATFORM::CLockObject lock(m_mutex);
-  std::string InfoFileName = StringUtils::Format("%s%s", m_strFileName.c_str(), m_bIsPesRecording ? INFOFILESUFFIX ".vdr" : INFOFILESUFFIX);
-  return m_recordingInfo->Write(InfoFileName);
-}
-
-void cRecording::SetStartTime(time_t Start)
-{
-  PLATFORM::CLockObject lock(m_mutex);
-  m_start = Start;
-  m_strFileName.clear();
-}
-
-bool cRecording::Delete(void)
-{
-  bool result = true;
-  PLATFORM::CLockObject lock(m_mutex);
-  std::string strNewName = FileName();
-  std::string strExt = URLUtils::GetExtension(strNewName);
-  if (!strExt.empty() && strcmp(strExt.substr(1).c_str(), RECEXT_) == 0)
-  {
-    strNewName.erase(strNewName.size() - strExt.size() + 1);
-    strNewName.append(DELEXT_);
-    if (CFile::Exists(strNewName))
-    {
-      // the new name already exists, so let's remove that one first:
-      isyslog("removing recording '%s'", strNewName.c_str());
-      RemoveVideoFile(strNewName);
-    }
-    isyslog("deleting recording '%s'", FileName().c_str());
-    if (CFile::Exists(FileName()))
-    {
-      result = RenameVideoFile(FileName(), strNewName);
-      cRecordingUserCommand::Get().InvokeCommand(RUC_DELETERECORDING, strNewName);
-    }
-    else
-    {
-      isyslog("recording '%s' vanished", FileName().c_str());
-      result = true; // well, we were going to delete it, anyway
-    }
-  }
-
-  return result;
-}
-
-bool cRecording::Remove(void)
-{
-  PLATFORM::CLockObject lock(m_mutex);
-  // let's do a final safety check here:
-  if (!StringUtils::EndsWith(FileName(), DELEXT_))
-  {
-    esyslog("attempt to remove recording %s", FileName().c_str());
+    LogInvalidProperties();
     return false;
   }
-  isyslog("removing recording %s", FileName().c_str());
-  return RemoveVideoFile(FileName());
+
+  time_t startTime;
+  time_t endTime;
+
+  m_startTime.GetAsTime(startTime);
+  m_endTime.GetAsTime(endTime);
+
+  elem->SetAttribute(RECORDING_XML_ATTR_ID, m_id);
+  elem->SetAttribute(RECORDING_XML_ATTR_FOLDER, m_strFoldername);
+  elem->SetAttribute(RECORDING_XML_ATTR_TITLE, m_strTitle);
+  if (!m_channel->ID().Serialise(node))
+    return false;
+  elem->SetAttribute(RECORDING_XML_ATTR_START_TIME, startTime);
+  elem->SetAttribute(RECORDING_XML_ATTR_END_TIME, endTime);
+  if (m_expires.IsValid())
+  {
+    time_t expires;
+    m_expires.GetAsTime(expires);
+    elem->SetAttribute(RECORDING_XML_ATTR_EXPIRES, expires);
+  }
+  if (m_resumePosition.GetSecondsTotal() > 0)
+    elem->SetAttribute(RECORDING_XML_ATTR_RESUME_POS, m_resumePosition.GetSecondsTotal());
+  if (m_playCount > 0)
+    elem->SetAttribute(RECORDING_XML_ATTR_PLAY_COUNT, m_playCount);
+  if (m_priority > 0)
+    elem->SetAttribute(RECORDING_XML_ATTR_PRIORITY, m_priority);
+
+  return true;
 }
 
-bool cRecording::Undelete(void)
+bool cRecording::Deserialise(const TiXmlNode* node)
 {
-  bool result = true;
-  PLATFORM::CLockObject lock(m_mutex);
-  std::string strNewName = FileName();
-  std::string strExt = URLUtils::GetExtension(strNewName);
-  if (!strExt.empty() && strcmp(strExt.c_str(), DELEXT_) == 0)
-  {
-    strNewName.erase(strNewName.size() - strExt.size());
-    strNewName.append(RECEXT_);
+  if (node == NULL)
+    return false;
 
-    if (CFile::Exists(strNewName))
-    {
-      // the new name already exists, so let's not remove that one:
-      esyslog("ERROR: attempt to undelete '%s', while recording '%s' exists", FileName().c_str(), strNewName.c_str());
-      result = false;
-    }
-    else
-    {
-      isyslog("undeleting recording '%s'", FileName().c_str());
-      if (CFile::Exists(FileName()))
-        result = RenameVideoFile(FileName(), strNewName);
-      else
-      {
-        isyslog("deleted recording '%s' vanished", FileName().c_str());
-        result = false;
-      }
-    }
+  const TiXmlElement *elem = node->ToElement();
+  if (elem == NULL)
+    return false;
+
+  if (m_id != RECORDING_INVALID_ID)
+  {
+    esyslog("Error loading recording: object already has a valid ID (%u)", m_id);
+    return false;
   }
 
-  return result;
-}
-
-void cRecording::ResetResume(void)
-{
-  PLATFORM::CLockObject lock(m_mutex);
-  m_iResume = RESUME_NOT_INITIALIZED;
-}
-
-int cRecording::NumFrames(void)
-{
-  PLATFORM::CLockObject lock(m_mutex);
-  if (m_iNumFrames < 0)
   {
-    int nf = cIndexFile::GetLength(FileName(), IsPesRecording());
-    if (time(NULL) - LastModifiedTime(cIndexFile::IndexFileName(FileName().c_str(), IsPesRecording())) < MININDEXAGE)
-      return nf; // check again later for ongoing recordings
-    m_iNumFrames = nf;
+    const char* attr = elem->Attribute(RECORDING_XML_ATTR_ID);
+    m_id = attr ? StringUtils::IntVal(attr, RECORDING_INVALID_ID) : RECORDING_INVALID_ID;
   }
 
-  return m_iNumFrames;
-}
-
-int cRecording::LengthInSeconds(void)
-{
-  int nf = NumFrames();
-  if (nf >= 0)
-     return int(nf / FramesPerSecond());
-  return -1;
-}
-
-size_t cRecording::FileSizeMB(void)
-{
-  PLATFORM::CLockObject lock(m_mutex);
-  if (m_iFileSizeMB < 0)
   {
-    size_t fs = DirSizeMB(FileName());
-    if (time(NULL) - LastModifiedTime(cIndexFile::IndexFileName(FileName().c_str(), IsPesRecording())) < MININDEXAGE)
-      return fs; // check again later for ongoing recordings
-    m_iFileSizeMB = fs;
+    const char* attr = elem->Attribute(RECORDING_XML_ATTR_FOLDER);
+    m_strFoldername = attr ? attr : "";
   }
-  return m_iFileSizeMB;
-}
 
-int cRecording::SecondsToFrames(int Seconds, double FramesPerSecond)
-{
-  return int(round(Seconds * FramesPerSecond));
-}
-
-int cRecording::ReadFrame(CVideoFile *f, uint8_t *b, int Length, int Max)
-{
-  if (Length == -1)
-     Length = Max; // this means we read up to EOF (see cIndex)
-  else if (Length > Max) {
-     esyslog("ERROR: frame larger than buffer (%d > %d)", Length, Max);
-     Length = Max;
-     }
-  int r = f->Read(b, Length);
-  if (r < 0)
-     LOG_ERROR;
-  return r;
-}
-
-void cRecording::SetFileLimits(const recording_file_limits_t limits)
-{
-  switch (limits)
   {
-  case RECORDING_FILE_LIMITS_MSDOS:
-    DirectoryPathMax  = 250;
-    DirectoryNameMax  = 40;
-    DirectoryEncoding = true;
-    break;
-  case RECORDING_FILE_LIMITS_UNIX:
-  default:
-    DirectoryPathMax  = PATH_MAX - 1;
-    DirectoryNameMax  = NAME_MAX;
-    DirectoryEncoding = false;
-    break;
+    const char* attr = elem->Attribute(RECORDING_XML_ATTR_TITLE);
+    m_strTitle = attr ? attr : "";
   }
+
+  cChannelID chanId;
+  chanId.Deserialise(node);
+  m_channel = cChannelManager::Get().GetByChannelID(chanId);
+
+  {
+    const char* attr = elem->Attribute(RECORDING_XML_ATTR_START_TIME);
+    m_startTime = (time_t)(attr ? StringUtils::IntVal(attr) : 0);
+  }
+
+  {
+    const char* attr = elem->Attribute(RECORDING_XML_ATTR_END_TIME);
+    m_endTime = (time_t)(attr ? StringUtils::IntVal(attr) : 0);
+  }
+
+  {
+    const char* attr = elem->Attribute(RECORDING_XML_ATTR_EXPIRES);
+    m_expires = (time_t)(attr ? StringUtils::IntVal(attr) : 0);
+  }
+
+  {
+    const char* attr = elem->Attribute(RECORDING_XML_ATTR_RESUME_POS);
+    m_resumePosition.SetDateTimeSpan(0, 0, 0, (attr ? StringUtils::IntVal(attr) : 0));
+  }
+
+  {
+    const char* attr = elem->Attribute(RECORDING_XML_ATTR_PLAY_COUNT);
+    m_playCount = attr ? StringUtils::IntVal(attr) : 0;
+  }
+
+  {
+    const char* attr = elem->Attribute(RECORDING_XML_ATTR_PRIORITY);
+    m_priority = attr ? StringUtils::IntVal(attr) : 0;
+  }
+
+  if (!IsValid())
+  {
+    LogInvalidProperties();
+    return false;
+  }
+
+  SetChanged(false);
+
+  return true;
 }
 
 }

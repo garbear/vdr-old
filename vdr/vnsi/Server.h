@@ -54,6 +54,7 @@ protected:
   bool             m_bChannelsModified;
   bool             m_bEventsModified;
   bool             m_bTimersModified;
+  bool             m_bRecordingsModified;
   PLATFORM::CMutex m_mutex;
 };
 
