@@ -21,7 +21,7 @@
 #pragma once
 
 #include <map>
-#include <shared_ptr/shared_ptr.hpp>
+#include <memory>
 #include <vector>
 
 #define RECORDING_INVALID_ID   0
@@ -30,7 +30,7 @@ namespace VDR
 {
 
 class cRecording;
-typedef VDR::shared_ptr<cRecording> RecordingPtr;
+typedef std::shared_ptr<cRecording> RecordingPtr;
 typedef std::vector<RecordingPtr>   RecordingVector;
 typedef std::map<unsigned int, RecordingPtr> RecordingMap; // ID -> Recording
 
