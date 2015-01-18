@@ -65,6 +65,14 @@ using namespace PLATFORM;
 namespace VDR
 {
 
+enum AM_AMX_SOURCE
+{
+  AM_DMX_SRC_TS0,
+  AM_DMX_SRC_TS1,
+  AM_DMX_SRC_TS2,
+  AM_DMX_SRC_HIU
+};
+
 /*!
  * Helper class to perform frontend commands
  */
@@ -1025,25 +1033,68 @@ void cDvbTuner::ExecuteDiseqc(const cDiseqc* Diseqc, unsigned int* Frequency)
     m_diseqcMutex.Unlock();
 }
 
-bool cDvbTuner::InitialiseHardware(void)
-{
+// TODO move this
 #if defined(TARGET_ANDROID)
-  const std::string strAsyncFifoPath = StringUtils::Format("/sys/class/stb/asyncfifo%d_source", m_device->Frontend());
+static const string DemuxSourceToString(AM_AMX_SOURCE src)
+{
+  string cmd;
+
+  switch(src)
+  {
+  case AM_DMX_SRC_TS0:
+    cmd = "ts0";
+    break;
+  case AM_DMX_SRC_TS1:
+    cmd = "ts1";
+    break;
+  case AM_DMX_SRC_TS2:
+    cmd = "ts2";
+    break;
+  case AM_DMX_SRC_HIU:
+    cmd = "hiu";
+    break;
+  default:
+    dsyslog("Demux source not supported: %d", src);
+    break;
+  }
+
+  return cmd;
+}
+
+static bool WriteToFile(const string& filename, const string& data)
+{
+  bool retval(false);
   CFile demuxSource;
 
-  // TODO: Magic code that makes everything work on Android
-  if (demuxSource.OpenForWrite(strAsyncFifoPath, false))
+  if (data.empty() || filename.empty())
+    return false;
+
+  if (demuxSource.OpenForWrite(filename, false))
   {
-    const std::string strCmd = StringUtils::Format("dmx%u", m_device->Frontend());
-    demuxSource.Write(strCmd.c_str(), strCmd.length());
+    dsyslog("Writing '%s' to '%s'", data.c_str(), filename.c_str());
+    retval = demuxSource.Write(data.c_str(), data.length()) == data.length();
     demuxSource.Close();
-    return true;
   }
   else
   {
-    dsyslog("Can't open %s", strAsyncFifoPath.c_str());
-    return false;
+    dsyslog("Can't open %s", filename.c_str());
   }
+
+  return retval;
+}
+#endif
+
+bool cDvbTuner::InitialiseHardware(void)
+{
+#if defined(TARGET_ANDROID)
+  // TODO: Magic code that makes everything work on Geniatech's Android box
+  const string strDemuxSourcePath(StringUtils::Format("/sys/class/stb/demux%d_source", m_device->Frontend()));
+  const string strDemuxSource(DemuxSourceToString(AM_DMX_SRC_TS2));
+  const string strAsyncFifoPath(StringUtils::Format("/sys/class/stb/asyncfifo%d_source", m_device->Frontend()));
+  const string strAsyncFifo(StringUtils::Format("dmx%u", m_device->Frontend()));
+
+  return WriteToFile(strDemuxSourcePath, strDemuxSource) &&
+      WriteToFile(strAsyncFifoPath, strAsyncFifo);
 #endif
 
   return true;
