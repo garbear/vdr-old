@@ -24,6 +24,7 @@
 #include "lib/platform/threads/threads.h"
 #include "lib/platform/threads/mutex.h"
 #include "utils/Observer.h"
+#include <string>
 
 namespace VDR
 {
