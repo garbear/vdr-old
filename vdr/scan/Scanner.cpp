@@ -122,11 +122,9 @@ void* cScanner::Process()
       bool bSuccess = m_setup.device->Scan()->WaitForTransponderScan();
       cChannelManager::Get().NotifyObservers();
       if (bSuccess)
-      {
         bSuccess = m_setup.device->Scan()->WaitForEPGScan();
-        dsyslog("%s %d MHz", bSuccess ? "Successfully scanned" : "Failed to scan", transponder.FrequencyMHz());
-      }
       newHandle->Release();
+      dsyslog("%s %d MHz", bSuccess ? "Successfully scanned" : "Failed to scan", transponder.FrequencyMHz());
     }
     else
     {
