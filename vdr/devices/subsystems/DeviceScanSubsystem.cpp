@@ -139,66 +139,48 @@ void cDeviceScanSubsystem::DetachReceivers(void)
   m_waitingCondition.Broadcast();
 }
 
-void cDeviceScanSubsystem::StartScan()
+/**
+ * Wait for lock
+ * blocks until all receivers are attached and resources are opened
+ * @param iTimeoutMs  timeout in milliseconds
+ * @return true if receivers were attached, false if not
+ */
+bool cDeviceScanSubsystem::WaitForLock(uint32_t iTimeoutMs)
 {
-  m_transponderScanTimeout.Init(TRANSPONDER_TIMEOUT);
-  m_epgScanTimeout.Init(EPG_TIMEOUT);
-  AttachReceivers();
-}
-
-void cDeviceScanSubsystem::StopScan()
-{
-  DetachReceivers();
+  CLockObject lock(m_waitingMutex);
+  return m_lockCondition.Wait(m_waitingMutex, m_locked, iTimeoutMs);
 }
 
 bool cDeviceScanSubsystem::WaitForTransponderScan(void)
 {
-  uint32_t timeleft;
+  if (WaitForLock(TRANSPONDER_TIMEOUT))
+  {
+    CLockObject lock(m_waitingMutex);
+    return m_waitingCondition.Wait(m_waitingMutex, m_scanFinished, TRANSPONDER_TIMEOUT);
+  }
 
-  CLockObject lock(m_waitingMutex);
-
-  return // Wait for lock (blocks until all receivers are attached and resources
-         // are opened)
-         (timeleft = m_transponderScanTimeout.TimeLeft()) > 0     &&
-         m_lockCondition.Wait(m_waitingMutex, m_locked, timeleft) &&
-
-         // Wait for transponder scan
-         (timeleft = m_transponderScanTimeout.TimeLeft()) > 0     &&
-         m_waitingCondition.Wait(m_waitingMutex, m_scanFinished, timeleft);
+  return false;
 }
 
 bool cDeviceScanSubsystem::WaitForEPGScan(void)
 {
-  uint32_t timeleft;
-
-  // Wait for lock (blocks until all receivers are attached and resources
-  // are opened)
+  if (WaitForLock(TRANSPONDER_TIMEOUT))
   {
     CLockObject lock(m_waitingMutex);
-
-    if ((timeleft = m_epgScanTimeout.TimeLeft()) == 0          ||
-        !m_lockCondition.Wait(m_waitingMutex, m_locked, timeleft))
+    if (Channel()->ProvidesSource(TRANSPONDER_ATSC))
     {
-      return false;
+      CTimeout timeout(EPG_TIMEOUT);
+      return m_mgt->WaitForScan(timeout.TimeLeft()) &&
+             !timeout.TimedOut() &&
+             m_psipeit->WaitForScan(timeout.TimeLeft());
+    }
+    else
+    {
+      return m_eit->WaitForScan(EPG_TIMEOUT);
     }
   }
 
-  if (Channel()->ProvidesSource(TRANSPONDER_ATSC))
-  {
-    return // Wait for MGT
-           (timeleft = m_epgScanTimeout.TimeLeft()) > 0 &&
-           m_mgt->WaitForScan(timeleft)                 &&
-
-           // Wait for EIT (PSIP)
-           (timeleft = m_epgScanTimeout.TimeLeft()) > 0 &&
-           m_psipeit->WaitForScan(timeleft);
-  }
-  else
-  {
-    return // Wait for EIT
-           (timeleft = m_epgScanTimeout.TimeLeft()) > 0 &&
-           m_eit->WaitForScan(timeleft);
-  }
+  return false;
 }
 
 void cDeviceScanSubsystem::LockAcquired(void)
@@ -237,7 +219,7 @@ void cDeviceScanSubsystem::Notify(const Observable &obs, const ObservableMessage
   {
   case ObservableMessageChannelLock:
   {
-    StartScan();
+    AttachReceivers();
     LockAcquired();
     PLATFORM::CLockObject lock(m_mutex);
     m_locked = true;

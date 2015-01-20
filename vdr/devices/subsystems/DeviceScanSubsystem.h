@@ -48,9 +48,6 @@ public:
   cDeviceScanSubsystem(cDevice* device);
   virtual ~cDeviceScanSubsystem(void);
 
-  void StartScan(void);
-  void StopScan(void);
-
   bool WaitForTransponderScan(void);
   bool WaitForEPGScan(void);
   bool AttachReceivers(void);
@@ -78,6 +75,7 @@ private:
   void LockAcquired(void);
   void LockLost(void);
   bool ReceiverOk(cScanReceiver* receiver);
+  bool WaitForLock(uint32_t iTimeoutMs);
 
   cPat*                      m_pat;
   cEit*                      m_eit;
@@ -95,8 +93,6 @@ private:
   bool                       m_scanFinished; // invariant: true when m_waitingForReceivers is empty
   PLATFORM::CMutex           m_waitingMutex;
   PLATFORM::CCondition<bool> m_waitingCondition;
-  PLATFORM::CTimeout         m_transponderScanTimeout;
-  PLATFORM::CTimeout         m_epgScanTimeout;
 };
 
 }
