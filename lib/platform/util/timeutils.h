@@ -130,6 +130,12 @@ namespace PLATFORM
 
     bool IsSet(void) const       { return m_iTarget > 0; }
     void Init(uint32_t iTimeout) { m_iTarget = GetTimeMs() + iTimeout; }
+    void Increase(uint32_t iIncreaseMs) { m_iTarget += iIncreaseMs; }
+    bool TimedOut(void) const
+    {
+      uint64_t iNow = GetTimeMs();
+      return iNow > m_iTarget;
+    }
 
     uint32_t TimeLeft(void) const
     {
