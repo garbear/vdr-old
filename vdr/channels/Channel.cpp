@@ -153,6 +153,7 @@ void cChannel::SetName(const string& strName, const string& strShortName, const 
     m_name      = strName;
     m_shortName = strShortName;
     m_provider  = strProvider;
+    isyslog("updating channel name: %s%s", strName.c_str(), strShortName != strName ? StringUtils::Format(" (%s)", strShortName.c_str()).c_str() : "");
     SetChanged();
   }
 }

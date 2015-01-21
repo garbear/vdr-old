@@ -197,7 +197,6 @@ void cSdt::ReceivePacket(uint16_t pid, const uint8_t* data)
                 StringUtils::Trim(strShortName);
 
                 channel->SetName(strName, strShortName, strProviderName);
-                isyslog("updating channel name: %s%s", strName.c_str(), strShortName != strName ? StringUtils::Format(" (%s)", strShortName.c_str()).c_str() : "");
               }
               default:
                 break;
