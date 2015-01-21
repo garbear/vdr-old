@@ -78,6 +78,7 @@ public:
 protected:
   int                     m_handle;
   const cDvbDevice* const m_device;
+  PLATFORM::CMutex        m_mutex;
 
 private:
   const RESOURCE_TYPE     m_type;
@@ -85,6 +86,7 @@ private:
 
 void cDvbResource::Close(void)
 {
+  PLATFORM::CLockObject lock(m_mutex);
   if (m_handle != FILE_DESCRIPTOR_INVALID)
   {
     if (ioctl(m_handle, DMX_STOP) < 0)
@@ -139,6 +141,7 @@ bool cDvbStreamingResource::Equals(const cPidResource* other) const
 bool cDvbStreamingResource::Open(void)
 {
   // Calculate strings
+  PLATFORM::CLockObject lock(m_mutex);
   if (m_handle == FILE_DESCRIPTOR_INVALID)
   {
     m_handle = open(m_device->DvbPath(DEV_DVB_DEMUX).c_str(), O_RDWR | O_NONBLOCK);
@@ -221,6 +224,7 @@ bool cDvbMultiplexedResource::Equals(const cPidResource* other) const
 bool cDvbMultiplexedResource::Open(void)
 {
   // Calculate strings
+  PLATFORM::CLockObject lock(m_mutex);
   if (m_handle == FILE_DESCRIPTOR_INVALID)
   {
     m_handle = open(m_device->DvbPath(DEV_DVB_DEMUX).c_str(), O_RDWR | O_NONBLOCK);
