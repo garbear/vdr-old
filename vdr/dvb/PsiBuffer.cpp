@@ -79,7 +79,7 @@ bool cPsiBuffer::AddTsData(const uint8_t* data, size_t len, const uint8_t** outd
   int payloadoffset = TsPayloadOffset(data);
   const uint8_t* payload = data + payloadoffset;
   size_t payloadlen = len - payloadoffset;
-  if (m_cursize + payloadlen > PSI_MAX_SIZE)
+  while (m_cursize + payloadlen > PSI_MAX_SIZE)
     payloadlen -= PSI_MAX_SIZE - m_cursize;
   if (bnew)
     m_sectionSize = SI::Section::getLength(payload + 1);
