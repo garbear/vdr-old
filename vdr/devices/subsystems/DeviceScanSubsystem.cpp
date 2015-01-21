@@ -166,7 +166,6 @@ bool cDeviceScanSubsystem::WaitForEPGScan(void)
 {
   if (WaitForLock(TRANSPONDER_TIMEOUT))
   {
-    CLockObject lock(m_waitingMutex);
     if (Channel()->ProvidesSource(TRANSPONDER_ATSC))
     {
       CTimeout timeout(EPG_TIMEOUT);
