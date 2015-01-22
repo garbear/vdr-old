@@ -153,7 +153,7 @@ void cChannel::SetName(const string& strName, const string& strShortName, const 
     m_name      = strName;
     m_shortName = strShortName;
     m_provider  = strProvider;
-    isyslog("updating channel name: %s%s", strName.c_str(), strShortName != strName ? StringUtils::Format(" (%s)", strShortName.c_str()).c_str() : "");
+    isyslog("updating channel name of channel %d: %s%s", Sid(), strName.c_str(), strShortName != strName ? StringUtils::Format(" (%s)", strShortName.c_str()).c_str() : "");
     SetChanged();
   }
 }
@@ -231,7 +231,7 @@ set<uint16_t> cChannel::GetPids(void) const
   return pids;
 }
 
-void cChannel::SetStreams(const VideoStream& videoStream,
+bool cChannel::SetStreams(const VideoStream& videoStream,
                           const vector<AudioStream>& audioStreams,
                           const vector<DataStream>& dataStreams,
                           const vector<SubtitleStream>& subtitleStreams,
@@ -249,7 +249,9 @@ void cChannel::SetStreams(const VideoStream& videoStream,
     m_subtitleStreams = subtitleStreams;
     m_teletextStream  = teletextStream;
     SetChanged();
+    return true;
   }
+  return false;
 }
 
 void cChannel::SetSubtitlingDescriptors(const vector<SubtitleStream>& subtitleStreams)
@@ -265,13 +267,15 @@ void cChannel::SetSubtitlingDescriptors(const vector<SubtitleStream>& subtitleSt
   }
 }
 
-void cChannel::SetCaDescriptors(const CaDescriptorVector& caDescriptors)
+bool cChannel::SetCaDescriptors(const CaDescriptorVector& caDescriptors)
 {
   if (m_caDescriptors != caDescriptors)
   {
     m_caDescriptors = caDescriptors;
     SetChanged();
+    return true;
   }
+  return false;
 }
 
 // --- transponder -------------------------------------------------------------

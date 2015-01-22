@@ -149,15 +149,16 @@ public:
   uint16_t                           GetCaId(unsigned int index) const;
   std::vector<uint16_t>              GetCaIds(void) const;
   std::set<uint16_t>                 GetPids(void) const; // Get the PIDs associated with all streams
+  bool                               IsDataChannel(void) const { return GetVideoStream().vpid == 0 && GetAudioStreams().empty(); }
 
   // Set streams
-  void SetStreams(const VideoStream& videoStream,
+  bool SetStreams(const VideoStream& videoStream,
                   const std::vector<AudioStream>& audioStreams,
                   const std::vector<DataStream>& dataStreams,
                   const std::vector<SubtitleStream>& subtitleStreams,
                   const TeletextStream& teletextStream);
   void SetSubtitlingDescriptors(const std::vector<SubtitleStream>& subtitleStreams);
-  void SetCaDescriptors(const CaDescriptorVector& caDescriptors);
+  bool SetCaDescriptors(const CaDescriptorVector& caDescriptors);
 
   // Get transponder
   const cTransponder& GetTransponder(void) const { return m_transponder; }
