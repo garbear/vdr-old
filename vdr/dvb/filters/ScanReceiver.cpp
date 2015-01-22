@@ -122,12 +122,12 @@ bool cScanReceiver::Attach(void)
 void cScanReceiver::Detach(void)
 {
   PLATFORM::CLockObject lock(m_mutex);
-  RemoveFilters();
-  for (std::map<filter_properties, cSectionSyncer*>::iterator it = m_sectionSyncers.begin(); it != m_sectionSyncers.end(); ++it)
-    it->second->Reset();
   if (m_attached)
   {
     m_attached = false;
+    RemoveFilters();
+    for (std::map<filter_properties, cSectionSyncer*>::iterator it = m_sectionSyncers.begin(); it != m_sectionSyncers.end(); ++it)
+      it->second->Reset();
 
     for (std::set<filter_properties>::const_iterator it = m_filters.begin(); it != m_filters.end(); ++it)
       m_device->Receiver()->DetachStreamingReceiver(this, it->pid, it->tid, it->mask);

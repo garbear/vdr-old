@@ -106,7 +106,7 @@ void* cEPGScanner::Process()
       continue;
     }
 
-    for (ChannelVector::iterator it = channels.begin(); it != channels.end(); ++it)
+    for (ChannelVector::iterator it = channels.begin(); it != channels.end() && !IsStopped(); ++it)
     {
       TunerHandlePtr newHandle = device->Acquire((*it), TUNING_TYPE_EPG_SCAN, this);
       if (newHandle)

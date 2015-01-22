@@ -25,6 +25,7 @@
 #include "devices/DeviceManager.h"
 #include "dvb/DiSEqC.h"
 #include "epg/ScheduleManager.h"
+#include "epg/EPGScanner.h"
 #include "filesystem/Directory.h"
 #include "filesystem/SpecialProtocol.h"
 #include "recordings/RecordingManager.h"
@@ -139,6 +140,7 @@ void *cVDRDaemon::Process()
   }
   DeInit();
   m_exitEvent.Broadcast();
+  isyslog("VDR version %s exiting", VDRVERSION);
   return NULL;
 }
 
@@ -160,10 +162,9 @@ void cVDRDaemon::OnSignal(int signum)
 
 void cVDRDaemon::DeInit()
 {
+  cEPGScanner::Get().Stop(true);
   cTimerManager::Get().Stop();
-
   cDeviceManager::Get().Shutdown();
-
   cChannelManager::Get().Clear();
 
   SAFE_DELETE(m_server);

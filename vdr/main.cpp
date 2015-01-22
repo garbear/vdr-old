@@ -46,14 +46,5 @@ int main(int argc, char *argv[])
     vdr.WaitForShutdown();
   }
 
-  CSignalHandler::Get().ResetSignalReceivers();
-
-  int signum = vdr.GetExitCode();
-  if (signum == EXIT_CODE_OFFSET + SIGHUP ||
-      signum == EXIT_CODE_OFFSET + SIGINT ||
-      signum == EXIT_CODE_OFFSET + SIGKILL ||
-      signum == EXIT_CODE_OFFSET + SIGTERM)
-    kill(getpid(), signum - EXIT_CODE_OFFSET);
-
-  return signum;
+  return vdr.GetExitCode() - EXIT_CODE_OFFSET;
 }
