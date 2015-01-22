@@ -79,8 +79,11 @@ void cChannelManager::MergeChannelProps(const ChannelPtr& channel)
   const uint16_t tsid = channel->ID().Tsid();
   const uint16_t sid  = channel->ID().Sid();
 
-  if (tsid == 0 || sid == 0)
+  if (tsid == 0 || sid == 0 || channel->IsDataChannel())
+  {
+    dsyslog("skipping channel (tsid=%d, sid=%d, data=%d)", tsid, sid, channel->IsDataChannel()?1:0);
     return;
+  }
 
   CLockObject lock(m_mutex);
 
@@ -90,14 +93,18 @@ void cChannelManager::MergeChannelProps(const ChannelPtr& channel)
     if (tsid == (*itChannel)->ID().Tsid() &&
         sid  == (*itChannel)->ID().Sid())
     {
+      bool bChanged(false);
       bFound = true;
-      (*itChannel)->SetStreams(channel->GetVideoStream(),
+      bChanged = (*itChannel)->SetStreams(channel->GetVideoStream(),
                                channel->GetAudioStreams(),
                                channel->GetDataStreams(),
                                channel->GetSubtitleStreams(),
                                channel->GetTeletextStream());
-      (*itChannel)->SetCaDescriptors(channel->GetCaDescriptors());
-      (*itChannel)->NotifyObservers();
+      bChanged |= (*itChannel)->SetCaDescriptors(channel->GetCaDescriptors());
+      if (bChanged) {
+        dsyslog("channel tsid=%d sid=%d updated", tsid, sid);
+        (*itChannel)->NotifyObservers();
+      }
       break;
     }
   }
@@ -106,7 +113,9 @@ void cChannelManager::MergeChannelProps(const ChannelPtr& channel)
   {
     channel->RegisterObserver(this);
     m_channels.push_back(channel);
+    dsyslog("channel tsid=%d sid=%d added", tsid, sid);
     SetChanged();
+    NotifyObservers();
   }
 }
 
