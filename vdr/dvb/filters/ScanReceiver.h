@@ -52,7 +52,7 @@ protected:
   cScanReceiver(cDevice* device, const std::string& name, size_t nbFilters, const filter_properties* filters);
 
 public:
-  virtual ~cScanReceiver(void) { Detach(); }
+  virtual ~cScanReceiver(void);
 
   void Receive(const uint16_t pid, const uint8_t* data, const size_t len);
   virtual void ReceivePacket(const uint16_t pid, const uint8_t* data) = 0;

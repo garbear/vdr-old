@@ -99,6 +99,13 @@ cScanReceiver::cScanReceiver(cDevice* device, const std::string& name, size_t nb
   }
 }
 
+cScanReceiver::~cScanReceiver(void)
+{
+  Detach();
+  for (std::map<filter_properties, cSectionSyncer*>::iterator cit = m_sectionSyncers.begin(); cit != m_sectionSyncers.end(); ++cit)
+    delete cit->second;
+}
+
 bool cScanReceiver::Attach(void)
 {
   bool retval = true;
