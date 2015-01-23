@@ -50,7 +50,8 @@ using namespace PLATFORM;
 cVDRDaemon::cVDRDaemon()
  : m_exitCode(0),
    m_server(NULL),
-   m_bConfigLoaded(false)
+   m_bConfigLoaded(false),
+   m_bExiting(false)
 {
 }
 
@@ -133,14 +134,26 @@ void cVDRDaemon::Stop()
 
 void *cVDRDaemon::Process()
 {
-  isyslog("VDR version %s started", VDRVERSION);
+  {
+    CLockObject lock(m_mutex);
+    m_bExiting = false;
+    isyslog("VDR version %s started", VDRVERSION);
+  }
+
   while (!IsStopped())
   {
     m_sleepEvent.Wait();
   }
-  DeInit();
-  m_exitEvent.Broadcast();
+
   isyslog("VDR version %s exiting", VDRVERSION);
+
+  DeInit();
+  {
+    CLockObject lock(m_mutex);
+    m_bExiting = true;
+    m_exitEvent.Broadcast();
+  }
+
   return NULL;
 }
 
@@ -174,8 +187,9 @@ void cVDRDaemon::DeInit()
 
 bool cVDRDaemon::WaitForShutdown(uint32_t iTimeout /* = 0 */)
 {
+  CLockObject lock(m_mutex);
   if (IsRunning())
-    return m_exitEvent.Wait(iTimeout);
+    return m_exitEvent.Wait(m_mutex, m_bExiting, iTimeout);
   return true;
 }
 

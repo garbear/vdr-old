@@ -92,12 +92,14 @@ private:
    * when stopped via Stop(). The exit event is triggered when the event loop
    * terminates, which allows users to block until WaitForShutdown() returns.
    */
-  ::PLATFORM::CEvent m_sleepEvent;
-  ::PLATFORM::CEvent m_exitEvent;
+  ::PLATFORM::CEvent           m_sleepEvent;
+  ::PLATFORM::CCondition<bool> m_exitEvent;
+  ::PLATFORM::CMutex           m_mutex;
 
   int              m_exitCode;
   cVNSIServer*     m_server;
   bool             m_bConfigLoaded;
+  bool             m_bExiting;
 };
 
 }
