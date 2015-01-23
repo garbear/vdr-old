@@ -129,7 +129,9 @@ TunerHandlePtr cDeviceChannelSubsystem::Acquire(const ChannelPtr& channel, devic
     CLockObject lock(m_mutex);
     for (std::vector<TunerHandlePtr>::iterator it = m_activeTransponders.begin(); valid &&it != m_activeTransponders.end(); ++it)
     {
-      if ((*it)->Channel()->GetTransponder() != channel->GetTransponder())
+      if ((*it)->Channel()->GetTransponder() != channel->GetTransponder() ||
+          // live tv takes priority over others
+          type == TUNING_TYPE_LIVE_TV)
       {
         /** found subscription for another transponder */
         if ((*it)->Type() > type)
