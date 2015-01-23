@@ -49,7 +49,7 @@ cCharSetConv::cCharSetConv(const char *FromCode, const char *ToCode)
 cCharSetConv::~cCharSetConv()
 {
   free(result);
-  if (cd != (iconv_t)-1)
+  if (cd > 0)
     iconv_close(cd);
 }
 
