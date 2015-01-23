@@ -391,11 +391,11 @@ void cDvbTuner::Close(void)
   if (m_bIsOpen)
   {
     isyslog("DVB tuner: Closing frontend");
-
     StopThread(-1);
-
     close(m_fileDescriptor);
     m_fileDescriptor = INVALID_FD;
+    m_tunedSignal = true;
+    m_tuneCondition.Broadcast();
 
     /* looks like this irritates the SCR switch, so let's leave it out for now
     if (m_lastDiseqc && m_lastDiseqc->IsScr())
@@ -675,6 +675,9 @@ void* cDvbTuner::Process(void)
       if (!m_tuneCondition.Wait(m_mutex, m_tunedSignal, 500))
         continue;
     }
+
+    if (IsStopped())
+      break;
 
     // According to MythTv, waiting for DVB events fails with several DVB cards.
     // They either don't send the required events or delete them from the event

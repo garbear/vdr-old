@@ -45,18 +45,20 @@ namespace VDR
 
 const DevicePtr cDevice::EmptyDevice;
 
+#define safe_delete(x) do { delete x; x = NULL; } while(0)
+
 // --- cSubsystems -----------------------------------------------------------
-void cSubsystems::Free() const
+void cSubsystems::Free()
 {
-  delete Channel;
-  delete CommonInterface;
-  delete ImageGrab;
-  delete Player;
-  delete Receiver;
-  delete Scan;
-  delete SPU;
-  delete Track;
-  delete VideoFormat;
+  safe_delete(CommonInterface);
+  safe_delete(ImageGrab);
+  safe_delete(Player);
+  safe_delete(Scan);
+  safe_delete(SPU);
+  safe_delete(Track);
+  safe_delete(VideoFormat);
+  safe_delete(Receiver);
+  safe_delete(Channel);
 }
 
 void cSubsystems::AssertValid() const
@@ -98,9 +100,12 @@ bool cDevice::Initialise(unsigned int index)
 
 void cDevice::Deinitialise(void)
 {
-  m_bInitialised = false;
-  Channel()->UnregisterObserver(Scan());
-  Receiver()->Stop();
+  if (m_bInitialised)
+  {
+    m_bInitialised = false;
+    Channel()->UnregisterObserver(Scan());
+    Receiver()->Stop();
+  }
 }
 
 bool cDevice::CanTune(device_tuning_type_t type)

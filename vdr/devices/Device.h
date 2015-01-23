@@ -48,7 +48,7 @@ class cTunerHandle;
 
 struct cSubsystems
 {
-  void Free() const; // Free the subsystem pointers (TODO: Consider removing this function by switching to shared_ptrs)
+  void Free(); // Free the subsystem pointers (TODO: Consider removing this function by switching to shared_ptrs)
   void AssertValid() const; // Asserts on empty pointer for the subsystems below
   cDeviceChannelSubsystem         *Channel;
   cDeviceCommonInterfaceSubsystem *CommonInterface;
@@ -123,9 +123,9 @@ public:
   cDeviceTrackSubsystem*           Track(void)           const { return m_subsystems.Track; }
   cDeviceVideoFormatSubsystem*     VideoFormat(void)     const { return m_subsystems.VideoFormat; }
 
-private:
-  const cSubsystems m_subsystems;
-  bool              m_bInitialised;
-  size_t            m_index;
+protected:
+  cSubsystems m_subsystems;
+  bool        m_bInitialised;
+  size_t      m_index;
 };
 }

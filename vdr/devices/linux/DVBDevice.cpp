@@ -94,6 +94,8 @@ cDvbDevice::~cDvbDevice(void)
 {
   // We're not explicitly closing any device files here, since this sometimes
   // caused segfaults. Besides, the program is about to terminate anyway...
+  Deinitialise();
+  m_subsystems.Free(); // TODO: Remove me if we switch cSubsystems to use shared_ptrs
 }
 
 string cDvbDevice::DvbPath(const char *dvbDeviceName) const
