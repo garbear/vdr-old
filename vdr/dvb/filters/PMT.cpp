@@ -122,7 +122,7 @@ bool cPmt::HasUnsyncedPids(void) const
 void cPmt::ReceivePacket(uint16_t pid, const uint8_t* data)
 {
   SI::PMT pmt(data);
-  if (pmt.CheckCRCAndParse() && pmt.getTableId() == TableIdPMT)
+  if (pmt.CheckAndParse() && pmt.getTableId() == TableIdPMT)
   {
     if (!Sync(pid, pmt.getVersionNumber(), pmt.getSectionNumber(), pmt.getLastSectionNumber()))
       return;

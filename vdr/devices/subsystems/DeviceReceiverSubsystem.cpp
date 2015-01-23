@@ -94,6 +94,7 @@ void *cDeviceReceiverSubsystem::Process()
   size_t psidatalen;
   bool validpsi;
   PidResourcePtr resource;
+  ts_crc_check_t crcCheck;
 
   while (!IsStopped())
   {
@@ -110,11 +111,11 @@ void *cDeviceReceiverSubsystem::Process()
       if (!IsStopped() && resource->Read(&psidata, &psidatalen))
       {
         CLockObject lock(m_mutex);
-
+        crcCheck = TS_CRC_NOT_CHECKED;
         /** distribute the packet to receivers holding this resource */
         std::set<iReceiver*> receivers = GetReceivers(resource);
         for (std::set<iReceiver*>::iterator receiverit = receivers.begin(); receiverit != receivers.end(); ++receiverit)
-          (*receiverit)->Receive(resource->Pid(), psidata, psidatalen);
+          (*receiverit)->Receive(resource->Pid(), psidata, psidatalen, crcCheck);
       }
       break;
 
@@ -129,6 +130,7 @@ void *cDeviceReceiverSubsystem::Process()
         if (pidPtr)
         {
           validpsi = pidPtr->AllocateBuffer()->AddTsData(packet, TS_SIZE, &psidata, &psidatalen);
+          crcCheck = TS_CRC_NOT_CHECKED;
 
           /** distribute the packet to all receivers */
           std::set<iReceiver*> receivers = GetReceivers();
@@ -138,11 +140,11 @@ void *cDeviceReceiverSubsystem::Process()
             {
               /** only send full data */
               if (validpsi)
-                (*receiverit)->Receive(pid, psidata, psidatalen);
+                (*receiverit)->Receive(pid, psidata, psidatalen, crcCheck);
             }
             else
             {
-              (*receiverit)->Receive(pid, packet, TS_SIZE);
+              (*receiverit)->Receive(pid, packet, TS_SIZE, crcCheck);
             }
           }
         }

@@ -47,7 +47,7 @@ public:
 
   virtual bool Start(void);
   virtual void Stop(void);
-  virtual void Receive(const uint16_t pid, const uint8_t* data, const size_t len) = 0;
+  virtual void Receive(const uint16_t pid, const uint8_t* data, const size_t len, ts_crc_check_t& crcvalid) = 0;
 
   virtual int ReadBlock(uint8_t **buf, unsigned int size, time_t &endTime, time_t &wrapTime) = 0;
   virtual off_t GetPosMin() { return 0; };

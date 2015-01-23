@@ -99,7 +99,7 @@ void cRecorder::Stop(void)
   StopThread(-1);
 }
 
-void cRecorder::Receive(const uint16_t pid, const uint8_t* data, const size_t len)
+void cRecorder::Receive(const uint16_t pid, const uint8_t* data, const size_t len, ts_crc_check_t& crcvalid)
 {
   if (!IsStopped())
   {

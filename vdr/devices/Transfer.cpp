@@ -63,7 +63,7 @@ void cTransfer::Stop(void)
 #define MAXRETRIES    20 // max. number of retries for a single TS packet
 #define RETRYWAIT      5 // time (in ms) between two retries
 
-void cTransfer::Receive(const uint16_t pid, const uint8_t* data, const size_t len)
+void cTransfer::Receive(const uint16_t pid, const uint8_t* data, const size_t len, ts_crc_check_t& crcvalid)
 {
   if (cPlayer::IsAttached())
   {

@@ -54,7 +54,7 @@ protected:
 public:
   virtual ~cScanReceiver(void);
 
-  void Receive(const uint16_t pid, const uint8_t* data, const size_t len);
+  void Receive(const uint16_t pid, const uint8_t* data, const size_t len, ts_crc_check_t& crcvalid);
   virtual void ReceivePacket(const uint16_t pid, const uint8_t* data) = 0;
   virtual bool Attach(void);
   virtual void Detach(void);

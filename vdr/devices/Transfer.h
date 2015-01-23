@@ -39,7 +39,7 @@ public:
   virtual bool Start(void);
   virtual void Stop(void);
 
-  virtual void Receive(const uint16_t pid, const uint8_t* data, const size_t len);
+  virtual void Receive(const uint16_t pid, const uint8_t* data, const size_t len, ts_crc_check_t& crcvalid);
 
 private:
   cPatPmtGenerator patPmtGenerator;

@@ -110,7 +110,7 @@ cSdt::cSdt(cDevice* device, SI::TableId tableId /* = SI::TableIdSDT */)
 void cSdt::ReceivePacket(uint16_t pid, const uint8_t* data)
 {
   SI::SDT sdt(data);
-  if (sdt.CheckCRCAndParse())
+  if (sdt.CheckAndParse())
   {
     /** wait for the PMT scan to complete first */
     if (!m_device->Scan()->PAT()->PmtScanned())

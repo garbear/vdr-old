@@ -58,7 +58,7 @@ public:
   const char* GetFuzzyName() const { return fuzzy_network; };
 
 protected:
-  virtual void Receive(uint8_t* Data, int Length);
+  virtual void Receive(uint8_t* Data, int Length, ts_crc_check_t& crcvalid);
   virtual void* Process();
   virtual void Stop() { m_bStopped = true; };
   void Decode(uint8_t* data, int count);

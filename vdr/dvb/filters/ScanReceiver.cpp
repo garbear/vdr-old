@@ -28,6 +28,7 @@
 #include "devices/subsystems/DeviceReceiverSubsystem.h"
 #include "devices/subsystems/DeviceScanSubsystem.h"
 #include "utils/log/Log.h"
+#include <libsi/util.h>
 #include <algorithm>
 
 using namespace std;
@@ -168,8 +169,13 @@ void cScanReceiver::LockLost(void)
   Detach();
 }
 
-void cScanReceiver::Receive(const uint16_t pid, const uint8_t* data, const size_t len)
+void cScanReceiver::Receive(const uint16_t pid, const uint8_t* data, const size_t len, ts_crc_check_t& crcvalid)
 {
+  if (crcvalid == TS_CRC_NOT_CHECKED)
+    crcvalid = SI::CRC32::isValid((const char *)data, len) ? TS_CRC_CHECKED_VALID : TS_CRC_CHECKED_INVALID;
+  if (crcvalid == TS_CRC_CHECKED_INVALID)
+    return;
+
   ReceivePacket(pid, data);
 }
 

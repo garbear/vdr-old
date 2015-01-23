@@ -71,7 +71,7 @@ void cPsipEit::ReceivePacket(uint16_t pid, const uint8_t* data)
   unsigned int numEvents = 0;
 
   SI::PSIP_EIT psipEit(data);
-  if (psipEit.CheckCRCAndParse())
+  if (psipEit.CheckAndParse())
   {
     /** wait for the PMT scan to complete first */
     if (!m_device->Scan()->PAT()->PmtScanned())

@@ -637,7 +637,7 @@ void cPatPmtParser::ParsePat(const uint8_t *Data, int Length)
      return;
   Data += Data[0] + 1; // process pointer_field
   SI::PAT Pat(Data);
-  if (Pat.CheckCRCAndParse()) {
+  if (Pat.CheckAndParse()) {
      dbgpatpmt("PAT: TSid = %d, c/n = %d, v = %d, s = %d, ls = %d\n", Pat.getTransportStreamId(), Pat.getCurrentNextIndicator(), Pat.getVersionNumber(), Pat.getSectionNumber(), Pat.getLastSectionNumber());
      if (patVersion == Pat.getVersionNumber())
         return;
@@ -700,7 +700,7 @@ void cPatPmtParser::ParsePmt(const uint8_t *Data, int Length)
   else
      return; // fragment of broken packet - ignore
   SI::PMT Pmt(Data);
-  if (Pmt.CheckCRCAndParse()) {
+  if (Pmt.CheckAndParse()) {
      dbgpatpmt("PMT: sid = %d, c/n = %d, v = %d, s = %d, ls = %d\n", Pmt.getServiceId(), Pmt.getCurrentNextIndicator(), Pmt.getVersionNumber(), Pmt.getSectionNumber(), Pmt.getLastSectionNumber());
      dbgpatpmt("     pcr = %d\n", Pmt.getPCRPid());
      if (pmtVersion == Pmt.getVersionNumber())

@@ -73,7 +73,7 @@ void cEit::ReceivePacket(uint16_t pid, const uint8_t* data)
     EventVector events;
 
     SI::EIT tsEIT(data);
-    if (tsEIT.CheckCRCAndParse())
+    if (tsEIT.CheckAndParse())
     {
       // We need the current time for handling PDC descriptors
       CDateTime now = CDateTime::GetUTCDateTime();

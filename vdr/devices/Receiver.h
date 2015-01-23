@@ -31,6 +31,13 @@
 namespace VDR
 {
 
+typedef enum
+{
+  TS_CRC_NOT_CHECKED,
+  TS_CRC_CHECKED_VALID,
+  TS_CRC_CHECKED_INVALID
+} ts_crc_check_t;
+
 class iReceiver : public iTunerHandleCallbacks
 {
 public:
@@ -57,7 +64,7 @@ public:
    * only ONCE, so the iReceiver must make sure that it will be able to buffer
    * the data if necessary.
    */
-  virtual void Receive(const uint16_t pid, const uint8_t* data, const size_t len) = 0;
+  virtual void Receive(const uint16_t pid, const uint8_t* data, const size_t len, ts_crc_check_t& crcvalid) = 0;
 
   virtual void LockAcquired(void) {}
 

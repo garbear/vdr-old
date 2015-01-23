@@ -82,7 +82,7 @@ void cNit::ReceivePacket(uint16_t pid, const uint8_t* data)
   map<uint16_t, Network> networks; // Network ID -> Network
 
   SI::NIT nit(data);
-    if (nit.CheckCRCAndParse())
+    if (nit.CheckAndParse())
     {
       // TODO: Handle TableIdNIT_other/
       SI::TableId tid = nit.getTableId();

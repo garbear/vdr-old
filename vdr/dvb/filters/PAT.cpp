@@ -68,7 +68,7 @@ bool cPat::WaitForScan(uint32_t iTimeout /* = TRANSPONDER_TIMEOUT */)
 void cPat::ReceivePacket(uint16_t pid, const uint8_t* data)
 {
   SI::PAT tsPAT(data);
-  if (tsPAT.CheckCRCAndParse() && tsPAT.getTableId() == TableIdPAT)
+  if (tsPAT.CheckAndParse() && tsPAT.getTableId() == TableIdPAT)
   {
     bool haspmt = false;
     if (!Sync(pid, tsPAT.getVersionNumber(), tsPAT.getSectionNumber(), tsPAT.getLastSectionNumber()))

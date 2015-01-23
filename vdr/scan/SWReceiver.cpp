@@ -172,7 +172,7 @@ cSwReceiver::~cSwReceiver()
   DELETENULL(buffer);
 }
 
-void cSwReceiver::Receive(uint8_t* Data, int Length)
+void cSwReceiver::Receive(uint8_t* Data, int Length, ts_crc_check_t& crcvalid)
 {
   uint8_t* p;
   int count = 184;

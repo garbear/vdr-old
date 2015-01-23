@@ -48,7 +48,7 @@ class cVideoBufferSimple : public cVideoBuffer
 {
 friend class cVideoBuffer;
 public:
-  virtual void Receive(const uint16_t pid, const uint8_t* data, const size_t len);
+  virtual void Receive(const uint16_t pid, const uint8_t* data, const size_t len, ts_crc_check_t& crcvalid);
   virtual int ReadBlock(uint8_t **buf, unsigned int size, time_t &endTime, time_t &wrapTime);
 
 protected:
@@ -71,7 +71,7 @@ cVideoBufferSimple::~cVideoBufferSimple()
     delete m_Buffer;
 }
 
-void cVideoBufferSimple::Receive(const uint16_t pid, const uint8_t* data, const size_t len)
+void cVideoBufferSimple::Receive(const uint16_t pid, const uint8_t* data, const size_t len, ts_crc_check_t& crcvalid)
 {
   m_Buffer->Put(data, len);
 }
@@ -207,7 +207,7 @@ class cVideoBufferRAM : public cVideoBufferTimeshift
 {
 friend class cVideoBuffer;
 public:
-  virtual void Receive(const uint16_t pid, const uint8_t* data, const size_t len);
+  virtual void Receive(const uint16_t pid, const uint8_t* data, const size_t len, ts_crc_check_t& crcvalid);
   virtual int ReadBlock(uint8_t **buf, unsigned int size, time_t &endTime, time_t &wrapTime);
   virtual void SetPos(off_t pos);
 
@@ -253,7 +253,7 @@ void cVideoBufferRAM::SetPos(off_t pos)
   m_BytesConsumed = 0;
 }
 
-void cVideoBufferRAM::Receive(const uint16_t pid, const uint8_t* data, const size_t len)
+void cVideoBufferRAM::Receive(const uint16_t pid, const uint8_t* data, const size_t len, ts_crc_check_t& crcvalid)
 {
   const uint8_t* buf  = data;
   size_t         size = len;
@@ -348,7 +348,7 @@ class cVideoBufferFile : public cVideoBufferTimeshift
 friend class cVideoBuffer;
 public:
   virtual off_t GetPosMax();
-  virtual void Receive(const uint16_t pid, const uint8_t* data, const size_t len);
+  virtual void Receive(const uint16_t pid, const uint8_t* data, const size_t len, ts_crc_check_t& crcvalid);
   virtual int ReadBlock(uint8_t **buf, unsigned int size, time_t &endTime, time_t &wrapTime);
   virtual void SetPos(off_t pos);
 
@@ -461,7 +461,7 @@ off_t cVideoBufferFile::GetPosMax()
   return posMax;
 }
 
-void cVideoBufferFile::Receive(const uint16_t pid, const uint8_t* data, const size_t len)
+void cVideoBufferFile::Receive(const uint16_t pid, const uint8_t* data, const size_t len, ts_crc_check_t& crcvalid)
 {
   const uint8_t* buf  = data;
   size_t         size = len;
@@ -798,7 +798,7 @@ class cVideoBufferTest : public cVideoBufferFile
 friend class cVideoBuffer;
 public:
   virtual off_t GetPosMax();
-  virtual void Receive(const uint16_t pid, const uint8_t* data, const size_t len);
+  virtual void Receive(const uint16_t pid, const uint8_t* data, const size_t len, ts_crc_check_t& crcvalid);
 
 protected:
   cVideoBufferTest(const std::string& filename);
@@ -833,7 +833,7 @@ off_t cVideoBufferTest::GetPosEnd()
   return end;
 }
 
-void cVideoBufferTest::Receive(const uint16_t pid, const uint8_t* data, const size_t len)
+void cVideoBufferTest::Receive(const uint16_t pid, const uint8_t* data, const size_t len, ts_crc_check_t& crcvalid)
 {
 
 }

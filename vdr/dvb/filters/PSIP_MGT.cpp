@@ -53,7 +53,7 @@ cPsipMgt::cPsipMgt(cDevice* device) :
 void cPsipMgt::ReceivePacket(uint16_t pid, const uint8_t* data)
 {
   SI::PSIP_MGT mgt(data);
-  if (mgt.CheckCRCAndParse())
+  if (mgt.CheckAndParse())
   {
     size_t eitPids = 0;
     size_t mgtPids = 0;
