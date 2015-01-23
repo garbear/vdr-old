@@ -33,7 +33,8 @@ cPsiBuffer::cPsiBuffer(unsigned int position) :
     m_start(false),
     m_copy(true),
     m_position(position),
-    m_resource(NULL)
+    m_resource(NULL),
+    m_used(0)
 {
   Reset();
 }
