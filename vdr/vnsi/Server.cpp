@@ -230,7 +230,7 @@ void* cVNSIServer::Process(void)
     int r = select(m_ServerFD + 1, &fds, NULL, NULL, &tv);
     if (r == -1)
     {
-      esyslog("failed during select");
+      //esyslog("failed during select");
       continue;
     }
     if (r == 0)
