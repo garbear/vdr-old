@@ -70,6 +70,11 @@ bool CRCSection::CheckCRCAndParse() {
    return isValid();
 }
 
+bool CRCSection::CheckAndParse() {
+   CheckParse();
+   return isValid();
+}
+
 int NumberedSection::getTableIdExtension() const {
    return getTableIdExtension(data.getData());
 }

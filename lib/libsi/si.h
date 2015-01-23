@@ -304,6 +304,7 @@ public:
    bool isCRCValid();
    //convenience: isValid+CheckParse
    bool CheckCRCAndParse();
+   bool CheckAndParse();
 };
 
 /* A section which has the ExtendedSectionHeader
