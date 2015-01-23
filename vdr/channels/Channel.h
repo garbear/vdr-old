@@ -40,29 +40,52 @@ class TiXmlNode;
 namespace VDR
 {
 
-struct VideoStream
+class VideoStream
 {
+public:
+  VideoStream(void) :
+    vpid(0),
+    vtype(STREAM_TYPE_UNDEFINED),
+    ppid(0) {}
+
   uint16_t    vpid;  // Video stream packet ID
   STREAM_TYPE vtype; // Video stream type (see enum _stream_type in si_ext.h)
   uint16_t    ppid;  // Program clock reference packet ID
 };
 
-struct AudioStream
+class AudioStream
 {
+public:
+  AudioStream(void) :
+    apid(0),
+    atype(STREAM_TYPE_UNDEFINED) {}
+
   uint16_t    apid;  // Audio stream packet ID
   STREAM_TYPE atype; // Audio stream type (see enum _stream_type in si_ext.h)
   std::string alang; // Audio stream language
 };
 
-struct DataStream // Alternatively, DolbyStream; stream types (AC3, DTS) are dolby
+class DataStream // Alternatively, DolbyStream; stream types (AC3, DTS) are dolby
 {
+public:
+  DataStream(void) :
+    dpid(0),
+    dtype(STREAM_TYPE_UNDEFINED) {}
+
   uint16_t    dpid;  // Data stream packet ID
   STREAM_TYPE dtype; // Data stream type (see enum _stream_type in si_ext.h)
   std::string dlang; // Data stream language
 };
 
-struct SubtitleStream
+class SubtitleStream
 {
+public:
+  SubtitleStream(void) :
+    spid(0),
+    subtitlingType(0),
+    compositionPageId(0),
+    ancillaryPageId(0) {}
+
   uint16_t    spid;              // Subtitle stream packet ID
   std::string slang;             // Subtitle stream language
   uint8_t     subtitlingType;    // Subtitling type (optional)
@@ -70,8 +93,12 @@ struct SubtitleStream
   uint16_t    ancillaryPageId;   // Ancillary page ID (optional)
 };
 
-struct TeletextStream
+class TeletextStream
 {
+public:
+  TeletextStream(void) :
+    tpid(0) {}
+
   uint16_t    tpid; // Teletext stream packet ID
 };
 
