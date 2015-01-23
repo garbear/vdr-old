@@ -175,10 +175,14 @@ bool cDvbStreamingResource::Open(void)
 
 bool cDvbStreamingResource::Read(const uint8_t** outdata, size_t* outlen)
 {
-  ssize_t bytesRead = safe_read(m_handle, Buffer()->Data(), PSI_MAX_SIZE);
+  cPsiBuffer* buffer = Buffer();
+  if (!buffer)
+    return false;
+
+  ssize_t bytesRead = safe_read(m_handle, buffer->Data(), PSI_MAX_SIZE);
   if (read > 0)
   {
-    *outdata = Buffer()->Data();
+    *outdata = buffer->Data();
     *outlen  = bytesRead;
     return true;
   }

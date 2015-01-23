@@ -128,7 +128,7 @@ void *cDeviceReceiverSubsystem::Process()
         PidResourcePtr pidPtr = GetMultiplexedResource(pid);
         if (pidPtr)
         {
-          validpsi = pidPtr->Buffer()->AddTsData(packet, TS_SIZE, &psidata, &psidatalen);
+          validpsi = pidPtr->AllocateBuffer()->AddTsData(packet, TS_SIZE, &psidata, &psidatalen);
 
           /** distribute the packet to all receivers */
           std::set<iReceiver*> receivers = GetReceivers();

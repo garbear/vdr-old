@@ -42,4 +42,18 @@ cPidResource::~cPidResource(void)
   cPsiBuffers::Get().Release(m_buffer);
 }
 
+cPsiBuffer* cPidResource::Buffer(void) const
+{
+  PLATFORM::CLockObject lock(m_mutex);
+  return m_buffer;
+}
+
+cPsiBuffer* cPidResource::AllocateBuffer(void)
+{
+  PLATFORM::CLockObject lock(m_mutex);
+  if (!m_buffer)
+    m_buffer = cPsiBuffers::Get().Allocate(this);
+  return m_buffer;
+}
+
 }

@@ -23,6 +23,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string>
+#include "lib/platform/threads/mutex.h"
 
 namespace VDR
 {
@@ -60,13 +61,15 @@ public:
   virtual bool Read(const uint8_t** outdata, size_t* outlen) { return false; }
 
   uint16_t    Pid(void) const    { return m_pid; }
-  cPsiBuffer* Buffer(void) const { return m_buffer; }
+  cPsiBuffer* Buffer(void) const;
+  cPsiBuffer* AllocateBuffer(void);
 
   virtual std::string ToString(void) const = 0;
 
 private:
-  const uint16_t    m_pid; // Packet ID
-  cPsiBuffer* const m_buffer;
+  const uint16_t   m_pid; // Packet ID
+  cPsiBuffer*      m_buffer;
+  PLATFORM::CMutex m_mutex;
 };
 
 }
