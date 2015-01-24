@@ -92,25 +92,20 @@ void *cDeviceReceiverSubsystem::Process()
   uint16_t pid;
   const uint8_t* psidata;
   size_t psidatalen;
-  bool validpsi;
+  bool validpsi, psichecked;
   PidResourcePtr resource;
   ts_crc_check_t crcCheck;
+  iReceiver* receiver;
+  PidResourcePtr pidPtr;
 
   while (!IsStopped())
   {
-    if (!Receiving())
-    {
-      CThread::Sleep(100);
-      continue;
-    }
-
     /** wait for new data */
     switch (Poll(resource))
     {
       case POLL_RESULT_STREAMING_READY:
       if (!IsStopped() && resource->Read(&psidata, &psidatalen))
       {
-        CLockObject lock(m_mutex);
         crcCheck = TS_CRC_NOT_CHECKED;
         /** distribute the packet to receivers holding this resource */
         std::set<iReceiver*> receivers = GetReceivers(resource);
@@ -122,30 +117,31 @@ void *cDeviceReceiverSubsystem::Process()
       case POLL_RESULT_MULTIPLEXED_READY:
       if (!IsStopped() && (packet = ReadMultiplexed()) != NULL)
       {
-        CLockObject lock(m_mutex);
-
         /** find resources attached to the PID that we received */
         pid = TsPid(packet);
-        PidResourcePtr pidPtr = GetMultiplexedResource(pid);
-        if (pidPtr)
-        {
-          validpsi = pidPtr->AllocateBuffer()->AddTsData(packet, TS_SIZE, &psidata, &psidatalen);
-          crcCheck = TS_CRC_NOT_CHECKED;
+        crcCheck = TS_CRC_NOT_CHECKED;
+        psichecked = false;
 
-          /** distribute the packet to all receivers */
-          std::set<iReceiver*> receivers = GetReceivers();
-          for (std::set<iReceiver*>::iterator receiverit = receivers.begin(); receiverit != receivers.end(); ++receiverit)
+        /** distribute the packet to all receivers */
+        std::set<iReceiver*> receivers = GetReceivers();
+        for (std::set<iReceiver*>::iterator receiverit = receivers.begin(); receiverit != receivers.end(); ++receiverit)
+        {
+          receiver = *receiverit;
+          if (receiver->IsPsiReceiver())
           {
-            if ((*receiverit)->IsPsiReceiver())
+            /** only send full data */
+            if (!psichecked)
             {
-              /** only send full data */
-              if (validpsi)
-                (*receiverit)->Receive(pid, psidata, psidatalen, crcCheck);
+              psichecked = true;
+              pidPtr = GetMultiplexedResource(pid);
+              validpsi = pidPtr ? pidPtr->AllocateBuffer()->AddTsData(packet, TS_SIZE, &psidata, &psidatalen) : false;
             }
-            else
-            {
-              (*receiverit)->Receive(pid, packet, TS_SIZE, crcCheck);
-            }
+            if (validpsi)
+              receiver->Receive(pid, psidata, psidatalen, crcCheck);
+          }
+          else
+          {
+            receiver->Receive(pid, packet, TS_SIZE, crcCheck);
           }
         }
         Consumed();
@@ -163,14 +159,6 @@ void *cDeviceReceiverSubsystem::Process()
   return NULL;
 }
 
-std::set<cDeviceReceiverSubsystem::PidResourcePtr> cDeviceReceiverSubsystem::GetResources(void) const
-{
-  std::set<PidResourcePtr> resources;
-  for (ReceiverPidTable::const_iterator it = m_receiverPidTable.begin(); it != m_receiverPidTable.end(); ++it)
-    resources.insert(it->second);
-  return resources;
-}
-
 cDeviceReceiverSubsystem::ReceiverHandlePtr cDeviceReceiverSubsystem::GetReceiverHandle(iReceiver* receiver) const
 {
   for (ReceiverPidTable::const_iterator it = m_receiverPidTable.begin(); it != m_receiverPidTable.end(); ++it)
@@ -184,6 +172,7 @@ cDeviceReceiverSubsystem::ReceiverHandlePtr cDeviceReceiverSubsystem::GetReceive
 std::set<iReceiver*> cDeviceReceiverSubsystem::GetReceivers(void) const
 {
   std::set<iReceiver*> receivers;
+  CLockObject lock(m_mutex);
   for (ReceiverPidTable::const_iterator it = m_receiverPidTable.begin(); it != m_receiverPidTable.end(); ++it)
     receivers.insert(it->first->receiver);
   return receivers;
@@ -192,6 +181,7 @@ std::set<iReceiver*> cDeviceReceiverSubsystem::GetReceivers(void) const
 std::set<iReceiver*> cDeviceReceiverSubsystem::GetReceivers(const PidResourcePtr& resource) const
 {
   std::set<iReceiver*> receivers;
+  CLockObject lock(m_mutex);
   for (ReceiverPidTable::const_iterator it = m_receiverPidTable.begin(); it != m_receiverPidTable.end(); ++it)
     if (resource == it->second)
       receivers.insert(it->first->receiver);
@@ -291,6 +281,7 @@ bool cDeviceReceiverSubsystem::AttachReceiver(iReceiver* receiver, const PidReso
     receiverHandle = ReceiverHandlePtr(new cReceiverHandle(receiver));
   }
 
+  CLockObject lock(m_mutex);
   m_receiverPidTable.insert(ReceiverPidEdge(receiverHandle, openResource));
 
   return true;
@@ -334,13 +325,6 @@ void cDeviceReceiverSubsystem::DetachAllReceivers(void)
   CLockObject lock(m_mutex);
 
   m_receiverPidTable.clear();
-}
-
-bool cDeviceReceiverSubsystem::Receiving(void) const
-{
-  CLockObject lock(m_mutex);
-
-  return !m_receiverPidTable.empty();
 }
 
 }

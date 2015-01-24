@@ -30,6 +30,12 @@ namespace VDR
 
 class cPsiBuffer;
 
+enum RESOURCE_TYPE
+{
+  RESOURCE_TYPE_STREAMING,
+  RESOURCE_TYPE_MULTIPLEXING
+};
+
 /*!
  * Represents a resource (possibly a POSIX file handle) that is associated with
  * a DVB packet ID. This is used to abstract handles used by the Receiver
@@ -54,6 +60,9 @@ public:
 
   virtual bool Open(void) = 0;
   virtual void Close(void) = 0;
+
+  virtual RESOURCE_TYPE Type(void) const = 0;
+  virtual int Handle(void) const = 0;
 
   /*!
    * Override this is if the resource can stream data.

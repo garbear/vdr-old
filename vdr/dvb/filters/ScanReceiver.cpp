@@ -249,6 +249,7 @@ void cScanReceiver::SetScanned(void)
     {
       FILTER_DEBUGGING("%s scan completed", m_name.c_str());
       m_scanned = true;
+      Detach();
     }
     m_scannedEvent.Broadcast();
   }

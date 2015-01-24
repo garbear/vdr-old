@@ -119,6 +119,8 @@ void* cScanner::Process()
     TunerHandlePtr newHandle = dvbDevice->Acquire(channel, TUNING_TYPE_CHANNEL_SCAN, this);
     if (newHandle)
     {
+      //XXX fix tuner subsys to correctly call the callback
+      LockAcquired();
       bool bSuccess = m_setup.device->Scan()->WaitForTransponderScan();
       cChannelManager::Get().NotifyObservers();
       if (bSuccess)
@@ -153,6 +155,9 @@ void* cScanner::Process()
 
 void cScanner::LockAcquired(void)
 {
+  shared_ptr<cDvbDevice> dvbDevice = dynamic_pointer_cast<cDvbDevice>(m_setup.device);
+  if (dvbDevice)
+    dvbDevice->Scan()->AttachReceivers();
 }
 
 void cScanner::LockLost(void)

@@ -43,19 +43,13 @@ using namespace std;
 #define FILE_DESCRIPTOR_INVALID  (-1)
 #define POLL_TIMEOUT_MS          1000
 
-#define PID_DEBUGGING(x...) dsyslog(x)
-//#define PID_DEBUGGING(x...) {}
+//#define PID_DEBUGGING(x...) dsyslog(x)
+#define PID_DEBUGGING(x...) {}
 
 namespace VDR
 {
 
 // --- cDvbResource ------------------------------------------------
-
-enum RESOURCE_TYPE
-{
-  RESOURCE_TYPE_STREAMING,
-  RESOURCE_TYPE_MULTIPLEXING
-};
 
 class cDvbResource : public cPidResource
 {
@@ -302,20 +296,33 @@ POLL_RESULT cDvbReceiverSubsystem::Poll(PidResourcePtr& streamingResource)
 
   // Build a list of file descriptors to poll
   vector<pollfd> vecPfds;
+  PLATFORM::CLockObject lock(m_mutex);
+
+  if (m_receiverPidTable.empty())
+  {
+    lock.Unlock();
+    Sleep(100);
+    lock.Lock();
+    if (m_receiverPidTable.empty())
+      return POLL_RESULT_NOT_READY;
+  }
 
   // Add the file descriptors of all streaming resources
-  std::set<PidResourcePtr> resources = GetResources();
-  for (std::set<PidResourcePtr>::const_iterator it = resources.begin(); it != resources.end(); ++it)
+  for (ReceiverPidTable::const_iterator it = m_receiverPidTable.begin(); it != m_receiverPidTable.end(); ++it)
   {
-    const cDvbResource* resource = dynamic_cast<const cDvbResource*>(it->get());
-    if (resource && resource->Type() == RESOURCE_TYPE_STREAMING)
+    switch (it->second->Type())
     {
-      pollfd pfd = { resource->Handle(), POLLIN | POLLERR, 0 };
-      vecPfds.push_back(pfd);
-    }
-    else if (resource && resource->Type() == RESOURCE_TYPE_MULTIPLEXING)
-    {
-      bMultiplexedResources = true;
+      case RESOURCE_TYPE_STREAMING:
+        {
+          pollfd pfd = { it->second->Handle(), POLLIN | POLLERR, 0 };
+          vecPfds.push_back(pfd);
+        }
+        break;
+      case RESOURCE_TYPE_MULTIPLEXING:
+        bMultiplexedResources = true;
+        break;
+      default:
+        break;
     }
   }
 
@@ -328,8 +335,10 @@ POLL_RESULT cDvbReceiverSubsystem::Poll(PidResourcePtr& streamingResource)
 
   if (!vecPfds.empty())
   {
+    lock.Unlock();
     if (poll(vecPfds.data(), vecPfds.size(), POLL_TIMEOUT_MS) > 0)
     {
+      lock.Lock();
       // Look for file descriptor that signaled poll()
       for (unsigned int i = 0; i < vecPfds.size(); i++)
       {
@@ -342,12 +351,11 @@ POLL_RESULT cDvbReceiverSubsystem::Poll(PidResourcePtr& streamingResource)
             return POLL_RESULT_MULTIPLEXED_READY;
 
           // Check if a streaming resource is ready
-          for (std::set<PidResourcePtr>::const_iterator it = resources.begin(); it != resources.end(); ++it)
+          for (ReceiverPidTable::const_iterator it = m_receiverPidTable.begin(); it != m_receiverPidTable.end(); ++it)
           {
-            const cDvbResource* resource = dynamic_cast<const cDvbResource*>(it->get());
-            if (resource && resource->Handle() == signaledFd)
+            if (it->second->Handle() == signaledFd)
             {
-              streamingResource = *it;
+              streamingResource = it->second;
               return POLL_RESULT_STREAMING_READY;
             }
           }

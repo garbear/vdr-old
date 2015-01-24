@@ -200,34 +200,42 @@ TunerHandlePtr cDeviceChannelSubsystem::Acquire(const ChannelPtr& channel, devic
 
 void cDeviceChannelSubsystem::Release(TunerHandlePtr& handle, bool notify /* = true */)
 {
-  CLockObject lock(m_mutex);
-  std::vector<TunerHandlePtr>::iterator it = std::find(m_activeTransponders.begin(), m_activeTransponders.end(), handle);
-  if (it != m_activeTransponders.end())
+  bool empty;
   {
-    m_activeTransponders.erase(it);
-    if (notify)
-      handle->LockLost();
-    dsyslog("released subscription for channel %uMHz prio %d", handle->Channel()->GetTransponder().FrequencyMHz(), handle->Type());
-  }
-  if (m_activeTransponders.empty())
-    ClearChannel();
-}
-
-void cDeviceChannelSubsystem::Release(cTunerHandle* handle, bool notify /* = true */)
-{
-  CLockObject lock(m_mutex);
-  for (std::vector<TunerHandlePtr>::iterator it = m_activeTransponders.begin(); it != m_activeTransponders.end(); ++it)
-  {
-    if ((*it).get() == handle)
+    CLockObject lock(m_mutex);
+    std::vector<TunerHandlePtr>::iterator it = std::find(m_activeTransponders.begin(), m_activeTransponders.end(), handle);
+    if (it != m_activeTransponders.end())
     {
       m_activeTransponders.erase(it);
       if (notify)
         handle->LockLost();
       dsyslog("released subscription for channel %uMHz prio %d", handle->Channel()->GetTransponder().FrequencyMHz(), handle->Type());
-      break;
     }
+    empty = m_activeTransponders.empty();
   }
-  if (m_activeTransponders.empty())
+  if (empty)
+    ClearChannel();
+}
+
+void cDeviceChannelSubsystem::Release(cTunerHandle* handle, bool notify /* = true */)
+{
+  bool empty;
+  {
+    CLockObject lock(m_mutex);
+    for (std::vector<TunerHandlePtr>::iterator it = m_activeTransponders.begin(); it != m_activeTransponders.end(); ++it)
+    {
+      if ((*it).get() == handle)
+      {
+        m_activeTransponders.erase(it);
+        if (notify)
+          handle->LockLost();
+        dsyslog("released subscription for channel %uMHz prio %d", handle->Channel()->GetTransponder().FrequencyMHz(), handle->Type());
+        break;
+      }
+    }
+    empty = m_activeTransponders.empty();
+  }
+  if (empty)
     ClearChannel();
 }
 

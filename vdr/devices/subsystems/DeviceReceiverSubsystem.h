@@ -84,11 +84,6 @@ public:
   void DetachMultiplexedReceiver(iReceiver* receiver, uint16_t pid, STREAM_TYPE type = STREAM_TYPE_UNDEFINED);
 
   /*!
-   * Returns true if any receivers are attached to this device.
-   */
-  bool Receiving(void) const;
-
-  /*!
    * \brief Detaches all receivers from this device.
    */
   virtual void DetachAllReceivers(void);
@@ -143,9 +138,7 @@ protected:
    */
   virtual void Consumed(void) = 0;
 
-  std::set<PidResourcePtr> GetResources(void) const;
-
-private:
+protected:
   ReceiverHandlePtr    GetReceiverHandle(iReceiver* receiver) const;
   std::set<iReceiver*> GetReceivers(void) const;
   std::set<iReceiver*> GetReceivers(const PidResourcePtr& resource) const;

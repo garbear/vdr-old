@@ -111,6 +111,7 @@ void* cEPGScanner::Process()
       TunerHandlePtr newHandle = device->Acquire((*it), TUNING_TYPE_EPG_SCAN, this);
       if (newHandle)
       {
+        device->Scan()->AttachReceivers();
         device->Scan()->WaitForEPGScan();
         cScheduleManager::Get().NotifyObservers();
         newHandle->Release();
@@ -137,6 +138,7 @@ void cEPGScanner::LockLost(void)
 
 void cEPGScanner::LostPriority(void)
 {
+  Stop(false);
 }
 
 }

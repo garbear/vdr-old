@@ -25,6 +25,8 @@
 #include "channels/Channel.h"
 #include "channels/ChannelID.h"
 #include "channels/ChannelManager.h"
+#include "devices/DeviceManager.h"
+#include "devices/subsystems/DeviceChannelSubsystem.h"
 #include "epg/Component.h"
 #include "epg/Event.h"
 #include "epg/ScheduleManager.h"
@@ -75,8 +77,6 @@ void cEit::ReceivePacket(uint16_t pid, const uint8_t* data)
     SI::EIT tsEIT(data);
     if (tsEIT.CheckAndParse())
     {
-      // We need the current time for handling PDC descriptors
-      CDateTime now = CDateTime::GetUTCDateTime();
       /*
        ChannelPtr channel = m_channelManager.GetByChannelID(tsEIT.getOriginalNetworkId(),
        tsEIT.getTransportStreamId(),
@@ -86,7 +86,7 @@ void cEit::ReceivePacket(uint16_t pid, const uint8_t* data)
       channel->SetId(tsEIT.getOriginalNetworkId(), tsEIT.getTransportStreamId(),
           tsEIT.getServiceId());
 
-      if (now.IsValid())
+      if (true)//TODO
       {
         SI::EIT::Event eitEvent;
         for (SI::Loop::Iterator it; tsEIT.eventLoop.getNext(eitEvent, it);)
@@ -245,7 +245,7 @@ void cEit::ReceivePacket(uint16_t pid, const uint8_t* data)
             case SI::PDCDescriptorTag:
               {
                 SI::PDCDescriptor* pd = (SI::PDCDescriptor*) d;
-
+                CDateTime now = CDateTime::GetUTCDateTime();
                 CDateTime vps = now;
                 vps.SetDateTime(vps.GetYear(), pd->getMonth(), pd->getDay(),
                     pd->getHour(), pd->getMinute(), 0);
@@ -271,7 +271,7 @@ void cEit::ReceivePacket(uint16_t pid, const uint8_t* data)
                 {
                   CDateTime eitStart =
                       CDateTime(eitEvent.getStartTime()).GetAsUTCDateTime();
-
+                  CDateTime now = CDateTime::GetUTCDateTime();
                   bool bHit =
                       (eitStart <= now)
                           && (now
@@ -342,7 +342,7 @@ void cEit::ReceivePacket(uint16_t pid, const uint8_t* data)
            */
 
           // Report pEvent
-          events.push_back(thisEvent);
+          cScheduleManager::Get().AddEvent(thisEvent, m_device->Channel()->GetCurrentlyTunedTransponder());
 
           // m_extendedEventDescriptors is allocated in GetText()
           SAFE_DELETE(m_extendedEventDescriptors);
@@ -373,7 +373,6 @@ void cEit::ReceivePacket(uint16_t pid, const uint8_t* data)
          */
       }
     }
-    //TODO do something useful with the events ;)
   }
 
 void cEit::GetText(SI::Descriptor* d, uint8_t tid, uint16_t nid, uint16_t tsid,

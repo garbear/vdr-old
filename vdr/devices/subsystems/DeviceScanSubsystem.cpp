@@ -218,7 +218,6 @@ void cDeviceScanSubsystem::Notify(const Observable &obs, const ObservableMessage
   {
   case ObservableMessageChannelLock:
   {
-    AttachReceivers();
     LockAcquired();
     PLATFORM::CLockObject lock(m_mutex);
     m_locked = true;
