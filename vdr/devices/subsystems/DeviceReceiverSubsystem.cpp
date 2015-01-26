@@ -93,7 +93,7 @@ void cDeviceReceiverSubsystem::Stop(void)
 
 void cDeviceReceiverSubsystem::ProcessDetachAll(void)
 {
-  DEBUG_RCV_CHANGE("detaching all receivers");
+  DEBUG_RCV_CHANGE("ProcessChanges: detaching all receivers");
   m_receiverPidTable.clear();
 }
 
@@ -200,6 +200,7 @@ void cDeviceReceiverSubsystem::ProcessChanges(void)
     m_receiverChanges.pop();
   }
 
+  DEBUG_RCV_CHANGE("ProcessChanges: active pids after processing changes: %d", m_receiverPidTable.size());
   m_changeProcessed = true;
   m_pidChangeProcessed.Broadcast();
 }
