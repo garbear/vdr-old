@@ -206,6 +206,13 @@ protected:
   PidResourcePtr       GetMultiplexedResource(uint16_t pid) const; // Streaming resources can't be identified by PID alone
   bool                 AttachReceiver(iReceiver* receiver, const PidResourcePtr& resource);
 
+  void ProcessDetachAll(void);
+  void ProcessAttachMultiplexed(cReceiverChange& change);
+  void ProcessAttachStreaming(cReceiverChange& change);
+  void ProcessDetachReceiver(cReceiverChange& change);
+  void ProcessDetachMultiplexed(cReceiverChange& change);
+  void ProcessDetachStreaming(cReceiverChange& change);
+
   ReceiverPidTable m_receiverPidTable;// Receiver <-> PID associations
 
   PLATFORM::CMutex             m_mutex;

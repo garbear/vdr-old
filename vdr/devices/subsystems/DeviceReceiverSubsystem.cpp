@@ -38,6 +38,14 @@ using namespace std;
 
 #define MAX_IDLE_DELAY_MS      100
 
+#define DEBUG_RCV_CHANGES (1)
+
+#if DEBUG_RCV_CHANGES
+#define DEBUG_RCV_CHANGE(x...) dsyslog(x)
+#else
+#define DEBUG_RCV_CHANGE(x...)
+#endif
+
 namespace VDR
 {
 
@@ -83,6 +91,85 @@ void cDeviceReceiverSubsystem::Stop(void)
   StopThread(0);
 }
 
+void cDeviceReceiverSubsystem::ProcessDetachAll(void)
+{
+  DEBUG_RCV_CHANGE("detaching all receivers");
+  m_receiverPidTable.clear();
+}
+
+void cDeviceReceiverSubsystem::ProcessAttachMultiplexed(cDeviceReceiverSubsystem::cReceiverChange& change)
+{
+  DEBUG_RCV_CHANGE("ProcessChanges: attaching multiplexed receiver for pid %d", change.m_pid);
+  AttachReceiver(change.m_receiver, CreateMultiplexedResource(change.m_pid, change.m_streamType));
+}
+
+void cDeviceReceiverSubsystem::ProcessAttachStreaming(cDeviceReceiverSubsystem::cReceiverChange& change)
+{
+  DEBUG_RCV_CHANGE("ProcessChanges: attaching streaming receiver for pid %d tid %d mask %d", change.m_pid, change.m_tid, change.m_mask);
+  AttachReceiver(change.m_receiver, CreateStreamingResource(change.m_pid, change.m_tid, change.m_mask));
+}
+
+void cDeviceReceiverSubsystem::ProcessDetachReceiver(cDeviceReceiverSubsystem::cReceiverChange& change)
+{
+  ReceiverList receiverList;
+  DEBUG_RCV_CHANGE("ProcessChanges: detaching receiver %p", change.m_receiver);
+  for (ReceiverPidTable::iterator itReceiverList = m_receiverPidTable.begin(); itReceiverList != m_receiverPidTable.end(); ++itReceiverList)
+  {
+    receiverList = itReceiverList->second;
+    for (ReceiverList::iterator itReceiver = receiverList.begin(); itReceiver != receiverList.end(); ++itReceiver)
+    {
+      if (itReceiver->first->receiver == change.m_receiver)
+      {
+        itReceiverList->second.erase(itReceiver);
+        break;
+      }
+    }
+    if (receiverList.empty())
+      m_receiverPidTable.erase(itReceiverList);
+  }
+}
+
+void cDeviceReceiverSubsystem::ProcessDetachMultiplexed(cDeviceReceiverSubsystem::cReceiverChange& change)
+{
+  ReceiverPidTable::iterator itReceiverList = m_receiverPidTable.find(change.m_pid);
+  DEBUG_RCV_CHANGE("ProcessChanges: detaching multiplexed receiver %p from pid %u", change.m_receiver, change.m_pid);
+  if (itReceiverList != m_receiverPidTable.end())
+  {
+    ReceiverList receiverList = itReceiverList->second;
+    for (ReceiverList::iterator itReceiver = receiverList.begin(); itReceiver != receiverList.end(); ++itReceiver)
+    {
+      if (itReceiver->first->receiver == change.m_receiver)
+      {
+        itReceiverList->second.erase(itReceiver);
+        break;
+      }
+    }
+    if (receiverList.empty())
+      m_receiverPidTable.erase(itReceiverList);
+  }
+}
+
+void cDeviceReceiverSubsystem::ProcessDetachStreaming(cDeviceReceiverSubsystem::cReceiverChange& change)
+{
+  //TODO remove tid/mask
+  ReceiverPidTable::iterator itReceiverList = m_receiverPidTable.find(change.m_pid);
+  DEBUG_RCV_CHANGE("ProcessChanges: detaching streaming receiver %p from pid %u", change.m_receiver, change.m_pid);
+  if (itReceiverList != m_receiverPidTable.end())
+  {
+    ReceiverList receiverList = itReceiverList->second;
+    for (ReceiverList::iterator itReceiver = receiverList.begin(); itReceiver != receiverList.end(); ++itReceiver)
+    {
+      if (itReceiver->first->receiver == change.m_receiver)
+      {
+        itReceiverList->second.erase(itReceiver);
+        break;
+      }
+    }
+    if (receiverList.empty())
+      m_receiverPidTable.erase(itReceiverList);
+  }
+}
+
 void cDeviceReceiverSubsystem::ProcessChanges(void)
 {
   cReceiverChange* change;
@@ -92,72 +179,22 @@ void cDeviceReceiverSubsystem::ProcessChanges(void)
     switch (change->m_type)
     {
       case RCV_CHANGE_DETACH_ALL:
-        m_receiverPidTable.clear();
+        ProcessDetachAll();
         break;
       case RCV_CHANGE_ATTACH_MULTIPLEXED:
-        AttachReceiver(change->m_receiver, CreateMultiplexedResource(change->m_pid, change->m_streamType));
+        ProcessAttachMultiplexed(*change);
         break;
-
       case RCV_CHANGE_ATTACH_STREAMING:
-        AttachReceiver(change->m_receiver, CreateStreamingResource(change->m_pid, change->m_tid, change->m_mask));
+        ProcessAttachStreaming(*change);
         break;
       case RCV_CHANGE_DETACH:
-        {
-          ReceiverList receiverList;
-          for (ReceiverPidTable::iterator itReceiverList = m_receiverPidTable.begin(); itReceiverList != m_receiverPidTable.end(); ++itReceiverList)
-          {
-            receiverList = itReceiverList->second;
-            for (ReceiverList::iterator itReceiver = receiverList.begin(); itReceiver != receiverList.end(); ++itReceiver)
-            {
-              if (itReceiver->first->receiver == change->m_receiver)
-              {
-                itReceiverList->second.erase(itReceiver);
-                break;
-              }
-            }
-            if (receiverList.empty())
-              m_receiverPidTable.erase(itReceiverList);
-          }
-        }
+        ProcessDetachReceiver(*change);
         break;
       case RCV_CHANGE_DETACH_MULTIPLEXED:
-        {
-          ReceiverPidTable::iterator itReceiverList = m_receiverPidTable.find(change->m_pid);
-          if (itReceiverList != m_receiverPidTable.end())
-          {
-            ReceiverList receiverList = itReceiverList->second;
-            for (ReceiverList::iterator itReceiver = receiverList.begin(); itReceiver != receiverList.end(); ++itReceiver)
-            {
-              if (itReceiver->first->receiver == change->m_receiver)
-              {
-                itReceiverList->second.erase(itReceiver);
-                break;
-              }
-            }
-            if (receiverList.empty())
-              m_receiverPidTable.erase(itReceiverList);
-          }
-        }
+        ProcessDetachMultiplexed(*change);
         break;
       case RCV_CHANGE_DETACH_STREAMING:
-        {
-          //TODO remove tid/mask
-          ReceiverPidTable::iterator itReceiverList = m_receiverPidTable.find(change->m_pid);
-          if (itReceiverList != m_receiverPidTable.end())
-          {
-            ReceiverList receiverList = itReceiverList->second;
-            for (ReceiverList::iterator itReceiver = receiverList.begin(); itReceiver != receiverList.end(); ++itReceiver)
-            {
-              if (itReceiver->first->receiver == change->m_receiver)
-              {
-                itReceiverList->second.erase(itReceiver);
-                break;
-              }
-            }
-            if (receiverList.empty())
-              m_receiverPidTable.erase(itReceiverList);
-          }
-        }
+        ProcessDetachStreaming(*change);
         break;
     }
     delete change;
