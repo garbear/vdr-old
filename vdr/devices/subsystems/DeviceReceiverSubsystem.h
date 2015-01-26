@@ -145,7 +145,7 @@ public:
   /*!
    * \brief Detaches all receivers from this device.
    */
-  virtual void DetachAllReceivers(void);
+  virtual void DetachAllReceivers(bool wait);
 
 protected:
   /*!

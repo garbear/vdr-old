@@ -69,7 +69,7 @@ cDeviceReceiverSubsystem::cDeviceReceiverSubsystem(cDevice *device)
 
 cDeviceReceiverSubsystem::~cDeviceReceiverSubsystem(void)
 {
-  DetachAllReceivers();
+  DetachAllReceivers(false);
 }
 
 void cDeviceReceiverSubsystem::Start(void)
@@ -445,14 +445,17 @@ void cDeviceReceiverSubsystem::DetachReceiver(iReceiver* receiver, bool wait)
     m_pidChangeProcessed.Wait(m_mutex, m_changeProcessed);
 }
 
-void cDeviceReceiverSubsystem::DetachAllReceivers(void)
+void cDeviceReceiverSubsystem::DetachAllReceivers(bool wait)
 {
   CLockObject lock(m_mutex);
   m_receiverChanges.push(new cReceiverChange(RCV_CHANGE_DETACH_ALL));
   m_changed = true;
   m_changeProcessed = false;
-  m_pidChange.Signal();
-  m_pidChangeProcessed.Wait(m_mutex, m_changeProcessed);
+  if (wait)
+  {
+    m_pidChange.Signal();
+    m_pidChangeProcessed.Wait(m_mutex, m_changeProcessed);
+  }
 }
 
 }
