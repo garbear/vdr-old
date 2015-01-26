@@ -30,8 +30,6 @@
 #include "utils/CommonMacros.h"
 #include "utils/log/Log.h"
 
-#include <algorithm>
-
 using namespace PLATFORM;
 using namespace std;
 
@@ -63,7 +61,9 @@ cDeviceReceiverSubsystem::cReceiverHandle::~cReceiverHandle(void)
 // --- cDeviceReceiverSubsystem ------------------------------------------------
 
 cDeviceReceiverSubsystem::cDeviceReceiverSubsystem(cDevice *device)
- : cDeviceSubsystem(device)
+ : cDeviceSubsystem(device),
+   m_changed(false),
+   m_changeProcessed(false)
 {
 }
 
@@ -83,6 +83,91 @@ void cDeviceReceiverSubsystem::Stop(void)
   StopThread(0);
 }
 
+void cDeviceReceiverSubsystem::ProcessChanges(void)
+{
+  cReceiverChange* change;
+  while (!m_receiverChanges.empty())
+  {
+    change = m_receiverChanges.front();
+    switch (change->m_type)
+    {
+      case RCV_CHANGE_DETACH_ALL:
+        m_receiverPidTable.clear();
+        break;
+      case RCV_CHANGE_ATTACH_MULTIPLEXED:
+        AttachReceiver(change->m_receiver, CreateMultiplexedResource(change->m_pid, change->m_streamType));
+        break;
+
+      case RCV_CHANGE_ATTACH_STREAMING:
+        AttachReceiver(change->m_receiver, CreateStreamingResource(change->m_pid, change->m_tid, change->m_mask));
+        break;
+      case RCV_CHANGE_DETACH:
+        {
+          ReceiverList receiverList;
+          for (ReceiverPidTable::iterator itReceiverList = m_receiverPidTable.begin(); itReceiverList != m_receiverPidTable.end(); ++itReceiverList)
+          {
+            receiverList = itReceiverList->second;
+            for (ReceiverList::iterator itReceiver = receiverList.begin(); itReceiver != receiverList.end(); ++itReceiver)
+            {
+              if (itReceiver->first->receiver == change->m_receiver)
+              {
+                itReceiverList->second.erase(itReceiver);
+                break;
+              }
+            }
+            if (receiverList.empty())
+              m_receiverPidTable.erase(itReceiverList);
+          }
+        }
+        break;
+      case RCV_CHANGE_DETACH_MULTIPLEXED:
+        {
+          ReceiverPidTable::iterator itReceiverList = m_receiverPidTable.find(change->m_pid);
+          if (itReceiverList != m_receiverPidTable.end())
+          {
+            ReceiverList receiverList = itReceiverList->second;
+            for (ReceiverList::iterator itReceiver = receiverList.begin(); itReceiver != receiverList.end(); ++itReceiver)
+            {
+              if (itReceiver->first->receiver == change->m_receiver)
+              {
+                itReceiverList->second.erase(itReceiver);
+                break;
+              }
+            }
+            if (receiverList.empty())
+              m_receiverPidTable.erase(itReceiverList);
+          }
+        }
+        break;
+      case RCV_CHANGE_DETACH_STREAMING:
+        {
+          //TODO remove tid/mask
+          ReceiverPidTable::iterator itReceiverList = m_receiverPidTable.find(change->m_pid);
+          if (itReceiverList != m_receiverPidTable.end())
+          {
+            ReceiverList receiverList = itReceiverList->second;
+            for (ReceiverList::iterator itReceiver = receiverList.begin(); itReceiver != receiverList.end(); ++itReceiver)
+            {
+              if (itReceiver->first->receiver == change->m_receiver)
+              {
+                itReceiverList->second.erase(itReceiver);
+                break;
+              }
+            }
+            if (receiverList.empty())
+              m_receiverPidTable.erase(itReceiverList);
+          }
+        }
+        break;
+    }
+    delete change;
+    m_receiverChanges.pop();
+  }
+
+  m_changeProcessed = true;
+  m_pidChangeProcessed.Broadcast();
+}
+
 void *cDeviceReceiverSubsystem::Process()
 {
   if (!Initialise())
@@ -97,9 +182,33 @@ void *cDeviceReceiverSubsystem::Process()
   ts_crc_check_t crcCheck;
   iReceiver* receiver;
   PidResourcePtr pidPtr;
+  bool empty = true;
 
   while (!IsStopped())
   {
+    {
+      CLockObject lock(m_mutex);
+      if (m_changed)
+      {
+        m_changed = false;
+        ProcessChanges();
+      }
+
+      if (m_receiverPidTable.empty())
+      {
+        if (m_pidChange.Wait(m_mutex, m_changed, 1000))
+        {
+          m_changed = false;
+          ProcessChanges();
+        }
+      }
+
+      empty = m_receiverPidTable.empty();
+    }
+
+    if (empty)
+      continue;
+
     /** wait for new data */
     switch (Poll(resource))
     {
@@ -108,7 +217,7 @@ void *cDeviceReceiverSubsystem::Process()
       {
         crcCheck = TS_CRC_NOT_CHECKED;
         /** distribute the packet to receivers holding this resource */
-        std::set<iReceiver*> receivers = GetReceivers(resource);
+        std::set<iReceiver*> receivers = GetReceiversForPid(resource->Pid());
         for (std::set<iReceiver*>::iterator receiverit = receivers.begin(); receiverit != receivers.end(); ++receiverit)
           (*receiverit)->Receive(resource->Pid(), psidata, psidatalen, crcCheck);
       }
@@ -123,7 +232,7 @@ void *cDeviceReceiverSubsystem::Process()
         psichecked = false;
 
         /** distribute the packet to all receivers */
-        std::set<iReceiver*> receivers = GetReceivers();
+        std::set<iReceiver*> receivers = GetReceiversForPid(pid);
         for (std::set<iReceiver*>::iterator receiverit = receivers.begin(); receiverit != receivers.end(); ++receiverit)
         {
           receiver = *receiverit;
@@ -163,47 +272,46 @@ cDeviceReceiverSubsystem::ReceiverHandlePtr cDeviceReceiverSubsystem::GetReceive
 {
   for (ReceiverPidTable::const_iterator it = m_receiverPidTable.begin(); it != m_receiverPidTable.end(); ++it)
   {
-    if (it->first->receiver == receiver)
-      return it->first;
+    for (ReceiverList::const_iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2)
+      if (it2->first->receiver == receiver)
+        return it2->first;
   }
   return ReceiverHandlePtr();
 }
 
-std::set<iReceiver*> cDeviceReceiverSubsystem::GetReceivers(void) const
+std::set<iReceiver*> cDeviceReceiverSubsystem::GetReceiversForPid(uint16_t pid) const
 {
   std::set<iReceiver*> receivers;
-  CLockObject lock(m_mutex);
-  for (ReceiverPidTable::const_iterator it = m_receiverPidTable.begin(); it != m_receiverPidTable.end(); ++it)
-    receivers.insert(it->first->receiver);
-  return receivers;
-}
-
-std::set<iReceiver*> cDeviceReceiverSubsystem::GetReceivers(const PidResourcePtr& resource) const
-{
-  std::set<iReceiver*> receivers;
-  CLockObject lock(m_mutex);
-  for (ReceiverPidTable::const_iterator it = m_receiverPidTable.begin(); it != m_receiverPidTable.end(); ++it)
-    if (resource == it->second)
+  ReceiverPidTable::const_iterator it = m_receiverPidTable.find(pid);
+  if (it != m_receiverPidTable.end())
+  {
+    ReceiverList rcv = it->second;
+    for (ReceiverList::const_iterator it = rcv.begin(); it != rcv.end(); ++it)
       receivers.insert(it->first->receiver);
+  }
   return receivers;
 }
 
 cDeviceReceiverSubsystem::PidResourcePtr cDeviceReceiverSubsystem::GetResource(const PidResourcePtr& needle) const
 {
-  for (ReceiverPidTable::const_iterator it = m_receiverPidTable.begin(); it != m_receiverPidTable.end(); ++it)
+  ReceiverPidTable::const_iterator it = m_receiverPidTable.find(needle->Pid());
+  if (it != m_receiverPidTable.end())
   {
-    if (it->second->Equals(needle.get()))
-      return it->second;
+    for (ReceiverList::const_iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2)
+      if (it2->second->Equals(needle.get()))
+        return it2->second;
   }
   return PidResourcePtr();
 }
 
 cDeviceReceiverSubsystem::PidResourcePtr cDeviceReceiverSubsystem::GetMultiplexedResource(uint16_t pid) const
 {
-  for (ReceiverPidTable::const_iterator it = m_receiverPidTable.begin(); it != m_receiverPidTable.end(); ++it)
+  ReceiverPidTable::const_iterator it = m_receiverPidTable.find(pid);
+  if (it != m_receiverPidTable.end())
   {
-    if (it->second->Equals(pid))
-      return it->second;
+    for (ReceiverList::const_iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2)
+      if (it2->second->Type() == RESOURCE_TYPE_MULTIPLEXING && it2->second->Equals(pid))
+        return it2->second;
   }
   return PidResourcePtr();
 }
@@ -211,21 +319,23 @@ cDeviceReceiverSubsystem::PidResourcePtr cDeviceReceiverSubsystem::GetMultiplexe
 bool cDeviceReceiverSubsystem::AttachStreamingReceiver(iReceiver* receiver, uint16_t pid, uint8_t tid, uint8_t mask)
 {
   CLockObject lock(m_mutex);
-
-  return AttachReceiver(receiver, CreateStreamingResource(pid, tid, mask));
+  m_receiverChanges.push(new cReceiverChange(RCV_CHANGE_ATTACH_STREAMING, receiver, pid, tid, mask));
+  m_changed = true;
+  m_pidChange.Signal();
+  return true;
 }
 
 bool cDeviceReceiverSubsystem::AttachMultiplexedReceiver(iReceiver* receiver, uint16_t pid, STREAM_TYPE type /* = STREAM_TYPE_UNDEFINED */)
 {
   CLockObject lock(m_mutex);
-
-  return AttachReceiver(receiver, CreateMultiplexedResource(pid, type));
+  m_receiverChanges.push(new cReceiverChange(RCV_CHANGE_ATTACH_MULTIPLEXED, receiver, pid, type));
+  m_changed = true;
+  m_pidChange.Signal();
+  return true;
 }
 
 bool cDeviceReceiverSubsystem::AttachMultiplexedReceiver(iReceiver* receiver, const ChannelPtr& channel)
 {
-  CLockObject lock(m_mutex);
-
   bool bAllOpened(true);
 
   if (bAllOpened && channel->GetVideoStream().vpid)
@@ -256,7 +366,7 @@ bool cDeviceReceiverSubsystem::AttachMultiplexedReceiver(iReceiver* receiver, co
   }
   else
   {
-    DetachReceiver(receiver);
+    DetachReceiver(receiver, false);
   }
 
   return bAllOpened;
@@ -264,6 +374,7 @@ bool cDeviceReceiverSubsystem::AttachMultiplexedReceiver(iReceiver* receiver, co
 
 bool cDeviceReceiverSubsystem::AttachReceiver(iReceiver* receiver, const PidResourcePtr& resource)
 {
+  //TODO fix when both streaming and multiplexed sources attach to the same pid
   PidResourcePtr openResource = GetResource(resource);
   if (!openResource)
   {
@@ -281,50 +392,67 @@ bool cDeviceReceiverSubsystem::AttachReceiver(iReceiver* receiver, const PidReso
     receiverHandle = ReceiverHandlePtr(new cReceiverHandle(receiver));
   }
 
-  CLockObject lock(m_mutex);
-  m_receiverPidTable.insert(ReceiverPidEdge(receiverHandle, openResource));
+  ReceiverPidTable::iterator it = m_receiverPidTable.find(resource->Pid());
+  if (it != m_receiverPidTable.end())
+  {
+    for (ReceiverList::iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2)
+    {
+      if (it2->first->receiver == receiverHandle->receiver)
+        return true;
+    }
+    it->second.push_back(make_pair(receiverHandle, openResource));
+  }
+  else
+  {
+    ReceiverList rcvlist;
+    rcvlist.push_back(make_pair(receiverHandle, openResource));
+    m_receiverPidTable.insert(make_pair(resource->Pid(), rcvlist));
+  }
 
   return true;
 }
 
-void cDeviceReceiverSubsystem::DetachStreamingReceiver(iReceiver* receiver, uint16_t pid, uint8_t tid, uint8_t mask)
+void cDeviceReceiverSubsystem::DetachStreamingReceiver(iReceiver* receiver, uint16_t pid, uint8_t tid, uint8_t mask, bool wait)
 {
   CLockObject lock(m_mutex);
-
-  const ReceiverPidEdge needle(GetReceiverHandle(receiver), GetResource(CreateStreamingResource(pid, tid, mask)));
-  ReceiverPidTable::iterator it = m_receiverPidTable.find(needle);
-  if (it != m_receiverPidTable.end())
-    m_receiverPidTable.erase(it);
+  m_receiverChanges.push(new cReceiverChange(RCV_CHANGE_DETACH_STREAMING, receiver, pid, tid, mask));
+  m_changed = true;
+  m_changeProcessed = false;
+  m_pidChange.Signal();
+  if (wait)
+    m_pidChangeProcessed.Wait(m_mutex, m_changeProcessed);
 }
 
-void cDeviceReceiverSubsystem::DetachMultiplexedReceiver(iReceiver* receiver, uint16_t pid, STREAM_TYPE type /* = STREAM_TYPE_UNDEFINED */)
+void cDeviceReceiverSubsystem::DetachMultiplexedReceiver(iReceiver* receiver, uint16_t pid, STREAM_TYPE type /* = STREAM_TYPE_UNDEFINED */, bool wait /* = false */)
 {
   CLockObject lock(m_mutex);
-
-  const ReceiverPidEdge needle(GetReceiverHandle(receiver), CreateMultiplexedResource(pid, type));
-  ReceiverPidTable::iterator it = m_receiverPidTable.find(needle);
-  if (it != m_receiverPidTable.end())
-    m_receiverPidTable.erase(it);
+  m_receiverChanges.push(new cReceiverChange(RCV_CHANGE_DETACH_MULTIPLEXED, receiver, pid, type));
+  m_changed = true;
+  m_changeProcessed = false;
+  m_pidChange.Signal();
+  if (wait)
+    m_pidChangeProcessed.Wait(m_mutex, m_changeProcessed);
 }
 
-void cDeviceReceiverSubsystem::DetachReceiver(iReceiver* receiver)
+void cDeviceReceiverSubsystem::DetachReceiver(iReceiver* receiver, bool wait)
 {
   CLockObject lock(m_mutex);
-
-  for (ReceiverPidTable::iterator it = m_receiverPidTable.begin(); it != m_receiverPidTable.end(); )
-  {
-    if (it->first->receiver == receiver)
-      m_receiverPidTable.erase(it++);
-    else
-      ++it;
-  }
+  m_receiverChanges.push(new cReceiverChange(RCV_CHANGE_DETACH, receiver));
+  m_changed = true;
+  m_changeProcessed = false;
+  m_pidChange.Signal();
+  if (wait)
+    m_pidChangeProcessed.Wait(m_mutex, m_changeProcessed);
 }
 
 void cDeviceReceiverSubsystem::DetachAllReceivers(void)
 {
   CLockObject lock(m_mutex);
-
-  m_receiverPidTable.clear();
+  m_receiverChanges.push(new cReceiverChange(RCV_CHANGE_DETACH_ALL));
+  m_changed = true;
+  m_changeProcessed = false;
+  m_pidChange.Signal();
+  m_pidChangeProcessed.Wait(m_mutex, m_changeProcessed);
 }
 
 }

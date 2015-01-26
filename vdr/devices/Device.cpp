@@ -94,6 +94,7 @@ cDevice::~cDevice()
 bool cDevice::Initialise(unsigned int index)
 {
   m_index = index;
+  Receiver()->Start();
   m_bInitialised = true;
   return m_bInitialised;
 }

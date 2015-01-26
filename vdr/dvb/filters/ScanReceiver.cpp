@@ -138,7 +138,7 @@ void cScanReceiver::Detach(void)
       it->second->Reset();
 
     for (std::set<filter_properties>::const_iterator it = m_filters.begin(); it != m_filters.end(); ++it)
-      m_device->Receiver()->DetachStreamingReceiver(this, it->pid, it->tid, it->mask);
+      m_device->Receiver()->DetachStreamingReceiver(this, it->pid, it->tid, it->mask, false);
 
     FILTER_DEBUGGING("%s filter detached", m_name.c_str());
   }
@@ -211,7 +211,7 @@ void cScanReceiver::RemoveFilter(const filter_properties& filter)
     }
 
     if (m_attached)
-      m_device->Receiver()->DetachStreamingReceiver(this, filter.pid, filter.tid, filter.mask);
+      m_device->Receiver()->DetachStreamingReceiver(this, filter.pid, filter.tid, filter.mask, false);
   }
 }
 
@@ -222,7 +222,7 @@ void cScanReceiver::RemoveFilters(void)
 
   for (std::set<filter_properties>::iterator it = m_filters.begin(); it != m_filters.end(); ++it)
   {
-    m_device->Receiver()->DetachStreamingReceiver(this, it->pid, it->tid, it->mask);
+    m_device->Receiver()->DetachStreamingReceiver(this, it->pid, it->tid, it->mask, false);
 
     if (DynamicFilter(*it))
     {

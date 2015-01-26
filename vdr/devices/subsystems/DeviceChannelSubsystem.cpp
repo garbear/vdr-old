@@ -71,8 +71,6 @@ bool cDeviceChannelSubsystem::SwitchChannel(const ChannelPtr& channel)
 
   if (Tune(channel->GetTransponder()))
   {
-    Receiver()->Start();
-
     // Start decrypting any PIDs that might have been set in SetChannelDevice():
     if (CommonInterface()->m_camSlot)
       CommonInterface()->m_camSlot->StartDecrypting();
