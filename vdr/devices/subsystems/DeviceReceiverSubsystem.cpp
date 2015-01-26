@@ -113,19 +113,20 @@ void cDeviceReceiverSubsystem::ProcessDetachReceiver(cDeviceReceiverSubsystem::c
 {
   ReceiverList receiverList;
   DEBUG_RCV_CHANGE("ProcessChanges: detaching receiver %p", change.m_receiver);
-  for (ReceiverPidTable::iterator itReceiverList = m_receiverPidTable.begin(); itReceiverList != m_receiverPidTable.end(); ++itReceiverList)
+  for (ReceiverPidTable::iterator itReceiverList = m_receiverPidTable.begin(); itReceiverList != m_receiverPidTable.end();)
   {
     receiverList = itReceiverList->second;
-    for (ReceiverList::iterator itReceiver = receiverList.begin(); itReceiver != receiverList.end(); ++itReceiver)
+    for (ReceiverList::iterator itReceiver = receiverList.begin(); itReceiver != receiverList.end();)
     {
       if (itReceiver->first->receiver == change.m_receiver)
-      {
-        itReceiverList->second.erase(itReceiver);
-        break;
-      }
+        itReceiverList->second.erase(itReceiver++);
+      else
+        ++itReceiver;
     }
     if (receiverList.empty())
-      m_receiverPidTable.erase(itReceiverList);
+      m_receiverPidTable.erase(itReceiverList++);
+    else
+      ++itReceiverList;
   }
 }
 
@@ -136,13 +137,12 @@ void cDeviceReceiverSubsystem::ProcessDetachMultiplexed(cDeviceReceiverSubsystem
   if (itReceiverList != m_receiverPidTable.end())
   {
     ReceiverList receiverList = itReceiverList->second;
-    for (ReceiverList::iterator itReceiver = receiverList.begin(); itReceiver != receiverList.end(); ++itReceiver)
+    for (ReceiverList::iterator itReceiver = receiverList.begin(); itReceiver != receiverList.end();)
     {
       if (itReceiver->first->receiver == change.m_receiver)
-      {
-        itReceiverList->second.erase(itReceiver);
-        break;
-      }
+        itReceiverList->second.erase(itReceiver++);
+      else
+        ++itReceiver;
     }
     if (receiverList.empty())
       m_receiverPidTable.erase(itReceiverList);
@@ -157,13 +157,12 @@ void cDeviceReceiverSubsystem::ProcessDetachStreaming(cDeviceReceiverSubsystem::
   if (itReceiverList != m_receiverPidTable.end())
   {
     ReceiverList receiverList = itReceiverList->second;
-    for (ReceiverList::iterator itReceiver = receiverList.begin(); itReceiver != receiverList.end(); ++itReceiver)
+    for (ReceiverList::iterator itReceiver = receiverList.begin(); itReceiver != receiverList.end();)
     {
       if (itReceiver->first->receiver == change.m_receiver)
-      {
-        itReceiverList->second.erase(itReceiver);
-        break;
-      }
+        itReceiverList->second.erase(itReceiver++);
+      else
+        ++itReceiver;
     }
     if (receiverList.empty())
       m_receiverPidTable.erase(itReceiverList);
