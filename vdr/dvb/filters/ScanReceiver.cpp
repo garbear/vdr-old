@@ -268,7 +268,7 @@ void cScanReceiver::ResetScanned(void)
 bool cScanReceiver::Scanned(void) const
 {
   PLATFORM::CLockObject lock(m_scannedmutex);
-  return m_scanned;
+  return m_attached && m_scanned;
 }
 
 bool cScanReceiver::DynamicFilter(const filter_properties& filter) const
