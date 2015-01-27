@@ -123,7 +123,10 @@ bool cScanReceiver::Attach(void)
   if (!m_attached)
     esyslog("failed to attach %s filter", m_name.c_str());
   else
+  {
     FILTER_DEBUGGING("%s filter attached", m_name.c_str());
+    m_scanned = false;
+  }
 
   return m_attached;
 }
