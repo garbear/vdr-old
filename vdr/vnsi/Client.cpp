@@ -1771,7 +1771,7 @@ bool cVNSIClient::processSCAN_Start() /* OPCODE 143 */
   config.atscModulation  = ATSC_MODULATION_VSB_8;
   config.device          = cDeviceManager::Get().GetDevice(0); // TODO: Support multiple devices
 
-  if (m_scanner.Start(config))
+  if (cScanner::Get().Start(config))
     m_resp->add_U32(VNSI_RET_OK);
   else
     m_resp->add_U32(VNSI_RET_ERROR);
@@ -1783,7 +1783,7 @@ bool cVNSIClient::processSCAN_Start() /* OPCODE 143 */
 
 bool cVNSIClient::processSCAN_Stop() /* OPCODE 144 */
 {
-  m_scanner.Stop(false);
+  cScanner::Get().Stop(false);
 
   m_resp->add_U32(VNSI_RET_OK);
 
@@ -1794,12 +1794,12 @@ bool cVNSIClient::processSCAN_Stop() /* OPCODE 144 */
 
 bool cVNSIClient::processSCAN_Progress() /* OPCODE 145 */
 {
-  if (m_scanner.IsRunning())
+  if (cScanner::Get().IsRunning())
   {
     m_resp->add_U32(VNSI_RET_OK);
-    m_resp->add_double(m_scanner.GetPercentage());
-    m_resp->add_U32(m_scanner.GetFrequency());
-    m_resp->add_U32(m_scanner.GetChannelNumber());
+    m_resp->add_double(cScanner::Get().GetPercentage());
+    m_resp->add_U32(cScanner::Get().GetFrequency());
+    m_resp->add_U32(cScanner::Get().GetChannelNumber());
   }
   else
     m_resp->add_U32(VNSI_RET_ERROR);

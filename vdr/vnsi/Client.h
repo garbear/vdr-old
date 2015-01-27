@@ -70,7 +70,6 @@ private:
   static PLATFORM::CMutex m_timerLock;
 //  cVnsiOsdProvider *m_Osd;
   std::map<int, CDateTime> m_epgUpdate;
-  cScanner         m_scanner;
 
 protected:
 

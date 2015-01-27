@@ -50,6 +50,12 @@ cScanner::cScanner(void)
 {
 }
 
+cScanner& cScanner::Get(void)
+{
+  static cScanner _instance;
+  return _instance;
+}
+
 bool cScanner::Start(const cScanConfig& setup)
 {
   assert(setup.device.get() != NULL);

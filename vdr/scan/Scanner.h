@@ -31,7 +31,7 @@ namespace VDR
 class cScanner : public PLATFORM::CThread, public iTunerHandleCallbacks
 {
 public:
-  cScanner(void);
+  static cScanner& Get(void);
   virtual ~cScanner(void) { Stop(true); }
 
   /*!
@@ -53,6 +53,8 @@ protected:
   virtual void* Process(void);
 
 private:
+  cScanner(void);
+
   cScanConfig        m_setup;
   unsigned int       m_frequencyHz;
   unsigned int       m_number;
