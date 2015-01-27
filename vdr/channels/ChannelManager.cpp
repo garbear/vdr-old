@@ -66,6 +66,7 @@ void cChannelManager::AddChannel(const ChannelPtr& channel)
   channel->RegisterObserver(this);
   m_channels.push_back(channel);
   SetChanged();
+  dsyslog("channel tsid=%d sid=%d freq=%d source=%d added", channel->Tsid(), channel->Sid(), channel->GetTransponder().FrequencyHz() , channel->ATSCSourceID());
 }
 
 void cChannelManager::AddChannels(const ChannelVector& channels)
@@ -110,13 +111,7 @@ void cChannelManager::MergeChannelProps(const ChannelPtr& channel)
   }
 
   if (!bFound)
-  {
-    channel->RegisterObserver(this);
-    m_channels.push_back(channel);
-    dsyslog("channel tsid=%d sid=%d added", tsid, sid);
-    SetChanged();
-    NotifyObservers();
-  }
+    AddChannel(channel);
 }
 
 void cChannelManager::MergeChannelNamesAndModulation(const ChannelPtr& channel)
@@ -238,6 +233,16 @@ ChannelVector cChannelManager::GetCurrent(void) const
 {
   CLockObject lock(m_mutex);
   return m_channels;
+}
+
+std::list<cTransponder> cChannelManager::GetCurrentTransponders(void) const
+{
+  std::list<cTransponder> transponders;
+  CLockObject lock(m_mutex);
+  for (ChannelVector::const_iterator itChannel = m_channels.begin(); itChannel != m_channels.end(); ++itChannel)
+    transponders.push_back((*itChannel)->GetTransponder());
+  transponders.unique();
+  return transponders;
 }
 
 size_t cChannelManager::ChannelCount() const
