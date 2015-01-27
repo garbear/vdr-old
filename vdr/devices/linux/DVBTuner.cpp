@@ -429,17 +429,12 @@ bool cDvbTuner::Tune(const cTransponder& transponder)
   ClearTransponder();
 
   CLockObject lock(m_mutex);
-  if (IsRunning())
-  {
-    StopThread();
-    m_lockEvent.Signal();
-  }
-  if (!TuneDevice(transponder))
-    return false;
-
   uint32_t timeLeft;
   unsigned int lockTimeoutMs(GetLockTimeout(transponder.Type()));
   CTimeout timeout(lockTimeoutMs);
+
+  if (!TuneDevice(transponder))
+    return false;
 
   // Some drivers report stale status immediately after tuning. Give stale lock
   // events a chance to clear, then reset m_tunedLock and wait for real lock events
@@ -792,6 +787,7 @@ void cDvbTuner::ClearTransponder(void)
 
   lock.Unlock();
 
+  StopThread(0);
   SetChanged();
   NotifyObservers(ObservableMessageChannelLostLock);
 
