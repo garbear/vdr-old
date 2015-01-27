@@ -428,23 +428,33 @@ bool cDvbTuner::Tune(const cTransponder& transponder)
 {
   ClearTransponder();
 
+  CLockObject lock(m_mutex);
+  if (IsRunning())
+  {
+    esyslog("FIXME: multiple calls to cDvbTuner::Tune()!");
+    return false;
+  }
+
   if (!TuneDevice(transponder))
     return false;
 
-  int64_t startMs = GetTimeMs();
+  uint32_t timeLeft;
+  unsigned int lockTimeoutMs(GetLockTimeout(transponder.Type()));
+  CTimeout timeout(lockTimeoutMs);
+
+  // Some drivers report stale status immediately after tuning. Give stale lock
+  // events a chance to clear, then reset m_tunedLock and wait for real lock events
+  Sleep(TUNE_DELAY_MS);
 
   // Device is tuning. Create the event-handling thread. Thread stays running
   // even after tuner gets lock.
   CreateThread(false);
 
-  // Some drivers report stale status immediately after tuning. Give stale lock
-  // events a chance to clear, then reset m_tunedLock and wait for real lock events
-  Sleep(TUNE_DELAY_MS);
-  CLockObject lock(m_mutex);
-  if (m_lockEvent.Wait(m_mutex, m_tunedLock, GetLockTimeout(transponder.Type()) - TUNE_DELAY_MS))
-    dsyslog("Dvb tuner: tuned to channel %u in %d ms", transponder.ChannelNumber(), GetTimeMs() - startMs);
+  timeLeft = timeout.TimeLeft();
+  if ((timeLeft = timeout.TimeLeft()) > 0 && m_lockEvent.Wait(m_mutex, m_tunedLock, timeLeft))
+    dsyslog("Dvb tuner: tuned to channel %u in %d ms", transponder.ChannelNumber(), lockTimeoutMs - timeout.TimeLeft());
   else
-    dsyslog("Dvb tuner: tuning timed out after %d ms", GetTimeMs() - startMs);
+    dsyslog("Dvb tuner: tuning timed out after %d ms", lockTimeoutMs);
 
   return m_tunedLock;
 }
