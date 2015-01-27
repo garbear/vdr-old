@@ -125,6 +125,9 @@ TunerHandlePtr cDeviceChannelSubsystem::Acquire(const ChannelPtr& channel, devic
 
   {
     CLockObject lock(m_mutex);
+    if (!CanTune(type))
+      return cTunerHandle::EmptyHandle;
+
     for (std::vector<TunerHandlePtr>::iterator it = m_activeTransponders.begin(); valid &&it != m_activeTransponders.end(); ++it)
     {
       if ((*it)->Channel()->GetTransponder() != channel->GetTransponder() ||
