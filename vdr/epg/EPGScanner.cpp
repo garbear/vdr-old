@@ -122,6 +122,7 @@ void* cEPGScanner::Process()
       m_condition.Wait(m_mutex, m_scanTriggered, EPG_SCAN_INTERVAL_MS);
       if (IsStopped() || !m_scanTriggered)
         continue;
+      m_scanTriggered = false;
     }
     Scan();
   }
