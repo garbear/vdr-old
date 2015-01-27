@@ -89,6 +89,7 @@ void cEPGScanner::Scan(void)
   std::list<cTransponder> transponders;
   ChannelPtr dummyChannel = ChannelPtr(new cChannel());
   DevicePtr device;
+  dsyslog("EPG scan started");
 
   // TODO get a free tuner, not the first one
   device = cDeviceManager::Get().GetDevice(0);
@@ -108,6 +109,8 @@ void cEPGScanner::Scan(void)
       newHandle->Release();
     }
   }
+
+  dsyslog("EPG scan ended");
 }
 
 void* cEPGScanner::Process()
