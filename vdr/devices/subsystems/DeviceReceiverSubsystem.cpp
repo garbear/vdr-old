@@ -157,9 +157,11 @@ void cDeviceReceiverSubsystem::ProcessDetachStreaming(cDeviceReceiverSubsystem::
   if (itReceiverList != m_receiverPidTable.end())
   {
     ReceiverList receiverList = itReceiverList->second;
+    PidResourcePtr resource(CreateStreamingResource(change.m_pid, change.m_tid, change.m_mask));
     for (ReceiverList::iterator itReceiver = receiverList.begin(); itReceiver != receiverList.end();)
     {
-      if (itReceiver->first->receiver == change.m_receiver)
+      if (itReceiver->first->receiver == change.m_receiver &&
+          itReceiver->second->Equals(resource.get()))
         itReceiverList->second.erase(itReceiver++);
       else
         ++itReceiver;
@@ -432,11 +434,6 @@ bool cDeviceReceiverSubsystem::AttachReceiver(iReceiver* receiver, const PidReso
   ReceiverPidTable::iterator it = m_receiverPidTable.find(resource->Pid());
   if (it != m_receiverPidTable.end())
   {
-    for (ReceiverList::iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2)
-    {
-      if (it2->first->receiver == receiverHandle->receiver)
-        return true;
-    }
     it->second.push_back(make_pair(receiverHandle, openResource));
   }
   else
