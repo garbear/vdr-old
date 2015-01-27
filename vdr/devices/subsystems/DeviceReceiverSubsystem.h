@@ -199,7 +199,6 @@ protected:
 
   void ProcessChanges(void);
 
-protected:
   ReceiverHandlePtr    GetReceiverHandle(iReceiver* receiver) const;
   std::set<iReceiver*> GetReceiversForPid(uint16_t pid) const;
   PidResourcePtr       GetResource(const PidResourcePtr& needle) const;
