@@ -429,12 +429,6 @@ bool cDvbTuner::Tune(const cTransponder& transponder)
   ClearTransponder();
 
   CLockObject lock(m_mutex);
-  if (IsRunning())
-  {
-    esyslog("FIXME: multiple calls to cDvbTuner::Tune()!");
-    return false;
-  }
-
   if (!TuneDevice(transponder))
     return false;
 
