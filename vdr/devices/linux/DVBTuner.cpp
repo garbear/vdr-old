@@ -429,6 +429,11 @@ bool cDvbTuner::Tune(const cTransponder& transponder)
   ClearTransponder();
 
   CLockObject lock(m_mutex);
+  if (IsRunning())
+  {
+    StopThread();
+    m_lockEvent.Signal();
+  }
   if (!TuneDevice(transponder))
     return false;
 
@@ -450,7 +455,7 @@ bool cDvbTuner::Tune(const cTransponder& transponder)
   else
     dsyslog("Dvb tuner: tuning timed out after %d ms", lockTimeoutMs);
 
-  return m_tunedLock;
+  return m_tunedLock && m_transponder == transponder;
 }
 
 bool cDvbTuner::TuneDevice(const cTransponder& transponder)
