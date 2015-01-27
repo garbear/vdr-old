@@ -113,6 +113,8 @@ void* cScanner::Process()
   const int64_t startMs = GetTimeMs();
   ChannelPtr channel = ChannelPtr(new cChannel);
 
+  cEPGScanner::Get().Stop(true);
+
   while (!IsStopped() && transponders->HasNext())
   {
     cTransponder transponder = transponders->GetNext();
