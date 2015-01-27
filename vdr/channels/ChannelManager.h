@@ -30,6 +30,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <list>
 
 namespace VDR
 {
@@ -74,6 +75,7 @@ public:
   ChannelPtr GetByFrequencyAndATSCSourceId(unsigned int frequency, uint32_t sourceId);
 
   ChannelVector GetCurrent(void) const;
+  std::list<cTransponder> GetCurrentTransponders(void) const;
   size_t ChannelCount() const;
 
   void RemoveChannel(const ChannelPtr& channel);
