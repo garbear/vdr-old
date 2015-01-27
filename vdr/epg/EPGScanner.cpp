@@ -137,6 +137,7 @@ void cEPGScanner::LockAcquired(void)
 void cEPGScanner::LockLost(void)
 {
   cDeviceManager::Get().GetDevice(0)->Scan()->DetachReceivers();
+  cChannelManager::Get().NotifyObservers();
 }
 
 void cEPGScanner::LostPriority(void)

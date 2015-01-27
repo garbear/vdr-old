@@ -168,6 +168,7 @@ void cScanner::LockAcquired(void)
 void cScanner::LockLost(void)
 {
   m_setup.device->Scan()->DetachReceivers();
+  cChannelManager::Get().NotifyObservers();
 }
 
 void cScanner::LostPriority(void)
