@@ -92,7 +92,8 @@ bool cDeviceManager::WaitForAllDevicesReady(unsigned int timeout /* = 0 */)
     return false;
 
   bool retval = m_devicesReadyCondition.Wait(m_mutex, m_bAllDevicesReady, timeout * 1000);
-  cEPGScanner::Get().Start();
+  if (!cScanner::Get().IsRunning())
+    cEPGScanner::Get().Start();
   return retval;
 }
 
