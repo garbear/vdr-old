@@ -169,9 +169,12 @@ bool cDeviceScanSubsystem::WaitForEPGScan(void)
     if (Channel()->ProvidesSource(TRANSPONDER_ATSC))
     {
       CTimeout timeout(EPG_TIMEOUT);
-      return m_mgt->WaitForScan(timeout.TimeLeft()) &&
-             !timeout.TimedOut() &&
-             m_psipeit->WaitForScan(timeout.TimeLeft());
+      if (m_mgt->WaitForScan(timeout.TimeLeft()))
+      {
+        uint32_t timeLeft = timeout.TimeLeft();
+        if (timeLeft > 0)
+          return m_psipeit->WaitForScan(timeLeft);
+      }
     }
     else
     {

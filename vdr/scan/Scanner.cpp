@@ -122,7 +122,6 @@ void* cScanner::Process()
       //XXX fix tuner subsys to correctly call the callback
       LockAcquired();
       bool bSuccess = m_setup.device->Scan()->WaitForTransponderScan();
-      cChannelManager::Get().NotifyObservers();
       if (bSuccess)
         bSuccess = m_setup.device->Scan()->WaitForEPGScan();
       newHandle->Release();
@@ -162,6 +161,7 @@ void cScanner::LockAcquired(void)
 
 void cScanner::LockLost(void)
 {
+  m_setup.device->Scan()->DetachReceivers();
 }
 
 void cScanner::LostPriority(void)

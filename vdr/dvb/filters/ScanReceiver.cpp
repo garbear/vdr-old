@@ -23,6 +23,7 @@
 
 #include "ScanReceiver.h"
 #include "SectionSyncer.h"
+#include "channels/ChannelManager.h"
 #include "devices/Device.h"
 #include "devices/Remux.h"
 #include "devices/subsystems/DeviceReceiverSubsystem.h"
@@ -249,7 +250,6 @@ void cScanReceiver::SetScanned(void)
     {
       FILTER_DEBUGGING("%s scan completed", m_name.c_str());
       m_scanned = true;
-      Detach();
     }
     m_scannedEvent.Broadcast();
   }
