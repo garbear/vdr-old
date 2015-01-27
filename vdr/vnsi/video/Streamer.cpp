@@ -74,7 +74,8 @@ bool cLiveStreamer::Open(int serial)
 {
   Close();
 
-  m_Demuxer.Open(m_Channel, serial);
+  if (!m_Demuxer.Open(m_Channel, serial))
+    return false;
   if (serial >= 0)
     m_Demuxer.SetSerial(serial);
 
