@@ -86,7 +86,8 @@ void cEPGScanner::Stop(bool bWait)
 
 void* cEPGScanner::Process()
 {
-  ChannelVector channels;
+  std::list<cTransponder> transponders;
+  ChannelPtr dummyChannel = ChannelPtr(new cChannel());
   DevicePtr device;
   while (!IsStopped())
   {
@@ -99,16 +100,17 @@ void* cEPGScanner::Process()
 
     // TODO get a free tuner, not the first one
     device = cDeviceManager::Get().GetDevice(0);
-    channels = cChannelManager::Get().GetCurrent();
-    if (channels.empty() || !device)
+    transponders = cChannelManager::Get().GetCurrentTransponders();
+    if (transponders.empty() || !device)
     {
       Sleep(1000);
       continue;
     }
 
-    for (ChannelVector::iterator it = channels.begin(); it != channels.end() && !IsStopped(); ++it)
+    for (std::list<cTransponder>::iterator it = transponders.begin(); it != transponders.end() && !IsStopped(); ++it)
     {
-      TunerHandlePtr newHandle = device->Acquire((*it), TUNING_TYPE_EPG_SCAN, this);
+      dummyChannel->SetTransponder(*it);
+      TunerHandlePtr newHandle = device->Acquire(dummyChannel, TUNING_TYPE_EPG_SCAN, this);
       if (newHandle)
       {
         device->Scan()->AttachReceivers();
