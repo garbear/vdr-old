@@ -57,7 +57,7 @@ public:
   void Receive(const uint16_t pid, const uint8_t* data, const size_t len, ts_crc_check_t& crcvalid);
   virtual void ReceivePacket(const uint16_t pid, const uint8_t* data) = 0;
   virtual bool Attach(void);
-  virtual void Detach(void);
+  virtual void Detach(bool wait = false);
   virtual bool WaitForScan(uint32_t iTimeout = TRANSPONDER_TIMEOUT);
 
   virtual bool Start(void) { return true; }

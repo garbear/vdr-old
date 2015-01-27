@@ -130,7 +130,7 @@ void cDeviceScanSubsystem::DetachReceivers(void)
   for (std::set<cScanReceiver*>::iterator it = m_receivers.begin(); it != m_receivers.end(); ++it)
   {
     if (ReceiverOk(*it))
-      (*it)->Detach();
+      (*it)->Detach(true);
   }
 
   CLockObject lock(m_waitingMutex);

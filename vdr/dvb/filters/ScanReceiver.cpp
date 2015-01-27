@@ -128,7 +128,7 @@ bool cScanReceiver::Attach(void)
   return m_attached;
 }
 
-void cScanReceiver::Detach(void)
+void cScanReceiver::Detach(bool wait /* = false */)
 {
   PLATFORM::CLockObject lock(m_mutex);
   if (m_attached)
@@ -139,7 +139,7 @@ void cScanReceiver::Detach(void)
       it->second->Reset();
 
     for (std::set<filter_properties>::const_iterator it = m_filters.begin(); it != m_filters.end(); ++it)
-      m_device->Receiver()->DetachStreamingReceiver(this, it->pid, it->tid, it->mask, false);
+      m_device->Receiver()->DetachStreamingReceiver(this, it->pid, it->tid, it->mask, wait);
 
     FILTER_DEBUGGING("%s filter detached", m_name.c_str());
   }
