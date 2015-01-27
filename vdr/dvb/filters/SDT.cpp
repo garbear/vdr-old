@@ -109,12 +109,13 @@ cSdt::cSdt(cDevice* device, SI::TableId tableId /* = SI::TableIdSDT */)
 
 void cSdt::ReceivePacket(uint16_t pid, const uint8_t* data)
 {
+  /** wait for the PMT scan to complete first */
+  if (!m_device->Scan()->PAT()->PmtScanned())
+    return;
+
   SI::SDT sdt(data);
   if (sdt.CheckAndParse())
   {
-    /** wait for the PMT scan to complete first */
-    if (!m_device->Scan()->PAT()->PmtScanned())
-      return;
     if (!Sync(pid, sdt.getVersionNumber(), sdt.getSectionNumber(), sdt.getLastSectionNumber()))
       return;
 
