@@ -39,6 +39,7 @@ public:
    * previous scan is still running.
    */
   bool Start(const cScanConfig& setup);
+  bool Start(void);
   void Stop(bool bWait);
 
   float GetFrequency() const { return m_frequencyHz; }

@@ -28,6 +28,7 @@
 #include "devices/subsystems/DeviceReceiverSubsystem.h"
 #include "devices/subsystems/DeviceVideoFormatSubsystem.h"
 #include "epg/EPGScanner.h"
+#include "scan/Scanner.h"
 #include "channels/Channel.h"
 #include "settings/Settings.h"
 #include "utils/log/Log.h"

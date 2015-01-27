@@ -65,6 +65,8 @@ public:
   void LostPriority(void);
 
   void Release(bool notify = true);
+  void StartEPGScanAfterRelease(bool setto) { m_startEpgScan = setto; }
+  void StartChannelScanAfterRelease(bool setto) { m_startChannelScan = setto; }
 
   static const TunerHandlePtr EmptyHandle;
 
@@ -73,6 +75,8 @@ private:
   cDeviceChannelSubsystem* m_tuner;
   iTunerHandleCallbacks*   m_callbacks;
   const ChannelPtr&        m_channel;
+  bool                     m_startEpgScan;
+  bool                     m_startChannelScan;
 };
 
 }

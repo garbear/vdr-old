@@ -29,6 +29,8 @@
 #include "devices/Device.h"
 #include "devices/DeviceManager.h"
 #include "devices/Transfer.h"
+#include "epg/EPGScanner.h"
+#include "scan/Scanner.h"
 #include "Player.h"
 #include "utils/log/Log.h"
 #include "utils/Tools.h"
@@ -118,12 +120,22 @@ TunerHandlePtr cDeviceChannelSubsystem::Acquire(const ChannelPtr& channel, devic
 {
   bool valid(true);
   bool switchNeeded(true);
+  bool startChannelScan(false);
+  bool startEpgScan(false);
   TunerHandlePtr handle = TunerHandlePtr(new cTunerHandle(type, this, callbacks, channel));
   std::vector<TunerHandlePtr> lowerPrio;
 
   dsyslog("acquire subscription for %s", handle->ToString().c_str());
 
   {
+    if (type == TUNING_TYPE_LIVE_TV || type == TUNING_TYPE_RECORDING)
+    {
+      startEpgScan = cEPGScanner::Get().IsRunning();
+      cEPGScanner::Get().Stop(false);
+      startChannelScan = cScanner::Get().IsRunning();
+      cScanner::Get().Stop(false);
+    }
+
     CLockObject lock(m_mutex);
     if (!CanTune(type))
       return cTunerHandle::EmptyHandle;
@@ -167,6 +179,8 @@ TunerHandlePtr cDeviceChannelSubsystem::Acquire(const ChannelPtr& channel, devic
 
       /** add new registration */
       handle = TunerHandlePtr(new cTunerHandle(type, this, callbacks, channel));
+      handle->StartChannelScanAfterRelease(startChannelScan);
+      handle->StartEPGScanAfterRelease(startEpgScan);
       m_activeTransponders.push_back(handle);
     }
   }

@@ -20,6 +20,8 @@
  */
 
 #include "TunerHandle.h"
+#include "epg/EPGScanner.h"
+#include "scan/Scanner.h"
 #include "subsystems/DeviceChannelSubsystem.h"
 
 using namespace VDR;
@@ -30,7 +32,9 @@ cTunerHandle::cTunerHandle(device_tuning_type_t type, cDeviceChannelSubsystem* t
     m_type(type),
     m_tuner(tuner),
     m_callbacks(callbacks),
-    m_channel(channel)
+    m_channel(channel),
+    m_startEpgScan(false),
+    m_startChannelScan(false)
 {
 }
 
@@ -84,4 +88,8 @@ void cTunerHandle::Release(bool notify /* = true */)
 {
   if (m_tuner)
     m_tuner->Release(this, notify);
+  if (m_startChannelScan)
+    cScanner::Get().Start();
+  else if (m_startEpgScan)
+    cEPGScanner::Get().Start();
 }
