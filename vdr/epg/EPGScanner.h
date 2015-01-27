@@ -47,6 +47,7 @@ public:
 protected:
   cEPGScanner(void);
   virtual void* Process(void);
+  void Scan(void);
   bool                       m_scanTriggered;
   PLATFORM::CMutex           m_mutex;
   PLATFORM::CCondition<bool> m_condition;

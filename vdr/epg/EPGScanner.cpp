@@ -84,11 +84,34 @@ void cEPGScanner::Stop(bool bWait)
     StopThread(0);
 }
 
-void* cEPGScanner::Process()
+void cEPGScanner::Scan(void)
 {
   std::list<cTransponder> transponders;
   ChannelPtr dummyChannel = ChannelPtr(new cChannel());
   DevicePtr device;
+
+  // TODO get a free tuner, not the first one
+  device = cDeviceManager::Get().GetDevice(0);
+  transponders = cChannelManager::Get().GetCurrentTransponders();
+  if (transponders.empty() || !device)
+    return;
+
+  for (std::list<cTransponder>::iterator it = transponders.begin(); it != transponders.end() && !IsStopped() && device->CanTune(TUNING_TYPE_EPG_SCAN); ++it)
+  {
+    dummyChannel->SetTransponder(*it);
+    TunerHandlePtr newHandle = device->Acquire(dummyChannel, TUNING_TYPE_EPG_SCAN, this);
+    if (newHandle)
+    {
+      device->Scan()->AttachReceivers();
+      device->Scan()->WaitForEPGScan();
+      cScheduleManager::Get().NotifyObservers();
+      newHandle->Release();
+    }
+  }
+}
+
+void* cEPGScanner::Process()
+{
   while (!IsStopped())
   {
     {
@@ -97,34 +120,7 @@ void* cEPGScanner::Process()
       if (IsStopped() || !m_scanTriggered)
         continue;
     }
-
-    // TODO get a free tuner, not the first one
-    device = cDeviceManager::Get().GetDevice(0);
-    transponders = cChannelManager::Get().GetCurrentTransponders();
-    if (transponders.empty() || !device)
-    {
-      Sleep(1000);
-      continue;
-    }
-
-    for (std::list<cTransponder>::iterator it = transponders.begin(); it != transponders.end() && !IsStopped(); ++it)
-    {
-      dummyChannel->SetTransponder(*it);
-      TunerHandlePtr newHandle = device->Acquire(dummyChannel, TUNING_TYPE_EPG_SCAN, this);
-      if (newHandle)
-      {
-        device->Scan()->AttachReceivers();
-        device->Scan()->WaitForEPGScan();
-        cScheduleManager::Get().NotifyObservers();
-        newHandle->Release();
-      }
-      else
-      {
-        /** continue again in a second when the tuner is busy */
-        while (!IsStopped() && !device->CanTune(TUNING_TYPE_EPG_SCAN))
-          Sleep(1000);
-      }
-    }
+    Scan();
   }
 
   return NULL;
