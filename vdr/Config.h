@@ -31,7 +31,7 @@ namespace VDR
 {
 
 // VDR's own version number:
-#define VDRVERSION  "2.0.4-72"
+#define VDRVERSION  "2.0.4-73"
 #define VDRVERSNUM   20004  // Version * 10000 + Major * 100 + Minor
 
 #define MAXPRIORITY       99
