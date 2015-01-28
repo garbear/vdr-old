@@ -43,8 +43,8 @@ using namespace std;
 #define FILE_DESCRIPTOR_INVALID  (-1)
 #define POLL_TIMEOUT_MS          100
 
-//#define PID_DEBUGGING(x...) dsyslog(x)
-#define PID_DEBUGGING(x...) {}
+#define PID_DEBUGGING(x...) dsyslog(x)
+//#define PID_DEBUGGING(x...) {}
 
 namespace VDR
 {
