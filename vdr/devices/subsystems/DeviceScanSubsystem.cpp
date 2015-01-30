@@ -42,7 +42,7 @@ using namespace PLATFORM;
 using namespace std;
 
 // TODO: This can be shorted by fetching PMT tables in parallel
-#define EPG_TIMEOUT         10000
+#define EPG_TIMEOUT         3000
 
 namespace VDR
 {
