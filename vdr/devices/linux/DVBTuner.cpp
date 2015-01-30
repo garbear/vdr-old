@@ -451,10 +451,16 @@ bool cDvbTuner::Tune(const cTransponder& transponder)
 {
   CLockObject lock(m_mutex);
   if (!IsOpen())
+  {
+    esyslog("tuning failed - tuner is not open");
     return false;
+  }
 
   if (!CancelTuning(GetLockTimeout(transponder.Type())))
+  {
+    esyslog("tuning failed - failed to cancel previous tuning");
     return false;
+  }
 
   /** tune to new transponder */
   m_state = DVB_TUNER_STATE_TUNING;
@@ -778,6 +784,8 @@ bool cDvbTuner::CancelTuning(uint32_t iTimeoutMs)
   {
     dsyslog("cancel previous tuning (state %d)", m_state);
     m_state = DVB_TUNER_STATE_CANCEL;
+    m_tuneEvent = true;
+    m_tuneEventCondition.Signal();
     if (m_tunerIdleCondition.Wait(m_mutex, m_tunerIdle, iTimeoutMs))
     {
       dsyslog("cancelled previous tuning (state %d)", m_state);
