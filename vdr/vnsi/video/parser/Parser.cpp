@@ -667,13 +667,16 @@ bool cTSStream::SetVideoInformation(int FpsScale, int FpsRate, int Height, int W
       (m_Height != Height) ||
       (m_Width != Width) ||
       (m_Aspect != Aspect))
-    m_IsStreamChange = true;
+  {
+    dsyslog("video info changed: scale=%d(%d) rate=%d(%d), height=%d(%d), width=%d(%d) aspect=%.02f(%.02f)", FpsScale, m_FpsScale, FpsRate, m_FpsRate, Height, m_Height, Width, m_Width, Aspect, m_Aspect);
 
-  m_FpsScale        = FpsScale;
-  m_FpsRate         = FpsRate;
-  m_Height          = Height;
-  m_Width           = Width;
-  m_Aspect          = Aspect;
+    m_IsStreamChange = true;
+    m_FpsScale       = FpsScale;
+    m_FpsRate        = FpsRate;
+    m_Height         = Height;
+    m_Width          = Width;
+    m_Aspect         = Aspect;
+  }
 
   return m_IsStreamChange;
 }

@@ -110,7 +110,10 @@ void* cLiveStreamer::Process(void)
       if (pkt.data)
       {
         if (pkt.streamChange || requestStreamChange)
+        {
+          dsyslog("sending stream change (dmx packet: %d, requested: %d)", pkt.streamChange?1:0, requestStreamChange?1:0);
           sendStreamChange();
+        }
         requestStreamChange = false;
         if (pkt.reftime)
         {
