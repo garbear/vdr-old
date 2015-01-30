@@ -88,8 +88,9 @@ void cTunerHandle::Release(bool notify /* = true */)
 {
   if (m_tuner)
     m_tuner->Release(this, notify);
-  if (m_startChannelScan)
-    cScanner::Get().Start();
-  else if (m_startEpgScan)
-    cEPGScanner::Get().Start();
+  //TODO fix this properly later
+//  if (m_startChannelScan)
+//    cScanner::Get().Start();
+//  else if (m_startEpgScan)
+//    cEPGScanner::Get().Start();
 }
