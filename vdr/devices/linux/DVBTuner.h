@@ -38,8 +38,26 @@ class cDvbDevice;
 class cDiseqc;
 class cScr;
 
+enum DVB_TUNER_STATE
+{
+  DVB_TUNER_STATE_NOT_INITIALISED,
+  DVB_TUNER_STATE_ERROR,
+  DVB_TUNER_STATE_IDLE,
+  DVB_TUNER_STATE_TUNING,
+  DVB_TUNER_STATE_TUNING_FAILED,
+  DVB_TUNER_STATE_LOCKING,
+  DVB_TUNER_STATE_LOCKED,
+  DVB_TUNER_STATE_LOST_LOCK,
+  DVB_TUNER_STATE_CANCEL,
+};
+
 class cDvbTuner : public PLATFORM::CThread, public Observable
 {
+  class cDvbTunerAction
+  {
+  public:
+    cDvbTunerAction();
+  };
 public:
   cDvbTuner(cDvbDevice *device);
   virtual ~cDvbTuner(void) { Close(); }
@@ -49,7 +67,7 @@ public:
    * be used.
    */
   bool Open(void);
-  bool IsOpen(void) const { return m_bIsOpen; }
+  bool IsOpen(void);
   void Close(void);
 
   /*!
@@ -117,7 +135,7 @@ private:
   static bool GetSubsystemId(const std::string& frontendPath, unsigned int& subsystemId);
   static Version GetApiVersion(int fileDescriptor);
 
-  bool TuneDevice(const cTransponder& transponder);
+  bool TuneDevice(void);
 
   void ResetToneAndVoltage(void);
   void ExecuteDiseqc(const cDiseqc* Diseqc, unsigned int* Frequency);
@@ -128,9 +146,14 @@ private:
   static std::string StatusToString(const fe_status_t status);
 
   bool InitialiseHardware(void);
+  bool OpenFrontend(const std::string& strFrontendPath);
+  void LogTunerInfo(void);
+  inline bool CheckEvent(uint32_t iTimeoutMs = 0);
+  void UpdateFrontendStatus(const fe_status_t& status);
+  bool CancelTuning(uint32_t iTimeoutMs);
+  DVB_TUNER_STATE State(void);
 
   cDvbDevice* const                 m_device;
-  bool                              m_bIsOpen;
 
   // Properties available after calling Open()
   std::string                       m_strName;
@@ -142,12 +165,10 @@ private:
 
   // Tuning properties
   cTransponder                      m_transponder;
+  cTransponder                      m_nextTransponder;
   volatile fe_status_t              m_status;
   bool                              m_tunedLock;
-  bool                              m_tunedSignal;
   PLATFORM::CCondition<bool>        m_lockEvent;
-  PLATFORM::CCondition<bool>        m_tuneCondition;
-  PLATFORM::CMutex                  m_mutex;
 
   // Satellite properties
   const cDiseqc*                    m_lastDiseqc;
@@ -156,7 +177,13 @@ private:
   PLATFORM::CMutex                  m_diseqcMutex;
 
   // Internal
+  PLATFORM::CMutex                  m_mutex;
   int                               m_fileDescriptor;
+  DVB_TUNER_STATE                   m_state;
+  PLATFORM::CCondition<bool>        m_tuneEventCondition;
+  bool                              m_tuneEvent;
+  PLATFORM::CCondition<bool>        m_tunerIdleCondition;
+  bool                              m_tunerIdle;
 };
 
 }

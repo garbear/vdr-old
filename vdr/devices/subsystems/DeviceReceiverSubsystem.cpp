@@ -38,7 +38,7 @@ using namespace std;
 
 #define MAX_IDLE_DELAY_MS      100
 
-#define DEBUG_RCV_CHANGES (0)
+#define DEBUG_RCV_CHANGES (1)
 
 #if DEBUG_RCV_CHANGES
 #define DEBUG_RCV_CHANGE(x...) dsyslog(x)

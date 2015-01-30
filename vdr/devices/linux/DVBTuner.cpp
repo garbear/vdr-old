@@ -111,17 +111,18 @@ private:
 
 cDvbTuner::cDvbTuner(cDvbDevice *device)
  : m_device(device),
-   m_bIsOpen(false),
    m_capabilities(FE_IS_STUPID),
    m_subsystemId(0),
    m_apiVersion(Version::EmptyVersion),
    m_status(FE_STATUS_UNKNOWN),
    m_tunedLock(false),
-   m_tunedSignal(false),
    m_lastDiseqc(NULL),
    m_scr(NULL),
    m_bLnbPowerTurnedOn(false),
-   m_fileDescriptor(INVALID_FD)
+   m_fileDescriptor(INVALID_FD),
+   m_state(DVB_TUNER_STATE_NOT_INITIALISED),
+   m_tuneEvent(false),
+   m_tunerIdle(true)
 {
   assert(m_device);
 }
@@ -136,17 +137,10 @@ bool cDvbTuner::HasModulation(fe_modulation_t modulation) const
   return std::find(m_modulations.begin(), m_modulations.end(), modulation) != m_modulations.end();
 }
 
-bool cDvbTuner::Open(void)
+bool cDvbTuner::OpenFrontend(const std::string& strFrontendPath)
 {
-  isyslog("Opening DVB tuner %s", m_device->DvbPath(DEV_DVB_FRONTEND).c_str());
-
-  CLockObject lock(m_mutex);
-
-  if (IsRunning())
-    return true;
-
   errno = 0;
-  while (INVALID_FD == (m_fileDescriptor = open(m_device->DvbPath(DEV_DVB_FRONTEND).c_str(), O_RDWR | O_NONBLOCK)))
+  while (INVALID_FD == (m_fileDescriptor = open(strFrontendPath.c_str(), O_RDWR | O_NONBLOCK)))
   {
     if (errno == EINTR)
     {
@@ -162,17 +156,16 @@ bool cDvbTuner::Open(void)
     else
     {
       esyslog("DVB tuner: Can't open frontend (errno=%d)", errno);
+      m_state = DVB_TUNER_STATE_ERROR;
       return false;
     }
   }
+  return true;
+}
 
-  if (!SetProperties())
-    return false;
-
+void cDvbTuner::LogTunerInfo(void)
+{
   isyslog("DVB tuner: Detected DVB API version %s", m_apiVersion.c_str());
-
-  if (!InitialiseHardware())
-    return false;
 
   // Log delivery systems and modulations
   vector<string> vecDeliverySystems;
@@ -188,10 +181,37 @@ bool cDvbTuner::Open(void)
     strModulations = "unknown modulations";
 
   isyslog("Dvb tuner: provides %s with %s", strDeliverySystems.c_str(), strModulations.c_str());
+}
 
-  m_bIsOpen = true;
+bool cDvbTuner::Open(void)
+{
+  CLockObject lock(m_mutex);
+  if (m_state != DVB_TUNER_STATE_NOT_INITIALISED)
+    return true;
+
+  isyslog("Opening DVB tuner %s", m_device->DvbPath(DEV_DVB_FRONTEND).c_str());
+
+  if (!OpenFrontend(m_device->DvbPath(DEV_DVB_FRONTEND)) ||
+      !SetProperties() ||
+      !InitialiseHardware() ||
+      !CreateThread(false))
+  {
+    m_state = DVB_TUNER_STATE_ERROR;
+  }
+  else
+  {
+    LogTunerInfo();
+    m_state = DVB_TUNER_STATE_IDLE;
+  }
 
   return true;
+}
+
+bool cDvbTuner::IsOpen(void)
+{
+  return m_state != DVB_TUNER_STATE_ERROR &&
+      m_state != DVB_TUNER_STATE_NOT_INITIALISED &&
+      !IsStopped();
 }
 
 bool cDvbTuner::SetProperties(void)
@@ -388,14 +408,17 @@ void cDvbTuner::Close(void)
 {
   CLockObject lock(m_mutex);
 
-  if (m_bIsOpen)
+  if (IsOpen())
   {
     isyslog("DVB tuner: Closing frontend");
     StopThread(-1);
+    m_state = DVB_TUNER_STATE_NOT_INITIALISED;
+    m_tuneEventCondition.Signal();
+
     close(m_fileDescriptor);
     m_fileDescriptor = INVALID_FD;
-    m_tunedSignal = true;
-    m_tuneCondition.Broadcast();
+    m_transponder.Reset();
+    m_nextTransponder.Reset();
 
     /* looks like this irritates the SCR switch, so let's leave it out for now
     if (m_lastDiseqc && m_lastDiseqc->IsScr())
@@ -407,7 +430,7 @@ void cDvbTuner::Close(void)
   }
 }
 
-unsigned int GetLockTimeout(TRANSPONDER_TYPE frontendType)
+static unsigned int GetLockTimeout(TRANSPONDER_TYPE frontendType)
 {
   switch (frontendType)
   {
@@ -426,43 +449,54 @@ unsigned int GetLockTimeout(TRANSPONDER_TYPE frontendType)
 
 bool cDvbTuner::Tune(const cTransponder& transponder)
 {
-  ClearTransponder();
-
   CLockObject lock(m_mutex);
-  uint32_t timeLeft;
+  if (!IsOpen())
+    return false;
+
+  if (!CancelTuning(GetLockTimeout(transponder.Type())))
+    return false;
+
+  /** tune to new transponder */
+  m_state = DVB_TUNER_STATE_TUNING;
+  m_nextTransponder = transponder;
+  m_tuneEvent = true;
+  m_tunedLock = false;
+  m_tuneEventCondition.Signal();
+
+  /** wait for a lock */
   unsigned int lockTimeoutMs(GetLockTimeout(transponder.Type()));
   CTimeout timeout(lockTimeoutMs);
-
-  if (!TuneDevice(transponder))
-    return false;
-
-  // Some drivers report stale status immediately after tuning. Give stale lock
-  // events a chance to clear, then reset m_tunedLock and wait for real lock events
-  Sleep(TUNE_DELAY_MS);
-
-  // Device is tuning. Create the event-handling thread. Thread stays running
-  // even after tuner gets lock.
-  CreateThread(false);
-
-  timeLeft = timeout.TimeLeft();
-  if ((timeLeft = timeout.TimeLeft()) > 0 && m_lockEvent.Wait(m_mutex, m_tunedLock, timeLeft))
-    dsyslog("Dvb tuner: tuned to channel %u in %d ms", transponder.ChannelNumber(), lockTimeoutMs - timeout.TimeLeft());
+  if (m_lockEvent.Wait(m_mutex, m_tunedLock, timeout.TimeLeft()))
+  {
+    if (m_transponder == transponder && IsOpen())
+    {
+      dsyslog("Dvb tuner: tuned to %u MHz in %d ms", transponder.FrequencyMHz(), lockTimeoutMs - timeout.TimeLeft());
+      return true;
+    }
+    else
+    {
+      dsyslog("Dvb tuner: tuning to %u MHz cancelled after %d ms", transponder.FrequencyMHz(), lockTimeoutMs - timeout.TimeLeft());
+    }
+  }
   else
-    dsyslog("Dvb tuner: tuning timed out after %d ms", lockTimeoutMs);
-
-  return m_tunedLock && m_transponder == transponder;
+  {
+    dsyslog("Dvb tuner: tuning to %u MHz timed out after %d ms", transponder.FrequencyMHz(), lockTimeoutMs);
+  }
+  return false;
 }
 
-bool cDvbTuner::TuneDevice(const cTransponder& transponder)
+bool cDvbTuner::TuneDevice(void)
 {
-  CLockObject lock(m_mutex);
-
-  if (!m_bIsOpen)
+  if (!IsOpen())
     return false;
 
-  dsyslog("#####");
-  dsyslog("##### Dvb tuner: tuning to channel %u (%u MHz)", transponder.ChannelNumber(), transponder.FrequencyMHz());
-  dsyslog("#####");
+  if (m_nextTransponder == m_transponder)
+    return true;
+
+  m_transponder.Reset();
+  m_status = FE_STATUS_UNKNOWN;
+
+  dsyslog("##### Dvb tuner: tuning to channel %u (%u MHz)", m_nextTransponder.ChannelNumber(), m_nextTransponder.FrequencyMHz());
 
   cFrontendCommands frontendCmds(m_fileDescriptor);
 
@@ -472,32 +506,32 @@ bool cDvbTuner::TuneDevice(const cTransponder& transponder)
     return false;
 
   // Set common parameters
-  frontendCmds.AddCommand(DTV_DELIVERY_SYSTEM, transponder.DeliverySystem());
-  frontendCmds.AddCommand(DTV_MODULATION,      transponder.Modulation());
-  frontendCmds.AddCommand(DTV_INVERSION,       transponder.Inversion());
+  frontendCmds.AddCommand(DTV_DELIVERY_SYSTEM, m_nextTransponder.DeliverySystem());
+  frontendCmds.AddCommand(DTV_MODULATION,      m_nextTransponder.Modulation());
+  frontendCmds.AddCommand(DTV_INVERSION,       m_nextTransponder.Inversion());
 
   // For satellital delivery systems, DTV_FREQUENCY is measured in kHz. For
   // the other ones, it is measured in Hz.
   // http://linuxtv.org/downloads/v4l-dvb-apis/FE_GET_SET_PROPERTY.html
-  if (transponder.IsSatellite())
+  if (m_nextTransponder.IsSatellite())
   {
-    unsigned int frequencyHz = GetTunedFrequencyHz(transponder);
+    unsigned int frequencyHz = GetTunedFrequencyHz(m_nextTransponder);
     if (frequencyHz == 0) // TODO
       return false;       // TODO
     frontendCmds.AddCommand(DTV_FREQUENCY, frequencyHz / 1000);
   }
   else
   {
-    frontendCmds.AddCommand(DTV_FREQUENCY, transponder.FrequencyHz());
+    frontendCmds.AddCommand(DTV_FREQUENCY, m_nextTransponder.FrequencyHz());
   }
 
   // Set delivery-system-specific parameters
-  if (transponder.IsSatellite())
+  if (m_nextTransponder.IsSatellite())
   {
     // DVB-S/DVB-S2 (common parts)
-    frontendCmds.AddCommand(DTV_SYMBOL_RATE, transponder.SatelliteParams().SymbolRateHz());
-    frontendCmds.AddCommand(DTV_INNER_FEC,   transponder.SatelliteParams().CoderateH());
-    if (transponder.DeliverySystem() != SYS_DVBS2)
+    frontendCmds.AddCommand(DTV_SYMBOL_RATE, m_nextTransponder.SatelliteParams().SymbolRateHz());
+    frontendCmds.AddCommand(DTV_INNER_FEC,   m_nextTransponder.SatelliteParams().CoderateH());
+    if (m_nextTransponder.DeliverySystem() != SYS_DVBS2)
     {
       // DVB-S
       frontendCmds.AddCommand(DTV_ROLLOFF,   ROLLOFF_35); // DVB-S always has a ROLLOFF of 0.35
@@ -506,37 +540,37 @@ bool cDvbTuner::TuneDevice(const cTransponder& transponder)
     {
       // DVB-S2
       frontendCmds.AddCommand(DTV_PILOT,   PILOT_AUTO);
-      frontendCmds.AddCommand(DTV_ROLLOFF, transponder.SatelliteParams().RollOff());
+      frontendCmds.AddCommand(DTV_ROLLOFF, m_nextTransponder.SatelliteParams().RollOff());
       if (m_apiVersion >= "5.8")
-        frontendCmds.AddCommand(DTV_STREAM_ID, transponder.SatelliteParams().StreamId());
+        frontendCmds.AddCommand(DTV_STREAM_ID, m_nextTransponder.SatelliteParams().StreamId());
     }
   }
-  else if (transponder.IsCable())
+  else if (m_nextTransponder.IsCable())
   {
     // DVB-C
-    frontendCmds.AddCommand(DTV_SYMBOL_RATE, transponder.CableParams().SymbolRateHz());
-    frontendCmds.AddCommand(DTV_INNER_FEC,   transponder.CableParams().CoderateH());
+    frontendCmds.AddCommand(DTV_SYMBOL_RATE, m_nextTransponder.CableParams().SymbolRateHz());
+    frontendCmds.AddCommand(DTV_INNER_FEC,   m_nextTransponder.CableParams().CoderateH());
   }
-  else if (transponder.IsTerrestrial())
+  else if (m_nextTransponder.IsTerrestrial())
   {
     // DVB-T/DVB-T2 (common parts)
-    frontendCmds.AddCommand(DTV_BANDWIDTH_HZ,      transponder.TerrestrialParams().BandwidthHz()); // Use hertz value, not enum
-    frontendCmds.AddCommand(DTV_CODE_RATE_HP,      transponder.TerrestrialParams().CoderateH());
-    frontendCmds.AddCommand(DTV_CODE_RATE_LP,      transponder.TerrestrialParams().CoderateL());
-    frontendCmds.AddCommand(DTV_TRANSMISSION_MODE, transponder.TerrestrialParams().Transmission());
-    frontendCmds.AddCommand(DTV_GUARD_INTERVAL,    transponder.TerrestrialParams().Guard());
-    frontendCmds.AddCommand(DTV_HIERARCHY,         transponder.TerrestrialParams().Hierarchy());
+    frontendCmds.AddCommand(DTV_BANDWIDTH_HZ,      m_nextTransponder.TerrestrialParams().BandwidthHz()); // Use hertz value, not enum
+    frontendCmds.AddCommand(DTV_CODE_RATE_HP,      m_nextTransponder.TerrestrialParams().CoderateH());
+    frontendCmds.AddCommand(DTV_CODE_RATE_LP,      m_nextTransponder.TerrestrialParams().CoderateL());
+    frontendCmds.AddCommand(DTV_TRANSMISSION_MODE, m_nextTransponder.TerrestrialParams().Transmission());
+    frontendCmds.AddCommand(DTV_GUARD_INTERVAL,    m_nextTransponder.TerrestrialParams().Guard());
+    frontendCmds.AddCommand(DTV_HIERARCHY,         m_nextTransponder.TerrestrialParams().Hierarchy());
 
-    if (transponder.DeliverySystem() == SYS_DVBT2)
+    if (m_nextTransponder.DeliverySystem() == SYS_DVBT2)
     {
       // DVB-T2
       if (m_apiVersion >= "5.8")
-        frontendCmds.AddCommand(DTV_STREAM_ID, transponder.TerrestrialParams().StreamId());
+        frontendCmds.AddCommand(DTV_STREAM_ID, m_nextTransponder.TerrestrialParams().StreamId());
       else if (m_apiVersion >= "5.3")
-        frontendCmds.AddCommand(DTV_DVBT2_PLP_ID_LEGACY, transponder.TerrestrialParams().StreamId());
+        frontendCmds.AddCommand(DTV_DVBT2_PLP_ID_LEGACY, m_nextTransponder.TerrestrialParams().StreamId());
     }
   }
-  else if (transponder.IsAtsc())
+  else if (m_nextTransponder.IsAtsc())
   {
     // ATSC - no delivery-system-specific parameters
   }
@@ -551,10 +585,12 @@ bool cDvbTuner::TuneDevice(const cTransponder& transponder)
   if (!frontendCmds.Execute())
     return false;
 
-  m_transponder = transponder;
-  m_tunedSignal = true;
-  m_tuneCondition.Signal();
+  // Some drivers report stale status immediately after tuning. Give stale lock
+  // events a chance to clear, then reset m_tunedLock and wait for real lock events
+  Sleep(TUNE_DELAY_MS);
 
+  m_transponder = m_nextTransponder;
+  m_nextTransponder.Reset();
   return true;
 }
 
@@ -666,97 +702,171 @@ std::string cDvbTuner::StatusToString(const fe_status_t status)
   return retval;
 }
 
+inline bool cDvbTuner::CheckEvent(uint32_t iTimeoutMs /* = 0 */)
+{
+  CLockObject lock(m_mutex);
+  if (m_tuneEventCondition.Wait(m_mutex, m_tuneEvent, iTimeoutMs))
+  {
+    m_tuneEvent = false;
+    return true;
+  }
+  return false;
+}
+
+void cDvbTuner::UpdateFrontendStatus(const fe_status_t& status)
+{
+  bool bLocked(false);
+  bool bLostLock(false);
+
+  if (m_status == status)
+    return;
+
+  // Update status, recording lock state before and after status change
+  const bool bWasSynced(IsSynced());
+  m_status = status;
+  const bool bIsSynced(IsSynced());
+
+  dsyslog("frontend %d '%s' status changed to %s", m_device->Index(), Name().c_str(), StatusToString(status).c_str());
+
+  // Report new lock status to observers
+  if (!bWasSynced && bIsSynced)
+  {
+    SetChanged();
+    bLocked = true;
+    CLockObject lock(m_mutex);
+    m_state = DVB_TUNER_STATE_LOCKED;
+    m_tunedLock = true;
+    m_lockEvent.Broadcast();
+  }
+  else if (bWasSynced && !bIsSynced)
+  {
+    SetChanged();
+    bLostLock = true;
+    CLockObject lock(m_mutex);
+    m_state = DVB_TUNER_STATE_LOST_LOCK;
+  }
+
+  // Check for frontend re-initialisation
+  if (m_status & FE_REINIT)
+  {
+    // TODO
+  }
+
+  if (bLocked)
+  {
+    bLocked = false;
+    NotifyObservers(ObservableMessageChannelLock);
+  }
+
+  if (bLostLock)
+  {
+    bLostLock = false;
+    NotifyObservers(ObservableMessageChannelLostLock);
+  }
+}
+
+DVB_TUNER_STATE cDvbTuner::State(void)
+{
+  CLockObject lock(m_mutex);
+  return m_state;
+}
+
+bool cDvbTuner::CancelTuning(uint32_t iTimeoutMs)
+{
+  /** cancel previous tuning */
+  if (m_state != DVB_TUNER_STATE_IDLE)
+  {
+    dsyslog("cancel previous tuning (state %d)", m_state);
+    m_state = DVB_TUNER_STATE_CANCEL;
+    if (m_tunerIdleCondition.Wait(m_mutex, m_tunerIdle, iTimeoutMs))
+    {
+      dsyslog("cancelled previous tuning (state %d)", m_state);
+      return true;
+    }
+    return false;
+  }
+  return true;
+}
+
 void* cDvbTuner::Process(void)
 {
   fe_status_t status;
-  bool bSuccess, bLocked = false, bLostLock = false;
+  cPoller poller(m_fileDescriptor, false, true);
+  struct dvb_frontend_event event;
 
   while (!IsStopped())
   {
-    // Wait for backend to get a tune message
+    switch (State())
     {
-      CLockObject lock(m_mutex);
-      if (!m_tuneCondition.Wait(m_mutex, m_tunedSignal, 500))
-        continue;
-    }
-
-    if (IsStopped())
-      break;
-
-    // According to MythTv, waiting for DVB events fails with several DVB cards.
-    // They either don't send the required events or delete them from the event
-    // queue before we can read the event. Using a FE_GET_FRONTEND call has also
-    // been tried, but returns the old data until a 2 sec timeout elapses on at
-    // least one DVB card.
-
-    // If polling fails (which happens on several DVB cards), then at least we
-    // have a timeout.
-    cPoller poller(m_fileDescriptor, false, true);
-    bool bPollSuccess = poller.Poll(TUNER_POLL_TIMEOUT_MS);
-
-    if (IsStopped())
-      break;
-
-    // Read all the events off the queue, so we can poll until backend gets
-    // another tune message
-    struct dvb_frontend_event event;
-    while (ioctl(m_fileDescriptor, FE_GET_EVENT, &event) == 0) { Sleep(TUNER_POLL_TIMEOUT_MS); } // empty
-    {
-      CLockObject lock(m_mutex);
-      bSuccess = (ioctl(m_fileDescriptor, FE_READ_STATUS, &status) >= 0);
-
-      if (!bSuccess)
-      {
-        esyslog("Dvb tuner: failed to read status from tuner: %m");
-      }
-      else if (bSuccess && m_status != status)
-      {
-        // Update status, recording lock state before and after status change
-        const bool bWasSynced = IsSynced();
-        m_status = status;
-        const bool bIsSynced = IsSynced();
-
-        dsyslog("frontend %d '%s' status changed to %s", m_device->Index(), Name().c_str(), StatusToString(status).c_str());
-
-        // Report new lock status to observers
-        if (!bWasSynced && bIsSynced)
+      case DVB_TUNER_STATE_CANCEL:
         {
-          SetChanged();
-          bLocked = true;
           CLockObject lock(m_mutex);
+          m_transponder.Reset();
+          m_nextTransponder.Reset();
           m_tunedLock = true;
           m_lockEvent.Broadcast();
-        }
-        else if (bWasSynced && !bIsSynced)
-        {
+
           SetChanged();
-          bLostLock = true;
-        }
+          NotifyObservers(ObservableMessageChannelLostLock);
 
-        // Check for frontend re-initialisation
-        if (m_status & FE_REINIT)
+          // TODO: When is this needed?
+          //ResetToneAndVoltage();
+
+          m_tunedLock = false;
+          m_status = FE_STATUS_UNKNOWN;
+          m_state = DVB_TUNER_STATE_IDLE;
+          // detach remaining receivers that didn't get closed correctly
+          m_device->Receiver()->DetachAllReceivers(false);
+          m_tunerIdleCondition.Signal();
+        }
+        break;
+      case DVB_TUNER_STATE_IDLE:
+        CheckEvent();
+        break;
+      case DVB_TUNER_STATE_TUNING:
         {
-          // TODO
+          CLockObject lock(m_mutex);
+          m_tunerIdle = false;
+          m_state = TuneDevice() ?
+              DVB_TUNER_STATE_LOCKING :
+              DVB_TUNER_STATE_TUNING_FAILED;
         }
-      }
+        break;
+      case DVB_TUNER_STATE_LOCKING:
+      case DVB_TUNER_STATE_LOCKED:
+      case DVB_TUNER_STATE_LOST_LOCK:
+        {
+          while (!IsStopped() && State() != DVB_TUNER_STATE_CANCEL)
+          {
+            // According to MythTv, waiting for DVB events fails with several DVB cards.
+            // They either don't send the required events or delete them from the event
+            // queue before we can read the event. Using a FE_GET_FRONTEND call has also
+            // been tried, but returns the old data until a 2 sec timeout elapses on at
+            // least one DVB card.
+
+            // If polling fails (which happens on several DVB cards), then at least we
+            // have a timeout.
+
+            poller.Poll(TUNER_POLL_TIMEOUT_MS);
+            if (IsStopped() || State() == DVB_TUNER_STATE_CANCEL)
+              break;
+
+            // Read all the events off the queue, so we can poll until backend gets
+            // another tune message
+            while (ioctl(m_fileDescriptor, FE_GET_EVENT, &event) == 0 && !IsStopped() && State() != DVB_TUNER_STATE_CANCEL)
+              Sleep(TUNER_POLL_TIMEOUT_MS);
+
+            if (ioctl(m_fileDescriptor, FE_READ_STATUS, &status) >= 0)
+              UpdateFrontendStatus(status);
+            else
+              esyslog("Dvb tuner: failed to read status from tuner: %m");
+          }
+        }
+        break;
     }
 
-    if (bLocked)
-    {
-      bLocked = false;
-      NotifyObservers(ObservableMessageChannelLock);
-    }
-
-    if (bLostLock)
-    {
-      bLostLock = false;
-      NotifyObservers(ObservableMessageChannelLostLock);
-    }
-
-    Sleep(TUNER_POLL_TIMEOUT_MS);
+    CheckEvent(TUNER_POLL_TIMEOUT_MS);
   }
-
-  m_lastDiseqc = NULL;
 
   return NULL;
 }
@@ -779,33 +889,11 @@ bool cDvbTuner::IsTunedTo(const cTransponder& transponder) const
 
 void cDvbTuner::ClearTransponder(void)
 {
-  CLockObject lock(m_mutex);
-  if (m_tunedSignal)
-    m_tunedSignal = false;
-  else
-    return;
-
-  lock.Unlock();
-
-  StopThread(0);
   SetChanged();
   NotifyObservers(ObservableMessageChannelLostLock);
 
-  lock.Lock();
-
-  m_transponder.Reset();
-  m_status = FE_STATUS_UNKNOWN;
-
-  // TODO: When is this needed?
-  //ResetToneAndVoltage();
-
-  /*
-  if (m_bondedTuner && m_device->IsPrimaryDevice())
-    cDeviceManager::Get().PrimaryDevice()->PID()->DelLivePids(); // 'device' is const, so we must do it this way
-  */
-
-  m_tunedLock = false;
-  m_lockEvent.Broadcast();
+  CLockObject lock(m_mutex);
+  CancelTuning(2000);
 }
 
 int cDvbTuner::GetSignalStrength(void) const
