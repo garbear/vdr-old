@@ -474,7 +474,7 @@ bool cDvbTuner::Tune(const cTransponder& transponder)
   CTimeout timeout(lockTimeoutMs);
   if (m_lockEvent.Wait(m_mutex, m_tunedLock, timeout.TimeLeft()))
   {
-    if (m_transponder == transponder && IsOpen())
+    if (m_transponder == transponder && m_state == DVB_TUNER_STATE_LOCKED)
     {
       dsyslog("Dvb tuner: tuned to %u MHz in %d ms", transponder.FrequencyMHz(), lockTimeoutMs - timeout.TimeLeft());
       return true;
