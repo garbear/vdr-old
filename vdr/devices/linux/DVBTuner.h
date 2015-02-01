@@ -177,12 +177,14 @@ private:
   PLATFORM::CMutex                  m_diseqcMutex;
 
   // Internal
-  PLATFORM::CMutex                  m_mutex;
+  PLATFORM::CMutex                  m_tuneEventMutex;
   int                               m_fileDescriptor;
-  DVB_TUNER_STATE                   m_state;
   PLATFORM::CCondition<bool>        m_tuneEventCondition;
   bool                              m_tuneEvent;
+
+  PLATFORM::CMutex                  m_stateMutex;
   PLATFORM::CCondition<bool>        m_tunerIdleCondition;
+  DVB_TUNER_STATE                   m_state;
   bool                              m_tunerIdle;
 };
 

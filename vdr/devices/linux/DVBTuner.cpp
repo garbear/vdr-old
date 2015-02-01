@@ -120,8 +120,8 @@ cDvbTuner::cDvbTuner(cDvbDevice *device)
    m_scr(NULL),
    m_bLnbPowerTurnedOn(false),
    m_fileDescriptor(INVALID_FD),
-   m_state(DVB_TUNER_STATE_NOT_INITIALISED),
    m_tuneEvent(false),
+   m_state(DVB_TUNER_STATE_NOT_INITIALISED),
    m_tunerIdle(true)
 {
   assert(m_device);
@@ -185,7 +185,7 @@ void cDvbTuner::LogTunerInfo(void)
 
 bool cDvbTuner::Open(void)
 {
-  CLockObject lock(m_mutex);
+  CLockObject lock(m_stateMutex);
   if (m_state != DVB_TUNER_STATE_NOT_INITIALISED)
     return true;
 
@@ -209,6 +209,7 @@ bool cDvbTuner::Open(void)
 
 bool cDvbTuner::IsOpen(void)
 {
+  CLockObject lock(m_stateMutex);
   return m_state != DVB_TUNER_STATE_ERROR &&
       m_state != DVB_TUNER_STATE_NOT_INITIALISED &&
       !IsStopped();
@@ -406,11 +407,12 @@ Version cDvbTuner::GetApiVersion(int fileDescriptor)
 
 void cDvbTuner::Close(void)
 {
-  CLockObject lock(m_mutex);
+  CLockObject lock(m_stateMutex);
 
   if (IsOpen())
   {
     isyslog("DVB tuner: Closing frontend");
+    CancelTuning(2000);
     StopThread(-1);
     m_state = DVB_TUNER_STATE_NOT_INITIALISED;
     m_tuneEventCondition.Signal();
@@ -449,7 +451,7 @@ static unsigned int GetLockTimeout(TRANSPONDER_TYPE frontendType)
 
 bool cDvbTuner::Tune(const cTransponder& transponder)
 {
-  CLockObject lock(m_mutex);
+  CLockObject lock(m_stateMutex);
   if (!IsOpen())
   {
     esyslog("tuning failed - tuner is not open");
@@ -463,16 +465,21 @@ bool cDvbTuner::Tune(const cTransponder& transponder)
   }
 
   /** tune to new transponder */
-  m_state = DVB_TUNER_STATE_TUNING;
-  m_nextTransponder = transponder;
-  m_tuneEvent = true;
-  m_tunedLock = false;
-  m_tuneEventCondition.Signal();
+  {
+    CLockObject lock2(m_tuneEventMutex);
+    m_state = DVB_TUNER_STATE_TUNING;
+    m_nextTransponder = transponder;
+    m_tuneEvent = true;
+    m_tunedLock = false;
+    lock.Unlock(); //TODO use something smarter...
+    m_tuneEventCondition.Signal();
+    lock.Lock();
+  }
 
   /** wait for a lock */
   unsigned int lockTimeoutMs(GetLockTimeout(transponder.Type()));
   CTimeout timeout(lockTimeoutMs);
-  if (m_lockEvent.Wait(m_mutex, m_tunedLock, timeout.TimeLeft()))
+  if (m_lockEvent.Wait(m_stateMutex, m_tunedLock, timeout.TimeLeft()))
   {
     if (m_transponder == transponder && m_state == DVB_TUNER_STATE_LOCKED)
     {
@@ -600,7 +607,6 @@ bool cDvbTuner::TuneDevice(void)
   return true;
 }
 
-
 unsigned int cDvbTuner::GetTunedFrequencyHz(const cTransponder& transponder)
 {
   unsigned int frequencyHz = transponder.FrequencyHz();
@@ -710,8 +716,8 @@ std::string cDvbTuner::StatusToString(const fe_status_t status)
 
 inline bool cDvbTuner::CheckEvent(uint32_t iTimeoutMs /* = 0 */)
 {
-  CLockObject lock(m_mutex);
-  if (m_tuneEventCondition.Wait(m_mutex, m_tuneEvent, iTimeoutMs))
+  CLockObject lock(m_tuneEventMutex);
+  if (m_tuneEventCondition.Wait(m_tuneEventMutex, m_tuneEvent, iTimeoutMs))
   {
     m_tuneEvent = false;
     return true;
@@ -739,7 +745,7 @@ void cDvbTuner::UpdateFrontendStatus(const fe_status_t& status)
   {
     SetChanged();
     bLocked = true;
-    CLockObject lock(m_mutex);
+    CLockObject lock(m_stateMutex);
     m_state = DVB_TUNER_STATE_LOCKED;
     m_tunedLock = true;
     m_lockEvent.Broadcast();
@@ -748,7 +754,7 @@ void cDvbTuner::UpdateFrontendStatus(const fe_status_t& status)
   {
     SetChanged();
     bLostLock = true;
-    CLockObject lock(m_mutex);
+    CLockObject lock(m_stateMutex);
     m_state = DVB_TUNER_STATE_LOST_LOCK;
   }
 
@@ -773,7 +779,7 @@ void cDvbTuner::UpdateFrontendStatus(const fe_status_t& status)
 
 DVB_TUNER_STATE cDvbTuner::State(void)
 {
-  CLockObject lock(m_mutex);
+  CLockObject lock(m_stateMutex);
   return m_state;
 }
 
@@ -786,7 +792,7 @@ bool cDvbTuner::CancelTuning(uint32_t iTimeoutMs)
     m_state = DVB_TUNER_STATE_CANCEL;
     m_tuneEvent = true;
     m_tuneEventCondition.Signal();
-    if (m_tunerIdleCondition.Wait(m_mutex, m_tunerIdle, iTimeoutMs))
+    if (m_tunerIdleCondition.Wait(m_stateMutex, m_tunerIdle, iTimeoutMs))
     {
       dsyslog("cancelled previous tuning (state %d)", m_state);
       return true;
@@ -808,7 +814,7 @@ void* cDvbTuner::Process(void)
     {
       case DVB_TUNER_STATE_CANCEL:
         {
-          CLockObject lock(m_mutex);
+          CLockObject lock(m_stateMutex);
           m_transponder.Reset();
           m_nextTransponder.Reset();
           m_tunedLock = true;
@@ -829,11 +835,16 @@ void* cDvbTuner::Process(void)
         }
         break;
       case DVB_TUNER_STATE_IDLE:
+        {
+          CLockObject lock(m_stateMutex);
+          m_tunerIdle = true;
+          m_tunerIdleCondition.Signal();
+        }
         CheckEvent();
         break;
       case DVB_TUNER_STATE_TUNING:
         {
-          CLockObject lock(m_mutex);
+          CLockObject lock(m_stateMutex);
           m_tunerIdle = false;
           m_state = TuneDevice() ?
               DVB_TUNER_STATE_LOCKING :
@@ -881,13 +892,13 @@ void* cDvbTuner::Process(void)
 
 cTransponder cDvbTuner::GetTransponder(void) const
 {
-  CLockObject lock(m_mutex);
+  CLockObject lock(m_stateMutex);
   return m_transponder;
 }
 
 bool cDvbTuner::IsTunedTo(const cTransponder& transponder) const
 {
-  CLockObject lock(m_mutex);
+  CLockObject lock(m_stateMutex);
 
   if (!HasLock())
     return false;
@@ -900,13 +911,13 @@ void cDvbTuner::ClearTransponder(void)
   SetChanged();
   NotifyObservers(ObservableMessageChannelLostLock);
 
-  CLockObject lock(m_mutex);
+  CLockObject lock(m_stateMutex);
   CancelTuning(2000);
 }
 
 int cDvbTuner::GetSignalStrength(void) const
 {
-  CLockObject lock(m_mutex);
+  CLockObject lock(m_stateMutex);
 
   uint16_t Signal;
 
@@ -943,7 +954,7 @@ int cDvbTuner::GetSignalStrength(void) const
 
 int cDvbTuner::GetSignalQuality(void) const
 {
-  CLockObject lock(m_mutex);
+  CLockObject lock(m_stateMutex);
 
   if (m_status != FE_STATUS_UNKNOWN)
   {
