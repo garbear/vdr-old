@@ -33,13 +33,6 @@ namespace VDR
 
 class cPsipEit : public cScanReceiver
 {
-  enum PSIP_PID_STATE
-  {
-    PSIP_PID_STATE_WAITING,
-    PSIP_PID_STATE_OPEN,
-    PSIP_PID_STATE_DONE
-  };
-
 public:
   cPsipEit(cDevice* device);
   virtual ~cPsipEit(void) { }
@@ -47,18 +40,8 @@ public:
   void AddPid(uint16_t pid);
   void ReceivePacket(uint16_t pid, const uint8_t* data);
 
-  void Detach(bool wait = false);
-
   bool InATSC(void) const { return true; }
   bool InDVB(void) const { return false; }
-
-private:
-  void OpenPid(uint16_t pid);
-  size_t OpenPids(void) const;
-  void PidScanned(uint16_t pid);
-
-  PLATFORM::CMutex                   m_mutex;
-  std::map<uint16_t, PSIP_PID_STATE> m_eitPids;
 };
 
 }

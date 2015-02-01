@@ -38,11 +38,48 @@ class cSectionSyncer;
 class cScanReceiver : public iReceiver
 {
 public:
+  enum FILTER_SCAN_STATE
+  {
+    SCAN_STATE_WAITING,
+    SCAN_STATE_OPEN,
+    SCAN_STATE_DONE
+  };
+
   struct filter_properties
   {
     uint16_t pid;
     uint8_t  tid;
     uint8_t  mask;
+  };
+
+  class cScanFilterStatus
+  {
+  public:
+    cScanFilterStatus(const filter_properties& filter, cScanReceiver* receiver, bool dynamic);
+    virtual ~cScanFilterStatus(void);
+
+    bool Dynamic(void) const { return m_dynamic; }
+    const filter_properties& Filter(void) const { return m_filter; }
+    FILTER_SCAN_STATE State(void) const;
+    void SetState(FILTER_SCAN_STATE state);
+
+    bool Attach(void);
+    void Detach(void);
+    bool Attached(void) const;
+
+    cSectionSyncer* Syncer(void) const { return m_syncer; }
+    void ResetSectionSyncer(void);
+    bool Sync(uint8_t version, int sectionNumber, int endSectionNumber);
+    bool Synced(void) const;
+
+  private:
+    PLATFORM::CMutex  m_mutex;
+    filter_properties m_filter;
+    cSectionSyncer*   m_syncer;
+    FILTER_SCAN_STATE m_state;
+    bool              m_dynamic;
+    bool              m_attached;
+    cScanReceiver*    m_receiver;
   };
 
 protected:
@@ -75,16 +112,18 @@ public:
 
   bool Scanned(void) const;
   bool Synced(uint16_t pid) const;
+  size_t NbOpenPids(void) const;
 
 protected:
-  bool Sync(uint16_t pid, uint8_t version, int sectionNumber, int endSectionNumber);
+  bool Sync(uint16_t pid, uint8_t tid, uint8_t version, int sectionNumber, int endSectionNumber);
   virtual void AddFilter(const filter_properties& filter);
-  virtual bool HasFilters(void) {  return !m_filtersAdded.empty(); }
+  virtual bool HasFilters(void) {  return !m_filtersNew.empty(); }
   void RemoveFilter(const filter_properties& filter);
   void RemoveFilters(void);
   void SetScanned(void);
   void ResetScanned(void);
   bool DynamicFilter(const filter_properties& filter) const;
+  void FilterScanned(const filter_properties& filter);
 
   cDevice*         m_device;
   bool             m_locked;
@@ -94,11 +133,10 @@ protected:
 private:
   bool                       m_scanned;
   PLATFORM::CCondition<bool> m_scannedEvent;
-  std::set<filter_properties> m_filters;
-  std::set<filter_properties> m_filtersAdded;
   bool                       m_attached;
   std::string                m_name;
-  std::map<filter_properties, cSectionSyncer*> m_sectionSyncers;
+
+  std::map<filter_properties, cScanFilterStatus*> m_filtersNew;
 };
 
 }

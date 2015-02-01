@@ -89,7 +89,7 @@ void cNit::ReceivePacket(uint16_t pid, const uint8_t* data)
       if (tid != TableIdNIT && tid != TableIdNIT_other)
         return;
 
-      if (!Sync(pid, nit.getVersionNumber(), nit.getSectionNumber(), nit.getLastSectionNumber()))
+      if (!Sync(pid, (uint8_t)nit.getTableId(), nit.getVersionNumber(), nit.getSectionNumber(), nit.getLastSectionNumber()))
         return;
 
       // Add the network if we aren't already tracking it

@@ -116,7 +116,7 @@ void cSdt::ReceivePacket(uint16_t pid, const uint8_t* data)
   SI::SDT sdt(data);
   if (sdt.CheckAndParse())
   {
-    if (!Sync(pid, sdt.getVersionNumber(), sdt.getSectionNumber(), sdt.getLastSectionNumber()))
+    if (!Sync(pid, (uint8_t)sdt.getTableId(), sdt.getVersionNumber(), sdt.getSectionNumber(), sdt.getLastSectionNumber()))
       return;
 
     cTransponder transponder = m_device->Channel()->GetCurrentlyTunedTransponder();

@@ -62,76 +62,10 @@ cPsipEit::cPsipEit(cDevice* device)
 {
 }
 
-void cPsipEit::OpenPid(uint16_t pid)
-{
-  CLockObject lock(m_mutex);
-  std::map<uint16_t, PSIP_PID_STATE>::iterator it = m_eitPids.find(pid);
-  if (it != m_eitPids.end())
-  {
-    it->second = PSIP_PID_STATE_OPEN;
-    filter_properties eitFilter = { pid, TableIdEIT, 0xFF };
-    AddFilter(eitFilter);
-  }
-}
-
-size_t cPsipEit::OpenPids(void) const
-{
-  size_t retval(0);
-  CLockObject lock(m_mutex);
-  for (std::map<uint16_t, PSIP_PID_STATE>::const_iterator it; it != m_eitPids.end(); ++it)
-    if (it->second == PSIP_PID_STATE_OPEN)
-      ++retval;
-  return retval;
-}
-
 void cPsipEit::AddPid(uint16_t pid)
 {
-  CLockObject lock(m_mutex);
-  if (m_eitPids.find(pid) != m_eitPids.end())
-    return;
-  m_eitPids.insert(make_pair(pid, PSIP_PID_STATE_WAITING));
-
-  if (OpenPids() < PSIP_EIT_MAX_OPEN_FILTER)
-    OpenPid(pid);
-}
-
-void cPsipEit::PidScanned(uint16_t pid)
-{
   filter_properties eitFilter = { pid, TableIdEIT, 0xFF };
-  RemoveFilter(eitFilter);
-  uint16_t nextPid(~0);
-  size_t activePids(0);
-
-  CLockObject lock(m_mutex);
-  std::map<uint16_t, PSIP_PID_STATE>::iterator it = m_eitPids.find(pid);
-  if (it != m_eitPids.end())
-    it->second = PSIP_PID_STATE_DONE;
-
-  for (std::map<uint16_t, PSIP_PID_STATE>::const_iterator it; it != m_eitPids.end(); ++it)
-  {
-    switch (it->second)
-    {
-      case PSIP_PID_STATE_OPEN:
-        ++activePids;
-        break;
-      case PSIP_PID_STATE_WAITING:
-        if (nextPid == ~0)
-          nextPid = it->first;
-        break;
-      default:
-        break;
-    }
-  }
-
-  if (activePids < PSIP_EIT_MAX_OPEN_FILTER && nextPid != ~0)
-    OpenPid(nextPid);
-}
-
-void cPsipEit::Detach(bool wait /* = false */)
-{
-  cScanReceiver::Detach(wait);
-  CLockObject lock(m_mutex);
-  m_eitPids.clear();
+  AddFilter(eitFilter);
 }
 
 void cPsipEit::ReceivePacket(uint16_t pid, const uint8_t* data)
@@ -140,13 +74,14 @@ void cPsipEit::ReceivePacket(uint16_t pid, const uint8_t* data)
   const unsigned int gpsUtcOffset = m_device->Scan()->GetGpsUtcOffset();
   unsigned int numEvents = 0;
 
+  /** wait for the PMT scan to complete first */
+  if (!m_device->Scan()->PAT()->PmtScanned())
+    return;
+
   SI::PSIP_EIT psipEit(data);
   if (psipEit.CheckAndParse())
   {
-    /** wait for the PMT scan to complete first */
-    if (!m_device->Scan()->PAT()->PmtScanned())
-      return;
-    if (!Sync(pid, psipEit.getVersionNumber(), psipEit.getSectionNumber(), psipEit.getLastSectionNumber()))
+    if (!Sync(pid, (uint8_t)psipEit.getTableId(), psipEit.getVersionNumber(), psipEit.getSectionNumber(), psipEit.getLastSectionNumber()))
       return;
 
     SI::PSIP_EIT::Event psipEitEvent;
@@ -188,11 +123,13 @@ void cPsipEit::ReceivePacket(uint16_t pid, const uint8_t* data)
       cScheduleManager::Get().AddEvent(thisEvent, m_device->Channel()->GetCurrentlyTunedTransponder());
       numEvents++;
     }
+
+    filter_properties eitFilter = { pid, TableIdEIT, 0xFF };
+    FilterScanned(eitFilter); // TODO probably want more than one...
   }
 
   if (numEvents > 0)
     dsyslog("EIT: Found PID %u with %u events", pid, numEvents);
-  PidScanned(pid);
 }
 
 }
