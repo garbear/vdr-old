@@ -64,7 +64,8 @@ void cPsipVct::ReceivePacket(uint16_t pid, const uint8_t* data)
   SI::PSIP_VCT vct(data);
   if (vct.CheckAndParse())
   {
-    if (!Sync(pid, (uint8_t)vct.getTableId(), vct.getVersionNumber(), vct.getSectionNumber(), vct.getLastSectionNumber()))
+    filter_properties filter = { pid, vct.getTableId(), 0xFF };
+    if (!Sync(filter, vct.getVersionNumber(), vct.getSectionNumber(), vct.getLastSectionNumber()))
       return;
 
     SI::PSIP_VCT::ChannelInfo channelInfo;

@@ -329,14 +329,13 @@ bool cScanReceiver::DynamicFilter(const filter_properties& filter) const
   return false;
 }
 
-bool cScanReceiver::Sync(uint16_t pid, uint8_t tid, uint8_t version, int sectionNumber, int endSectionNumber)
+bool cScanReceiver::Sync(const filter_properties& filter, uint8_t version, int sectionNumber, int endSectionNumber)
 {
   CLockObject lock(m_mutex);
-  for (std::map<filter_properties, cScanFilterStatus*>::iterator it = m_filtersNew.begin(); it != m_filtersNew.end(); ++it)
-  {
-    if (it->first.pid == pid && it->first.tid == tid)
-      return it->second->Sync(version, sectionNumber, endSectionNumber);
-  }
+  //
+  std::map<filter_properties, cScanFilterStatus*>::const_iterator it = m_filtersNew.find(filter);
+  if (it != m_filtersNew.end())
+    return it->second->Sync(version, sectionNumber, endSectionNumber);
   return false;
 }
 

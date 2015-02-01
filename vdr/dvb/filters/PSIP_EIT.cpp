@@ -81,7 +81,8 @@ void cPsipEit::ReceivePacket(uint16_t pid, const uint8_t* data)
   SI::PSIP_EIT psipEit(data);
   if (psipEit.CheckAndParse())
   {
-    if (!Sync(pid, (uint8_t)psipEit.getTableId(), psipEit.getVersionNumber(), psipEit.getSectionNumber(), psipEit.getLastSectionNumber()))
+    filter_properties filter = { pid, psipEit.getTableId(), 0xFF };
+    if (!Sync(filter, psipEit.getVersionNumber(), psipEit.getSectionNumber(), psipEit.getLastSectionNumber()))
       return;
 
     SI::PSIP_EIT::Event psipEitEvent;

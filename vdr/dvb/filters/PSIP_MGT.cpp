@@ -58,7 +58,8 @@ void cPsipMgt::ReceivePacket(uint16_t pid, const uint8_t* data)
     size_t eitPids = 0;
     size_t mgtPids = 0;
 
-    if (!Sync(pid, (uint8_t)mgt.getTableId(), mgt.getVersionNumber(), mgt.getSectionNumber(), mgt.getLastSectionNumber()))
+    filter_properties filter = { pid, mgt.getTableId(), 0xFF };
+    if (!Sync(filter, mgt.getVersionNumber(), mgt.getSectionNumber(), mgt.getLastSectionNumber()))
       return;
 
     SI::PSIP_MGT::TableInfo tableInfo;

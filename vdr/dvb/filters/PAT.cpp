@@ -71,7 +71,8 @@ void cPat::ReceivePacket(uint16_t pid, const uint8_t* data)
   if (tsPAT.CheckAndParse() && tsPAT.getTableId() == TableIdPAT)
   {
     bool haspmt = false;
-    if (!Sync(pid, (uint8_t)tsPAT.getTableId(), tsPAT.getVersionNumber(), tsPAT.getSectionNumber(), tsPAT.getLastSectionNumber()))
+    filter_properties filter = { pid, tsPAT.getTableId(), 0xFF };
+    if (!Sync(filter, tsPAT.getVersionNumber(), tsPAT.getSectionNumber(), tsPAT.getLastSectionNumber()))
       return;
 
     SI::PAT::Association assoc;

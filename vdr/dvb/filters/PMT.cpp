@@ -124,7 +124,8 @@ void cPmt::ReceivePacket(uint16_t pid, const uint8_t* data)
   SI::PMT pmt(data);
   if (pmt.CheckAndParse() && pmt.getTableId() == TableIdPMT)
   {
-    if (!Sync(pid, (uint8_t)pmt.getTableId(), pmt.getVersionNumber(), pmt.getSectionNumber(), pmt.getLastSectionNumber()))
+    filter_properties filter = { pid, pmt.getTableId(), 0xFF };
+    if (!Sync(filter, pmt.getVersionNumber(), pmt.getSectionNumber(), pmt.getLastSectionNumber()))
       return;
 
     for (std::vector<PMTFilter>::iterator it = m_filters.begin(); it != m_filters.end(); ++it)

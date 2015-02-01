@@ -115,7 +115,7 @@ public:
   size_t NbOpenPids(void) const;
 
 protected:
-  bool Sync(uint16_t pid, uint8_t tid, uint8_t version, int sectionNumber, int endSectionNumber);
+  bool Sync(const filter_properties& filter, uint8_t version, int sectionNumber, int endSectionNumber);
   virtual void AddFilter(const filter_properties& filter);
   virtual bool HasFilters(void) {  return !m_filtersNew.empty(); }
   void RemoveFilter(const filter_properties& filter);
