@@ -124,12 +124,17 @@ void cPsipEit::ReceivePacket(uint16_t pid, const uint8_t* data)
       numEvents++;
     }
 
-    filter_properties eitFilter = { pid, TableIdEIT, 0xFF };
-    FilterScanned(eitFilter); // TODO probably want more than one...
+    if (Synced(pid))
+    {
+      filter_properties eitFilter = { pid, TableIdEIT, 0xFF };
+      FilterScanned(eitFilter);
+    }
   }
 
   if (numEvents > 0)
     dsyslog("EIT: Found PID %u with %u events", pid, numEvents);
+  if (NbOpenPids() == 0)
+    SetScanned();
 }
 
 }

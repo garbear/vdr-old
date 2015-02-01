@@ -342,14 +342,13 @@ bool cScanReceiver::Sync(uint16_t pid, uint8_t tid, uint8_t version, int section
 
 bool cScanReceiver::Synced(uint16_t pid) const
 {
-  bool bSynced(false);
   CLockObject lock(m_mutex);
   for (std::map<filter_properties, cScanFilterStatus*>::const_iterator it = m_filtersNew.begin(); it != m_filtersNew.end(); ++it)
   {
     if (it->first.pid == pid)
-      bSynced &= it->second->Synced();
+      return it->second->Synced();
   }
-  return bSynced;
+  return false;
 }
 
 void cScanReceiver::FilterScanned(const filter_properties& filter)
