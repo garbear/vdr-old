@@ -96,7 +96,10 @@ bool cScanReceiver::cScanFilterStatus::Attach(void)
   {
     m_attached = m_receiver->m_device->Receiver()->AttachStreamingReceiver(m_receiver, m_filter.pid, m_filter.tid, m_filter.mask);
     if (m_attached)
+    {
       m_state = SCAN_STATE_OPEN;
+      m_syncer->Reset();
+    }
   }
   return m_attached;
 }
