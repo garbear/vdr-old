@@ -117,7 +117,7 @@ public:
 protected:
   bool Sync(const filter_properties& filter, uint8_t version, int sectionNumber, int endSectionNumber);
   virtual void AddFilter(const filter_properties& filter);
-  virtual bool HasFilters(void) {  return !m_filtersNew.empty(); }
+  virtual bool HasFilters(void) {  return !m_filters.empty(); }
   void RemoveFilter(const filter_properties& filter);
   void RemoveFilters(void);
   void SetScanned(void);
@@ -136,7 +136,7 @@ private:
   bool                       m_attached;
   std::string                m_name;
 
-  std::map<filter_properties, cScanFilterStatus*> m_filtersNew;
+  std::map<filter_properties, cScanFilterStatus*> m_filters;
 };
 
 }

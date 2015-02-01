@@ -151,7 +151,7 @@ cScanReceiver::cScanReceiver(cDevice* device, const std::string& name, const fil
     m_attached(false),
     m_name(name)
 {
-  m_filtersNew.insert(make_pair(filter, new cScanFilterStatus(filter, this, false)));
+  m_filters.insert(make_pair(filter, new cScanFilterStatus(filter, this, false)));
 }
 
 cScanReceiver::cScanReceiver(cDevice* device, const std::string& name, const std::vector<filter_properties>& filters) :
@@ -162,7 +162,7 @@ cScanReceiver::cScanReceiver(cDevice* device, const std::string& name, const std
     m_name(name)
 {
   for (std::vector<filter_properties>::const_iterator it = filters.begin(); it != filters.end(); ++it)
-    m_filtersNew.insert(make_pair(*it, new cScanFilterStatus(*it, this, false)));
+    m_filters.insert(make_pair(*it, new cScanFilterStatus(*it, this, false)));
 }
 
 cScanReceiver::cScanReceiver(cDevice* device, const std::string& name, size_t nbFilters, const filter_properties* filters) :
@@ -173,13 +173,13 @@ cScanReceiver::cScanReceiver(cDevice* device, const std::string& name, size_t nb
     m_name(name)
 {
   for (size_t ptr = 0; ptr < nbFilters; ++ptr)
-    m_filtersNew.insert(make_pair(filters[ptr], new cScanFilterStatus(filters[ptr], this, false)));
+    m_filters.insert(make_pair(filters[ptr], new cScanFilterStatus(filters[ptr], this, false)));
 }
 
 cScanReceiver::~cScanReceiver(void)
 {
   Detach();
-  for (std::map<filter_properties, cScanFilterStatus*>::iterator cit = m_filtersNew.begin(); cit != m_filtersNew.end(); ++cit)
+  for (std::map<filter_properties, cScanFilterStatus*>::iterator cit = m_filters.begin(); cit != m_filters.end(); ++cit)
     delete cit->second;
 }
 
@@ -192,7 +192,7 @@ bool cScanReceiver::Attach(void)
     return true;
 
   m_attached = true;
-  for (std::map<filter_properties, cScanFilterStatus*>::const_iterator it = m_filtersNew.begin(); m_attached && it != m_filtersNew.end(); ++it)
+  for (std::map<filter_properties, cScanFilterStatus*>::const_iterator it = m_filters.begin(); m_attached && it != m_filters.end(); ++it)
     m_attached &= it->second->Attach();
 
   if (!m_attached)
@@ -220,7 +220,7 @@ void cScanReceiver::Detach(bool wait /* = false */)
 bool cScanReceiver::WaitForScan(uint32_t iTimeout /* = TRANSPONDER_TIMEOUT */)
 {
   CLockObject lock(m_scannedmutex);
-  if (m_filtersNew.empty() || !m_attached)
+  if (m_filters.empty() || !m_attached)
     return true;
   return m_scannedEvent.Wait(m_scannedmutex, m_scanned, iTimeout);
 }
@@ -253,12 +253,12 @@ void cScanReceiver::Receive(const uint16_t pid, const uint8_t* data, const size_
 void cScanReceiver::AddFilter(const filter_properties& filter)
 {
   CLockObject lock(m_mutex);
-  if (m_filtersNew.find(filter) != m_filtersNew.end())
+  if (m_filters.find(filter) != m_filters.end())
     return;
   cScanFilterStatus* scan = new cScanFilterStatus(filter, this, true);
   if (scan)
   {
-    m_filtersNew.insert(make_pair(filter, scan));
+    m_filters.insert(make_pair(filter, scan));
     if (NbOpenPids() < SCAN_MAX_OPEN_FILTERS)
       scan->Attach();
   }
@@ -267,12 +267,12 @@ void cScanReceiver::AddFilter(const filter_properties& filter)
 void cScanReceiver::RemoveFilter(const filter_properties& filter)
 {
   CLockObject lock(m_mutex);
-  std::map<filter_properties, cScanFilterStatus*>::iterator it = m_filtersNew.find(filter);
-  if (it != m_filtersNew.end())
+  std::map<filter_properties, cScanFilterStatus*>::iterator it = m_filters.find(filter);
+  if (it != m_filters.end())
   {
     it->second->Detach();
     if (it->second->Dynamic())
-      m_filtersNew.erase(it);
+      m_filters.erase(it);
   }
 }
 
@@ -281,12 +281,12 @@ void cScanReceiver::RemoveFilters(void)
   CLockObject lock(m_mutex);
   std::vector<filter_properties> filtersRemoved;
 
-  for (std::map<filter_properties, cScanFilterStatus*>::iterator it = m_filtersNew.begin(); it != m_filtersNew.end();)
+  for (std::map<filter_properties, cScanFilterStatus*>::iterator it = m_filters.begin(); it != m_filters.end();)
   {
     if (it->second->Dynamic())
     {
       delete it->second;
-      m_filtersNew.erase(it++);
+      m_filters.erase(it++);
     }
     else
     {
@@ -326,8 +326,8 @@ bool cScanReceiver::Scanned(void) const
 
 bool cScanReceiver::DynamicFilter(const filter_properties& filter) const
 {
-  std::map<filter_properties, cScanFilterStatus*>::const_iterator it = m_filtersNew.find(filter);
-  if (it != m_filtersNew.end())
+  std::map<filter_properties, cScanFilterStatus*>::const_iterator it = m_filters.find(filter);
+  if (it != m_filters.end())
     return it->second->Dynamic();
   return false;
 }
@@ -336,8 +336,8 @@ bool cScanReceiver::Sync(const filter_properties& filter, uint8_t version, int s
 {
   CLockObject lock(m_mutex);
   //
-  std::map<filter_properties, cScanFilterStatus*>::const_iterator it = m_filtersNew.find(filter);
-  if (it != m_filtersNew.end())
+  std::map<filter_properties, cScanFilterStatus*>::const_iterator it = m_filters.find(filter);
+  if (it != m_filters.end())
     return it->second->Sync(version, sectionNumber, endSectionNumber);
   return false;
 }
@@ -345,7 +345,7 @@ bool cScanReceiver::Sync(const filter_properties& filter, uint8_t version, int s
 bool cScanReceiver::Synced(uint16_t pid) const
 {
   CLockObject lock(m_mutex);
-  for (std::map<filter_properties, cScanFilterStatus*>::const_iterator it = m_filtersNew.begin(); it != m_filtersNew.end(); ++it)
+  for (std::map<filter_properties, cScanFilterStatus*>::const_iterator it = m_filters.begin(); it != m_filters.end(); ++it)
   {
     if (it->first.pid == pid)
       return it->second->Synced();
@@ -360,14 +360,14 @@ void cScanReceiver::FilterScanned(const filter_properties& filter)
   bool hasNextFilter(false);
   size_t activePids(0);
 
-  std::map<filter_properties, cScanFilterStatus*>::iterator it = m_filtersNew.find(filter);
-  if (it != m_filtersNew.end())
+  std::map<filter_properties, cScanFilterStatus*>::iterator it = m_filters.find(filter);
+  if (it != m_filters.end())
   {
     it->second->Detach();
     it->second->SetState(SCAN_STATE_DONE);
   }
 
-  for (std::map<filter_properties, cScanFilterStatus*>::const_iterator it = m_filtersNew.begin(); it != m_filtersNew.end(); ++it)
+  for (std::map<filter_properties, cScanFilterStatus*>::const_iterator it = m_filters.begin(); it != m_filters.end(); ++it)
   {
     switch (it->second->State())
     {
@@ -394,7 +394,7 @@ size_t cScanReceiver::NbOpenPids(void) const
 {
   size_t retval(0);
   CLockObject lock(m_mutex);
-  for (std::map<filter_properties, cScanFilterStatus*>::const_iterator it = m_filtersNew.begin(); it != m_filtersNew.end(); ++it)
+  for (std::map<filter_properties, cScanFilterStatus*>::const_iterator it = m_filters.begin(); it != m_filters.end(); ++it)
     if (it->second->Attached())
       ++retval;
   return retval;
