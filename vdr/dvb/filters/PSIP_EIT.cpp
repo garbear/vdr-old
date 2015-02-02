@@ -62,10 +62,13 @@ cPsipEit::cPsipEit(cDevice* device)
 {
 }
 
-void cPsipEit::AddPid(uint16_t pid)
+void cPsipEit::AddPid(TunerHandlePtr handle, uint16_t pid)
 {
   filter_properties eitFilter = { pid, TableIdEIT, 0xFF };
-  AddFilter(eitFilter);
+  PLATFORM::CLockObject lock(m_mutex);
+  m_handle = handle;
+  if (m_handle)
+    AddFilter(eitFilter);
 }
 
 void cPsipEit::ReceivePacket(uint16_t pid, const uint8_t* data)
