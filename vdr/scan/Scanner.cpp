@@ -129,15 +129,15 @@ void* cScanner::Process()
 
     channel->SetTransponder(transponder);
 
-    TunerHandlePtr newHandle = dvbDevice->Acquire(channel, TUNING_TYPE_CHANNEL_SCAN, this);
-    if (newHandle)
+    m_handle = dvbDevice->Acquire(channel, TUNING_TYPE_CHANNEL_SCAN, this);
+    if (m_handle)
     {
       //XXX fix tuner subsys to correctly call the callback
       LockAcquired();
       bool bSuccess = m_setup.device->Scan()->WaitForTransponderScan();
       if (bSuccess)
         bSuccess = m_setup.device->Scan()->WaitForEPGScan();
-      newHandle->Release();
+      m_handle->Release();
       dsyslog("%s %d MHz", bSuccess ? "Successfully scanned" : "Failed to scan", transponder.FrequencyMHz());
     }
     else
@@ -160,7 +160,6 @@ void* cScanner::Process()
 
   const int64_t durationSec = (GetTimeMs() - startMs) / 1000;
   isyslog("Channel scan took %d min %d sec", durationSec / 60, durationSec % 60);
-  cEPGScanner::Get().Start();
 
   return NULL;
 }
@@ -168,8 +167,8 @@ void* cScanner::Process()
 void cScanner::LockAcquired(void)
 {
   shared_ptr<cDvbDevice> dvbDevice = dynamic_pointer_cast<cDvbDevice>(m_setup.device);
-  if (dvbDevice)
-    dvbDevice->Scan()->AttachReceivers();
+  if (dvbDevice && m_handle)
+    dvbDevice->Scan()->AttachReceivers(m_handle);
 }
 
 void cScanner::LockLost(void)

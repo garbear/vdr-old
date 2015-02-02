@@ -56,10 +56,11 @@ protected:
 private:
   cScanner(void);
 
-  cScanConfig        m_setup;
-  unsigned int       m_frequencyHz;
-  unsigned int       m_number;
-  float              m_percentage;
+  cScanConfig    m_setup;
+  unsigned int   m_frequencyHz;
+  unsigned int   m_number;
+  float          m_percentage;
+  TunerHandlePtr m_handle;
 };
 
 }
