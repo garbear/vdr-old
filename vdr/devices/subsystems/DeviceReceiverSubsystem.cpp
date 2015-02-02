@@ -197,6 +197,8 @@ void cDeviceReceiverSubsystem::ProcessChanges(void)
       case RCV_CHANGE_DETACH_STREAMING:
         ProcessDetachStreaming(*change);
         break;
+      case RCV_CHANGE_NOOP:
+        break;
     }
     delete change;
     m_receiverChanges.pop();
@@ -358,6 +360,8 @@ cDeviceReceiverSubsystem::PidResourcePtr cDeviceReceiverSubsystem::GetMultiplexe
 bool cDeviceReceiverSubsystem::AttachStreamingReceiver(iReceiver* receiver, uint16_t pid, uint8_t tid, uint8_t mask)
 {
   CLockObject lock(m_mutex);
+  if (!IsRunning())
+    return false;
   m_receiverChanges.push(new cReceiverChange(RCV_CHANGE_ATTACH_STREAMING, receiver, pid, tid, mask));
   m_changed = true;
   m_pidChange.Signal();
@@ -367,48 +371,12 @@ bool cDeviceReceiverSubsystem::AttachStreamingReceiver(iReceiver* receiver, uint
 bool cDeviceReceiverSubsystem::AttachMultiplexedReceiver(iReceiver* receiver, uint16_t pid, STREAM_TYPE type /* = STREAM_TYPE_UNDEFINED */)
 {
   CLockObject lock(m_mutex);
+  if (!IsRunning())
+    return false;
   m_receiverChanges.push(new cReceiverChange(RCV_CHANGE_ATTACH_MULTIPLEXED, receiver, pid, type));
   m_changed = true;
   m_pidChange.Signal();
   return true;
-}
-
-bool cDeviceReceiverSubsystem::AttachMultiplexedReceiver(iReceiver* receiver, const ChannelPtr& channel)
-{
-  bool bAllOpened(true);
-
-  if (bAllOpened && channel->GetVideoStream().vpid)
-    bAllOpened &= AttachMultiplexedReceiver(receiver, channel->GetVideoStream().vpid, channel->GetVideoStream().vtype);
-
-  if (bAllOpened && channel->GetVideoStream().ppid != channel->GetVideoStream().vpid)
-    bAllOpened &= AttachMultiplexedReceiver(receiver, channel->GetVideoStream().ppid);
-
-  for (vector<AudioStream>::const_iterator it = channel->GetAudioStreams().begin(); bAllOpened && it != channel->GetAudioStreams().end(); ++it)
-    bAllOpened &= AttachMultiplexedReceiver(receiver, it->apid, it->atype);
-
-  for (vector<DataStream>::const_iterator it = channel->GetDataStreams().begin(); bAllOpened && it != channel->GetDataStreams().end(); ++it)
-    bAllOpened &= AttachMultiplexedReceiver(receiver, it->dpid, it->dtype);
-
-  for (vector<SubtitleStream>::const_iterator it = channel->GetSubtitleStreams().begin(); bAllOpened && it != channel->GetSubtitleStreams().end(); ++it)
-    bAllOpened &= AttachMultiplexedReceiver(receiver, it->spid);
-
-  if (bAllOpened && channel->GetTeletextStream().tpid)
-    bAllOpened &= AttachMultiplexedReceiver(receiver, channel->GetTeletextStream().tpid);
-
-  if (bAllOpened)
-  {
-    if (CommonInterface()->m_camSlot)
-    {
-      CommonInterface()->m_camSlot->StartDecrypting();
-      CommonInterface()->m_startScrambleDetection = time(NULL);
-    }
-  }
-  else
-  {
-    DetachReceiver(receiver, false);
-  }
-
-  return bAllOpened;
 }
 
 bool cDeviceReceiverSubsystem::AttachReceiver(iReceiver* receiver, const PidResourcePtr& resource)
@@ -449,6 +417,8 @@ bool cDeviceReceiverSubsystem::AttachReceiver(iReceiver* receiver, const PidReso
 void cDeviceReceiverSubsystem::DetachStreamingReceiver(iReceiver* receiver, uint16_t pid, uint8_t tid, uint8_t mask, bool wait)
 {
   CLockObject lock(m_mutex);
+  if (!IsRunning())
+    return;
   m_receiverChanges.push(new cReceiverChange(RCV_CHANGE_DETACH_STREAMING, receiver, pid, tid, mask));
   m_changed = true;
   m_changeProcessed = false;
@@ -460,6 +430,8 @@ void cDeviceReceiverSubsystem::DetachStreamingReceiver(iReceiver* receiver, uint
 void cDeviceReceiverSubsystem::DetachMultiplexedReceiver(iReceiver* receiver, uint16_t pid, STREAM_TYPE type /* = STREAM_TYPE_UNDEFINED */, bool wait /* = false */)
 {
   CLockObject lock(m_mutex);
+  if (!IsRunning())
+    return;
   m_receiverChanges.push(new cReceiverChange(RCV_CHANGE_DETACH_MULTIPLEXED, receiver, pid, type));
   m_changed = true;
   m_changeProcessed = false;
@@ -471,12 +443,26 @@ void cDeviceReceiverSubsystem::DetachMultiplexedReceiver(iReceiver* receiver, ui
 void cDeviceReceiverSubsystem::DetachReceiver(iReceiver* receiver, bool wait)
 {
   CLockObject lock(m_mutex);
+  if (!IsRunning())
+    return;
   m_receiverChanges.push(new cReceiverChange(RCV_CHANGE_DETACH, receiver));
   m_changed = true;
   m_changeProcessed = false;
   m_pidChange.Signal();
   if (wait)
     m_pidChangeProcessed.Wait(m_mutex, m_changeProcessed);
+}
+
+void cDeviceReceiverSubsystem::SyncPids(void)
+{
+  CLockObject lock(m_mutex);
+  if (!IsRunning())
+    return;
+  m_receiverChanges.push(new cReceiverChange(RCV_CHANGE_NOOP));
+  m_changed = true;
+  m_changeProcessed = false;
+  m_pidChange.Signal();
+  m_pidChangeProcessed.Wait(m_mutex, m_changeProcessed);
 }
 
 void cDeviceReceiverSubsystem::DetachAllReceivers(bool wait)

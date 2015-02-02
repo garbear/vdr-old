@@ -63,7 +63,7 @@ public:
     FILTER_SCAN_STATE State(void) const;
     void SetState(FILTER_SCAN_STATE state);
 
-    bool Attach(void);
+    bool Attach(TunerHandlePtr handle);
     void Detach(void);
     bool Attached(void) const;
 
@@ -80,6 +80,7 @@ public:
     bool              m_dynamic;
     bool              m_attached;
     cScanReceiver*    m_receiver;
+    TunerHandlePtr    m_handle;
   };
 
 protected:
@@ -93,7 +94,7 @@ public:
 
   void Receive(const uint16_t pid, const uint8_t* data, const size_t len, ts_crc_check_t& crcvalid);
   virtual void ReceivePacket(const uint16_t pid, const uint8_t* data) = 0;
-  virtual bool Attach(void);
+  virtual bool Attach(TunerHandlePtr handle);
   virtual void Detach(bool wait = false);
   virtual bool WaitForScan(uint32_t iTimeout = TRANSPONDER_TIMEOUT);
 
@@ -129,6 +130,7 @@ protected:
   bool             m_locked;
   PLATFORM::CMutex m_mutex;
   PLATFORM::CMutex m_scannedmutex;
+  TunerHandlePtr   m_handle;
 
 private:
   bool                       m_scanned;

@@ -105,14 +105,15 @@ void cDeviceScanSubsystem::ResetScanned(cScanReceiver* receiver)
   }
 }
 
-bool cDeviceScanSubsystem::AttachReceivers(void)
+bool cDeviceScanSubsystem::AttachReceivers(TunerHandlePtr handle)
 {
   bool retval(true);
+  assert(handle.get());
   for (std::set<cScanReceiver*>::iterator it = m_receivers.begin(); it != m_receivers.end(); ++it)
   {
     if (ReceiverOk(*it))
     {
-      retval &= (*it)->Attach();
+      retval &= (*it)->Attach(handle);
 
       if ((*it)->InChannelScan())
       {

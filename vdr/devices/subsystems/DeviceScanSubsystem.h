@@ -40,6 +40,8 @@ class cSdt;
 class cPsipMgt;
 class cPsipEit;
 class cPsipStt;
+class cTunerHandle;
+typedef std::shared_ptr<cTunerHandle> TunerHandlePtr;
 
 class cDeviceScanSubsystem : protected cDeviceSubsystem,
                              public    Observer
@@ -50,7 +52,7 @@ public:
 
   bool WaitForTransponderScan(void);
   bool WaitForEPGScan(void);
-  bool AttachReceivers(void);
+  bool AttachReceivers(TunerHandlePtr handle);
   void DetachReceivers(void);
 
   virtual void Notify(const Observable &obs, const ObservableMessage msg);

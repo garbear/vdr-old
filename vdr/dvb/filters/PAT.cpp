@@ -84,12 +84,19 @@ void cPat::ReceivePacket(uint16_t pid, const uint8_t* data)
 
       haspmt = true;
       dsyslog("PAT: Scanning for PMT table with TSID=%d, SID=%d", tsPAT.getTransportStreamId(), assoc.getServiceId());
-      m_pmt.AddTransport(tsPAT.getTransportStreamId(), assoc.getServiceId(), assoc.getPid());
+      m_pmt.AddTransport(m_handle, tsPAT.getTransportStreamId(), assoc.getServiceId(), assoc.getPid());
+    }
+
+    if (Synced(pid))
+    {
+      filter_properties filter = { pid, TableIdPAT, 0xFF };
+      FilterScanned(filter);
     }
 
     if (haspmt)
     {
-      m_pmt.Attach();
+      assert(m_handle.get());
+      m_pmt.Attach(m_handle);
       SetScanned();
     }
   }

@@ -103,7 +103,7 @@ void cEPGScanner::Scan(void)
     TunerHandlePtr newHandle = device->Acquire(dummyChannel, TUNING_TYPE_EPG_SCAN, this);
     if (newHandle)
     {
-      device->Scan()->AttachReceivers();
+      device->Scan()->AttachReceivers(newHandle);
       device->Scan()->WaitForEPGScan();
       cScheduleManager::Get().NotifyObservers();
       newHandle->Release();

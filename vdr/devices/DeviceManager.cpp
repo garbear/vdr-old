@@ -122,7 +122,7 @@ TunerHandlePtr cDeviceManager::OpenVideoInput(iReceiver* receiver, device_tuning
     if (device)
     {
       TunerHandlePtr newHandle = device->Acquire(channel, type, receiver);
-      if (newHandle && !device->Receiver()->AttachMultiplexedReceiver(receiver, channel))
+      if (newHandle && !newHandle->AttachMultiplexedReceiver(receiver, channel))
       {
         /** failed to attach receiver */
         device->Release(newHandle);
@@ -136,14 +136,6 @@ TunerHandlePtr cDeviceManager::OpenVideoInput(iReceiver* receiver, device_tuning
   }
 
   return handle;
-}
-
-void cDeviceManager::CloseVideoInput(iReceiver* receiver)
-{
-  DevicePtr device = GetDevice(0); // TODO
-
-  if (device)
-    device->Receiver()->DetachReceiver(receiver, true);
 }
 
 void cDeviceManager::Notify(const Observable &obs, const ObservableMessage msg)

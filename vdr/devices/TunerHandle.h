@@ -27,6 +27,7 @@
 namespace VDR
 {
 class cDeviceChannelSubsystem;
+class iReceiver;
 
 // prio high -> low
 typedef enum
@@ -48,13 +49,14 @@ public:
   virtual void LostPriority(void) = 0;
 };
 
+class cDevice;
 class cTunerHandle;
 typedef std::shared_ptr<cTunerHandle> TunerHandlePtr;
 
 class cTunerHandle
 {
 public:
-  cTunerHandle(device_tuning_type_t type, cDeviceChannelSubsystem* tuner, iTunerHandleCallbacks* callbacks, const ChannelPtr& channel);
+  cTunerHandle(device_tuning_type_t type, cDevice* tuner, iTunerHandleCallbacks* callbacks, const ChannelPtr& channel);
   virtual ~cTunerHandle(void);
 
   ChannelPtr Channel(void) const { return m_channel; }
@@ -68,15 +70,23 @@ public:
   void StartEPGScanAfterRelease(bool setto) { m_startEpgScan = setto; }
   void StartChannelScanAfterRelease(bool setto) { m_startChannelScan = setto; }
 
+  bool AttachMultiplexedReceiver(iReceiver* receiver, const ChannelPtr& channel);
+  bool AttachMultiplexedReceiver(iReceiver* receiver, uint16_t pid, STREAM_TYPE type = STREAM_TYPE_UNDEFINED);
+  bool AttachStreamingReceiver(iReceiver* receiver, uint16_t pid, uint8_t tid, uint8_t mask);
+  void DetachStreamingReceiver(iReceiver* receiver, uint16_t pid, uint8_t tid, uint8_t mask, bool wait);
+  void DetachReceiver(iReceiver* receiver, bool wait);
+
   static const TunerHandlePtr EmptyHandle;
 
 private:
-  device_tuning_type_t     m_type;
-  cDeviceChannelSubsystem* m_tuner;
-  iTunerHandleCallbacks*   m_callbacks;
-  const ChannelPtr&        m_channel;
-  bool                     m_startEpgScan;
-  bool                     m_startChannelScan;
+  device_tuning_type_t   m_type;
+  cDevice*               m_tuner;
+  iTunerHandleCallbacks* m_callbacks;
+  const ChannelPtr&      m_channel;
+  bool                   m_startEpgScan;
+  bool                   m_startChannelScan;
+  PLATFORM::CMutex       m_mutex;
+  std::set<iReceiver*>   m_receivers;
 };
 
 }

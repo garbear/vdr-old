@@ -244,7 +244,6 @@ void cRecording::Interrupt(void)
 {
   if (m_tunerHandle)
   {
-    cDeviceManager::Get().CloseVideoInput(m_recorder);
     m_tunerHandle->Release();
     m_tunerHandle = cTunerHandle::EmptyHandle;
   }

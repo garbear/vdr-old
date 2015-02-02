@@ -116,12 +116,17 @@ bool cDevice::CanTune(device_tuning_type_t type)
 
 TunerHandlePtr cDevice::Acquire(const ChannelPtr& channel, device_tuning_type_t type, iTunerHandleCallbacks* callbacks)
 {
-  return Channel()->Acquire(channel, type, callbacks);
+  return Channel()->Acquire(this, channel, type, callbacks);
 }
 
 void cDevice::Release(TunerHandlePtr& handle)
 {
-  return Channel()->Release(handle);
+  Channel()->Release(handle);
+}
+
+void cDevice::Release(cTunerHandle* handle, bool notify /* = true */)
+{
+  Channel()->Release(handle, notify);
 }
 
 }

@@ -74,7 +74,6 @@ public:
   void Shutdown();
 
   TunerHandlePtr OpenVideoInput(iReceiver* receiver, device_tuning_type_t type, const ChannelPtr& channel);
-  void CloseVideoInput(iReceiver* receiver);
 
   void Notify(const Observable &obs, const ObservableMessage msg);
 

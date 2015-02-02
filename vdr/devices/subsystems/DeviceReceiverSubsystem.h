@@ -54,7 +54,8 @@ enum RECEIVER_CHANGE
   RCV_CHANGE_DETACH_ALL,
   RCV_CHANGE_DETACH,
   RCV_CHANGE_DETACH_MULTIPLEXED,
-  RCV_CHANGE_DETACH_STREAMING
+  RCV_CHANGE_DETACH_STREAMING,
+  RCV_CHANGE_NOOP
 };
 
 class cDeviceReceiverSubsystem : protected cDeviceSubsystem, public PLATFORM::CThread
@@ -132,7 +133,6 @@ public:
    * that channel provides are opened and associated with the receiver.
    */
   bool AttachStreamingReceiver(iReceiver* receiver, uint16_t pid, uint8_t tid, uint8_t mask);
-  bool AttachMultiplexedReceiver(iReceiver* receiver, const ChannelPtr& channel);
   bool AttachMultiplexedReceiver(iReceiver* receiver, uint16_t pid, STREAM_TYPE type = STREAM_TYPE_UNDEFINED);
 
   /*!
@@ -141,6 +141,8 @@ public:
   void DetachReceiver(iReceiver* receiver, bool wait);
   void DetachStreamingReceiver(iReceiver* receiver, uint16_t pid, uint8_t tid, uint8_t mask, bool wait);
   void DetachMultiplexedReceiver(iReceiver* receiver, uint16_t pid, STREAM_TYPE type = STREAM_TYPE_UNDEFINED, bool wait = false);
+
+  void SyncPids(void);
 
   /*!
    * \brief Detaches all receivers from this device.

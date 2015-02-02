@@ -45,7 +45,7 @@ public:
   cPmt(cDevice* device);
   virtual ~cPmt(void) { }
 
-  bool AddTransport(uint16_t tsid, uint16_t sid, uint16_t pid);
+  bool AddTransport(TunerHandlePtr handle, uint16_t tsid, uint16_t sid, uint16_t pid);
   void ReceivePacket(uint16_t pid, const uint8_t* data);
 
   void Detach(void);

@@ -116,13 +116,13 @@ void cDeviceChannelSubsystem::Notify(const Observable &obs, const ObservableMess
   NotifyObservers(msg);
 }
 
-TunerHandlePtr cDeviceChannelSubsystem::Acquire(const ChannelPtr& channel, device_tuning_type_t type, iTunerHandleCallbacks* callbacks)
+TunerHandlePtr cDeviceChannelSubsystem::Acquire(cDevice* device, const ChannelPtr& channel, device_tuning_type_t type, iTunerHandleCallbacks* callbacks)
 {
   bool valid(true);
   bool switchNeeded(true);
   bool startChannelScan(false);
   bool startEpgScan(false);
-  TunerHandlePtr handle = TunerHandlePtr(new cTunerHandle(type, this, callbacks, channel));
+  TunerHandlePtr handle = TunerHandlePtr(new cTunerHandle(type, device, callbacks, channel));
   std::vector<TunerHandlePtr> lowerPrio;
 
   dsyslog("acquire subscription for %s", handle->ToString().c_str());
@@ -178,7 +178,7 @@ TunerHandlePtr cDeviceChannelSubsystem::Acquire(const ChannelPtr& channel, devic
       }
 
       /** add new registration */
-      handle = TunerHandlePtr(new cTunerHandle(type, this, callbacks, channel));
+      handle = TunerHandlePtr(new cTunerHandle(type, device, callbacks, channel));
       handle->StartChannelScanAfterRelease(startChannelScan);
       handle->StartEPGScanAfterRelease(startEpgScan);
       m_activeTransponders.push_back(handle);

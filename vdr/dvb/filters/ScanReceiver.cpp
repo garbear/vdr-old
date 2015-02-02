@@ -89,14 +89,16 @@ bool cScanReceiver::cScanFilterStatus::Attached(void) const
   return m_attached;
 }
 
-bool cScanReceiver::cScanFilterStatus::Attach(void)
+bool cScanReceiver::cScanFilterStatus::Attach(TunerHandlePtr handle)
 {
+  assert(handle.get());
   CLockObject lock(m_mutex);
   if (!m_attached)
   {
-    m_attached = m_receiver->m_device->Receiver()->AttachStreamingReceiver(m_receiver, m_filter.pid, m_filter.tid, m_filter.mask);
+    m_attached = handle->AttachStreamingReceiver(m_receiver, m_filter.pid, m_filter.tid, m_filter.mask);
     if (m_attached)
     {
+      m_handle = handle;
       m_state = SCAN_STATE_OPEN;
       m_syncer->Reset();
     }
@@ -110,8 +112,9 @@ void cScanReceiver::cScanFilterStatus::Detach(void)
   if (m_attached)
   {
     m_attached = false;
-    m_receiver->m_device->Receiver()->DetachStreamingReceiver(m_receiver, m_filter.pid, m_filter.tid, m_filter.mask, false);
+    m_handle->DetachStreamingReceiver(m_receiver, m_filter.pid, m_filter.tid, m_filter.mask, false);
     m_syncer->Reset();
+    m_handle.reset();
   }
 }
 
@@ -183,17 +186,22 @@ cScanReceiver::~cScanReceiver(void)
     delete cit->second;
 }
 
-bool cScanReceiver::Attach(void)
+bool cScanReceiver::Attach(TunerHandlePtr handle)
 {
   bool retval = true;
+  assert(handle.get());
   CLockObject lock(m_mutex);
+
+  if (m_handle)
+    Detach(true);
+  m_handle = handle;
 
   if (m_attached)
     return true;
 
   m_attached = true;
   for (std::map<filter_properties, cScanFilterStatus*>::const_iterator it = m_filters.begin(); m_attached && it != m_filters.end(); ++it)
-    m_attached &= it->second->Attach();
+    m_attached &= it->second->Attach(m_handle);
 
   if (!m_attached)
     esyslog("failed to attach %s filter", m_name.c_str());
@@ -213,6 +221,7 @@ void cScanReceiver::Detach(bool wait /* = false */)
   {
     m_attached = false;
     RemoveFilters();
+    m_handle.reset();
     FILTER_DEBUGGING("%s filter detached", m_name.c_str());
   }
 }
@@ -253,6 +262,7 @@ void cScanReceiver::Receive(const uint16_t pid, const uint8_t* data, const size_
 void cScanReceiver::AddFilter(const filter_properties& filter)
 {
   CLockObject lock(m_mutex);
+  assert(m_handle.get());
   if (m_filters.find(filter) != m_filters.end())
     return;
   cScanFilterStatus* scan = new cScanFilterStatus(filter, this, true);
@@ -260,7 +270,7 @@ void cScanReceiver::AddFilter(const filter_properties& filter)
   {
     m_filters.insert(make_pair(filter, scan));
     if (NbOpenPids() < SCAN_MAX_OPEN_FILTERS)
-      scan->Attach();
+      scan->Attach(m_handle);
   }
 }
 
@@ -321,7 +331,7 @@ void cScanReceiver::ResetScanned(void)
 bool cScanReceiver::Scanned(void) const
 {
   CLockObject lock(m_scannedmutex);
-  return m_attached && m_scanned;
+  return m_scanned;
 }
 
 bool cScanReceiver::DynamicFilter(const filter_properties& filter) const
@@ -348,7 +358,7 @@ bool cScanReceiver::Synced(uint16_t pid) const
   for (std::map<filter_properties, cScanFilterStatus*>::const_iterator it = m_filters.begin(); it != m_filters.end(); ++it)
   {
     if (it->first.pid == pid)
-      return it->second->Synced();
+      return it->second->State() == SCAN_STATE_DONE || it->second->Synced();
   }
   return false;
 }
@@ -387,7 +397,7 @@ void cScanReceiver::FilterScanned(const filter_properties& filter)
   }
 
   if (activePids < SCAN_MAX_OPEN_FILTERS && hasNextFilter)
-    nextFilter->Attach(); // TODO check for failures
+    nextFilter->Attach(m_handle); // TODO check for failures
 }
 
 size_t cScanReceiver::NbOpenPids(void) const

@@ -111,17 +111,16 @@ bool cVNSIDemuxer::Open(const ChannelPtr& channel, int serial)
 void cVNSIDemuxer::Close()
 {
   CLockObject lock(m_Mutex);
+  if (m_tunerHandle)
+  {
+    m_tunerHandle->Release(false);
+    m_tunerHandle = cTunerHandle::EmptyHandle;
+  }
 
   if (m_VideoBuffer)
   {
-    cDeviceManager::Get().CloseVideoInput(m_VideoBuffer);
     delete m_VideoBuffer;
     m_VideoBuffer = NULL;
-    if (m_tunerHandle)
-    {
-      m_tunerHandle->Release(false);
-      m_tunerHandle = cTunerHandle::EmptyHandle;
-    }
   }
 
   if (m_CurrentChannel)
@@ -129,6 +128,7 @@ void cVNSIDemuxer::Close()
     m_CurrentChannel->UnregisterObserver(this);
     m_CurrentChannel.reset();
   }
+
   m_WaitIFrame      = true;
   m_FirstFramePTS   = 0;
   m_MuxPacketSerial = 0;

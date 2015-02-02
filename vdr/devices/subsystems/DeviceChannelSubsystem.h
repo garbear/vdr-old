@@ -134,7 +134,7 @@ public:
 
   void Release(TunerHandlePtr& handle, bool notify = true);
   void Release(cTunerHandle* handle, bool notify = true);
-  TunerHandlePtr Acquire(const ChannelPtr& channel, device_tuning_type_t type, iTunerHandleCallbacks* callbacks);
+  TunerHandlePtr Acquire(cDevice* device, const ChannelPtr& channel, device_tuning_type_t type, iTunerHandleCallbacks* callbacks);
   bool CanTune(device_tuning_type_t type);
   void Notify(const Observable &obs, const ObservableMessage msg);
 

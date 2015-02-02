@@ -81,7 +81,7 @@ cPmt::cPmt(cDevice* device)
 {
 }
 
-bool cPmt::AddTransport(uint16_t tsid, uint16_t sid, uint16_t pid)
+bool cPmt::AddTransport(TunerHandlePtr handle, uint16_t tsid, uint16_t sid, uint16_t pid)
 {
   PLATFORM::CLockObject lock(m_mutex);
   for (std::vector<PMTFilter>::const_iterator it = m_filters.begin(); it != m_filters.end(); ++it)
@@ -97,6 +97,7 @@ bool cPmt::AddTransport(uint16_t tsid, uint16_t sid, uint16_t pid)
   ResetScanned();
   m_filters.push_back(newfilter);
   filter_properties pmtFilter = { pid, TableIdPMT, 0xFF };
+  m_handle = handle;
   AddFilter(pmtFilter);
   return retval;
 }
@@ -136,7 +137,7 @@ void cPmt::ReceivePacket(uint16_t pid, const uint8_t* data)
 
     if (Synced(pid))
     {
-      filter_properties eitFilter = { pid, TableIdEIT, 0xFF };
+      filter_properties eitFilter = { pid, TableIdPMT, 0xFF };
       FilterScanned(eitFilter);
     }
 

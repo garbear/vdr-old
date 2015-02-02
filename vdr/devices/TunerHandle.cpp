@@ -22,13 +22,16 @@
 #include "TunerHandle.h"
 #include "epg/EPGScanner.h"
 #include "scan/Scanner.h"
+#include "commoninterface/CI.h"
 #include "subsystems/DeviceChannelSubsystem.h"
+#include "subsystems/DeviceReceiverSubsystem.h"
+#include "subsystems/DeviceCommonInterfaceSubsystem.h"
 
 using namespace VDR;
 
 const TunerHandlePtr cTunerHandle::EmptyHandle;
 
-cTunerHandle::cTunerHandle(device_tuning_type_t type, cDeviceChannelSubsystem* tuner, iTunerHandleCallbacks* callbacks, const ChannelPtr& channel) :
+cTunerHandle::cTunerHandle(device_tuning_type_t type, cDevice* tuner, iTunerHandleCallbacks* callbacks, const ChannelPtr& channel) :
     m_type(type),
     m_tuner(tuner),
     m_callbacks(callbacks),
@@ -40,6 +43,7 @@ cTunerHandle::cTunerHandle(device_tuning_type_t type, cDeviceChannelSubsystem* t
 
 cTunerHandle::~cTunerHandle(void)
 {
+  Release();
 }
 
 std::string cTunerHandle::ToString(void) const
@@ -84,10 +88,92 @@ void cTunerHandle::LostPriority(void)
     m_callbacks->LostPriority();
 }
 
+void cTunerHandle::DetachStreamingReceiver(iReceiver* receiver, uint16_t pid, uint8_t tid, uint8_t mask, bool wait)
+{
+  m_tuner->Receiver()->DetachStreamingReceiver(receiver, pid, tid, mask, wait);
+}
+
+void cTunerHandle::DetachReceiver(iReceiver* receiver, bool wait)
+{
+  PLATFORM::CLockObject lock(m_mutex);
+  m_tuner->Receiver()->DetachReceiver(receiver, wait);
+  m_receivers.erase(receiver);
+}
+
+bool cTunerHandle::AttachStreamingReceiver(iReceiver* receiver, uint16_t pid, uint8_t tid, uint8_t mask)
+{
+  PLATFORM::CLockObject lock(m_mutex);
+  if (m_tuner->Receiver()->AttachStreamingReceiver(receiver, pid, tid, mask))
+  {
+    m_receivers.insert(receiver);
+    return true;
+  }
+  return false;
+}
+
+bool cTunerHandle::AttachMultiplexedReceiver(iReceiver* receiver, uint16_t pid, STREAM_TYPE type /* = STREAM_TYPE_UNDEFINED */)
+{
+  PLATFORM::CLockObject lock(m_mutex);
+  if (m_tuner->Receiver()->AttachMultiplexedReceiver(receiver, pid, type))
+  {
+    m_receivers.insert(receiver);
+    return true;
+  }
+  return false;
+}
+
+bool cTunerHandle::AttachMultiplexedReceiver(iReceiver* receiver, const ChannelPtr& channel)
+{
+  bool bAllOpened(true);
+
+  if (bAllOpened && channel->GetVideoStream().vpid)
+    bAllOpened &= AttachMultiplexedReceiver(receiver, channel->GetVideoStream().vpid, channel->GetVideoStream().vtype);
+
+  if (bAllOpened && channel->GetVideoStream().ppid != channel->GetVideoStream().vpid)
+    bAllOpened &= AttachMultiplexedReceiver(receiver, channel->GetVideoStream().ppid);
+
+  for (std::vector<AudioStream>::const_iterator it = channel->GetAudioStreams().begin(); bAllOpened && it != channel->GetAudioStreams().end(); ++it)
+    bAllOpened &= AttachMultiplexedReceiver(receiver, it->apid, it->atype);
+
+  for (std::vector<DataStream>::const_iterator it = channel->GetDataStreams().begin(); bAllOpened && it != channel->GetDataStreams().end(); ++it)
+    bAllOpened &= AttachMultiplexedReceiver(receiver, it->dpid, it->dtype);
+
+  for (std::vector<SubtitleStream>::const_iterator it = channel->GetSubtitleStreams().begin(); bAllOpened && it != channel->GetSubtitleStreams().end(); ++it)
+    bAllOpened &= AttachMultiplexedReceiver(receiver, it->spid);
+
+  if (bAllOpened && channel->GetTeletextStream().tpid)
+    bAllOpened &= AttachMultiplexedReceiver(receiver, channel->GetTeletextStream().tpid);
+
+  if (bAllOpened)
+  {
+    if (m_tuner->CommonInterface()->m_camSlot)
+    {
+      m_tuner->CommonInterface()->m_camSlot->StartDecrypting();
+      m_tuner->CommonInterface()->m_startScrambleDetection = time(NULL);
+    }
+  }
+  else
+  {
+    DetachReceiver(receiver, false);
+  }
+
+  return bAllOpened;
+}
+
 void cTunerHandle::Release(bool notify /* = true */)
 {
+  {
+    if (m_tuner)
+      m_tuner->Release(this, notify);
+
+    PLATFORM::CLockObject lock(m_mutex);
+    for (std::set<iReceiver*>::iterator it = m_receivers.begin(); it != m_receivers.end(); ++it)
+      m_tuner->Receiver()->DetachReceiver(*it, false);
+    m_receivers.clear();
+  }
   if (m_tuner)
-    m_tuner->Release(this, notify);
+    m_tuner->Receiver()->SyncPids();
+
   //TODO fix this properly later
 //  if (m_startChannelScan)
 //    cScanner::Get().Start();
