@@ -44,11 +44,10 @@ namespace VDR
  * constructor for all comparisons in the sorting instance.
  *
  * cTimerSorter produces a weak ordering of timers sorted by the output of
- * cTimer::GetOccurrence(). This allows for efficient greedy processing by
- * sorting all pending timers after (possibly intermingled) expired and
- * occurring timers:
+ * cTimer::GetSortOccurrence(). This allows for efficient greedy processing by
+ * sorting all pending timers after expired and occurring timers:
  *
- *    Expired/Occurring <= now < Pending
+ *    Expired < Occurring <= now < Pending
  */
 struct cTimerSorter
 {
@@ -126,13 +125,14 @@ public:
   bool IsPending(const CDateTime& now) const   { return !IsExpired(now) && !IsOccurring(now); }
 
   /*!
-   * GetOccurrence() returns the start time of a timer's occurrence depending on
-   * the timer's state:
+   * Returns the start time of a timer's occurrence depending on the timer's
+   * state:
+   *
    *   (1) Expired:   Returns the start time of the last occurrence (value of Expires())
    *   (2) Occurring: Returns the start time of the occurrence
    *   (3) Pending:   Returns the start time of the next occurrence
    */
-  CDateTime GetOccurrence(const CDateTime& now) const;
+  CDateTime GetSortOccurrence(const CDateTime& now) const;
 
   /*!
    * Check for time conflicts with another timer.
@@ -168,6 +168,7 @@ public:
 
   /*!
    * A timer is valid if:
+   *
    *   (1) m_id           is a valid ID (i.e. is not TIMER_INVALID_ID)
    *   (2) m_startTime    is a valid CDateTime object
    *   (3) m_endTime      is a valid CDateTime object

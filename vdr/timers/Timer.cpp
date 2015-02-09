@@ -44,7 +44,11 @@ static const CDateTimeSpan ONE_DAY = CDateTimeSpan(1, 0, 0, 0);
 
 bool cTimerSorter::operator()(const TimerPtr& lhs, const TimerPtr& rhs) const
 {
-  return lhs->GetOccurrence(m_now) < rhs->GetOccurrence(m_now);
+  // Guarantee that expired timers come before occurring timers
+  if (lhs->IsExpired(m_now) && rhs->IsOccurring(m_now)) return true;
+  if (lhs->IsOccurring(m_now) && rhs->IsExpired(m_now)) return false;
+
+  return lhs->GetSortOccurrence(m_now) < rhs->GetSortOccurrence(m_now);
 }
 
 // --- cTimer ------------------------------------------------------------------
@@ -234,7 +238,7 @@ bool cTimer::IsOccurring(const CDateTime& now) const
   return false;
 }
 
-CDateTime cTimer::GetOccurrence(const CDateTime& now) const
+CDateTime cTimer::GetSortOccurrence(const CDateTime& now) const
 {
   PLATFORM::CLockObject lock(m_mutex);
 
@@ -246,7 +250,7 @@ CDateTime cTimer::GetOccurrence(const CDateTime& now) const
   if (IsOccurring(now))
   {
     assert(!IsOccurring(now - Duration()));
-    return GetOccurrence(now - Duration());
+    return GetSortOccurrence(now - Duration());
   }
 
   // Case (3): timer is pending and thus must have a future occurrence on a
@@ -287,7 +291,7 @@ void cTimer::StartRecording(void)
   }
   else
   {
-    const CDateTime startTime = GetOccurrence(now);
+    const CDateTime startTime = GetSortOccurrence(now);
     m_recording = RecordingPtr(new cRecording(m_strFilename,
                                               "TEST", // TODO
                                               m_channel,
