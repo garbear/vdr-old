@@ -269,7 +269,22 @@ CDateTime cTimer::GetSortOccurrence(const CDateTime& now) const
 
 bool cTimer::Conflicts(const cTimer& timer) const
 {
-  return false; // TODO
+  for (CDateTime occurenceStart = m_startTime; occurenceStart <= m_expires; occurenceStart += ONE_DAY)
+  {
+    // Satisfy the weekday mask if present
+    if (!IsRepeatingEvent() || OccursOnWeekday(occurenceStart.GetDayOfWeek()))
+    {
+      if (timer.IsExpired(occurenceStart))
+        return false;
+
+      if (timer.IsOccurring(occurenceStart))
+        return true;
+
+      if (timer.GetSortOccurrence(occurenceStart) < occurenceStart + Duration())
+        return  true;
+    }
+  }
+  return false;
 }
 
 void cTimer::StartRecording(void)
