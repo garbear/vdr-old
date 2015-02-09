@@ -177,6 +177,8 @@ public:
   std::vector<uint16_t>              GetCaIds(void) const;
   std::set<uint16_t>                 GetPids(void) const; // Get the PIDs associated with all streams
   bool                               IsDataChannel(void) const { return GetVideoStream().vpid == 0 && GetAudioStreams().empty(); }
+  bool                               IsRadioChannel(void) const { return GetVideoStream().vpid == 0 && !GetAudioStreams().empty(); }
+  bool                               IsVideoChannel(void) const { return GetVideoStream().vpid > 0; }
 
   // Set streams
   bool SetStreams(const VideoStream& videoStream,

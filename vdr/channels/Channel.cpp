@@ -466,7 +466,8 @@ bool cChannel::Serialise(TiXmlNode* node) const
 bool cChannel::CanBePlayed(void) const
 {
   /** just filter out scrambled channels for now */
-  return GetCaIds().empty();
+  return GetCaIds().empty() &&
+      (IsVideoChannel() || IsRadioChannel());
 }
 
 bool cChannel::Deserialise(const TiXmlNode* node)
