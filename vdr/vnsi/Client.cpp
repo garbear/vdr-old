@@ -966,7 +966,7 @@ bool cVNSIClient::processCHANNELS_GetChannels() /* OPCODE 63 */
       continue;
 
     // skip invalid channels
-    if (!channel->ID().IsValid())
+    if (!channel->ID().IsValid() || !channel->CanBePlayed())
       continue;
 
     // check filter
