@@ -182,6 +182,42 @@ public:
   void LogInvalidProperties(bool bCheckID = true) const;
 
   /*!
+   * Iterators
+   */
+  class const_iterator
+  {
+  public:
+    const_iterator(void);
+    const_iterator(const CDateTime& startTime,
+                   const CDateTime& endTime,
+                   const CDateTime& expires,
+                   uint8_t          weekdayMask);
+
+    bool operator==(const const_iterator& rhs) const;
+    bool operator!=(const const_iterator& rhs) const { return !operator==(rhs); }
+
+    const_iterator& operator++(void);
+    const_iterator& operator--(void);
+
+    const CDateTime& StartTime(void) const { return m_startTime; }
+    CDateTime        EndTime(void)   const { return m_endTime; }
+
+  private:
+    bool IsExpired(void) const { return !m_startTime.IsValid() || m_startTime > m_expires; }
+    bool IsRepeatingEvent(void) const { return (m_weekdayMask != 0) ; }
+    bool OccursOnWeekday(unsigned int weekday) const { return m_weekdayMask & (1 << weekday); }
+
+    CDateTime m_initialStartTime;
+    CDateTime m_startTime;
+    CDateTime m_endTime;
+    CDateTime m_expires;
+    uint8_t   m_weekdayMask;
+  };
+
+  const const_iterator& begin(void) const { return m_begin; }
+  const const_iterator& end(void)   const { return m_end; }
+
+  /*!
    * Start/stop timer's recording.
    */
   void StartRecording(void);
@@ -233,6 +269,8 @@ private:
   ChannelPtr       m_channel;
   bool             m_bActive;
   RecordingPtr     m_recording;
+  const_iterator   m_begin;
+  const_iterator   m_end;
   PLATFORM::CMutex m_mutex;
 };
 
