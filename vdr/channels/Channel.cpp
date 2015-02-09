@@ -463,6 +463,12 @@ bool cChannel::Serialise(TiXmlNode* node) const
   return true;
 }
 
+bool cChannel::CanBePlayed(void) const
+{
+  /** just filter out scrambled channels for now */
+  return GetCaIds().empty();
+}
+
 bool cChannel::Deserialise(const TiXmlNode* node)
 {
   if (node == NULL)

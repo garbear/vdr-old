@@ -203,6 +203,8 @@ public:
   bool Serialise(TiXmlNode* node) const;
   bool Deserialise(const TiXmlNode* node);
 
+  bool CanBePlayed(void) const;
+
 private:
   cChannelID                  m_channelId;
   std::string                 m_name;
