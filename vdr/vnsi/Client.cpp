@@ -1638,7 +1638,7 @@ bool cVNSIClient::processEPG_GetForChannel() /* OPCODE 120 */
     m_resp->finalise();
     m_socket.write(m_resp->getPtr(), m_resp->getLen());
 
-    dsyslog("cannot find EPG data for channel '%s'", channel->Name().c_str());
+//    dsyslog("cannot find EPG data for channel '%s'", channel->Name().c_str());
     return true;
   }
 
