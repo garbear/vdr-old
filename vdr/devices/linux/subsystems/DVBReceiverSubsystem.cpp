@@ -185,7 +185,7 @@ bool cDvbStreamingResource::Read(const uint8_t** outdata, size_t* outlen)
 
 std::string cDvbStreamingResource::ToString(void) const
 {
-  return StringUtils::Format("[PID 0x%04X, TID 0x%02X, MASK 0x%02X]", Pid(), m_tid, m_mask);
+  return StringUtils::Format("[PID %04d, TID 0x%02X, MASK 0x%02X]", Pid(), m_tid, m_mask);
 }
 
 // --- cDvbMultiplexedResource ------------------------------------------------
@@ -256,7 +256,7 @@ bool cDvbMultiplexedResource::Open(void)
 
 std::string cDvbMultiplexedResource::ToString(void) const
 {
-  return StringUtils::Format("[PID 0x%04X, Type 0x%02X]", Pid(), StreamType());
+  return StringUtils::Format("[PID %04d, Type 0x%02X]", Pid(), StreamType());
 }
 
 // --- cDvbReceiverSubsystem -----------------------------------------------
