@@ -165,7 +165,7 @@ CDateTime cTimer::GetExpiration(const CDateTime& startTime, uint8_t weekdayMask,
   if (bIsRepeating)
   {
     // Fast forward to the deadline
-    while (last + ONE_DAY < deadline)
+    while (last + ONE_DAY <= deadline)
       last += ONE_DAY;
 
     // Rewind until we satisfy the weekday mask, but don't rewind past start time
