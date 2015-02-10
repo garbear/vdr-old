@@ -77,6 +77,7 @@ public:
   bool AttachStreamingReceiver(iReceiver* receiver, uint16_t pid, uint8_t tid, uint8_t mask);
   void DetachStreamingReceiver(iReceiver* receiver, uint16_t pid, uint8_t tid, uint8_t mask, bool wait);
   void DetachReceiver(iReceiver* receiver, bool wait);
+  void SyncPids(void);
 
   static const TunerHandlePtr EmptyHandle;
 

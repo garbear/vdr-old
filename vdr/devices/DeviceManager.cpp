@@ -130,6 +130,7 @@ TunerHandlePtr cDeviceManager::OpenVideoInput(iReceiver* receiver, device_tuning
       else if (newHandle)
       {
         /** handle acquired and receiver attached */
+        newHandle->SyncPids();
         handle = newHandle;
       }
     }

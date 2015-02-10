@@ -100,6 +100,13 @@ void cTunerHandle::DetachReceiver(iReceiver* receiver, bool wait)
   m_receivers.erase(receiver);
 }
 
+void cTunerHandle::SyncPids(void)
+{
+  PLATFORM::CLockObject lock(m_mutex);
+  if (m_tuner)
+    m_tuner->Receiver()->SyncPids();
+}
+
 bool cTunerHandle::AttachStreamingReceiver(iReceiver* receiver, uint16_t pid, uint8_t tid, uint8_t mask)
 {
   PLATFORM::CLockObject lock(m_mutex);
@@ -183,5 +190,6 @@ void cTunerHandle::Release(bool notify /* = true */)
 
 bool cTunerHandle::SignalQuality(signal_quality_info_t& info) const
 {
+  PLATFORM::CLockObject lock(m_mutex);
   return m_tuner ? m_tuner->Channel()->SignalQuality(info) : false;
 }
