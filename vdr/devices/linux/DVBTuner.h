@@ -155,6 +155,7 @@ private:
   void UpdateFrontendStatus(const fe_status_t& status);
   bool CancelTuning(uint32_t iTimeoutMs);
   DVB_TUNER_STATE State(void);
+  void SetState(DVB_TUNER_STATE state);
 
   cDvbDevice* const                 m_device;
 
