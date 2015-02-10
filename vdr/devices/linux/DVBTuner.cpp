@@ -57,7 +57,6 @@ using namespace PLATFORM;
 
 #define TUNER_POLL_TIMEOUT_MS      100 // tuning usually takes about a second
 
-#define DEBUG_SIGNALSTRENGTH       1
 #define DEBUG_SIGNALQUALITY        1
 
 #define TUNE_DELAY_MS              100 // Some drivers report stale status immediately after tuning
@@ -915,18 +914,8 @@ void cDvbTuner::ClearTransponder(void)
   CancelTuning(2000);
 }
 
-int cDvbTuner::GetSignalStrength(void) const
+void cDvbTuner::SetSignalStrength(signal_quality_info_t& info) const
 {
-  CLockObject lock(m_stateMutex);
-
-  uint16_t Signal;
-
-  while (ioctl(m_fileDescriptor, FE_READ_SIGNAL_STRENGTH, &Signal) < 0)
-  {
-    if (errno != EINTR)
-      return -1;
-  }
-
   uint16_t MaxSignal = 0xFFFF; // Let's assume the default is using the entire range.
 
   // Use the subsystemId to identify individual devices in case they need
@@ -939,134 +928,99 @@ int cDvbTuner::GetSignalStrength(void) const
     break;
   }
 
-  int s = int(Signal) * 100 / MaxSignal;
+  int s = int(info.signal) * 100 / MaxSignal;
   if (s > 100)
     s = 100;
 
-#if DEBUG_SIGNALSTRENGTH
-  fprintf(stderr, "FE %d/%d: %08X S = %04X %04X %3d%%\n", m_device->Adapter(), m_device->Frontend(), m_subsystemId, MaxSignal, Signal, s);
-#endif
-
-  return s;
+  info.strength = s;
 }
 
 #define LOCK_THRESHOLD 5 // indicates that all 5 FE_HAS_* flags are set
 
-int cDvbTuner::GetSignalQuality(void) const
+#define READ_SIGNAL(item, value, defval) \
+    while (1) \
+    { \
+      if (ioctl(m_fileDescriptor, item, &(value)) >= 0) \
+        break; \
+      if (errno != EINTR) \
+      { \
+        (value) = defval; \
+        break; \
+      } \
+    }
+
+bool cDvbTuner::SignalQuality(signal_quality_info_t& info) const
 {
   CLockObject lock(m_stateMutex);
+  info.status = (signal_quality_status_t)m_status;
+  info.name   = StringUtils::Format("%s (%d/%d)", Name().c_str(), m_device->Adapter(), m_device->Frontend());
 
-  if (m_status != FE_STATUS_UNKNOWN)
+  if (HasLock())
   {
-    // Actually one would expect these checks to be done from FE_HAS_SIGNAL to FE_HAS_LOCK, but some drivers (like the stb0899) are broken, so FE_HAS_LOCK is the only one that (hopefully) is generally reliable...
-    if (!HasLock())
-    {
-      if ((m_status & FE_HAS_SIGNAL) == 0)
-        return 0;
-      if ((m_status & FE_HAS_CARRIER) == 0)
-        return 1;
-      if ((m_status & FE_HAS_VITERBI) == 0)
-        return 2;
-      if ((m_status & FE_HAS_SYNC) == 0)
-        return 3;
-      return 4;
-    }
-
-#if DEBUG_SIGNALQUALITY
-    bool HasSnr = true;
-#endif
-
-    uint16_t Snr;
-    while (1)
-    {
-      if (ioctl(m_fileDescriptor, FE_READ_SNR, &Snr) >= 0)
-        break;
-      if (errno != EINTR)
-      {
-        Snr = 0xFFFF;
-#if DEBUG_SIGNALQUALITY
-        HasSnr = false;
-#endif
-        break;
-      }
-    }
-
-#if DEBUG_SIGNALQUALITY
-    bool HasBer = true;
-#endif
-
-    uint32_t Ber;
-    while (1)
-    {
-      if (ioctl(m_fileDescriptor, FE_READ_BER, &Ber) >= 0)
-        break;
-      if (errno != EINTR)
-      {
-        Ber = 0;
-#if DEBUG_SIGNALQUALITY
-        HasBer = false;
-#endif
-        break;
-      }
-    }
-
-#if DEBUG_SIGNALQUALITY
-    bool HasUnc = true;
-#endif
-
-    uint32_t Unc;
-    while (1)
-    {
-      if (ioctl(m_fileDescriptor, FE_READ_UNCORRECTED_BLOCKS, &Unc) >= 0)
-        break;
-      if (errno != EINTR)
-      {
-        Unc = 0;
-#if DEBUG_SIGNALQUALITY
-        HasUnc = false;
-#endif
-        break;
-      }
-    }
-
-    uint16_t MinSnr = 0x0000;
-    uint16_t MaxSnr = 0xFFFF; // Let's assume the default is using the entire range.
-
-    // Use the subsystemId to identify individual devices in case they need
-    // special treatment to map their Snr value into the range 0...0xFFFF.
-    switch (m_subsystemId)
-    {
-    case 0x13C21019: // TT-budget S2-3200 (DVB-S/DVB-S2)
-    case 0x1AE40001: // TechniSat SkyStar HD2 (DVB-S/DVB-S2)
-      if (m_transponder.DeliverySystem() == SYS_DVBS2)
-      {
-        MinSnr = 10;
-        MaxSnr = 70;
-      }
-      else
-        MaxSnr = 200;
-      break;
-    case 0x20130245: // PCTV Systems PCTV 73ESE
-    case 0x2013024F: // PCTV Systems nanoStick T2 290e
-      MaxSnr = 255; break;
-    }
-
-    int a = int(constrain(Snr, MinSnr, MaxSnr)) * 100 / (MaxSnr - MinSnr);
-    int b = 100 - (Unc * 10 + (Ber / 256) * 5);
-    if (b < 0)
-      b = 0;
-
-    int q = LOCK_THRESHOLD + a * b * (100 - LOCK_THRESHOLD) / 100 / 100;
-    if (q > 100)
-      q = 100;
-
-#if DEBUG_SIGNALQUALITY
-    fprintf(stderr, "FE %d/%d: %08X Q = %04X %04X %d %5d %5d %3d%%\n", m_device->Adapter(), m_device->Frontend(), m_subsystemId, MaxSnr, Snr, HasSnr, HasBer ? int(Ber) : -1, HasUnc ? int(Unc) : -1, q);
-#endif
-
-    return q;
+    READ_SIGNAL(FE_READ_SNR, info.snr, 0xFFFF);
+    READ_SIGNAL(FE_READ_BER, info.ber, 0);
+    READ_SIGNAL(FE_READ_UNCORRECTED_BLOCKS, info.unc, 0);
+    READ_SIGNAL(FE_READ_SIGNAL_STRENGTH, info.signal, 0);
+    SetQualityPercentage(info);
+    SetSignalStrength(info);
+    info.status_string = StringUtils::Format("%s:%s:%s:%s:%s",
+                                             (info.status & SIG_HAS_LOCK) ? "LOCKED" : "-",
+                                             (info.status & SIG_HAS_SIGNAL) ? "SIGNAL" : "-",
+                                             (info.status & SIG_HAS_CARRIER) ? "CARRIER" : "-",
+                                             (info.status & SIG_HAS_VITERBI) ? "VITERBI" : "-",
+                                             (info.status & SIG_HAS_SYNC) ? "SYNC" : "-");
   }
-  return -1;
+  else
+  {
+    info.snr      = -2;
+    info.ber      = -2;
+    info.unc      = -2;
+    info.signal   = -2;
+    info.quality  = 0;
+    info.strength = 0;
+  }
+
+#if DEBUG_SIGNALQUALITY
+  fprintf(stderr, "FE %s: %08X s/n:%04X ber:%5d unc:%5d qual:%3d%% str:%3d%%\n", info.name.c_str(), m_subsystemId, info.snr, int(info.ber), int(info.unc), info.quality, info.strength);
+#endif
+
+  return true;
+}
+
+void cDvbTuner::SetQualityPercentage(signal_quality_info_t& info) const
+{
+  uint16_t MinSnr = 0x0000;
+  uint16_t MaxSnr = 0xFFFF; // Let's assume the default is using the entire range.
+
+  // Use the subsystemId to identify individual devices in case they need
+  // special treatment to map their Snr value into the range 0...0xFFFF.
+  switch (m_subsystemId)
+  {
+  case 0x13C21019: // TT-budget S2-3200 (DVB-S/DVB-S2)
+  case 0x1AE40001: // TechniSat SkyStar HD2 (DVB-S/DVB-S2)
+    if (m_transponder.DeliverySystem() == SYS_DVBS2)
+    {
+      MinSnr = 10;
+      MaxSnr = 70;
+    }
+    else
+      MaxSnr = 200;
+    break;
+  case 0x20130245: // PCTV Systems PCTV 73ESE
+  case 0x2013024F: // PCTV Systems nanoStick T2 290e
+    MaxSnr = 255; break;
+  }
+
+  int a = int(constrain(info.snr, MinSnr, MaxSnr)) * 100 / (MaxSnr - MinSnr);
+  int b = 100 - (info.unc * 10 + (info.ber / 256) * 5);
+  if (b < 0)
+    b = 0;
+
+  int q = LOCK_THRESHOLD + a * b * (100 - LOCK_THRESHOLD) / 100 / 100;
+  if (q > 100)
+    q = 100;
+
+  info.quality = q;
 }
 
 void cDvbTuner::ResetToneAndVoltage(void)

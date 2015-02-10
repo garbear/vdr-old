@@ -22,6 +22,7 @@
 
 #include "channels/Channel.h"
 #include "channels/ChannelTypes.h"
+#include "devices/DeviceTypes.h"
 #include <memory>
 
 namespace VDR
@@ -65,6 +66,7 @@ public:
   void LockAcquired(void);
   void LockLost(void);
   void LostPriority(void);
+  bool SignalQuality(signal_quality_info_t& info) const;
 
   void Release(bool notify = true);
   void StartEPGScanAfterRelease(bool setto) { m_startEpgScan = setto; }

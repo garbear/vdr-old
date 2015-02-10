@@ -80,6 +80,8 @@ public:
 
   uint16_t GetError();
 
+  bool SignalQuality(signal_quality_info_t& info) const;
+
   virtual void Notify(const Observable &obs, const ObservableMessage msg);
 
 protected:

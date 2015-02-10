@@ -180,3 +180,8 @@ void cTunerHandle::Release(bool notify /* = true */)
 //  else if (m_startEpgScan)
 //    cEPGScanner::Get().Start();
 }
+
+bool cTunerHandle::SignalQuality(signal_quality_info_t& info) const
+{
+  return m_tuner ? m_tuner->Channel()->SignalQuality(info) : false;
+}

@@ -40,8 +40,7 @@ public:
   virtual bool ProvidesChannel(const cChannel &channel) const { return false; } // Not implemented
   virtual bool ProvidesEIT() const;
   virtual unsigned int NumProvidedSystems() const;
-  virtual int SignalStrength() const;
-  virtual int SignalQuality() const;
+  virtual bool SignalQuality(signal_quality_info_t& info) const;
   virtual cTransponder GetCurrentlyTunedTransponder() const;
   unsigned int Occupied() const;
   void SetOccupied(unsigned int seconds);

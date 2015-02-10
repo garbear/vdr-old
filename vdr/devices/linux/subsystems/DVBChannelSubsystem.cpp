@@ -111,18 +111,11 @@ unsigned int cDvbChannelSubsystem::NumProvidedSystems() const
   return Device<cDvbDevice>()->m_dvbTuner.DeliverySystems().size() + Device<cDvbDevice>()->m_dvbTuner.Modulations().size();
 }
 
-int cDvbChannelSubsystem::SignalStrength() const
+bool cDvbChannelSubsystem::SignalQuality(signal_quality_info_t& info) const
 {
   if (Device<cDvbDevice>()->m_dvbTuner.IsOpen())
-    return Device<cDvbDevice>()->m_dvbTuner.GetSignalStrength();
-  return -1;
-}
-
-int cDvbChannelSubsystem::SignalQuality() const
-{
-  if (Device<cDvbDevice>()->m_dvbTuner.IsOpen())
-    return Device<cDvbDevice>()->m_dvbTuner.GetSignalQuality();
-  return -1;
+    return Device<cDvbDevice>()->m_dvbTuner.SignalQuality(info);
+  return false;
 }
 
 cTransponder cDvbChannelSubsystem::GetCurrentlyTunedTransponder() const

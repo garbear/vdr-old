@@ -32,4 +32,28 @@ typedef std::vector<DevicePtr>   DeviceVector;
 
 typedef uint8_t* TsPacket;
 
+
+typedef enum {
+  SIG_HAS_SIGNAL   = 0x01,
+  SIG_HAS_CARRIER  = 0x02,
+  SIG_HAS_VITERBI  = 0x04,
+  SIG_HAS_SYNC     = 0x08,
+  SIG_HAS_LOCK     = 0x10,
+  SIG_TIMEDOUT     = 0x20,
+  SIG_REINIT       = 0x40,
+} signal_quality_status_t;
+
+typedef struct {
+  signal_quality_status_t status;
+  std::string             status_string;
+  int                     quality;
+  int                     strength;
+  std::string             name;
+
+  uint16_t                snr;
+  uint16_t                signal;
+  uint32_t                ber;
+  uint32_t                unc;
+} signal_quality_info_t;
+
 }

@@ -651,4 +651,9 @@ uint16_t cVNSIDemuxer::GetError()
   return ret;
 }
 
+bool cVNSIDemuxer::SignalQuality(signal_quality_info_t& info) const
+{
+  return m_tunerHandle->SignalQuality(info);
+}
+
 }

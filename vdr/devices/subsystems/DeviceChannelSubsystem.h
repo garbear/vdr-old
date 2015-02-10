@@ -94,6 +94,8 @@ public:
    */
   virtual int SignalQuality() const { return -1; }
 
+  virtual bool SignalQuality(signal_quality_info_t& info) const { return false; }
+
   /*!
    * \brief Returns a pointer to the currently tuned transponder
    * \return A local copy of one of the channels in the global cChannels list.

@@ -352,9 +352,8 @@ bool IsFrontendFound(void) { return false; } // TODO
 
 void cLiveStreamer::sendSignalInfo()
 {
-  // If no frontend is found, return an empty signalinfo package
-  bool bFrontendFound = false; // TODO
-  if (!bFrontendFound)
+  signal_quality_info_t info;
+  if (!m_Demuxer.SignalQuality(info))
   {
     cResponsePacket *resp = new cResponsePacket();
     if (!resp->initStream(VNSI_STREAM_SIGNALINFO, 0, 0, 0, 0, 0))
@@ -375,7 +374,6 @@ void cLiveStreamer::sendSignalInfo()
     m_Socket->write(resp->getPtr(), resp->getLen());
     delete resp;
   }
-  /* TODO
   else
   {
     cResponsePacket *resp = new cResponsePacket();
@@ -386,39 +384,25 @@ void cLiveStreamer::sendSignalInfo()
       return;
     }
 
-    fe_status_t status;
-    uint16_t fe_snr;
-    uint16_t fe_signal;
-    uint32_t fe_ber;
-    uint32_t fe_unc;
-
-    if (ioctl(m_Frontend, FE_READ_SIGNAL_STRENGTH, &fe_signal) == -1)
-      fe_signal = -2;
-    if (ioctl(m_Frontend, FE_READ_SNR, &fe_snr) == -1)
-      fe_snr = -2;
-    if (ioctl(m_Frontend, FE_READ_BER, &fe_ber) == -1)
-      fe_ber = -2;
-    if (ioctl(m_Frontend, FE_READ_UNCORRECTED_BLOCKS, &fe_unc) == -1)
-      fe_unc = -2;
-
     if (m_Channel->GetTransponder().IsSatellite())
-      resp->add_String(StringUtils::Format("DVB-S%s #%d - %s", (m_FrontendInfo.caps & 0x10000000) ? "2" : "",  m_Device->Index(), m_FrontendInfo.name));
+      resp->add_String(StringUtils::Format("DVB-S %s", info.name.c_str()));
     else if (m_Channel->GetTransponder().IsCable())
-      resp->add_String(StringUtils::Format("DVB-C #%d - %s", m_Device->Index(), m_FrontendInfo.name));
+      resp->add_String(StringUtils::Format("DVB-C %s", info.name.c_str()));
     else if (m_Channel->GetTransponder().IsTerrestrial())
-      resp->add_String(StringUtils::Format("DVB-T #%d - %s", m_Device->Index(), m_FrontendInfo.name));
+      resp->add_String(StringUtils::Format("DVB-T %s", info.name.c_str()));
+    else if (m_Channel->GetTransponder().IsAtsc())
+          resp->add_String(StringUtils::Format("ATSC %s", info.name.c_str()));
 
-    resp->add_String(StringUtils::Format("%s:%s:%s:%s:%s", (status & FE_HAS_LOCK) ? "LOCKED" : "-", (status & FE_HAS_SIGNAL) ? "SIGNAL" : "-", (status & FE_HAS_CARRIER) ? "CARRIER" : "-", (status & FE_HAS_VITERBI) ? "VITERBI" : "-", (status & FE_HAS_SYNC) ? "SYNC" : "-"));
-    resp->add_U32(fe_snr);
-    resp->add_U32(fe_signal);
-    resp->add_U32(fe_ber);
-    resp->add_U32(fe_unc);
+    resp->add_String(info.status_string);
+    resp->add_U32(info.snr);
+    resp->add_U32(info.signal);
+    resp->add_U32(info.ber);
+    resp->add_U32(info.unc);
 
     resp->finaliseStream();
     m_Socket->write(resp->getPtr(), resp->getLen());
     delete resp;
   }
-  */
 }
 
 void cLiveStreamer::sendStreamStatus()

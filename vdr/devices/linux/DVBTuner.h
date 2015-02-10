@@ -21,6 +21,7 @@
 #pragma once
 
 #include "channels/Channel.h"
+#include "devices/DeviceTypes.h"
 #include "lib/platform/threads/threads.h"
 #include "transponders/Transponder.h"
 #include "utils/Observer.h"
@@ -121,13 +122,15 @@ public:
    */
   void ClearTransponder(void);
 
-  int GetSignalStrength(void) const;
-  int GetSignalQuality(void) const;
+  bool SignalQuality(signal_quality_info_t& info) const;
 
 protected:
   virtual void* Process(void);
 
 private:
+  void SetQualityPercentage(signal_quality_info_t& info) const;
+  void SetSignalStrength(signal_quality_info_t& info) const;
+
   // Called on Open()
   bool SetProperties(void);
   static std::vector<fe_delivery_system_t> GetDeliverySystems(int fileDescriptor, const Version& apiVersion, fe_type_t fallbackType, bool bCan2G);
