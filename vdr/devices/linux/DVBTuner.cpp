@@ -985,7 +985,7 @@ bool cDvbTuner::SignalQuality(signal_quality_info_t& info) const
   }
 
 #if DEBUG_SIGNALQUALITY
-  fprintf(stderr, "FE %s: %08X s/n:%04X ber:%5d unc:%5d qual:%3d%% str:%3d%%\n", info.name.c_str(), m_subsystemId, info.snr, int(info.ber), int(info.unc), info.quality, info.strength);
+  dsyslog("FE %s: %08X s/n:%04X ber:%5d unc:%5d qual:%3d%% str:%3d%%\n", info.name.c_str(), m_subsystemId, info.snr, int(info.ber), int(info.unc), info.quality, info.strength);
 #endif
 
   return true;
