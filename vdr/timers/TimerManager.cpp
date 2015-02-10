@@ -91,7 +91,7 @@ void* cTimerManager::Process(void)
     // Sleep until first pending timer
     if (itTimer != idleTimers.end())
     {
-      CDateTimeSpan waitTime = (*itTimer)->GetOccurrence(now) - now;
+      CDateTimeSpan waitTime = (*itTimer)->GetSortOccurrence(now) - now;
       m_timerNotifyEvent.Wait(std::min(ULONG_MAX, (unsigned long)waitTime.GetSecondsTotal() * 1000));
     }
   }

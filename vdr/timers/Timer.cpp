@@ -44,7 +44,63 @@ static const CDateTimeSpan ONE_DAY = CDateTimeSpan(1, 0, 0, 0);
 
 bool cTimerSorter::operator()(const TimerPtr& lhs, const TimerPtr& rhs) const
 {
-  return lhs->GetOccurrence(m_now) < rhs->GetOccurrence(m_now);
+  // Guarantee that expired timers come before occurring timers
+  if (lhs->IsExpired(m_now) && rhs->IsOccurring(m_now)) return true;
+  if (lhs->IsOccurring(m_now) && rhs->IsExpired(m_now)) return false;
+
+  return lhs->GetSortOccurrence(m_now) < rhs->GetSortOccurrence(m_now);
+}
+
+// --- cTimer::const_iterator --------------------------------------------------
+
+cTimer::const_iterator::const_iterator(void)
+ : m_weekdayMask(0)
+{
+}
+
+cTimer::const_iterator::const_iterator(const CDateTime& startTime,
+                                       const CDateTime& endTime,
+                                       const CDateTime& expires,
+                                       uint8_t          weekdayMask)
+ : m_initialStartTime(startTime),
+   m_startTime(startTime),
+   m_endTime(endTime),
+   m_expires(expires),
+   m_weekdayMask(weekdayMask)
+{
+}
+
+bool cTimer::const_iterator::operator==(const const_iterator& rhs) const
+{
+  return (m_startTime == rhs.m_startTime) || (IsExpired() && rhs.IsExpired());
+}
+
+cTimer::const_iterator& cTimer::const_iterator::operator++(void)
+{
+  while (!IsExpired())
+  {
+    m_startTime += ONE_DAY;
+    m_endTime   += ONE_DAY;
+
+    if (!IsRepeatingEvent() || OccursOnWeekday(m_startTime.GetDayOfWeek()))
+      break;
+  }
+
+  return *this;
+}
+
+cTimer::const_iterator& cTimer::const_iterator::operator--(void)
+{
+  while (m_startTime > m_initialStartTime)
+  {
+    m_startTime -= ONE_DAY;
+    m_endTime   -= ONE_DAY;
+
+    if (!IsRepeatingEvent() || OccursOnWeekday(m_startTime.GetDayOfWeek()))
+      break;
+  }
+
+  return *this;
 }
 
 // --- cTimer ------------------------------------------------------------------
@@ -70,7 +126,9 @@ cTimer::cTimer(const CDateTime&   startTime,
    m_weekdayMask(weekdayMask & 0x7f),
    m_expires(GetExpiration(startTime, m_weekdayMask, deadline)),
    m_channel(channel),
-   m_bActive(bActive)
+   m_bActive(bActive),
+   m_begin(m_startTime, m_endTime, m_expires, m_weekdayMask),
+   m_end(m_expires + ONE_DAY, m_endTime, m_expires, m_weekdayMask)
 {
 }
 
@@ -107,7 +165,7 @@ CDateTime cTimer::GetExpiration(const CDateTime& startTime, uint8_t weekdayMask,
   if (bIsRepeating)
   {
     // Fast forward to the deadline
-    while (last + ONE_DAY < deadline)
+    while (last + ONE_DAY <= deadline)
       last += ONE_DAY;
 
     // Rewind until we satisfy the weekday mask, but don't rewind past start time
@@ -145,6 +203,8 @@ void cTimer::SetTime(const CDateTime& startTime, const CDateTime& endTime, uint8
     m_endTime     = endTime;
     m_weekdayMask = weekdayMask;
     m_expires     = expires;
+    m_begin       = const_iterator(m_startTime, m_endTime, m_expires, m_weekdayMask);
+    m_end         = const_iterator(m_expires + ONE_DAY, m_endTime, m_expires, m_weekdayMask);
     SetChanged();
   }
 }
@@ -214,58 +274,44 @@ void cTimer::LogInvalidProperties(bool bCheckID /* = true */) const
 
 bool cTimer::IsOccurring(const CDateTime& now) const
 {
-  PLATFORM::CLockObject lock(m_mutex);
-
-  // Check lifetime bounds
-  if (StartTime() <= now && !IsExpired(now))
+  for (const_iterator it = begin(); it != end(); ++it)
   {
-    // Iterate over timer lifetime looking for intersections
-    for (CDateTime occurenceStart = m_startTime; occurenceStart <= m_expires; occurenceStart += ONE_DAY)
-    {
-      // Satisfy the weekday mask if present
-      if (!IsRepeatingEvent() || OccursOnWeekday(occurenceStart.GetDayOfWeek()))
-      {
-        // Check if now intersects the occurrence
-        if (occurenceStart <= now && now < occurenceStart + Duration())
-          return true;
-      }
-    }
+    if (it.StartTime() <= now && now < it.EndTime())
+      return true;
   }
   return false;
 }
 
-CDateTime cTimer::GetOccurrence(const CDateTime& now) const
+CDateTime cTimer::GetSortOccurrence(const CDateTime& now) const
 {
   PLATFORM::CLockObject lock(m_mutex);
 
-  // Case (1): timer is expired
   if (IsExpired(now))
-    return Expires();
+    return m_expires;
 
-  // Case (2): timer is occurring
-  if (IsOccurring(now))
-  {
-    assert(!IsOccurring(now - Duration()));
-    return GetOccurrence(now - Duration());
-  }
-
-  // Case (3): timer is pending and thus must have a future occurrence on a
-  // valid weekday
-  CDateTime nextOccurrence = m_startTime;
-  if (IsRepeatingEvent())
-  {
-    while (nextOccurrence <= now)
-      nextOccurrence += ONE_DAY;
-    while (!OccursOnWeekday(nextOccurrence.GetDayOfWeek()))
-      nextOccurrence += ONE_DAY;
-  }
-  assert(IsOccurring(nextOccurrence) && !IsExpired(nextOccurrence));
-  return nextOccurrence;
+  // Timer is occurring or pending
+  const_iterator it = begin();
+  while (it.EndTime() <= now)
+    ++it;
+  return it.StartTime();
 }
 
 bool cTimer::Conflicts(const cTimer& timer) const
 {
-  return false; // TODO
+  for (const_iterator it = begin(); it != end(); ++it)
+  {
+    if (timer.IsExpired(it.StartTime()))
+      return false;
+
+    if (timer.IsOccurring(it.StartTime()))
+      return true;
+
+    CDateTime pendingTime = timer.GetSortOccurrence(it.StartTime());
+    if (pendingTime < it.EndTime())
+      return  true;
+  }
+
+  return false;
 }
 
 void cTimer::StartRecording(void)
@@ -287,7 +333,7 @@ void cTimer::StartRecording(void)
   }
   else
   {
-    const CDateTime startTime = GetOccurrence(now);
+    const CDateTime startTime = GetSortOccurrence(now);
     m_recording = RecordingPtr(new cRecording(m_strFilename,
                                               "TEST", // TODO
                                               m_channel,
