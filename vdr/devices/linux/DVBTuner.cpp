@@ -909,13 +909,15 @@ bool cDvbTuner::IsTunedTo(const cTransponder& transponder) const
   return m_transponder == transponder;
 }
 
-void cDvbTuner::ClearTransponder(void)
+void cDvbTuner::ClearTransponder(const cTransponder& transponder)
 {
-  SetChanged();
-  NotifyObservers(ObservableMessageChannelLostLock);
-
   CLockObject lock(m_stateMutex);
-  CancelTuning(2000);
+  if (m_transponder == transponder)
+  {
+    SetChanged();
+    CancelTuning(2000);
+    NotifyObservers(ObservableMessageChannelLostLock);
+  }
 }
 
 void cDvbTuner::SetSignalStrength(signal_quality_info_t& info) const

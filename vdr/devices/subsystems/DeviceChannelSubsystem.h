@@ -147,7 +147,7 @@ protected:
    *        due to a timeout).
    */
   virtual bool Tune(const cTransponder& transponder) = 0;
-  virtual void ClearTransponder(void) = 0;
+  virtual void ClearTransponder(const cTransponder& transponder) = 0;
 
 private:
 
@@ -157,7 +157,7 @@ private:
    *        (perhaps due to a timeout).
    */
   bool SwitchChannel(const ChannelPtr& channel);
-  void ClearChannel(void);
+  void ClearChannel(const cTransponder& transponder);
 
   time_t               m_occupiedTimeout;
   std::vector<TunerHandlePtr> m_activeTransponders;

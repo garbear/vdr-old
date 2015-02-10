@@ -48,7 +48,7 @@ public:
 
 protected:
   virtual bool Tune(const cTransponder& transponder);
-  virtual void ClearTransponder(void);
+  virtual void ClearTransponder(const cTransponder& transponder);
 
   // Not inherited from cDeviceChannelSubsystem
   virtual bool ProvidesDeliverySystem(fe_delivery_system_t deliverySystem) const;

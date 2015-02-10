@@ -120,7 +120,7 @@ public:
   /*!
    * Untune (detune?) the tuner.
    */
-  void ClearTransponder(void);
+  void ClearTransponder(const cTransponder& transponder);
 
   bool SignalQuality(signal_quality_info_t& info) const;
 

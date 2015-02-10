@@ -139,9 +139,9 @@ bool cDvbChannelSubsystem::Tune(const cTransponder& transponder)
   return Device<cDvbDevice>()->m_dvbTuner.Tune(transponder);
 }
 
-void cDvbChannelSubsystem::ClearTransponder(void)
+void cDvbChannelSubsystem::ClearTransponder(const cTransponder& transponder)
 {
-  return Device<cDvbDevice>()->m_dvbTuner.ClearTransponder();
+  return Device<cDvbDevice>()->m_dvbTuner.ClearTransponder(transponder);
 }
 
 }

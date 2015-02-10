@@ -83,9 +83,9 @@ bool cDeviceChannelSubsystem::SwitchChannel(const ChannelPtr& channel)
   return false;
 }
 
-void cDeviceChannelSubsystem::ClearChannel(void)
+void cDeviceChannelSubsystem::ClearChannel(const cTransponder& transponder)
 {
-  ClearTransponder();
+  ClearTransponder(transponder);
 }
 
 unsigned int cDeviceChannelSubsystem::Occupied() const
@@ -229,7 +229,7 @@ void cDeviceChannelSubsystem::Release(TunerHandlePtr& handle, bool notify /* = t
     empty = m_activeTransponders.empty();
   }
   if (empty)
-    ClearChannel();
+    ClearChannel(handle->Channel()->GetTransponder());
 }
 
 void cDeviceChannelSubsystem::Release(cTunerHandle* handle, bool notify /* = true */)
@@ -251,7 +251,7 @@ void cDeviceChannelSubsystem::Release(cTunerHandle* handle, bool notify /* = tru
     empty = m_activeTransponders.empty();
   }
   if (empty)
-    ClearChannel();
+    ClearChannel(handle->Channel()->GetTransponder());
 }
 
 }
