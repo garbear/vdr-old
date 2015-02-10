@@ -262,7 +262,8 @@ void cScanReceiver::Receive(const uint16_t pid, const uint8_t* data, const size_
 void cScanReceiver::AddFilter(const filter_properties& filter)
 {
   CLockObject lock(m_mutex);
-  assert(m_handle.get());
+  if (!m_handle.get())
+    return;
   if (m_filters.find(filter) != m_filters.end())
     return;
   cScanFilterStatus* scan = new cScanFilterStatus(filter, this, true);
