@@ -93,6 +93,7 @@ bool cVNSIDemuxer::Open(const ChannelPtr& channel, int serial)
 
   if (!recording)
   {
+    isyslog("Open channel %d-%d: %s", channel->Number(), channel->SubNumber(), channel->Name().c_str());
     if (!(m_tunerHandle = cDeviceManager::Get().OpenVideoInput(m_VideoBuffer, TUNING_TYPE_LIVE_TV, channel)))
     {
       esyslog("Can't switch to channel %i - %s", channel->Number(), channel->Name().c_str());
