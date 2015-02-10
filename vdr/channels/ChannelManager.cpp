@@ -373,7 +373,8 @@ bool cChannelManager::Save(const string &file /* = ""*/)
   if (!file.empty())
     m_strFilename = file;
 
-  assert(!m_strFilename.empty());
+  if (m_strFilename.empty())
+    return false;
 
   isyslog("saving channel configuration to '%s'", m_strFilename.c_str());
   if (!xmlDoc.SafeSaveFile(m_strFilename))
