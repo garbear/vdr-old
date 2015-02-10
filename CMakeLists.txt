@@ -271,6 +271,7 @@ set(VDR_TEST_SRCS
 	vdr/test/gtest/TestBasicEnvironment.cpp
 	vdr/test/gtest/TestUtils.cpp
 	vdr/test/gtest/vdr-test.cpp
+	vdr/timers/test/TestTimer.cpp
 	vdr/utils/test/TestStringUtils.cpp
 	vdr/utils/test/TestSynchronousAbort.cpp
 	vdr/utils/test/TestXBMCTinyXML.cpp
