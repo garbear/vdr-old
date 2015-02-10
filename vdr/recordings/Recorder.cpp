@@ -88,10 +88,14 @@ bool cRecorder::RunningLowOnDiskSpace(void)
 
 bool cRecorder::Start(void)
 {
-  if (m_file.OpenForWrite(m_strRecordingPath))
-    return CreateThread(true);
+  isyslog("Recording to %s", m_strRecordingPath.c_str());
+  if (!m_file.OpenForWrite(m_strRecordingPath))
+  {
+    esyslog("Failed to open file for recording");
+    return false;
+  }
 
-  return false;
+  return CreateThread(true);
 }
 
 void cRecorder::Stop(void)
