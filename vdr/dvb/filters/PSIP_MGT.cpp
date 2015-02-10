@@ -92,7 +92,8 @@ void cPsipMgt::ReceivePacket(uint16_t pid, const uint8_t* data)
         //filters.push_back(shared_ptr<cFilter>(new cEitPsip(GetDevice(), tablePid, tableType - 0x0100)));
         const unsigned short eitNumber = tableType - 0x0100;
         PLATFORM::CLockObject lock(m_mutex);
-        m_device->Scan()->PsipEIT()->AddPid(m_handle, tablePid);
+        if (m_handle)
+          m_device->Scan()->PsipEIT()->AddPid(m_handle, tablePid);
         ++eitPids;
         break;
       }

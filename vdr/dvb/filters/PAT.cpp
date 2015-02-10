@@ -95,8 +95,9 @@ void cPat::ReceivePacket(uint16_t pid, const uint8_t* data)
 
     if (haspmt)
     {
-      assert(m_handle.get());
-      m_pmt.Attach(m_handle);
+      PLATFORM::CLockObject lock(m_mutex);
+      if (m_handle)
+        m_pmt.Attach(m_handle);
       SetScanned();
     }
   }
