@@ -411,10 +411,14 @@ void cDvbTuner::Close(void)
   if (IsOpen())
   {
     isyslog("DVB tuner: Closing frontend");
-    CancelTuning(2000);
     StopThread(-1);
-    m_state = DVB_TUNER_STATE_NOT_INITIALISED;
-    m_tuneEventCondition.Signal();
+
+    {
+      CLockObject lock2(m_tuneEventMutex);
+      m_state = DVB_TUNER_STATE_NOT_INITIALISED;
+      CancelTuning(2000);
+      m_tuneEventCondition.Signal();
+    }
 
     close(m_fileDescriptor);
     m_fileDescriptor = INVALID_FD;
