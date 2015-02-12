@@ -30,6 +30,7 @@ namespace VDR
 class cDevice;
 typedef std::shared_ptr<cDevice> DevicePtr;
 typedef std::vector<DevicePtr>   DeviceVector;
+typedef void (*receiver_change_processed_t)(void* cbparam);
 
 typedef uint8_t* TsPacket;
 

@@ -88,29 +88,29 @@ void cTunerHandle::LostPriority(void)
     m_callbacks->LostPriority();
 }
 
-void cTunerHandle::DetachStreamingReceiver(iReceiver* receiver, uint16_t pid, uint8_t tid, uint8_t mask, bool wait)
+void cTunerHandle::DetachStreamingReceiver(iReceiver* receiver, uint16_t pid, uint8_t tid, uint8_t mask, bool wait, receiver_change_processed_t cb /* = NULL */, void* cbarg /* = NULL */)
 {
-  m_tuner->Receiver()->DetachStreamingReceiver(receiver, pid, tid, mask, wait);
+  m_tuner->Receiver()->DetachStreamingReceiver(receiver, pid, tid, mask, wait, cb, cbarg);
 }
 
-void cTunerHandle::DetachReceiver(iReceiver* receiver, bool wait)
+void cTunerHandle::DetachReceiver(iReceiver* receiver, bool wait, receiver_change_processed_t cb /* = NULL */, void* cbarg /* = NULL */)
 {
   PLATFORM::CLockObject lock(m_mutex);
-  m_tuner->Receiver()->DetachReceiver(receiver, wait);
+  m_tuner->Receiver()->DetachReceiver(receiver, wait, cb, cbarg);
   m_receivers.erase(receiver);
 }
 
-void cTunerHandle::SyncPids(void)
+void cTunerHandle::SyncPids(bool wait /* = true */, receiver_change_processed_t cb /* = NULL */, void* cbarg /* = NULL */)
 {
   PLATFORM::CLockObject lock(m_mutex);
   if (m_tuner)
-    m_tuner->Receiver()->SyncPids();
+    m_tuner->Receiver()->SyncPids(wait, cb, cbarg);
 }
 
-bool cTunerHandle::AttachStreamingReceiver(iReceiver* receiver, uint16_t pid, uint8_t tid, uint8_t mask)
+bool cTunerHandle::AttachStreamingReceiver(iReceiver* receiver, uint16_t pid, uint8_t tid, uint8_t mask, receiver_change_processed_t cb /* = NULL */, void* cbarg /* = NULL */)
 {
   PLATFORM::CLockObject lock(m_mutex);
-  if (m_tuner->Receiver()->AttachStreamingReceiver(receiver, pid, tid, mask))
+  if (m_tuner->Receiver()->AttachStreamingReceiver(receiver, pid, tid, mask, cb, cbarg))
   {
     m_receivers.insert(receiver);
     return true;
@@ -118,10 +118,10 @@ bool cTunerHandle::AttachStreamingReceiver(iReceiver* receiver, uint16_t pid, ui
   return false;
 }
 
-bool cTunerHandle::AttachMultiplexedReceiver(iReceiver* receiver, uint16_t pid, STREAM_TYPE type /* = STREAM_TYPE_UNDEFINED */)
+bool cTunerHandle::AttachMultiplexedReceiver(iReceiver* receiver, uint16_t pid, STREAM_TYPE type /* = STREAM_TYPE_UNDEFINED */, receiver_change_processed_t cb /* = NULL */, void* cbarg /* = NULL */)
 {
   PLATFORM::CLockObject lock(m_mutex);
-  if (m_tuner->Receiver()->AttachMultiplexedReceiver(receiver, pid, type))
+  if (m_tuner->Receiver()->AttachMultiplexedReceiver(receiver, pid, type, cb, cbarg))
   {
     m_receivers.insert(receiver);
     return true;
@@ -129,7 +129,7 @@ bool cTunerHandle::AttachMultiplexedReceiver(iReceiver* receiver, uint16_t pid, 
   return false;
 }
 
-bool cTunerHandle::AttachMultiplexedReceiver(iReceiver* receiver, const ChannelPtr& channel)
+bool cTunerHandle::AttachMultiplexedReceiver(iReceiver* receiver, const ChannelPtr& channel, receiver_change_processed_t cb /* = NULL */, void* cbarg /* = NULL */)
 {
   bool bAllOpened(true);
 
@@ -153,6 +153,8 @@ bool cTunerHandle::AttachMultiplexedReceiver(iReceiver* receiver, const ChannelP
 
   if (bAllOpened)
   {
+    if (cb)
+      SyncPids(false, cb, cbarg);
     if (m_tuner->CommonInterface()->m_camSlot)
     {
       m_tuner->CommonInterface()->m_camSlot->StartDecrypting();
