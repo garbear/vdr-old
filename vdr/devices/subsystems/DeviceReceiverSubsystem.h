@@ -204,7 +204,10 @@ protected:
    */
   virtual void Consumed(void) = 0;
 
-  void ProcessChanges(void);
+  bool ProcessChanges(void);
+  bool WaitForPidChange(void);
+  void ProcessReceiverChange(cReceiverChange* change);
+  cReceiverChange* NextChange(void);
 
   ReceiverHandlePtr    GetReceiverHandle(iReceiver* receiver) const;
   std::set<iReceiver*> GetReceiversForPid(uint16_t pid) const;

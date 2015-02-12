@@ -171,44 +171,72 @@ void cDeviceReceiverSubsystem::ProcessDetachStreaming(cDeviceReceiverSubsystem::
   }
 }
 
-void cDeviceReceiverSubsystem::ProcessChanges(void)
+bool cDeviceReceiverSubsystem::WaitForPidChange(void)
 {
-  cReceiverChange* change;
-  while (!m_receiverChanges.empty())
+  CLockObject lock(m_mutex);
+  return m_pidChange.Wait(m_mutex, m_changed, 1000);
+}
+
+cDeviceReceiverSubsystem::cReceiverChange* cDeviceReceiverSubsystem::NextChange(void)
+{
+  cDeviceReceiverSubsystem::cReceiverChange* retval = NULL;
+  CLockObject lock(m_mutex);
+  if (!m_receiverChanges.empty())
   {
-    change = m_receiverChanges.front();
-    switch (change->m_type)
-    {
-      case RCV_CHANGE_DETACH_ALL:
-        ProcessDetachAll();
-        break;
-      case RCV_CHANGE_ATTACH_MULTIPLEXED:
-        ProcessAttachMultiplexed(*change);
-        break;
-      case RCV_CHANGE_ATTACH_STREAMING:
-        ProcessAttachStreaming(*change);
-        break;
-      case RCV_CHANGE_DETACH:
-        ProcessDetachReceiver(*change);
-        break;
-      case RCV_CHANGE_DETACH_MULTIPLEXED:
-        ProcessDetachMultiplexed(*change);
-        break;
-      case RCV_CHANGE_DETACH_STREAMING:
-        ProcessDetachStreaming(*change);
-        break;
-      case RCV_CHANGE_NOOP:
-        break;
-    }
-    if (change->m_processed_cb)
-      change->m_processed_cb->ChangeProcessed();
-    delete change;
+    retval = m_receiverChanges.front();
     m_receiverChanges.pop();
   }
+  return retval;
+}
 
-  DEBUG_RCV_CHANGE("ProcessChanges: active pids after processing changes: %d", m_receiverPidTable.size());
-  m_changeProcessed = true;
-  m_pidChangeProcessed.Broadcast();
+void cDeviceReceiverSubsystem::ProcessReceiverChange(cDeviceReceiverSubsystem::cReceiverChange* change)
+{
+  switch (change->m_type)
+  {
+    case RCV_CHANGE_DETACH_ALL:
+      ProcessDetachAll();
+      break;
+    case RCV_CHANGE_ATTACH_MULTIPLEXED:
+      ProcessAttachMultiplexed(*change);
+      break;
+    case RCV_CHANGE_ATTACH_STREAMING:
+      ProcessAttachStreaming(*change);
+      break;
+    case RCV_CHANGE_DETACH:
+      ProcessDetachReceiver(*change);
+      break;
+    case RCV_CHANGE_DETACH_MULTIPLEXED:
+      ProcessDetachMultiplexed(*change);
+      break;
+    case RCV_CHANGE_DETACH_STREAMING:
+      ProcessDetachStreaming(*change);
+      break;
+    case RCV_CHANGE_NOOP:
+      break;
+  }
+  if (change->m_processed_cb)
+    change->m_processed_cb->ChangeProcessed();
+}
+
+bool cDeviceReceiverSubsystem::ProcessChanges(void)
+{
+  cReceiverChange* change = NextChange();
+  if (change)
+  {
+    ProcessReceiverChange(change);
+    delete change;
+  }
+
+  CLockObject lock(m_mutex);
+  if (m_changed && m_receiverChanges.empty())
+  {
+    DEBUG_RCV_CHANGE("ProcessChanges: active pids after processing changes: %d", m_receiverPidTable.size());
+    m_changeProcessed = true;
+    m_changed = false;
+    m_pidChangeProcessed.Broadcast();
+  }
+
+  return m_receiverPidTable.empty();
 }
 
 void *cDeviceReceiverSubsystem::Process()
@@ -229,25 +257,8 @@ void *cDeviceReceiverSubsystem::Process()
 
   while (!IsStopped())
   {
-    {
-      CLockObject lock(m_mutex);
-      if (m_changed)
-      {
-        m_changed = false;
-        ProcessChanges();
-      }
-
-      if (m_receiverPidTable.empty())
-      {
-        if (m_pidChange.Wait(m_mutex, m_changed, 1000))
-        {
-          m_changed = false;
-          ProcessChanges();
-        }
-      }
-
-      empty = m_receiverPidTable.empty();
-    }
+    if (WaitForPidChange())
+      empty = ProcessChanges();
 
     if (empty)
       continue;

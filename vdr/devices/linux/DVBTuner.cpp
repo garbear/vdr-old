@@ -807,6 +807,7 @@ bool cDvbTuner::CancelTuning(uint32_t iTimeoutMs)
       dsyslog("cancelled previous tuning (state %d)", m_state);
       return true;
     }
+    esyslog("failed to cancel previous tuning (state %d)", m_state);
     return false;
   }
   return true;
