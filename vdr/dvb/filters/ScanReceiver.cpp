@@ -388,7 +388,8 @@ void cScanReceiver::FilterScanned(const filter_properties& filter)
   std::map<filter_properties, cScanFilterStatus*>::iterator it = m_filters.find(filter);
   if (it != m_filters.end())
   {
-    it->second->Detach(false);
+    /** dynamic filters will be deleted later */
+    it->second->Detach(it->second->Dynamic());
     it->second->SetState(SCAN_STATE_DONE);
   }
 
