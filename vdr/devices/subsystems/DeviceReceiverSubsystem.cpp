@@ -403,7 +403,8 @@ bool cDeviceReceiverSubsystem::AttachReceiver(iReceiver* receiver, const PidReso
   if (it != m_receiverPidTable.end())
   {
     for (ReceiverList::const_iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2)
-      if (it2->first->receiver == receiverHandle->receiver)
+      if (it2->first->receiver == receiverHandle->receiver &&
+          it2->second == openResource)
         return true;
     it->second.push_back(make_pair(receiverHandle, openResource));
   }
