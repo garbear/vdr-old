@@ -106,14 +106,7 @@ bool cScanReceiver::cScanFilterStatus::Attach(TunerHandlePtr handle)
   return m_attached;
 }
 
-void cScanReceiver::cScanFilterStatus::ReceiverDetachedCb(void* cbarg)
-{
-  cScanReceiver::cScanFilterStatus* instance = static_cast<cScanReceiver::cScanFilterStatus*>(cbarg);
-  if (instance)
-    instance->ReceiverDetached();
-}
-
-void cScanReceiver::cScanFilterStatus::ReceiverDetached(void)
+void cScanReceiver::cScanFilterStatus::ChangeProcessed(void)
 {
   CLockObject lock(m_mutex);
   m_syncer->Reset();
@@ -125,7 +118,7 @@ void cScanReceiver::cScanFilterStatus::Detach(void)
   if (m_attached)
   {
     m_attached = false;
-    m_handle->DetachStreamingReceiver(m_receiver, m_filter.pid, m_filter.tid, m_filter.mask, false, ReceiverDetachedCb, this);
+    m_handle->DetachStreamingReceiver(m_receiver, m_filter.pid, m_filter.tid, m_filter.mask, false, this);
     m_handle.reset();
   }
 }

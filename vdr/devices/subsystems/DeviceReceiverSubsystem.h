@@ -64,53 +64,48 @@ protected:
   class cReceiverChange
   {
   public:
-    cReceiverChange(RECEIVER_CHANGE type, receiver_change_processed_t cb = NULL, void* cbarg = NULL) :
+    cReceiverChange(RECEIVER_CHANGE type, iReceiverChangeProcessed* cb = NULL) :
       m_type(type),
       m_receiver(NULL),
       m_pid(~0),
       m_tid(~0),
       m_mask(~0),
       m_streamType(STREAM_TYPE_UNDEFINED),
-      m_processed_cb(cb),
-      m_cbarg(cbarg) {}
-    cReceiverChange(RECEIVER_CHANGE type, iReceiver* receiver, receiver_change_processed_t cb = NULL, void* cbarg = NULL) :
+      m_processed_cb(cb) {}
+    cReceiverChange(RECEIVER_CHANGE type, iReceiver* receiver, iReceiverChangeProcessed* cb = NULL) :
       m_type(type),
       m_receiver(receiver),
       m_pid(~0),
       m_tid(~0),
       m_mask(~0),
       m_streamType(STREAM_TYPE_UNDEFINED),
-      m_processed_cb(cb),
-      m_cbarg(cbarg) {}
-    cReceiverChange(RECEIVER_CHANGE type, iReceiver* receiver, uint16_t pid, uint8_t tid, uint8_t mask, receiver_change_processed_t cb = NULL, void* cbarg = NULL) :
+      m_processed_cb(cb) {}
+    cReceiverChange(RECEIVER_CHANGE type, iReceiver* receiver, uint16_t pid, uint8_t tid, uint8_t mask, iReceiverChangeProcessed* cb = NULL) :
       m_type(type),
       m_receiver(receiver),
       m_pid(pid),
       m_tid(tid),
       m_mask(mask),
       m_streamType(STREAM_TYPE_UNDEFINED),
-      m_processed_cb(cb),
-      m_cbarg(cbarg) {}
-    cReceiverChange(RECEIVER_CHANGE type, iReceiver* receiver, uint16_t pid, STREAM_TYPE streamType = STREAM_TYPE_UNDEFINED, receiver_change_processed_t cb = NULL, void* cbarg = NULL) :
+      m_processed_cb(cb) {}
+    cReceiverChange(RECEIVER_CHANGE type, iReceiver* receiver, uint16_t pid, STREAM_TYPE streamType = STREAM_TYPE_UNDEFINED, iReceiverChangeProcessed* cb = NULL) :
       m_type(type),
       m_receiver(receiver),
       m_pid(pid),
       m_tid(~0),
       m_mask(~0),
       m_streamType(streamType),
-      m_processed_cb(cb),
-      m_cbarg(cbarg) {}
+      m_processed_cb(cb) {}
 
     virtual ~cReceiverChange(void) {}
 
-    RECEIVER_CHANGE             m_type;
-    iReceiver*                  m_receiver;
-    uint16_t                    m_pid;
-    uint8_t                     m_tid;
-    uint8_t                     m_mask;
-    STREAM_TYPE                 m_streamType;
-    receiver_change_processed_t m_processed_cb;
-    void*                       m_cbarg;
+    RECEIVER_CHANGE           m_type;
+    iReceiver*                m_receiver;
+    uint16_t                  m_pid;
+    uint8_t                   m_tid;
+    uint8_t                   m_mask;
+    STREAM_TYPE               m_streamType;
+    iReceiverChangeProcessed* m_processed_cb;
   };
 
   class cReceiverHandle
@@ -142,22 +137,22 @@ public:
    * Attaches the given receiver to this device. Resources for all the streams
    * that channel provides are opened and associated with the receiver.
    */
-  bool AttachStreamingReceiver(iReceiver* receiver, uint16_t pid, uint8_t tid, uint8_t mask, receiver_change_processed_t cb = NULL, void* cbarg = NULL);
-  bool AttachMultiplexedReceiver(iReceiver* receiver, uint16_t pid, STREAM_TYPE type = STREAM_TYPE_UNDEFINED, receiver_change_processed_t cb = NULL, void* cbarg = NULL);
+  bool AttachStreamingReceiver(iReceiver* receiver, uint16_t pid, uint8_t tid, uint8_t mask, iReceiverChangeProcessed* cb = NULL);
+  bool AttachMultiplexedReceiver(iReceiver* receiver, uint16_t pid, STREAM_TYPE type = STREAM_TYPE_UNDEFINED, iReceiverChangeProcessed* cb = NULL);
 
   /*!
    * Detaches the given receiver from this device.
    */
-  void DetachReceiver(iReceiver* receiver, bool wait, receiver_change_processed_t cb = NULL, void* cbarg = NULL);
-  void DetachStreamingReceiver(iReceiver* receiver, uint16_t pid, uint8_t tid, uint8_t mask, bool wait, receiver_change_processed_t cb = NULL, void* cbarg = NULL);
-  void DetachMultiplexedReceiver(iReceiver* receiver, uint16_t pid, STREAM_TYPE type = STREAM_TYPE_UNDEFINED, bool wait = false, receiver_change_processed_t cb = NULL, void* cbarg = NULL);
+  void DetachReceiver(iReceiver* receiver, bool wait, iReceiverChangeProcessed* cb = NULL);
+  void DetachStreamingReceiver(iReceiver* receiver, uint16_t pid, uint8_t tid, uint8_t mask, bool wait, iReceiverChangeProcessed* cb = NULL);
+  void DetachMultiplexedReceiver(iReceiver* receiver, uint16_t pid, STREAM_TYPE type = STREAM_TYPE_UNDEFINED, bool wait = false, iReceiverChangeProcessed* cb = NULL);
 
-  void SyncPids(bool wait = true, receiver_change_processed_t cb = NULL, void* cbarg = NULL);
+  void SyncPids(bool wait = true, iReceiverChangeProcessed* cb = NULL);
 
   /*!
    * \brief Detaches all receivers from this device.
    */
-  virtual void DetachAllReceivers(bool wait, receiver_change_processed_t cb = NULL, void* cbarg = NULL);
+  virtual void DetachAllReceivers(bool wait, iReceiverChangeProcessed* cb = NULL);
 
 protected:
   /*!

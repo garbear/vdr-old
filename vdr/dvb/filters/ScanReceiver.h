@@ -52,7 +52,7 @@ public:
     uint8_t  mask;
   };
 
-  class cScanFilterStatus
+  class cScanFilterStatus : public iReceiverChangeProcessed
   {
   public:
     cScanFilterStatus(const filter_properties& filter, cScanReceiver* receiver, bool dynamic);
@@ -72,11 +72,9 @@ public:
     bool Sync(uint8_t version, int sectionNumber, int endSectionNumber);
     bool Synced(void) const;
 
-    static void ReceiverDetachedCb(void* cbarg);
+    void ChangeProcessed(void);
 
   private:
-    void ReceiverDetached(void);
-
     PLATFORM::CMutex  m_mutex;
     filter_properties m_filter;
     cSectionSyncer*   m_syncer;

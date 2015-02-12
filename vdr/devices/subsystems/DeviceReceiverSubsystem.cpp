@@ -201,7 +201,7 @@ void cDeviceReceiverSubsystem::ProcessChanges(void)
         break;
     }
     if (change->m_processed_cb)
-      change->m_processed_cb(change->m_cbarg);
+      change->m_processed_cb->ChangeProcessed();
     delete change;
     m_receiverChanges.pop();
   }
@@ -359,23 +359,23 @@ cDeviceReceiverSubsystem::PidResourcePtr cDeviceReceiverSubsystem::GetMultiplexe
   return PidResourcePtr();
 }
 
-bool cDeviceReceiverSubsystem::AttachStreamingReceiver(iReceiver* receiver, uint16_t pid, uint8_t tid, uint8_t mask, receiver_change_processed_t cb /* = NULL */, void* cbarg /* = NULL */)
+bool cDeviceReceiverSubsystem::AttachStreamingReceiver(iReceiver* receiver, uint16_t pid, uint8_t tid, uint8_t mask, iReceiverChangeProcessed* cb /* = NULL */)
 {
   CLockObject lock(m_mutex);
   if (!IsRunning())
     return false;
-  m_receiverChanges.push(new cReceiverChange(RCV_CHANGE_ATTACH_STREAMING, receiver, pid, tid, mask, cb, cbarg));
+  m_receiverChanges.push(new cReceiverChange(RCV_CHANGE_ATTACH_STREAMING, receiver, pid, tid, mask, cb));
   m_changed = true;
   m_pidChange.Signal();
   return true;
 }
 
-bool cDeviceReceiverSubsystem::AttachMultiplexedReceiver(iReceiver* receiver, uint16_t pid, STREAM_TYPE type /* = STREAM_TYPE_UNDEFINED */, receiver_change_processed_t cb /* = NULL */, void* cbarg /* = NULL */)
+bool cDeviceReceiverSubsystem::AttachMultiplexedReceiver(iReceiver* receiver, uint16_t pid, STREAM_TYPE type /* = STREAM_TYPE_UNDEFINED */, iReceiverChangeProcessed* cb /* = NULL */)
 {
   CLockObject lock(m_mutex);
   if (!IsRunning())
     return false;
-  m_receiverChanges.push(new cReceiverChange(RCV_CHANGE_ATTACH_MULTIPLEXED, receiver, pid, type, cb, cbarg));
+  m_receiverChanges.push(new cReceiverChange(RCV_CHANGE_ATTACH_MULTIPLEXED, receiver, pid, type, cb));
   m_changed = true;
   m_pidChange.Signal();
   return true;
@@ -420,12 +420,12 @@ bool cDeviceReceiverSubsystem::AttachReceiver(iReceiver* receiver, const PidReso
   return true;
 }
 
-void cDeviceReceiverSubsystem::DetachStreamingReceiver(iReceiver* receiver, uint16_t pid, uint8_t tid, uint8_t mask, bool wait, receiver_change_processed_t cb /* = NULL */, void* cbarg /* = NULL */)
+void cDeviceReceiverSubsystem::DetachStreamingReceiver(iReceiver* receiver, uint16_t pid, uint8_t tid, uint8_t mask, bool wait, iReceiverChangeProcessed* cb /* = NULL */)
 {
   CLockObject lock(m_mutex);
   if (!IsRunning())
     return;
-  m_receiverChanges.push(new cReceiverChange(RCV_CHANGE_DETACH_STREAMING, receiver, pid, tid, mask, cb, cbarg));
+  m_receiverChanges.push(new cReceiverChange(RCV_CHANGE_DETACH_STREAMING, receiver, pid, tid, mask, cb));
   m_changed = true;
   m_changeProcessed = false;
   m_pidChange.Signal();
@@ -433,12 +433,12 @@ void cDeviceReceiverSubsystem::DetachStreamingReceiver(iReceiver* receiver, uint
     m_pidChangeProcessed.Wait(m_mutex, m_changeProcessed);
 }
 
-void cDeviceReceiverSubsystem::DetachMultiplexedReceiver(iReceiver* receiver, uint16_t pid, STREAM_TYPE type /* = STREAM_TYPE_UNDEFINED */, bool wait /* = false */, receiver_change_processed_t cb /* = NULL */, void* cbarg /* = NULL */)
+void cDeviceReceiverSubsystem::DetachMultiplexedReceiver(iReceiver* receiver, uint16_t pid, STREAM_TYPE type /* = STREAM_TYPE_UNDEFINED */, bool wait /* = false */, iReceiverChangeProcessed* cb /* = NULL */)
 {
   CLockObject lock(m_mutex);
   if (!IsRunning())
     return;
-  m_receiverChanges.push(new cReceiverChange(RCV_CHANGE_DETACH_MULTIPLEXED, receiver, pid, type, cb, cbarg));
+  m_receiverChanges.push(new cReceiverChange(RCV_CHANGE_DETACH_MULTIPLEXED, receiver, pid, type, cb));
   m_changed = true;
   m_changeProcessed = false;
   m_pidChange.Signal();
@@ -446,12 +446,12 @@ void cDeviceReceiverSubsystem::DetachMultiplexedReceiver(iReceiver* receiver, ui
     m_pidChangeProcessed.Wait(m_mutex, m_changeProcessed);
 }
 
-void cDeviceReceiverSubsystem::DetachReceiver(iReceiver* receiver, bool wait, receiver_change_processed_t cb /* = NULL */, void* cbarg /* = NULL */)
+void cDeviceReceiverSubsystem::DetachReceiver(iReceiver* receiver, bool wait, iReceiverChangeProcessed* cb /* = NULL */)
 {
   CLockObject lock(m_mutex);
   if (!IsRunning())
     return;
-  m_receiverChanges.push(new cReceiverChange(RCV_CHANGE_DETACH, receiver, cb, cbarg));
+  m_receiverChanges.push(new cReceiverChange(RCV_CHANGE_DETACH, receiver, cb));
   m_changed = true;
   m_changeProcessed = false;
   m_pidChange.Signal();
@@ -459,12 +459,12 @@ void cDeviceReceiverSubsystem::DetachReceiver(iReceiver* receiver, bool wait, re
     m_pidChangeProcessed.Wait(m_mutex, m_changeProcessed);
 }
 
-void cDeviceReceiverSubsystem::SyncPids(bool wait /* = true */, receiver_change_processed_t cb /* = NULL */, void* cbarg /* = NULL */)
+void cDeviceReceiverSubsystem::SyncPids(bool wait /* = true */, iReceiverChangeProcessed* cb /* = NULL */)
 {
   CLockObject lock(m_mutex);
   if (!IsRunning())
     return;
-  m_receiverChanges.push(new cReceiverChange(RCV_CHANGE_NOOP, cb, cbarg));
+  m_receiverChanges.push(new cReceiverChange(RCV_CHANGE_NOOP, cb));
   m_changed = true;
   m_changeProcessed = false;
   m_pidChange.Signal();
@@ -472,10 +472,10 @@ void cDeviceReceiverSubsystem::SyncPids(bool wait /* = true */, receiver_change_
     m_pidChangeProcessed.Wait(m_mutex, m_changeProcessed);
 }
 
-void cDeviceReceiverSubsystem::DetachAllReceivers(bool wait, receiver_change_processed_t cb /* = NULL */, void* cbarg /* = NULL */)
+void cDeviceReceiverSubsystem::DetachAllReceivers(bool wait, iReceiverChangeProcessed* cb /* = NULL */)
 {
   CLockObject lock(m_mutex);
-  m_receiverChanges.push(new cReceiverChange(RCV_CHANGE_DETACH_ALL, cb, cbarg));
+  m_receiverChanges.push(new cReceiverChange(RCV_CHANGE_DETACH_ALL, cb));
   m_changed = true;
   m_changeProcessed = false;
   if (wait)

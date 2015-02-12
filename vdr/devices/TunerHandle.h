@@ -72,12 +72,12 @@ public:
   void StartEPGScanAfterRelease(bool setto) { m_startEpgScan = setto; }
   void StartChannelScanAfterRelease(bool setto) { m_startChannelScan = setto; }
 
-  bool AttachMultiplexedReceiver(iReceiver* receiver, const ChannelPtr& channel, receiver_change_processed_t cb = NULL, void* cbarg = NULL);
-  bool AttachMultiplexedReceiver(iReceiver* receiver, uint16_t pid, STREAM_TYPE type = STREAM_TYPE_UNDEFINED, receiver_change_processed_t cb = NULL, void* cbarg = NULL);
-  bool AttachStreamingReceiver(iReceiver* receiver, uint16_t pid, uint8_t tid, uint8_t mask, receiver_change_processed_t cb = NULL, void* cbarg = NULL);
-  void DetachStreamingReceiver(iReceiver* receiver, uint16_t pid, uint8_t tid, uint8_t mask, bool wait, receiver_change_processed_t cb = NULL, void* cbarg = NULL);
-  void DetachReceiver(iReceiver* receiver, bool wait, receiver_change_processed_t cb = NULL, void* cbarg = NULL);
-  void SyncPids(bool wait = true, receiver_change_processed_t cb = NULL, void* cbarg = NULL);
+  bool AttachMultiplexedReceiver(iReceiver* receiver, const ChannelPtr& channel, iReceiverChangeProcessed* cb = NULL);
+  bool AttachMultiplexedReceiver(iReceiver* receiver, uint16_t pid, STREAM_TYPE type = STREAM_TYPE_UNDEFINED, iReceiverChangeProcessed* cb = NULL);
+  bool AttachStreamingReceiver(iReceiver* receiver, uint16_t pid, uint8_t tid, uint8_t mask, iReceiverChangeProcessed* cb = NULL);
+  void DetachStreamingReceiver(iReceiver* receiver, uint16_t pid, uint8_t tid, uint8_t mask, bool wait, iReceiverChangeProcessed* cb = NULL);
+  void DetachReceiver(iReceiver* receiver, bool wait, iReceiverChangeProcessed* cb = NULL);
+  void SyncPids(bool wait = true, iReceiverChangeProcessed* cb = NULL);
 
   static const TunerHandlePtr EmptyHandle;
 
