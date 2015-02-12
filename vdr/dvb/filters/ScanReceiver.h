@@ -72,7 +72,11 @@ public:
     bool Sync(uint8_t version, int sectionNumber, int endSectionNumber);
     bool Synced(void) const;
 
+    static void ReceiverDetachedCb(void* cbarg);
+
   private:
+    void ReceiverDetached(void);
+
     PLATFORM::CMutex  m_mutex;
     filter_properties m_filter;
     cSectionSyncer*   m_syncer;
