@@ -174,7 +174,9 @@ void cDeviceReceiverSubsystem::ProcessDetachStreaming(cDeviceReceiverSubsystem::
 bool cDeviceReceiverSubsystem::WaitForPidChange(void)
 {
   CLockObject lock(m_mutex);
-  return m_pidChange.Wait(m_mutex, m_changed, 1000);
+  if (m_receiverPidTable.empty())
+    return m_pidChange.Wait(m_mutex, m_changed, 1000);
+  return m_changed;
 }
 
 cDeviceReceiverSubsystem::cReceiverChange* cDeviceReceiverSubsystem::NextChange(void)
