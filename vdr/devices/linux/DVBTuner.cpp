@@ -944,6 +944,8 @@ void cDvbTuner::SetSignalStrength(signal_quality_info_t& info) const
   int s = int(info.signal) * 100 / MaxSignal;
   if (s > 100)
     s = 100;
+  if (s < 0)
+    s = 0;
 
   info.strength = s;
 }
@@ -994,7 +996,7 @@ bool cDvbTuner::SignalQuality(signal_quality_info_t& info) const
   }
 
 #if DEBUG_SIGNALQUALITY
-  dsyslog("FE %s: %08X s/n:%04X ber:%5d unc:%5d qual:%3d%% str:%3d%%", info.name.c_str(), m_subsystemId, info.snr, int(info.ber), int(info.unc), info.quality, info.strength);
+  dsyslog("FE %s: %08X s/n:%04X ber:%5d unc:%5d qual:%u str:%u", info.name.c_str(), m_subsystemId, info.snr, int(info.ber), int(info.unc), info.quality, info.strength);
 #endif
 
   return true;
@@ -1032,6 +1034,8 @@ void cDvbTuner::SetQualityPercentage(signal_quality_info_t& info) const
   int q = LOCK_THRESHOLD + a * b * (100 - LOCK_THRESHOLD) / 100 / 100;
   if (q > 100)
     q = 100;
+  if (q < 0)
+    q = 0;
 
   info.quality = q;
 }
