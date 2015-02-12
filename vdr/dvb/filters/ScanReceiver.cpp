@@ -256,6 +256,11 @@ void cScanReceiver::LockLost(void)
 
 void cScanReceiver::Receive(const uint16_t pid, const uint8_t* data, const size_t len, ts_crc_check_t& crcvalid)
 {
+  {
+    CLockObject lock(m_mutex);
+    if (!m_attached)
+      return;
+  }
   if (crcvalid == TS_CRC_NOT_CHECKED)
     crcvalid = SI::CRC32::isValid((const char *)data, len) ? TS_CRC_CHECKED_VALID : TS_CRC_CHECKED_INVALID;
   if (crcvalid == TS_CRC_CHECKED_INVALID)
