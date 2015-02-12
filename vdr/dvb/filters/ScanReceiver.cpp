@@ -67,7 +67,7 @@ cScanReceiver::cScanFilterStatus::cScanFilterStatus(const filter_properties& fil
 
 cScanReceiver::cScanFilterStatus::~cScanFilterStatus(void)
 {
-  Detach();
+  Detach(true);
   delete m_syncer;
 }
 
@@ -112,13 +112,13 @@ void cScanReceiver::cScanFilterStatus::ChangeProcessed(void)
   m_syncer->Reset();
 }
 
-void cScanReceiver::cScanFilterStatus::Detach(void)
+void cScanReceiver::cScanFilterStatus::Detach(bool deleting)
 {
   CLockObject lock(m_mutex);
   if (m_attached)
   {
     m_attached = false;
-    m_handle->DetachStreamingReceiver(m_receiver, m_filter.pid, m_filter.tid, m_filter.mask, false, this);
+    m_handle->DetachStreamingReceiver(m_receiver, m_filter.pid, m_filter.tid, m_filter.mask, false, deleting ? NULL : this);
     m_handle.reset();
   }
 }
@@ -286,9 +286,15 @@ void cScanReceiver::RemoveFilter(const filter_properties& filter)
   std::map<filter_properties, cScanFilterStatus*>::iterator it = m_filters.find(filter);
   if (it != m_filters.end())
   {
-    it->second->Detach();
     if (it->second->Dynamic())
+    {
+      delete it->second;
       m_filters.erase(it);
+    }
+    else
+    {
+      it->second->Detach(false);
+    }
   }
 }
 
@@ -309,7 +315,7 @@ void cScanReceiver::RemoveFilters(void)
     else
     {
       dsyslog("detaching filter PID %04d, TID 0x%x, MASK 0x%x", it->first.pid, it->first.tid, it->first.mask);
-      it->second->Detach();
+      it->second->Detach(false);
       ++it;
     }
   }
@@ -382,7 +388,7 @@ void cScanReceiver::FilterScanned(const filter_properties& filter)
   std::map<filter_properties, cScanFilterStatus*>::iterator it = m_filters.find(filter);
   if (it != m_filters.end())
   {
-    it->second->Detach();
+    it->second->Detach(false);
     it->second->SetState(SCAN_STATE_DONE);
   }
 

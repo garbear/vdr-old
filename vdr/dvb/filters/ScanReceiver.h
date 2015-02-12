@@ -64,7 +64,7 @@ public:
     void SetState(FILTER_SCAN_STATE state);
 
     bool Attach(TunerHandlePtr handle);
-    void Detach(void);
+    void Detach(bool deleting);
     bool Attached(void) const;
 
     cSectionSyncer* Syncer(void) const { return m_syncer; }
