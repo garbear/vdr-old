@@ -417,6 +417,7 @@ void cDvbTuner::Close(void)
       CLockObject lock2(m_tuneEventMutex);
       CancelTuning(2000);
       m_state = DVB_TUNER_STATE_NOT_INITIALISED;
+      m_tuneEvent = true;
       m_tuneEventCondition.Signal();
     }
 
