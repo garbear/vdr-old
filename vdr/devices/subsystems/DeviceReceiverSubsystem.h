@@ -24,6 +24,7 @@
 #include "devices/DeviceSubsystem.h"
 #include "devices/DeviceTypes.h"
 #include "devices/PIDResource.h"
+#include "devices/Receiver.h"
 #include "lib/platform/threads/mutex.h"
 #include "lib/platform/threads/threads.h"
 
@@ -210,8 +211,9 @@ protected:
   cReceiverChange* NextChange(void);
 
   ReceiverHandlePtr    GetReceiverHandle(iReceiver* receiver) const;
-  std::set<iReceiver*> GetReceiversForPid(uint16_t pid) const;
   PidResourcePtr       GetResource(const PidResourcePtr& needle) const;
+  PidResourcePtr       OpenResource(const PidResourcePtr& resource);
+  ReceiverHandlePtr    OpenReceiverHandle(iReceiver* receiver);
   PidResourcePtr       GetMultiplexedResource(uint16_t pid) const; // Streaming resources can't be identified by PID alone
   bool                 AttachReceiver(iReceiver* receiver, const PidResourcePtr& resource);
 

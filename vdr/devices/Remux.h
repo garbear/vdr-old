@@ -102,6 +102,11 @@ inline uint16_t TsPid(const uint8_t *p)
   return (p[1] & TS_PID_MASK_HI) * 256 + p[2];
 }
 
+inline uint8_t TsTid(const uint8_t *p)
+{
+  return p[0] & 0xFF;
+}
+
 inline bool TsIsScrambled(const uint8_t *p)
 {
   return p[3] & TS_SCRAMBLING_CONTROL;

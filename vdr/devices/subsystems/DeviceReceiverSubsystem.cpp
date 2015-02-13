@@ -248,6 +248,7 @@ void *cDeviceReceiverSubsystem::Process()
 
   TsPacket packet;
   uint16_t pid;
+  uint8_t tid;
   const uint8_t* psidata;
   size_t psidatalen;
   bool validpsi, psichecked;
@@ -271,42 +272,49 @@ void *cDeviceReceiverSubsystem::Process()
       case POLL_RESULT_STREAMING_READY:
       if (!IsStopped() && resource->Read(&psidata, &psidatalen))
       {
-        crcCheck = TS_CRC_NOT_CHECKED;
         /** distribute the packet to receivers holding this resource */
-        std::set<iReceiver*> receivers = GetReceiversForPid(resource->Pid());
-        for (std::set<iReceiver*>::iterator receiverit = receivers.begin(); receiverit != receivers.end(); ++receiverit)
-          (*receiverit)->Receive(resource->Pid(), psidata, psidatalen, crcCheck);
+        ReceiverPidTable::const_iterator it = m_receiverPidTable.find(resource->Pid());
+        crcCheck = TS_CRC_NOT_CHECKED;
+        if (it != m_receiverPidTable.end())
+        {
+          ReceiverList rcv = it->second;
+          for (ReceiverList::const_iterator it = rcv.begin(); it != rcv.end(); ++it)
+          {
+            if (it->second == resource)
+              it->first->receiver->Receive(resource->Pid(), psidata, psidatalen, crcCheck);
+          }
+        }
       }
       break;
 
       case POLL_RESULT_MULTIPLEXED_READY:
       if (!IsStopped() && (packet = ReadMultiplexed()) != NULL)
       {
-        /** find resources attached to the PID that we received */
         pid = TsPid(packet);
-        crcCheck = TS_CRC_NOT_CHECKED;
-        psichecked = false;
-
-        /** distribute the packet to all receivers */
-        std::set<iReceiver*> receivers = GetReceiversForPid(pid);
-        for (std::set<iReceiver*>::iterator receiverit = receivers.begin(); receiverit != receivers.end(); ++receiverit)
+        ReceiverPidTable::const_iterator it = m_receiverPidTable.find(pid);
+        if (it != m_receiverPidTable.end())
         {
-          receiver = *receiverit;
-          if (receiver->IsPsiReceiver())
+          psichecked = false;
+
+          for (ReceiverList::const_iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2)
           {
-            /** only send full data */
-            if (!psichecked)
+            receiver = it2->first->receiver;
+            if (receiver->IsPsiReceiver())
             {
-              psichecked = true;
-              pidPtr = GetMultiplexedResource(pid);
-              validpsi = pidPtr ? pidPtr->AllocateBuffer()->AddTsData(packet, TS_SIZE, &psidata, &psidatalen) : false;
+              /** only send full data */
+              if (!psichecked)
+              {
+                psichecked = true;
+                pidPtr = GetMultiplexedResource(pid);
+                validpsi = pidPtr ? pidPtr->AllocateBuffer()->AddTsData(packet, TS_SIZE, &psidata, &psidatalen) : false;
+              }
+              if (validpsi)
+                receiver->Receive(pid, psidata, psidatalen, crcCheck);
             }
-            if (validpsi)
-              receiver->Receive(pid, psidata, psidatalen, crcCheck);
-          }
-          else
-          {
-            receiver->Receive(pid, packet, TS_SIZE, crcCheck);
+            else
+            {
+              receiver->Receive(pid, packet, TS_SIZE, crcCheck);
+            }
           }
         }
         Consumed();
@@ -335,19 +343,6 @@ cDeviceReceiverSubsystem::ReceiverHandlePtr cDeviceReceiverSubsystem::GetReceive
   return ReceiverHandlePtr();
 }
 
-std::set<iReceiver*> cDeviceReceiverSubsystem::GetReceiversForPid(uint16_t pid) const
-{
-  std::set<iReceiver*> receivers;
-  ReceiverPidTable::const_iterator it = m_receiverPidTable.find(pid);
-  if (it != m_receiverPidTable.end())
-  {
-    ReceiverList rcv = it->second;
-    for (ReceiverList::const_iterator it = rcv.begin(); it != rcv.end(); ++it)
-      receivers.insert(it->first->receiver);
-  }
-  return receivers;
-}
-
 cDeviceReceiverSubsystem::PidResourcePtr cDeviceReceiverSubsystem::GetResource(const PidResourcePtr& needle) const
 {
   ReceiverPidTable::const_iterator it = m_receiverPidTable.find(needle->Pid());
@@ -358,6 +353,31 @@ cDeviceReceiverSubsystem::PidResourcePtr cDeviceReceiverSubsystem::GetResource(c
         return it2->second;
   }
   return PidResourcePtr();
+}
+
+cDeviceReceiverSubsystem::PidResourcePtr cDeviceReceiverSubsystem::OpenResource(const PidResourcePtr& resource)
+{
+  PidResourcePtr openResource = GetResource(resource);
+  if (!openResource)
+  {
+    // Resource hasn't been opened, try to open it now and bail on failure
+    if (!resource->Open())
+      return PidResourcePtr();
+    openResource = resource;
+  }
+  return openResource;
+}
+
+cDeviceReceiverSubsystem::ReceiverHandlePtr cDeviceReceiverSubsystem::OpenReceiverHandle(iReceiver* receiver)
+{
+  ReceiverHandlePtr receiverHandle = GetReceiverHandle(receiver);
+  if (!receiverHandle)
+  {
+    if (!receiver->Start())
+      return ReceiverHandlePtr();
+    receiverHandle = ReceiverHandlePtr(new cReceiverHandle(receiver));
+  }
+  return receiverHandle;
 }
 
 cDeviceReceiverSubsystem::PidResourcePtr cDeviceReceiverSubsystem::GetMultiplexedResource(uint16_t pid) const
@@ -396,25 +416,13 @@ bool cDeviceReceiverSubsystem::AttachMultiplexedReceiver(iReceiver* receiver, ui
 
 bool cDeviceReceiverSubsystem::AttachReceiver(iReceiver* receiver, const PidResourcePtr& resource)
 {
-  //TODO fix when both streaming and multiplexed sources attach to the same pid
-  PidResourcePtr openResource = GetResource(resource);
-  if (!openResource)
-  {
-    // Resource hasn't been opened, try to open it now and bail on failure
-    if (!resource->Open())
-      return false;
-    openResource = resource;
-  }
+  PidResourcePtr openResource = OpenResource(resource);
+  ReceiverHandlePtr receiverHandle = OpenReceiverHandle(receiver);
 
-  ReceiverHandlePtr receiverHandle = GetReceiverHandle(receiver);
-  if (!receiverHandle)
-  {
-    if (!receiver->Start())
-      return false;
-    receiverHandle = ReceiverHandlePtr(new cReceiverHandle(receiver));
-  }
+  if (!openResource || !receiverHandle)
+    return false;
 
-  ReceiverPidTable::iterator it = m_receiverPidTable.find(resource->Pid());
+  ReceiverPidTable::iterator it = m_receiverPidTable.find(openResource->Pid());
   if (it != m_receiverPidTable.end())
   {
     for (ReceiverList::const_iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2)

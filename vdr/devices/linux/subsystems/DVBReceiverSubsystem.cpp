@@ -242,7 +242,7 @@ bool cDvbMultiplexedResource::Open(void)
 
     if (ioctl(m_handle, DMX_SET_PES_FILTER, &pesFilterParams) < 0)
     {
-      esyslog("Couldn't open %s: ioctl failed", ToString().c_str());
+      esyslog("Couldn't open %s: ioctl failed - %s", ToString().c_str(), strerror(errno));
       Close();
       return false;
     }
