@@ -125,7 +125,7 @@ protected:
   typedef std::pair<ReceiverHandlePtr, PidResourcePtr> ReceiverPidEdge;
 
   typedef std::list<ReceiverPidEdge>                   ReceiverList;
-  typedef std::map<uint16_t, ReceiverList>             ReceiverPidTable;
+  typedef std::map<uint32_t, ReceiverList>             ReceiverPidTable;
 
 public:
   cDeviceReceiverSubsystem(cDevice *device);
@@ -201,7 +201,7 @@ protected:
   virtual TsPacket ReadMultiplexed(void) = 0;
 
   /*!
-   * Report that the TS packet delivered by Read() was used.
+   * Report that the TS packet delivered by ReadMultiplexed() was used.
    */
   virtual void Consumed(void) = 0;
 

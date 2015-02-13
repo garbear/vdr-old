@@ -46,6 +46,11 @@ using namespace std;
 #define DEBUG_RCV_CHANGE(x...)
 #endif
 
+#define PID_TID_TO_UINT32(pid, tid) ((pid) << 16 | (tid))
+#define RESOURCE_TO_UINT32(res)     (PID_TID_TO_UINT32((res)->Pid(), (res)->Tid()))
+#define UINT32_TO_PID(x)            ((x) >> 16 & 0xFFFF)
+#define UINT32_TO_TID(x)            ((x) & 0xFF)
+
 namespace VDR
 {
 
@@ -132,7 +137,7 @@ void cDeviceReceiverSubsystem::ProcessDetachReceiver(cDeviceReceiverSubsystem::c
 
 void cDeviceReceiverSubsystem::ProcessDetachMultiplexed(cDeviceReceiverSubsystem::cReceiverChange& change)
 {
-  ReceiverPidTable::iterator itReceiverList = m_receiverPidTable.find(change.m_pid);
+  ReceiverPidTable::iterator itReceiverList = m_receiverPidTable.find(PID_TID_TO_UINT32(change.m_pid, 0xFF));
   DEBUG_RCV_CHANGE("ProcessChanges: detaching multiplexed receiver %p from pid %u", change.m_receiver, change.m_pid);
   if (itReceiverList != m_receiverPidTable.end())
   {
@@ -151,17 +156,14 @@ void cDeviceReceiverSubsystem::ProcessDetachMultiplexed(cDeviceReceiverSubsystem
 
 void cDeviceReceiverSubsystem::ProcessDetachStreaming(cDeviceReceiverSubsystem::cReceiverChange& change)
 {
-  //TODO remove tid/mask
-  ReceiverPidTable::iterator itReceiverList = m_receiverPidTable.find(change.m_pid);
+  ReceiverPidTable::iterator itReceiverList = m_receiverPidTable.find(PID_TID_TO_UINT32(change.m_pid, change.m_tid));
   DEBUG_RCV_CHANGE("ProcessChanges: detaching streaming receiver %p from pid %u", change.m_receiver, change.m_pid);
   if (itReceiverList != m_receiverPidTable.end())
   {
     ReceiverList& receiverList = itReceiverList->second;
-    PidResourcePtr resource(CreateStreamingResource(change.m_pid, change.m_tid, change.m_mask));
     for (ReceiverList::iterator itReceiver = receiverList.begin(); itReceiver != receiverList.end();)
     {
-      if (itReceiver->first->receiver == change.m_receiver &&
-          itReceiver->second->Equals(resource.get()))
+      if (itReceiver->first->receiver == change.m_receiver)
         itReceiverList->second.erase(itReceiver++);
       else
         ++itReceiver;
@@ -257,6 +259,8 @@ void *cDeviceReceiverSubsystem::Process()
   iReceiver* receiver;
   PidResourcePtr pidPtr;
   bool empty = true;
+  ReceiverList::const_iterator itRcvList;
+  ReceiverPidTable::const_iterator itReceiverLists;
 
   while (!IsStopped())
   {
@@ -273,16 +277,12 @@ void *cDeviceReceiverSubsystem::Process()
       if (!IsStopped() && resource->Read(&psidata, &psidatalen))
       {
         /** distribute the packet to receivers holding this resource */
-        ReceiverPidTable::const_iterator it = m_receiverPidTable.find(resource->Pid());
+        itReceiverLists = m_receiverPidTable.find(RESOURCE_TO_UINT32(resource));
         crcCheck = TS_CRC_NOT_CHECKED;
-        if (it != m_receiverPidTable.end())
+        if (itReceiverLists != m_receiverPidTable.end())
         {
-          ReceiverList rcv = it->second;
-          for (ReceiverList::const_iterator it = rcv.begin(); it != rcv.end(); ++it)
-          {
-            if (it->second == resource)
-              it->first->receiver->Receive(resource->Pid(), psidata, psidatalen, crcCheck);
-          }
+          for (itRcvList = itReceiverLists->second.begin(); itRcvList != itReceiverLists->second.end(); ++itRcvList)
+            itRcvList->first->receiver->Receive(resource->Pid(), psidata, psidatalen, crcCheck);
         }
       }
       break;
@@ -291,14 +291,14 @@ void *cDeviceReceiverSubsystem::Process()
       if (!IsStopped() && (packet = ReadMultiplexed()) != NULL)
       {
         pid = TsPid(packet);
-        ReceiverPidTable::const_iterator it = m_receiverPidTable.find(pid);
-        if (it != m_receiverPidTable.end())
+        itReceiverLists = m_receiverPidTable.find(PID_TID_TO_UINT32(pid, 0xFF));
+        if (itReceiverLists != m_receiverPidTable.end())
         {
           psichecked = false;
 
-          for (ReceiverList::const_iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2)
+          for (itRcvList = itReceiverLists->second.begin(); itRcvList != itReceiverLists->second.end(); ++itRcvList)
           {
-            receiver = it2->first->receiver;
+            receiver = itRcvList->first->receiver;
             if (receiver->IsPsiReceiver())
             {
               /** only send full data */
@@ -345,7 +345,7 @@ cDeviceReceiverSubsystem::ReceiverHandlePtr cDeviceReceiverSubsystem::GetReceive
 
 cDeviceReceiverSubsystem::PidResourcePtr cDeviceReceiverSubsystem::GetResource(const PidResourcePtr& needle) const
 {
-  ReceiverPidTable::const_iterator it = m_receiverPidTable.find(needle->Pid());
+  ReceiverPidTable::const_iterator it = m_receiverPidTable.find(RESOURCE_TO_UINT32(needle));
   if (it != m_receiverPidTable.end())
   {
     for (ReceiverList::const_iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2)
@@ -382,7 +382,7 @@ cDeviceReceiverSubsystem::ReceiverHandlePtr cDeviceReceiverSubsystem::OpenReceiv
 
 cDeviceReceiverSubsystem::PidResourcePtr cDeviceReceiverSubsystem::GetMultiplexedResource(uint16_t pid) const
 {
-  ReceiverPidTable::const_iterator it = m_receiverPidTable.find(pid);
+  ReceiverPidTable::const_iterator it = m_receiverPidTable.find(PID_TID_TO_UINT32(pid, 0xFF));
   if (it != m_receiverPidTable.end())
   {
     for (ReceiverList::const_iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2)
@@ -422,7 +422,7 @@ bool cDeviceReceiverSubsystem::AttachReceiver(iReceiver* receiver, const PidReso
   if (!openResource || !receiverHandle)
     return false;
 
-  ReceiverPidTable::iterator it = m_receiverPidTable.find(openResource->Pid());
+  ReceiverPidTable::iterator it = m_receiverPidTable.find(RESOURCE_TO_UINT32(openResource));
   if (it != m_receiverPidTable.end())
   {
     for (ReceiverList::const_iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2)
@@ -435,7 +435,7 @@ bool cDeviceReceiverSubsystem::AttachReceiver(iReceiver* receiver, const PidReso
   {
     ReceiverList rcvlist;
     rcvlist.push_back(make_pair(receiverHandle, openResource));
-    m_receiverPidTable.insert(make_pair(resource->Pid(), rcvlist));
+    m_receiverPidTable.insert(make_pair(RESOURCE_TO_UINT32(openResource), rcvlist));
   }
 
   return true;
