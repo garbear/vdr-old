@@ -71,6 +71,7 @@ public:
   virtual bool Read(const uint8_t** outdata, size_t* outlen) { return false; }
 
   uint16_t    Pid(void) const    { return m_pid; }
+  uint8_t     Tid(void) const    { return m_tid; }
   cPsiBuffer* Buffer(void) const;
   cPsiBuffer* AllocateBuffer(void);
 
@@ -78,6 +79,7 @@ public:
 
 private:
   const uint16_t   m_pid; // Packet ID
+  const uint8_t    m_tid;
   cPsiBuffer*      m_buffer;
   PLATFORM::CMutex m_mutex;
 };
